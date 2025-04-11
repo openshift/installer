@@ -81,6 +81,16 @@ func (c *Client) DNSDomains() *DNSDomainsClient {
 	)
 }
 
+// GCP returns the target 'GCP' resource.
+//
+// Reference to the resource that manages the collection of gcp endpoints.
+func (c *Client) GCP() *GCPClient {
+	return NewGCPClient(
+		c.transport,
+		path.Join(c.path, "gcp"),
+	)
+}
+
 // GCPInquiries returns the target 'GCP_inquiries' resource.
 //
 // Reference to the resource that manages the collection of gcp inquiries.
@@ -161,6 +171,16 @@ func (c *Client) LimitedSupportReasonTemplates() *LimitedSupportReasonTemplatesC
 	)
 }
 
+// LoadBalancerQuotaValues returns the target 'load_balancer_quota_values' resource.
+//
+// Reference to the resource that manages the load balancer quota values.
+func (c *Client) LoadBalancerQuotaValues() *LoadBalancerQuotaValuesClient {
+	return NewLoadBalancerQuotaValuesClient(
+		c.transport,
+		path.Join(c.path, "load_balancer_quota_values"),
+	)
+}
+
 // MachineTypes returns the target 'machine_types' resource.
 //
 // Reference to the resource that manage the collection of machine types.
@@ -218,6 +238,26 @@ func (c *Client) ProvisionShards() *ProvisionShardsClient {
 	return NewProvisionShardsClient(
 		c.transport,
 		path.Join(c.path, "provision_shards"),
+	)
+}
+
+// RegistryAllowlists returns the target 'registry_allowlists' resource.
+//
+// Reference to the resource that manages the collection of registry allowlists.
+func (c *Client) RegistryAllowlists() *RegistryAllowlistsClient {
+	return NewRegistryAllowlistsClient(
+		c.transport,
+		path.Join(c.path, "registry_allowlists"),
+	)
+}
+
+// StorageQuotaValues returns the target 'storage_quota_values' resource.
+//
+// Reference to the resource that manages the storage quota values.
+func (c *Client) StorageQuotaValues() *StorageQuotaValuesClient {
+	return NewStorageQuotaValuesClient(
+		c.transport,
+		path.Join(c.path, "storage_quota_values"),
 	)
 }
 

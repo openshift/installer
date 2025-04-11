@@ -20,28 +20,29 @@ import (
 	"context"
 
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
-	"sigs.k8s.io/cluster-api/controllers/remote"
+	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	clusterresourcesets "sigs.k8s.io/cluster-api/exp/addons/internal/controllers"
 )
 
 // ClusterResourceSetReconciler reconciles a ClusterResourceSet object.
 type ClusterResourceSetReconciler struct {
-	Client  client.Client
-	Tracker *remote.ClusterCacheTracker
+	Client       client.Client
+	ClusterCache clustercache.ClusterCache
 
 	// WatchFilterValue is the label value used to filter events prior to reconciliation.
 	WatchFilterValue string
 }
 
-func (r *ClusterResourceSetReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+func (r *ClusterResourceSetReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options, partialSecretCache cache.Cache) error {
 	return (&clusterresourcesets.ClusterResourceSetReconciler{
 		Client:           r.Client,
-		Tracker:          r.Tracker,
+		ClusterCache:     r.ClusterCache,
 		WatchFilterValue: r.WatchFilterValue,
-	}).SetupWithManager(ctx, mgr, options)
+	}).SetupWithManager(ctx, mgr, options, partialSecretCache)
 }
 
 // ClusterResourceSetBindingReconciler reconciles a ClusterResourceSetBinding object.

@@ -4,13 +4,6 @@ all:
       ansible_connection: local
       ansible_python_interpreter: "{{ansible_playbook_python}}"
 
-      # Network resource names
-      os_network: ocp-network
-      os_port_api: ocp-api-port
-      os_port_ingress: ocp-ingress-port
-      os_router: ocp-external-router
-      os_subnet: ocp-subnet-v4
-
       # User-provided values
       os_subnet_range: '10.0.0.0/16'
       os_flavor_master: 'm1.xlarge'
@@ -61,23 +54,20 @@ all:
       # Be aware that the 10 and 11 of the machineNetwork will
       # be taken by neutron dhcp by default, and wont be available.
       # This value will be overwritten by the network.yaml playbook.
-      os_apiVIP: "{{ os_subnet_range | ansible.utils.next_nth_usable(5) }}"
+      os_apiVIP: "{{ os_subnet_range | next_nth_usable(5) }}"
 
       # An IPv4 address that will be assigned to the ingress VIP.
       # Be aware that the 10 and 11 of the machineNetwork will
       # be taken by neutron dhcp by default, and wont be available.
       # This value will be overwritten by the network.yaml playbook.
-      os_ingressVIP: "{{ os_subnet_range | ansible.utils.next_nth_usable(7) }}"
+      os_ingressVIP: "{{ os_subnet_range | next_nth_usable(7) }}"
 
       # Set control-plane nodes to schedule workloads when number of compute
       # nodes is zero
       os_master_schedulable: "{{ os_compute_nodes_number | int == 0 }}"
 
-      # Name of the IPv6 subnet. Uncomment to enable dual-stack support
-      #os_subnet6: ocp-subnet-v6
-
-      # IPv6 subnet CIDR
-      os_subnet6_range: 'fd2e:6f44:5dd8:c956::/64'
+      # IPv6 subnet CIDR. Uncomment to enable dual-stack support.
+      #os_subnet6_range: 'fd2e:6f44:5dd8:c956::/64'
 
       # Modes are one of: slaac, dhcpv6-stateful or dhcpv6-stateless
       os_subnet6_address_mode: slaac

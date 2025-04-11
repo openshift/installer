@@ -6,6 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	configv1 "github.com/openshift/api/config/v1"
 	features "github.com/openshift/api/features"
@@ -17,7 +18,6 @@ import (
 	"github.com/openshift/installer/pkg/types/featuregates"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -124,6 +124,11 @@ type InstallConfig struct {
 	// control plane.
 	// +optional
 	ControlPlane *MachinePool `json:"controlPlane,omitempty"`
+
+	// Arbiter is the configuration for the machines that comprise the
+	// arbiter nodes.
+	// +optional
+	Arbiter *MachinePool `json:"arbiter,omitempty"`
 
 	// Compute is the configuration for the machines that comprise the
 	// compute nodes.
@@ -247,6 +252,13 @@ func (c *InstallConfig) IsSingleNodeOpenShift() bool {
 	return c.BootstrapInPlace != nil
 }
 
+// IsArbiterEnabled returns if arbiter is enabled based off of the install-config arbiter machine pool.
+func (c *InstallConfig) IsArbiterEnabled() bool {
+	return c.Arbiter != nil &&
+		c.Arbiter.Replicas != nil &&
+		*c.Arbiter.Replicas > 0
+}
+
 // CPUPartitioningMode defines how the nodes should be setup for partitioning the CPU Sets.
 // +kubebuilder:validation:Enum=None;AllNodes
 type CPUPartitioningMode string
@@ -280,10 +292,6 @@ type Platform struct {
 	// IBMCloud is the configuration used when installing on IBM Cloud.
 	// +optional
 	IBMCloud *ibmcloud.Platform `json:"ibmcloud,omitempty"`
-
-	// Libvirt is the configuration used when installing on libvirt.
-	// +optional
-	Libvirt *libvirt.Platform `json:"libvirt,omitempty"`
 
 	// None is the empty configuration used when installing on an unsupported
 	// platform.
@@ -347,8 +355,6 @@ func (p *Platform) Name() string {
 		return gcp.Name
 	case p.IBMCloud != nil:
 		return ibmcloud.Name
-	case p.Libvirt != nil:
-		return libvirt.Name
 	case p.None != nil:
 		return none.Name
 	case p.External != nil:
@@ -380,8 +386,7 @@ type Networking struct {
 	// MachineNetwork is the list of IP address pools for machines.
 	// This field replaces MachineCIDR, and if set MachineCIDR must
 	// be empty or match the first entry in the list.
-	// Default is 10.0.0.0/16 for all platforms other than libvirt and Power VS.
-	// For libvirt, the default is 192.168.126.0/24.
+	// Default is 10.0.0.0/16 for all platforms other than Power VS.
 	// For Power VS, the default is 192.168.0.0/24.
 	//
 	// +optional
@@ -407,6 +412,10 @@ type Networking struct {
 	// automatically based on the host network MTU.
 	// +optional
 	ClusterNetworkMTU uint32 `json:"clusterNetworkMTU,omitempty"`
+
+	// OVNKubernetesConfig provides configuration for ovn-kubernetes as the default
+	// pod network when NetworkType is set to OVNKubernetes.
+	OVNKubernetesConfig *OVNKubernetesConfig `json:"ovnKubernetesConfig,omitempty"`
 
 	// Deprecated types, scheduled to be removed
 
@@ -444,6 +453,8 @@ type ClusterNetworkEntry struct {
 	// HostPrefix is the prefix size to allocate to each node from the CIDR.
 	// For example, 24 would allocate 2^8=256 adresses to each node. If this
 	// field is not used by the plugin, it can be left unset.
+	// When multiple CIDRs of the same family (i.e. IPv4/IPv6) are present,
+	// their HostPrefix value must be the same.
 	// +optional
 	HostPrefix int32 `json:"hostPrefix,omitempty"`
 
@@ -451,6 +462,29 @@ type ClusterNetworkEntry struct {
 	// This is the length in bits - so a 9 here will allocate a /23.
 	// +optional
 	DeprecatedHostSubnetLength int32 `json:"hostSubnetLength,omitempty"`
+}
+
+// OVNKubernetesConfig configures the ovn-kubernetes sdn plugin.
+type OVNKubernetesConfig struct {
+	// ipv4 allows users to configure IP settings for IPv4 connections. When omitted,
+	// this means no opinions and the default configuration is used. Check individual
+	// fields within ipv4 for details of default values.
+	// +optional
+	IPv4 *IPv4OVNKubernetesConfig `json:"ipv4,omitempty"`
+}
+
+// IPv4OVNKubernetesConfig is IPv4 configuration for the ovn-kubernetes sdn plugin.
+type IPv4OVNKubernetesConfig struct {
+	// internalJoinSubnet is a v4 subnet used internally by ovn-kubernetes in case the
+	// default one is being already used by something else. It must not overlap with
+	// any other subnet being used by OpenShift or by the node network. The size of the
+	// subnet must be larger than the number of nodes. The value cannot be changed
+	// after installation.
+	// The current default value is 100.64.0.0/16
+	// The subnet must be large enough to accommodate one IP per node in your cluster
+	// The value must be in proper IPV4 CIDR format
+	// +optional
+	InternalJoinSubnet *ipnet.IPNet `json:"internalJoinSubnet,omitempty"`
 }
 
 // Proxy defines the proxy settings for the cluster.
@@ -528,6 +562,32 @@ type Capabilities struct {
 	AdditionalEnabledCapabilities []configv1.ClusterVersionCapability `json:"additionalEnabledCapabilities,omitempty"`
 }
 
+// GetEnabledCapabilities returns a set of enabled ClusterVersionCapabilities.
+func (c *InstallConfig) GetEnabledCapabilities() sets.Set[configv1.ClusterVersionCapability] {
+	enabledCaps := sets.Set[configv1.ClusterVersionCapability]{}
+	if c.Capabilities == nil || c.Capabilities.BaselineCapabilitySet == "" {
+		// when Capabilities and/or BaselineCapabilitySet is not specified, default is vCurrent
+		baseSet := configv1.ClusterVersionCapabilitySets[configv1.ClusterVersionCapabilitySetCurrent]
+		for _, cap := range baseSet {
+			enabledCaps.Insert(cap)
+		}
+	}
+	if c.Capabilities != nil {
+		if c.Capabilities.BaselineCapabilitySet != "" {
+			baseSet := configv1.ClusterVersionCapabilitySets[c.Capabilities.BaselineCapabilitySet]
+			for _, cap := range baseSet {
+				enabledCaps.Insert(cap)
+			}
+		}
+		if c.Capabilities.AdditionalEnabledCapabilities != nil {
+			for _, cap := range c.Capabilities.AdditionalEnabledCapabilities {
+				enabledCaps.Insert(cap)
+			}
+		}
+	}
+	return enabledCaps
+}
+
 // WorkerMachinePool retrieves the worker MachinePool from InstallConfig.Compute
 func (c *InstallConfig) WorkerMachinePool() *MachinePool {
 	for _, machinePool := range c.Compute {
@@ -569,24 +629,24 @@ func ClusterAPIFeatureGateEnabled(platform string, fgs featuregates.FeatureGate)
 
 	// Check if CAPI install is enabled for individual platforms.
 	switch platform {
-	case aws.Name:
-		return fgs.Enabled(features.FeatureGateClusterAPIInstallAWS)
+	case aws.Name, azure.Name, gcp.Name, nutanix.Name, openstack.Name, powervs.Name, vsphere.Name:
+		return true
 	case azure.StackTerraformName, azure.StackCloud.Name():
 		return false
-	case azure.Name:
-		return fgs.Enabled(features.FeatureGateClusterAPIInstallAzure)
-	case gcp.Name:
-		return fgs.Enabled(features.FeatureGateClusterAPIInstallGCP)
 	case ibmcloud.Name:
 		return fgs.Enabled(features.FeatureGateClusterAPIInstallIBMCloud)
-	case nutanix.Name:
-		return fgs.Enabled(features.FeatureGateClusterAPIInstallNutanix)
-	case openstack.Name:
-		return fgs.Enabled(features.FeatureGateClusterAPIInstallOpenStack)
-	case powervs.Name:
-		return fgs.Enabled(features.FeatureGateClusterAPIInstallPowerVS)
-	case vsphere.Name:
-		return fgs.Enabled(features.FeatureGateClusterAPIInstallVSphere)
+	default:
+		return false
+	}
+}
+
+// MultiArchFeatureGateEnabled checks whether feature gate enabling multi-arch clusters is enabled.
+func MultiArchFeatureGateEnabled(platform string, fgs featuregates.FeatureGate) bool {
+	switch platform {
+	case aws.Name:
+		return fgs.Enabled(features.FeatureGateMultiArchInstallAWS)
+	case gcp.Name:
+		return fgs.Enabled(features.FeatureGateMultiArchInstallGCP)
 	default:
 		return false
 	}

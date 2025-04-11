@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
+ */
 
 package mqcloud
 
@@ -13,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/mqcloud-go-sdk/mqcloudv1"
 )
 
@@ -24,7 +29,7 @@ func DataSourceIbmMqcloudQueueManagerStatus() *schema.Resource {
 			"service_instance_guid": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The GUID that uniquely identifies the MQ on Cloud service instance.",
+				Description: "The GUID that uniquely identifies the MQaaS service instance.",
 			},
 			"queue_manager_id": {
 				Type:        schema.TypeString,
@@ -43,12 +48,17 @@ func DataSourceIbmMqcloudQueueManagerStatus() *schema.Resource {
 func dataSourceIbmMqcloudQueueManagerStatusRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mqcloudClient, err := meta.(conns.ClientSession).MqcloudV1()
 	if err != nil {
-		return diag.FromErr(err)
+		// Error is coming from SDK client, so it doesn't need to be discriminated.
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_mqcloud_queue_manager_status", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	err = checkSIPlan(d, meta)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Read Queue Manager Status failed %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Read Queue Manager Status failed: %s", err.Error()), "(Data) ibm_mqcloud_queue_manager_status", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getQueueManagerStatusOptions := &mqcloudv1.GetQueueManagerStatusOptions{}
@@ -56,16 +66,17 @@ func dataSourceIbmMqcloudQueueManagerStatusRead(context context.Context, d *sche
 	getQueueManagerStatusOptions.SetServiceInstanceGuid(d.Get("service_instance_guid").(string))
 	getQueueManagerStatusOptions.SetQueueManagerID(d.Get("queue_manager_id").(string))
 
-	queueManagerStatus, response, err := mqcloudClient.GetQueueManagerStatusWithContext(context, getQueueManagerStatusOptions)
+	queueManagerStatus, _, err := mqcloudClient.GetQueueManagerStatusWithContext(context, getQueueManagerStatusOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetQueueManagerStatusWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetQueueManagerStatusWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetQueueManagerStatusWithContext failed: %s", err.Error()), "(Data) ibm_mqcloud_queue_manager_status", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(dataSourceIbmMqcloudQueueManagerStatusID(d))
 
 	if err = d.Set("status", queueManagerStatus.Status); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting status: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting status: %s", err), "(Data) ibm_mqcloud_queue_manager_status", "read", "set-status").GetDiag()
 	}
 
 	return nil

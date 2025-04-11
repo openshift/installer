@@ -7,6 +7,10 @@ import (
 	storage "google.golang.org/api/storage/v1"
 )
 
+const (
+	bucketObjectResourceName = "bucketobject"
+)
+
 func (o *ClusterUninstaller) listBucketObjects(ctx context.Context, bucket cloudResource) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing objects for storage bucket %s", bucket.name)
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
@@ -19,7 +23,7 @@ func (o *ClusterUninstaller) listBucketObjects(ctx context.Context, bucket cloud
 			result = append(result, cloudResource{
 				key:      object.Name,
 				name:     object.Name,
-				typeName: "bucketobject",
+				typeName: bucketObjectResourceName,
 			})
 		}
 		return nil

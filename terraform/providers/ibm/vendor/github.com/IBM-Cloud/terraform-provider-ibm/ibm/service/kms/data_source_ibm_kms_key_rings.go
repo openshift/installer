@@ -5,10 +5,10 @@ package kms
 
 import (
 	"context"
-	"fmt"
 
 	//kp "github.com/IBM/keyprotect-go-client"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -65,10 +65,10 @@ func dataSourceIBMKMSKeyRingsRead(d *schema.ResourceData, meta interface{}) erro
 	endpointType := d.Get("endpoint_type").(string)
 	keys, err := api.GetKeyRings(context.Background())
 	if err != nil || keys == nil {
-		return fmt.Errorf("[ERROR] Get Key Rings failed with error: %s", err)
+		return flex.FmtErrorf("[ERROR] Get Key Rings failed with error: %s", err)
 	}
-	if keys == nil || keys.KeyRings == nil || len(keys.KeyRings) == 0 {
-		return fmt.Errorf("[ERROR] No key Rings in instance  %s", instanceID)
+	if keys.KeyRings == nil || len(keys.KeyRings) == 0 {
+		return flex.FmtErrorf("[ERROR] No key Rings in instance  %s", instanceID)
 	}
 
 	keyRingMap := make([]map[string]interface{}, 0, len(keys.KeyRings))

@@ -11,7 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/gcp"
-	"github.com/openshift/installer/pkg/types/libvirt"
+	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
@@ -100,18 +100,6 @@ func TestValidateMachinePool(t *testing.T) {
 			valid: true,
 		},
 		{
-			name:     "valid libvirt",
-			platform: &types.Platform{Libvirt: &libvirt.Platform{}},
-			pool: func() *types.MachinePool {
-				p := validMachinePool("test-name")
-				p.Platform = types.MachinePoolPlatform{
-					Libvirt: &libvirt.MachinePool{},
-				}
-				return p
-			}(),
-			valid: true,
-		},
-		{
 			name:     "valid openstack",
 			platform: &types.Platform{OpenStack: &openstack.Platform{}},
 			pool: func() *types.MachinePool {
@@ -125,7 +113,7 @@ func TestValidateMachinePool(t *testing.T) {
 		},
 		{
 			name:     "mis-matched platform",
-			platform: &types.Platform{Libvirt: &libvirt.Platform{}},
+			platform: &types.Platform{IBMCloud: &ibmcloud.Platform{}},
 			pool: func() *types.MachinePool {
 				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
@@ -141,8 +129,8 @@ func TestValidateMachinePool(t *testing.T) {
 			pool: func() *types.MachinePool {
 				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
-					AWS:     &aws.MachinePool{},
-					Libvirt: &libvirt.MachinePool{},
+					AWS:      &aws.MachinePool{},
+					IBMCloud: &ibmcloud.MachinePool{},
 				}
 				return p
 			}(),
@@ -191,6 +179,34 @@ func TestValidateMachinePool(t *testing.T) {
 			valid: false,
 		},
 		{
+			name:     "valid GCP disk type master",
+			platform: &types.Platform{GCP: &gcp.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("master")
+				p.Platform = types.MachinePoolPlatform{
+					GCP: &gcp.MachinePool{},
+				}
+				p.Platform.GCP.OSDisk.DiskSizeGB = 100
+				p.Platform.GCP.OSDisk.DiskType = "hyperdisk-balanced"
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name:     "invalid GCP disk type master",
+			platform: &types.Platform{GCP: &gcp.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("master")
+				p.Platform = types.MachinePoolPlatform{
+					GCP: &gcp.MachinePool{},
+				}
+				p.Platform.GCP.OSDisk.DiskSizeGB = 100
+				p.Platform.GCP.OSDisk.DiskType = "pd-standard"
+				return p
+			}(),
+			valid: false,
+		},
+		{
 			name:     "valid GCP service account use",
 			platform: &types.Platform{GCP: &gcp.Platform{Region: "us-east-1", NetworkProjectID: "ExampleNetworkProject"}},
 			pool: func() *types.MachinePool {
@@ -216,7 +232,7 @@ func TestValidateMachinePool(t *testing.T) {
 				}
 				return p
 			}(),
-			valid: false,
+			valid: true,
 		},
 		{
 			name:     "invalid GCP service account non xpn install",
@@ -230,7 +246,7 @@ func TestValidateMachinePool(t *testing.T) {
 				}
 				return p
 			}(),
-			valid: false,
+			valid: true,
 		},
 	}
 	for _, tc := range cases {

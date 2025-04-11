@@ -5,11 +5,11 @@ package appconfiguration
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"reflect"
 	"strconv"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
@@ -165,16 +165,16 @@ func dataSourceIbmAppConfigEnvironmentsRead(d *schema.ResourceData, meta interfa
 
 	appconfigClient, err := getAppConfigClient(meta, guid)
 	if err != nil {
-		return err
+		return flex.FmtErrorf(fmt.Sprintf("%s", err))
 	}
 
 	options := &appconfigurationv1.ListEnvironmentsOptions{}
 
-	if _, ok := d.GetOk("expand"); ok {
+	if _, ok := GetFieldExists(d, "expand"); ok {
 		options.SetExpand(d.Get("expand").(bool))
 	}
 
-	if _, ok := d.GetOk("tags"); ok {
+	if _, ok := GetFieldExists(d, "tags"); ok {
 		options.SetTags(d.Get("tags").(string))
 	}
 
@@ -184,13 +184,13 @@ func dataSourceIbmAppConfigEnvironmentsRead(d *schema.ResourceData, meta interfa
 	finalList := []appconfigurationv1.Environment{}
 
 	var isLimit bool
-	if _, ok := d.GetOk("limit"); ok {
+	if _, ok := GetFieldExists(d, "limit"); ok {
 		isLimit = true
 		limit = int64(d.Get("limit").(int))
 	}
 	options.SetLimit(limit)
 
-	if _, ok := d.GetOk("offset"); ok {
+	if _, ok := GetFieldExists(d, "offset"); ok {
 		offset = int64(d.Get("offset").(int))
 	}
 	for {
@@ -198,8 +198,7 @@ func dataSourceIbmAppConfigEnvironmentsRead(d *schema.ResourceData, meta interfa
 		result, response, err := appconfigClient.ListEnvironments(options)
 		environmentList = result
 		if err != nil {
-			log.Printf("[DEBUG] ListEnvironments failed %s\n%s", err, response)
-			return err
+			return flex.FmtErrorf("[ERROR] Listing Environments failed %s\n%s", err, response)
 		}
 		if isLimit {
 			offset = 0
@@ -219,48 +218,48 @@ func dataSourceIbmAppConfigEnvironmentsRead(d *schema.ResourceData, meta interfa
 	if environmentList.Environments != nil {
 		err = d.Set("environments", dataSourceEnvironmentListFlattenEnvironments(environmentList.Environments))
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error setting environments %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting environments %s", err)
 		}
 	}
 	if environmentList.TotalCount != nil {
 		if err = d.Set("total_count", environmentList.TotalCount); err != nil {
-			return fmt.Errorf("[ERROR] Error setting total_count: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting total_count: %s", err)
 		}
 	}
 	if environmentList.Limit != nil {
 		if err = d.Set("limit", environmentList.Limit); err != nil {
-			return fmt.Errorf("[ERROR] Error setting limit: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting limit: %s", err)
 		}
 	}
 	if environmentList.Offset != nil {
 		if err = d.Set("offset", environmentList.Offset); err != nil {
-			return fmt.Errorf("[ERROR] Error setting offset: %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting offset: %s", err)
 		}
 	}
 	if environmentList.First != nil {
 		err = d.Set("first", dataSourceEnvironmentListFlattenPagination(*environmentList.First))
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error setting first %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting first %s", err)
 		}
 	}
 
 	if environmentList.Previous != nil {
 		err = d.Set("previous", dataSourceEnvironmentListFlattenPagination(*environmentList.Previous))
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error setting previous %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting previous %s", err)
 		}
 	}
 
 	if environmentList.Last != nil {
 		err = d.Set("last", dataSourceEnvironmentListFlattenPagination(*environmentList.Last))
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error setting last %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting last %s", err)
 		}
 	}
 	if environmentList.Next != nil {
 		err = d.Set("next", dataSourceEnvironmentListFlattenPagination(*environmentList.Next))
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error setting next %s", err)
+			return flex.FmtErrorf("[ERROR] Error setting next %s", err)
 		}
 	}
 
@@ -332,7 +331,7 @@ func dataSourceEnvironmentListGetNext(next interface{}) int64 {
 	return convertedVal
 }
 
-func dataSourceEnvironmentListFlattenPagination(result appconfigurationv1.PageHrefResponse) (finalList []map[string]interface{}) {
+func dataSourceEnvironmentListFlattenPagination(result interface{}) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceEnvironmentListURLToMap(result)
 	finalList = append(finalList, finalMap)
@@ -340,11 +339,22 @@ func dataSourceEnvironmentListFlattenPagination(result appconfigurationv1.PageHr
 	return finalList
 }
 
-func dataSourceEnvironmentListURLToMap(urlItem appconfigurationv1.PageHrefResponse) (urlMap map[string]interface{}) {
+func dataSourceEnvironmentListURLToMap(urlItem interface{}) (urlMap map[string]interface{}) {
 	urlMap = map[string]interface{}{}
 
-	if urlItem.Href != nil {
-		urlMap["href"] = urlItem.Href
+	var hrefUrl *string
+	switch urlItem := urlItem.(type) {
+	case appconfigurationv1.PaginatedListFirst:
+		hrefUrl = urlItem.Href
+	case appconfigurationv1.PaginatedListLast:
+		hrefUrl = urlItem.Href
+	case appconfigurationv1.PaginatedListNext:
+		hrefUrl = urlItem.Href
+	case appconfigurationv1.PaginatedListPrevious:
+		hrefUrl = urlItem.Href
+	}
+	if hrefUrl != nil {
+		urlMap["href"] = hrefUrl
 	}
 
 	return urlMap

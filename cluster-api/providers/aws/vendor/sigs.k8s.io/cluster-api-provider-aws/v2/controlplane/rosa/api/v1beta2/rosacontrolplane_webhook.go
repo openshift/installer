@@ -42,6 +42,10 @@ func (r *ROSAControlPlane) ValidateCreate() (warnings admission.Warnings, err er
 		allErrs = append(allErrs, err)
 	}
 
+	if err := r.validateClusterRegistryConfig(); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
 	allErrs = append(allErrs, r.validateNetwork()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 
@@ -54,6 +58,18 @@ func (r *ROSAControlPlane) ValidateCreate() (warnings admission.Warnings, err er
 		r.Name,
 		allErrs,
 	)
+}
+
+func (r *ROSAControlPlane) validateClusterRegistryConfig() *field.Error {
+	if r.Spec.ClusterRegistryConfig != nil {
+		if r.Spec.ClusterRegistryConfig.RegistrySources != nil {
+			if len(r.Spec.ClusterRegistryConfig.RegistrySources.AllowedRegistries) > 0 && len(r.Spec.ClusterRegistryConfig.RegistrySources.BlockedRegistries) > 0 {
+				return field.Invalid(field.NewPath("spec.clusterRegistryConfig.registrySources"), r.Spec.ClusterRegistryConfig.RegistrySources, "allowedRegistries and blockedRegistries are mutually exclusive fields")
+			}
+		}
+	}
+
+	return nil
 }
 
 // ValidateUpdate implements admission.Validator.

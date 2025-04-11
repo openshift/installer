@@ -27,6 +27,9 @@ type ExportImage struct {
 	// Required: true
 	BucketName *string `json:"bucketName"`
 
+	// Create a checksum filename
+	Checksum bool `json:"checksum,omitempty"`
+
 	// Cloud Object Storage Region; required for IBM COS
 	Region string `json:"region,omitempty"`
 

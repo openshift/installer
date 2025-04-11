@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
 	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
+	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	azmarketplace "github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering"
 	"github.com/Azure/go-autorest/autorest/to"
@@ -20,6 +20,7 @@ import (
 // API represents the calls made to the API.
 type API interface {
 	GetVirtualNetwork(ctx context.Context, resourceGroupName, virtualNetwork string) (*aznetwork.VirtualNetwork, error)
+	CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*aznetwork.IPAddressAvailabilityResult, error)
 	GetComputeSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*aznetwork.Subnet, error)
 	GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*aznetwork.Subnet, error)
 	ListLocations(ctx context.Context) (*[]azsubs.Location, error)
@@ -68,6 +69,24 @@ func (c *Client) GetVirtualNetwork(ctx context.Context, resourceGroupName, virtu
 	}
 
 	return &vnet, nil
+}
+
+// CheckIPAddressAvailability checks availability of an IP address in an Azure virtual network.
+func (c *Client) CheckIPAddressAvailability(ctx context.Context, resourceGroupName, virtualNetwork, ipAddr string) (*aznetwork.IPAddressAvailabilityResult, error) {
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	vnetClient, err := c.getVirtualNetworksClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	availability, err := vnetClient.CheckIPAddressAvailability(ctx, resourceGroupName, virtualNetwork, ipAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get azure ip availability: %w", err)
+	}
+
+	return &availability, nil
 }
 
 // getSubnet gets an Azure subnet by name

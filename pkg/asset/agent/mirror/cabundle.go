@@ -1,6 +1,7 @@
 package mirror
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -42,7 +43,7 @@ func (*CaBundle) Dependencies() []asset.Asset {
 }
 
 // Generate generates the Mirror Registries certificate file from install-config.
-func (i *CaBundle) Generate(dependencies asset.Parents) error {
+func (i *CaBundle) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	clusterInfo := &joiner.ClusterInfo{}
 	installConfig := &agent.OptionalInstallConfig{}
@@ -56,6 +57,10 @@ func (i *CaBundle) Generate(dependencies asset.Parents) error {
 			return nil
 		}
 		additionalTrustBundle = installConfig.Config.AdditionalTrustBundle
+
+	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
+		// Not required
+		return nil
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		additionalTrustBundle = clusterInfo.UserCaBundle

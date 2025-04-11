@@ -71,6 +71,11 @@ func (r *IBMVPCClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
+	// Determine whether the Cluster is designed for extended Infrastructure support, implemented in a separate path.
+	if ibmCluster.Spec.Network != nil {
+		return r.reconcileV2(ctx, req)
+	}
+
 	// Fetch the Cluster.
 	cluster, err := util.GetOwnerCluster(ctx, r.Client, ibmCluster.ObjectMeta)
 	if err != nil {
@@ -107,6 +112,57 @@ func (r *IBMVPCClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return reconcile.Result{}, fmt.Errorf("failed to create scope: %w", err)
 	}
 	return r.reconcile(clusterScope)
+}
+
+func (r *IBMVPCClusterReconciler) reconcileV2(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
+	log := r.Log.WithValues("ibmvpccluster", req.NamespacedName)
+
+	// Fetch the IBMVPCCluster instance.
+	ibmCluster := &infrav1beta2.IBMVPCCluster{}
+	err := r.Get(ctx, req.NamespacedName, ibmCluster)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, err
+	}
+
+	// Fetch the Cluster.
+	cluster, err := util.GetOwnerCluster(ctx, r.Client, ibmCluster.ObjectMeta)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if cluster == nil {
+		log.Info("Cluster Controller has not yet set OwnerRef")
+		return ctrl.Result{}, nil
+	}
+
+	clusterScope, err := scope.NewVPCClusterScope(scope.VPCClusterScopeParams{
+		Client:          r.Client,
+		Logger:          log,
+		Cluster:         cluster,
+		IBMVPCCluster:   ibmCluster,
+		ServiceEndpoint: r.ServiceEndpoint,
+	})
+
+	// Always close the scope when exiting this function so we can persist any IBMVPCCluster changes.
+	defer func() {
+		if clusterScope != nil {
+			if err := clusterScope.Close(); err != nil && reterr == nil {
+				reterr = err
+			}
+		}
+	}()
+
+	// Handle deleted clusters.
+	if !ibmCluster.DeletionTimestamp.IsZero() {
+		return r.reconcileDeleteV2(clusterScope)
+	}
+
+	if err != nil {
+		return reconcile.Result{}, fmt.Errorf("failed to create scope: %w", err)
+	}
+	return r.reconcileCluster(clusterScope)
 }
 
 func (r *IBMVPCClusterReconciler) reconcile(clusterScope *scope.ClusterScope) (ctrl.Result, error) {
@@ -173,6 +229,94 @@ func (r *IBMVPCClusterReconciler) reconcile(clusterScope *scope.ClusterScope) (c
 	return ctrl.Result{}, nil
 }
 
+func (r *IBMVPCClusterReconciler) reconcileCluster(clusterScope *scope.VPCClusterScope) (ctrl.Result, error) {
+	// If the IBMVPCCluster doesn't have our finalizer, add it.
+	if controllerutil.AddFinalizer(clusterScope.IBMVPCCluster, infrav1beta2.ClusterFinalizer) {
+		return ctrl.Result{}, nil
+	}
+
+	// Reconcile the cluster's VPC.
+	clusterScope.Info("Reconciling VPC")
+	if requeue, err := clusterScope.ReconcileVPC(); err != nil {
+		clusterScope.Error(err, "failed to reconcile VPC")
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.VPCReadyCondition, infrav1beta2.VPCReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
+		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("VPC creation is pending, requeuing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+	clusterScope.Info("Reconciliation of VPC complete")
+	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.VPCReadyCondition)
+
+	// Reconcile the cluster's VPC Custom Image.
+	clusterScope.Info("Reconciling VPC Custom Image")
+	if requeue, err := clusterScope.ReconcileVPCCustomImage(); err != nil {
+		clusterScope.Error(err, "failed to reconcile VPC Custom Image")
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.ImageReadyCondition, infrav1beta2.ImageReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
+		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("VPC Custom Image creation is pending, requeueing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+	clusterScope.Info("Reconciliation of VPC Custom Image complete")
+	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.ImageReadyCondition)
+
+	// Reconcile the cluster's VPC Subnets.
+	clusterScope.Info("Reconciling VPC Subnets")
+	if requeue, err := clusterScope.ReconcileSubnets(); err != nil {
+		clusterScope.Error(err, "failed to reconcile VPC Subnets")
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.VPCSubnetReadyCondition, infrav1beta2.VPCSubnetReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
+		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("VPC Subnets creation is pending, requeueing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+	clusterScope.Info("Reconciliation of VPC Subnets complete")
+	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.VPCSubnetReadyCondition)
+
+	// Reconcile the cluster's Security Groups (and Security Group Rules)
+	clusterScope.Info("Reconciling Security Groups")
+	if requeue, err := clusterScope.ReconcileSecurityGroups(); err != nil {
+		clusterScope.Error(err, "failed to reconcile Security Groups")
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.VPCSecurityGroupReadyCondition, infrav1beta2.VPCSecurityGroupReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
+		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("Security Groups creation is pending, requeueing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+	clusterScope.Info("Reconciliation of Security Groups complete")
+	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.VPCSecurityGroupReadyCondition)
+
+	// Reconcile the cluster's Load Balancers
+	clusterScope.Info("Reconciling Load Balancers")
+	if requeue, err := clusterScope.ReconcileLoadBalancers(); err != nil {
+		clusterScope.Error(err, "failed to reconcile Load Balancers")
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.LoadBalancerReadyCondition, infrav1beta2.LoadBalancerReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
+		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("Load Balancers creation is pending, requeueing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+	clusterScope.Info("Reconciliation of Load Balancers complete")
+	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.LoadBalancerReadyCondition)
+
+	// Collect cluster's Load Balancer hostname for spec.
+	hostName, err := clusterScope.GetLoadBalancerHostName()
+	if err != nil {
+		return reconcile.Result{}, fmt.Errorf("error retrieving load balancer hostname: %w", err)
+	} else if hostName == nil || *hostName == "" {
+		clusterScope.Info("No Load Balancer hostname found, requeueing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+
+	// Mark cluster as ready.
+	clusterScope.IBMVPCCluster.Spec.ControlPlaneEndpoint.Host = *hostName
+	clusterScope.IBMVPCCluster.Spec.ControlPlaneEndpoint.Port = clusterScope.GetAPIServerPort()
+	clusterScope.IBMVPCCluster.Status.Ready = true
+	clusterScope.Info("cluster infrastructure is now ready for cluster", "clusterName", clusterScope.IBMVPCCluster.Name)
+	return ctrl.Result{}, nil
+}
+
 func (r *IBMVPCClusterReconciler) reconcileDelete(clusterScope *scope.ClusterScope) (ctrl.Result, error) {
 	// check if still have existing VSIs.
 	listVSIOpts := &vpcv1.ListInstancesOptions{
@@ -227,6 +371,10 @@ func (r *IBMVPCClusterReconciler) reconcileDelete(clusterScope *scope.ClusterSco
 	return handleFinalizerRemoval(clusterScope)
 }
 
+func (r *IBMVPCClusterReconciler) reconcileDeleteV2(_ *scope.VPCClusterScope) (ctrl.Result, error) {
+	return ctrl.Result{}, fmt.Errorf("not implemented")
+}
+
 func (r *IBMVPCClusterReconciler) getOrCreate(clusterScope *scope.ClusterScope) (*vpcv1.LoadBalancer, error) {
 	loadBalancer, err := clusterScope.CreateLoadBalancer()
 	return loadBalancer, err
@@ -252,7 +400,7 @@ func (r *IBMVPCClusterReconciler) reconcileLBState(clusterScope *scope.ClusterSc
 	case infrav1beta2.VPCLoadBalancerStateCreatePending:
 		clusterScope.Logger.V(3).Info("LoadBalancer is in create state")
 		clusterScope.SetNotReady()
-		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.LoadBalancerReadyCondition, string(infrav1beta2.VPCLoadBalancerStateCreatePending), capiv1beta1.ConditionSeverityInfo, *loadBalancer.OperatingStatus)
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.LoadBalancerReadyCondition, string(infrav1beta2.VPCLoadBalancerStateCreatePending), capiv1beta1.ConditionSeverityInfo, "%s", *loadBalancer.OperatingStatus)
 	case infrav1beta2.VPCLoadBalancerStateActive:
 		clusterScope.Logger.V(3).Info("LoadBalancer is in active state")
 		clusterScope.SetReady()
@@ -268,6 +416,6 @@ func (r *IBMVPCClusterReconciler) reconcileLBState(clusterScope *scope.ClusterSc
 func (r *IBMVPCClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1beta2.IBMVPCCluster{}).
-		WithEventFilter(predicates.ResourceIsNotExternallyManaged(ctrl.LoggerFrom(ctx))).
+		WithEventFilter(predicates.ResourceIsNotExternallyManaged(r.Scheme, ctrl.LoggerFrom(ctx))).
 		Complete(r)
 }

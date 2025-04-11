@@ -6,45 +6,65 @@ package power
 import (
 	"context"
 
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 )
 
 func DataSourceIBMPIDisasterRecoveryLocations() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIDisasterRecoveryLocations,
 		Schema: map[string]*schema.Schema{
-
-			// Computed Attributes
-			"disaster_recovery_locations": {
+			// Attributes
+			Attr_DisasterRecoveryLocations: {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						PIDRLocation: {
-							Type:        schema.TypeString,
+						Attr_Location: {
 							Computed:    true,
-							Description: "RegionZone of a site",
+							Description: "The region zone of a site.",
+							Type:        schema.TypeString,
 						},
-						"replication_sites": {
-							Type:     schema.TypeList,
-							Computed: true,
+						Attr_ReplicationSites: {
+							Computed:    true,
+							Description: "List of Replication Sites.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"is_active": {
-										Type:     schema.TypeBool,
-										Computed: true,
+									Attr_IsActive: {
+										Computed:    true,
+										Description: "Indicates the location is active or not, true if location is active, otherwise it is false.",
+										Type:        schema.TypeBool,
 									},
-									PIDRLocation: {
-										Type:     schema.TypeString,
-										Computed: true,
+									Attr_Location: {
+										Computed:    true,
+										Description: "The region zone of the location.",
+										Type:        schema.TypeString,
+									},
+									Attr_ReplicationPoolMap: {
+										Computed:    true,
+										Description: "List of replication pool map.",
+										Type:        schema.TypeList,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												Attr_RemotePool: {
+													Computed:    true,
+													Description: "Remote pool.",
+													Type:        schema.TypeString,
+												},
+												Attr_VolumePool: {
+													Computed:    true,
+													Description: "Volume pool.",
+													Type:        schema.TypeString,
+												},
+											},
+										},
 									},
 								},
 							},
+							Type: schema.TypeList,
 						},
 					},
 				},
@@ -66,21 +86,31 @@ func dataSourceIBMPIDisasterRecoveryLocations(ctx context.Context, d *schema.Res
 	}
 
 	results := make([]map[string]interface{}, 0, len(drLocationSites.DisasterRecoveryLocations))
-	for _, i := range drLocationSites.DisasterRecoveryLocations {
-		if i != nil {
-			replicationSites := make([]map[string]interface{}, 0, len(i.ReplicationSites))
-			for _, j := range i.ReplicationSites {
-				if j != nil {
+	for _, drl := range drLocationSites.DisasterRecoveryLocations {
+		if drl != nil {
+			replicationSites := make([]map[string]interface{}, 0, len(drl.ReplicationSites))
+			for _, site := range drl.ReplicationSites {
+				if site != nil {
+					replicationPoolMap := make([]map[string]string, 0)
+					if site.ReplicationPoolMap != nil {
+						for _, rMap := range site.ReplicationPoolMap {
+							replicationPool := make(map[string]string)
+							replicationPool[Attr_RemotePool] = rMap.RemotePool
+							replicationPool[Attr_VolumePool] = rMap.VolumePool
+							replicationPoolMap = append(replicationPoolMap, replicationPool)
+						}
+					}
 					r := map[string]interface{}{
-						"is_active":  j.IsActive,
-						PIDRLocation: j.Location,
+						Attr_IsActive:           site.IsActive,
+						Attr_Location:           site.Location,
+						Attr_ReplicationPoolMap: replicationPoolMap,
 					}
 					replicationSites = append(replicationSites, r)
 				}
 			}
 			l := map[string]interface{}{
-				"location":          i.Location,
-				"replication_sites": replicationSites,
+				Attr_Location:         drl.Location,
+				Attr_ReplicationSites: replicationSites,
 			}
 			results = append(results, l)
 		}
@@ -88,7 +118,7 @@ func dataSourceIBMPIDisasterRecoveryLocations(ctx context.Context, d *schema.Res
 
 	var clientgenU, _ = uuid.GenerateUUID()
 	d.SetId(clientgenU)
-	d.Set("disaster_recovery_locations", results)
+	d.Set(Attr_DisasterRecoveryLocations, results)
 
 	return nil
 }

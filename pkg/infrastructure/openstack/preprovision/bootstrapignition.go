@@ -11,12 +11,12 @@ import (
 	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
-	"github.com/gophercloud/gophercloud"
-	gophercloud_openstack "github.com/gophercloud/gophercloud/openstack"
-	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
-	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/gophercloud/gophercloud/v2"
+	gophercloud_openstack "github.com/gophercloud/gophercloud/v2/openstack"
+	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/tokens"
+	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/imagedata"
+	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/images"
+	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
 	"k8s.io/utils/ptr"
@@ -74,7 +74,7 @@ func ReplaceBootstrapIgnitionInTFVars(ctx context.Context, tfvarsFile *asset.Fil
 // UploadIgnitionAndBuildShim uploads the bootstrap Ignition config in Glance.
 func UploadIgnitionAndBuildShim(ctx context.Context, cloud string, infraID string, proxy *types.Proxy, bootstrapIgn []byte) ([]byte, error) {
 	opts := openstackdefaults.DefaultClientOpts(cloud)
-	conn, err := openstackdefaults.NewServiceClient("image", opts)
+	conn, err := openstackdefaults.NewServiceClient(ctx, "image", opts)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func UploadIgnitionAndBuildShim(ctx context.Context, cloud string, infraID strin
 	// upload the bootstrap Ignition config in Glance and save its location
 	var bootstrapConfigURL string
 	{
-		img, err := images.Create(conn, images.CreateOpts{
+		img, err := images.Create(ctx, conn, images.CreateOpts{
 			Name:            infraID + "-ignition",
 			ContainerFormat: "bare",
 			DiskFormat:      "raw",
@@ -145,7 +145,7 @@ func UploadIgnitionAndBuildShim(ctx context.Context, cloud string, infraID strin
 			return nil, fmt.Errorf("unable to create a Glance image for the bootstrap server's Ignition file: %w", err)
 		}
 
-		if res := imagedata.Upload(conn, img.ID, bytes.NewReader(bootstrapIgn)); res.Err != nil {
+		if res := imagedata.Upload(ctx, conn, img.ID, bytes.NewReader(bootstrapIgn)); res.Err != nil {
 			return nil, fmt.Errorf("unable to upload a Glance image for the bootstrap server's Ignition file: %w", res.Err)
 		}
 

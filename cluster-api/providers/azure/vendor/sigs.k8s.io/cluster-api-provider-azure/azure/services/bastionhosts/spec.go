@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
 )
 
 // AzureBastionSpec defines the specification for azure bastion feature.
@@ -44,7 +45,7 @@ type AzureBastionSpec struct {
 func (s *AzureBastionSpec) ResourceRef() *asonetworkv1.BastionHost {
 	return &asonetworkv1.BastionHost{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: s.Name,
+			Name: azure.GetNormalizedKubernetesName(s.Name),
 		},
 	}
 }
@@ -60,7 +61,7 @@ func (s *AzureBastionSpec) Parameters(ctx context.Context, existingBastionHost *
 	bastionHost.Spec.AzureName = s.Name
 	bastionHost.Spec.Location = ptr.To(s.Location)
 	bastionHost.Spec.Owner = &genruntime.KnownResourceReference{
-		Name: s.ResourceGroup,
+		Name: azure.GetNormalizedKubernetesName(s.ResourceGroup),
 	}
 	bastionHost.Spec.Tags = infrav1.Build(infrav1.BuildParams{
 		ClusterName: s.ClusterName,

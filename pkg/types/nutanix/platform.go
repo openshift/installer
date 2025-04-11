@@ -28,6 +28,12 @@ type Platform struct {
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
 
+	// PreloadedOSImageName uses the named preloaded RHCOS image from PC/PE,
+	// instead of create and upload a new image for each cluster.
+	//
+	// +optional
+	PreloadedOSImageName string `json:"preloadedOSImageName,omitempty"`
+
 	// DeprecatedAPIVIP is the virtual IP address for the api endpoint
 	// Deprecated: use APIVIPs
 	//
@@ -78,6 +84,11 @@ type Platform struct {
 	// FailureDomains configures failure domains for the Nutanix platform.
 	// +optional
 	FailureDomains []FailureDomain `json:"failureDomains,omitempty"`
+
+	// PrismAPICallTimeout sets the timeout (in minutes) for the prism-api calls.
+	// If not configured, the default value of 10 minutes will be used as the prism-api call timeout.
+	// +optional
+	PrismAPICallTimeout *int `json:"prismAPICallTimeout,omitempty"`
 }
 
 // PrismCentral holds the endpoint and credentials data used to connect to the Prism Central
@@ -134,8 +145,16 @@ type FailureDomain struct {
 	// Currently we only support one subnet for a failure domain.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
-	// +listType=atomic
+	// +listType=set
 	SubnetUUIDs []string `json:"subnetUUIDs"`
+
+	// StorageContainers identifies the storage containers in the Prism Element.
+	// +optional
+	StorageContainers []StorageResourceReference `json:"storageContainers,omitempty"`
+
+	// DataSourceImages identifies the datasource images in the Prism Element.
+	// +optional
+	DataSourceImages []StorageResourceReference `json:"dataSourceImages,omitempty"`
 }
 
 // GetFailureDomainByName returns the NutanixFailureDomain pointer with the input name.
@@ -148,4 +167,36 @@ func (p Platform) GetFailureDomainByName(fdName string) (*FailureDomain, error) 
 	}
 
 	return nil, fmt.Errorf("not found the defined failure domain with name %q", fdName)
+}
+
+// GetStorageContainerFromFailureDomain returns the storage container configuration with the provided reference and failuer domain names.
+// Returns nil and error if not found.
+func (p Platform) GetStorageContainerFromFailureDomain(fdName, storageContainerRefName string) (*StorageResourceReference, error) {
+	for _, fd := range p.FailureDomains {
+		if fd.Name == fdName {
+			for _, sc := range fd.StorageContainers {
+				if sc.ReferenceName == storageContainerRefName {
+					return &sc, nil
+				}
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("not found the storage container with reference name %q in failureDomain %q", storageContainerRefName, fdName)
+}
+
+// GetDataSourceImageFromFailureDomain returns the datasource image configuration with the provided reference and failuer domain names.
+// Returns nil and error if not found.
+func (p Platform) GetDataSourceImageFromFailureDomain(fdName, dataSourceRefName string) (*StorageResourceReference, error) {
+	for _, fd := range p.FailureDomains {
+		if fd.Name == fdName {
+			for _, dsi := range fd.DataSourceImages {
+				if dsi.ReferenceName == dataSourceRefName {
+					return &dsi, nil
+				}
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("not found the datasource image with reference name %q in failureDomain %q", dataSourceRefName, fdName)
 }

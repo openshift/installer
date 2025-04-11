@@ -6,6 +6,7 @@ package workspaces
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -103,11 +104,13 @@ func (o *V1WorkspacesGetallOK) Code() int {
 }
 
 func (o *V1WorkspacesGetallOK) Error() string {
-	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallOK %s", 200, payload)
 }
 
 func (o *V1WorkspacesGetallOK) String() string {
-	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallOK %s", 200, payload)
 }
 
 func (o *V1WorkspacesGetallOK) GetPayload() *models.Workspaces {
@@ -171,11 +174,13 @@ func (o *V1WorkspacesGetallUnauthorized) Code() int {
 }
 
 func (o *V1WorkspacesGetallUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallUnauthorized %s", 401, payload)
 }
 
 func (o *V1WorkspacesGetallUnauthorized) String() string {
-	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallUnauthorized %s", 401, payload)
 }
 
 func (o *V1WorkspacesGetallUnauthorized) GetPayload() *models.Error {
@@ -239,11 +244,13 @@ func (o *V1WorkspacesGetallForbidden) Code() int {
 }
 
 func (o *V1WorkspacesGetallForbidden) Error() string {
-	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallForbidden %s", 403, payload)
 }
 
 func (o *V1WorkspacesGetallForbidden) String() string {
-	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallForbidden %s", 403, payload)
 }
 
 func (o *V1WorkspacesGetallForbidden) GetPayload() *models.Error {
@@ -307,11 +314,13 @@ func (o *V1WorkspacesGetallTooManyRequests) Code() int {
 }
 
 func (o *V1WorkspacesGetallTooManyRequests) Error() string {
-	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallTooManyRequests  %+v", 429, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallTooManyRequests %s", 429, payload)
 }
 
 func (o *V1WorkspacesGetallTooManyRequests) String() string {
-	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallTooManyRequests  %+v", 429, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallTooManyRequests %s", 429, payload)
 }
 
 func (o *V1WorkspacesGetallTooManyRequests) GetPayload() *models.Error {
@@ -375,11 +384,13 @@ func (o *V1WorkspacesGetallInternalServerError) Code() int {
 }
 
 func (o *V1WorkspacesGetallInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallInternalServerError %s", 500, payload)
 }
 
 func (o *V1WorkspacesGetallInternalServerError) String() string {
-	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/workspaces][%d] v1WorkspacesGetallInternalServerError %s", 500, payload)
 }
 
 func (o *V1WorkspacesGetallInternalServerError) GetPayload() *models.Error {

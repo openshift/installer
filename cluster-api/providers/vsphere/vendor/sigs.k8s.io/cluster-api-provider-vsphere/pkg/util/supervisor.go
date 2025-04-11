@@ -17,13 +17,17 @@ limitations under the License.
 package util
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
 )
 
 // SetControllerReferenceWithOverride sets owner as a Controller OwnerReference on controlled.
@@ -81,4 +85,27 @@ func referSameObject(a, b metav1.OwnerReference) bool {
 	}
 
 	return aGV.Group == bGV.Group && a.Kind == b.Kind && a.Name == b.Name
+}
+
+// GetOwnerVMWareMachine returns the vmwarev1.VSphereMachine owner for the passed object.
+func GetOwnerVMWareMachine(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*vmwarev1.VSphereMachine, error) {
+	for _, ref := range obj.OwnerReferences {
+		gv, err := schema.ParseGroupVersion(ref.APIVersion)
+		if err != nil {
+			return nil, err
+		}
+		if ref.Kind == "VSphereMachine" && gv.Group == vmwarev1.GroupVersion.Group {
+			return getVMWareMachineByName(ctx, c, obj.Namespace, ref.Name)
+		}
+	}
+	return nil, nil
+}
+
+func getVMWareMachineByName(ctx context.Context, c client.Client, namespace, name string) (*vmwarev1.VSphereMachine, error) {
+	m := &vmwarev1.VSphereMachine{}
+	key := client.ObjectKey{Name: name, Namespace: namespace}
+	if err := c.Get(ctx, key, m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }

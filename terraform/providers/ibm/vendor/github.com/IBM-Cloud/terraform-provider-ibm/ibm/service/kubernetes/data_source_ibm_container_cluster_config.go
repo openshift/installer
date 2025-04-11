@@ -181,7 +181,7 @@ func dataSourceIBMContainerClusterConfigRead(d *schema.ResourceData, meta interf
 		d.Set("config_file_path", configPath)
 
 	} else {
-		targetEnv, err := getVpcClusterTargetHeader(d, meta)
+		targetEnv, err := getVpcClusterTargetHeader(d)
 		if err != nil {
 			return err
 		}

@@ -96,6 +96,13 @@ func (cluster *ManagedCluster) ExportKubernetesResources(_ context.Context, _ ge
 			}
 		}
 	}
+	if cluster.Spec.OperatorSpec != nil && cluster.Spec.OperatorSpec.ConfigMaps != nil {
+		if cluster.Status.Identity != nil {
+			if cluster.Status.Identity.PrincipalId != nil {
+				collector.AddValue(cluster.Spec.OperatorSpec.ConfigMaps.PrincipalId, *cluster.Status.Identity.PrincipalId)
+			}
+		}
+	}
 	result, err := collector.Values()
 	if err != nil {
 		return nil, err
@@ -329,7 +336,7 @@ type ManagedCluster_Spec struct {
 	ServicePrincipalProfile   *ManagedClusterServicePrincipalProfile   `json:"servicePrincipalProfile,omitempty"`
 	Sku                       *ManagedClusterSKU                       `json:"sku,omitempty"`
 	StorageProfile            *ManagedClusterStorageProfile            `json:"storageProfile,omitempty"`
-	Tags                      map[string]string                        `json:"tags,omitempty"`
+	Tags                      map[string]string                        `json:"tags,omitempty" serializationType:"explicitEmptyCollection"`
 	UpgradeSettings           *ClusterUpgradeSettings                  `json:"upgradeSettings,omitempty"`
 	WindowsProfile            *ManagedClusterWindowsProfile            `json:"windowsProfile,omitempty"`
 	WorkloadAutoScalerProfile *ManagedClusterWorkloadAutoScalerProfile `json:"workloadAutoScalerProfile,omitempty"`
@@ -3946,12 +3953,12 @@ type ManagedClusterAgentPoolProfile struct {
 	Mode               *string                       `json:"mode,omitempty"`
 	Name               *string                       `json:"name,omitempty"`
 	NetworkProfile     *AgentPoolNetworkProfile      `json:"networkProfile,omitempty"`
-	NodeLabels         map[string]string             `json:"nodeLabels,omitempty"`
+	NodeLabels         map[string]string             `json:"nodeLabels,omitempty" serializationType:"explicitEmptyCollection"`
 
 	// NodePublicIPPrefixReference: This is of the form:
 	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}
 	NodePublicIPPrefixReference *genruntime.ResourceReference `armReference:"NodePublicIPPrefixID" json:"nodePublicIPPrefixReference,omitempty"`
-	NodeTaints                  []string                      `json:"nodeTaints,omitempty"`
+	NodeTaints                  []string                      `json:"nodeTaints,omitempty" serializationType:"explicitEmptyCollection"`
 	OrchestratorVersion         *string                       `json:"orchestratorVersion,omitempty"`
 	OsDiskSizeGB                *int                          `json:"osDiskSizeGB,omitempty"`
 	OsDiskType                  *string                       `json:"osDiskType,omitempty"`
@@ -3971,7 +3978,7 @@ type ManagedClusterAgentPoolProfile struct {
 	ScaleSetEvictionPolicy           *string                       `json:"scaleSetEvictionPolicy,omitempty"`
 	ScaleSetPriority                 *string                       `json:"scaleSetPriority,omitempty"`
 	SpotMaxPrice                     *float64                      `json:"spotMaxPrice,omitempty"`
-	Tags                             map[string]string             `json:"tags,omitempty"`
+	Tags                             map[string]string             `json:"tags,omitempty" serializationType:"explicitEmptyCollection"`
 	Type                             *string                       `json:"type,omitempty"`
 	UpgradeSettings                  *AgentPoolUpgradeSettings     `json:"upgradeSettings,omitempty"`
 	VmSize                           *string                       `json:"vmSize,omitempty"`
@@ -8191,12 +8198,12 @@ func (profile *ManagedClusterStorageProfile_STATUS) AssignProperties_To_ManagedC
 // Storage version of v1api20230202preview.ManagedClusterWindowsProfile
 // Profile for Windows VMs in the managed cluster.
 type ManagedClusterWindowsProfile struct {
-	AdminPassword  *string                `json:"adminPassword,omitempty"`
-	AdminUsername  *string                `json:"adminUsername,omitempty"`
-	EnableCSIProxy *bool                  `json:"enableCSIProxy,omitempty"`
-	GmsaProfile    *WindowsGmsaProfile    `json:"gmsaProfile,omitempty"`
-	LicenseType    *string                `json:"licenseType,omitempty"`
-	PropertyBag    genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	AdminPassword  *genruntime.SecretReference `json:"adminPassword,omitempty"`
+	AdminUsername  *string                     `json:"adminUsername,omitempty"`
+	EnableCSIProxy *bool                       `json:"enableCSIProxy,omitempty"`
+	GmsaProfile    *WindowsGmsaProfile         `json:"gmsaProfile,omitempty"`
+	LicenseType    *string                     `json:"licenseType,omitempty"`
+	PropertyBag    genruntime.PropertyBag      `json:"$propertyBag,omitempty"`
 }
 
 // AssignProperties_From_ManagedClusterWindowsProfile populates our ManagedClusterWindowsProfile from the provided source ManagedClusterWindowsProfile
@@ -8205,7 +8212,12 @@ func (profile *ManagedClusterWindowsProfile) AssignProperties_From_ManagedCluste
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
 	// AdminPassword
-	profile.AdminPassword = genruntime.ClonePointerToString(source.AdminPassword)
+	if source.AdminPassword != nil {
+		adminPassword := source.AdminPassword.Copy()
+		profile.AdminPassword = &adminPassword
+	} else {
+		profile.AdminPassword = nil
+	}
 
 	// AdminUsername
 	profile.AdminUsername = genruntime.ClonePointerToString(source.AdminUsername)
@@ -8259,7 +8271,12 @@ func (profile *ManagedClusterWindowsProfile) AssignProperties_To_ManagedClusterW
 	propertyBag := genruntime.NewPropertyBag(profile.PropertyBag)
 
 	// AdminPassword
-	destination.AdminPassword = genruntime.ClonePointerToString(profile.AdminPassword)
+	if profile.AdminPassword != nil {
+		adminPassword := profile.AdminPassword.Copy()
+		destination.AdminPassword = &adminPassword
+	} else {
+		destination.AdminPassword = nil
+	}
 
 	// AdminUsername
 	destination.AdminUsername = genruntime.ClonePointerToString(profile.AdminUsername)
@@ -8310,7 +8327,6 @@ func (profile *ManagedClusterWindowsProfile) AssignProperties_To_ManagedClusterW
 // Storage version of v1api20230202preview.ManagedClusterWindowsProfile_STATUS
 // Profile for Windows VMs in the managed cluster.
 type ManagedClusterWindowsProfile_STATUS struct {
-	AdminPassword  *string                    `json:"adminPassword,omitempty"`
 	AdminUsername  *string                    `json:"adminUsername,omitempty"`
 	EnableCSIProxy *bool                      `json:"enableCSIProxy,omitempty"`
 	GmsaProfile    *WindowsGmsaProfile_STATUS `json:"gmsaProfile,omitempty"`
@@ -8322,9 +8338,6 @@ type ManagedClusterWindowsProfile_STATUS struct {
 func (profile *ManagedClusterWindowsProfile_STATUS) AssignProperties_From_ManagedClusterWindowsProfile_STATUS(source *v20230201s.ManagedClusterWindowsProfile_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
-
-	// AdminPassword
-	profile.AdminPassword = genruntime.ClonePointerToString(source.AdminPassword)
 
 	// AdminUsername
 	profile.AdminUsername = genruntime.ClonePointerToString(source.AdminUsername)
@@ -8376,9 +8389,6 @@ func (profile *ManagedClusterWindowsProfile_STATUS) AssignProperties_From_Manage
 func (profile *ManagedClusterWindowsProfile_STATUS) AssignProperties_To_ManagedClusterWindowsProfile_STATUS(destination *v20230201s.ManagedClusterWindowsProfile_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(profile.PropertyBag)
-
-	// AdminPassword
-	destination.AdminPassword = genruntime.ClonePointerToString(profile.AdminPassword)
 
 	// AdminUsername
 	destination.AdminUsername = genruntime.ClonePointerToString(profile.AdminUsername)
@@ -11141,6 +11151,7 @@ func (profile *ManagedClusterNATGatewayProfile_STATUS) AssignProperties_To_Manag
 // Storage version of v1api20230202preview.ManagedClusterOperatorConfigMaps
 type ManagedClusterOperatorConfigMaps struct {
 	OIDCIssuerProfile *genruntime.ConfigMapDestination `json:"oidcIssuerProfile,omitempty"`
+	PrincipalId       *genruntime.ConfigMapDestination `json:"principalId,omitempty"`
 	PropertyBag       genruntime.PropertyBag           `json:"$propertyBag,omitempty"`
 }
 
@@ -11155,6 +11166,14 @@ func (maps *ManagedClusterOperatorConfigMaps) AssignProperties_From_ManagedClust
 		maps.OIDCIssuerProfile = &oidcIssuerProfile
 	} else {
 		maps.OIDCIssuerProfile = nil
+	}
+
+	// PrincipalId
+	if source.PrincipalId != nil {
+		principalId := source.PrincipalId.Copy()
+		maps.PrincipalId = &principalId
+	} else {
+		maps.PrincipalId = nil
 	}
 
 	// Update the property bag
@@ -11188,6 +11207,14 @@ func (maps *ManagedClusterOperatorConfigMaps) AssignProperties_To_ManagedCluster
 		destination.OIDCIssuerProfile = &oidcIssuerProfile
 	} else {
 		destination.OIDCIssuerProfile = nil
+	}
+
+	// PrincipalId
+	if maps.PrincipalId != nil {
+		principalId := maps.PrincipalId.Copy()
+		destination.PrincipalId = &principalId
+	} else {
+		destination.PrincipalId = nil
 	}
 
 	// Update the property bag

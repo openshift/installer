@@ -33,7 +33,7 @@ type CloudConnectionUpdate struct {
 	Name *string `json:"name,omitempty"`
 
 	// speed of the cloud connection (speed in megabits per second)
-	// Enum: [50 100 200 500 1000 2000 5000 10000]
+	// Enum: [50,100,200,500,1000,2000,5000,10000]
 	Speed *int64 `json:"speed,omitempty"`
 
 	// vpc

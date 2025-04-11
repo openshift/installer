@@ -16,7 +16,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/mitchellh/go-homedir"
 
 	"github.com/IBM-Cloud/bluemix-go/helpers"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -74,6 +74,24 @@ func ValidBucketLifecycleTimestamp(v interface{}, k string) (ws []string, errors
 	if err != nil {
 		errors = append(errors, fmt.Errorf(
 			"%q cannot be parsed as RFC3339 Timestamp Format", value))
+	}
+
+	return
+}
+
+func ValidateUTCFormat(v interface{}, k string) (ws []string, errors []error) {
+	// Assert v to be a string
+	value, ok := v.(string)
+	if !ok {
+		errors = append(errors, fmt.Errorf("value must be a string, got %T", v))
+		return
+	}
+
+	// Parse the string as RFC3339 time format
+	_, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		errors = append(errors, fmt.Errorf("value must be in RFC3339 format %q. Example: %s", time.RFC3339, err))
+		return
 	}
 
 	return
@@ -165,9 +183,9 @@ func validateAppPort(v interface{}, k string) (ws []string, errors []error) {
 }
 func ValidateLBListenerPolicyPriority(v interface{}, k string) (ws []string, errors []error) {
 	interval := v.(int)
-	if interval < 1 || interval > 10 {
+	if interval < 1 {
 		errors = append(errors, fmt.Errorf(
-			"%q must be between 1 and 10",
+			"%q must be greater than 0",
 			k))
 	}
 	return
@@ -304,9 +322,9 @@ func ValidateWeight(v interface{}, k string) (ws []string, errors []error) {
 
 func ValidateSizePerZone(v interface{}, k string) (ws []string, errors []error) {
 	sizePerZone := v.(int)
-	if sizePerZone <= 0 {
+	if sizePerZone < 0 {
 		errors = append(errors, fmt.Errorf(
-			"%q must be greater than 0",
+			"%q must be non-negative",
 			k))
 	}
 	return

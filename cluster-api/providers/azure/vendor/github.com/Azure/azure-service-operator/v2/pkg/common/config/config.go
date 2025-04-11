@@ -32,8 +32,8 @@ const (
 	// exists to detect and correct changes that happened in Azure that Kubernetes is not
 	// aware about. BE VERY CAREFUL setting this value low - even a modest number of resources
 	// can cause subscription level throttling if they are re-synced frequently.
-	// If nil, no sync is performed. Durations are specified as "1h", "15m", or "60s". See
-	// https://pkg.go.dev/time#ParseDuration for more details.
+	// Durations are specified as "1h", "15m", or "60s". Specify the special value "never" to prevent
+	// syncing. See https://pkg.go.dev/time#ParseDuration for more details.
 	SyncPeriod = "AZURE_SYNC_PERIOD"
 	// ResourceManagerEndpoint is the Azure Resource Manager endpoint.
 	// If not specified, the default is the Public cloud resource manager endpoint.
@@ -55,4 +55,6 @@ const (
 	PodNamespace = "POD_NAMESPACE"
 	// UseWorkloadIdentityAuth boolean is used to determine if we're using Workload Identity authentication for global credential
 	UseWorkloadIdentityAuth = "USE_WORKLOAD_IDENTITY_AUTH"
+	// UserAgentSuffix is appended to the default User-Agent for Azure HTTP clients.
+	UserAgentSuffix = "AZURE_USER_AGENT_SUFFIX"
 )

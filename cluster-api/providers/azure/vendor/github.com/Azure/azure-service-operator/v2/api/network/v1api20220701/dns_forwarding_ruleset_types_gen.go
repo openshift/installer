@@ -5,7 +5,7 @@ package v1api20220701
 
 import (
 	"fmt"
-	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -49,7 +49,7 @@ var _ conversion.Convertible = &DnsForwardingRuleset{}
 
 // ConvertFrom populates our DnsForwardingRuleset from the provided hub DnsForwardingRuleset
 func (ruleset *DnsForwardingRuleset) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220701s.DnsForwardingRuleset)
+	source, ok := hub.(*storage.DnsForwardingRuleset)
 	if !ok {
 		return fmt.Errorf("expected network/v1api20220701/storage/DnsForwardingRuleset but received %T instead", hub)
 	}
@@ -59,7 +59,7 @@ func (ruleset *DnsForwardingRuleset) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub DnsForwardingRuleset from our DnsForwardingRuleset
 func (ruleset *DnsForwardingRuleset) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220701s.DnsForwardingRuleset)
+	destination, ok := hub.(*storage.DnsForwardingRuleset)
 	if !ok {
 		return fmt.Errorf("expected network/v1api20220701/storage/DnsForwardingRuleset but received %T instead", hub)
 	}
@@ -254,7 +254,7 @@ func (ruleset *DnsForwardingRuleset) validateWriteOnceProperties(old runtime.Obj
 }
 
 // AssignProperties_From_DnsForwardingRuleset populates our DnsForwardingRuleset from the provided source DnsForwardingRuleset
-func (ruleset *DnsForwardingRuleset) AssignProperties_From_DnsForwardingRuleset(source *v20220701s.DnsForwardingRuleset) error {
+func (ruleset *DnsForwardingRuleset) AssignProperties_From_DnsForwardingRuleset(source *storage.DnsForwardingRuleset) error {
 
 	// ObjectMeta
 	ruleset.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -280,13 +280,13 @@ func (ruleset *DnsForwardingRuleset) AssignProperties_From_DnsForwardingRuleset(
 }
 
 // AssignProperties_To_DnsForwardingRuleset populates the provided destination DnsForwardingRuleset from our DnsForwardingRuleset
-func (ruleset *DnsForwardingRuleset) AssignProperties_To_DnsForwardingRuleset(destination *v20220701s.DnsForwardingRuleset) error {
+func (ruleset *DnsForwardingRuleset) AssignProperties_To_DnsForwardingRuleset(destination *storage.DnsForwardingRuleset) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *ruleset.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20220701s.DnsForwardingRuleset_Spec
+	var spec storage.DnsForwardingRuleset_Spec
 	err := ruleset.Spec.AssignProperties_To_DnsForwardingRuleset_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_DnsForwardingRuleset_Spec() to populate field Spec")
@@ -294,7 +294,7 @@ func (ruleset *DnsForwardingRuleset) AssignProperties_To_DnsForwardingRuleset(de
 	destination.Spec = spec
 
 	// Status
-	var status v20220701s.DnsForwardingRuleset_STATUS
+	var status storage.DnsForwardingRuleset_STATUS
 	err = ruleset.Status.AssignProperties_To_DnsForwardingRuleset_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_DnsForwardingRuleset_STATUS() to populate field Status")
@@ -444,14 +444,14 @@ var _ genruntime.ConvertibleSpec = &DnsForwardingRuleset_Spec{}
 
 // ConvertSpecFrom populates our DnsForwardingRuleset_Spec from the provided source
 func (ruleset *DnsForwardingRuleset_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20220701s.DnsForwardingRuleset_Spec)
+	src, ok := source.(*storage.DnsForwardingRuleset_Spec)
 	if ok {
 		// Populate our instance from source
 		return ruleset.AssignProperties_From_DnsForwardingRuleset_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220701s.DnsForwardingRuleset_Spec{}
+	src = &storage.DnsForwardingRuleset_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -468,14 +468,14 @@ func (ruleset *DnsForwardingRuleset_Spec) ConvertSpecFrom(source genruntime.Conv
 
 // ConvertSpecTo populates the provided destination from our DnsForwardingRuleset_Spec
 func (ruleset *DnsForwardingRuleset_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20220701s.DnsForwardingRuleset_Spec)
+	dst, ok := destination.(*storage.DnsForwardingRuleset_Spec)
 	if ok {
 		// Populate destination from our instance
 		return ruleset.AssignProperties_To_DnsForwardingRuleset_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220701s.DnsForwardingRuleset_Spec{}
+	dst = &storage.DnsForwardingRuleset_Spec{}
 	err := ruleset.AssignProperties_To_DnsForwardingRuleset_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -491,7 +491,7 @@ func (ruleset *DnsForwardingRuleset_Spec) ConvertSpecTo(destination genruntime.C
 }
 
 // AssignProperties_From_DnsForwardingRuleset_Spec populates our DnsForwardingRuleset_Spec from the provided source DnsForwardingRuleset_Spec
-func (ruleset *DnsForwardingRuleset_Spec) AssignProperties_From_DnsForwardingRuleset_Spec(source *v20220701s.DnsForwardingRuleset_Spec) error {
+func (ruleset *DnsForwardingRuleset_Spec) AssignProperties_From_DnsForwardingRuleset_Spec(source *storage.DnsForwardingRuleset_Spec) error {
 
 	// AzureName
 	ruleset.AzureName = source.AzureName
@@ -533,7 +533,7 @@ func (ruleset *DnsForwardingRuleset_Spec) AssignProperties_From_DnsForwardingRul
 }
 
 // AssignProperties_To_DnsForwardingRuleset_Spec populates the provided destination DnsForwardingRuleset_Spec from our DnsForwardingRuleset_Spec
-func (ruleset *DnsForwardingRuleset_Spec) AssignProperties_To_DnsForwardingRuleset_Spec(destination *v20220701s.DnsForwardingRuleset_Spec) error {
+func (ruleset *DnsForwardingRuleset_Spec) AssignProperties_To_DnsForwardingRuleset_Spec(destination *storage.DnsForwardingRuleset_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -542,11 +542,11 @@ func (ruleset *DnsForwardingRuleset_Spec) AssignProperties_To_DnsForwardingRules
 
 	// DnsResolverOutboundEndpoints
 	if ruleset.DnsResolverOutboundEndpoints != nil {
-		dnsResolverOutboundEndpointList := make([]v20220701s.DnsresolverSubResource, len(ruleset.DnsResolverOutboundEndpoints))
+		dnsResolverOutboundEndpointList := make([]storage.DnsresolverSubResource, len(ruleset.DnsResolverOutboundEndpoints))
 		for dnsResolverOutboundEndpointIndex, dnsResolverOutboundEndpointItem := range ruleset.DnsResolverOutboundEndpoints {
 			// Shadow the loop variable to avoid aliasing
 			dnsResolverOutboundEndpointItem := dnsResolverOutboundEndpointItem
-			var dnsResolverOutboundEndpoint v20220701s.DnsresolverSubResource
+			var dnsResolverOutboundEndpoint storage.DnsresolverSubResource
 			err := dnsResolverOutboundEndpointItem.AssignProperties_To_DnsresolverSubResource(&dnsResolverOutboundEndpoint)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_DnsresolverSubResource() to populate field DnsResolverOutboundEndpoints")
@@ -670,14 +670,14 @@ var _ genruntime.ConvertibleStatus = &DnsForwardingRuleset_STATUS{}
 
 // ConvertStatusFrom populates our DnsForwardingRuleset_STATUS from the provided source
 func (ruleset *DnsForwardingRuleset_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20220701s.DnsForwardingRuleset_STATUS)
+	src, ok := source.(*storage.DnsForwardingRuleset_STATUS)
 	if ok {
 		// Populate our instance from source
 		return ruleset.AssignProperties_From_DnsForwardingRuleset_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220701s.DnsForwardingRuleset_STATUS{}
+	src = &storage.DnsForwardingRuleset_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -694,14 +694,14 @@ func (ruleset *DnsForwardingRuleset_STATUS) ConvertStatusFrom(source genruntime.
 
 // ConvertStatusTo populates the provided destination from our DnsForwardingRuleset_STATUS
 func (ruleset *DnsForwardingRuleset_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20220701s.DnsForwardingRuleset_STATUS)
+	dst, ok := destination.(*storage.DnsForwardingRuleset_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return ruleset.AssignProperties_To_DnsForwardingRuleset_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220701s.DnsForwardingRuleset_STATUS{}
+	dst = &storage.DnsForwardingRuleset_STATUS{}
 	err := ruleset.AssignProperties_To_DnsForwardingRuleset_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -817,7 +817,7 @@ func (ruleset *DnsForwardingRuleset_STATUS) PopulateFromARM(owner genruntime.Arb
 }
 
 // AssignProperties_From_DnsForwardingRuleset_STATUS populates our DnsForwardingRuleset_STATUS from the provided source DnsForwardingRuleset_STATUS
-func (ruleset *DnsForwardingRuleset_STATUS) AssignProperties_From_DnsForwardingRuleset_STATUS(source *v20220701s.DnsForwardingRuleset_STATUS) error {
+func (ruleset *DnsForwardingRuleset_STATUS) AssignProperties_From_DnsForwardingRuleset_STATUS(source *storage.DnsForwardingRuleset_STATUS) error {
 
 	// Conditions
 	ruleset.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -854,8 +854,9 @@ func (ruleset *DnsForwardingRuleset_STATUS) AssignProperties_From_DnsForwardingR
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := DnsresolverProvisioningState_STATUS(*source.ProvisioningState)
-		ruleset.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, dnsresolverProvisioningState_STATUS_Values)
+		ruleset.ProvisioningState = &provisioningStateTemp
 	} else {
 		ruleset.ProvisioningState = nil
 	}
@@ -886,7 +887,7 @@ func (ruleset *DnsForwardingRuleset_STATUS) AssignProperties_From_DnsForwardingR
 }
 
 // AssignProperties_To_DnsForwardingRuleset_STATUS populates the provided destination DnsForwardingRuleset_STATUS from our DnsForwardingRuleset_STATUS
-func (ruleset *DnsForwardingRuleset_STATUS) AssignProperties_To_DnsForwardingRuleset_STATUS(destination *v20220701s.DnsForwardingRuleset_STATUS) error {
+func (ruleset *DnsForwardingRuleset_STATUS) AssignProperties_To_DnsForwardingRuleset_STATUS(destination *storage.DnsForwardingRuleset_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -895,11 +896,11 @@ func (ruleset *DnsForwardingRuleset_STATUS) AssignProperties_To_DnsForwardingRul
 
 	// DnsResolverOutboundEndpoints
 	if ruleset.DnsResolverOutboundEndpoints != nil {
-		dnsResolverOutboundEndpointList := make([]v20220701s.DnsresolverSubResource_STATUS, len(ruleset.DnsResolverOutboundEndpoints))
+		dnsResolverOutboundEndpointList := make([]storage.DnsresolverSubResource_STATUS, len(ruleset.DnsResolverOutboundEndpoints))
 		for dnsResolverOutboundEndpointIndex, dnsResolverOutboundEndpointItem := range ruleset.DnsResolverOutboundEndpoints {
 			// Shadow the loop variable to avoid aliasing
 			dnsResolverOutboundEndpointItem := dnsResolverOutboundEndpointItem
-			var dnsResolverOutboundEndpoint v20220701s.DnsresolverSubResource_STATUS
+			var dnsResolverOutboundEndpoint storage.DnsresolverSubResource_STATUS
 			err := dnsResolverOutboundEndpointItem.AssignProperties_To_DnsresolverSubResource_STATUS(&dnsResolverOutboundEndpoint)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_DnsresolverSubResource_STATUS() to populate field DnsResolverOutboundEndpoints")
@@ -936,7 +937,7 @@ func (ruleset *DnsForwardingRuleset_STATUS) AssignProperties_To_DnsForwardingRul
 
 	// SystemData
 	if ruleset.SystemData != nil {
-		var systemDatum v20220701s.SystemData_STATUS
+		var systemDatum storage.SystemData_STATUS
 		err := ruleset.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
@@ -1010,7 +1011,7 @@ func (resource *DnsresolverSubResource) PopulateFromARM(owner genruntime.Arbitra
 }
 
 // AssignProperties_From_DnsresolverSubResource populates our DnsresolverSubResource from the provided source DnsresolverSubResource
-func (resource *DnsresolverSubResource) AssignProperties_From_DnsresolverSubResource(source *v20220701s.DnsresolverSubResource) error {
+func (resource *DnsresolverSubResource) AssignProperties_From_DnsresolverSubResource(source *storage.DnsresolverSubResource) error {
 
 	// Reference
 	if source.Reference != nil {
@@ -1025,7 +1026,7 @@ func (resource *DnsresolverSubResource) AssignProperties_From_DnsresolverSubReso
 }
 
 // AssignProperties_To_DnsresolverSubResource populates the provided destination DnsresolverSubResource from our DnsresolverSubResource
-func (resource *DnsresolverSubResource) AssignProperties_To_DnsresolverSubResource(destination *v20220701s.DnsresolverSubResource) error {
+func (resource *DnsresolverSubResource) AssignProperties_To_DnsresolverSubResource(destination *storage.DnsresolverSubResource) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1094,7 +1095,7 @@ func (resource *DnsresolverSubResource_STATUS) PopulateFromARM(owner genruntime.
 }
 
 // AssignProperties_From_DnsresolverSubResource_STATUS populates our DnsresolverSubResource_STATUS from the provided source DnsresolverSubResource_STATUS
-func (resource *DnsresolverSubResource_STATUS) AssignProperties_From_DnsresolverSubResource_STATUS(source *v20220701s.DnsresolverSubResource_STATUS) error {
+func (resource *DnsresolverSubResource_STATUS) AssignProperties_From_DnsresolverSubResource_STATUS(source *storage.DnsresolverSubResource_STATUS) error {
 
 	// Id
 	resource.Id = genruntime.ClonePointerToString(source.Id)
@@ -1104,7 +1105,7 @@ func (resource *DnsresolverSubResource_STATUS) AssignProperties_From_Dnsresolver
 }
 
 // AssignProperties_To_DnsresolverSubResource_STATUS populates the provided destination DnsresolverSubResource_STATUS from our DnsresolverSubResource_STATUS
-func (resource *DnsresolverSubResource_STATUS) AssignProperties_To_DnsresolverSubResource_STATUS(destination *v20220701s.DnsresolverSubResource_STATUS) error {
+func (resource *DnsresolverSubResource_STATUS) AssignProperties_To_DnsresolverSubResource_STATUS(destination *storage.DnsresolverSubResource_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 

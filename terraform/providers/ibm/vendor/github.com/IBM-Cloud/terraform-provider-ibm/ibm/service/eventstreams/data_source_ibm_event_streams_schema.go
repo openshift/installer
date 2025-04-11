@@ -9,6 +9,7 @@ import (
 	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/eventstreams-go-sdk/pkg/schemaregistryv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -41,14 +42,16 @@ func DataSourceIBMEventStreamsSchema() *schema.Resource {
 func dataSourceIBMEventStreamsSchemaRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schemaregistryClient, err := meta.(conns.ClientSession).ESschemaRegistrySession()
 	if err != nil {
-		log.Printf("[DEBUG] dataSourceIBMEventStreamsSchemaRead schemaregistryClient err %s", err)
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMEventStreamsSchemaRead schemaregistryClient: %s", err), "ibm_event_streams_schema", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	adminURL, instanceCRN, err := getInstanceURL(d, meta)
 	if err != nil {
-		log.Printf("[DEBUG] dataSourceIBMEventStreamsSchemaRead getInstanceURL err %s", err)
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMEventStreamsSchemaRead getInstanceURL: %s", err), "ibm_event_streams_schema", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	schemaregistryClient.SetServiceURL(adminURL)
 
@@ -59,8 +62,9 @@ func dataSourceIBMEventStreamsSchemaRead(context context.Context, d *schema.Reso
 
 	schema, response, err := schemaregistryClient.GetLatestSchemaWithContext(context, getLatestSchemaOptions)
 	if err != nil || schema == nil {
-		log.Printf("[DEBUG] GetLatestSchemaWithContext failed with error: %s and response:\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetLatestSchemaWithContext failed with error: %s\n and response:%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMEventStreamsSchemaRead GetLatestSchemaWithContext failed with error: %s and response:\n%s", err, response), "ibm_event_streams_schema", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	uniqueID := getUniqueSchemaID(instanceCRN, schemaID)
 

@@ -1,6 +1,7 @@
 package machines
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -159,7 +160,7 @@ spec:
 							},
 						},
 					}),
-				(*rhcos.Image)(pointer.StringPtr("test-image")),
+				rhcos.MakeAsset("test-image"),
 				(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
 				&machine.Worker{
 					File: &asset.File{
@@ -169,7 +170,7 @@ spec:
 				},
 			)
 			worker := &Worker{}
-			if err := worker.Generate(parents); err != nil {
+			if err := worker.Generate(context.Background(), parents); err != nil {
 				t.Fatalf("failed to generate worker machines: %v", err)
 			}
 			expectedLen := len(tc.expectedMachineConfig)
@@ -221,7 +222,7 @@ func TestComputeIsNotModified(t *testing.T) {
 			InfraID: "test-infra-id",
 		},
 		installConfig,
-		(*rhcos.Image)(pointer.StringPtr("test-image")),
+		rhcos.MakeAsset("test-image"),
 		(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
 		&machine.Worker{
 			File: &asset.File{
@@ -231,7 +232,7 @@ func TestComputeIsNotModified(t *testing.T) {
 		},
 	)
 	worker := &Worker{}
-	if err := worker.Generate(parents); err != nil {
+	if err := worker.Generate(context.Background(), parents); err != nil {
 		t.Fatalf("failed to generate master machines: %v", err)
 	}
 

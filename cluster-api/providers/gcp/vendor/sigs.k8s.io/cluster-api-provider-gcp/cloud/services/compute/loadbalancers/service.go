@@ -44,6 +44,14 @@ type forwardingrulesInterface interface {
 	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.ForwardingRule, error)
 	Insert(ctx context.Context, key *meta.Key, obj *compute.ForwardingRule, options ...k8scloud.Option) error
 	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
+	SetLabels(ctx context.Context, key *meta.Key, obj *compute.GlobalSetLabelsRequest, options ...k8scloud.Option) error
+}
+
+type regionalforwardingrulesInterface interface {
+	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.ForwardingRule, error)
+	Insert(ctx context.Context, key *meta.Key, obj *compute.ForwardingRule, options ...k8scloud.Option) error
+	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
+	SetLabels(ctx context.Context, key *meta.Key, obj *compute.RegionSetLabelsRequest, options ...k8scloud.Option) error
 }
 
 type healthchecksInterface interface {
@@ -65,39 +73,59 @@ type targettcpproxiesInterface interface {
 	Delete(ctx context.Context, key *meta.Key, options ...k8scloud.Option) error
 }
 
+type subnetsInterface interface {
+	Get(ctx context.Context, key *meta.Key, options ...k8scloud.Option) (*compute.Subnetwork, error)
+}
+
 // Scope is an interfaces that hold used methods.
 type Scope interface {
 	cloud.Cluster
-	AddressSpec() *compute.Address
-	BackendServiceSpec() *compute.BackendService
-	ForwardingRuleSpec() *compute.ForwardingRule
-	HealthCheckSpec() *compute.HealthCheck
+	AddressSpec(name string) *compute.Address
+	BackendServiceSpec(name string) *compute.BackendService
+	ForwardingRuleSpec(name string) *compute.ForwardingRule
+	HealthCheckSpec(name string) *compute.HealthCheck
 	InstanceGroupSpec(zone string) *compute.InstanceGroup
 	TargetTCPProxySpec() *compute.TargetTcpProxy
+	SubnetSpecs() []*compute.Subnetwork
 }
 
 // Service implements loadbalancers reconciler.
 type Service struct {
-	scope            Scope
-	addresses        addressesInterface
-	backendservices  backendservicesInterface
-	forwardingrules  forwardingrulesInterface
-	healthchecks     healthchecksInterface
-	instancegroups   instancegroupsInterface
-	targettcpproxies targettcpproxiesInterface
+	scope                   Scope
+	addresses               addressesInterface
+	internaladdresses       addressesInterface
+	backendservices         backendservicesInterface
+	regionalbackendservices backendservicesInterface
+	forwardingrules         forwardingrulesInterface
+	regionalforwardingrules regionalforwardingrulesInterface
+	healthchecks            healthchecksInterface
+	regionalhealthchecks    healthchecksInterface
+	instancegroups          instancegroupsInterface
+	targettcpproxies        targettcpproxiesInterface
+	subnets                 subnetsInterface
 }
 
 var _ cloud.Reconciler = &Service{}
 
 // New returns Service from given scope.
 func New(scope Scope) *Service {
+	cloudScope := scope.Cloud()
+	if scope.IsSharedVpc() {
+		cloudScope = scope.NetworkCloud()
+	}
+
 	return &Service{
-		scope:            scope,
-		addresses:        scope.Cloud().GlobalAddresses(),
-		backendservices:  scope.Cloud().BackendServices(),
-		forwardingrules:  scope.Cloud().GlobalForwardingRules(),
-		healthchecks:     scope.Cloud().HealthChecks(),
-		instancegroups:   scope.Cloud().InstanceGroups(),
-		targettcpproxies: scope.Cloud().TargetTcpProxies(),
+		scope:                   scope,
+		addresses:               scope.Cloud().GlobalAddresses(),
+		internaladdresses:       scope.Cloud().Addresses(),
+		backendservices:         scope.Cloud().BackendServices(),
+		regionalbackendservices: scope.Cloud().RegionBackendServices(),
+		forwardingrules:         scope.Cloud().GlobalForwardingRules(),
+		regionalforwardingrules: scope.Cloud().ForwardingRules(),
+		healthchecks:            scope.Cloud().HealthChecks(),
+		regionalhealthchecks:    scope.Cloud().RegionHealthChecks(),
+		instancegroups:          scope.Cloud().InstanceGroups(),
+		targettcpproxies:        scope.Cloud().TargetTcpProxies(),
+		subnets:                 cloudScope.Subnetworks(),
 	}
 }

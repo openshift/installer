@@ -9,13 +9,14 @@ After=network-online.target ironic-volume.service build-ironic-env.service extra
 [Container]
 ContainerName=image-customization
 Image=$CUSTOMIZATION_IMAGE
-Exec=/image-customization-controller --namespace=openshift-machine-api --images-publish-addr=http://0.0.0.0:8084 --metrics-addr=0.0.0.0:7373
+Exec=/image-customization-controller --namespace=openshift-machine-api --images-publish-addr=http://127.0.0.1:8084 --metrics-addr=127.0.0.1:7373
 Network=host
 PodmanArgs=--secret pull-secret,mode=400
 Volume=ironic.volume:/shared:z
 Volume=/etc/containers:/tmp/containers:z
 Volume=${AUTH_DIR}:/auth:z,ro
 Volume=/opt/openshift:/opt/openshift:z,ro
+Volume=/etc/pki/ca-trust/source/anchors/ca.crt:/tmp/ca.crt:z,ro
 Environment="DEPLOY_ISO=/shared/html/images/ironic-python-agent.iso"
 Environment="DEPLOY_INITRD=/shared/html/images/ironic-python-agent.initramfs"
 Environment="IRONIC_BASE_URL=${IRONIC_BASE_URL}"
@@ -24,6 +25,8 @@ Environment="IRONIC_AGENT_IMAGE=${IRONIC_AGENT_IMAGE}"
 Environment="IP_OPTIONS=${EXTERNAL_IP_OPTIONS}"
 Environment="REGISTRIES_CONF_PATH=/tmp/containers/registries.conf"
 Environment="KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback"
+Environment="ADDITIONAL_NTP_SERVERS=${ADDITIONAL_NTP_SERVERS}"
+Environment="CA_BUNDLE=/tmp/ca.crt"
 
 [Service]
 EnvironmentFile=/etc/ironic.env

@@ -26,8 +26,8 @@ type OpenStackMachineTemplateSpec struct {
 }
 
 // +genclient
-// +genclient:Namespaced
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:deprecatedversion:warning="The v1alpha6 version of OpenStackMachineTemplate has been deprecated and will be removed in a future release of the API. Please upgrade."
 // +kubebuilder:resource:path=openstackmachinetemplates,scope=Namespaced,categories=cluster-api,shortName=osmt
 
@@ -42,6 +42,7 @@ type OpenStackMachineTemplate struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 
 // OpenStackMachineTemplateList contains a list of OpenStackMachineTemplate.
 //

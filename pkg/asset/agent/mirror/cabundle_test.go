@@ -1,12 +1,13 @@
 package mirror
 
 import (
+	"context"
 	"errors"
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -194,7 +195,7 @@ OIUk31HnM/Fj
 			parents.Add(tc.dependencies...)
 
 			asset := &CaBundle{}
-			err := asset.Generate(parents)
+			err := asset.Generate(context.Background(), parents)
 
 			if tc.expectedError != "" {
 				assert.EqualError(t, err, tc.expectedError)

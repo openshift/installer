@@ -1,4 +1,4 @@
-// Copyright (c) 2020 VMware, Inc. All Rights Reserved.
+// Copyright (c) 2020-2024 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 package v1alpha1
@@ -70,12 +70,15 @@ const (
 
 	// LoadBalancerConfigTypeAvi is the LoadBalancerConfigType for Avi.
 	LoadBalancerConfigTypeAvi LoadBalancerConfigType = "avi"
+
+	// LoadBalancerConfigTypeFoundation is the FoundationLoadBalancerConfigType for VCF Foundation Load Balancer.
+	LoadBalancerConfigTypeFoundation LoadBalancerConfigType = "foundation"
 )
 
 // LoadBalancerConfigSpec defines the desired state of LoadBalancerConfig
 type LoadBalancerConfigSpec struct {
 	// Type describes type of load balancer. Supported value is haproxy
-	// +kubebuilder:validation:Enum=haproxy;avi
+	// +kubebuilder:validation:Enum=haproxy;avi;foundation
 	Type LoadBalancerConfigType `json:"type"`
 	// ProviderRef is reference to a load balancer provider object that provides the details for this type of load balancer
 	ProviderRef LoadBalancerConfigProviderReference `json:"providerRef"`

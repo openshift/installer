@@ -25,29 +25,28 @@ import (
 	"github.com/openshift/rosa/pkg/logging"
 )
 
+const (
+	clusterFlagName        = "cluster"
+	clusterFlagShortHand   = "c"
+	clusterFlagDescription = "Name or ID of the cluster."
+)
+
 var clusterKey string
 
 func AddOptionalClusterFlag(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(
 		&clusterKey,
-		"cluster",
-		"c",
+		clusterFlagName,
+		clusterFlagShortHand,
 		"",
-		"Name or ID of the cluster.",
+		clusterFlagDescription,
 	)
-	cmd.RegisterFlagCompletionFunc("cluster", clusterCompletion)
+	cmd.RegisterFlagCompletionFunc(clusterFlagName, clusterCompletion)
 }
 
 func AddClusterFlag(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(
-		&clusterKey,
-		"cluster",
-		"c",
-		"",
-		"Name or ID of the cluster.",
-	)
-	cmd.MarkFlagRequired("cluster")
-	cmd.RegisterFlagCompletionFunc("cluster", clusterCompletion)
+	AddOptionalClusterFlag(cmd)
+	cmd.MarkFlagRequired(clusterFlagName)
 }
 
 func SetClusterKey(key string) {
@@ -67,7 +66,7 @@ func GetClusterKey() (string, error) {
 	return clusterKey, nil
 }
 
-func clusterCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func clusterCompletion(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 	logger := logging.NewLogger()
 
 	ocmClient, err := NewClient().Logger(logger).Build()

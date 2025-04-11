@@ -1,14 +1,16 @@
 package manifests
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
@@ -48,6 +50,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 				&joiner.ClusterInfo{
 					Namespace:   "cluster0",
 					ClusterName: "ostest",
+					Nodes:       &v1.NodeList{},
 				},
 				getAgentHostsWithSomeHostsWithoutNetworkConfig(),
 				&agentconfig.OptionalInstallConfig{},
@@ -78,6 +81,66 @@ func TestNMStateConfig_Generate(t *testing.T) {
 				},
 			},
 			expectedError: "",
+		},
+		{
+			name: "add-nodes workflow - invalid ip",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					Namespace:   "cluster0",
+					ClusterName: "ostest",
+					Nodes: &v1.NodeList{
+						Items: []v1.Node{
+							{
+								ObjectMeta: metav1.ObjectMeta{
+									Name: "master-0",
+								},
+								Status: v1.NodeStatus{
+									Addresses: []v1.NodeAddress{
+										{
+											Address: "192.168.122.21", // configured by getValidAgentHostsConfig()
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				getValidAgentHostsConfig(),
+				&agentconfig.OptionalInstallConfig{},
+			},
+			requiresNmstatectl: false,
+			expectedError:      "address conflict found. The configured address 192.168.122.21 is already used by the cluster node master-0",
+		},
+		{
+			name: "add-nodes workflow - invalid hostname",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					Namespace:   "cluster0",
+					ClusterName: "ostest",
+					Nodes: &v1.NodeList{
+						Items: []v1.Node{
+							{
+								ObjectMeta: metav1.ObjectMeta{
+									Name: "control-0.example.org",
+								},
+								Status: v1.NodeStatus{
+									Addresses: []v1.NodeAddress{
+										{
+											Address: "control-0.example.org", // configured by getValidAgentHostsConfig()
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				getValidAgentHostsConfig(),
+				&agentconfig.OptionalInstallConfig{},
+			},
+			requiresNmstatectl: false,
+			expectedError:      "hostname conflict found. The configured hostname control-0.example.org is already used in the cluster",
 		},
 		{
 			name: "agentHosts does not contain networkConfig",
@@ -221,6 +284,30 @@ func TestNMStateConfig_Generate(t *testing.T) {
 			expectedConfig:     nil,
 			expectedError:      "failed to validate network yaml",
 		},
+		{
+			name: "invalid networkConfig, no interfaces in interface table",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
+				getAgentHostsConfigNoInterfaces(),
+				getValidOptionalInstallConfig(),
+			},
+			requiresNmstatectl: true,
+			expectedConfig:     nil,
+			expectedError:      "at least one interface for host 0 must be provided",
+		},
+		{
+			name: "invalid networkConfig, invalid mac in interface table",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
+				getAgentHostsConfigInvalidMac(),
+				getValidOptionalInstallConfig(),
+			},
+			requiresNmstatectl: true,
+			expectedConfig:     nil,
+			expectedError:      "MAC address 98-af-65-a5-8d-02 for host 0 is incorrectly formatted, use XX:XX:XX:XX:XX:XX format",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -228,7 +315,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 			parents.Add(tc.dependencies...)
 
 			asset := &NMStateConfig{}
-			err := asset.Generate(parents)
+			err := asset.Generate(context.Background(), parents)
 
 			// Check if the test failed because nmstatectl is not available in CI
 			if tc.requiresNmstatectl {
@@ -458,7 +545,7 @@ spec:
     - name: "eth0"
       macAddress: "52:54:01:aa:aa:a1"`,
 			requiresNmstatectl: true,
-			expectedError:      "invalid NMStateConfig configuration: ObjectMeta.Labels: Required value: mynmstateconfig does not have any label set",
+			expectedError:      "invalid NMStateConfig configuration: labels: Required value: mynmstateconfig does not have any label set",
 		},
 
 		{

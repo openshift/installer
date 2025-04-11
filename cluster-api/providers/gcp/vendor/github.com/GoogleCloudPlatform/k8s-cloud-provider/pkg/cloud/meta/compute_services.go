@@ -278,6 +278,7 @@ var ComputeServices = []*ServiceInfo{
 		keyType:     Regional,
 		serviceType: reflect.TypeOf(&ga.ForwardingRulesService{}),
 		additionalMethods: []string{
+			"Patch",
 			"SetTarget",
 			"SetLabels",
 		},
@@ -290,6 +291,7 @@ var ComputeServices = []*ServiceInfo{
 		keyType:     Regional,
 		serviceType: reflect.TypeOf(&alpha.ForwardingRulesService{}),
 		additionalMethods: []string{
+			"Patch",
 			"SetTarget",
 			"SetLabels",
 		},
@@ -302,6 +304,7 @@ var ComputeServices = []*ServiceInfo{
 		keyType:     Regional,
 		serviceType: reflect.TypeOf(&beta.ForwardingRulesService{}),
 		additionalMethods: []string{
+			"Patch",
 			"SetTarget",
 			"SetLabels",
 		},
@@ -314,6 +317,7 @@ var ComputeServices = []*ServiceInfo{
 		keyType:     Global,
 		serviceType: reflect.TypeOf(&alpha.GlobalForwardingRulesService{}),
 		additionalMethods: []string{
+			"Patch",
 			"SetTarget",
 			"SetLabels",
 		},
@@ -326,6 +330,7 @@ var ComputeServices = []*ServiceInfo{
 		keyType:     Global,
 		serviceType: reflect.TypeOf(&beta.GlobalForwardingRulesService{}),
 		additionalMethods: []string{
+			"Patch",
 			"SetTarget",
 			"SetLabels",
 		},
@@ -337,6 +342,7 @@ var ComputeServices = []*ServiceInfo{
 		keyType:     Global,
 		serviceType: reflect.TypeOf(&ga.GlobalForwardingRulesService{}),
 		additionalMethods: []string{
+			"Patch",
 			"SetTarget",
 			"SetLabels",
 		},
@@ -642,6 +648,45 @@ var ComputeServices = []*ServiceInfo{
 		version:     VersionGA,
 		keyType:     Global,
 		serviceType: reflect.TypeOf(&ga.GlobalNetworkEndpointGroupsService{}),
+		additionalMethods: []string{
+			"AttachNetworkEndpoints",
+			"DetachNetworkEndpoints",
+			"ListNetworkEndpoints",
+		},
+	},
+	{
+		Object:      "NetworkEndpointGroup",
+		Service:     "RegionNetworkEndpointGroups",
+		Resource:    "networkEndpointGroups",
+		version:     VersionAlpha,
+		keyType:     Regional,
+		serviceType: reflect.TypeOf(&alpha.RegionNetworkEndpointGroupsService{}),
+		additionalMethods: []string{
+			"AttachNetworkEndpoints",
+			"DetachNetworkEndpoints",
+			"ListNetworkEndpoints",
+		},
+	},
+	{
+		Object:      "NetworkEndpointGroup",
+		Service:     "RegionNetworkEndpointGroups",
+		Resource:    "networkEndpointGroups",
+		version:     VersionBeta,
+		keyType:     Regional,
+		serviceType: reflect.TypeOf(&beta.RegionNetworkEndpointGroupsService{}),
+		additionalMethods: []string{
+			"AttachNetworkEndpoints",
+			"DetachNetworkEndpoints",
+			"ListNetworkEndpoints",
+		},
+	},
+	{
+		Object:      "NetworkEndpointGroup",
+		Service:     "RegionNetworkEndpointGroups",
+		Resource:    "networkEndpointGroups",
+		version:     VersionGA,
+		keyType:     Regional,
+		serviceType: reflect.TypeOf(&ga.RegionNetworkEndpointGroupsService{}),
 		additionalMethods: []string{
 			"AttachNetworkEndpoints",
 			"DetachNetworkEndpoints",

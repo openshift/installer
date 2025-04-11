@@ -65,8 +65,8 @@ func (r *GCPClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 	c, err := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&infrav1.GCPCluster{}).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue)).
-		WithEventFilter(predicates.ResourceIsNotExternallyManaged(log)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceIsNotExternallyManaged(mgr.GetScheme(), log)).
 		Build(r)
 	if err != nil {
 		return errors.Wrap(err, "error creating controller")
@@ -74,27 +74,27 @@ func (r *GCPClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 
 	clusterToInfraFn := util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind("GCPCluster"), mgr.GetClient(), &infrav1.GCPCluster{})
 	if err = c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(func(mapCtx context.Context, o client.Object) []reconcile.Request {
-			requests := clusterToInfraFn(mapCtx, o)
-			if requests == nil {
-				return nil
-			}
+		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(func(mapCtx context.Context, o client.Object) []reconcile.Request {
+				requests := clusterToInfraFn(mapCtx, o)
+				if requests == nil {
+					return nil
+				}
 
-			gcpCluster := &infrav1.GCPCluster{}
-			if err := r.Get(ctx, requests[0].NamespacedName, gcpCluster); err != nil {
-				log.V(4).Error(err, "Failed to get GCP cluster")
-				return nil
-			}
+				gcpCluster := &infrav1.GCPCluster{}
+				if err := r.Get(ctx, requests[0].NamespacedName, gcpCluster); err != nil {
+					log.V(4).Error(err, "Failed to get GCP cluster")
+					return nil
+				}
 
-			if annotations.IsExternallyManaged(gcpCluster) {
-				log.V(4).Info("GCPCluster is externally managed, skipping mapping.")
-				return nil
-			}
-			return requests
-		}),
-		predicates.ClusterUnpaused(log),
-	); err != nil {
+				if annotations.IsExternallyManaged(gcpCluster) {
+					log.V(4).Info("GCPCluster is externally managed, skipping mapping.")
+					return nil
+				}
+				return requests
+			}),
+			predicates.ClusterUnpaused(mgr.GetScheme(), log),
+		)); err != nil {
 		return errors.Wrap(err, "failed adding a watch for ready clusters")
 	}
 
@@ -200,8 +200,9 @@ func (r *GCPClusterReconciler) reconcile(ctx context.Context, clusterScope *scop
 	reconcilers := []cloud.Reconciler{
 		networks.New(clusterScope),
 		firewalls.New(clusterScope),
-		loadbalancers.New(clusterScope),
+		// Reconcile subnets before loadbalancers since subnet is needed for internal LB
 		subnets.New(clusterScope),
+		loadbalancers.New(clusterScope),
 	}
 
 	for _, r := range reconcilers {
@@ -230,8 +231,8 @@ func (r *GCPClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 	log.Info("Reconciling Delete GCPCluster")
 
 	reconcilers := []cloud.Reconciler{
-		subnets.New(clusterScope),
 		loadbalancers.New(clusterScope),
+		subnets.New(clusterScope),
 		firewalls.New(clusterScope),
 		networks.New(clusterScope),
 	}

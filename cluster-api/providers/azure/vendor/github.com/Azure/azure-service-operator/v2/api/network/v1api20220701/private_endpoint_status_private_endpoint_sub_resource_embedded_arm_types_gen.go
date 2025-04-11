@@ -91,6 +91,11 @@ type ExtendedLocationType_STATUS string
 
 const ExtendedLocationType_STATUS_EdgeZone = ExtendedLocationType_STATUS("EdgeZone")
 
+// Mapping from string to ExtendedLocationType_STATUS
+var extendedLocationType_STATUS_Values = map[string]ExtendedLocationType_STATUS{
+	"edgezone": ExtendedLocationType_STATUS_EdgeZone,
+}
+
 // A network interface in a resource group.
 type NetworkInterface_STATUS_PrivateEndpoint_SubResourceEmbedded_ARM struct {
 	// Id: Resource ID.

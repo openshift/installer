@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2017, 2021 All Rights Reserved.
+// Copyright IBM Corp. 2017, 2021, 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package power
@@ -11,12 +11,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -36,321 +37,457 @@ func ResourceIBMPIInstance() *schema.Resource {
 			Update: schema.DefaultTimeout(60 * time.Minute),
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
+		CustomizeDiff: customdiff.Sequence(
+			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+				return flex.ResourcePowerUserTagsCustomizeDiff(diff)
+			},
+		),
 
 		Schema: map[string]*schema.Schema{
-
-			helpers.PICloudInstanceId: {
-				Type:        schema.TypeString,
+			// Arguments
+			Arg_AffinityInstance: {
+				ConflictsWith: []string{Arg_AffinityVolume},
+				Description:   "PVM Instance (ID or Name) to base storage affinity policy against; required if requesting storage affinity and pi_affinity_volume is not provided",
+				Optional:      true,
+				Type:          schema.TypeString,
+			},
+			Arg_AffinityPolicy: {
+				Description:  "Affinity policy for pvm instance being created; ignored if pi_storage_pool provided; for policy affinity requires one of pi_affinity_instance or pi_affinity_volume to be specified; for policy anti-affinity requires one of pi_anti_affinity_instances or pi_anti_affinity_volumes to be specified",
+				Optional:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validate.ValidateAllowedStringValues([]string{Affinity, AntiAffinity}),
+			},
+			Arg_AffinityVolume: {
+				ConflictsWith: []string{Arg_AffinityInstance},
+				Description:   "Volume (ID or Name) to base storage affinity policy against; required if requesting affinity and pi_affinity_instance is not provided",
+				Optional:      true,
+				Type:          schema.TypeString,
+			},
+			Arg_AntiAffinityInstances: {
+				ConflictsWith: []string{Arg_AntiAffinityVolumes},
+				Description:   "List of pvmInstances to base storage anti-affinity policy against; required if requesting anti-affinity and pi_anti_affinity_volumes is not provided",
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				Optional:      true,
+				Type:          schema.TypeList,
+			},
+			Arg_AntiAffinityVolumes: {
+				ConflictsWith: []string{Arg_AntiAffinityInstances},
+				Description:   "List of volumes to base storage anti-affinity policy against; required if requesting anti-affinity and pi_anti_affinity_instances is not provided",
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				Optional:      true,
+				Type:          schema.TypeList,
+			},
+			Arg_BootVolumeReplicationEnabled: {
+				Description: "Indicates if the boot volume should be replication enabled or not.",
+				ForceNew:    true,
+				Optional:    true,
+				Type:        schema.TypeBool,
+			},
+			Arg_CloudInstanceID: {
+				Description: "This is the Power Instance id that is assigned to the account",
 				ForceNew:    true,
 				Required:    true,
-				Description: "This is the Power Instance id that is assigned to the account",
-			},
-			helpers.PIInstanceLicenseRepositoryCapacity: {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Computed:    true,
-				Description: "The VTL license repository capacity TB value",
-			},
-			"status": {
 				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "PI instance status",
 			},
-			"pi_migratable": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-				Description: "set to true to enable migration of the PI instance",
-			},
-			"min_processors": {
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Minimum number of the CPUs",
-			},
-			"min_memory": {
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Minimum memory",
-			},
-			"max_processors": {
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Maximum number of processors",
-			},
-			"max_memory": {
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Maximum memory size",
-			},
-			helpers.PIInstanceVolumeIds: {
-				Type:             schema.TypeSet,
-				Optional:         true,
-				Elem:             &schema.Schema{Type: schema.TypeString},
-				Set:              schema.HashString,
-				DiffSuppressFunc: flex.ApplyOnce,
-				Description:      "List of PI volumes",
-			},
-
-			helpers.PIInstanceUserData: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Base64 encoded data to be passed in for invoking a cloud init script",
-			},
-
-			helpers.PIInstanceStorageType: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "Storage type for server deployment; if pi_storage_type is not provided the storage type will default to tier3",
-			},
-			PIInstanceStoragePool: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "Storage Pool for server deployment; if provided then pi_storage_pool_affinity will be ignored; Only valid when you deploy one of the IBM supplied stock images. Storage pool for a custom image (an imported image or an image that is created from a VM capture) defaults to the storage pool the image was created in",
-			},
-			PIAffinityPolicy: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Description:  "Affinity policy for pvm instance being created; ignored if pi_storage_pool provided; for policy affinity requires one of pi_affinity_instance or pi_affinity_volume to be specified; for policy anti-affinity requires one of pi_anti_affinity_instances or pi_anti_affinity_volumes to be specified",
-				ValidateFunc: validate.ValidateAllowedStringValues([]string{"affinity", "anti-affinity"}),
-			},
-			PIAffinityVolume: {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "Volume (ID or Name) to base storage affinity policy against; required if requesting affinity and pi_affinity_instance is not provided",
-				ConflictsWith: []string{PIAffinityInstance},
-			},
-			PIAffinityInstance: {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "PVM Instance (ID or Name) to base storage affinity policy against; required if requesting storage affinity and pi_affinity_volume is not provided",
-				ConflictsWith: []string{PIAffinityVolume},
-			},
-			PIAntiAffinityVolumes: {
-				Type:          schema.TypeList,
-				Optional:      true,
-				Elem:          &schema.Schema{Type: schema.TypeString},
-				Description:   "List of volumes to base storage anti-affinity policy against; required if requesting anti-affinity and pi_anti_affinity_instances is not provided",
-				ConflictsWith: []string{PIAntiAffinityInstances},
-			},
-			PIAntiAffinityInstances: {
-				Type:          schema.TypeList,
-				Optional:      true,
-				Elem:          &schema.Schema{Type: schema.TypeString},
-				Description:   "List of pvmInstances to base storage anti-affinity policy against; required if requesting anti-affinity and pi_anti_affinity_volumes is not provided",
-				ConflictsWith: []string{PIAntiAffinityVolumes},
-			},
-			helpers.PIInstanceStorageConnection: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validate.ValidateAllowedStringValues([]string{"vSCSI"}),
-				Description:  "Storage Connectivity Group for server deployment",
-			},
-			PIInstanceStoragePoolAffinity: {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Indicates if all volumes attached to the server must reside in the same storage pool",
-			},
-			PIInstanceNetwork: {
-				Type:             schema.TypeList,
-				Required:         true,
-				DiffSuppressFunc: flex.ApplyOnce,
-				Description:      "List of one or more networks to attach to the instance",
+			Arg_DeploymentTarget: {
+				Description: "The deployment of a dedicated host.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"ip_address": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
+						Attr_ID: {
+							Description: "The uuid of the host group or host.",
+							Required:    true,
+							Type:        schema.TypeString,
 						},
-						"mac_address": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"network_id": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"network_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"type": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"external_ip": {
-							Type:     schema.TypeString,
-							Computed: true,
+						Attr_Type: {
+							Description:  "The deployment target type. Supported values are `host` and `hostGroup`.",
+							Required:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validate.ValidateAllowedStringValues([]string{Host, HostGroup}),
 						},
 					},
 				},
+				MaxItems:     1,
+				Optional:     true,
+				RequiredWith: []string{Arg_SysType},
+				Type:         schema.TypeSet,
 			},
-			helpers.PIPlacementGroupID: {
-				Type:        schema.TypeString,
+			Arg_DeploymentType: {
+				Description:  "Custom Deployment Type Information",
+				ForceNew:     true,
+				Optional:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validate.ValidateAllowedStringValues([]string{DeploymentTypeEpic, DeploymentTypeVMNoStorage}),
+			},
+			Arg_HealthStatus: {
+				Default:      OK,
+				Description:  "Allow the user to set the status of the lpar so that they can connect to it faster",
+				Optional:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validate.ValidateAllowedStringValues([]string{OK, Warning}),
+			},
+			Arg_IBMiCSS: {
+				Description: "IBM i Cloud Storage Solution",
 				Optional:    true,
-				Description: "Placement group ID",
+				Type:        schema.TypeBool,
 			},
-			Arg_PIInstanceSharedProcessorPool: {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{PISAPInstanceProfileID},
-				Description:   "Shared Processor Pool the instance is deployed on",
+			Arg_IBMiPHA: {
+				Description: "IBM i Power High Availability",
+				Optional:    true,
+				Type:        schema.TypeBool,
 			},
-			Attr_PIInstanceSharedProcessorPoolID: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Shared Processor Pool ID the instance is deployed on",
+			Arg_IBMiRDSUsers: {
+				Description: "IBM i Rational Dev Studio Number of User Licenses",
+				Optional:    true,
+				Type:        schema.TypeInt,
 			},
-			"health_status": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "PI Instance health status",
-			},
-			"instance_id": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Instance ID",
-			},
-			"pin_policy": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "PIN Policy of the Instance",
-			},
-			helpers.PIInstanceImageId: {
-				Type:             schema.TypeString,
-				Required:         true,
+			Arg_ImageID: {
 				Description:      "PI instance image id",
 				DiffSuppressFunc: flex.ApplyOnce,
-			},
-			helpers.PIInstanceProcessors: {
-				Type:          schema.TypeFloat,
-				Optional:      true,
-				Computed:      true,
-				ConflictsWith: []string{PISAPInstanceProfileID},
-				Description:   "Processors count",
-			},
-			helpers.PIInstanceName: {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "PI Instance name",
-			},
-			helpers.PIInstanceProcType: {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				ValidateFunc:  validate.ValidateAllowedStringValues([]string{"dedicated", "shared", "capped"}),
-				ConflictsWith: []string{PISAPInstanceProfileID},
-				Description:   "Instance processor type",
-			},
-			helpers.PIInstanceSSHKeyName: {
+				Required:         true,
 				Type:             schema.TypeString,
-				Optional:         true,
-				DiffSuppressFunc: flex.ApplyOnce,
-				Description:      "SSH key name",
 			},
-			helpers.PIInstanceMemory: {
-				Type:          schema.TypeFloat,
-				Optional:      true,
-				Computed:      true,
-				ConflictsWith: []string{PISAPInstanceProfileID},
-				Description:   "Memory size",
-			},
-			PIInstanceDeploymentType: {
+			Arg_InstanceName: {
+				Description: "PI Instance name",
+				Required:    true,
 				Type:        schema.TypeString,
+			},
+			Arg_KeyPairName: {
+				Description: "SSH key name",
+				ForceNew:    true,
 				Optional:    true,
-				Description: "Custom Deployment Type Information",
-			},
-			PISAPInstanceProfileID: {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{helpers.PIInstanceProcessors, helpers.PIInstanceMemory, helpers.PIInstanceProcType},
-				Description:   "SAP Profile ID for the amount of cores and memory",
-			},
-			PISAPInstanceDeploymentType: {
 				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Custom SAP Deployment Type Information",
 			},
-			helpers.PIInstanceSystemType: {
-				Type:        schema.TypeString,
-				Optional:    true,
+			Arg_LicenseRepositoryCapacity: {
 				Computed:    true,
-				Description: "PI Instance system type",
-			},
-			helpers.PIInstanceReplicants: {
-				Type:        schema.TypeInt,
+				Deprecated:  "This field is deprecated.",
+				Description: "The VTL license repository capacity TB value",
 				Optional:    true,
+				Type:        schema.TypeInt,
+			},
+			Arg_Memory: {
+				Computed:      true,
+				ConflictsWith: []string{Arg_SAPProfileID},
+				Description:   "Memory size",
+				Optional:      true,
+				Type:          schema.TypeFloat,
+			},
+			Arg_Network: {
+				Description:      "List of one or more networks to attach to the instance",
+				DiffSuppressFunc: flex.ApplyOnce,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						Attr_IPAddress: {
+							Computed: true,
+							Optional: true,
+							Type:     schema.TypeString,
+						},
+						Attr_MacAddress: {
+							Computed: true,
+							Type:     schema.TypeString,
+						},
+						Attr_NetworkID: {
+							Required: true,
+							Type:     schema.TypeString,
+						},
+						Attr_NetworkInterfaceID: {
+							Computed:    true,
+							Description: "ID of the network interface.",
+							Type:        schema.TypeString,
+						},
+						Attr_NetworkName: {
+							Computed: true,
+							Type:     schema.TypeString,
+						},
+						Attr_NetworkSecurityGroupIDs: {
+							Computed:    true,
+							Description: "Network security groups that the network interface is a member of. There is a limit of 1 network security group in the array. If not specified, default network security group is used.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Optional:    true,
+							Type:        schema.TypeSet,
+						},
+						Attr_NetworkSecurityGroupsHref: {
+							Computed:    true,
+							Description: "Links to the network security groups that the network interface is a member of.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Type:        schema.TypeList,
+						},
+						Attr_Type: {
+							Computed: true,
+							Type:     schema.TypeString,
+						},
+						Attr_ExternalIP: {
+							Computed: true,
+							Type:     schema.TypeString,
+						},
+					},
+				},
+				Required: true,
+				Type:     schema.TypeList,
+			},
+			Arg_PinPolicy: {
+				Default:      None,
+				Description:  "Pin Policy of the instance",
+				Optional:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validate.ValidateAllowedStringValues([]string{None, Soft, Hard}),
+			},
+			Arg_PlacementGroupID: {
+				Description: "Placement group ID",
+				Computed:    true,
+				Optional:    true,
+				Type:        schema.TypeString,
+			},
+			Arg_ProcType: {
+				Computed:      true,
+				ConflictsWith: []string{Arg_SAPProfileID},
+				Description:   "Instance processor type",
+				Optional:      true,
+				Type:          schema.TypeString,
+				ValidateFunc:  validate.ValidateAllowedStringValues([]string{Dedicated, Shared, Capped}),
+			},
+			Arg_Processors: {
+				Computed:      true,
+				ConflictsWith: []string{Arg_SAPProfileID},
+				Description:   "Processors count",
+				Optional:      true,
+				Type:          schema.TypeFloat,
+			},
+			Arg_Replicants: {
 				Default:     1,
 				Description: "PI Instance replicas count",
-			},
-			helpers.PIInstanceReplicationPolicy: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validate.ValidateAllowedStringValues([]string{"affinity", "anti-affinity", "none"}),
-				Default:      "none",
-				Description:  "Replication policy for the PI Instance",
-			},
-			helpers.PIInstanceReplicationScheme: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validate.ValidateAllowedStringValues([]string{"prefix", "suffix"}),
-				Default:      "suffix",
-				Description:  "Replication scheme",
-			},
-			helpers.PIInstanceProgress: {
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Progress of the operation",
-			},
-			helpers.PIInstancePinPolicy: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Description:  "Pin Policy of the instance",
-				Default:      "none",
-				ValidateFunc: validate.ValidateAllowedStringValues([]string{"none", "soft", "hard"}),
-			},
-
-			// "reboot_for_resource_change": {
-			// 	Type:        schema.TypeString,
-			// 	Optional:    true,
-			// 	Description: "Flag to be passed for CPU/Memory changes that require a reboot to take effect",
-			// },
-			"operating_system": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Operating System",
-			},
-			"os_type": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "OS Type",
-			},
-			helpers.PIInstanceHealthStatus: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validate.ValidateAllowedStringValues([]string{helpers.PIInstanceHealthOk, helpers.PIInstanceHealthWarning}),
-				Default:      "OK",
-				Description:  "Allow the user to set the status of the lpar so that they can connect to it faster",
-			},
-			helpers.PIVirtualCoresAssigned: {
-				Type:        schema.TypeInt,
+				ForceNew:    true,
 				Optional:    true,
+				Type:        schema.TypeInt,
+			},
+			Arg_ReplicationPolicy: {
+				Default:      None,
+				Description:  "Replication policy for the PI Instance",
+				ForceNew:     true,
+				Optional:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validate.ValidateAllowedStringValues([]string{Affinity, AntiAffinity, None}),
+			},
+			Arg_ReplicationScheme: {
+				Default:      Suffix,
+				Description:  "Replication scheme",
+				ForceNew:     true,
+				Optional:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validate.ValidateAllowedStringValues([]string{Prefix, Suffix}),
+			},
+			Arg_ReplicationSites: {
+				Description: "Indicates the replication sites of the boot volume.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				ForceNew:    true,
+				Optional:    true,
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
+			},
+			Arg_RetainVirtualSerialNumber: {
+				Default:     false,
+				Description: "Indicates whether to retain virtual serial number when changed or deleted.",
+				Optional:    true,
+				Type:        schema.TypeBool,
+			},
+			Arg_SAPProfileID: {
+				ConflictsWith: []string{Arg_Processors, Arg_Memory, Arg_ProcType},
+				Description:   "SAP Profile ID for the amount of cores and memory",
+				Optional:      true,
+				Type:          schema.TypeString,
+			},
+			Arg_SAPDeploymentType: {
+				Description: "Custom SAP Deployment Type Information",
+				ForceNew:    true,
+				Optional:    true,
+				Type:        schema.TypeString,
+			},
+			Arg_SharedProcessorPool: {
+				ConflictsWith: []string{Arg_SAPProfileID},
+				Description:   "Shared Processor Pool the instance is deployed on",
+				ForceNew:      true,
+				Optional:      true,
+				Type:          schema.TypeString,
+			},
+			Arg_StoragePool: {
+				Computed:    true,
+				Description: "Storage Pool for server deployment; if provided then pi_storage_pool_affinity will be ignored; Only valid when you deploy one of the IBM supplied stock images. Storage pool for a custom image (an imported image or an image that is created from a VM capture) defaults to the storage pool the image was created in",
+				Optional:    true,
+				Type:        schema.TypeString,
+			},
+			Arg_StoragePoolAffinity: {
+				Default:     true,
+				Description: "Indicates if all volumes attached to the server must reside in the same storage pool",
+				Optional:    true,
+				Type:        schema.TypeBool,
+			},
+			Arg_StorageType: {
+				Computed:    true,
+				Description: "Storage type for server deployment; if pi_storage_type is not provided the storage type will default to tier3",
+				Optional:    true,
+				Type:        schema.TypeString,
+			},
+			Arg_StorageConnection: {
+				Description:  "Storage Connectivity Group for server deployment",
+				Optional:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validate.ValidateAllowedStringValues([]string{vSCSI, MaxVolumeSupport}),
+			},
+			Arg_SysType: {
+				Computed:    true,
+				Description: "PI Instance system type",
+				ForceNew:    true,
+				Optional:    true,
+				Type:        schema.TypeString,
+			},
+			Arg_UserData: {
+				Description: "Base64 encoded data to be passed in for invoking a cloud init script",
+				ForceNew:    true,
+				Optional:    true,
+				Type:        schema.TypeString,
+			},
+			Arg_UserTags: {
+				Computed:    true,
+				Description: "The user tags attached to this resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Optional:    true,
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
+			},
+			Arg_VirtualCoresAssigned: {
 				Computed:    true,
 				Description: "Virtual Cores Assigned to the PVMInstance",
-			},
-			"max_virtual_cores": {
+				Optional:    true,
 				Type:        schema.TypeInt,
+			},
+			Arg_VirtualOpticalDevice: {
+				Description:  "Virtual Machine's Cloud Initialization Virtual Optical Device",
+				Optional:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validate.ValidateAllowedStringValues([]string{Attach}),
+			},
+			Arg_VirtualSerialNumber: {
+				ConflictsWith: []string{Arg_SAPProfileID},
+				Description:   "Virtual Serial Number information",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						Attr_Description: {
+							Description: "Description of the Virtual Serial Number",
+							Optional:    true,
+							Type:        schema.TypeString,
+						},
+						Attr_Serial: {
+							Description:      "Provide an existing reserved Virtual Serial Number or specify 'auto-assign' for auto generated Virtual Serial Number.",
+							Required:         true,
+							DiffSuppressFunc: supressVSNDiffAutoAssign,
+							Type:             schema.TypeString,
+						},
+					},
+				},
+				MaxItems: 1,
+				Optional: true,
+				Type:     schema.TypeList,
+			},
+			Arg_VolumeIDs: {
+				Description:      "List of PI volumes",
+				DiffSuppressFunc: flex.ApplyOnce,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				Optional:         true,
+				Set:              schema.HashString,
+				Type:             schema.TypeSet,
+			},
+
+			// Attributes
+			Attr_CRN: {
+				Computed:    true,
+				Description: "The CRN of this resource.",
+				Type:        schema.TypeString,
+			},
+			Attr_DedicatedHostID: {
+				Computed:    true,
+				Description: "The dedicated host ID where the shared processor pool resides.",
+				Type:        schema.TypeString,
+			},
+			Attr_Fault: {
+				Computed:    true,
+				Description: "Fault information.",
+				Type:        schema.TypeMap,
+			},
+			Attr_HealthStatus: {
+				Computed:    true,
+				Description: "PI Instance health status",
+				Type:        schema.TypeString,
+			},
+			Attr_IBMiRDS: {
+				Computed:    true,
+				Description: "IBM i Rational Dev Studio",
+				Optional:    false,
+				Required:    false,
+				Type:        schema.TypeBool,
+			},
+			Attr_InstanceID: {
+				Computed:    true,
+				Description: "Instance ID",
+				Type:        schema.TypeString,
+			},
+			Attr_MaxMemory: {
+				Computed:    true,
+				Description: "Maximum memory size",
+				Type:        schema.TypeFloat,
+			},
+			Attr_MaxProcessors: {
+				Computed:    true,
+				Description: "Maximum number of processors",
+				Type:        schema.TypeFloat,
+			},
+			Attr_MaxVirtualCores: {
 				Computed:    true,
 				Description: "Maximum Virtual Cores Assigned to the PVMInstance",
-			},
-			"min_virtual_cores": {
 				Type:        schema.TypeInt,
+			},
+			Attr_MinMemory: {
+				Computed:    true,
+				Description: "Minimum memory",
+				Type:        schema.TypeFloat,
+			},
+			Attr_MinProcessors: {
+				Computed:    true,
+				Description: "Minimum number of the CPUs",
+				Type:        schema.TypeFloat,
+			},
+			Attr_MinVirtualCores: {
 				Computed:    true,
 				Description: "Minimum Virtual Cores Assigned to the PVMInstance",
+				Type:        schema.TypeInt,
+			},
+			Attr_OperatingSystem: {
+				Computed:    true,
+				Description: "Operating System",
+				Type:        schema.TypeString,
+			},
+			Attr_OSType: {
+				Computed:    true,
+				Description: "OS Type",
+				Type:        schema.TypeString,
+			},
+			Attr_PinPolicy: {
+				Computed:    true,
+				Description: "PIN Policy of the Instance",
+				Type:        schema.TypeString,
+			},
+			Attr_Progress: {
+				Computed:    true,
+				Description: "Progress of the operation",
+				Type:        schema.TypeFloat,
+			},
+			Attr_SharedProcessorPoolID: {
+				Computed:    true,
+				Description: "Shared Processor Pool ID the instance is deployed on",
+				Type:        schema.TypeString,
+			},
+			Attr_Status: {
+				Computed:    true,
+				Description: "PI instance status",
+				Type:        schema.TypeString,
 			},
 		},
 	}
@@ -362,13 +499,13 @@ func resourceIBMPIInstanceCreate(ctx context.Context, d *schema.ResourceData, me
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
-	client := st.NewIBMPIInstanceClient(ctx, sess, cloudInstanceID)
-	sapClient := st.NewIBMPISAPInstanceClient(ctx, sess, cloudInstanceID)
-	imageClient := st.NewIBMPIImageClient(ctx, sess, cloudInstanceID)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
+	client := instance.NewIBMPIInstanceClient(ctx, sess, cloudInstanceID)
+	sapClient := instance.NewIBMPISAPInstanceClient(ctx, sess, cloudInstanceID)
+	imageClient := instance.NewIBMPIImageClient(ctx, sess, cloudInstanceID)
 
 	var pvmList *models.PVMInstanceList
-	if _, ok := d.GetOk(PISAPInstanceProfileID); ok {
+	if _, ok := d.GetOk(Arg_SAPProfileID); ok {
 		pvmList, err = createSAPInstance(d, sapClient)
 	} else {
 		pvmList, err = createPVMInstance(d, client, imageClient)
@@ -378,23 +515,36 @@ func resourceIBMPIInstanceCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	var instanceReadyStatus string
-	if r, ok := d.GetOk(helpers.PIInstanceHealthStatus); ok {
+	if r, ok := d.GetOk(Arg_HealthStatus); ok {
 		instanceReadyStatus = r.(string)
 	}
 
-	d.SetId(fmt.Sprintf("%s/%s", cloudInstanceID, *(*pvmList)[0].PvmInstanceID))
+	// id is a combination of the cloud instance id and all of the pvm instance ids
+	id := cloudInstanceID
+	for _, pvm := range *pvmList {
+		id += "/" + *pvm.PvmInstanceID
+	}
+
+	d.SetId(id)
 
 	for _, s := range *pvmList {
-		_, err = isWaitForPIInstanceAvailable(ctx, client, *s.PvmInstanceID, instanceReadyStatus)
-		if err != nil {
-			return diag.FromErr(err)
+		if dt, ok := d.GetOk(Arg_DeploymentType); ok && dt.(string) == DeploymentTypeVMNoStorage {
+			_, err = isWaitForPIInstanceShutoff(ctx, client, *s.PvmInstanceID, instanceReadyStatus, d.Timeout(schema.TimeoutCreate))
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		} else {
+			_, err = isWaitForPIInstanceAvailable(ctx, client, *s.PvmInstanceID, instanceReadyStatus, d.Timeout(schema.TimeoutCreate))
+			if err != nil {
+				return diag.FromErr(err)
+			}
 		}
 	}
 
 	// If Storage Pool Affinity is given as false we need to update the vm instance.
 	// Default value is true which indicates that all volumes attached to the server
 	// must reside in the same storage pool.
-	storagePoolAffinity := d.Get(PIInstanceStoragePoolAffinity).(bool)
+	storagePoolAffinity := d.Get(Arg_StoragePoolAffinity).(bool)
 	if !storagePoolAffinity {
 		for _, s := range *pvmList {
 			body := &models.PVMInstanceUpdate{
@@ -408,8 +558,35 @@ func resourceIBMPIInstanceCreate(ctx context.Context, d *schema.ResourceData, me
 		}
 	}
 
-	return resourceIBMPIInstanceRead(ctx, d, meta)
+	// If user tags are set, make sure tags are set correctly before moving on
+	if _, ok := d.GetOk(Arg_UserTags); ok {
+		oldList, newList := d.GetChange(Arg_UserTags)
+		for _, s := range *pvmList {
+			if s.Crn != "" {
+				err := flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, string(s.Crn), "", UserTagType)
+				if err != nil {
+					log.Printf("Error on update of pi instance (%s) pi_user_tags during creation: %s", *s.PvmInstanceID, err)
+				}
+			}
+		}
+	}
 
+	// If virtual optical device provided then update cloud initialization
+	if vod, ok := d.GetOk(Arg_VirtualOpticalDevice); ok {
+		for _, s := range *pvmList {
+			body := &models.PVMInstanceUpdate{
+				CloudInitialization: &models.CloudInitialization{
+					VirtualOpticalDevice: vod.(string),
+				},
+			}
+			_, err = client.Update(*s.PvmInstanceID, body)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	return resourceIBMPIInstanceRead(ctx, d, meta)
 }
 
 func resourceIBMPIInstanceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -418,96 +595,128 @@ func resourceIBMPIInstanceRead(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID, instanceID, err := splitID(d.Id())
+	idArr, err := flex.IdParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	client := st.NewIBMPIInstanceClient(ctx, sess, cloudInstanceID)
+	cloudInstanceID := idArr[0]
+	instanceID := idArr[1]
+
+	client := instance.NewIBMPIInstanceClient(ctx, sess, cloudInstanceID)
 	powervmdata, err := client.Get(instanceID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.Set(helpers.PIInstanceMemory, powervmdata.Memory)
-	d.Set(helpers.PIInstanceProcessors, powervmdata.Processors)
+	if powervmdata.Crn != "" {
+		d.Set(Attr_CRN, powervmdata.Crn)
+		tags, err := flex.GetTagsUsingCRN(meta, string(powervmdata.Crn))
+		if err != nil {
+			log.Printf("Error on get of ibm pi instance (%s) pi_user_tags: %s", *powervmdata.PvmInstanceID, err)
+		}
+		d.Set(Arg_UserTags, tags)
+	}
+	d.Set(Arg_Memory, powervmdata.Memory)
+	d.Set(Arg_Processors, powervmdata.Processors)
 	if powervmdata.Status != nil {
-		d.Set("status", powervmdata.Status)
+		d.Set(Attr_Status, powervmdata.Status)
 	}
-	d.Set(helpers.PIInstanceProcType, powervmdata.ProcType)
-	if powervmdata.Migratable != nil {
-		d.Set("pi_migratable", powervmdata.Migratable)
+	d.Set(Arg_CloudInstanceID, cloudInstanceID)
+	d.Set(Arg_ImageID, powervmdata.ImageID)
+	d.Set(Arg_InstanceName, powervmdata.ServerName)
+	d.Set(Arg_ProcType, powervmdata.ProcType)
+	d.Set(Arg_StoragePool, powervmdata.StoragePool)
+	d.Set(Arg_StoragePoolAffinity, powervmdata.StoragePoolAffinity)
+	d.Set(Attr_InstanceID, powervmdata.PvmInstanceID)
+	d.Set(Attr_MinProcessors, powervmdata.Minproc)
+	d.Set(Attr_Progress, powervmdata.Progress)
+	if *powervmdata.PlacementGroup != None {
+		d.Set(Arg_PlacementGroupID, powervmdata.PlacementGroup)
 	}
-	d.Set("min_processors", powervmdata.Minproc)
-	d.Set(helpers.PIInstanceProgress, powervmdata.Progress)
-	if powervmdata.StorageType != nil {
-		d.Set(helpers.PIInstanceStorageType, powervmdata.StorageType)
-	}
-	d.Set(PIInstanceStoragePool, powervmdata.StoragePool)
-	d.Set(PIInstanceStoragePoolAffinity, powervmdata.StoragePoolAffinity)
-	d.Set(helpers.PICloudInstanceId, cloudInstanceID)
-	d.Set("instance_id", powervmdata.PvmInstanceID)
-	d.Set(helpers.PIInstanceName, powervmdata.ServerName)
-	d.Set(helpers.PIInstanceImageId, powervmdata.ImageID)
-	if *powervmdata.PlacementGroup != "none" {
-		d.Set(helpers.PIPlacementGroupID, powervmdata.PlacementGroup)
-	}
-	d.Set(Arg_PIInstanceSharedProcessorPool, powervmdata.SharedProcessorPool)
-	d.Set(Attr_PIInstanceSharedProcessorPoolID, powervmdata.SharedProcessorPoolID)
+	d.Set(Arg_SharedProcessorPool, powervmdata.SharedProcessorPool)
+	d.Set(Attr_SharedProcessorPoolID, powervmdata.SharedProcessorPoolID)
 
 	networksMap := []map[string]interface{}{}
 	if powervmdata.Networks != nil {
 		for _, n := range powervmdata.Networks {
 			if n != nil {
 				v := map[string]interface{}{
-					"ip_address":   n.IPAddress,
-					"mac_address":  n.MacAddress,
-					"network_id":   n.NetworkID,
-					"network_name": n.NetworkName,
-					"type":         n.Type,
-					"external_ip":  n.ExternalIP,
+					Attr_ExternalIP:         n.ExternalIP,
+					Attr_IPAddress:          n.IPAddress,
+					Attr_MacAddress:         n.MacAddress,
+					Attr_NetworkID:          n.NetworkID,
+					Attr_NetworkInterfaceID: n.NetworkInterfaceID,
+					Attr_NetworkName:        n.NetworkName,
+					Attr_Type:               n.Type,
+				}
+				if len(n.NetworkSecurityGroupIDs) > 0 {
+					v[Attr_NetworkSecurityGroupIDs] = n.NetworkSecurityGroupIDs
+				}
+				if len(n.NetworkSecurityGroupsHref) > 0 {
+					v[Attr_NetworkSecurityGroupsHref] = n.NetworkSecurityGroupsHref
 				}
 				networksMap = append(networksMap, v)
 			}
 		}
 	}
-	d.Set(PIInstanceNetwork, networksMap)
+	d.Set(Arg_Network, networksMap)
 
 	if powervmdata.SapProfile != nil && powervmdata.SapProfile.ProfileID != nil {
-		d.Set(PISAPInstanceProfileID, powervmdata.SapProfile.ProfileID)
+		d.Set(Arg_SAPProfileID, powervmdata.SapProfile.ProfileID)
 	}
-	d.Set(helpers.PIInstanceSystemType, powervmdata.SysType)
-	d.Set("min_memory", powervmdata.Minmem)
-	d.Set("max_processors", powervmdata.Maxproc)
-	d.Set("max_memory", powervmdata.Maxmem)
-	d.Set("pin_policy", powervmdata.PinPolicy)
-	d.Set("operating_system", powervmdata.OperatingSystem)
-	if powervmdata.OsType != nil {
-		d.Set("os_type", powervmdata.OsType)
-	}
+	d.Set(Arg_SysType, powervmdata.SysType)
+	d.Set(Attr_DedicatedHostID, powervmdata.DedicatedHostID)
+	d.Set(Attr_MinMemory, powervmdata.Minmem)
+	d.Set(Attr_MaxProcessors, powervmdata.Maxproc)
+	d.Set(Attr_MaxMemory, powervmdata.Maxmem)
+	d.Set(Attr_PinPolicy, powervmdata.PinPolicy)
+	d.Set(Attr_OperatingSystem, powervmdata.OperatingSystem)
+	d.Set(Attr_OSType, powervmdata.OsType)
 
 	if powervmdata.Health != nil {
-		d.Set("health_status", powervmdata.Health.Status)
+		d.Set(Attr_HealthStatus, powervmdata.Health.Status)
 	}
 	if powervmdata.VirtualCores != nil {
-		d.Set(helpers.PIVirtualCoresAssigned, powervmdata.VirtualCores.Assigned)
-		d.Set("max_virtual_cores", powervmdata.VirtualCores.Max)
-		d.Set("min_virtual_cores", powervmdata.VirtualCores.Min)
+		d.Set(Arg_VirtualCoresAssigned, powervmdata.VirtualCores.Assigned)
+		d.Set(Attr_MaxVirtualCores, powervmdata.VirtualCores.Max)
+		d.Set(Attr_MinVirtualCores, powervmdata.VirtualCores.Min)
 	}
-	d.Set(helpers.PIInstanceLicenseRepositoryCapacity, powervmdata.LicenseRepositoryCapacity)
-	d.Set(PIInstanceDeploymentType, powervmdata.DeploymentType)
+	d.Set(Arg_DeploymentType, powervmdata.DeploymentType)
+	d.Set(Arg_LicenseRepositoryCapacity, powervmdata.LicenseRepositoryCapacity)
+	if powervmdata.SoftwareLicenses != nil {
+		d.Set(Arg_IBMiCSS, powervmdata.SoftwareLicenses.IbmiCSS)
+		d.Set(Arg_IBMiPHA, powervmdata.SoftwareLicenses.IbmiPHA)
+		d.Set(Attr_IBMiRDS, powervmdata.SoftwareLicenses.IbmiRDS)
+		if *powervmdata.SoftwareLicenses.IbmiRDS {
+			d.Set(Arg_IBMiRDSUsers, powervmdata.SoftwareLicenses.IbmiRDSUsers)
+		} else {
+			d.Set(Arg_IBMiRDSUsers, 0)
+		}
+	}
+	if powervmdata.Fault != nil {
+		d.Set(Attr_Fault, flattenPvmInstanceFault(powervmdata.Fault))
+	} else {
+		d.Set(Attr_Fault, nil)
+	}
+
+	if powervmdata.VirtualSerialNumber != nil {
+		d.Set(Arg_VirtualSerialNumber, flattenVirtualSerialNumberToList(powervmdata.VirtualSerialNumber))
+	} else {
+		d.Set(Arg_VirtualSerialNumber, nil)
+	}
+
 	return nil
 }
 
 func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	name := d.Get(Arg_InstanceName).(string)
+	mem := d.Get(Arg_Memory).(float64)
+	procs := d.Get(Arg_Processors).(float64)
+	processortype := d.Get(Arg_ProcType).(string)
+	assignedVirtualCores := int64(d.Get(Arg_VirtualCoresAssigned).(int))
 
-	name := d.Get(helpers.PIInstanceName).(string)
-	mem := d.Get(helpers.PIInstanceMemory).(float64)
-	procs := d.Get(helpers.PIInstanceProcessors).(float64)
-	processortype := d.Get(helpers.PIInstanceProcType).(string)
-	assignedVirtualCores := int64(d.Get(helpers.PIVirtualCoresAssigned).(int))
-
-	if d.Get("health_status") == "WARNING" {
+	if d.Get(Attr_HealthStatus) == Warning {
 		return diag.Errorf("the operation cannot be performed when the lpar health in the WARNING State")
 	}
 
@@ -521,37 +730,51 @@ func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 
-	client := st.NewIBMPIInstanceClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIInstanceClient(ctx, sess, cloudInstanceID)
 
 	// Check if cloud instance is capable of changing virtual cores
-	cloudInstanceClient := st.NewIBMPICloudInstanceClient(ctx, sess, cloudInstanceID)
+	cloudInstanceClient := instance.NewIBMPICloudInstanceClient(ctx, sess, cloudInstanceID)
 	cloudInstance, err := cloudInstanceClient.Get(cloudInstanceID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	cores_enabled := checkCloudInstanceCapability(cloudInstance, CUSTOM_VIRTUAL_CORES)
 
-	if d.HasChange(helpers.PIInstanceName) {
-		body := &models.PVMInstanceUpdate{
-			ServerName: name,
+	if d.HasChanges(Arg_InstanceName, Arg_VirtualOpticalDevice) {
+		if d.HasChange(Arg_InstanceName) && d.HasChange(Arg_VirtualOpticalDevice) {
+			oldVOD, _ := d.GetChange(Arg_VirtualOpticalDevice)
+			d.Set(Arg_VirtualOpticalDevice, oldVOD)
+			return diag.Errorf("updates to %s and %s are mutually exclusive", Arg_InstanceName, Arg_VirtualOpticalDevice)
+		}
+		body := &models.PVMInstanceUpdate{}
+		if d.HasChange(Arg_InstanceName) {
+			body.ServerName = name
+		}
+		if d.HasChange(Arg_VirtualOpticalDevice) {
+			body.CloudInitialization = &models.CloudInitialization{}
+			if vod, ok := d.GetOk(Arg_VirtualOpticalDevice); ok {
+				body.CloudInitialization.VirtualOpticalDevice = vod.(string)
+			} else {
+				body.CloudInitialization.VirtualOpticalDevice = Detach
+			}
 		}
 		_, err = client.Update(instanceID, body)
 		if err != nil {
-			return diag.Errorf("failed to update the lpar with the change for name: %v", err)
+			return diag.Errorf("failed to update the lpar: %v", err)
 		}
-		_, err = isWaitForPIInstanceAvailable(ctx, client, instanceID, "OK")
+		_, err = isWaitForPIInstanceAvailableOrShutoffAfterUpdate(ctx, client, instanceID, OK, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
-	if d.HasChange(helpers.PIInstanceProcType) {
-
+	if d.HasChange(Arg_ProcType) {
 		// Stop the lpar
-		if d.Get("status") == "SHUTOFF" {
+		status := d.Get(Attr_Status).(string)
+		if strings.ToLower(status) == State_Shutoff {
 			log.Printf("the lpar is in the shutoff state. Nothing to do . Moving on ")
 		} else {
-			err := stopLparForResourceChange(ctx, client, instanceID)
+			err := stopLparForResourceChange(ctx, client, instanceID, d)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -570,20 +793,20 @@ func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, me
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		_, err = isWaitForPIInstanceStopped(ctx, client, instanceID)
+		_, err = isWaitForPIInstanceStopped(ctx, client, instanceID, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
 		// Start the lpar
-		err := startLparAfterResourceChange(ctx, client, instanceID)
+		err := startLparAfterResourceChange(ctx, client, instanceID, d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
 	// Virtual core will be updated only if service instance capability is enabled
-	if d.HasChange(helpers.PIVirtualCoresAssigned) {
+	if d.HasChange(Arg_VirtualCoresAssigned) {
 		body := &models.PVMInstanceUpdate{
 			VirtualCores: &models.VirtualCores{Assigned: &assignedVirtualCores},
 		}
@@ -591,18 +814,17 @@ func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, me
 		if err != nil {
 			return diag.Errorf("failed to update the lpar with the change for virtual cores: %v", err)
 		}
-		_, err = isWaitForPIInstanceAvailable(ctx, client, instanceID, "OK")
+		_, err = isWaitForPIInstanceAvailable(ctx, client, instanceID, OK, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
 	// Start of the change for Memory and Processors
-	if d.HasChange(helpers.PIInstanceMemory) || d.HasChange(helpers.PIInstanceProcessors) || d.HasChange("pi_migratable") {
+	if d.HasChange(Arg_Memory) || d.HasChange(Arg_Processors) {
 
-		maxMemLpar := d.Get("max_memory").(float64)
-		maxCPULpar := d.Get("max_processors").(float64)
-		//log.Printf("the required memory is set to [%d] and current max memory is set to  [%d] ", int(mem), int(maxMemLpar))
+		maxMemLpar := d.Get(Attr_MaxMemory).(float64)
+		maxCPULpar := d.Get(Attr_MaxProcessors).(float64)
 
 		if mem > maxMemLpar || procs > maxCPULpar {
 			log.Printf("Will require a shutdown to perform the change")
@@ -611,13 +833,11 @@ func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, me
 			log.Printf("maxCPULpar is set to %f", maxCPULpar)
 		}
 
-		//if d.GetOkExists("reboot_for_resource_change")
-
-		instanceState := d.Get("status")
+		instanceState := d.Get(Attr_Status).(string)
 		log.Printf("the instance state is %s", instanceState)
 
-		if (mem > maxMemLpar || procs > maxCPULpar) && instanceState != "SHUTOFF" {
-			err = performChangeAndReboot(ctx, client, instanceID, cloudInstanceID, mem, procs)
+		if (mem > maxMemLpar || procs > maxCPULpar) && strings.ToLower(instanceState) != State_Shutoff {
+			err = performChangeAndReboot(ctx, client, d, instanceID, mem, procs)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -626,10 +846,6 @@ func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, me
 			body := &models.PVMInstanceUpdate{
 				Memory:     mem,
 				Processors: procs,
-			}
-			if m, ok := d.GetOk("pi_migratable"); ok {
-				migratable := m.(bool)
-				body.Migratable = &migratable
 			}
 			if cores_enabled {
 				log.Printf("support for %s is enabled", CUSTOM_VIRTUAL_CORES)
@@ -642,25 +858,18 @@ func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, me
 			if err != nil {
 				return diag.Errorf("failed to update the lpar with the change %v", err)
 			}
-			if instanceState == "SHUTOFF" {
-				_, err = isWaitforPIInstanceUpdate(ctx, client, instanceID)
-				if err != nil {
-					return diag.FromErr(err)
-				}
-			} else {
-				_, err = isWaitForPIInstanceAvailable(ctx, client, instanceID, "OK")
-				if err != nil {
-					return diag.FromErr(err)
-				}
+			instanceReadyStatus := d.Get(Arg_HealthStatus).(string)
+			_, err = isWaitForPIInstanceAvailableOrShutoffAfterUpdate(ctx, client, instanceID, instanceReadyStatus, d.Timeout(schema.TimeoutUpdate))
+			if err != nil {
+				return diag.FromErr(err)
 			}
 		}
 	}
 
 	// License repository capacity will be updated only if service instance is a vtl instance
 	// might need to check if lrc was set
-	if d.HasChange(helpers.PIInstanceLicenseRepositoryCapacity) {
-
-		lrc := d.Get(helpers.PIInstanceLicenseRepositoryCapacity).(int64)
+	if d.HasChange(Arg_LicenseRepositoryCapacity) {
+		lrc := d.Get(Arg_LicenseRepositoryCapacity).(int64)
 		body := &models.PVMInstanceUpdate{
 			LicenseRepositoryCapacity: lrc,
 		}
@@ -668,25 +877,26 @@ func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, me
 		if err != nil {
 			return diag.Errorf("failed to update the lpar with the change for license repository capacity %s", err)
 		}
-		_, err = isWaitForPIInstanceAvailable(ctx, client, instanceID, "OK")
+		_, err = isWaitForPIInstanceAvailable(ctx, client, instanceID, OK, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			diag.FromErr(err)
 		}
 	}
 
-	if d.HasChange(PISAPInstanceProfileID) {
+	if d.HasChange(Arg_SAPProfileID) {
 		// Stop the lpar
-		if d.Get("status") == "SHUTOFF" {
+		status := d.Get(Attr_Status).(string)
+		if strings.ToLower(status) == State_Shutoff {
 			log.Printf("the lpar is in the shutoff state. Nothing to do... Moving on ")
 		} else {
-			err := stopLparForResourceChange(ctx, client, instanceID)
+			err := stopLparForResourceChange(ctx, client, instanceID, d)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 		}
 
 		// Update the profile id
-		profileID := d.Get(PISAPInstanceProfileID).(string)
+		profileID := d.Get(Arg_SAPProfileID).(string)
 		body := &models.PVMInstanceUpdate{
 			SapProfileID: profileID,
 		}
@@ -696,19 +906,19 @@ func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, me
 		}
 
 		// Wait for the resize to complete and status to reset
-		_, err = isWaitForPIInstanceStopped(ctx, client, instanceID)
+		_, err = isWaitForPIInstanceStopped(ctx, client, instanceID, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
 		// Start the lpar
-		err := startLparAfterResourceChange(ctx, client, instanceID)
+		err := startLparAfterResourceChange(ctx, client, instanceID, d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
-	if d.HasChange(PIInstanceStoragePoolAffinity) {
-		storagePoolAffinity := d.Get(PIInstanceStoragePoolAffinity).(bool)
+	if d.HasChange(Arg_StoragePoolAffinity) {
+		storagePoolAffinity := d.Get(Arg_StoragePoolAffinity).(bool)
 		body := &models.PVMInstanceUpdate{
 			StoragePoolAffinity: &storagePoolAffinity,
 		}
@@ -719,11 +929,10 @@ func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, me
 		}
 	}
 
-	if d.HasChange(helpers.PIPlacementGroupID) {
+	if d.HasChange(Arg_PlacementGroupID) {
+		pgClient := instance.NewIBMPIPlacementGroupClient(ctx, sess, cloudInstanceID)
 
-		pgClient := st.NewIBMPIPlacementGroupClient(ctx, sess, cloudInstanceID)
-
-		oldRaw, newRaw := d.GetChange(helpers.PIPlacementGroupID)
+		oldRaw, newRaw := d.GetChange(Arg_PlacementGroupID)
 		old := oldRaw.(string)
 		new := newRaw.(string)
 
@@ -733,10 +942,15 @@ func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, me
 			body := &models.PlacementGroupServer{
 				ID: &instanceID,
 			}
-			_, err := pgClient.DeleteMember(placementGroupID, body)
+			pgID, err := pgClient.DeleteMember(placementGroupID, body)
 			if err != nil {
 				// ignore delete member error where the server is already not in the PG
 				if !strings.Contains(err.Error(), "is not part of placement-group") {
+					return diag.FromErr(err)
+				}
+			} else {
+				_, err = isWaitForPIInstancePlacementGroupDelete(ctx, pgClient, *pgID.ID, instanceID, d.Timeout(schema.TimeoutUpdate))
+				if err != nil {
 					return diag.FromErr(err)
 				}
 			}
@@ -748,7 +962,122 @@ func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, me
 			body := &models.PlacementGroupServer{
 				ID: &instanceID,
 			}
-			_, err := pgClient.AddMember(placementGroupID, body)
+			pgID, err := pgClient.AddMember(placementGroupID, body)
+			if err != nil {
+				return diag.FromErr(err)
+			} else {
+				_, err = isWaitForPIInstancePlacementGroupAdd(ctx, pgClient, *pgID.ID, instanceID, d.Timeout(schema.TimeoutUpdate))
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
+		}
+	}
+	if d.HasChanges(Arg_IBMiCSS, Arg_IBMiPHA, Arg_IBMiRDSUsers) {
+		status := d.Get(Attr_Status).(string)
+		if strings.ToLower(status) == State_Active {
+			log.Printf("the lpar is in the Active state, continuing with update")
+		} else {
+			_, err = isWaitForPIInstanceAvailable(ctx, client, instanceID, OK, d.Timeout(schema.TimeoutUpdate))
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
+		sl := &models.SoftwareLicenses{}
+		sl.IbmiCSS = flex.PtrToBool(d.Get(Arg_IBMiCSS).(bool))
+		sl.IbmiPHA = flex.PtrToBool(d.Get(Arg_IBMiPHA).(bool))
+		ibmrdsUsers := d.Get(Arg_IBMiRDSUsers).(int)
+		if ibmrdsUsers < 0 {
+			return diag.Errorf("request with  IBM i Rational Dev Studio property requires IBM i Rational Dev Studio number of users")
+		}
+		sl.IbmiRDS = flex.PtrToBool(ibmrdsUsers > 0)
+		sl.IbmiRDSUsers = int64(ibmrdsUsers)
+
+		updatebody := &models.PVMInstanceUpdate{SoftwareLicenses: sl}
+		_, err = client.Update(instanceID, updatebody)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		_, err = isWaitForPIInstanceSoftwareLicenses(ctx, client, instanceID, sl, d.Timeout(schema.TimeoutUpdate))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange(Arg_UserTags) {
+		if crn, ok := d.GetOk(Attr_CRN); ok {
+			oldList, newList := d.GetChange(Arg_UserTags)
+			err := flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, crn.(string), "", UserTagType)
+			if err != nil {
+				log.Printf("Error on update of pi instance (%s) pi_user_tags: %s", instanceID, err)
+			}
+		}
+	}
+
+	if d.HasChange(Arg_VirtualSerialNumber) {
+		vsnClient := instance.NewIBMPIVSNClient(ctx, sess, cloudInstanceID)
+
+		if d.HasChange(Arg_VirtualSerialNumber + ".0." + Attr_Serial) {
+			instanceRestart := false
+			status := d.Get(Attr_Status).(string)
+			if strings.ToLower(status) != State_Shutoff {
+				err := stopLparForResourceChange(ctx, client, instanceID, d)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+				instanceRestart = true
+			}
+
+			oldVSN, newVSN := d.GetChange(Arg_VirtualSerialNumber)
+			if len(oldVSN.([]interface{})) > 0 {
+				retainVSN := d.Get(Arg_RetainVirtualSerialNumber).(bool)
+				deleteBody := &models.DeleteServerVirtualSerialNumber{
+					RetainVSN: retainVSN,
+				}
+				err := vsnClient.PVMInstanceDeleteVSN(instanceID, deleteBody)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+
+				_, err = isWaitForPIInstanceStopped(ctx, client, instanceID, d.Timeout(schema.TimeoutUpdate))
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
+
+			if len(newVSN.([]interface{})) > 0 {
+				newVSNMap := newVSN.([]interface{})[0].(map[string]interface{})
+				description := newVSNMap[Attr_Description].(string)
+				serial := newVSNMap[Attr_Serial].(string)
+				addBody := &models.AddServerVirtualSerialNumber{
+					Description: description,
+					Serial:      &serial,
+				}
+				_, err := vsnClient.PVMInstanceAttachVSN(instanceID, addBody)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+
+				_, err = isWaitForPIInstanceStopped(ctx, client, instanceID, d.Timeout(schema.TimeoutUpdate))
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
+
+			if instanceRestart {
+				err = startLparAfterResourceChange(ctx, client, instanceID, d)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
+		}
+
+		if !d.HasChange(Arg_VirtualSerialNumber+".0."+Attr_Serial) && d.HasChange(Arg_VirtualSerialNumber+".0."+Attr_Description) {
+			newDescriptionString := d.Get(Arg_VirtualSerialNumber + ".0." + Attr_Description).(string)
+			updateBody := &models.UpdateServerVirtualSerialNumber{
+				Description: &newDescriptionString,
+			}
+			_, err = vsnClient.PVMInstanceUpdateVSN(instanceID, updateBody)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -756,7 +1085,6 @@ func resourceIBMPIInstanceUpdate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	return resourceIBMPIInstanceRead(ctx, d, meta)
-
 }
 
 func resourceIBMPIInstanceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -765,74 +1093,87 @@ func resourceIBMPIInstanceDelete(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID, instanceID, err := splitID(d.Id())
+	idArr, err := flex.IdParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	client := st.NewIBMPIInstanceClient(ctx, sess, cloudInstanceID)
-	err = client.Delete(instanceID)
-	if err != nil {
-		return diag.FromErr(err)
+	cloudInstanceID := idArr[0]
+	client := instance.NewIBMPIInstanceClient(ctx, sess, cloudInstanceID)
+	for _, instanceID := range idArr[1:] {
+		retainVSNBool := d.Get(Arg_RetainVirtualSerialNumber).(bool)
+		if _, ok := d.GetOk(Arg_VirtualSerialNumber); ok && retainVSNBool {
+			body := &models.PVMInstanceDelete{
+				RetainVSN: &retainVSNBool,
+			}
+			err = client.DeleteWithBody(instanceID, body)
+		} else {
+			err = client.Delete(instanceID)
+		}
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
-	_, err = isWaitForPIInstanceDeleted(ctx, client, instanceID)
-	if err != nil {
-		return diag.FromErr(err)
+	for _, instanceID := range idArr[1:] {
+		_, err = isWaitForPIInstanceDeleted(ctx, client, instanceID, d.Timeout(schema.TimeoutUpdate))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	d.SetId("")
 	return nil
 }
 
-func isWaitForPIInstanceDeleted(ctx context.Context, client *st.IBMPIInstanceClient, id string) (interface{}, error) {
+func isWaitForPIInstanceDeleted(ctx context.Context, client *instance.IBMPIInstanceClient, id string, timeout time.Duration) (interface{}, error) {
 
 	log.Printf("Waiting for  (%s) to be deleted.", id)
 
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"retry", helpers.PIInstanceDeleting},
-		Target:     []string{helpers.PIInstanceNotFound},
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Retry, State_Deleting},
+		Target:     []string{State_NotFound},
 		Refresh:    isPIInstanceDeleteRefreshFunc(client, id),
-		Delay:      10 * time.Second,
-		MinTimeout: 10 * time.Second,
-		Timeout:    10 * time.Minute,
+		Delay:      Timeout_Delay,
+		MinTimeout: Timeout_Active,
+		Timeout:    timeout,
 	}
 
 	return stateConf.WaitForStateContext(ctx)
 }
 
-func isPIInstanceDeleteRefreshFunc(client *st.IBMPIInstanceClient, id string) resource.StateRefreshFunc {
+func isPIInstanceDeleteRefreshFunc(client *instance.IBMPIInstanceClient, id string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		pvm, err := client.Get(id)
 		if err != nil {
 			log.Printf("The power vm does not exist")
-			return pvm, helpers.PIInstanceNotFound, nil
+			return pvm, State_NotFound, nil
 		}
-		return pvm, helpers.PIInstanceDeleting, nil
+		return pvm, State_Deleting, nil
 	}
 }
 
-func isWaitForPIInstanceAvailable(ctx context.Context, client *st.IBMPIInstanceClient, id string, instanceReadyStatus string) (interface{}, error) {
+func isWaitForPIInstanceAvailable(ctx context.Context, client *instance.IBMPIInstanceClient, id string, instanceReadyStatus string, timeout time.Duration) (interface{}, error) {
 	log.Printf("Waiting for PIInstance (%s) to be available and active ", id)
 
-	queryTimeOut := activeTimeOut
-	if instanceReadyStatus == helpers.PIInstanceHealthWarning {
-		queryTimeOut = warningTimeOut
+	queryTimeOut := Timeout_Active
+	if instanceReadyStatus == Warning {
+		queryTimeOut = Timeout_Warning
 	}
 
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"PENDING", helpers.PIInstanceBuilding, helpers.PIInstanceHealthWarning},
-		Target:     []string{helpers.PIInstanceAvailable, helpers.PIInstanceHealthOk, "ERROR", ""},
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Pending, State_Build, Warning},
+		Target:     []string{State_Active, OK, State_Error, "", State_Shutoff},
 		Refresh:    isPIInstanceRefreshFunc(client, id, instanceReadyStatus),
-		Delay:      30 * time.Second,
+		Delay:      Timeout_Delay,
 		MinTimeout: queryTimeOut,
-		Timeout:    120 * time.Minute,
+		Timeout:    timeout,
 	}
 
 	return stateConf.WaitForStateContext(ctx)
 }
 
-func isPIInstanceRefreshFunc(client *st.IBMPIInstanceClient, id, instanceReadyStatus string) resource.StateRefreshFunc {
+func isPIInstanceRefreshFunc(client *instance.IBMPIInstanceClient, id, instanceReadyStatus string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 
 		pvm, err := client.Get(id)
@@ -840,10 +1181,10 @@ func isPIInstanceRefreshFunc(client *st.IBMPIInstanceClient, id, instanceReadySt
 			return nil, "", err
 		}
 		// Check for `instanceReadyStatus` health status and also the final health status "OK"
-		if *pvm.Status == helpers.PIInstanceAvailable && (pvm.Health.Status == instanceReadyStatus || pvm.Health.Status == helpers.PIInstanceHealthOk) {
-			return pvm, helpers.PIInstanceAvailable, nil
+		if strings.ToLower(*pvm.Status) == State_Active && (pvm.Health.Status == instanceReadyStatus || pvm.Health.Status == OK) {
+			return pvm, State_Active, nil
 		}
-		if *pvm.Status == "ERROR" {
+		if strings.ToLower(*pvm.Status) == State_Error {
 			if pvm.Fault != nil {
 				err = fmt.Errorf("failed to create the lpar: %s", pvm.Fault.Message)
 			} else {
@@ -852,7 +1193,200 @@ func isPIInstanceRefreshFunc(client *st.IBMPIInstanceClient, id, instanceReadySt
 			return pvm, *pvm.Status, err
 		}
 
-		return pvm, helpers.PIInstanceBuilding, nil
+		return pvm, State_Build, nil
+	}
+}
+
+func isWaitForPIInstanceAvailableOrShutoffAfterUpdate(ctx context.Context, client *instance.IBMPIInstanceClient, id string, instanceReadyStatus string, timeout time.Duration) (interface{}, error) {
+	log.Printf("Waiting for PIInstance (%s) to be available and active or shutoff ", id)
+
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Updating, Warning},
+		Target:     []string{State_Active, OK, State_Shutoff},
+		Refresh:    isPIInstanceShutoffOrActiveAfterResourceChange(client, id, instanceReadyStatus),
+		Delay:      Timeout_Delay,
+		MinTimeout: 5 * time.Minute,
+		Timeout:    timeout,
+	}
+
+	return stateConf.WaitForStateContext(ctx)
+}
+
+func isPIInstanceShutoffOrActiveAfterResourceChange(client *instance.IBMPIInstanceClient, id string, instanceReadyStatus string) retry.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+
+		pvm, err := client.Get(id)
+		if err != nil {
+			return nil, "", err
+		}
+		if strings.ToLower(*pvm.Status) == State_Active && (pvm.Health.Status == instanceReadyStatus || pvm.Health.Status == OK) {
+			log.Printf("The lpar is now active after the resource change...")
+			return pvm, State_Active, nil
+		}
+		if strings.ToLower(*pvm.Status) == State_Shutoff && pvm.Health.Status == OK {
+			log.Printf("The lpar is now off after the resource change...")
+			return pvm, State_Shutoff, nil
+		}
+
+		return pvm, State_Updating, nil
+	}
+}
+
+func isWaitForPIInstancePlacementGroupAdd(ctx context.Context, client *instance.IBMPIPlacementGroupClient, pgID string, id string, timeout time.Duration) (interface{}, error) {
+	log.Printf("Waiting for PIInstance Placement Group (%s) to be updated ", id)
+
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Adding},
+		Target:     []string{State_Added},
+		Refresh:    isPIInstancePlacementGroupAddRefreshFunc(client, pgID, id),
+		Delay:      Timeout_Delay,
+		MinTimeout: Timeout_Active,
+		Timeout:    timeout,
+	}
+
+	return stateConf.WaitForStateContext(ctx)
+}
+
+func isPIInstancePlacementGroupAddRefreshFunc(client *instance.IBMPIPlacementGroupClient, pgID string, id string) retry.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		pg, err := client.Get(pgID)
+		if err != nil {
+			return nil, "", err
+		}
+		for _, x := range pg.Members {
+			if x == id {
+				return pg, State_Added, nil
+			}
+		}
+		return pg, State_Adding, nil
+	}
+}
+
+func isWaitForPIInstancePlacementGroupDelete(ctx context.Context, client *instance.IBMPIPlacementGroupClient, pgID string, id string, timeout time.Duration) (interface{}, error) {
+	log.Printf("Waiting for PIInstance Placement Group (%s) to be updated ", id)
+
+	queryTimeOut := Timeout_Active
+
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Deleting},
+		Target:     []string{State_Deleted},
+		Refresh:    isPIInstancePlacementGroupDeleteRefreshFunc(client, pgID, id),
+		Delay:      Timeout_Delay,
+		MinTimeout: queryTimeOut,
+		Timeout:    timeout,
+	}
+
+	return stateConf.WaitForStateContext(ctx)
+}
+
+func isPIInstancePlacementGroupDeleteRefreshFunc(client *instance.IBMPIPlacementGroupClient, pgID string, id string) retry.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		pg, err := client.Get(pgID)
+		if err != nil {
+			return nil, "", err
+		}
+		for _, x := range pg.Members {
+			if x == id {
+				return pg, State_Deleting, nil
+			}
+		}
+		return pg, State_Deleted, nil
+	}
+}
+
+func isWaitForPIInstanceSoftwareLicenses(ctx context.Context, client *instance.IBMPIInstanceClient, id string, softwareLicenses *models.SoftwareLicenses, timeout time.Duration) (interface{}, error) {
+	log.Printf("Waiting for PIInstance Software Licenses (%s) to be updated ", id)
+
+	queryTimeOut := Timeout_Active
+
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_InProgress},
+		Target:     []string{State_Available},
+		Refresh:    isPIInstanceSoftwareLicensesRefreshFunc(client, id, softwareLicenses),
+		Delay:      Timeout_Delay,
+		MinTimeout: queryTimeOut,
+		Timeout:    timeout,
+	}
+
+	return stateConf.WaitForStateContext(ctx)
+}
+
+func isPIInstanceSoftwareLicensesRefreshFunc(client *instance.IBMPIInstanceClient, id string, softwareLicenses *models.SoftwareLicenses) retry.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+
+		pvm, err := client.Get(id)
+		if err != nil {
+			return nil, "", err
+		}
+
+		// Check that each software license we modified has been updated
+		if softwareLicenses.IbmiCSS != nil {
+			if *softwareLicenses.IbmiCSS != *pvm.SoftwareLicenses.IbmiCSS {
+				return pvm, State_InProgress, nil
+			}
+		}
+
+		if softwareLicenses.IbmiPHA != nil {
+			if *softwareLicenses.IbmiPHA != *pvm.SoftwareLicenses.IbmiPHA {
+				return pvm, State_InProgress, nil
+			}
+		}
+
+		if softwareLicenses.IbmiRDS != nil {
+			// If the update set IBMiRDS to false, don't check IBMiRDSUsers as it will be updated on the terraform side on the read
+			if !*softwareLicenses.IbmiRDS {
+				if *softwareLicenses.IbmiRDS != *pvm.SoftwareLicenses.IbmiRDS {
+					return pvm, State_InProgress, nil
+				}
+			} else if (*softwareLicenses.IbmiRDS != *pvm.SoftwareLicenses.IbmiRDS) || (softwareLicenses.IbmiRDSUsers != pvm.SoftwareLicenses.IbmiRDSUsers) {
+				return pvm, State_InProgress, nil
+			}
+		}
+
+		return pvm, State_Available, nil
+	}
+}
+
+func isWaitForPIInstanceShutoff(ctx context.Context, client *instance.IBMPIInstanceClient, id string, instanceReadyStatus string, timeout time.Duration) (interface{}, error) {
+	log.Printf("Waiting for PIInstance (%s) to be shutoff and health active ", id)
+
+	queryTimeOut := Timeout_Active
+	if instanceReadyStatus == Warning {
+		queryTimeOut = Timeout_Warning
+	}
+
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Pending, State_Build, Warning},
+		Target:     []string{OK, State_Error, "", State_Shutoff},
+		Refresh:    isPIInstanceShutoffRefreshFunc(client, id, instanceReadyStatus),
+		Delay:      Timeout_Delay,
+		MinTimeout: queryTimeOut,
+		Timeout:    timeout,
+	}
+
+	return stateConf.WaitForStateContext(ctx)
+}
+
+func isPIInstanceShutoffRefreshFunc(client *instance.IBMPIInstanceClient, id, instanceReadyStatus string) retry.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+
+		pvm, err := client.Get(id)
+		if err != nil {
+			return nil, "", err
+		}
+		if strings.ToLower(*pvm.Status) == State_Shutoff && (pvm.Health.Status == instanceReadyStatus || pvm.Health.Status == OK) {
+			return pvm, State_Shutoff, nil
+		}
+		if strings.ToLower(*pvm.Status) == State_Error {
+			if pvm.Fault != nil {
+				err = fmt.Errorf("failed to create the lpar: %s", pvm.Fault.Message)
+			} else {
+				err = fmt.Errorf("failed to create the lpar")
+			}
+			return pvm, *pvm.Status, err
+		}
+
+		return pvm, State_Build, nil
 	}
 }
 
@@ -865,22 +1399,22 @@ func encodeBase64(userData string) string {
 	return userData
 }
 
-func isWaitForPIInstanceStopped(ctx context.Context, client *st.IBMPIInstanceClient, id string) (interface{}, error) {
+func isWaitForPIInstanceStopped(ctx context.Context, client *instance.IBMPIInstanceClient, id string, timeout time.Duration) (interface{}, error) {
 	log.Printf("Waiting for PIInstance (%s) to be stopped and powered off ", id)
 
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"STOPPING", "RESIZE", "VERIFY_RESIZE", helpers.PIInstanceHealthWarning},
-		Target:     []string{"OK", "SHUTOFF"},
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Stopping, State_Resize, State_VerifyResize, Warning},
+		Target:     []string{OK, State_Shutoff},
 		Refresh:    isPIInstanceRefreshFuncOff(client, id),
-		Delay:      10 * time.Second,
-		MinTimeout: 2 * time.Minute, // This is the time that the client will execute to check the status of the request
-		Timeout:    30 * time.Minute,
+		Delay:      Timeout_Delay,
+		MinTimeout: Timeout_Active, // This is the time that the client will execute to check the status of the request
+		Timeout:    timeout,
 	}
 
 	return stateConf.WaitForStateContext(ctx)
 }
 
-func isPIInstanceRefreshFuncOff(client *st.IBMPIInstanceClient, id string) resource.StateRefreshFunc {
+func isPIInstanceRefreshFuncOff(client *instance.IBMPIInstanceClient, id string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 
 		log.Printf("Calling the check Refresh status of the pvm instance %s", id)
@@ -888,47 +1422,45 @@ func isPIInstanceRefreshFuncOff(client *st.IBMPIInstanceClient, id string) resou
 		if err != nil {
 			return nil, "", err
 		}
-		if *pvm.Status == "SHUTOFF" && pvm.Health.Status == helpers.PIInstanceHealthOk {
-			return pvm, "SHUTOFF", nil
+		if strings.ToLower(*pvm.Status) == State_Shutoff && pvm.Health.Status == OK {
+			return pvm, State_Shutoff, nil
 		}
-		return pvm, "STOPPING", nil
+		return pvm, State_Stopping, nil
 	}
 }
 
-func stopLparForResourceChange(ctx context.Context, client *st.IBMPIInstanceClient, id string) error {
+func stopLparForResourceChange(ctx context.Context, client *instance.IBMPIInstanceClient, id string, d *schema.ResourceData) error {
 	body := &models.PVMInstanceAction{
 		//Action: flex.PtrToString("stop"),
-		Action: flex.PtrToString("immediate-shutdown"),
+		Action: flex.PtrToString(Action_ImmediateShutdown),
 	}
 	err := client.Action(id, body)
 	if err != nil {
 		return fmt.Errorf("failed to perform the stop action on the pvm instance %v", err)
 	}
 
-	_, err = isWaitForPIInstanceStopped(ctx, client, id)
+	_, err = isWaitForPIInstanceStopped(ctx, client, id, d.Timeout(schema.TimeoutUpdate))
 
 	return err
 }
 
 // Start the lpar
-
-func startLparAfterResourceChange(ctx context.Context, client *st.IBMPIInstanceClient, id string) error {
+func startLparAfterResourceChange(ctx context.Context, client *instance.IBMPIInstanceClient, id string, d *schema.ResourceData) error {
 	body := &models.PVMInstanceAction{
-		Action: flex.PtrToString("start"),
+		Action: flex.PtrToString(Action_Start),
 	}
 	err := client.Action(id, body)
 	if err != nil {
 		return fmt.Errorf("failed to perform the start action on the pvm instance %v", err)
 	}
 
-	_, err = isWaitForPIInstanceAvailable(ctx, client, id, "OK")
+	_, err = isWaitForPIInstanceAvailable(ctx, client, id, OK, d.Timeout(schema.TimeoutUpdate))
 
 	return err
 }
 
 // Stop / Modify / Start only when the lpar is off limits
-
-func performChangeAndReboot(ctx context.Context, client *st.IBMPIInstanceClient, id, cloudInstanceID string, mem, procs float64) error {
+func performChangeAndReboot(ctx context.Context, client *instance.IBMPIInstanceClient, d *schema.ResourceData, id string, mem, procs float64) error {
 	/*
 		These are the steps
 		1. Stop the lpar - Check if the lpar is SHUTOFF
@@ -939,7 +1471,7 @@ func performChangeAndReboot(ctx context.Context, client *st.IBMPIInstanceClient,
 	//Execute the stop
 
 	log.Printf("Calling the stop lpar for Resource Change code ..")
-	err := stopLparForResourceChange(ctx, client, id)
+	err := stopLparForResourceChange(ctx, client, id, d)
 	if err != nil {
 		return err
 	}
@@ -954,14 +1486,14 @@ func performChangeAndReboot(ctx context.Context, client *st.IBMPIInstanceClient,
 		return fmt.Errorf("failed to update the lpar with the change, %s", updateErr)
 	}
 
-	_, err = isWaitforPIInstanceUpdate(ctx, client, id)
+	_, err = isWaitForPIInstanceShutoffAfterUpdate(ctx, client, id, d.Timeout(schema.TimeoutUpdate))
 	if err != nil {
 		return fmt.Errorf("failed to get an update from the Service after the resource change, %s", err)
 	}
 
 	// Now we can start the lpar
 	log.Printf("Calling the start lpar After the  Resource Change code ..")
-	err = startLparAfterResourceChange(ctx, client, id)
+	err = startLparAfterResourceChange(ctx, client, id, d)
 	if err != nil {
 		return err
 	}
@@ -970,22 +1502,22 @@ func performChangeAndReboot(ctx context.Context, client *st.IBMPIInstanceClient,
 
 }
 
-func isWaitforPIInstanceUpdate(ctx context.Context, client *st.IBMPIInstanceClient, id string) (interface{}, error) {
+func isWaitForPIInstanceShutoffAfterUpdate(ctx context.Context, client *instance.IBMPIInstanceClient, id string, timeout time.Duration) (interface{}, error) {
 	log.Printf("Waiting for PIInstance (%s) to be ACTIVE or SHUTOFF AFTER THE RESIZE Due to DLPAR Operation ", id)
 
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"RESIZE", "VERIFY_RESIZE"},
-		Target:     []string{"ACTIVE", "SHUTOFF", helpers.PIInstanceHealthOk},
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Resize, State_VerifyResize},
+		Target:     []string{State_Active, State_Shutoff, OK},
 		Refresh:    isPIInstanceShutAfterResourceChange(client, id),
-		Delay:      10 * time.Second,
+		Delay:      Timeout_Delay,
 		MinTimeout: 5 * time.Minute,
-		Timeout:    60 * time.Minute,
+		Timeout:    timeout,
 	}
 
 	return stateConf.WaitForStateContext(ctx)
 }
 
-func isPIInstanceShutAfterResourceChange(client *st.IBMPIInstanceClient, id string) resource.StateRefreshFunc {
+func isPIInstanceShutAfterResourceChange(client *instance.IBMPIInstanceClient, id string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 
 		pvm, err := client.Get(id)
@@ -993,12 +1525,12 @@ func isPIInstanceShutAfterResourceChange(client *st.IBMPIInstanceClient, id stri
 			return nil, "", err
 		}
 
-		if *pvm.Status == "SHUTOFF" && pvm.Health.Status == helpers.PIInstanceHealthOk {
+		if strings.ToLower(*pvm.Status) == State_Shutoff && pvm.Health.Status == OK {
 			log.Printf("The lpar is now off after the resource change...")
-			return pvm, "SHUTOFF", nil
+			return pvm, State_Shutoff, nil
 		}
 
-		return pvm, "RESIZE", nil
+		return pvm, State_Resize, nil
 	}
 }
 
@@ -1007,8 +1539,9 @@ func expandPVMNetworks(networks []interface{}) []*models.PVMInstanceAddNetwork {
 	for _, v := range networks {
 		network := v.(map[string]interface{})
 		pvmInstanceNetwork := &models.PVMInstanceAddNetwork{
-			IPAddress: network["ip_address"].(string),
-			NetworkID: flex.PtrToString(network["network_id"].(string)),
+			IPAddress:               network[Attr_IPAddress].(string),
+			NetworkID:               flex.PtrToString(network[Attr_NetworkID].(string)),
+			NetworkSecurityGroupIDs: flex.ExpandStringList((network[Attr_NetworkSecurityGroupIDs].(*schema.Set)).List()),
 		}
 		pvmNetworks = append(pvmNetworks, pvmInstanceNetwork)
 	}
@@ -1026,24 +1559,23 @@ func checkCloudInstanceCapability(cloudInstance *models.CloudInstance, custom_ca
 	return false
 }
 
-func createSAPInstance(d *schema.ResourceData, sapClient *st.IBMPISAPInstanceClient) (*models.PVMInstanceList, error) {
+func createSAPInstance(d *schema.ResourceData, sapClient *instance.IBMPISAPInstanceClient) (*models.PVMInstanceList, error) {
+	name := d.Get(Arg_InstanceName).(string)
+	profileID := d.Get(Arg_SAPProfileID).(string)
+	imageid := d.Get(Arg_ImageID).(string)
 
-	name := d.Get(helpers.PIInstanceName).(string)
-	profileID := d.Get(PISAPInstanceProfileID).(string)
-	imageid := d.Get(helpers.PIInstanceImageId).(string)
-
-	pvmNetworks := expandPVMNetworks(d.Get(PIInstanceNetwork).([]interface{}))
+	pvmNetworks := expandPVMNetworks(d.Get(Arg_Network).([]interface{}))
 
 	var replicants int64
-	if r, ok := d.GetOk(helpers.PIInstanceReplicants); ok {
+	if r, ok := d.GetOk(Arg_Replicants); ok {
 		replicants = int64(r.(int))
 	}
 	var replicationpolicy string
-	if r, ok := d.GetOk(helpers.PIInstanceReplicationPolicy); ok {
+	if r, ok := d.GetOk(Arg_ReplicationPolicy); ok {
 		replicationpolicy = r.(string)
 	}
 	var replicationNamingScheme string
-	if r, ok := d.GetOk(helpers.PIInstanceReplicationScheme); ok {
+	if r, ok := d.GetOk(Arg_ReplicationScheme); ok {
 		replicationNamingScheme = r.(string)
 	}
 	instances := &models.PVMInstanceMultiCreate{
@@ -1060,62 +1592,76 @@ func createSAPInstance(d *schema.ResourceData, sapClient *st.IBMPISAPInstanceCli
 		ProfileID: &profileID,
 	}
 
-	if v, ok := d.GetOk(PISAPInstanceDeploymentType); ok {
+	if v, ok := d.GetOk(Arg_SAPDeploymentType); ok {
 		body.DeploymentType = v.(string)
 	}
-	if v, ok := d.GetOk(helpers.PIInstanceVolumeIds); ok {
+	if v, ok := d.GetOk(Arg_VolumeIDs); ok {
 		volids := flex.ExpandStringList((v.(*schema.Set)).List())
 		if len(volids) > 0 {
 			body.VolumeIDs = volids
 		}
 	}
-	if p, ok := d.GetOk(helpers.PIInstancePinPolicy); ok {
+	if p, ok := d.GetOk(Arg_PinPolicy); ok {
 		pinpolicy := p.(string)
-		if d.Get(helpers.PIInstancePinPolicy) == "soft" || d.Get(helpers.PIInstancePinPolicy) == "hard" {
+		if d.Get(Arg_PinPolicy) == Soft || d.Get(Arg_PinPolicy) == Hard {
 			body.PinPolicy = models.PinPolicy(pinpolicy)
 		}
 	}
 
-	if v, ok := d.GetOk(helpers.PIInstanceSSHKeyName); ok {
+	if v, ok := d.GetOk(Arg_KeyPairName); ok {
 		sshkey := v.(string)
 		body.SSHKeyName = sshkey
 	}
-	if u, ok := d.GetOk(helpers.PIInstanceUserData); ok {
+	if u, ok := d.GetOk(Arg_UserData); ok {
 		userData := u.(string)
 		body.UserData = encodeBase64(userData)
 	}
-	if sys, ok := d.GetOk(helpers.PIInstanceSystemType); ok {
+	if sys, ok := d.GetOk(Arg_SysType); ok {
 		body.SysType = sys.(string)
 	}
 
-	if st, ok := d.GetOk(helpers.PIInstanceStorageType); ok {
+	if st, ok := d.GetOk(Arg_StorageType); ok {
 		body.StorageType = st.(string)
 	}
-	if sp, ok := d.GetOk(PIInstanceStoragePool); ok {
+	var bootVolumeReplicationEnabled bool
+	if bootVolumeReplicationBoolean, ok := d.GetOk(Arg_BootVolumeReplicationEnabled); ok {
+		bootVolumeReplicationEnabled = bootVolumeReplicationBoolean.(bool)
+		body.BootVolumeReplicationEnabled = &bootVolumeReplicationEnabled
+	}
+	var replicationSites []string
+	if sites, ok := d.GetOk(Arg_ReplicationSites); ok {
+		if !bootVolumeReplicationEnabled {
+			return nil, fmt.Errorf("must set %s to true in order to specify replication sites", Arg_BootVolumeReplicationEnabled)
+		} else {
+			replicationSites = flex.FlattenSet(sites.(*schema.Set))
+			body.ReplicationSites = replicationSites
+		}
+	}
+	if sp, ok := d.GetOk(Arg_StoragePool); ok {
 		body.StoragePool = sp.(string)
 	}
 
-	if ap, ok := d.GetOk(PIAffinityPolicy); ok {
+	if ap, ok := d.GetOk(Arg_AffinityPolicy); ok {
 		policy := ap.(string)
 		affinity := &models.StorageAffinity{
 			AffinityPolicy: &policy,
 		}
 
-		if policy == "affinity" {
-			if av, ok := d.GetOk(PIAffinityVolume); ok {
+		if policy == Affinity {
+			if av, ok := d.GetOk(Arg_AffinityVolume); ok {
 				afvol := av.(string)
 				affinity.AffinityVolume = &afvol
 			}
-			if ai, ok := d.GetOk(PIAffinityInstance); ok {
+			if ai, ok := d.GetOk(Arg_AffinityInstance); ok {
 				afins := ai.(string)
 				affinity.AffinityPVMInstance = &afins
 			}
 		} else {
-			if avs, ok := d.GetOk(PIAntiAffinityVolumes); ok {
+			if avs, ok := d.GetOk(Arg_AntiAffinityVolumes); ok {
 				afvols := flex.ExpandStringList(avs.([]interface{}))
 				affinity.AntiAffinityVolumes = afvols
 			}
-			if ais, ok := d.GetOk(PIAntiAffinityInstances); ok {
+			if ais, ok := d.GetOk(Arg_AntiAffinityInstances); ok {
 				afinss := flex.ExpandStringList(ais.([]interface{}))
 				affinity.AntiAffinityPVMInstances = afinss
 			}
@@ -1123,10 +1669,15 @@ func createSAPInstance(d *schema.ResourceData, sapClient *st.IBMPISAPInstanceCli
 		body.StorageAffinity = affinity
 	}
 
-	if pg, ok := d.GetOk(helpers.PIPlacementGroupID); ok {
+	if pg, ok := d.GetOk(Arg_PlacementGroupID); ok {
 		body.PlacementGroup = pg.(string)
 	}
-
+	if deploymentTarget, ok := d.GetOk(Arg_DeploymentTarget); ok {
+		body.DeploymentTarget = expandDeploymentTarget(deploymentTarget.(*schema.Set).List())
+	}
+	if tags, ok := d.GetOk(Arg_UserTags); ok {
+		body.UserTags = flex.FlattenSet(tags.(*schema.Set))
+	}
 	pvmList, err := sapClient.Create(body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to provision: %v", err)
@@ -1138,135 +1689,127 @@ func createSAPInstance(d *schema.ResourceData, sapClient *st.IBMPISAPInstanceCli
 	return pvmList, nil
 }
 
-func createPVMInstance(d *schema.ResourceData, client *st.IBMPIInstanceClient, imageClient *st.IBMPIImageClient) (*models.PVMInstanceList, error) {
+func createPVMInstance(d *schema.ResourceData, client *instance.IBMPIInstanceClient, imageClient *instance.IBMPIImageClient) (*models.PVMInstanceList, error) {
 
-	name := d.Get(helpers.PIInstanceName).(string)
-	imageid := d.Get(helpers.PIInstanceImageId).(string)
+	name := d.Get(Arg_InstanceName).(string)
+	imageid := d.Get(Arg_ImageID).(string)
 
 	var mem, procs float64
 	var systype, processortype string
-	if v, ok := d.GetOk(helpers.PIInstanceMemory); ok {
+	if v, ok := d.GetOk(Arg_Memory); ok {
 		mem = v.(float64)
 	} else {
-		return nil, fmt.Errorf("%s is required for creating pvm instances", helpers.PIInstanceMemory)
+		return nil, fmt.Errorf("%s is required for creating pvm instances", Arg_Memory)
 	}
-	if v, ok := d.GetOk(helpers.PIInstanceProcessors); ok {
+	if v, ok := d.GetOk(Arg_Processors); ok {
 		procs = v.(float64)
 	} else {
-		return nil, fmt.Errorf("%s is required for creating pvm instances", helpers.PIInstanceProcessors)
+		return nil, fmt.Errorf("%s is required for creating pvm instances", Arg_Processors)
 	}
-	if v, ok := d.GetOk(helpers.PIInstanceSystemType); ok {
+	if v, ok := d.GetOk(Arg_SysType); ok {
 		systype = v.(string)
 	} else {
-		return nil, fmt.Errorf("%s is required for creating pvm instances", helpers.PIInstanceSystemType)
+		return nil, fmt.Errorf("%s is required for creating pvm instances", Arg_SysType)
 	}
-	if v, ok := d.GetOk(helpers.PIInstanceProcType); ok {
+	if v, ok := d.GetOk(Arg_ProcType); ok {
 		processortype = v.(string)
 	} else {
-		return nil, fmt.Errorf("%s is required for creating pvm instances", helpers.PIInstanceProcType)
+		return nil, fmt.Errorf("%s is required for creating pvm instances", Arg_ProcType)
 	}
 
-	pvmNetworks := expandPVMNetworks(d.Get(PIInstanceNetwork).([]interface{}))
+	pvmNetworks := expandPVMNetworks(d.Get(Arg_Network).([]interface{}))
 
 	var volids []string
-	if v, ok := d.GetOk(helpers.PIInstanceVolumeIds); ok {
+	if v, ok := d.GetOk(Arg_VolumeIDs); ok {
 		volids = flex.ExpandStringList((v.(*schema.Set)).List())
 	}
 	var replicants float64
-	if r, ok := d.GetOk(helpers.PIInstanceReplicants); ok {
+	if r, ok := d.GetOk(Arg_Replicants); ok {
 		replicants = float64(r.(int))
 	}
 	var replicationpolicy string
-	if r, ok := d.GetOk(helpers.PIInstanceReplicationPolicy); ok {
+	if r, ok := d.GetOk(Arg_ReplicationPolicy); ok {
 		replicationpolicy = r.(string)
 	}
 	var replicationNamingScheme string
-	if r, ok := d.GetOk(helpers.PIInstanceReplicationScheme); ok {
+	if r, ok := d.GetOk(Arg_ReplicationScheme); ok {
 		replicationNamingScheme = r.(string)
 	}
-	var migratable bool
-	if m, ok := d.GetOk("pi_migratable"); ok {
-		migratable = m.(bool)
-	}
-
 	var pinpolicy string
-	if p, ok := d.GetOk(helpers.PIInstancePinPolicy); ok {
+	if p, ok := d.GetOk(Arg_PinPolicy); ok {
 		pinpolicy = p.(string)
 		if pinpolicy == "" {
-			pinpolicy = "none"
+			pinpolicy = None
 		}
 	}
 
 	var userData string
-	if u, ok := d.GetOk(helpers.PIInstanceUserData); ok {
+	if u, ok := d.GetOk(Arg_UserData); ok {
 		userData = u.(string)
 	}
 
-	//publicinterface := d.Get(helpers.PIInstancePublicNetwork).(bool)
 	body := &models.PVMInstanceCreate{
-		//NetworkIds: networks,
 		Processors:              &procs,
 		Memory:                  &mem,
 		ServerName:              flex.PtrToString(name),
 		SysType:                 systype,
 		ImageID:                 flex.PtrToString(imageid),
 		ProcType:                flex.PtrToString(processortype),
-		Replicants:              replicants,
+		Replicants:              &replicants,
 		UserData:                encodeBase64(userData),
 		ReplicantNamingScheme:   flex.PtrToString(replicationNamingScheme),
 		ReplicantAffinityPolicy: flex.PtrToString(replicationpolicy),
 		Networks:                pvmNetworks,
-		Migratable:              &migratable,
 	}
-	if s, ok := d.GetOk(helpers.PIInstanceSSHKeyName); ok {
+	if s, ok := d.GetOk(Arg_KeyPairName); ok {
 		sshkey := s.(string)
 		body.KeyPairName = sshkey
 	}
 	if len(volids) > 0 {
 		body.VolumeIDs = volids
 	}
-	if d.Get(helpers.PIInstancePinPolicy) == "soft" || d.Get(helpers.PIInstancePinPolicy) == "hard" {
+	if d.Get(Arg_PinPolicy) == Soft || d.Get(Arg_PinPolicy) == Hard {
 		body.PinPolicy = models.PinPolicy(pinpolicy)
 	}
 
 	var assignedVirtualCores int64
-	if a, ok := d.GetOk(helpers.PIVirtualCoresAssigned); ok {
+	if a, ok := d.GetOk(Arg_VirtualCoresAssigned); ok {
 		assignedVirtualCores = int64(a.(int))
 		body.VirtualCores = &models.VirtualCores{Assigned: &assignedVirtualCores}
 	}
 
-	if st, ok := d.GetOk(helpers.PIInstanceStorageType); ok {
+	if st, ok := d.GetOk(Arg_StorageType); ok {
 		body.StorageType = st.(string)
 	}
-	if sp, ok := d.GetOk(PIInstanceStoragePool); ok {
+	if sp, ok := d.GetOk(Arg_StoragePool); ok {
 		body.StoragePool = sp.(string)
 	}
 
-	if dt, ok := d.GetOk(PIInstanceDeploymentType); ok {
+	if dt, ok := d.GetOk(Arg_DeploymentType); ok {
 		body.DeploymentType = dt.(string)
 	}
 
-	if ap, ok := d.GetOk(PIAffinityPolicy); ok {
+	if ap, ok := d.GetOk(Arg_AffinityPolicy); ok {
 		policy := ap.(string)
 		affinity := &models.StorageAffinity{
 			AffinityPolicy: &policy,
 		}
 
-		if policy == "affinity" {
-			if av, ok := d.GetOk(PIAffinityVolume); ok {
+		if policy == Affinity {
+			if av, ok := d.GetOk(Arg_AffinityVolume); ok {
 				afvol := av.(string)
 				affinity.AffinityVolume = &afvol
 			}
-			if ai, ok := d.GetOk(PIAffinityInstance); ok {
+			if ai, ok := d.GetOk(Arg_AffinityInstance); ok {
 				afins := ai.(string)
 				affinity.AffinityPVMInstance = &afins
 			}
 		} else {
-			if avs, ok := d.GetOk(PIAntiAffinityVolumes); ok {
+			if avs, ok := d.GetOk(Arg_AntiAffinityVolumes); ok {
 				afvols := flex.ExpandStringList(avs.([]interface{}))
 				affinity.AntiAffinityVolumes = afvols
 			}
-			if ais, ok := d.GetOk(PIAntiAffinityInstances); ok {
+			if ais, ok := d.GetOk(Arg_AntiAffinityInstances); ok {
 				afinss := flex.ExpandStringList(ais.([]interface{}))
 				affinity.AntiAffinityPVMInstances = afinss
 			}
@@ -1274,35 +1817,83 @@ func createPVMInstance(d *schema.ResourceData, client *st.IBMPIInstanceClient, i
 		body.StorageAffinity = affinity
 	}
 
-	if sc, ok := d.GetOk(helpers.PIInstanceStorageConnection); ok {
+	if sc, ok := d.GetOk(Arg_StorageConnection); ok {
 		body.StorageConnection = sc.(string)
 	}
 
-	if pg, ok := d.GetOk(helpers.PIPlacementGroupID); ok {
+	if pg, ok := d.GetOk(Arg_PlacementGroupID); ok {
 		body.PlacementGroup = pg.(string)
 	}
 
-	if spp, ok := d.GetOk(Arg_PIInstanceSharedProcessorPool); ok {
+	if spp, ok := d.GetOk(Arg_SharedProcessorPool); ok {
 		body.SharedProcessorPool = spp.(string)
 	}
-
-	if lrc, ok := d.GetOk(helpers.PIInstanceLicenseRepositoryCapacity); ok {
-		// check if using vtl image
-		// check if vtl image is stock image
-		imageData, err := imageClient.GetStockImage(imageid)
+	imageData, err := imageClient.GetStockImage(imageid)
+	if err != nil {
+		// check if vtl image is cloud instance image
+		imageData, err = imageClient.Get(imageid)
 		if err != nil {
-			// check if vtl image is cloud instance image
-			imageData, err = imageClient.Get(imageid)
-			if err != nil {
-				return nil, fmt.Errorf("image doesn't exist. %e", err)
-			}
+			return nil, fmt.Errorf("image doesn't exist. %e", err)
 		}
+	}
+	if lrc, ok := d.GetOk(Arg_LicenseRepositoryCapacity); ok {
 
-		if imageData.Specifications.ImageType == "stock-vtl" {
+		if imageData.Specifications.ImageType == StockVTL {
 			body.LicenseRepositoryCapacity = int64(lrc.(int))
 		} else {
 			return nil, fmt.Errorf("pi_license_repository_capacity should only be used when creating VTL instances. %e", err)
 		}
+	}
+
+	if imageData.Specifications.OperatingSystem == OS_IBMI {
+		// Default value
+		falseBool := false
+		sl := &models.SoftwareLicenses{
+			IbmiCSS:      &falseBool,
+			IbmiPHA:      &falseBool,
+			IbmiRDS:      &falseBool,
+			IbmiRDSUsers: 0,
+		}
+		if ibmiCSS, ok := d.GetOk(Arg_IBMiCSS); ok {
+			sl.IbmiCSS = flex.PtrToBool(ibmiCSS.(bool))
+		}
+		if ibmiPHA, ok := d.GetOk(Arg_IBMiPHA); ok {
+			sl.IbmiPHA = flex.PtrToBool(ibmiPHA.(bool))
+		}
+		if ibmrdsUsers, ok := d.GetOk(Arg_IBMiRDSUsers); ok {
+			if ibmrdsUsers.(int) < 0 {
+				return nil, fmt.Errorf("request with IBM i Rational Dev Studio property requires IBM i Rational Dev Studio number of users")
+			}
+			sl.IbmiRDS = flex.PtrToBool(ibmrdsUsers.(int) > 0)
+			sl.IbmiRDSUsers = int64(ibmrdsUsers.(int))
+		}
+		body.SoftwareLicenses = sl
+	}
+	if deploymentTarget, ok := d.GetOk(Arg_DeploymentTarget); ok {
+		body.DeploymentTarget = expandDeploymentTarget(deploymentTarget.(*schema.Set).List())
+	}
+	var bootVolumeReplicationEnabled bool
+	if bootVolumeReplicationBoolean, ok := d.GetOk(Arg_BootVolumeReplicationEnabled); ok {
+		bootVolumeReplicationEnabled = bootVolumeReplicationBoolean.(bool)
+		body.BootVolumeReplicationEnabled = &bootVolumeReplicationEnabled
+	}
+	var replicationSites []string
+	if sites, ok := d.GetOk(Arg_ReplicationSites); ok {
+		if !bootVolumeReplicationEnabled {
+			return nil, fmt.Errorf("must set %s to true in order to specify replication sites", Arg_BootVolumeReplicationEnabled)
+		} else {
+			replicationSites = flex.FlattenSet(sites.(*schema.Set))
+			body.ReplicationSites = replicationSites
+		}
+	}
+
+	if tags, ok := d.GetOk(Arg_UserTags); ok {
+		body.UserTags = flex.FlattenSet(tags.(*schema.Set))
+	}
+	if vsn, ok := d.GetOk(Arg_VirtualSerialNumber); ok {
+		vsnListType := vsn.([]interface{})
+		vsnCreateModel := vsnSetToCreateModel(vsnListType)
+		body.VirtualSerialNumber = vsnCreateModel
 	}
 
 	pvmList, err := client.Create(body)
@@ -1317,6 +1908,16 @@ func createPVMInstance(d *schema.ResourceData, client *st.IBMPIInstanceClient, i
 	return pvmList, nil
 }
 
+func expandDeploymentTarget(dt []interface{}) *models.DeploymentTarget {
+	dtexpanded := &models.DeploymentTarget{}
+	for _, v := range dt {
+		dtarget := v.(map[string]interface{})
+		dtexpanded.ID = core.StringPtr(dtarget[Attr_ID].(string))
+		dtexpanded.Type = core.StringPtr(dtarget[Attr_Type].(string))
+	}
+	return dtexpanded
+}
+
 func splitID(id string) (id1, id2 string, err error) {
 	parts, err := flex.IdParts(id)
 	if err != nil {
@@ -1325,4 +1926,32 @@ func splitID(id string) (id1, id2 string, err error) {
 	id1 = parts[0]
 	id2 = parts[1]
 	return
+}
+
+func vsnSetToCreateModel(vsnSetList []interface{}) *models.CreateServerVirtualSerialNumber {
+	vsnItemMap := vsnSetList[0].(map[string]interface{})
+	serialString := vsnItemMap[Attr_Serial].(string)
+	model := &models.CreateServerVirtualSerialNumber{
+		Serial: &serialString,
+	}
+	description := vsnItemMap[Attr_Description].(string)
+	if description != "" {
+		model.Description = description
+	}
+
+	return model
+}
+
+func flattenVirtualSerialNumberToList(vsn *models.GetServerVirtualSerialNumber) []map[string]interface{} {
+	v := make([]map[string]interface{}, 1)
+	v[0] = map[string]interface{}{
+		Attr_Description: vsn.Description,
+		Attr_Serial:      vsn.Serial,
+	}
+	return v
+}
+
+// Do not show a diff if VSN is changed to existing assigned VSN
+func supressVSNDiffAutoAssign(k, old, new string, d *schema.ResourceData) bool {
+	return new == old || (new == AutoAssign && old != "")
 }

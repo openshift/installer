@@ -1,6 +1,7 @@
 package openshift
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -30,7 +31,7 @@ func (t *CloudCredsSecret) Name() string {
 }
 
 // Generate generates the actual files by this asset
-func (t *CloudCredsSecret) Generate(parents asset.Parents) error {
+func (t *CloudCredsSecret) Generate(_ context.Context, parents asset.Parents) error {
 	fileName := cloudCredsSecretFileName
 	data, err := content.GetOpenshiftTemplate(fileName)
 	if err != nil {

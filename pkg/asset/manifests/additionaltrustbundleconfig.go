@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -49,7 +50,7 @@ func (*AdditionalTrustBundleConfig) Dependencies() []asset.Asset {
 }
 
 // Generate generates the CloudProviderConfig.
-func (atbc *AdditionalTrustBundleConfig) Generate(dependencies asset.Parents) error {
+func (atbc *AdditionalTrustBundleConfig) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(installConfig)
 

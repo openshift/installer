@@ -4,7 +4,7 @@
 
 - [Prerequisites](#prerequisites)
 - [Creating DualStack Networks for the cluster](#creating-dualstack-networks-for-the-cluster)
-- [Creating DualStack API and Ingress VIPs Ports for the cluster](#creating-dualstack-api-and-ingress-vips-for-the-cluster)
+- [Creating DualStack API and Ingress VIPs Ports for the cluster](#creating-dualstack-api-and-ingress-vips-ports-for-the-cluster)
 - [Deploy OpenShift](#deploy-openshift)
 
 ## Prerequisites
@@ -12,7 +12,7 @@
 * Installation with dual-stack is only allowed when using one OpenStack network with one IPv4 and IPv6 subnet.
 * API and Ingress VIPs ports needs to pre-created by the user and the addresses specified in the `install-config.yaml`.
 * Add the IPv6 Subnet to a neutron router to provide router advertisements.
-* The dualstack network MTU must accomodate the minimun MTU for IPv6, which is 1280, and OVN-Kubernetes encapsulation overhead, which is 100.
+* The dualstack network MTU must accommodate the minimum MTU for IPv6, which is 1280, and OVN-Kubernetes encapsulation overhead, which is 100.
 
 Additional prerequisites are listed at the [OpenStack Platform Customization docs](./customization.md)
 
@@ -32,6 +32,8 @@ Given the above example uses a provider network, this network can be added to th
 ```sh
 $ openstack router set --external-gateway dualstack <router-id>
 ```
+
+**Note**: Any additional IPv6 Subnet that is used in the OpenShift cluster, should be added to a neutron router to provide router advertisements.
 
 ## Creating Dual-Stack API and Ingress VIPs Ports for the cluster
 

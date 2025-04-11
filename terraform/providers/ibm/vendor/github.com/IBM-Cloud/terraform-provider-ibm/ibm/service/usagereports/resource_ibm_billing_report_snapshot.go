@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package usagereports
@@ -22,159 +22,164 @@ func ResourceIBMBillingReportSnapshot() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceIBMBillingReportSnapshotCreate,
 		ReadContext:   resourceIBMBillingReportSnapshotRead,
-		UpdateContext: resourceIBMBillingReportSnapshotUpdate,
 		DeleteContext: resourceIBMBillingReportSnapshotDelete,
 		Importer:      &schema.ResourceImporter{},
 
 		Schema: map[string]*schema.Schema{
-			"interval": {
+			"interval": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
+				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_billing_report_snapshot", "interval"),
 				Description:  "Frequency of taking the snapshot of the billing reports.",
 			},
-			"versioning": {
+			"versioning": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "new",
+				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_billing_report_snapshot", "versioning"),
 				Description:  "A new version of report is created or the existing report version is overwritten with every update.",
 			},
-			"report_types": {
+			"report_types": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
+				ForceNew:    true,
 				Description: "The type of billing reports to take snapshot of. Possible values are [account_summary, enterprise_summary, account_resource_instance_usage].",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"cos_reports_folder": {
+			"cos_reports_folder": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "IBMCloud-Billing-Reports",
+				ForceNew:    true,
 				Description: "The billing reports root folder to store the billing reports snapshots. Defaults to \"IBMCloud-Billing-Reports\".",
 			},
-			"cos_bucket": {
+			"cos_bucket": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The name of the COS bucket to store the snapshot of the billing reports.",
 			},
-			"cos_location": {
+			"cos_location": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "Region of the COS instance.",
 			},
-			"state": {
+			"state": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Status of the billing snapshot configuration. Possible values are [enabled, disabled].",
 			},
-			"account_type": {
+			"account_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Type of account. Possible values are [enterprise, account].",
 			},
-			"compression": {
+			"compression": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Compression format of the snapshot report.",
 			},
-			"content_type": {
+			"content_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Type of content stored in snapshot report.",
 			},
-			"cos_endpoint": {
+			"cos_endpoint": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The endpoint of the COS instance.",
 			},
-			"created_at": {
+			"created_at": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Timestamp in milliseconds when the snapshot configuration was created.",
 			},
-			"last_updated_at": {
+			"last_updated_at": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Timestamp in milliseconds when the snapshot configuration was last updated.",
 			},
-			"history": {
+			"history": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "List of previous versions of the snapshot configurations.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"start_time": {
+						"start_time": &schema.Schema{
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Timestamp in milliseconds when the snapshot configuration was created.",
 						},
-						"end_time": {
+						"end_time": &schema.Schema{
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Timestamp in milliseconds when the snapshot configuration ends.",
 						},
-						"updated_by": {
+						"updated_by": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Account that updated the billing snapshot configuration.",
 						},
-						"account_id": {
+						"account_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Account ID for which billing report snapshot is configured.",
 						},
-						"state": {
+						"state": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Status of the billing snapshot configuration. Possible values are [enabled, disabled].",
 						},
-						"account_type": {
+						"account_type": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Type of account. Possible values [enterprise, account].",
 						},
-						"interval": {
+						"interval": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Frequency of taking the snapshot of the billing reports.",
 						},
-						"versioning": {
+						"versioning": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "A new version of report is created or the existing report version is overwritten with every update.",
 						},
-						"report_types": {
+						"report_types": &schema.Schema{
 							Type:        schema.TypeList,
 							Computed:    true,
 							Description: "The type of billing reports to take snapshot of. Possible values are [account_summary, enterprise_summary, account_resource_instance_usage].",
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
-						"compression": {
+						"compression": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Compression format of the snapshot report.",
 						},
-						"content_type": {
+						"content_type": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Type of content stored in snapshot report.",
 						},
-						"cos_reports_folder": {
+						"cos_reports_folder": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The billing reports root folder to store the billing reports snapshots. Defaults to \"IBMCloud-Billing-Reports\".",
 						},
-						"cos_bucket": {
+						"cos_bucket": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The name of the COS bucket to store the snapshot of the billing reports.",
 						},
-						"cos_location": {
+						"cos_location": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Region of the COS instance.",
 						},
-						"cos_endpoint": {
+						"cos_endpoint": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The endpoint of the COS instance.",
@@ -212,14 +217,18 @@ func ResourceIBMBillingReportSnapshotValidator() *validate.ResourceValidator {
 func resourceIBMBillingReportSnapshotCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	usageReportsClient, err := meta.(conns.ClientSession).UsageReportsV4()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_billing_report_snapshot", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createReportsSnapshotConfigOptions := &usagereportsv4.CreateReportsSnapshotConfigOptions{}
 
 	userDetails, err := meta.(conns.ClientSession).BluemixUserDetails()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_billing_report_snapshot", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createReportsSnapshotConfigOptions.SetAccountID(userDetails.UserAccount)
@@ -241,10 +250,11 @@ func resourceIBMBillingReportSnapshotCreate(context context.Context, d *schema.R
 		createReportsSnapshotConfigOptions.SetVersioning(d.Get("versioning").(string))
 	}
 
-	snapshotConfig, response, err := usageReportsClient.CreateReportsSnapshotConfigWithContext(context, createReportsSnapshotConfigOptions)
+	snapshotConfig, _, err := usageReportsClient.CreateReportsSnapshotConfigWithContext(context, createReportsSnapshotConfigOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateReportsSnapshotConfigWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateReportsSnapshotConfigWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateReportsSnapshotConfigWithContext failed: %s", err.Error()), "ibm_billing_report_snapshot", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*snapshotConfig.AccountID)
@@ -255,7 +265,9 @@ func resourceIBMBillingReportSnapshotCreate(context context.Context, d *schema.R
 func resourceIBMBillingReportSnapshotRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	usageReportsClient, err := meta.(conns.ClientSession).UsageReportsV4()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_billing_report_snapshot", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getReportsSnapshotConfigOptions := &usagereportsv4.GetReportsSnapshotConfigOptions{}
@@ -268,8 +280,9 @@ func resourceIBMBillingReportSnapshotRead(context context.Context, d *schema.Res
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetReportsSnapshotConfigWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetReportsSnapshotConfigWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetReportsSnapshotConfigWithContext failed: %s", err.Error()), "ibm_billing_report_snapshot", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("interval", snapshotConfig.Interval); err != nil {
@@ -348,73 +361,23 @@ func resourceIBMBillingReportSnapshotRead(context context.Context, d *schema.Res
 	return nil
 }
 
-func resourceIBMBillingReportSnapshotUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	usageReportsClient, err := meta.(conns.ClientSession).UsageReportsV4()
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	updateReportsSnapshotConfigOptions := &usagereportsv4.UpdateReportsSnapshotConfigOptions{}
-
-	updateReportsSnapshotConfigOptions.SetAccountID(d.Id())
-
-	hasChange := false
-
-	if d.HasChange("interval") {
-		updateReportsSnapshotConfigOptions.SetInterval(d.Get("interval").(string))
-		hasChange = true
-	}
-	if d.HasChange("cos_bucket") {
-		updateReportsSnapshotConfigOptions.SetCosBucket(d.Get("cos_bucket").(string))
-		hasChange = true
-	}
-	if d.HasChange("cos_location") {
-		updateReportsSnapshotConfigOptions.SetCosLocation(d.Get("cos_location").(string))
-		hasChange = true
-	}
-	if d.HasChange("cos_reports_folder") {
-		updateReportsSnapshotConfigOptions.SetCosReportsFolder(d.Get("cos_reports_folder").(string))
-		hasChange = true
-	}
-	if d.HasChange("report_types") {
-		var reportTypes []string
-		for _, v := range d.Get("report_types").([]interface{}) {
-			reportTypesItem := v.(string)
-			reportTypes = append(reportTypes, reportTypesItem)
-		}
-		updateReportsSnapshotConfigOptions.SetReportTypes(reportTypes)
-		hasChange = true
-	}
-	if d.HasChange("versioning") {
-		updateReportsSnapshotConfigOptions.SetVersioning(d.Get("versioning").(string))
-		hasChange = true
-	}
-
-	if hasChange {
-		_, response, err := usageReportsClient.UpdateReportsSnapshotConfigWithContext(context, updateReportsSnapshotConfigOptions)
-		if err != nil {
-			log.Printf("[DEBUG] UpdateReportsSnapshotConfigWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateReportsSnapshotConfigWithContext failed %s\n%s", err, response))
-		}
-	}
-
-	return resourceIBMBillingReportSnapshotRead(context, d, meta)
-}
-
 func resourceIBMBillingReportSnapshotDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	usageReportsClient, err := meta.(conns.ClientSession).UsageReportsV4()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_billing_report_snapshot", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteReportsSnapshotConfigOptions := &usagereportsv4.DeleteReportsSnapshotConfigOptions{}
 
 	deleteReportsSnapshotConfigOptions.SetAccountID(d.Id())
 
-	response, err := usageReportsClient.DeleteReportsSnapshotConfigWithContext(context, deleteReportsSnapshotConfigOptions)
+	_, err = usageReportsClient.DeleteReportsSnapshotConfigWithContext(context, deleteReportsSnapshotConfigOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteReportsSnapshotConfigWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteReportsSnapshotConfigWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteReportsSnapshotConfigWithContext failed: %s", err.Error()), "ibm_billing_report_snapshot", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

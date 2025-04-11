@@ -6,13 +6,10 @@ package secretsmanager
 import (
 	"context"
 	"fmt"
-	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -29,6 +26,11 @@ func ResourceIbmSmImportedCertificate() *schema.Resource {
 		Importer:      &schema.ResourceImporter{},
 
 		Schema: map[string]*schema.Schema{
+			"csr": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The certificate signing request.",
+			},
 			"custom_metadata": &schema.Schema{
 				Type:        schema.TypeMap,
 				Optional:    true,
@@ -61,14 +63,14 @@ func ResourceIbmSmImportedCertificate() *schema.Resource {
 			"secret_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "A v4 UUID identifier.",
+				Description: "A UUID identifier.",
 			},
 			"secret_group_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
-				Description: "A v4 UUID identifier, or `default` secret group.",
+				Description: "A UUID identifier, or `default` secret group.",
 			},
 			"secret_type": &schema.Schema{
 				Type:        schema.TypeString,
@@ -78,13 +80,12 @@ func ResourceIbmSmImportedCertificate() *schema.Resource {
 			"version_custom_metadata": &schema.Schema{
 				Type:        schema.TypeMap,
 				Optional:    true,
-				Computed:    true,
 				Description: "The secret version metadata that a user can customize.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"certificate": &schema.Schema{
 				Type:      schema.TypeString,
-				Required:  true,
+				Optional:  true,
 				Sensitive: true,
 				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
 					if removeNewLineFromCertificate(oldValue) == removeNewLineFromCertificate(newValue) {
@@ -111,23 +112,209 @@ func ResourceIbmSmImportedCertificate() *schema.Resource {
 				Optional:  true,
 				Sensitive: true,
 				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
+					lenManagedCsr := 0
+					rawManagedCsr, managedCsrExists := d.GetOkExists("managed_csr")
+					if managedCsrExists {
+						lenManagedCsr = len(rawManagedCsr.([]interface{}))
+					}
+					isManagedCsr := lenManagedCsr > 0
+					if isManagedCsr {
+						return true
+					}
 					if removeNewLineFromCertificate(oldValue) == removeNewLineFromCertificate(newValue) {
 						return true
 					}
 					return false
 				},
-				Description: "(Optional) The PEM-encoded private key to associate with the certificate.",
+				Description: "(Optional for non managed CSR secrets) The PEM-encoded private key to associate with the certificate.",
+			},
+			"managed_csr": &schema.Schema{
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Computed:    true,
+				Description: "The data specified to create the CSR and the private key.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"alt_names": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "With the Subject Alternative Name field, you can specify additional hostnames to be protected by a single SSL certificate.",
+						},
+						"client_flag": &schema.Schema{
+							Type:        schema.TypeBool,
+							Default:     true,
+							Optional:    true,
+							Description: "This field indicates whether certificate is flagged for client use.",
+						},
+						"code_signing_flag": &schema.Schema{
+							Type:        schema.TypeBool,
+							Default:     false,
+							Optional:    true,
+							Description: "This field indicates whether certificate is flagged for code signing use.",
+						},
+						"common_name": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The Common Name (CN) represents the server name protected by the SSL certificate.",
+						},
+						"csr": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The certificate signing request.",
+						},
+						"country": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Optional:    true,
+							Description: "The Country (C) values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"email_protection_flag": &schema.Schema{
+							Type:        schema.TypeBool,
+							Default:     false,
+							Optional:    true,
+							Description: "This field indicates whether certificate is flagged for email protection use.",
+						},
+						"exclude_cn_from_sans": &schema.Schema{
+							Type:        schema.TypeBool,
+							Default:     false,
+							Optional:    true,
+							Description: "This parameter controls whether the common name is excluded from Subject Alternative Names (SANs).",
+						},
+						"ext_key_usage": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The allowed extended key usage constraint on certificate, in a comma-delimited list.",
+						},
+						"ext_key_usage_oids": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "A comma-delimited list of extended key usage Object Identifiers (OIDs).",
+						},
+						"ip_sans": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The IP Subject Alternative Names to define for the certificate, in a comma-delimited list.",
+						},
+						"key_bits": &schema.Schema{
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Computed:    true,
+							Description: "The number of bits to use to generate the private key.",
+						},
+						"key_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Default:     "rsa",
+							Description: "The type of private key to generate.",
+						},
+						"key_usage": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The allowed key usage constraint to define for certificate, in a comma-delimited list.",
+						},
+						"locality": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Optional:    true,
+							Description: "The Locality (L) values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"organization": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Optional:    true,
+							Description: "The Organization (O) values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"other_sans": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The custom Object Identifier (OID) or UTF8-string Subject Alternative Names to define for the certificate, in a comma-delimited list.",
+						},
+						"ou": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Optional:    true,
+							Description: "The Organizational Unit (OU) values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"policy_identifiers": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "A comma-delimited list of policy Object Identifiers (OIDs).",
+						},
+						"postal_code": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Optional:    true,
+							Description: "The postal code values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"province": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Optional:    true,
+							Description: "The Province (ST) values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"require_cn": &schema.Schema{
+							Type:        schema.TypeBool,
+							Default:     true,
+							Optional:    true,
+							Description: "If set to false, makes the common_name field optional while generating a certificate.",
+						},
+						"rotate_keys": &schema.Schema{
+							Type:        schema.TypeBool,
+							Default:     false,
+							Optional:    true,
+							Description: "This field indicates whether the private key will be rotated.",
+						},
+						"server_flag": &schema.Schema{
+							Type:        schema.TypeBool,
+							Default:     true,
+							Optional:    true,
+							Description: "This field indicates whether certificate is flagged for server use.",
+						},
+						"street_address": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Optional:    true,
+							Description: "The street address values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"uri_sans": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The URI Subject Alternative Names to define for the certificate, in a comma-delimited list.",
+						},
+						"user_ids": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Specifies the list of requested User ID (OID 0.9.2342.19200300.100.1.1) Subject values to be placed on the signed certificate.",
+						},
+					},
+				},
 			},
 			"common_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The Common Name (AKA CN) represents the server name that is protected by the SSL certificate.",
-			},
-			"alt_names": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "With the Subject Alternative Name field, you can specify additional host names to be protected by a single SSL certificate.",
-				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"key_algorithm": &schema.Schema{
 				Type:        schema.TypeString,
@@ -230,7 +417,8 @@ func ResourceIbmSmImportedCertificate() *schema.Resource {
 func resourceIbmSmImportedCertificateCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", ImportedCertSecretResourceName, "create")
+		return tfErr.GetDiag()
 	}
 
 	region := getRegion(secretsManagerClient, d)
@@ -241,72 +429,36 @@ func resourceIbmSmImportedCertificateCreate(context context.Context, d *schema.R
 
 	secretPrototypeModel, err := resourceIbmSmImportedCertificateMapToSecretPrototype(d)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", ImportedCertSecretResourceName, "create")
+		return tfErr.GetDiag()
 	}
 	createSecretOptions.SetSecretPrototype(secretPrototypeModel)
 
 	secretIntf, response, err := secretsManagerClient.CreateSecretWithContext(context, createSecretOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateSecretWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateSecretWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateSecretWithContext failed: %s\n%s", err.Error(), response), ImportedCertSecretResourceName, "create")
+		return tfErr.GetDiag()
 	}
 	secret := secretIntf.(*secretsmanagerv2.ImportedCertificate)
 
 	d.SetId(fmt.Sprintf("%s/%s/%s", region, instanceId, *secret.ID))
 	d.Set("secret_id", *secret.ID)
 
-	_, err = waitForIbmSmImportedCertificateCreate(secretsManagerClient, d)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf(
-			"Error waiting for resource IbmSmImportedCertificate (%s) to be created: %s", d.Id(), err))
-	}
-
 	return resourceIbmSmImportedCertificateRead(context, d, meta)
-}
-
-func waitForIbmSmImportedCertificateCreate(secretsManagerClient *secretsmanagerv2.SecretsManagerV2, d *schema.ResourceData) (interface{}, error) {
-	getSecretOptions := &secretsmanagerv2.GetSecretOptions{}
-
-	id := strings.Split(d.Id(), "/")
-	secretId := id[2]
-
-	getSecretOptions.SetID(secretId)
-
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{"pre_activation"},
-		Target:  []string{"active"},
-		Refresh: func() (interface{}, string, error) {
-			stateObjIntf, response, err := secretsManagerClient.GetSecret(getSecretOptions)
-			stateObj := stateObjIntf.(*secretsmanagerv2.ImportedCertificate)
-			if err != nil {
-				if apiErr, ok := err.(bmxerror.RequestFailure); ok && apiErr.StatusCode() == 404 {
-					return nil, "", fmt.Errorf("The instance %s does not exist anymore: %s\n%s", "getSecretOptions", err, response)
-				}
-				return nil, "", err
-			}
-			failStates := map[string]bool{"destroyed": true}
-			if failStates[*stateObj.StateDescription] {
-				return stateObj, *stateObj.StateDescription, fmt.Errorf("The instance %s failed: %s\n%s", "getSecretOptions", err, response)
-			}
-			return stateObj, *stateObj.StateDescription, nil
-		},
-		Timeout:    d.Timeout(schema.TimeoutCreate),
-		Delay:      0 * time.Second,
-		MinTimeout: 5 * time.Second,
-	}
-
-	return stateConf.WaitForState()
 }
 
 func resourceIbmSmImportedCertificateRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
 	if len(id) != 3 {
-		return diag.Errorf("Wrong format of resource ID. To import a secret use the format `<region>/<instance_id>/<secret_id>`")
+		tfErr := flex.TerraformErrorf(nil, "Wrong format of resource ID. To import a secret use the format `<region>/<instance_id>/<secret_id>`", ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	region := id[0]
 	instanceId := id[1]
@@ -324,137 +476,277 @@ func resourceIbmSmImportedCertificateRead(context context.Context, d *schema.Res
 			return nil
 		}
 		log.Printf("[DEBUG] GetSecretWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetSecretWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetSecretWithContext failed %s\n%s", err, response), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	secret := secretIntf.(*secretsmanagerv2.ImportedCertificate)
 
 	if err = d.Set("secret_id", secretId); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_id"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("instance_id", instanceId); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting instance_id"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("region", region); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting region: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_by", secret.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_by"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_at", DateTimeToRFC3339(secret.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_at"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("crn", secret.Crn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting crn"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if secret.CustomMetadata != nil {
 		d.Set("custom_metadata", secret.CustomMetadata)
 	}
 	if err = d.Set("description", secret.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting description"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("downloaded", secret.Downloaded); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting downloaded: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting downloaded"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if secret.Labels != nil {
 		if err = d.Set("labels", secret.Labels); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting labels: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting labels"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("locks_total", flex.IntValue(secret.LocksTotal)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting locks_total: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting locks_total"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("name", secret.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("secret_group_id", secret.SecretGroupID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_group_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_group_id"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("secret_type", secret.SecretType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_type"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("state", flex.IntValue(secret.State)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting state"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("state_description", secret.StateDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting state_description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting state_description"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_at", DateTimeToRFC3339(secret.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("versions_total", flex.IntValue(secret.VersionsTotal)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting versions_total: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting versions_total"), ImportedCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
-	if err = d.Set("signing_algorithm", secret.SigningAlgorithm); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting signing_algorithm: %s", err))
-	}
-	if secret.AltNames != nil {
-		if err = d.Set("alt_names", secret.AltNames); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting alt_names: %s", err))
+	if secret.ManagedCsr != nil {
+		managedCsrMap := managedCsrToMap(secret.ManagedCsr)
+		if err = d.Set("managed_csr", []map[string]interface{}{managedCsrMap}); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting managed_csr"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
 		}
 	}
-	if err = d.Set("common_name", secret.CommonName); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting common_name: %s", err))
-	}
-	if err = d.Set("expiration_date", DateTimeToRFC3339(secret.ExpirationDate)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting expiration_date: %s", err))
-	}
-	if err = d.Set("intermediate_included", secret.IntermediateIncluded); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting intermediate_included: %s", err))
-	}
-	if err = d.Set("issuer", secret.Issuer); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting issuer: %s", err))
-	}
-	if err = d.Set("key_algorithm", secret.KeyAlgorithm); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting key_algorithm: %s", err))
-	}
-	if err = d.Set("private_key_included", secret.PrivateKeyIncluded); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting private_key_included: %s", err))
-	}
-	if err = d.Set("serial_number", secret.SerialNumber); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting serial_number: %s", err))
-	}
-	validityMap, err := resourceIbmSmImportedCertificateCertificateValidityToMap(secret.Validity)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err = d.Set("validity", []map[string]interface{}{validityMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting validity: %s", err))
-	}
-	if err = d.Set("certificate", secret.Certificate); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting certificate: %s", err))
-	}
-	if err = d.Set("intermediate", secret.Intermediate); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting intermediate: %s", err))
-	}
-	if err = d.Set("private_key", secret.PrivateKey); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting private_key: %s", err))
-	}
+	if d.Get("versions_total") != 0 {
+		if err = d.Set("signing_algorithm", secret.SigningAlgorithm); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting signing_algorithm"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
+		if err = d.Set("common_name", secret.CommonName); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting common_name"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
+		if err = d.Set("expiration_date", DateTimeToRFC3339(secret.ExpirationDate)); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting expiration_date"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
+		if err = d.Set("intermediate_included", secret.IntermediateIncluded); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting intermediate_included"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
+		if err = d.Set("issuer", secret.Issuer); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting issuer"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
+		if err = d.Set("key_algorithm", secret.KeyAlgorithm); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting key_algorithm"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
+		if err = d.Set("private_key_included", secret.PrivateKeyIncluded); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting private_key_included"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
+		if err = d.Set("serial_number", secret.SerialNumber); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting serial_number"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
+		log.Printf("[DEBUG] secret validity is null %t", secret.Validity == nil)
+		if secret.Validity != nil {
+			validityMap, err := resourceIbmSmImportedCertificateCertificateValidityToMap(secret.Validity)
+			if err != nil {
+				tfErr := flex.TerraformErrorf(err, "", ImportedCertSecretResourceName, "read")
+				return tfErr.GetDiag()
+			}
+			if err = d.Set("validity", []map[string]interface{}{validityMap}); err != nil {
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting validity"), ImportedCertSecretResourceName, "read")
+				return tfErr.GetDiag()
+			}
+		}
+		if err = d.Set("certificate", secret.Certificate); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting certificate"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
+		if err = d.Set("intermediate", secret.Intermediate); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting intermediate"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
+		if err = d.Set("private_key", secret.PrivateKey); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting private_key"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
+		if secret.Csr != nil {
+			if err = d.Set("csr", secret.Csr); err != nil {
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting csr"), ImportedCertSecretResourceName, "read")
+				return tfErr.GetDiag()
+			}
+		}
+		// Call get version metadata API to get the current version_custom_metadata
+		getVersionMetdataOptions := &secretsmanagerv2.GetSecretVersionMetadataOptions{}
+		getVersionMetdataOptions.SetSecretID(secretId)
+		getVersionMetdataOptions.SetID("current")
 
-	// Call get version metadata API to get the current version_custom_metadata
-	getVersionMetdataOptions := &secretsmanagerv2.GetSecretVersionMetadataOptions{}
-	getVersionMetdataOptions.SetSecretID(secretId)
-	getVersionMetdataOptions.SetID("current")
+		versionMetadataIntf, response, err := secretsManagerClient.GetSecretVersionMetadataWithContext(context, getVersionMetdataOptions)
+		if err != nil {
+			log.Printf("[DEBUG] GetSecretVersionMetadataWithContext failed %s\n%s", err, response)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetSecretVersionMetadataWithContext failed %s\n%s", err, response), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
 
-	versionMetadataIntf, response, err := secretsManagerClient.GetSecretVersionMetadataWithContext(context, getVersionMetdataOptions)
-	if err != nil {
-		log.Printf("[DEBUG] GetSecretVersionMetadataWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetSecretVersionMetadataWithContext failed %s\n%s", err, response))
-	}
-
-	versionMetadata := versionMetadataIntf.(*secretsmanagerv2.ImportedCertificateVersionMetadata)
-	if versionMetadata.VersionCustomMetadata != nil {
-		if err = d.Set("version_custom_metadata", versionMetadata.VersionCustomMetadata); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting version_custom_metadata: %s", err))
+		versionMetadata := versionMetadataIntf.(*secretsmanagerv2.ImportedCertificateVersionMetadata)
+		if versionMetadata.VersionCustomMetadata != nil {
+			if err = d.Set("version_custom_metadata", versionMetadata.VersionCustomMetadata); err != nil {
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting version_custom_metadata"), ImportedCertSecretResourceName, "read")
+				return tfErr.GetDiag()
+			}
+		}
+	} else {
+		if err = d.Set("validity", []map[string]interface{}{}); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting validity"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	return nil
 }
 
+func managedCsrToMap(managedCsr *secretsmanagerv2.ImportedCertificateManagedCsrResponse) map[string]interface{} {
+	modelMap := make(map[string]interface{})
+	if managedCsr.AltNames != nil {
+		modelMap["alt_names"] = managedCsr.AltNames
+	}
+	if managedCsr.ClientFlag != nil {
+		modelMap["client_flag"] = managedCsr.ClientFlag
+	}
+	if managedCsr.CodeSigningFlag != nil {
+		modelMap["code_signing_flag"] = managedCsr.CodeSigningFlag
+	}
+	if managedCsr.CommonName != nil {
+		modelMap["common_name"] = managedCsr.CommonName
+	}
+	if managedCsr.Csr != nil {
+		modelMap["csr"] = managedCsr.Csr
+	}
+	if managedCsr.Country != nil {
+		modelMap["country"] = managedCsr.Country
+	}
+	if managedCsr.EmailProtectionFlag != nil {
+		modelMap["email_protection_flag"] = managedCsr.EmailProtectionFlag
+	}
+	if managedCsr.ExcludeCnFromSans != nil {
+		modelMap["exclude_cn_from_sans"] = managedCsr.ExcludeCnFromSans
+	}
+	if managedCsr.ExtKeyUsage != nil {
+		modelMap["ext_key_usage"] = managedCsr.ExtKeyUsage
+	}
+	if managedCsr.ExtKeyUsageOids != nil {
+		modelMap["ext_key_usage_oids"] = managedCsr.ExtKeyUsageOids
+	}
+	if managedCsr.IpSans != nil {
+		modelMap["ip_sans"] = managedCsr.IpSans
+	}
+	if managedCsr.IpSans != nil {
+		modelMap["ip_sans"] = managedCsr.IpSans
+	}
+	if managedCsr.KeyBits != nil {
+		modelMap["key_bits"] = managedCsr.KeyBits
+	}
+	if managedCsr.KeyType != nil {
+		modelMap["key_type"] = managedCsr.KeyType
+	}
+	if managedCsr.KeyUsage != nil {
+		modelMap["key_usage"] = managedCsr.KeyUsage
+	}
+	if managedCsr.Locality != nil {
+		modelMap["locality"] = managedCsr.Locality
+	}
+	if managedCsr.Organization != nil {
+		modelMap["organization"] = managedCsr.Organization
+	}
+	if managedCsr.OtherSans != nil {
+		modelMap["other_sans"] = managedCsr.OtherSans
+	}
+	if managedCsr.Ou != nil {
+		modelMap["ou"] = managedCsr.Ou
+	}
+	if managedCsr.PolicyIdentifiers != nil {
+		modelMap["policy_identifiers"] = managedCsr.PolicyIdentifiers
+	}
+	if managedCsr.PostalCode != nil {
+		modelMap["postal_code"] = managedCsr.PostalCode
+	}
+	if managedCsr.Province != nil {
+		modelMap["province"] = managedCsr.Province
+	}
+	if managedCsr.RequireCn != nil {
+		modelMap["require_cn"] = managedCsr.RequireCn
+	}
+	if managedCsr.RotateKeys != nil {
+		modelMap["rotate_keys"] = managedCsr.RotateKeys
+	}
+	if managedCsr.ServerFlag != nil {
+		modelMap["server_flag"] = managedCsr.ServerFlag
+	}
+	if managedCsr.StreetAddress != nil {
+		modelMap["street_address"] = managedCsr.StreetAddress
+	}
+	if managedCsr.UriSans != nil {
+		modelMap["uri_sans"] = managedCsr.UriSans
+	}
+	if managedCsr.UserIds != nil {
+		modelMap["user_ids"] = managedCsr.UserIds
+	}
+	return modelMap
+}
+
 func resourceIbmSmImportedCertificateUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", ImportedCertSecretResourceName, "update")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
@@ -493,14 +785,14 @@ func resourceIbmSmImportedCertificateUpdate(context context.Context, d *schema.R
 		hasChange = true
 	}
 
-	// Apply change in metadata (if changed)
-	if hasChange {
-		updateSecretMetadataOptions.SecretMetadataPatch, _ = patchVals.AsPatch()
-		_, response, err := secretsManagerClient.UpdateSecretMetadataWithContext(context, updateSecretMetadataOptions)
+	if d.HasChange("managed_csr") {
+		managedCsr, err := mapManagedCsrOnCreate(d)
 		if err != nil {
-			log.Printf("[DEBUG] UpdateSecretMetadataWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateSecretMetadataWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, "", ImportedCertSecretResourceName, "update")
+			return tfErr.GetDiag()
 		}
+		patchVals.ManagedCsr = managedCsr
+		hasChange = true
 	}
 
 	// Apply change in secret data (if changed)
@@ -531,13 +823,14 @@ func resourceIbmSmImportedCertificateUpdate(context context.Context, d *schema.R
 				resourceIbmSmImportedCertificateRead(context, d, meta)
 			}
 			log.Printf("[DEBUG] CreateSecretVersionWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("CreateSecretVersionWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateSecretVersionWithContext failed %s\n%s", err, response), ImportedCertSecretResourceName, "update")
+			return tfErr.GetDiag()
 		}
 	} else if d.HasChange("version_custom_metadata") {
 		// Apply change to version_custom_metadata in current version
 		secretVersionMetadataPatchModel := new(secretsmanagerv2.SecretVersionMetadataPatch)
 		secretVersionMetadataPatchModel.VersionCustomMetadata = d.Get("version_custom_metadata").(map[string]interface{})
-		secretVersionMetadataPatchModelAsPatch, _ := secretVersionMetadataPatchModel.AsPatch()
+		secretVersionMetadataPatchModelAsPatch, _ := secretVersionMetadataAsPatchFunction(secretVersionMetadataPatchModel)
 
 		updateSecretVersionOptions := &secretsmanagerv2.UpdateSecretVersionMetadataOptions{}
 		updateSecretVersionOptions.SetSecretID(secretId)
@@ -550,16 +843,31 @@ func resourceIbmSmImportedCertificateUpdate(context context.Context, d *schema.R
 				resourceIbmSmImportedCertificateRead(context, d, meta)
 			}
 			log.Printf("[DEBUG] UpdateSecretVersionMetadataWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateSecretVersionMetadataWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateSecretVersionMetadataWithContext failed %s\n%s", err, response), ImportedCertSecretResourceName, "update")
+			return tfErr.GetDiag()
 		}
 	}
+
+	// Apply change in metadata (if changed)
+	if hasChange {
+
+		updateSecretMetadataOptions.SecretMetadataPatch, _ = patchVals.AsPatch()
+		_, response, err := secretsManagerClient.UpdateSecretMetadataWithContext(context, updateSecretMetadataOptions)
+		if err != nil {
+			log.Printf("[DEBUG] UpdateSecretMetadataWithContext failed %s\n%s", err, response)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateSecretMetadataWithContext failed %s\n%s", err, response), ImportedCertSecretResourceName, "update")
+			return tfErr.GetDiag()
+		}
+	}
+
 	return resourceIbmSmImportedCertificateRead(context, d, meta)
 }
 
 func resourceIbmSmImportedCertificateDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", ImportedCertSecretResourceName, "delete")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
@@ -575,7 +883,8 @@ func resourceIbmSmImportedCertificateDelete(context context.Context, d *schema.R
 	response, err := secretsManagerClient.DeleteSecretWithContext(context, deleteSecretOptions)
 	if err != nil {
 		log.Printf("[DEBUG] DeleteSecretWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteSecretWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteSecretWithContext failed %s\n%s", err, response), ImportedCertSecretResourceName, "delete")
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -622,7 +931,153 @@ func resourceIbmSmImportedCertificateMapToSecretPrototype(d *schema.ResourceData
 		model.PrivateKey = core.StringPtr(formatCertificate(d.Get("private_key").(string)))
 	}
 
+	if _, ok := d.GetOkExists("managed_csr"); ok {
+		managedCsrModel, err := mapManagedCsrOnCreate(d)
+		if err != nil {
+			return model, err
+		}
+		model.ManagedCsr = managedCsrModel
+	}
+
 	return model, nil
+}
+
+func mapManagedCsrOnCreate(d *schema.ResourceData) (*secretsmanagerv2.ImportedCertificateManagedCsr, error) {
+	modelMap := d.Get("managed_csr").([]interface{})[0].(map[string]interface{})
+	mainModel := &secretsmanagerv2.ImportedCertificateManagedCsr{}
+	altNames, ok := d.GetOkExists("managed_csr.0.alt_names")
+	if ok {
+		mainModel.AltNames = core.StringPtr(altNames.(string))
+	}
+	clientFlag, ok := d.GetOkExists("managed_csr.0.client_flag")
+	if ok {
+		mainModel.ClientFlag = core.BoolPtr(clientFlag.(bool))
+	}
+	codeSigningFlag, ok := d.GetOkExists("managed_csr.0.code_signing_flag")
+	if ok {
+		mainModel.CodeSigningFlag = core.BoolPtr(codeSigningFlag.(bool))
+	}
+	commonName, ok := d.GetOkExists("managed_csr.0.common_name")
+	if ok {
+		mainModel.CommonName = core.StringPtr(commonName.(string))
+	}
+	if modelMap["country"] != nil {
+		country := modelMap["country"].([]interface{})
+		countryParsed := make([]string, len(country))
+		for i, v := range country {
+			countryParsed[i] = fmt.Sprint(v)
+		}
+		mainModel.Country = countryParsed
+	}
+	emailProtectionFlag, ok := d.GetOkExists("managed_csr.0.email_protection_flag")
+	if ok {
+		mainModel.EmailProtectionFlag = core.BoolPtr(emailProtectionFlag.(bool))
+	}
+	excludeCnFromSans, ok := d.GetOkExists("managed_csr.0.exclude_cn_from_sans")
+	if ok {
+		mainModel.ExcludeCnFromSans = core.BoolPtr(excludeCnFromSans.(bool))
+	}
+	extKeyUsage, ok := d.GetOkExists("managed_csr.0.ext_key_usage")
+	if ok {
+		mainModel.ExtKeyUsage = core.StringPtr(extKeyUsage.(string))
+	}
+	extKeyUsageOids, ok := d.GetOkExists("managed_csr.0.ext_key_usage_oids")
+	if ok {
+		mainModel.ExtKeyUsageOids = core.StringPtr(extKeyUsageOids.(string))
+	}
+	ipSans, ok := d.GetOkExists("managed_csr.0.ip_sans")
+	if ok {
+		mainModel.IpSans = core.StringPtr(ipSans.(string))
+	}
+	keyBits, ok := d.GetOkExists("managed_csr.0.key_bits")
+	if ok {
+		mainModel.KeyBits = core.Int64Ptr(int64(keyBits.(int)))
+	}
+	keyType, ok := d.GetOkExists("managed_csr.0.key_type")
+	if ok {
+		mainModel.KeyType = core.StringPtr(keyType.(string))
+	}
+	keyUsage, ok := d.GetOkExists("managed_csr.0.key_usage")
+	if ok {
+		mainModel.KeyUsage = core.StringPtr(keyUsage.(string))
+	}
+	if modelMap["locality"] != nil {
+		locality := modelMap["locality"].([]interface{})
+		localityParsed := make([]string, len(locality))
+		for i, v := range locality {
+			localityParsed[i] = fmt.Sprint(v)
+		}
+		mainModel.Locality = localityParsed
+	}
+	if modelMap["organization"] != nil {
+		organization := modelMap["organization"].([]interface{})
+		organizationParsed := make([]string, len(organization))
+		for i, v := range organization {
+			organizationParsed[i] = fmt.Sprint(v)
+		}
+		mainModel.Organization = organizationParsed
+	}
+	otherSans, ok := d.GetOkExists("managed_csr.0.other_sans")
+	if ok {
+		mainModel.OtherSans = core.StringPtr(otherSans.(string))
+	}
+	if modelMap["ou"] != nil {
+		ou := modelMap["ou"].([]interface{})
+		ouParsed := make([]string, len(ou))
+		for i, v := range ou {
+			ouParsed[i] = fmt.Sprint(v)
+		}
+		mainModel.Ou = ouParsed
+	}
+	policyIdentifiers, ok := d.GetOkExists("managed_csr.0.policy_identifiers")
+	if ok {
+		mainModel.PolicyIdentifiers = core.StringPtr(policyIdentifiers.(string))
+	}
+	if modelMap["postal_code"] != nil {
+		postalCode := modelMap["postal_code"].([]interface{})
+		postalCodeParsed := make([]string, len(postalCode))
+		for i, v := range postalCode {
+			postalCodeParsed[i] = fmt.Sprint(v)
+		}
+		mainModel.PostalCode = postalCodeParsed
+	}
+	if modelMap["province"] != nil {
+		province := modelMap["province"].([]interface{})
+		provinceParsed := make([]string, len(province))
+		for i, v := range province {
+			provinceParsed[i] = fmt.Sprint(v)
+		}
+		mainModel.Province = provinceParsed
+	}
+	requireCn, ok := d.GetOkExists("managed_csr.0.require_cn")
+	if ok {
+		mainModel.RequireCn = core.BoolPtr(requireCn.(bool))
+	}
+	rotateKeys, ok := d.GetOkExists("managed_csr.0.rotate_keys")
+	if ok {
+		mainModel.RotateKeys = core.BoolPtr(rotateKeys.(bool))
+	}
+	serverFlag, ok := d.GetOkExists("managed_csr.0.server_flag")
+	if ok {
+		mainModel.ServerFlag = core.BoolPtr(serverFlag.(bool))
+	}
+	if modelMap["street_address"] != nil {
+		streetAddress := modelMap["street_address"].([]interface{})
+		streetAddressParsed := make([]string, len(streetAddress))
+		for i, v := range streetAddress {
+			streetAddressParsed[i] = fmt.Sprint(v)
+		}
+		mainModel.StreetAddress = streetAddressParsed
+	}
+	uriSans, ok := d.GetOkExists("managed_csr.0.uri_sans")
+	if ok {
+		mainModel.UriSans = core.StringPtr(uriSans.(string))
+	}
+	userIds, ok := d.GetOkExists("managed_csr.0.user_ids")
+	if ok {
+		mainModel.UserIds = core.StringPtr(userIds.(string))
+	}
+	return mainModel, nil
 }
 
 func resourceIbmSmImportedCertificateImportedCertificatePrototypeToMap(model *secretsmanagerv2.ImportedCertificatePrototype) (map[string]interface{}, error) {

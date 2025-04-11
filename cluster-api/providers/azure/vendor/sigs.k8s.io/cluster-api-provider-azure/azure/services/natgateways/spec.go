@@ -43,7 +43,7 @@ type NatGatewaySpec struct {
 func (s *NatGatewaySpec) ResourceRef() *asonetworkv1.NatGateway {
 	return &asonetworkv1.NatGateway{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: s.Name,
+			Name: azure.GetNormalizedKubernetesName(s.Name),
 		},
 	}
 }
@@ -59,7 +59,7 @@ func (s *NatGatewaySpec) Parameters(ctx context.Context, existingNatGateway *aso
 
 	natGateway.Spec.AzureName = s.Name
 	natGateway.Spec.Owner = &genruntime.KnownResourceReference{
-		Name: s.ResourceGroup,
+		Name: azure.GetNormalizedKubernetesName(s.ResourceGroup),
 	}
 	natGateway.Spec.Location = ptr.To(s.Location)
 	natGateway.Spec.Sku = &asonetworkv1.NatGatewaySku{

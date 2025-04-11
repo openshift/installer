@@ -1,6 +1,8 @@
 package bootstrap
 
 import (
+	"context"
+
 	"github.com/openshift/installer/pkg/asset"
 )
 
@@ -16,7 +18,7 @@ type Bootstrap struct {
 var _ asset.WritableAsset = (*Bootstrap)(nil)
 
 // Generate generates the ignition config for the Bootstrap asset.
-func (a *Bootstrap) Generate(dependencies asset.Parents) error {
+func (a *Bootstrap) Generate(_ context.Context, dependencies asset.Parents) error {
 	templateData := a.getTemplateData(dependencies, false)
 	if err := a.generateConfig(dependencies, templateData); err != nil {
 		return err

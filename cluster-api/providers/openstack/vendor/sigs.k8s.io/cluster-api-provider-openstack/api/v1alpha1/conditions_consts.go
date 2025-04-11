@@ -16,6 +16,8 @@ limitations under the License.
 
 package v1alpha1
 
+type ServerStatusError string
+
 const (
 	// OpenstackFloatingIPPoolReadyCondition reports on the current status of the floating ip pool. Ready indicates that the pool is ready to be used.
 	OpenstackFloatingIPPoolReadyCondition = "OpenstackFloatingIPPoolReadyCondition"
@@ -25,4 +27,6 @@ const (
 
 	// UnableToFindFloatingIPNetworkReason is used when the floating ip network is not found.
 	UnableToFindNetwork = "UnableToFindNetwork"
+
+	CreateServerError ServerStatusError = "CreateError"
 )

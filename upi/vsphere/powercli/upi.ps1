@@ -11,11 +11,23 @@ Write-Output "SCRIPT DIR: $($SCRIPTDIR)"
 $ErrorActionPreference = "Stop"
 
 # since we do not have ca for vsphere certs, we'll just set insecure
-Set-PowerCLIConfiguration -InvalidCertificateAction:Ignore -Confirm:$false | Out-Null
+# we will also set default vi server mode to multiple for multi vcenter support
+Set-PowerCLIConfiguration -InvalidCertificateAction:Ignore -DefaultVIServerMode Multiple -ParticipateInCEIP:$false -Confirm:$false | Out-Null
 $Env:GOVC_INSECURE = 1
 
+$viservers = @{}
+
 # Connect to vCenter
-Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
+if ($null -eq $vcenters) {
+    $viservers[$vcenter] = Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
+}
+else {
+    $vcenters = $vcenters | ConvertFrom-Json
+    foreach ($vc in $vcenters) {
+        Write-Output "Logging into $($vc.server)"
+        $viservers[$($vc.server)] = Connect-VIServer -Server $vc.server -User $vc.user -Password $($vc.password)
+    }
+}
 $cliContext = Get-PowerCLIContext
 
 if ($downloadInstaller) {
@@ -115,6 +127,7 @@ if ($null -eq $failure_domains) {
     $failure_domains = @"
 [
   {
+        "server": "$($vcenter)",
         "datacenter": "$($datacenter)",
         "cluster": "$($cluster)",
         "datastore": "$($datastore)",
@@ -135,15 +148,17 @@ if ($null -eq $vm_template) {
 }
 
 # Create tag for all resources we create
-$tagCategory = Get-TagCategory -Name "openshift-$($metadata.infraID)" -ErrorAction continue 2>$null
-if (-Not $?) {
-    Write-Output "Creating Tag Category openshift-$($metadata.infraID)"
-    $tagCategory = New-TagCategory -Name "openshift-$($metadata.infraID)" -EntityType "urn:vim25:VirtualMachine","urn:vim25:ResourcePool","urn:vim25:Folder","urn:vim25:Datastore","urn:vim25:StoragePod"
-}
-$tag = Get-Tag -Category $tagCategory -Name "$($metadata.infraID)" -ErrorAction continue 2>$null
-if (-Not $?) {
-    Write-Output "Creating Tag $($metadata.infraID)"
-    $tag = New-Tag -Category $tagCategory -Name "$($metadata.infraID)"
+foreach ($viserver in $viservers.Keys) {
+    $tagCategory = Get-TagCategory -Server $viserver -Name "openshift-$($metadata.infraID)" -ErrorAction continue 2>$null
+    if (-Not $?) {
+        Write-Output "Creating Tag Category openshift-$($metadata.infraID)"
+        $tagCategory = New-TagCategory -Server $viserver -Name "openshift-$($metadata.infraID)" -EntityType "urn:vim25:VirtualMachine","urn:vim25:ResourcePool","urn:vim25:Folder","urn:vim25:Datastore","urn:vim25:StoragePod"
+    }
+    $tag = Get-Tag -Server $viserver -Category $tagCategory -Name "$($metadata.infraID)" -ErrorAction continue 2>$null
+    if (-Not $?) {
+        Write-Output "Creating Tag $($metadata.infraID)"
+        $tag = New-Tag -Server $viserver -Category $tagCategory -Name "$($metadata.infraID)"
+    }
 }
 
 $jobs = @()
@@ -152,44 +167,50 @@ $templateInProgress = @()
 # Check each failure domain for ova template
 foreach ($fd in $fds)
 {
-    $datastoreInfo = Get-Datastore -Name $fd.datastore -Location $fd.datacenter
+    Write-Output "Getting viserver for $($fd.server)"
+    $viserver = $viservers[$fd.server]
+    $datastoreInfo = Get-Datastore -Server $viserver -Name $fd.datastore -Location $fd.datacenter
+
+    # Load tags for this FD.
+    $tagCategory = Get-TagCategory -Server $viserver -Name "openshift-$($metadata.infraID)" -ErrorAction continue 2>$null
+    $tag = Get-Tag -Server $viserver -Category $tagCategory -Name "$($metadata.infraID)" -ErrorAction continue 2>$null
 
     # If the folder already exists
     Write-Output "Checking for folder in failure domain $($fd.datacenter)/$($fd.cluster)"
-    $folder = Get-Folder -Name $clustername -Location $fd.datacenter -ErrorAction continue 2>$null
+    $folder = Get-Folder -Server $viserver -Name $clustername -Location $fd.datacenter -ErrorAction continue 2>$null
 
     # Otherwise create the folder within the datacenter as defined in the upi-variables
     if (-Not $?) {
-        Write-Output "Creating folder $($clustername) in datacenter $($fd.datacenter)"
-        (get-view (Get-Datacenter -Name $fd.datacenter).ExtensionData.vmfolder).CreateFolder($clustername)
-        $folder = Get-Folder -Name $clustername -Location $fd.datacenter
-        New-TagAssignment -Entity $folder -Tag $tag > $null
+        Write-Output "Creating folder $($clustername) in datacenter $($fd.datacenter) of vCenter $($fd.server)"
+        (get-view (Get-Datacenter -Server $viserver -Name $fd.datacenter).ExtensionData.vmfolder).CreateFolder($clustername)
+        $folder = Get-Folder -Server $viserver -Name $clustername -Location $fd.datacenter
+        New-TagAssignment -Server $viserver -Entity $folder -Tag $tag > $null
     }
 
     # Create resource pool for all future VMs
     Write-Output "Checking for resource pool in failure domain $($fd.datacenter)/$($fd.cluster)"
-    $rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($fd.cluster)) -ErrorAction continue 2>$null
+    $rp = Get-ResourcePool -Server $viserver -Name $($metadata.infraID) -Location $(Get-Cluster -Server $viserver -Name $($fd.cluster)) -ErrorAction continue 2>$null
 
     if (-Not $?) {
         Write-Output "Creating resource pool $($metadata.infraID) in datacenter $($fd.datacenter)"
-        $rp = New-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($fd.cluster))
-        New-TagAssignment -Entity $rp -Tag $tag > $null
+        $rp = New-ResourcePool -Server $viserver -Name $($metadata.infraID) -Location $(Get-Cluster -Server $viserver -Name $($fd.cluster))
+        New-TagAssignment -Server $viserver -Entity $rp -Tag $tag > $null
     }
 
     # If the rhcos virtual machine already exists
     Write-Output "Checking for vm template in failure domain $($fd.datacenter)/$($fd.cluster)"
-    $template = Get-VM -Name $vm_template -Location $fd.datacenter -ErrorAction continue
+    $template = Get-VM -Server $viserver -Name $vm_template -Location $fd.datacenter -ErrorAction continue 2>$null
 
     # Otherwise import the ova to a random host on the vSphere cluster
     if (-Not $? -And -Not $templateInProgress.Contains($fd.datacenter))
     {
         $templateInProgress += $fd.datacenter
         $vmhost = Get-Random -InputObject (Get-VMHost -Location (Get-Cluster $fd.cluster))
-        $ovfConfig = Get-OvfConfiguration -Ovf "template-$($Version).ova"
+        $ovfConfig = Get-OvfConfiguration -Server $viserver -Ovf "template-$($Version).ova"
         $ovfConfig.NetworkMapping.VM_Network.Value = $fd.network
         Write-Output "OVF: $($ovfConfig)"
         $jobs += Start-ThreadJob -n "upload-template-$($fd.cluster)" -ScriptBlock {
-            param($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag,$scriptdir,$cliContext)
+            param($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag,$scriptdir,$cliContext,$viserver)
             . .\variables.ps1
             . ${scriptdir}\upi-functions.ps1
             Write-Output "Version: $($Version)"
@@ -197,7 +218,7 @@ foreach ($fd in $fds)
             Write-Output "OVF Config: $($ovfConfig)"
             Write-Output "VM Host: $($vmhost)"
             Use-PowerCLIContext -PowerCLIContext $cliContext
-            $template = Import-Vapp -Source "template-$($Version).ova" -Name $vm_template -OvfConfiguration $ovfConfig -VMHost $vmhost -Datastore $datastoreInfo -InventoryLocation $folder -Force:$true
+            $template = Import-Vapp -Server $viserver -Source "template-$($Version).ova" -Name $vm_template -OvfConfiguration $ovfConfig -VMHost $vmhost -Datastore $datastoreInfo -InventoryLocation $folder -Force:$true
 
             $templateVIObj = Get-View -VIObject $template.Name
             # Need to look into upgrading hardware.  For me it keeps throwing exception.
@@ -209,14 +230,14 @@ foreach ($fd in $fds)
             Write-Output $_
         } #>
 
-            New-TagAssignment -Entity $template -Tag $tag
-            Set-VM -VM $template -MemoryGB 16 -NumCpu 4 -CoresPerSocket 4 -Confirm:$false > $null
+            New-TagAssignment -Server $viserver -Entity $template -Tag $tag
+            Set-VM -Server $viserver -VM $template -MemoryGB 16 -NumCpu 4 -CoresPerSocket 4 -Confirm:$false > $null
             #Get-HardDisk -VM $template | Select-Object -First 1 | Set-HardDisk -CapacityGB 120 -Confirm:$false > $null
             updateDisk -VM $template -CapacityGB 120
-            New-AdvancedSetting -Entity $template -name "disk.EnableUUID" -value 'TRUE' -confirm:$false -Force > $null
-            New-AdvancedSetting -Entity $template -name "guestinfo.ignition.config.data.encoding" -value "base64" -confirm:$false -Force > $null
+            New-AdvancedSetting -Server $viserver -Entity $template -name "disk.EnableUUID" -value 'TRUE' -confirm:$false -Force > $null
+            New-AdvancedSetting -Server $viserver -Entity $template -name "guestinfo.ignition.config.data.encoding" -value "base64" -confirm:$false -Force > $null
             #$snapshot = New-Snapshot -VM $template -Name "linked-clone" -Description "linked-clone" -Memory -Quiesce
-        } -ArgumentList @($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag,$SCRIPTDIR,$cliContext)
+        } -ArgumentList @($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag,$SCRIPTDIR,$cliContext,$viserver)
     }
 }
 
@@ -232,15 +253,17 @@ if ($jobs.count -gt 0)
 Write-Output "Creating LB"
 
 # Data needed for LB VM creation
-$rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($fds[0].cluster)) -Server $vcenter
-$datastoreInfo = Get-Datastore -Name $fds[0].datastore -Server $vcenter -Location $fds[0].datacenter
-$folder = Get-Folder -Name $clustername -Location $fds[0].datacenter
-$template = Get-VM -Name $vm_template -Location $fds[0].datacenter
+$tagCategory = Get-TagCategory -Server $fds[0].server -Name "openshift-$($metadata.infraID)" -ErrorAction continue 2>$null
+$tag = Get-Tag -Server $fds[0].server -Category $tagCategory -Name "$($metadata.infraID)" -ErrorAction continue 2>$null
+$rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Server $fds[0].server -Name $($fds[0].cluster))
+$datastoreInfo = Get-Datastore -Name $fds[0].datastore -Server $fds[0].server -Location $fds[0].datacenter
+$folder = Get-Folder -Server $fds[0].server -Name $clustername -Location $fds[0].datacenter
+$template = Get-VM -Server $fds[0].server -Name $vm_template -Location $fds[0].datacenter
 
 # Create LB for Cluster
 $ignition = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((New-LoadBalancerIgnition $sshKey)))
-$network = New-VMNetworkConfig -Hostname "$($metadata.infraID)-lb" -IPAddress $lb_ip_address -Netmask $netmask -Gateway $gateway -DNS $dns -Network $failure_domains[0].network
-$vm = New-OpenShiftVM -IgnitionData $ignition -Name "$($metadata.infraID)-lb" -Template $template -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -Tag $tag -Networking $network -Network $($fds[0].network) -SecureBoot $secureboot -StoragePolicy $storagepolicy -MemoryMB 8192 -NumCpu 4
+$network = New-VMNetworkConfig -Server $fds[0].server -Hostname "$($metadata.infraID)-lb" -IPAddress $lb_ip_address -Netmask $netmask -Gateway $gateway -DNS $dns -Network $failure_domains[0].network
+$vm = New-OpenShiftVM -IgnitionData $ignition -Name "$($metadata.infraID)-lb" -Template $template -Server $fds[0].server -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -Tag $tag -Networking $network -Network $($fds[0].network) -SecureBoot $secureboot -StoragePolicy $storagepolicy -MemoryMB 8192 -NumCpu 4
 $vm | Start-VM
 
 # Take the $virtualmachines defined in upi-variables and convert to a powershell object
@@ -517,6 +540,9 @@ if ($waitForComplete)
 
 Get-Job | Remove-Job
 
-Disconnect-VIServer -Server $vcenter -Force:$true -Confirm:$false
+foreach ($key in $viservers.Keys) {
+    Write-Output "Disconnecting from $($key)"
+    Disconnect-VIServer -Server $key -Force:$true -Confirm:$false
+}
 
 Write-Output "Install Complete!"

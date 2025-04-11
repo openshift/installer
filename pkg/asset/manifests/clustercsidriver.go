@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -44,7 +45,7 @@ func (*ClusterCSIDriverConfig) Dependencies() []asset.Asset {
 }
 
 // Generate the ClusterCSIDriverConfig.
-func (csi *ClusterCSIDriverConfig) Generate(dependencies asset.Parents) error {
+func (csi *ClusterCSIDriverConfig) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	dependencies.Get(installConfig, clusterID)

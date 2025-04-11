@@ -2,7 +2,11 @@
 
 package v1
 
-// VSpherePlatformStatusApplyConfiguration represents an declarative configuration of the VSpherePlatformStatus type for use
+import (
+	configv1 "github.com/openshift/api/config/v1"
+)
+
+// VSpherePlatformStatusApplyConfiguration represents a declarative configuration of the VSpherePlatformStatus type for use
 // with apply.
 type VSpherePlatformStatusApplyConfiguration struct {
 	APIServerInternalIP  *string                                        `json:"apiServerInternalIP,omitempty"`
@@ -11,9 +15,10 @@ type VSpherePlatformStatusApplyConfiguration struct {
 	IngressIPs           []string                                       `json:"ingressIPs,omitempty"`
 	NodeDNSIP            *string                                        `json:"nodeDNSIP,omitempty"`
 	LoadBalancer         *VSpherePlatformLoadBalancerApplyConfiguration `json:"loadBalancer,omitempty"`
+	MachineNetworks      []configv1.CIDR                                `json:"machineNetworks,omitempty"`
 }
 
-// VSpherePlatformStatusApplyConfiguration constructs an declarative configuration of the VSpherePlatformStatus type for use with
+// VSpherePlatformStatusApplyConfiguration constructs a declarative configuration of the VSpherePlatformStatus type for use with
 // apply.
 func VSpherePlatformStatus() *VSpherePlatformStatusApplyConfiguration {
 	return &VSpherePlatformStatusApplyConfiguration{}
@@ -68,5 +73,15 @@ func (b *VSpherePlatformStatusApplyConfiguration) WithNodeDNSIP(value string) *V
 // If called multiple times, the LoadBalancer field is set to the value of the last call.
 func (b *VSpherePlatformStatusApplyConfiguration) WithLoadBalancer(value *VSpherePlatformLoadBalancerApplyConfiguration) *VSpherePlatformStatusApplyConfiguration {
 	b.LoadBalancer = value
+	return b
+}
+
+// WithMachineNetworks adds the given value to the MachineNetworks field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the MachineNetworks field.
+func (b *VSpherePlatformStatusApplyConfiguration) WithMachineNetworks(values ...configv1.CIDR) *VSpherePlatformStatusApplyConfiguration {
+	for i := range values {
+		b.MachineNetworks = append(b.MachineNetworks, values[i])
+	}
 	return b
 }

@@ -17,7 +17,6 @@ package interpreter
 import (
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/google/cel-go/common/types/ref"
 )
@@ -58,7 +57,7 @@ func (emptyActivation) Parent() Activation             { return nil }
 // The output of the lazy binding will overwrite the variable reference in the internal map.
 //
 // Values which are not represented as ref.Val types on input may be adapted to a ref.Val using
-// the ref.TypeAdapter configured in the environment.
+// the types.Adapter configured in the environment.
 func NewActivation(bindings any) (Activation, error) {
 	if bindings == nil {
 		return nil, errors.New("bindings must be non-nil")
@@ -167,35 +166,3 @@ type partActivation struct {
 func (a *partActivation) UnknownAttributePatterns() []*AttributePattern {
 	return a.unknowns
 }
-
-// varActivation represents a single mutable variable binding.
-//
-// This activation type should only be used within folds as the fold loop controls the object
-// life-cycle.
-type varActivation struct {
-	parent Activation
-	name   string
-	val    ref.Val
-}
-
-// Parent implements the Activation interface method.
-func (v *varActivation) Parent() Activation {
-	return v.parent
-}
-
-// ResolveName implements the Activation interface method.
-func (v *varActivation) ResolveName(name string) (any, bool) {
-	if name == v.name {
-		return v.val, true
-	}
-	return v.parent.ResolveName(name)
-}
-
-var (
-	// pool of var activations to reduce allocations during folds.
-	varActivationPool = &sync.Pool{
-		New: func() any {
-			return &varActivation{}
-		},
-	}
-)

@@ -36,7 +36,7 @@ type PVMInstanceClone struct {
 	Networks []*PVMInstanceAddNetwork `json:"networks"`
 
 	// Processor type (dedicated, shared, capped)
-	// Enum: [dedicated shared capped]
+	// Enum: ["dedicated","shared","capped"]
 	ProcType *string `json:"procType,omitempty"`
 
 	// Number of processors allocated

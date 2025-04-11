@@ -18,8 +18,16 @@ package v1beta2
 
 import "github.com/IBM/vpc-go-sdk/vpcv1"
 
-// DefaultAPIServerPort is defuault API server port number.
-const DefaultAPIServerPort int32 = 6443
+const (
+	// CIDRBlockAny is the CIDRBlock representing any allowable destination/source IP.
+	CIDRBlockAny string = "0.0.0.0/0"
+
+	// DefaultAPIServerPort is defuault API server port number.
+	DefaultAPIServerPort int32 = 6443
+
+	// UpdateMachineError indicates an error while trying to update a machine.
+	UpdateMachineError string = "UpdateError"
+)
 
 // PowerVSInstanceState describes the state of an IBM Power VS instance.
 type PowerVSInstanceState string
@@ -109,6 +117,74 @@ var (
 	TransitGatewayConnectionStateDeleting = TransitGatewayConnectionState("deleting")
 )
 
+// VPCLoadBalancerBackendPoolAlgorithm describes the backend pool's load balancing algorithm.
+// +kubebuilder:validation:Enum=least_connections;round_robin;weighted_round_robin
+type VPCLoadBalancerBackendPoolAlgorithm string
+
+var (
+	// VPCLoadBalancerBackendPoolAlgorithmLeastConnections is the string representing the least_connections load balancing algorithm.
+	VPCLoadBalancerBackendPoolAlgorithmLeastConnections VPCLoadBalancerBackendPoolAlgorithm = vpcv1.CreateLoadBalancerPoolOptionsAlgorithmLeastConnectionsConst
+
+	// VPCLoadBalancerBackendPoolAlgorithmRoundRobin is the string representing the round_robin load balancing algorithm.
+	VPCLoadBalancerBackendPoolAlgorithmRoundRobin VPCLoadBalancerBackendPoolAlgorithm = vpcv1.CreateLoadBalancerPoolOptionsAlgorithmRoundRobinConst
+
+	// VPCLoadBalancerBackendPoolAlgorithmWeightedRoundRobin is the string representing the weighted_round_robin load balancing algorithm.
+	VPCLoadBalancerBackendPoolAlgorithmWeightedRoundRobin VPCLoadBalancerBackendPoolAlgorithm = vpcv1.CreateLoadBalancerPoolOptionsAlgorithmWeightedRoundRobinConst
+)
+
+// VPCLoadBalancerBackendPoolProtocol describes the protocol for load balancer backend pools.
+// We have unique types in case IBM Cloud Load Balancer Listener and Backend Pool supported algorithms ever diverage.
+// +kubebuilder:validation:Enum=http;https;tcp;udp
+type VPCLoadBalancerBackendPoolProtocol string
+
+var (
+	// VPCLoadBalancerBackendPoolProtocolHTTP is the string representing the http protocol for load balancer backend pools.
+	VPCLoadBalancerBackendPoolProtocolHTTP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeLoadBalancerContextProtocolHTTPConst
+
+	// VPCLoadBalancerBackendPoolProtocolHTTPS is the string representing the https protocol for load balancer backend pools.
+	VPCLoadBalancerBackendPoolProtocolHTTPS VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeLoadBalancerContextProtocolHTTPSConst
+
+	// VPCLoadBalancerBackendPoolProtocolTCP is the string representing the tcp protocol for load balancer backend pools.
+	VPCLoadBalancerBackendPoolProtocolTCP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeLoadBalancerContextProtocolTCPConst
+
+	// VPCLoadBalancerBackendPoolProtocolUDP is the string representing the tudp protocol for load balancer backend pools.
+	VPCLoadBalancerBackendPoolProtocolUDP VPCLoadBalancerBackendPoolProtocol = vpcv1.LoadBalancerPoolPrototypeLoadBalancerContextProtocolUDPConst
+)
+
+// VPCLoadBalancerListenerProtocol describes the protocol for load balancer listeners.
+// We have unique types in case IBM Cloud Load Balancer Listener and Backend Pool supported algorithms ever diverage.
+// +kubebuilder:validation:Enum=http;https;tcp;udp
+type VPCLoadBalancerListenerProtocol string
+
+var (
+	// VPCLoadBalancerListenerProtocolHTTP is the string representing the http protocol for load balancer listeners.
+	VPCLoadBalancerListenerProtocolHTTP VPCLoadBalancerListenerProtocol = vpcv1.LoadBalancerListenerProtocolHTTPConst
+
+	// VPCLoadBalancerListenerProtocolHTTPS is the string representing the https protocol for load balancer listeners.
+	VPCLoadBalancerListenerProtocolHTTPS VPCLoadBalancerListenerProtocol = vpcv1.LoadBalancerListenerProtocolHTTPSConst
+
+	// VPCLoadBalancerListenerProtocolTCP is the string representing the tcp protocol for load balancer listeners.
+	VPCLoadBalancerListenerProtocolTCP VPCLoadBalancerListenerProtocol = vpcv1.LoadBalancerListenerProtocolTCPConst
+
+	// VPCLoadBalancerListenerProtocolUDP is the string representing the tudp protocol for load balancer listeners.
+	VPCLoadBalancerListenerProtocolUDP VPCLoadBalancerListenerProtocol = vpcv1.LoadBalancerListenerProtocolUDPConst
+)
+
+// VPCLoadBalancerBackendPoolHealthMonitorType describes the backend pool's health check protocol type.
+// +kubebuilder:validation:Enum=http;https;tcp
+type VPCLoadBalancerBackendPoolHealthMonitorType string
+
+var (
+	// VPCLoadBalancerBackendPoolHealthMonitorTypeHTTP is the string representing the http health pool protocol type.
+	VPCLoadBalancerBackendPoolHealthMonitorTypeHTTP VPCLoadBalancerBackendPoolHealthMonitorType = vpcv1.LoadBalancerPoolHealthMonitorTypeHTTPConst
+
+	// VPCLoadBalancerBackendPoolHealthMonitorTypeHTTPS is the string representing the https health pool protocol type.
+	VPCLoadBalancerBackendPoolHealthMonitorTypeHTTPS VPCLoadBalancerBackendPoolHealthMonitorType = vpcv1.LoadBalancerPoolHealthMonitorTypeHTTPSConst
+
+	// VPCLoadBalancerBackendPoolHealthMonitorTypeTCP is the string representing the tcp health pool protocol type.
+	VPCLoadBalancerBackendPoolHealthMonitorTypeTCP VPCLoadBalancerBackendPoolHealthMonitorType = vpcv1.LoadBalancerPoolHealthMonitorTypeTCPConst
+)
+
 // VPCLoadBalancerState describes the state of the load balancer.
 type VPCLoadBalancerState string
 
@@ -118,6 +194,9 @@ var (
 
 	// VPCLoadBalancerStateCreatePending is the string representing the load balancer in a queued state.
 	VPCLoadBalancerStateCreatePending = VPCLoadBalancerState("create_pending")
+
+	// VPCLoadBalancerStateUpdatePending is the string representing the load balancer in updating state.
+	VPCLoadBalancerStateUpdatePending = VPCLoadBalancerState("update_pending")
 
 	// VPCLoadBalancerStateDeletePending is the string representing the load balancer in deleting state.
 	VPCLoadBalancerStateDeletePending = VPCLoadBalancerState("delete_pending")
@@ -176,18 +255,41 @@ var (
 	ResourceTypeDHCPServer = ResourceType("dhcpServer")
 	// ResourceTypeLoadBalancer VPC loadBalancer resource.
 	ResourceTypeLoadBalancer = ResourceType("loadBalancer")
+	// ResourceTypeLoadBalancerPool is a Load Balancer Pool resource.
+	ResourceTypeLoadBalancerPool = ResourceType("loadBalancerPool")
 	// ResourceTypeTransitGateway is transit gateway resource.
 	ResourceTypeTransitGateway = ResourceType("transitGateway")
 	// ResourceTypeVPC is Power VS network resource.
 	ResourceTypeVPC = ResourceType("vpc")
 	// ResourceTypeSubnet is VPC subnet resource.
 	ResourceTypeSubnet = ResourceType("subnet")
+	// ResourceTypeControlPlaneSubnet is a VPC subnet resource designated for the Control Plane.
+	ResourceTypeControlPlaneSubnet = ResourceType("controlPlaneSubnet")
+	// ResourceTypeWorkerSubnet is a VPC subnet resource designated for the Worker (Data) Plane.
+	ResourceTypeWorkerSubnet = ResourceType("workerSubnet")
+	// ResourceTypeSecurityGroup is a VPC Security Group resource.
+	ResourceTypeSecurityGroup = ResourceType("securityGroup")
 	// ResourceTypeCOSInstance is IBM COS instance resource.
 	ResourceTypeCOSInstance = ResourceType("cosInstance")
 	// ResourceTypeCOSBucket is IBM COS bucket resource.
 	ResourceTypeCOSBucket = ResourceType("cosBucket")
 	// ResourceTypeResourceGroup is IBM Resource Group.
 	ResourceTypeResourceGroup = ResourceType("resourceGroup")
+	// ResourceTypePublicGateway is a VPC Public Gatway.
+	ResourceTypePublicGateway = ResourceType("publicGateway")
+	// ResourceTypeCustomImage is a VPC Custom Image.
+	ResourceTypeCustomImage = ResourceType("customImage")
+)
+
+const (
+	// VPCSecurityGroupRuleProtocolAllType is a string representation of the 'SecurityGroupRuleSecurityGroupRuleProtocolAll' type.
+	VPCSecurityGroupRuleProtocolAllType = "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll"
+
+	// VPCSecurityGroupRuleProtocolIcmpType is a string representation of the 'SecurityGroupRuleSecurityGroupRuleProtocolIcmp' type.
+	VPCSecurityGroupRuleProtocolIcmpType = "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp"
+
+	// VPCSecurityGroupRuleProtocolTcpudpType is a string representation of the 'SecurityGroupRuleSecurityGroupRuleProtocolTcpudp' type.
+	VPCSecurityGroupRuleProtocolTcpudpType = "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp"
 )
 
 // VPCSecurityGroupRuleAction represents the actions for a Security Group Rule.
@@ -248,10 +350,77 @@ const (
 	VPCSecurityGroupRuleRemoteTypeSG VPCSecurityGroupRuleRemoteType = VPCSecurityGroupRuleRemoteType("sg")
 )
 
+// IBMCloudResourceReference represents an IBM Cloud resource.
+type IBMCloudResourceReference struct {
+	// id defines the IBM Cloud Resource ID.
+	// +required
+	ID string `json:"id"`
+
+	// name defines the IBM Cloud Resource Name.
+	// +optional
+	Name *string `json:"name,omitempty"`
+}
+
+// IBMCloudCatalogOffering represents an IBM Cloud Catalog Offering resource.
+// +kubebuilder:validation:XValidation:rule="(has(self.offeringCRN) && !has(self.versionCRN)) || (!has(self.offeringCRN) && has(self.versionCRN))",message="either offeringCRN or version CRN must be provided, not both"
+type IBMCloudCatalogOffering struct {
+	// OfferingCRN defines the IBM Cloud Catalog Offering CRN. Using the OfferingCRN expects that the latest version of the Offering will be used.
+	// If a specific version should be used instead, rely on VersionCRN.
+	// +optional
+	OfferingCRN *string `json:"offeringCRN,omitempty"`
+
+	// PlanCRN defines the IBM Cloud Catalog Offering Plan CRN to use for the Offering.
+	// +optional
+	PlanCRN *string `json:"planCRN,omitempty"`
+
+	// VersionCRN defines the IBM Cloud Catalog Offering Version CRN. A specific version of the Catalog Offering will be used, as defined by this CRN.
+	// +optional
+	VersionCRN *string `json:"versionCRN,omitempty"`
+}
+
 // NetworkInterface holds the network interface information like subnet id.
 type NetworkInterface struct {
+	// SecurityGroups defines a set of IBM Cloud VPC Security Groups to attach to the network interface.
+	// +optional
+	SecurityGroups []VPCResource `json:"securityGroups,omitempty"`
+
 	// Subnet ID of the network interface.
 	Subnet string `json:"subnet,omitempty"`
+}
+
+// VPCLoadBalancerBackendPoolMember represents a VPC Load Balancer Backend Pool Member.
+type VPCLoadBalancerBackendPoolMember struct {
+	// LoadBalancer defines the Load Balancer the Pool Member is for.
+	// +required
+	LoadBalancer VPCResource `json:"loadBalancer"`
+
+	// Pool defines the Load Balancer Pool the Pool Member should be in.
+	// +required
+	Pool VPCResource `json:"pool"`
+
+	// Port defines the Port the Load Balancer Pool Member listens for traffic.
+	// +required
+	Port int64 `json:"port"`
+
+	// Weight of the service member. Only applicable if the pool algorithm is "weighted_round_robin".
+	// +optional
+	Weight *int64 `json:"weight,omitempty"`
+}
+
+// VPCMachinePlacementTarget represents a VPC Machine's placement restrictions.
+// +kubebuilder:validation:XValidation:rule="(has(self.dedicatedHost) && !has(self.dedicatedHostGroup) && !has(self.placementGroup)) || (!has(self.dedicatedHost) && has(self.dedicatedHostGroup) && !has(self.placementGroup)) || (!has(self.dedicatedHost) && !has(self.dedicatedHostGroup) && has(self.placementGroup))",message="only one of dedicatedHost, dedicatedHostGroup, or placementGroup must be defined for machine placement"
+type VPCMachinePlacementTarget struct {
+	// DedicatedHost defines the Dedicated Host to place a VPC Machine (Instance) on.
+	// +optional
+	DedicatedHost *VPCResource `json:"dedicatedHost,omitempty"`
+
+	// DedicatedHostGroup defines the Dedicated Host Group to use when placing a VPC Machine (Instance).
+	// +optional
+	DedicatedHostGroup *VPCResource `json:"dedicatedHostGroup,omitempty"`
+
+	// PlacementGroup defines the Placement Group to use when placing a VPC Machine (Instance).
+	// +optional
+	PlacementGroup *VPCResource `json:"placementGroup,omitempty"`
 }
 
 // VPCSecurityGroupPortRange represents a range of ports, minimum to maximum.
@@ -396,4 +565,43 @@ type VPCEndpoint struct {
 	FIPID *string `json:"floatingIPID,omitempty"`
 	// +optional
 	LBID *string `json:"loadBalancerIPID,omitempty"`
+}
+
+// ResourceStatus identifies a resource by id (and name) and whether it is ready.
+type ResourceStatus struct {
+	// id defines the Id of the IBM Cloud resource status.
+	// +required
+	ID string `json:"id"`
+
+	// name defines the name of the IBM Cloud resource status.
+	// +optional
+	Name *string `json:"name,omitempty"`
+
+	// ready defines whether the IBM Cloud resource is ready.
+	// +required
+	Ready bool `json:"ready"`
+}
+
+// Set sets the ResourceStatus fields.
+func (s *ResourceStatus) Set(resource ResourceStatus) {
+	s.ID = resource.ID
+	// Set the name if it hasn't been, or the incoming name won't remove it (nil).
+	if s.Name == nil && resource.Name != nil {
+		s.Name = resource.Name
+	}
+	s.Ready = resource.Ready
+}
+
+// VPCResource represents a VPC resource.
+// +kubebuilder:validation:XValidation:rule="has(self.id) || has(self.name)",message="an id or name must be provided"
+type VPCResource struct {
+	// id of the resource.
+	// +kubebuilder:validation:MinLength=1
+	// +optional
+	ID *string `json:"id,omitempty"`
+
+	// name of the resource.
+	// +kubebuilder:validation:MinLength=1
+	// +optional
+	Name *string `json:"name,omitempty"`
 }

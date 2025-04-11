@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
@@ -82,6 +83,7 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 	}
 
 	allErrs = append(allErrs, validateOSImage(p, fldPath)...)
+	allErrs = append(allErrs, validateIdentity(poolName, p, fldPath.Child("identity"))...)
 
 	return allErrs
 }
@@ -210,6 +212,37 @@ func validateSecurityProfile(p *azure.MachinePool, cloudName azure.CloudEnvironm
 				fmt.Sprintf("securityType should be set to %s when uefiSettings are enabled.",
 					azure.SecurityTypesTrustedLaunch)))
 		}
+	}
+
+	return errs
+}
+
+func validateIdentity(poolName string, p *azure.MachinePool, fldPath *field.Path) field.ErrorList {
+	id := p.Identity
+	if id == nil {
+		return nil
+	}
+
+	var errs field.ErrorList
+	if poolName == "worker" && id.Type != capz.VMIdentityUserAssigned {
+		return append(errs, field.Invalid(fldPath.Child("type"), id.Type, "only user-assigned identities are supported for compute nodes"))
+	}
+
+	if id.Type == "" {
+		return append(errs, field.Required(fldPath.Child("type"), "type must be specified if using identity"))
+	}
+
+	if id.Type != capz.VMIdentityNone && id.Type != capz.VMIdentityUserAssigned {
+		supportedValues := []capz.VMIdentity{capz.VMIdentityNone, capz.VMIdentityUserAssigned}
+		return append(errs, field.NotSupported(fldPath.Child("type"), id.Type, supportedValues))
+	}
+
+	if id.Type == capz.VMIdentityUserAssigned && len(id.UserAssignedIdentities) == 0 {
+		errs = append(errs, field.Required(fldPath.Child("userAssignedIdentities"), "userAssignedIdentities must be specified when using type: UserAssigned"))
+	}
+
+	if id.UserAssignedIdentities != nil && id.Type != capz.VMIdentityUserAssigned {
+		errs = append(errs, field.Invalid(fldPath.Child("type"), id.Type, "userAssignedIdentities may only be used with type: UserAssigned"))
 	}
 
 	return errs

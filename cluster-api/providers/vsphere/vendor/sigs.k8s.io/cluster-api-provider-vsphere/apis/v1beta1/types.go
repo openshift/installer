@@ -93,8 +93,8 @@ const (
 
 // VirtualMachineCloneSpec is information used to clone a virtual machine.
 type VirtualMachineCloneSpec struct {
-	// Template is the name or inventory path of the template used to clone
-	// the virtual machine.
+	// Template is the name, inventory path, managed object reference or the managed
+	// object ID of the template used to clone the virtual machine.
 	// +kubebuilder:validation:MinLength=1
 	Template string `json:"template"`
 
@@ -127,19 +127,19 @@ type VirtualMachineCloneSpec struct {
 	// +optional
 	Thumbprint string `json:"thumbprint,omitempty"`
 
-	// Datacenter is the name or inventory path of the datacenter in which the
-	// virtual machine is created/located.
+	// Datacenter is the name, inventory path, managed object reference or the managed
+	// object ID of the datacenter in which the virtual machine is created/located.
 	// Defaults to * which selects the default datacenter.
 	// +optional
 	Datacenter string `json:"datacenter,omitempty"`
 
-	// Folder is the name or inventory path of the folder in which the
-	// virtual machine is created/located.
+	// Folder is the name, inventory path, managed object reference or the managed
+	// object ID of the folder in which the virtual machine is created/located.
 	// +optional
 	Folder string `json:"folder,omitempty"`
 
-	// Datastore is the name or inventory path of the datastore in which the
-	// virtual machine is created/located.
+	// Datastore is the name, inventory path, managed object reference or the managed
+	// object ID of the datastore in which the virtual machine is created/located.
 	// +optional
 	Datastore string `json:"datastore,omitempty"`
 
@@ -148,8 +148,8 @@ type VirtualMachineCloneSpec struct {
 	// +optional
 	StoragePolicyName string `json:"storagePolicyName,omitempty"`
 
-	// ResourcePool is the name or inventory path of the resource pool in which
-	// the virtual machine is created/located.
+	// ResourcePool is the name, inventory path, managed object reference or the managed
+	// object ID in which the virtual machine is created/located.
 	// +optional
 	ResourcePool string `json:"resourcePool,omitempty"`
 
@@ -203,7 +203,46 @@ type VirtualMachineCloneSpec struct {
 	// Check the compatibility with the ESXi version before setting the value.
 	// +optional
 	HardwareVersion string `json:"hardwareVersion,omitempty"`
+	// DataDisks are additional disks to add to the VM that are not part of the VM's OVA template.
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=29
+	DataDisks []VSphereDisk `json:"dataDisks,omitempty"`
 }
+
+// VSphereDisk is an additional disk to add to the VM that is not part of the VM OVA template.
+type VSphereDisk struct {
+	// Name is used to identify the disk definition. Name is required and needs to be unique so that it can be used to
+	// clearly identify purpose of the disk.
+	// +kubebuilder:validation:Required
+	Name string `json:"name,omitempty"`
+	// SizeGiB is the size of the disk in GiB.
+	// +kubebuilder:validation:Required
+	SizeGiB int32 `json:"sizeGiB"`
+	// ProvisioningMode specifies the provisioning type to be used by this vSphere data disk.
+	// If not set, the setting will be provided by the default storage policy.
+	// +optional
+	ProvisioningMode ProvisioningMode `json:"provisioningMode,omitempty"`
+}
+
+// ProvisioningMode represents the various provisioning types available to a VMs disk.
+// +kubebuilder:validation:Enum=Thin;Thick;EagerlyZeroed
+type ProvisioningMode string
+
+var (
+	// ThinProvisioningMode creates the disk using thin provisioning. This means a sparse (allocate on demand)
+	// format with additional space optimizations.
+	ThinProvisioningMode ProvisioningMode = "Thin"
+
+	// ThickProvisioningMode creates the disk with all space allocated.
+	ThickProvisioningMode ProvisioningMode = "Thick"
+
+	// EagerlyZeroedProvisioningMode creates the disk using eager zero provisioning. An eager zeroed thick disk
+	// has all space allocated and wiped clean of any previous contents on the physical media at
+	// creation time. Such disks may take longer time during creation compared to other disk formats.
+	EagerlyZeroedProvisioningMode ProvisioningMode = "EagerlyZeroed"
+)
 
 // VSphereMachineTemplateResource describes the data needed to create a VSphereMachine from a template.
 type VSphereMachineTemplateResource struct {
@@ -251,20 +290,36 @@ type PCIDeviceSpec struct {
 	// DeviceID is the device ID of a virtual machine's PCI, in integer.
 	// Defaults to the eponymous property value in the template from which the
 	// virtual machine is cloned.
-	// +kubebuilder:validation:Required
+	// Mutually exclusive with VGPUProfile as VGPUProfile and DeviceID + VendorID
+	// are two independent ways to define PCI devices.
+	// +optional
 	DeviceID *int32 `json:"deviceId,omitempty"`
 	// VendorId is the vendor ID of a virtual machine's PCI, in integer.
 	// Defaults to the eponymous property value in the template from which the
 	// virtual machine is cloned.
-	// +kubebuilder:validation:Required
+	// Mutually exclusive with VGPUProfile as VGPUProfile and DeviceID + VendorID
+	// are two independent ways to define PCI devices.
+	// +optional
 	VendorID *int32 `json:"vendorId,omitempty"`
+	// VGPUProfile is the profile name of a virtual machine's vGPU, in string.
+	// Defaults to the eponymous property value in the template from which the
+	// virtual machine is cloned.
+	// Mutually exclusive with DeviceID and VendorID as VGPUProfile and DeviceID + VendorID
+	// are two independent ways to define PCI devices.
+	// +optional
+	VGPUProfile string `json:"vGPUProfile,omitempty"`
+	// CustomLabel is the hardware label of a virtual machine's PCI device.
+	// Defaults to the eponymous property value in the template from which the
+	// virtual machine is cloned.
+	// +optional
+	CustomLabel string `json:"customLabel,omitempty"`
 }
 
 // NetworkSpec defines the virtual machine's network configuration.
 type NetworkSpec struct {
 	// Devices is the list of network devices used by the virtual machine.
-	// TODO(akutz) Make sure at least one network matches the
-	//             ClusterSpec.CloudProviderConfiguration.Network.Name
+	//
+	// TODO(akutz) Make sure at least one network matches the ClusterSpec.CloudProviderConfiguration.Network.Name
 	Devices []NetworkDeviceSpec `json:"devices"`
 
 	// Routes is a list of optional, static routes applied to the virtual
@@ -275,14 +330,16 @@ type NetworkSpec struct {
 	// PreferredAPIServeCIDR is the preferred CIDR for the Kubernetes API
 	// server endpoint on this machine
 	// +optional
+	//
+	// Deprecated: This field is going to be removed in a future release.
 	PreferredAPIServerCIDR string `json:"preferredAPIServerCidr,omitempty"`
 }
 
 // NetworkDeviceSpec defines the network configuration for a virtual machine's
 // network device.
 type NetworkDeviceSpec struct {
-	// NetworkName is the name of the vSphere network to which the device
-	// will be connected.
+	// NetworkName is the name, managed object reference or the managed
+	// object ID of the vSphere network to which the device will be connected.
 	NetworkName string `json:"networkName"`
 
 	// DeviceName may be used to explicitly assign a name to the network device
@@ -312,9 +369,9 @@ type NetworkDeviceSpec struct {
 	Gateway6 string `json:"gateway6,omitempty"`
 
 	// IPAddrs is a list of one or more IPv4 and/or IPv6 addresses to assign
-	// to this device.  IP addresses must also specify the segment length in
+	// to this device. IP addresses must also specify the segment length in
 	// CIDR notation.
-	// Required when DHCP4 and DHCP6 are both false.
+	// Required when DHCP4, DHCP6 and SkipIPAllocation are false.
 	// +optional
 	IPAddrs []string `json:"ipAddrs,omitempty"`
 
@@ -368,6 +425,12 @@ type NetworkDeviceSpec struct {
 	// For more information see the netplan reference (https://netplan.io/reference#dhcp-overrides)
 	// +optional
 	DHCP6Overrides *DHCPOverrides `json:"dhcp6Overrides,omitempty"`
+
+	// SkipIPAllocation allows the device to not have IP address or DHCP configured.
+	// This is suitable for devices for which IP allocation is handled externally, eg. using Multus CNI.
+	// If true, CAPV will not verify IP address allocation.
+	// +optional
+	SkipIPAllocation bool `json:"skipIPAllocation,omitempty"`
 }
 
 // DHCPOverrides allows for the control over several DHCP behaviors.

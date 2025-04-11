@@ -61,7 +61,7 @@ build_terraform_and_providers() {
 	fi
 }
 
-minimum_go_version=1.21
+minimum_go_version=1.23
 current_go_version=$(go version | cut -d " " -f 3)
 
 if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version")" ]; then

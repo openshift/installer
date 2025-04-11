@@ -30,13 +30,11 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
 	"github.com/openshift/installer/pkg/asset/machines/ibmcloud"
-	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
 	"github.com/openshift/installer/pkg/asset/machines/nutanix"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
@@ -55,12 +53,12 @@ import (
 	externaltypes "github.com/openshift/installer/pkg/types/external"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
-	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
+	powervsdefaults "github.com/openshift/installer/pkg/types/powervs/defaults"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	ibmcloudapi "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis"
 	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
@@ -155,8 +153,9 @@ func (m *Master) Dependencies() []asset.Asset {
 }
 
 // Generate generates the Master asset.
-func (m *Master) Generate(dependencies asset.Parents) error {
-	ctx := context.TODO()
+//
+//nolint:gocyclo
+func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
@@ -176,7 +175,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	switch ic.Platform.Name() {
 	case awstypes.Name:
 		subnets := map[string]string{}
-		if len(ic.Platform.AWS.Subnets) > 0 {
+		if len(ic.Platform.AWS.VPC.Subnets) > 0 {
 			subnetMeta, err := installConfig.AWS.PrivateSubnets(ctx)
 			if err != nil {
 				return err
@@ -188,7 +187,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 
 		mpool := defaultAWSMachinePoolPlatform("master")
 
-		osImage := strings.SplitN(string(*rhcosImage), ",", 2)
+		osImage := strings.SplitN(rhcosImage.ControlPlane, ",", 2)
 		osImageID := osImage[0]
 		if len(osImage) == 2 {
 			osImageID = "" // the AMI will be generated later on
@@ -258,7 +257,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.GCP = &mpool
-		machines, controlPlaneMachineSet, err = gcp.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName)
+		machines, controlPlaneMachineSet, err = gcp.Machines(clusterID.InfraID, ic, &pool, rhcosImage.ControlPlane, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -314,32 +313,15 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 		// TODO: IBM: implement ConfigMasters() if needed
 		// ibmcloud.ConfigMasters(machines, clusterID.InfraID, ic.Publish)
-	case libvirttypes.Name:
-		mpool := defaultLibvirtMachinePoolPlatform()
-		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
-		mpool.Set(pool.Platform.Libvirt)
-		pool.Platform.Libvirt = &mpool
-		machines, err = libvirt.Machines(clusterID.InfraID, ic, &pool, "master", masterUserDataSecretName)
-		if err != nil {
-			return errors.Wrap(err, "failed to create master machine objects")
-		}
 	case openstacktypes.Name:
 		mpool := defaultOpenStackMachinePoolPlatform()
 		mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.OpenStack)
 		pool.Platform.OpenStack = &mpool
 
-		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
+		imageName, _ := rhcosutils.GenerateOpenStackImageName(rhcosImage.ControlPlane, clusterID.InfraID)
 
-		trunkSupport, err := openstack.CheckNetworkExtensionAvailability(
-			ic.Platform.OpenStack.Cloud,
-			"trunk",
-			nil,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to check for trunk support: %w", err)
-		}
-		machines, controlPlaneMachineSet, err = openstack.Machines(clusterID.InfraID, ic, &pool, imageName, "master", masterUserDataSecretName, trunkSupport)
+		machines, controlPlaneMachineSet, err = openstack.Machines(ctx, clusterID.InfraID, ic, &pool, imageName, "master", masterUserDataSecretName)
 		if err != nil {
 			return fmt.Errorf("failed to create master machine objects: %w", err)
 		}
@@ -358,14 +340,13 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Azure)
 
-		session, err := installConfig.Azure.Session()
+		client, err := installConfig.Azure.Client()
 		if err != nil {
-			return errors.Wrap(err, "failed to fetch session")
+			return err
 		}
 
-		client := icazure.NewClient(session)
 		if len(mpool.Zones) == 0 {
-			azs, err := client.GetAvailabilityZones(context.TODO(), ic.Platform.Azure.Region, mpool.InstanceType)
+			azs, err := client.GetAvailabilityZones(ctx, ic.Platform.Azure.Region, mpool.InstanceType)
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch availability zones")
 			}
@@ -378,7 +359,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 
 		if mpool.OSImage.Publisher != "" {
-			img, ierr := client.GetMarketplaceImage(context.TODO(), ic.Platform.Azure.Region, mpool.OSImage.Publisher, mpool.OSImage.Offer, mpool.OSImage.SKU, mpool.OSImage.Version)
+			img, ierr := client.GetMarketplaceImage(ctx, ic.Platform.Azure.Region, mpool.OSImage.Publisher, mpool.OSImage.Offer, mpool.OSImage.SKU, mpool.OSImage.Version)
 			if ierr != nil {
 				return fmt.Errorf("failed to fetch marketplace image: %w", ierr)
 			}
@@ -391,12 +372,12 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 		pool.Platform.Azure = &mpool
 
-		capabilities, err := client.GetVMCapabilities(context.TODO(), mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+		capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
 		if err != nil {
 			return err
 		}
 		useImageGallery := installConfig.Azure.CloudName != azuretypes.StackCloud
-		machines, controlPlaneMachineSet, err = azure.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName, capabilities, useImageGallery)
+		machines, controlPlaneMachineSet, err = azure.Machines(clusterID.InfraID, ic, &pool, rhcosImage.ControlPlane, "master", masterUserDataSecretName, capabilities, useImageGallery)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -413,6 +394,10 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		// Use managed user data secret, since we always have up to date images
 		// available in the cluster
 		masterUserDataSecretName = "master-user-data-managed"
+		enabledCaps := installConfig.Config.GetEnabledCapabilities()
+		if !enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
+			break
+		}
 		machines, err = baremetal.Machines(clusterID.InfraID, ic, &pool, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
@@ -448,7 +433,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.Set(pool.Platform.Ovirt)
 		pool.Platform.Ovirt = &mpool
 
-		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
+		imageName, _ := rhcosutils.GenerateOpenStackImageName(rhcosImage.ControlPlane, clusterID.InfraID)
 
 		machines, err = ovirt.Machines(clusterID.InfraID, ic, &pool, imageName, "master", masterUserDataSecretName)
 		if err != nil {
@@ -479,9 +464,8 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 
 		pool.Platform.VSphere = &mpool
-		templateName := clusterID.InfraID + "-rhcos"
 
-		data, err := vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "master", masterUserDataSecretName)
+		data, err := vsphere.Machines(clusterID.InfraID, ic, &pool, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -512,11 +496,11 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.NumCPUs = 8
 		mpool.Set(ic.Platform.Nutanix.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Nutanix)
-		if err = mpool.ValidateConfig(ic.Platform.Nutanix); err != nil {
+		if err = mpool.ValidateConfig(ic.Platform.Nutanix, "master"); err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		pool.Platform.Nutanix = &mpool
-		templateName := nutanixtypes.RHCOSImageName(clusterID.InfraID)
+		templateName := nutanixtypes.RHCOSImageName(ic.Platform.Nutanix, clusterID.InfraID)
 
 		machines, controlPlaneMachineSet, err = nutanix.Machines(clusterID.InfraID, ic, &pool, templateName, "master", masterUserDataSecretName)
 		if err != nil {
@@ -527,7 +511,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		return fmt.Errorf("invalid Platform")
 	}
 
-	data, err := userDataSecret(masterUserDataSecretName, mign.File.Data)
+	data, err := UserDataSecret(masterUserDataSecretName, mign.File.Data)
 	if err != nil {
 		return errors.Wrap(err, "failed to create user-data secret for master machines")
 	}
@@ -574,6 +558,21 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 				return errors.Wrap(err, "failed to create ignition for Power SMT for master machines")
 			}
 			machineConfigs = append(machineConfigs, ignPowerSMT)
+		}
+
+		if installConfig.Config.Publish == types.InternalPublishingStrategy &&
+			(len(installConfig.Config.ImageDigestSources) > 0 || len(installConfig.Config.DeprecatedImageContentSources) > 0) {
+			ignChrony, err := machineconfig.ForCustomNTP("master", powervsdefaults.DefaultNTPServer)
+			if err != nil {
+				return errors.Wrap(err, "failed to create ignition for custom NTP for master machines")
+			}
+			machineConfigs = append(machineConfigs, ignChrony)
+
+			ignRoutes, err := machineconfig.ForExtraRoutes("master", powervsdefaults.DefaultExtraRoutes(), ic.MachineNetwork[0].CIDR.String())
+			if err != nil {
+				return errors.Wrap(err, "failed to create ignition for extra routes for master machines")
+			}
+			machineConfigs = append(machineConfigs, ignRoutes)
 		}
 	}
 	// The maximum number of networks supported on ServiceNetwork is two, one IPv4 and one IPv6 network.

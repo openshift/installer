@@ -18,6 +18,7 @@ package v1beta2
 
 import (
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
@@ -264,8 +265,36 @@ func (r *AWSCluster) validateNetwork() field.ErrorList {
 	}
 
 	for _, rule := range r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules {
-		if (rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil) && (rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil) {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("additionalControlPlaneIngressRules"), r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
+		allErrs = append(allErrs, r.validateIngressRule(rule)...)
+	}
+
+	for cidrBlockIndex, cidrBlock := range r.Spec.NetworkSpec.NodePortIngressRuleCidrBlocks {
+		if _, _, err := net.ParseCIDR(cidrBlock); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "network", fmt.Sprintf("nodePortIngressRuleCidrBlocks[%d]", cidrBlockIndex)), r.Spec.NetworkSpec.NodePortIngressRuleCidrBlocks, "CIDR block is invalid"))
+		}
+	}
+
+	if r.Spec.NetworkSpec.VPC.ElasticIPPool != nil {
+		eipp := r.Spec.NetworkSpec.VPC.ElasticIPPool
+		if eipp.PublicIpv4Pool != nil {
+			if eipp.PublicIpv4PoolFallBackOrder == nil {
+				return append(allErrs, field.Invalid(field.NewPath("elasticIpPool.publicIpv4PoolFallbackOrder"), r.Spec.NetworkSpec.VPC.ElasticIPPool, "publicIpv4PoolFallbackOrder must be set when publicIpv4Pool is defined."))
+			}
+			awsPublicIpv4PoolPrefix := "ipv4pool-ec2-"
+			if !strings.HasPrefix(*eipp.PublicIpv4Pool, awsPublicIpv4PoolPrefix) {
+				return append(allErrs, field.Invalid(field.NewPath("elasticIpPool.publicIpv4Pool"), r.Spec.NetworkSpec.VPC.ElasticIPPool, fmt.Sprintf("publicIpv4Pool must start with %s.", awsPublicIpv4PoolPrefix)))
+			}
+		}
+		if eipp.PublicIpv4Pool == nil && eipp.PublicIpv4PoolFallBackOrder != nil {
+			return append(allErrs, field.Invalid(field.NewPath("elasticIpPool.publicIpv4PoolFallbackOrder"), r.Spec.NetworkSpec.VPC.ElasticIPPool, "publicIpv4Pool must be set when publicIpv4PoolFallbackOrder is defined."))
+		}
+	}
+
+	secondaryCidrBlocks := r.Spec.NetworkSpec.VPC.SecondaryCidrBlocks
+	secondaryCidrBlocksField := field.NewPath("spec", "network", "vpc", "secondaryCidrBlocks")
+	for _, cidrBlock := range secondaryCidrBlocks {
+		if r.Spec.NetworkSpec.VPC.CidrBlock != "" && r.Spec.NetworkSpec.VPC.CidrBlock == cidrBlock.IPv4CidrBlock {
+			allErrs = append(allErrs, field.Invalid(secondaryCidrBlocksField, secondaryCidrBlocks, fmt.Sprintf("AWSCluster.spec.network.vpc.secondaryCidrBlocks must not contain the primary AWSCluster.spec.network.vpc.cidrBlock %v", r.Spec.NetworkSpec.VPC.CidrBlock)))
 		}
 	}
 
@@ -307,9 +336,7 @@ func (r *AWSCluster) validateControlPlaneLBs() field.ErrorList {
 		}
 
 		for _, rule := range cp.IngressRules {
-			if (rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil) && (rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil) {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
-			}
+			allErrs = append(allErrs, r.validateIngressRule(rule)...)
 		}
 	}
 
@@ -351,11 +378,19 @@ func (r *AWSCluster) validateControlPlaneLBs() field.ErrorList {
 		}
 	}
 
-	for _, rule := range r.Spec.ControlPlaneLoadBalancer.IngressRules {
+	return allErrs
+}
+
+func (r *AWSCluster) validateIngressRule(rule IngressRule) field.ErrorList {
+	var allErrs field.ErrorList
+	if rule.NatGatewaysIPsSource {
+		if rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil || rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("additionalControlPlaneIngressRules"), r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
+		}
+	} else {
 		if (rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil) && (rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil) {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
 		}
 	}
-
 	return allErrs
 }

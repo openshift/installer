@@ -6,6 +6,7 @@ package secretsmanager
 import (
 	"context"
 	"fmt"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"log"
@@ -31,7 +32,8 @@ func DataSourceIbmSmEnRegistration() *schema.Resource {
 func dataSourceIbmSmEnRegistrationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", fmt.Sprintf("(Data) %s", EnRegistrationResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	region := getRegion(secretsManagerClient, d)
@@ -43,16 +45,19 @@ func dataSourceIbmSmEnRegistrationRead(context context.Context, d *schema.Resour
 	notificationsRegistration, response, err := secretsManagerClient.GetNotificationsRegistrationWithContext(context, getNotificationsRegistrationOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetNotificationsRegistrationWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetNotificationsRegistrationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetNotificationsRegistrationWithContext failed %s\n%s", err, response), fmt.Sprintf("(Data) %s", EnRegistrationResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", region, instanceId))
 
 	if err = d.Set("region", region); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting region: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region"), fmt.Sprintf("(Data) %s", EnRegistrationResourceName), "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("event_notifications_instance_crn", notificationsRegistration.EventNotificationsInstanceCrn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting event_notifications_instance_crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting event_notifications_instance_crn"), fmt.Sprintf("(Data) %s", EnRegistrationResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil

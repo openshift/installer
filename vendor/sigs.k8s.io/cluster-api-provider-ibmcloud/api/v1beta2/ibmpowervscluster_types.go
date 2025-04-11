@@ -65,6 +65,7 @@ type IBMPowerVSClusterSpec struct {
 	// when omitted system will dynamically create the service instance with name CLUSTER_NAME-serviceInstance.
 	// when ServiceInstance.ID is set, its expected that there exist a service instance in PowerVS workspace with id or else system will give error.
 	// when ServiceInstance.Name is set, system will first check for service instance with Name in PowerVS workspace, if not exist system will create new instance.
+	// if there are more than one service instance exist with the ServiceInstance.Name in given Zone, installation fails with an error. Use ServiceInstance.ID in those situations to use the specific service instance.
 	// ServiceInstance.Regex is not yet supported not yet supported and system will ignore the value.
 	// +optional
 	ServiceInstance *IBMPowerVSResourceReference `json:"serviceInstance,omitempty"`
@@ -180,6 +181,19 @@ type ResourceReference struct {
 	ControllerCreated *bool `json:"controllerCreated,omitempty"`
 }
 
+// TransitGatewayStatus defines the status of transit gateway as well as it's connection's status.
+type TransitGatewayStatus struct {
+	// id represents the id of the resource.
+	ID *string `json:"id,omitempty"`
+	// +kubebuilder:default=false
+	// controllerCreated indicates whether the resource is created by the controller.
+	ControllerCreated *bool `json:"controllerCreated,omitempty"`
+	// vpcConnection defines the vpc connection status in transit gateway.
+	VPCConnection *ResourceReference `json:"vpcConnection,omitempty"`
+	// powerVSConnection defines the powervs connection status in transit gateway.
+	PowerVSConnection *ResourceReference `json:"powerVSConnection,omitempty"`
+}
+
 // IBMPowerVSClusterStatus defines the observed state of IBMPowerVSCluster.
 type IBMPowerVSClusterStatus struct {
 	// ready is true when the provider resource is ready.
@@ -208,7 +222,7 @@ type IBMPowerVSClusterStatus struct {
 	VPCSecurityGroups map[string]VPCSecurityGroupStatus `json:"vpcSecurityGroups,omitempty"`
 
 	// transitGateway is reference to IBM Cloud TransitGateway.
-	TransitGateway *ResourceReference `json:"transitGateway,omitempty"`
+	TransitGateway *TransitGatewayStatus `json:"transitGateway,omitempty"`
 
 	// cosInstance is reference to IBM Cloud COS Instance resource.
 	COSInstance *ResourceReference `json:"cosInstance,omitempty"`

@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -45,6 +46,11 @@ func DataSourceIBMEnCodeEngineDestination() *schema.Resource {
 				Computed:    true,
 				Description: "Destination type Webhook.",
 			},
+			"collect_failed_events": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether to collect the failed event in Cloud Object Storage bucket",
+			},
 			"config": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -65,6 +71,21 @@ func DataSourceIBMEnCodeEngineDestination() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "HTTP method of webhook.",
+									},
+									"type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The code engine destination type.",
+									},
+									"project_crn": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "CRN of the code engine project.",
+									},
+									"job_name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Name of the code engine job.",
 									},
 									"custom_headers": {
 										Type:        schema.TypeMap,
@@ -113,7 +134,9 @@ func DataSourceIBMEnCodeEngineDestination() *schema.Resource {
 func dataSourceIBMEnCodeEngineDestinationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_destination_ce", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetDestinationOptions{}
@@ -121,47 +144,61 @@ func dataSourceIBMEnCodeEngineDestinationRead(context context.Context, d *schema
 	options.SetInstanceID(d.Get("instance_guid").(string))
 	options.SetID(d.Get("destination_id").(string))
 
-	result, response, err := enClient.GetDestinationWithContext(context, options)
+	result, _, err := enClient.GetDestinationWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("GetDestination failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetDestinationWithContext failed: %s", err.Error()), "(Data) ibm_en_destination_ce", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *options.ID))
 
 	if err = d.Set("name", result.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_destination_ce", "read")
+		return tfErr.GetDiag()
 	}
 
 	if result.Description != nil {
 		if err = d.Set("description", result.Description); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting description: %s", err), "(Data) ibm_en_destination_ce", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("type", result.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting type: %s", err), "(Data) ibm_en_destination_ce", "read")
+		return tfErr.GetDiag()
+	}
+
+	if err = d.Set("collect_failed_events", result.CollectFailedEvents); err != nil {
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting CollectFailedEvents: %s", err), "(Data) ibm_en_destination_ce", "read")
+		return tfErr.GetDiag()
 	}
 
 	if result.Config != nil {
 		err = d.Set("config", enCodeEngineDestinationFlattenConfig(*result.Config))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting config %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting config: %s", err), "(Data) ibm_en_destination_ce", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if result.SubscriptionNames != nil {
 		err = d.Set("subscription_names", result.SubscriptionNames)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting subscription_names %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting subscription_names: %s", err), "(Data) ibm_en_destination_ce", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("updated_at", flex.DateTimeToString(result.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at: %s", err), "(Data) ibm_en_destination_ce", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("subscription_count", flex.IntValue(result.SubscriptionCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting subscription_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting subscription_count: %s", err), "(Data) ibm_en_destination_ce", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -193,18 +230,37 @@ func enCodeEngineDestinationConfigParamsToMap(paramsItem en.DestinationConfigOne
 
 	params := paramsItem.(*en.DestinationConfigOneOf)
 
-	if params.URL != nil {
-		paramsMap["url"] = params.URL
-	}
-	if params.Verb != nil {
-		paramsMap["verb"] = params.Verb
-	}
-	if params.CustomHeaders != nil {
-		paramsMap["custom_headers"] = params.CustomHeaders
-	}
-	if params.SensitiveHeaders != nil {
-		paramsMap["sensitive_headers"] = params.SensitiveHeaders
+	paramsMap["type"] = params.Type
+
+	if *params.Type == "application" {
+
+		if params.URL != nil {
+			paramsMap["url"] = params.URL
+		}
+		if params.Verb != nil {
+			paramsMap["verb"] = params.Verb
+		}
+
+		if params.CustomHeaders != nil {
+			paramsMap["custom_headers"] = params.CustomHeaders
+		}
+		if params.SensitiveHeaders != nil {
+			paramsMap["sensitive_headers"] = params.SensitiveHeaders
+		}
+
+		return paramsMap
+
+	} else {
+
+		if params.ProjectCRN != nil {
+			paramsMap["project_crn"] = params.ProjectCRN
+		}
+		if params.JobName != nil {
+			paramsMap["job_name"] = params.JobName
+		}
+
+		return paramsMap
+
 	}
 
-	return paramsMap
 }

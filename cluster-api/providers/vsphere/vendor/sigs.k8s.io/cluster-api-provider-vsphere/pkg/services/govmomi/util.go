@@ -194,11 +194,11 @@ func reconcileVSphereVMWhenNetworkIsReady(ctx context.Context, virtualMachineCtx
 			// Wait for the VM to be powered on.
 			powerOnTaskInfo, err := powerOnTask.WaitForResult(ctx)
 			if err != nil && powerOnTaskInfo == nil {
-				return nil, nil, errors.Wrapf(err, "failed to wait for power on op for vm %s", ctx)
+				return nil, nil, errors.Wrapf(err, "failed to wait for power on op for vm %s", virtualMachineCtx)
 			}
 			powerState, err := virtualMachineCtx.Obj.PowerState(ctx)
 			if err != nil {
-				return nil, nil, errors.Wrapf(err, "failed to get power state for vm %s", ctx)
+				return nil, nil, errors.Wrapf(err, "failed to get power state for vm %s", virtualMachineCtx)
 			}
 			if powerState != types.VirtualMachinePowerStatePoweredOn {
 				return nil, nil, errors.Errorf(
@@ -208,7 +208,7 @@ func reconcileVSphereVMWhenNetworkIsReady(ctx context.Context, virtualMachineCtx
 
 			// Wait for all NICs to have valid MAC addresses.
 			if err := waitForMacAddresses(ctx, virtualMachineCtx); err != nil {
-				return nil, nil, errors.Wrapf(err, "failed to wait for mac addresses for vm %s", ctx)
+				return nil, nil, errors.Wrapf(err, "failed to wait for mac addresses for vm %s", virtualMachineCtx)
 			}
 
 			// Get all the MAC addresses. This is done separately from waiting
@@ -217,7 +217,7 @@ func reconcileVSphereVMWhenNetworkIsReady(ctx context.Context, virtualMachineCtx
 			// specs, and not the propery change order.
 			_, macToDeviceIndex, deviceToMacIndex, err := getMacAddresses(ctx, virtualMachineCtx)
 			if err != nil {
-				return nil, nil, errors.Wrapf(err, "failed to get mac addresses for vm %s", ctx)
+				return nil, nil, errors.Wrapf(err, "failed to get mac addresses for vm %s", virtualMachineCtx)
 			}
 
 			// Wait for the IP addresses to show up for the VM.
@@ -525,6 +525,12 @@ func waitForIPAddresses(
 		// Determine whether or not the wait operation is over by whether
 		// or not the VM has all of the requested IP addresses.
 		for i, deviceSpec := range virtualMachineCtx.VSphereVM.Spec.Network.Devices {
+			// If the device spec has SkipIPAllocation set true then
+			// the wait is not required
+			if deviceSpec.SkipIPAllocation {
+				continue
+			}
+
 			mac, ok := deviceToMacIndex[i]
 			if !ok {
 				chanErrs <- errors.Errorf("invalid mac index %d waiting for ip addresses for vm %s", i, virtualMachineCtx)
@@ -543,7 +549,7 @@ func waitForIPAddresses(
 				}
 			}
 			// If the device spec requires DHCP6 then the Wait is not
-			// over if there is no IPv4 lease.
+			// over if there is no IPv6 lease.
 			if deviceSpec.DHCP6 {
 				if _, ok := macToHasIPv6Lease[mac]; !ok {
 					log.Info("The VM is missing the requested IP address",

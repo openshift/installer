@@ -152,6 +152,10 @@ const (
 	// MachineHasFailureReason is the reason used when a machine has either a FailureReason or a FailureMessage set on its status.
 	MachineHasFailureReason = "MachineHasFailure"
 
+	// HasRemediateMachineAnnotationReason is the reason that get's set at the MachineHealthCheckSucceededCondition when a machine
+	// has the RemediateMachineAnnotation set.
+	HasRemediateMachineAnnotationReason = "HasRemediateMachineAnnotation"
+
 	// NodeStartupTimeoutReason is the reason used when a machine's node does not appear within the specified timeout.
 	NodeStartupTimeoutReason = "NodeStartupTimeout"
 
@@ -191,7 +195,7 @@ const (
 // Conditions and condition Reasons for the Machine's Node object.
 const (
 	// MachineNodeHealthyCondition provides info about the operational state of the Kubernetes node hosted on the machine by summarizing  node conditions.
-	// If the conditions defined in a Kubernetes node (i.e., NodeReady, NodeMemoryPressure, NodeDiskPressure, NodePIDPressure, and NodeNetworkUnavailable) are in a healthy state, it will be set to True.
+	// If the conditions defined in a Kubernetes node (i.e., NodeReady, NodeMemoryPressure, NodeDiskPressure and NodePIDPressure) are in a healthy state, it will be set to True.
 	MachineNodeHealthyCondition ConditionType = "NodeHealthy"
 
 	// WaitingForNodeRefReason (Severity=Info) documents a machine.spec.providerId is not assigned yet.
@@ -207,6 +211,11 @@ const (
 
 	// NodeConditionsFailedReason (Severity=Warning) documents a node is not in a healthy state due to the failed state of at least 1 Kubelet condition.
 	NodeConditionsFailedReason = "NodeConditionsFailed"
+
+	// NodeInspectionFailedReason documents a failure in inspecting the node.
+	// This reason is used when the Machine controller is unable to list Nodes to find
+	// the corresponding Node for a Machine by ProviderID.
+	NodeInspectionFailedReason = "NodeInspectionFailed"
 )
 
 // Conditions and condition Reasons for the MachineHealthCheck object.
@@ -227,6 +236,14 @@ const (
 	// MachineDeploymentAvailableCondition means the MachineDeployment is available, that is, at least the minimum available
 	// machines required (i.e. Spec.Replicas-MaxUnavailable when MachineDeploymentStrategyType = RollingUpdate) are up and running for at least minReadySeconds.
 	MachineDeploymentAvailableCondition ConditionType = "Available"
+
+	// MachineSetReadyCondition reports a summary of current status of the MachineSet owned by the MachineDeployment.
+	MachineSetReadyCondition ConditionType = "MachineSetReady"
+
+	// WaitingForMachineSetFallbackReason (Severity=Info) documents a MachineDeployment waiting for the underlying MachineSet
+	// to be available.
+	// NOTE: This reason is used only as a fallback when the MachineSet object is not reporting its own ready condition.
+	WaitingForMachineSetFallbackReason = "WaitingForMachineSet"
 
 	// WaitingForAvailableMachinesReason (Severity=Warning) reflects the fact that the required minimum number of machines for a machinedeployment are not available.
 	WaitingForAvailableMachinesReason = "WaitingForAvailableMachines"
@@ -320,6 +337,9 @@ const (
 	// yet completed because the ClusterClass has not reconciled yet. If this condition persists there may be an issue
 	// with the ClusterClass surfaced in the ClusterClass status or controller logs.
 	TopologyReconciledClusterClassNotReconciledReason = "ClusterClassNotReconciled"
+
+	// TopologyReconciledPausedReason (Severity=Info) surfaces when the Cluster is paused.
+	TopologyReconciledPausedReason = "Paused"
 )
 
 // Conditions and condition reasons for ClusterClass.
@@ -333,4 +353,8 @@ const (
 	// up-to-date (i.e. they are not using the latest apiVersion of the current Cluster API contract from
 	// the corresponding CRD).
 	ClusterClassOutdatedRefVersionsReason = "OutdatedRefVersions"
+
+	// ClusterClassRefVersionsUpToDateInternalErrorReason (Severity=Warning) surfaces that an unexpected error occurred when validating
+	// if the references are up-to-date.
+	ClusterClassRefVersionsUpToDateInternalErrorReason = "InternalError"
 )

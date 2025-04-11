@@ -51,7 +51,7 @@ func NewClusterScope(ctx context.Context, params ClusterScopeParams) (*ClusterSc
 	}
 
 	if params.GCPServices.Compute == nil {
-		computeSvc, err := newComputeService(ctx, params.GCPCluster.Spec.CredentialsRef, params.Client)
+		computeSvc, err := newComputeService(ctx, params.GCPCluster.Spec.CredentialsRef, params.Client, params.GCPCluster.Spec.ServiceEndpoints)
 		if err != nil {
 			return nil, errors.Errorf("failed to create gcp compute client: %v", err)
 		}
@@ -90,9 +90,25 @@ func (s *ClusterScope) Cloud() cloud.Cloud {
 	return newCloud(s.Project(), s.GCPServices)
 }
 
+// NetworkCloud returns initialized cloud.
+func (s *ClusterScope) NetworkCloud() cloud.Cloud {
+	return newCloud(s.NetworkProject(), s.GCPServices)
+}
+
 // Project returns the current project name.
 func (s *ClusterScope) Project() string {
 	return s.GCPCluster.Spec.Project
+}
+
+// NetworkProject returns the project name where network resources should exist.
+// The network project defaults to the Project when one is not supplied.
+func (s *ClusterScope) NetworkProject() string {
+	return ptr.Deref(s.GCPCluster.Spec.Network.HostProject, s.Project())
+}
+
+// IsSharedVpc returns true If sharedVPC used else , returns false.
+func (s *ClusterScope) IsSharedVpc() bool {
+	return s.NetworkProject() != s.Project()
 }
 
 // Region returns the cluster region.
@@ -115,9 +131,24 @@ func (s *ClusterScope) NetworkName() string {
 	return ptr.Deref(s.GCPCluster.Spec.Network.Name, "default")
 }
 
+// NetworkMtu returns the Network MTU of 1440 which is the default, otherwise returns back what is being set.
+// Mtu: Maximum Transmission Unit in bytes. The minimum value for this field is
+// 1300 and the maximum value is 8896. The suggested value is 1500, which is
+// the default MTU used on the Internet, or 8896 if you want to use Jumbo
+// frames. If unspecified, the value defaults to 1460.
+// More info
+// - https://pkg.go.dev/google.golang.org/api/compute/v1#Network
+// - https://cloud.google.com/vpc/docs/mtu
+func (s *ClusterScope) NetworkMtu() int64 {
+	if s.GCPCluster.Spec.Network.Mtu == 0 {
+		return int64(1460)
+	}
+	return s.GCPCluster.Spec.Network.Mtu
+}
+
 // NetworkLink returns the partial URL for the network.
 func (s *ClusterScope) NetworkLink() string {
-	return fmt.Sprintf("projects/%s/global/networks/%s", s.Project(), s.NetworkName())
+	return fmt.Sprintf("projects/%s/global/networks/%s", s.NetworkProject(), s.NetworkName())
 }
 
 // Network returns the cluster network object.
@@ -190,6 +221,7 @@ func (s *ClusterScope) NetworkSpec() *compute.Network {
 		Description:           infrav1.ClusterTagKey(s.Name()),
 		AutoCreateSubnetworks: createSubnet,
 		ForceSendFields:       []string{"AutoCreateSubnetworks"},
+		Mtu:                   s.NetworkMtu(),
 	}
 
 	return network
@@ -231,6 +263,7 @@ func (s *ClusterScope) SubnetSpecs() []*compute.Subnetwork {
 			Network:               s.NetworkLink(),
 			Purpose:               ptr.Deref(subnetwork.Purpose, "PRIVATE_RFC_1918"),
 			Role:                  "ACTIVE",
+			StackType:             subnetwork.StackType,
 		})
 	}
 
@@ -259,7 +292,7 @@ func (s *ClusterScope) FirewallRulesSpec() []*compute.Firewall {
 				"130.211.0.0/22",
 			},
 			TargetTags: []string{
-				fmt.Sprintf("%s-control-plane", s.Name()),
+				s.Name() + "-control-plane",
 			},
 		},
 		{
@@ -272,12 +305,12 @@ func (s *ClusterScope) FirewallRulesSpec() []*compute.Firewall {
 			},
 			Direction: "INGRESS",
 			SourceTags: []string{
-				fmt.Sprintf("%s-control-plane", s.Name()),
-				fmt.Sprintf("%s-node", s.Name()),
+				s.Name() + "-control-plane",
+				s.Name() + "-node",
 			},
 			TargetTags: []string{
-				fmt.Sprintf("%s-control-plane", s.Name()),
-				fmt.Sprintf("%s-node", s.Name()),
+				s.Name() + "-control-plane",
+				s.Name() + "-node",
 			},
 		},
 	}
@@ -290,18 +323,18 @@ func (s *ClusterScope) FirewallRulesSpec() []*compute.Firewall {
 // ANCHOR: ClusterControlPlaneSpec
 
 // AddressSpec returns google compute address spec.
-func (s *ClusterScope) AddressSpec() *compute.Address {
+func (s *ClusterScope) AddressSpec(lbname string) *compute.Address {
 	return &compute.Address{
-		Name:        fmt.Sprintf("%s-%s", s.Name(), infrav1.APIServerRoleTagValue),
+		Name:        fmt.Sprintf("%s-%s", s.Name(), lbname),
 		AddressType: "EXTERNAL",
 		IpVersion:   "IPV4",
 	}
 }
 
 // BackendServiceSpec returns google compute backend-service spec.
-func (s *ClusterScope) BackendServiceSpec() *compute.BackendService {
+func (s *ClusterScope) BackendServiceSpec(lbname string) *compute.BackendService {
 	return &compute.BackendService{
-		Name:                fmt.Sprintf("%s-%s", s.Name(), infrav1.APIServerRoleTagValue),
+		Name:                fmt.Sprintf("%s-%s", s.Name(), lbname),
 		LoadBalancingScheme: "EXTERNAL",
 		PortName:            "apiserver",
 		Protocol:            "TCP",
@@ -310,24 +343,25 @@ func (s *ClusterScope) BackendServiceSpec() *compute.BackendService {
 }
 
 // ForwardingRuleSpec returns google compute forwarding-rule spec.
-func (s *ClusterScope) ForwardingRuleSpec() *compute.ForwardingRule {
+func (s *ClusterScope) ForwardingRuleSpec(lbname string) *compute.ForwardingRule {
 	port := int32(443)
 	if c := s.Cluster.Spec.ClusterNetwork; c != nil {
 		port = ptr.Deref(c.APIServerPort, 443)
 	}
 	portRange := fmt.Sprintf("%d-%d", port, port)
 	return &compute.ForwardingRule{
-		Name:                fmt.Sprintf("%s-%s", s.Name(), infrav1.APIServerRoleTagValue),
+		Name:                fmt.Sprintf("%s-%s", s.Name(), lbname),
 		IPProtocol:          "TCP",
 		LoadBalancingScheme: "EXTERNAL",
 		PortRange:           portRange,
+		Labels:              s.AdditionalLabels(),
 	}
 }
 
 // HealthCheckSpec returns google compute health-check spec.
-func (s *ClusterScope) HealthCheckSpec() *compute.HealthCheck {
+func (s *ClusterScope) HealthCheckSpec(lbname string) *compute.HealthCheck {
 	return &compute.HealthCheck{
-		Name: fmt.Sprintf("%s-%s", s.Name(), infrav1.APIServerRoleTagValue),
+		Name: fmt.Sprintf("%s-%s", s.Name(), lbname),
 		Type: "HTTPS",
 		HttpsHealthCheck: &compute.HTTPSHealthCheck{
 			Port:              6443,

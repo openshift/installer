@@ -778,6 +778,28 @@ func (mr *MockListPartitionReassignmentsResponse) For(reqBody versionedDecoder) 
 	return res
 }
 
+type MockElectLeadersResponse struct {
+	t TestReporter
+}
+
+func NewMockElectLeadersResponse(t TestReporter) *MockElectLeadersResponse {
+	return &MockElectLeadersResponse{t: t}
+}
+
+func (mr *MockElectLeadersResponse) For(reqBody versionedDecoder) encoderWithHeader {
+	req := reqBody.(*ElectLeadersRequest)
+	res := &ElectLeadersResponse{Version: req.version(), ReplicaElectionResults: map[string]map[int32]*PartitionResult{}}
+
+	for topic, partitions := range req.TopicPartitions {
+		for _, partition := range partitions {
+			res.ReplicaElectionResults[topic] = map[int32]*PartitionResult{
+				partition: {ErrorCode: ErrNoError},
+			}
+		}
+	}
+	return res
+}
+
 type MockDeleteRecordsResponse struct {
 	t TestReporter
 }
@@ -1464,6 +1486,46 @@ func (m *MockApiVersionsResponse) For(reqBody versionedDecoder) encoderWithHeade
 	res := &ApiVersionsResponse{
 		Version: req.Version,
 		ApiKeys: m.apiKeys,
+	}
+	return res
+}
+
+// MockInitProducerIDResponse is an `InitPorducerIDResponse` builder.
+type MockInitProducerIDResponse struct {
+	producerID    int64
+	producerEpoch int16
+	err           KError
+	t             TestReporter
+}
+
+func NewMockInitProducerIDResponse(t TestReporter) *MockInitProducerIDResponse {
+	return &MockInitProducerIDResponse{
+		t: t,
+	}
+}
+
+func (m *MockInitProducerIDResponse) SetProducerID(id int) *MockInitProducerIDResponse {
+	m.producerID = int64(id)
+	return m
+}
+
+func (m *MockInitProducerIDResponse) SetProducerEpoch(epoch int) *MockInitProducerIDResponse {
+	m.producerEpoch = int16(epoch)
+	return m
+}
+
+func (m *MockInitProducerIDResponse) SetError(err KError) *MockInitProducerIDResponse {
+	m.err = err
+	return m
+}
+
+func (m *MockInitProducerIDResponse) For(reqBody versionedDecoder) encoderWithHeader {
+	req := reqBody.(*InitProducerIDRequest)
+	res := &InitProducerIDResponse{
+		Version:       req.Version,
+		Err:           m.err,
+		ProducerID:    m.producerID,
+		ProducerEpoch: m.producerEpoch,
 	}
 	return res
 }

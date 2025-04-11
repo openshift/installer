@@ -22,11 +22,10 @@ of this method of installation.
   - [Table of Contents](#table-of-contents)
   - [Prerequisites](#prerequisites)
   - [Install Ansible](#install-ansible)
-    - [RHEL](#rhel)
-    - [Fedora](#fedora)
   - [OpenShift Configuration Directory](#openshift-configuration-directory)
   - [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
   - [API and Ingress Floating IP Addresses](#api-and-ingress-floating-ip-addresses)
+  - [Network identifier](#network-identifier)
   - [Create network, API and ingress ports](#create-network-api-and-ingress-ports)
   - [Install Config](#install-config)
     - [Configure the machineNetwork.CIDR apiVIP and ingressVIP](#configure-the-machinenetworkcidr-apivip-and-ingressvip)
@@ -92,23 +91,12 @@ The requirements for UPI are broadly similar to the [ones for OpenStack IPI][ipi
 
 This repository contains [Ansible playbooks][ansible-upi] to deploy OpenShift on OpenStack.
 
-They can be downloaded from Github with this script:
+They can be downloaded from Github with this script, using the `curl` and `jq` tools:
 
 ```sh
-RELEASE="release-4.14"; xargs -n 1 curl -O <<< "
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/bootstrap.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/common.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/compute-nodes.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/control-plane.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-bootstrap.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-compute-nodes.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-control-plane.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-network.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-security-groups.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-containers.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/inventory.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/network.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/security-groups.yaml"
+RELEASE="release-4.14"; curl -L "https://api.github.com/repos/openshift/installer/contents/upi/openstack?ref=$RELEASE" | \
+    jq -r '.[]|select(.download_url | endswith("yaml")).download_url'| \
+    xargs -n 1 curl -O
 ```
 
 For installing a different version, change the branch (`release-4.14`)
@@ -116,64 +104,44 @@ accordingly (e.g. `release-4.12`).
 
 **Requirements:**
 
-* Python (>=3.8 for ansible-core, currently tested by CI or lower if using Ansible 2.9)
-* Ansible (>=2.10 is currently tested by CI, 2.9 is EOL soon)
+* Python
+* Ansible
 * Python modules required in the playbooks. Namely:
   * openstackclient
   * openstacksdk
   * netaddr
 * Ansible collections required in the playbooks. Namely:
   * openstack.cloud
-  * ansible.utils
   * community.general
 
-### RHEL
-
-From a RHEL box, make sure that the repository origins are all set:
+From a RHEL-9 box, make sure that the repository origins are all set:
 
 ```sh
 sudo subscription-manager register # if not done already
 sudo subscription-manager attach --pool=$YOUR_POOLID # if not done already
 sudo subscription-manager repos --disable=* # if not done already
 sudo subscription-manager repos \
-  --enable=rhel-8-for-x86_64-baseos-rpms \ # change RHEL version if needed
-  --enable=rhel-8-for-x86_64-appstream-rpms # change RHEL version if needed
+  --enable=rhel-9-for-x86_64-appstream-rpms \
+  --enable=rhel-9-for-x86_64-baseos-rpms \
+  --enable=openstack-17.1-for-rhel-9-x86_64-rpms
 ```
 
 Then install the package:
 ```sh
-sudo dnf install ansible-core
+sudo dnf install ansible-collection-ansible-netcommon \
+    ansible-collection-community-general \
+    ansible-collections-openstack \
+    python3-netaddr \
+    python3-openstackclient \
+    python3-pip
 ```
 
-Make sure that `python` points to Python3:
+Followed by:
 ```sh
-sudo alternatives --set python /usr/bin/python3
-```
-
-To avoid packages not found or mismatches, we use pip to install the dependencies:
-```sh
-python3 -m pip install --upgrade pip
-python3 -m pip install yq openstackclient openstacksdk netaddr
-```
-
-### Fedora
-
-This command installs all required dependencies on Fedora:
-
-```sh
-sudo dnf install python3-openstackclient ansible-core python3-openstacksdk python3-netaddr
+python -m pip install yq
 ```
 
 [ansible-upi]: ../../../upi/openstack "Ansible Playbooks for Openstack UPI"
-
-## Ansible Collections
-
-The Ansible Collections are not packaged (yet) on recent versions of OSP and RHEL when `ansible-core` is
-installed instead of Ansible 2.9. So the collections need to be installed from `ansible-galaxy`.
-
-```sh
-ansible-galaxy collection install "openstack.cloud:<2.0.0" ansible.utils community.general
-```
 
 ## OpenShift Configuration Directory
 
@@ -270,6 +238,23 @@ api.openshift.example.com.    A 203.0.113.23
 
 They will need to be available to your developers, end users as well as the OpenShift installer process later in this guide.
 
+## Network identifier
+
+Resources like network, subnet (or subnets), router and API and ingress ports need to have unique name to not interfere with other deployments running on the same OpenStack cloud.
+Please, keep in mind, those OpenStack resources will have different name scheme then all the other resources which will be created on next steps, although they will be tagged by the infraID later on.
+Let's create environment variable `OS_NET_ID` and `netid.json` file, which will be used by ansible playbooks later on.
+
+<!--- e2e-openstack-upi: INCLUDE START --->
+```sh
+$ export OS_NET_ID="openshift-$(dd if=/dev/urandom count=4 bs=1 2>/dev/null |hexdump -e '"%02x"')"
+$ echo "{\"os_net_id\": \"$OS_NET_ID\"}" | tee netid.json
+```
+<!--- e2e-openstack-upi: INCLUDE END --->
+
+Make sure your shell session has the `$OS_NET_ID` environment variable set when you run the commands later in this document.
+
+Note, this identifier has nothing in common with OpenShift `infraID` defined later on.
+
 ## Create network, API and ingress ports
 
 Please note that value of the API and Ingress VIPs fields will be overwritten in the `inventory.yaml` with the respective addresses assigned to the Ports. Run the following playbook to create necessary resources:
@@ -336,22 +321,39 @@ values:
 
 <!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
-$ python -c 'import yaml
+$ python -c 'import os
+import sys
+import yaml
+import re
+re_os_net_id = re.compile(r"{{\s*os_net_id\s*}}")
+os_net_id = os.getenv("OS_NET_ID")
+path = "common.yaml"
+facts = None
+for _dict in yaml.safe_load(open(path))[0]["tasks"]:
+    if "os_network" in _dict.get("set_fact", {}):
+        facts = _dict["set_fact"]
+        break
+if not facts:
+    print("Cannot find `os_network` in common.yaml file. Make sure OpenStack resource names are defined in one of the tasks.")
+    sys.exit(1)
+os_network = re_os_net_id.sub(os_net_id, facts["os_network"])
+os_subnet = re_os_net_id.sub(os_net_id, facts["os_subnet"])
 path = "install-config.yaml"
 data = yaml.safe_load(open(path))
 inventory = yaml.safe_load(open("inventory.yaml"))["all"]["hosts"]["localhost"]
 machine_net = [{"cidr": inventory["os_subnet_range"]}]
 api_vips = [inventory["os_apiVIP"]]
 ingress_vips = [inventory["os_ingressVIP"]]
-ctrl_plane_port = {"network": {"name": inventory["os_network"]}, "fixedIPs": [{"subnet": {"name": inventory["os_subnet"]}}]}
-if inventory.get("os_subnet6"):
+ctrl_plane_port = {"network": {"name": os_network}, "fixedIPs": [{"subnet": {"name": os_subnet}}]}
+if inventory.get("os_subnet6_range"):
+    os_subnet6 = re_os_net_id.sub(os_net_id, facts["os_subnet6"])
     machine_net.append({"cidr": inventory["os_subnet6_range"]})
     api_vips.append(inventory["os_apiVIP6"])
     ingress_vips.append(inventory["os_ingressVIP6"])
     data["networking"]["networkType"] = "OVNKubernetes"
     data["networking"]["clusterNetwork"].append({"cidr": inventory["cluster_network6_cidr"], "hostPrefix": inventory["cluster_network6_prefix"]})
     data["networking"]["serviceNetwork"].append(inventory["service_subnet6_range"])
-    ctrl_plane_port["fixedIPs"].append({"subnet": {"name": inventory["os_subnet6"]}})
+    ctrl_plane_port["fixedIPs"].append({"subnet": {"name": os_subnet6}})
 data["networking"]["machineNetwork"] = machine_net
 data["platform"]["openstack"]["apiVIPs"] = api_vips
 data["platform"]["openstack"]["ingressVIPs"] = ingress_vips

@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2024.
+ * (C) Copyright IBM Corp. 2025.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.88.0-b0b4c159-20240402-205910
+ * IBM OpenAPI SDK Code Generator Version: 3.100.0-2ad7a784-20250212-162551
  */
 
 // Package iampolicymanagementv1 : Operations and models for the IamPolicyManagementV1 service
@@ -244,6 +244,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListPoliciesWithContext(ctx co
 	}
 	if listPoliciesOptions.State != nil {
 		builder.AddQuery("state", fmt.Sprint(*listPoliciesOptions.State))
+	}
+	if listPoliciesOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listPoliciesOptions.Limit))
+	}
+	if listPoliciesOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listPoliciesOptions.Start))
 	}
 
 	request, err := builder.Build()
@@ -1222,6 +1228,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListV2PoliciesWithContext(ctx 
 	if listV2PoliciesOptions.State != nil {
 		builder.AddQuery("state", fmt.Sprint(*listV2PoliciesOptions.State))
 	}
+	if listV2PoliciesOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listV2PoliciesOptions.Limit))
+	}
+	if listV2PoliciesOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listV2PoliciesOptions.Start))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -1876,6 +1888,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListPolicyTemplatesWithContext
 	if listPolicyTemplatesOptions.PolicyType != nil {
 		builder.AddQuery("policy_type", fmt.Sprint(*listPolicyTemplatesOptions.PolicyType))
 	}
+	if listPolicyTemplatesOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listPolicyTemplatesOptions.Limit))
+	}
+	if listPolicyTemplatesOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listPolicyTemplatesOptions.Start))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -2265,6 +2283,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListPolicyTemplateVersionsWith
 	if listPolicyTemplateVersionsOptions.State != nil {
 		builder.AddQuery("state", fmt.Sprint(*listPolicyTemplateVersionsOptions.State))
 	}
+	if listPolicyTemplateVersionsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listPolicyTemplateVersionsOptions.Limit))
+	}
+	if listPolicyTemplateVersionsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listPolicyTemplateVersionsOptions.Start))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -2632,6 +2656,12 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListPolicyAssignmentsWithConte
 	if listPolicyAssignmentsOptions.TemplateVersion != nil {
 		builder.AddQuery("template_version", fmt.Sprint(*listPolicyAssignmentsOptions.TemplateVersion))
 	}
+	if listPolicyAssignmentsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listPolicyAssignmentsOptions.Limit))
+	}
+	if listPolicyAssignmentsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listPolicyAssignmentsOptions.Start))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -2709,9 +2739,6 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreatePolicyTemplateAssignment
 	if createPolicyTemplateAssignmentOptions.Target != nil {
 		body["target"] = createPolicyTemplateAssignmentOptions.Target
 	}
-	if createPolicyTemplateAssignmentOptions.Options != nil {
-		body["options"] = createPolicyTemplateAssignmentOptions.Options
-	}
 	if createPolicyTemplateAssignmentOptions.Templates != nil {
 		body["templates"] = createPolicyTemplateAssignmentOptions.Templates
 	}
@@ -2748,14 +2775,14 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreatePolicyTemplateAssignment
 
 // GetPolicyAssignment : Retrieve a policy assignment
 // Retrieve a policy template assignment by providing a policy assignment ID.
-func (iamPolicyManagement *IamPolicyManagementV1) GetPolicyAssignment(getPolicyAssignmentOptions *GetPolicyAssignmentOptions) (result GetPolicyAssignmentResponseIntf, response *core.DetailedResponse, err error) {
+func (iamPolicyManagement *IamPolicyManagementV1) GetPolicyAssignment(getPolicyAssignmentOptions *GetPolicyAssignmentOptions) (result PolicyTemplateAssignmentItemsIntf, response *core.DetailedResponse, err error) {
 	result, response, err = iamPolicyManagement.GetPolicyAssignmentWithContext(context.Background(), getPolicyAssignmentOptions)
 	err = core.RepurposeSDKProblem(err, "")
 	return
 }
 
 // GetPolicyAssignmentWithContext is an alternate form of the GetPolicyAssignment method which supports a Context parameter
-func (iamPolicyManagement *IamPolicyManagementV1) GetPolicyAssignmentWithContext(ctx context.Context, getPolicyAssignmentOptions *GetPolicyAssignmentOptions) (result GetPolicyAssignmentResponseIntf, response *core.DetailedResponse, err error) {
+func (iamPolicyManagement *IamPolicyManagementV1) GetPolicyAssignmentWithContext(ctx context.Context, getPolicyAssignmentOptions *GetPolicyAssignmentOptions) (result PolicyTemplateAssignmentItemsIntf, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getPolicyAssignmentOptions, "getPolicyAssignmentOptions cannot be nil")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
@@ -2806,7 +2833,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetPolicyAssignmentWithContext
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGetPolicyAssignmentResponse)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPolicyTemplateAssignmentItems)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
@@ -2961,8 +2988,210 @@ func (iamPolicyManagement *IamPolicyManagementV1) DeletePolicyAssignmentWithCont
 
 	return
 }
+
+// GetSettings : Retrieve Access Management account settings by account ID
+// Retrieve Access Management settings for an account by providing the account ID.
+func (iamPolicyManagement *IamPolicyManagementV1) GetSettings(getSettingsOptions *GetSettingsOptions) (result *AccountSettingsAccessManagement, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.GetSettingsWithContext(context.Background(), getSettingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetSettingsWithContext is an alternate form of the GetSettings method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) GetSettingsWithContext(ctx context.Context, getSettingsOptions *GetSettingsOptions) (result *AccountSettingsAccessManagement, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getSettingsOptions, "getSettingsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getSettingsOptions, "getSettingsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id": *getSettingsOptions.AccountID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/accounts/{account_id}/settings/access_management`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getSettingsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetSettings")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if getSettingsOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*getSettingsOptions.AcceptLanguage))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_settings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsAccessManagement)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateSettings : Update Access Management account settings by account ID
+// Update access management settings for an account.
+//
+// ### External Account Identity Interaction
+//
+// Update the way identities within an external account are allowed to interact with the requested account by providing:
+// * the `account_id` as a parameter
+// * the external account ID(s) and state for the specific identity in the request body
+//
+// External account identity interaction includes the following `identity_types`: `user` (user identities defined as
+// [IBMid's](https://test.cloud.ibm.com/docs/account?topic=account-identity-overview#users-bestpract)), `service_id`
+// (defined as [IAM
+// ServiceIds](https://test.cloud.ibm.com/docs/account?topic=account-identity-overview#serviceid-bestpract)), `service`
+// (defined by a service’s [CRN](https://test.cloud.ibm.com/docs/account?topic=account-crn)). To update an Identity’s
+// setting, the `state` and `external_allowed_accounts` fields are required.
+//
+// Different identity states are:
+// * "enabled": An identity type is allowed to access resources in the account provided it has access policies on those
+// resources.
+// * "limited": An identity type is allowed to access resources in the account provided it has access policies on those
+// resources AND it is associated with either the account the resources are in or one of the allowed accounts. This
+// setting leverages the "external_allowed_accounts" list.
+// * "monitor": Has no direct impact on an Identity’s access. Instead, it creates AT events for access decisions as if
+// the account were in a limited “state”.
+//
+// **Note**: The state "enabled" is a special case. In this case, access is given to all accounts and there is no need
+// to specify a particular list. Therefore, when updating "state" to "enabled" for an identity type
+// "external_allowed_accounts" should be left empty.
+func (iamPolicyManagement *IamPolicyManagementV1) UpdateSettings(updateSettingsOptions *UpdateSettingsOptions) (result *AccountSettingsAccessManagement, response *core.DetailedResponse, err error) {
+	result, response, err = iamPolicyManagement.UpdateSettingsWithContext(context.Background(), updateSettingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateSettingsWithContext is an alternate form of the UpdateSettings method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) UpdateSettingsWithContext(ctx context.Context, updateSettingsOptions *UpdateSettingsOptions) (result *AccountSettingsAccessManagement, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateSettingsOptions, "updateSettingsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateSettingsOptions, "updateSettingsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id": *updateSettingsOptions.AccountID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v1/accounts/{account_id}/settings/access_management`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updateSettingsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "UpdateSettings")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if updateSettingsOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateSettingsOptions.IfMatch))
+	}
+	if updateSettingsOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*updateSettingsOptions.AcceptLanguage))
+	}
+
+	body := make(map[string]interface{})
+	if updateSettingsOptions.ExternalAccountIdentityInteraction != nil {
+		body["external_account_identity_interaction"] = updateSettingsOptions.ExternalAccountIdentityInteraction
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_settings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsAccessManagement)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
 func getServiceComponentInfo() *core.ProblemComponent {
 	return core.NewProblemComponent(DefaultServiceName, "1.0.1")
+}
+
+// AccountSettingsAccessManagement : The Access Management Account Settings that are currently set for the requested account.
+type AccountSettingsAccessManagement struct {
+	// How external accounts can interact in relation to the requested account.
+	ExternalAccountIdentityInteraction *ExternalAccountIdentityInteraction `json:"external_account_identity_interaction" validate:"required"`
+}
+
+// UnmarshalAccountSettingsAccessManagement unmarshals an instance of AccountSettingsAccessManagement from the specified map of raw messages.
+func UnmarshalAccountSettingsAccessManagement(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AccountSettingsAccessManagement)
+	err = core.UnmarshalModel(m, "external_account_identity_interaction", &obj.ExternalAccountIdentityInteraction, UnmarshalExternalAccountIdentityInteraction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "external_account_identity_interaction-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // AssignmentResourceCreated : On success, includes the  policy assigned.
@@ -3049,7 +3278,7 @@ type CommitPolicyTemplateOptions struct {
 	// The policy template version.
 	Version *string `json:"version" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3202,7 +3431,7 @@ type CreatePolicyOptions struct {
 	// * `zh-tw` - (Chinese, Taiwan).
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3266,9 +3495,6 @@ type CreatePolicyTemplateAssignmentOptions struct {
 	// assignment target account and type.
 	Target *AssignmentTargetDetails `json:"target" validate:"required"`
 
-	// The set of properties required for a policy assignment.
-	Options *PolicyAssignmentV1Options `json:"options" validate:"required"`
-
 	// List of template details for policy assignment.
 	Templates []AssignmentTemplateDetails `json:"templates" validate:"required"`
 
@@ -3286,16 +3512,15 @@ type CreatePolicyTemplateAssignmentOptions struct {
 	// * `zh-tw` - (Chinese, Taiwan).
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewCreatePolicyTemplateAssignmentOptions : Instantiate CreatePolicyTemplateAssignmentOptions
-func (*IamPolicyManagementV1) NewCreatePolicyTemplateAssignmentOptions(version string, target *AssignmentTargetDetails, options *PolicyAssignmentV1Options, templates []AssignmentTemplateDetails) *CreatePolicyTemplateAssignmentOptions {
+func (*IamPolicyManagementV1) NewCreatePolicyTemplateAssignmentOptions(version string, target *AssignmentTargetDetails, templates []AssignmentTemplateDetails) *CreatePolicyTemplateAssignmentOptions {
 	return &CreatePolicyTemplateAssignmentOptions{
 		Version: core.StringPtr(version),
 		Target: target,
-		Options: options,
 		Templates: templates,
 	}
 }
@@ -3309,12 +3534,6 @@ func (_options *CreatePolicyTemplateAssignmentOptions) SetVersion(version string
 // SetTarget : Allow user to set Target
 func (_options *CreatePolicyTemplateAssignmentOptions) SetTarget(target *AssignmentTargetDetails) *CreatePolicyTemplateAssignmentOptions {
 	_options.Target = target
-	return _options
-}
-
-// SetOptions : Allow user to set Options
-func (_options *CreatePolicyTemplateAssignmentOptions) SetOptions(options *PolicyAssignmentV1Options) *CreatePolicyTemplateAssignmentOptions {
-	_options.Options = options
 	return _options
 }
 
@@ -3369,7 +3588,7 @@ type CreatePolicyTemplateOptions struct {
 	// * `zh-tw` - (Chinese, Taiwan).
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3443,7 +3662,7 @@ type CreatePolicyTemplateVersionOptions struct {
 	// Committed status of the template version.
 	Committed *bool `json:"committed,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3526,7 +3745,7 @@ type CreateRoleOptions struct {
 	// * `zh-tw` - (Chinese, Taiwan).
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3627,7 +3846,7 @@ type CreateV2PolicyOptions struct {
 	// * `zh-tw` - (Chinese, Taiwan).
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3821,7 +4040,7 @@ type DeletePolicyAssignmentOptions struct {
 	// The policy template assignment ID.
 	AssignmentID *string `json:"assignment_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3849,7 +4068,7 @@ type DeletePolicyOptions struct {
 	// The policy ID.
 	PolicyID *string `json:"policy_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3877,7 +4096,7 @@ type DeletePolicyTemplateOptions struct {
 	// The policy template ID.
 	PolicyTemplateID *string `json:"policy_template_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3908,7 +4127,7 @@ type DeletePolicyTemplateVersionOptions struct {
 	// The policy template version.
 	Version *string `json:"version" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3943,7 +4162,7 @@ type DeleteRoleOptions struct {
 	// The role ID.
 	RoleID *string `json:"role_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -3971,7 +4190,7 @@ type DeleteV2PolicyOptions struct {
 	// The policy ID.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4086,6 +4305,7 @@ const (
 	ErrorObjectCodePolicyTemplateConflictErrorConst = "policy_template_conflict_error"
 	ErrorObjectCodePolicyTemplateNotFoundConst = "policy_template_not_found"
 	ErrorObjectCodeRequestNotProcessedConst = "request_not_processed"
+	ErrorObjectCodeResourceNotFoundConst = "resource_not_found"
 	ErrorObjectCodeRoleConflictErrorConst = "role_conflict_error"
 	ErrorObjectCodeRoleNotFoundConst = "role_not_found"
 	ErrorObjectCodeTooManyRequestsConst = "too_many_requests"
@@ -4154,6 +4374,60 @@ func UnmarshalErrorResponse(m map[string]json.RawMessage, result interface{}) (e
 	return
 }
 
+// ExternalAccountIdentityInteraction : How external accounts can interact in relation to the requested account.
+type ExternalAccountIdentityInteraction struct {
+	// The settings for each identity type.
+	IdentityTypes *IdentityTypes `json:"identity_types" validate:"required"`
+}
+
+// UnmarshalExternalAccountIdentityInteraction unmarshals an instance of ExternalAccountIdentityInteraction from the specified map of raw messages.
+func UnmarshalExternalAccountIdentityInteraction(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ExternalAccountIdentityInteraction)
+	err = core.UnmarshalModel(m, "identity_types", &obj.IdentityTypes, UnmarshalIdentityTypes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "identity_types-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ExternalAccountIdentityInteractionPatch : Update to how external accounts can interact in relation to the requested account.
+type ExternalAccountIdentityInteractionPatch struct {
+	// The settings to apply for each identity type for a request.
+	IdentityTypes *IdentityTypesPatch `json:"identity_types,omitempty"`
+}
+
+// UnmarshalExternalAccountIdentityInteractionPatch unmarshals an instance of ExternalAccountIdentityInteractionPatch from the specified map of raw messages.
+func UnmarshalExternalAccountIdentityInteractionPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ExternalAccountIdentityInteractionPatch)
+	err = core.UnmarshalModel(m, "identity_types", &obj.IdentityTypes, UnmarshalIdentityTypesPatch)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "identity_types-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// First : Details with href linking to first page of requested collection.
+type First struct {
+	// The href linking to the page of requested collection.
+	Href *string `json:"href,omitempty"`
+}
+
+// UnmarshalFirst unmarshals an instance of First from the specified map of raw messages.
+func UnmarshalFirst(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(First)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // GetPolicyAssignmentOptions : The GetPolicyAssignment options.
 type GetPolicyAssignmentOptions struct {
 	// The policy template assignment ID.
@@ -4162,7 +4436,7 @@ type GetPolicyAssignmentOptions struct {
 	// specify version of response body format.
 	Version *string `json:"version" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4192,243 +4466,12 @@ func (options *GetPolicyAssignmentOptions) SetHeaders(param map[string]string) *
 	return options
 }
 
-// GetPolicyAssignmentResponse : GetPolicyAssignmentResponse struct
-// Models which "extend" this model:
-// - GetPolicyAssignmentResponsePolicyAssignmentV1
-// - GetPolicyAssignmentResponsePolicyAssignment
-type GetPolicyAssignmentResponse struct {
-	// assignment target account and type.
-	Target *AssignmentTargetDetails `json:"target,omitempty"`
-
-	// The set of properties required for a policy assignment.
-	Options *PolicyAssignmentV1Options `json:"options,omitempty"`
-
-	// Policy assignment ID.
-	ID *string `json:"id,omitempty"`
-
-	// The account GUID that the policies assignments belong to..
-	AccountID *string `json:"account_id,omitempty"`
-
-	// The href URL that links to the policies assignments API by policy assignment ID.
-	Href *string `json:"href,omitempty"`
-
-	// The UTC timestamp when the policy assignment was created.
-	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
-
-	// The iam ID of the entity that created the policy assignment.
-	CreatedByID *string `json:"created_by_id,omitempty"`
-
-	// The UTC timestamp when the policy assignment was last modified.
-	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
-
-	// The iam ID of the entity that last modified the policy assignment.
-	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
-
-	// Object for each account assigned.
-	Resources []PolicyAssignmentV1Resources `json:"resources,omitempty"`
-
-	// subject details of access type assignment.
-	Subject *GetPolicyAssignmentResponseSubject `json:"subject,omitempty"`
-
-	// policy template details.
-	Template *AssignmentTemplateDetails `json:"template,omitempty"`
-
-	// The policy assignment status.
-	Status *string `json:"status,omitempty"`
-
-	// policy template id.
-	TemplateID *string `json:"template_id,omitempty"`
-
-	// policy template version.
-	TemplateVersion *string `json:"template_version,omitempty"`
-
-	// Passed in value to correlate with other assignments.
-	AssignmentID *string `json:"assignment_id,omitempty"`
-
-	// Assignment target type.
-	TargetType *string `json:"target_type,omitempty"`
-}
-
-// Constants associated with the GetPolicyAssignmentResponse.Status property.
-// The policy assignment status.
-const (
-	GetPolicyAssignmentResponseStatusFailedConst = "failed"
-	GetPolicyAssignmentResponseStatusInProgressConst = "in_progress"
-	GetPolicyAssignmentResponseStatusSucceedWithErrorsConst = "succeed_with_errors"
-	GetPolicyAssignmentResponseStatusSucceededConst = "succeeded"
-)
-
-// Constants associated with the GetPolicyAssignmentResponse.TargetType property.
-// Assignment target type.
-const (
-	GetPolicyAssignmentResponseTargetTypeAccountConst = "Account"
-)
-func (*GetPolicyAssignmentResponse) isaGetPolicyAssignmentResponse() bool {
-	return true
-}
-
-type GetPolicyAssignmentResponseIntf interface {
-	isaGetPolicyAssignmentResponse() bool
-}
-
-// UnmarshalGetPolicyAssignmentResponse unmarshals an instance of GetPolicyAssignmentResponse from the specified map of raw messages.
-func UnmarshalGetPolicyAssignmentResponse(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GetPolicyAssignmentResponse)
-	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalAssignmentTargetDetails)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "options", &obj.Options, UnmarshalPolicyAssignmentV1Options)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "options-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalPolicyAssignmentV1Resources)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "subject", &obj.Subject, UnmarshalGetPolicyAssignmentResponseSubject)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "subject-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "template", &obj.Template, UnmarshalAssignmentTemplateDetails)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "template-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "template_id", &obj.TemplateID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "template_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "template_version", &obj.TemplateVersion)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "template_version-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "assignment_id", &obj.AssignmentID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "assignment_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "target_type", &obj.TargetType)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "target_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// GetPolicyAssignmentResponsePolicyAssignmentV1Subject : subject details of access type assignment.
-type GetPolicyAssignmentResponsePolicyAssignmentV1Subject struct {
-	ID *string `json:"id,omitempty"`
-
-	Type *string `json:"type,omitempty"`
-}
-
-// Constants associated with the GetPolicyAssignmentResponsePolicyAssignmentV1Subject.Type property.
-const (
-	GetPolicyAssignmentResponsePolicyAssignmentV1SubjectTypeAccessGroupIDConst = "access_group_id"
-	GetPolicyAssignmentResponsePolicyAssignmentV1SubjectTypeIamIDConst = "iam_id"
-)
-
-// UnmarshalGetPolicyAssignmentResponsePolicyAssignmentV1Subject unmarshals an instance of GetPolicyAssignmentResponsePolicyAssignmentV1Subject from the specified map of raw messages.
-func UnmarshalGetPolicyAssignmentResponsePolicyAssignmentV1Subject(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GetPolicyAssignmentResponsePolicyAssignmentV1Subject)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// GetPolicyAssignmentResponseSubject : subject details of access type assignment.
-type GetPolicyAssignmentResponseSubject struct {
-	ID *string `json:"id,omitempty"`
-
-	Type *string `json:"type,omitempty"`
-}
-
-// Constants associated with the GetPolicyAssignmentResponseSubject.Type property.
-const (
-	GetPolicyAssignmentResponseSubjectTypeAccessGroupIDConst = "access_group_id"
-	GetPolicyAssignmentResponseSubjectTypeIamIDConst = "iam_id"
-)
-
-// UnmarshalGetPolicyAssignmentResponseSubject unmarshals an instance of GetPolicyAssignmentResponseSubject from the specified map of raw messages.
-func UnmarshalGetPolicyAssignmentResponseSubject(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GetPolicyAssignmentResponseSubject)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // GetPolicyOptions : The GetPolicy options.
 type GetPolicyOptions struct {
 	// The policy ID.
 	PolicyID *string `json:"policy_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4459,7 +4502,7 @@ type GetPolicyTemplateOptions struct {
 	// The policy template state.
 	State *string `json:"state,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4503,7 +4546,7 @@ type GetPolicyTemplateVersionOptions struct {
 	// The policy template version.
 	Version *string `json:"version" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4538,7 +4581,7 @@ type GetRoleOptions struct {
 	// The role ID.
 	RoleID *string `json:"role_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4561,6 +4604,54 @@ func (options *GetRoleOptions) SetHeaders(param map[string]string) *GetRoleOptio
 	return options
 }
 
+// GetSettingsOptions : The GetSettings options.
+type GetSettingsOptions struct {
+	// The account GUID that the settings belong to.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// Language code for translations
+	// * `default` - English
+	// * `de` -  German (Standard)
+	// * `en` - English
+	// * `es` - Spanish (Spain)
+	// * `fr` - French (Standard)
+	// * `it` - Italian (Standard)
+	// * `ja` - Japanese
+	// * `ko` - Korean
+	// * `pt-br` - Portuguese (Brazil)
+	// * `zh-cn` - Chinese (Simplified, PRC)
+	// * `zh-tw` - (Chinese, Taiwan).
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetSettingsOptions : Instantiate GetSettingsOptions
+func (*IamPolicyManagementV1) NewGetSettingsOptions(accountID string) *GetSettingsOptions {
+	return &GetSettingsOptions{
+		AccountID: core.StringPtr(accountID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *GetSettingsOptions) SetAccountID(accountID string) *GetSettingsOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *GetSettingsOptions) SetAcceptLanguage(acceptLanguage string) *GetSettingsOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetSettingsOptions) SetHeaders(param map[string]string) *GetSettingsOptions {
+	options.Headers = param
+	return options
+}
+
 // GetV2PolicyOptions : The GetV2Policy options.
 type GetV2PolicyOptions struct {
 	// The policy ID.
@@ -4573,7 +4664,7 @@ type GetV2PolicyOptions struct {
 	// fields.
 	Format *string `json:"format,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4661,6 +4752,121 @@ func UnmarshalGrantWithEnrichedRoles(m map[string]json.RawMessage, result interf
 	return
 }
 
+// IdentityTypes : The settings for each identity type.
+type IdentityTypes struct {
+	// The core set of properties associated with an identity type.
+	User *IdentityTypesBase `json:"user" validate:"required"`
+
+	// The core set of properties associated with an identity type.
+	ServiceID *IdentityTypesBase `json:"service_id" validate:"required"`
+
+	// The core set of properties associated with an identity type.
+	Service *IdentityTypesBase `json:"service" validate:"required"`
+}
+
+// UnmarshalIdentityTypes unmarshals an instance of IdentityTypes from the specified map of raw messages.
+func UnmarshalIdentityTypes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IdentityTypes)
+	err = core.UnmarshalModel(m, "user", &obj.User, UnmarshalIdentityTypesBase)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "service_id", &obj.ServiceID, UnmarshalIdentityTypesBase)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "service", &obj.Service, UnmarshalIdentityTypesBase)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// IdentityTypesBase : The core set of properties associated with an identity type.
+type IdentityTypesBase struct {
+	// The state of the identity type.
+	State *string `json:"state" validate:"required"`
+
+	// List of accounts that the state applies to for a given identity.
+	ExternalAllowedAccounts []string `json:"external_allowed_accounts" validate:"required"`
+}
+
+// Constants associated with the IdentityTypesBase.State property.
+// The state of the identity type.
+const (
+	IdentityTypesBaseStateEnabledConst = "enabled"
+	IdentityTypesBaseStateLimitedConst = "limited"
+	IdentityTypesBaseStateMonitorConst = "monitor"
+)
+
+// NewIdentityTypesBase : Instantiate IdentityTypesBase (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewIdentityTypesBase(state string, externalAllowedAccounts []string) (_model *IdentityTypesBase, err error) {
+	_model = &IdentityTypesBase{
+		State: core.StringPtr(state),
+		ExternalAllowedAccounts: externalAllowedAccounts,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalIdentityTypesBase unmarshals an instance of IdentityTypesBase from the specified map of raw messages.
+func UnmarshalIdentityTypesBase(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IdentityTypesBase)
+	err = core.UnmarshalPrimitive(m, "state", &obj.State)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "external_allowed_accounts", &obj.ExternalAllowedAccounts)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "external_allowed_accounts-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// IdentityTypesPatch : The settings to apply for each identity type for a request.
+type IdentityTypesPatch struct {
+	// The core set of properties associated with an identity type.
+	User *IdentityTypesBase `json:"user,omitempty"`
+
+	// The core set of properties associated with an identity type.
+	ServiceID *IdentityTypesBase `json:"service_id,omitempty"`
+
+	// The core set of properties associated with an identity type.
+	Service *IdentityTypesBase `json:"service,omitempty"`
+}
+
+// UnmarshalIdentityTypesPatch unmarshals an instance of IdentityTypesPatch from the specified map of raw messages.
+func UnmarshalIdentityTypesPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IdentityTypesPatch)
+	err = core.UnmarshalModel(m, "user", &obj.User, UnmarshalIdentityTypesBase)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "service_id", &obj.ServiceID, UnmarshalIdentityTypesBase)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "service", &obj.Service, UnmarshalIdentityTypesBase)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // LimitData : policy template current and limit details with in an account.
 type LimitData struct {
 	// policy template current count.
@@ -4739,7 +4945,13 @@ type ListPoliciesOptions struct {
 	// * `deleted` - returns non-active policies.
 	State *string `json:"state,omitempty"`
 
-	// Allows users to set headers on API requests
+	// The number of documents to include in collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Page token that refers to the page of collection to return.
+	Start *string `json:"start,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4863,6 +5075,18 @@ func (_options *ListPoliciesOptions) SetState(state string) *ListPoliciesOptions
 	return _options
 }
 
+// SetLimit : Allow user to set Limit
+func (_options *ListPoliciesOptions) SetLimit(limit int64) *ListPoliciesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListPoliciesOptions) SetStart(start string) *ListPoliciesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListPoliciesOptions) SetHeaders(param map[string]string) *ListPoliciesOptions {
 	options.Headers = param
@@ -4897,7 +5121,13 @@ type ListPolicyAssignmentsOptions struct {
 	// Optional policy template version.
 	TemplateVersion *string `json:"template_version,omitempty"`
 
-	// Allows users to set headers on API requests
+	// The number of documents to include in collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Page token that refers to the page of collection to return.
+	Start *string `json:"start,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4939,6 +5169,18 @@ func (_options *ListPolicyAssignmentsOptions) SetTemplateVersion(templateVersion
 	return _options
 }
 
+// SetLimit : Allow user to set Limit
+func (_options *ListPolicyAssignmentsOptions) SetLimit(limit int64) *ListPolicyAssignmentsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListPolicyAssignmentsOptions) SetStart(start string) *ListPolicyAssignmentsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListPolicyAssignmentsOptions) SetHeaders(param map[string]string) *ListPolicyAssignmentsOptions {
 	options.Headers = param
@@ -4953,7 +5195,13 @@ type ListPolicyTemplateVersionsOptions struct {
 	// The policy template state.
 	State *string `json:"state,omitempty"`
 
-	// Allows users to set headers on API requests
+	// The number of documents to include in collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Page token that refers to the page of collection to return.
+	Start *string `json:"start,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -4980,6 +5228,18 @@ func (_options *ListPolicyTemplateVersionsOptions) SetPolicyTemplateID(policyTem
 // SetState : Allow user to set State
 func (_options *ListPolicyTemplateVersionsOptions) SetState(state string) *ListPolicyTemplateVersionsOptions {
 	_options.State = core.StringPtr(state)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListPolicyTemplateVersionsOptions) SetLimit(limit int64) *ListPolicyTemplateVersionsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListPolicyTemplateVersionsOptions) SetStart(start string) *ListPolicyTemplateVersionsOptions {
+	_options.Start = core.StringPtr(start)
 	return _options
 }
 
@@ -5026,7 +5286,13 @@ type ListPolicyTemplatesOptions struct {
 	// Policy type, Optional.
 	PolicyType *string `json:"policy_type,omitempty"`
 
-	// Allows users to set headers on API requests
+	// The number of documents to include in collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Page token that refers to the page of collection to return.
+	Start *string `json:"start,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5106,6 +5372,18 @@ func (_options *ListPolicyTemplatesOptions) SetPolicyType(policyType string) *Li
 	return _options
 }
 
+// SetLimit : Allow user to set Limit
+func (_options *ListPolicyTemplatesOptions) SetLimit(limit int64) *ListPolicyTemplatesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListPolicyTemplatesOptions) SetStart(start string) *ListPolicyTemplatesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListPolicyTemplatesOptions) SetHeaders(param map[string]string) *ListPolicyTemplatesOptions {
 	options.Headers = param
@@ -5143,7 +5421,7 @@ type ListRolesOptions struct {
 	// Optional id of service group.
 	ServiceGroupID *string `json:"service_group_id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5259,7 +5537,13 @@ type ListV2PoliciesOptions struct {
 	// * `deleted` - returns non-active policies.
 	State *string `json:"state,omitempty"`
 
-	// Allows users to set headers on API requests
+	// The number of documents to include in collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Page token that refers to the page of collection to return.
+	Start *string `json:"start,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5370,6 +5654,18 @@ func (_options *ListV2PoliciesOptions) SetState(state string) *ListV2PoliciesOpt
 	return _options
 }
 
+// SetLimit : Allow user to set Limit
+func (_options *ListV2PoliciesOptions) SetLimit(limit int64) *ListV2PoliciesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListV2PoliciesOptions) SetStart(start string) *ListV2PoliciesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListV2PoliciesOptions) SetHeaders(param map[string]string) *ListV2PoliciesOptions {
 	options.Headers = param
@@ -5448,6 +5744,32 @@ func UnmarshalNestedCondition(m map[string]json.RawMessage, result interface{}) 
 	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalRuleAttribute)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "conditions-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Next : Details with href linking to following page of requested collection.
+type Next struct {
+	// The href linking to the page of requested collection.
+	Href *string `json:"href,omitempty"`
+
+	// Page token that refers to the page of collection.
+	Start *string `json:"start,omitempty"`
+}
+
+// UnmarshalNext unmarshals an instance of Next from the specified map of raw messages.
+func UnmarshalNext(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Next)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "start-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5567,63 +5889,6 @@ func UnmarshalPolicy(m map[string]json.RawMessage, result interface{}) (err erro
 	return
 }
 
-// PolicyAssignmentOptions : The set of properties required for a policy assignment.
-type PolicyAssignmentOptions struct {
-	// The policy subject type; either 'iam_id' or 'access_group_id'.
-	SubjectType *string `json:"subject_type" validate:"required"`
-
-	// The policy subject id.
-	SubjectID *string `json:"subject_id" validate:"required"`
-
-	// The policy assignment requester id.
-	RootRequesterID *string `json:"root_requester_id" validate:"required"`
-
-	// The template id where this policy is being assigned from.
-	RootTemplateID *string `json:"root_template_id,omitempty"`
-
-	// The template version where this policy is being assigned from.
-	RootTemplateVersion *string `json:"root_template_version,omitempty"`
-}
-
-// Constants associated with the PolicyAssignmentOptions.SubjectType property.
-// The policy subject type; either 'iam_id' or 'access_group_id'.
-const (
-	PolicyAssignmentOptionsSubjectTypeAccessGroupIDConst = "access_group_id"
-	PolicyAssignmentOptionsSubjectTypeIamIDConst = "iam_id"
-)
-
-// UnmarshalPolicyAssignmentOptions unmarshals an instance of PolicyAssignmentOptions from the specified map of raw messages.
-func UnmarshalPolicyAssignmentOptions(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(PolicyAssignmentOptions)
-	err = core.UnmarshalPrimitive(m, "subject_type", &obj.SubjectType)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "subject_type-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "subject_id", &obj.SubjectID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "subject_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "root_requester_id", &obj.RootRequesterID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "root_requester_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "root_template_id", &obj.RootTemplateID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "root_template_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "root_template_version", &obj.RootTemplateVersion)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "root_template_version-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // PolicyAssignmentResourcePolicy : Set of properties for the assigned resource.
 type PolicyAssignmentResourcePolicy struct {
 	// On success, includes the  policy assigned.
@@ -5689,9 +5954,6 @@ type PolicyAssignmentV1 struct {
 	// assignment target account and type.
 	Target *AssignmentTargetDetails `json:"target" validate:"required"`
 
-	// The set of properties required for a policy assignment.
-	Options *PolicyAssignmentV1Options `json:"options" validate:"required"`
-
 	// Policy assignment ID.
 	ID *string `json:"id,omitempty"`
 
@@ -5741,11 +6003,6 @@ func UnmarshalPolicyAssignmentV1(m map[string]json.RawMessage, result interface{
 	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalAssignmentTargetDetails)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "options", &obj.Options, UnmarshalPolicyAssignmentV1Options)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "options-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
@@ -5825,93 +6082,6 @@ func UnmarshalPolicyAssignmentV1Collection(m map[string]json.RawMessage, result 
 	return
 }
 
-// PolicyAssignmentV1Options : The set of properties required for a policy assignment.
-type PolicyAssignmentV1Options struct {
-	Root *PolicyAssignmentV1OptionsRoot `json:"root" validate:"required"`
-}
-
-// NewPolicyAssignmentV1Options : Instantiate PolicyAssignmentV1Options (Generic Model Constructor)
-func (*IamPolicyManagementV1) NewPolicyAssignmentV1Options(root *PolicyAssignmentV1OptionsRoot) (_model *PolicyAssignmentV1Options, err error) {
-	_model = &PolicyAssignmentV1Options{
-		Root: root,
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
-	}
-	return
-}
-
-// UnmarshalPolicyAssignmentV1Options unmarshals an instance of PolicyAssignmentV1Options from the specified map of raw messages.
-func UnmarshalPolicyAssignmentV1Options(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(PolicyAssignmentV1Options)
-	err = core.UnmarshalModel(m, "root", &obj.Root, UnmarshalPolicyAssignmentV1OptionsRoot)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "root-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// PolicyAssignmentV1OptionsRoot : PolicyAssignmentV1OptionsRoot struct
-type PolicyAssignmentV1OptionsRoot struct {
-	RequesterID *string `json:"requester_id,omitempty"`
-
-	// Passed in value to correlate with other assignments.
-	AssignmentID *string `json:"assignment_id,omitempty"`
-
-	Template *PolicyAssignmentV1OptionsRootTemplate `json:"template,omitempty"`
-}
-
-// UnmarshalPolicyAssignmentV1OptionsRoot unmarshals an instance of PolicyAssignmentV1OptionsRoot from the specified map of raw messages.
-func UnmarshalPolicyAssignmentV1OptionsRoot(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(PolicyAssignmentV1OptionsRoot)
-	err = core.UnmarshalPrimitive(m, "requester_id", &obj.RequesterID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "requester_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "assignment_id", &obj.AssignmentID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "assignment_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "template", &obj.Template, UnmarshalPolicyAssignmentV1OptionsRootTemplate)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "template-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// PolicyAssignmentV1OptionsRootTemplate : PolicyAssignmentV1OptionsRootTemplate struct
-type PolicyAssignmentV1OptionsRootTemplate struct {
-	// The template id where this policy is being assigned from.
-	ID *string `json:"id,omitempty"`
-
-	// The template version where this policy is being assigned from.
-	Version *string `json:"version,omitempty"`
-}
-
-// UnmarshalPolicyAssignmentV1OptionsRootTemplate unmarshals an instance of PolicyAssignmentV1OptionsRootTemplate from the specified map of raw messages.
-func UnmarshalPolicyAssignmentV1OptionsRootTemplate(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(PolicyAssignmentV1OptionsRootTemplate)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // PolicyAssignmentV1Resources : The policy assignment resources.
 type PolicyAssignmentV1Resources struct {
 	// assignment target account and type.
@@ -5940,12 +6110,15 @@ func UnmarshalPolicyAssignmentV1Resources(m map[string]json.RawMessage, result i
 
 // PolicyAssignmentV1Subject : subject details of access type assignment.
 type PolicyAssignmentV1Subject struct {
+	// The unique identifier of the subject of the assignment.
 	ID *string `json:"id,omitempty"`
 
+	// The identity type of the subject of the assignment.
 	Type *string `json:"type,omitempty"`
 }
 
 // Constants associated with the PolicyAssignmentV1Subject.Type property.
+// The identity type of the subject of the assignment.
 const (
 	PolicyAssignmentV1SubjectTypeAccessGroupIDConst = "access_group_id"
 	PolicyAssignmentV1SubjectTypeIamIDConst = "iam_id"
@@ -5970,6 +6143,18 @@ func UnmarshalPolicyAssignmentV1Subject(m map[string]json.RawMessage, result int
 
 // PolicyCollection : A collection of policies.
 type PolicyCollection struct {
+	// The number of documents to include per each page of collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Details with href linking to first page of requested collection.
+	First *First `json:"first,omitempty"`
+
+	// Details with href linking to following page of requested collection.
+	Next *Next `json:"next,omitempty"`
+
+	// Details with href linking to previous page of requested collection.
+	Previous *Previous `json:"previous,omitempty"`
+
 	// List of policies.
 	Policies []PolicyTemplateMetaData `json:"policies,omitempty"`
 }
@@ -5977,6 +6162,26 @@ type PolicyCollection struct {
 // UnmarshalPolicyCollection unmarshals an instance of PolicyCollection from the specified map of raw messages.
 func UnmarshalPolicyCollection(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(PolicyCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "policies", &obj.Policies, UnmarshalPolicyTemplateMetaData)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "policies-error", common.GetComponentInfo())
@@ -5984,6 +6189,14 @@ func UnmarshalPolicyCollection(m map[string]json.RawMessage, result interface{})
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *PolicyCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
 }
 
 // PolicyResource : The attributes of the resource. Note that only one resource is allowed in a policy.
@@ -6201,6 +6414,18 @@ func UnmarshalPolicyTemplate(m map[string]json.RawMessage, result interface{}) (
 
 // PolicyTemplateAssignmentCollection : A collection of policies assignments.
 type PolicyTemplateAssignmentCollection struct {
+	// The number of documents to include per each page of collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Details with href linking to first page of requested collection.
+	First *First `json:"first,omitempty"`
+
+	// Details with href linking to following page of requested collection.
+	Next *Next `json:"next,omitempty"`
+
+	// Details with href linking to previous page of requested collection.
+	Previous *Previous `json:"previous,omitempty"`
+
 	// List of policy assignments.
 	Assignments []PolicyTemplateAssignmentItemsIntf `json:"assignments,omitempty"`
 }
@@ -6208,6 +6433,26 @@ type PolicyTemplateAssignmentCollection struct {
 // UnmarshalPolicyTemplateAssignmentCollection unmarshals an instance of PolicyTemplateAssignmentCollection from the specified map of raw messages.
 func UnmarshalPolicyTemplateAssignmentCollection(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(PolicyTemplateAssignmentCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "assignments", &obj.Assignments, UnmarshalPolicyTemplateAssignmentItems)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "assignments-error", common.GetComponentInfo())
@@ -6217,6 +6462,14 @@ func UnmarshalPolicyTemplateAssignmentCollection(m map[string]json.RawMessage, r
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *PolicyTemplateAssignmentCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
+}
+
 // PolicyTemplateAssignmentItems : PolicyTemplateAssignmentItems struct
 // Models which "extend" this model:
 // - PolicyTemplateAssignmentItemsPolicyAssignmentV1
@@ -6224,9 +6477,6 @@ func UnmarshalPolicyTemplateAssignmentCollection(m map[string]json.RawMessage, r
 type PolicyTemplateAssignmentItems struct {
 	// assignment target account and type.
 	Target *AssignmentTargetDetails `json:"target,omitempty"`
-
-	// The set of properties required for a policy assignment.
-	Options *PolicyAssignmentV1Options `json:"options,omitempty"`
 
 	// Policy assignment ID.
 	ID *string `json:"id,omitempty"`
@@ -6302,11 +6552,6 @@ func UnmarshalPolicyTemplateAssignmentItems(m map[string]json.RawMessage, result
 	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalAssignmentTargetDetails)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "options", &obj.Options, UnmarshalPolicyAssignmentV1Options)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "options-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
@@ -6390,6 +6635,18 @@ func UnmarshalPolicyTemplateAssignmentItems(m map[string]json.RawMessage, result
 
 // PolicyTemplateCollection : A collection of policy Templates.
 type PolicyTemplateCollection struct {
+	// The number of documents to include per each page of collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Details with href linking to first page of requested collection.
+	First *First `json:"first,omitempty"`
+
+	// Details with href linking to following page of requested collection.
+	Next *Next `json:"next,omitempty"`
+
+	// Details with href linking to previous page of requested collection.
+	Previous *Previous `json:"previous,omitempty"`
+
 	// List of policy templates.
 	PolicyTemplates []PolicyTemplate `json:"policy_templates,omitempty"`
 }
@@ -6397,6 +6654,26 @@ type PolicyTemplateCollection struct {
 // UnmarshalPolicyTemplateCollection unmarshals an instance of PolicyTemplateCollection from the specified map of raw messages.
 func UnmarshalPolicyTemplateCollection(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(PolicyTemplateCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "policy_templates", &obj.PolicyTemplates, UnmarshalPolicyTemplate)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "policy_templates-error", common.GetComponentInfo())
@@ -6404,6 +6681,14 @@ func UnmarshalPolicyTemplateCollection(m map[string]json.RawMessage, result inte
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *PolicyTemplateCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
 }
 
 // PolicyTemplateLimitData : The core set of properties associated with the policy template.
@@ -6661,6 +6946,18 @@ func UnmarshalPolicyTemplateMetaData(m map[string]json.RawMessage, result interf
 
 // PolicyTemplateVersionsCollection : A collection of versions for a specific policy template.
 type PolicyTemplateVersionsCollection struct {
+	// The number of documents to include per each page of collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Details with href linking to first page of requested collection.
+	First *First `json:"first,omitempty"`
+
+	// Details with href linking to following page of requested collection.
+	Next *Next `json:"next,omitempty"`
+
+	// Details with href linking to previous page of requested collection.
+	Previous *Previous `json:"previous,omitempty"`
+
 	// List of policy templates versions.
 	Versions []PolicyTemplate `json:"versions,omitempty"`
 }
@@ -6668,9 +6965,63 @@ type PolicyTemplateVersionsCollection struct {
 // UnmarshalPolicyTemplateVersionsCollection unmarshals an instance of PolicyTemplateVersionsCollection from the specified map of raw messages.
 func UnmarshalPolicyTemplateVersionsCollection(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(PolicyTemplateVersionsCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "versions", &obj.Versions, UnmarshalPolicyTemplate)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "versions-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *PolicyTemplateVersionsCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
+}
+
+// Previous : Details with href linking to previous page of requested collection.
+type Previous struct {
+	// The href linking to the page of requested collection.
+	Href *string `json:"href,omitempty"`
+
+	// Page token that refers to the page of collection.
+	Start *string `json:"start,omitempty"`
+}
+
+// UnmarshalPrevious unmarshals an instance of Previous from the specified map of raw messages.
+func UnmarshalPrevious(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Previous)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "start-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6701,7 +7052,7 @@ type ReplacePolicyOptions struct {
 	// Customer-defined description.
 	Description *string `json:"description,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6792,7 +7143,7 @@ type ReplacePolicyTemplateOptions struct {
 	// Committed status of the template version.
 	Committed *bool `json:"committed,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6873,7 +7224,7 @@ type ReplaceRoleOptions struct {
 	// The description of the role.
 	Description *string `json:"description,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6954,7 +7305,7 @@ type ReplaceV2PolicyOptions struct {
 	// Additional access conditions associated with the policy.
 	Rule V2PolicyRuleIntf `json:"rule,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7483,7 +7834,7 @@ type TemplatePolicy struct {
 	Description *string `json:"description,omitempty"`
 
 	// The resource attributes to which the policy grants access.
-	Resource *V2PolicyResource `json:"resource" validate:"required"`
+	Resource *V2PolicyResource `json:"resource,omitempty"`
 
 	// The subject attributes for whom the policy grants access.
 	Subject *V2PolicySubject `json:"subject,omitempty"`
@@ -7496,7 +7847,7 @@ type TemplatePolicy struct {
 	Rule V2PolicyRuleIntf `json:"rule,omitempty"`
 
 	// Specifies the type of access granted by the policy.
-	Control *Control `json:"control" validate:"required"`
+	Control *Control `json:"control,omitempty"`
 }
 
 // Constants associated with the TemplatePolicy.Type property.
@@ -7507,11 +7858,9 @@ const (
 )
 
 // NewTemplatePolicy : Instantiate TemplatePolicy (Generic Model Constructor)
-func (*IamPolicyManagementV1) NewTemplatePolicy(typeVar string, resource *V2PolicyResource, control *Control) (_model *TemplatePolicy, err error) {
+func (*IamPolicyManagementV1) NewTemplatePolicy(typeVar string) (_model *TemplatePolicy, err error) {
 	_model = &TemplatePolicy{
 		Type: core.StringPtr(typeVar),
-		Resource: resource,
-		Control: control,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -7578,7 +7927,7 @@ type UpdatePolicyAssignmentOptions struct {
 	// The policy template version to update to.
 	TemplateVersion *string `json:"template_version" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7634,7 +7983,7 @@ type UpdatePolicyStateOptions struct {
 	// The policy state.
 	State *string `json:"state,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7673,6 +8022,75 @@ func (_options *UpdatePolicyStateOptions) SetState(state string) *UpdatePolicySt
 
 // SetHeaders : Allow user to set Headers
 func (options *UpdatePolicyStateOptions) SetHeaders(param map[string]string) *UpdatePolicyStateOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdateSettingsOptions : The UpdateSettings options.
+type UpdateSettingsOptions struct {
+	// The account GUID that the settings belong to.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// The revision number for updating Access Management Account Settings and must match the ETag value of the existing
+	// Access Management Account Settings. The Etag can be retrieved using the GET
+	// /v1/accounts/{account_id}/settings/access_management API and looking at the ETag response header.
+	IfMatch *string `json:"If-Match" validate:"required"`
+
+	// Update to how external accounts can interact in relation to the requested account.
+	ExternalAccountIdentityInteraction *ExternalAccountIdentityInteractionPatch `json:"external_account_identity_interaction,omitempty"`
+
+	// Language code for translations
+	// * `default` - English
+	// * `de` -  German (Standard)
+	// * `en` - English
+	// * `es` - Spanish (Spain)
+	// * `fr` - French (Standard)
+	// * `it` - Italian (Standard)
+	// * `ja` - Japanese
+	// * `ko` - Korean
+	// * `pt-br` - Portuguese (Brazil)
+	// * `zh-cn` - Chinese (Simplified, PRC)
+	// * `zh-tw` - (Chinese, Taiwan).
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewUpdateSettingsOptions : Instantiate UpdateSettingsOptions
+func (*IamPolicyManagementV1) NewUpdateSettingsOptions(accountID string, ifMatch string) *UpdateSettingsOptions {
+	return &UpdateSettingsOptions{
+		AccountID: core.StringPtr(accountID),
+		IfMatch: core.StringPtr(ifMatch),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *UpdateSettingsOptions) SetAccountID(accountID string) *UpdateSettingsOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *UpdateSettingsOptions) SetIfMatch(ifMatch string) *UpdateSettingsOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
+}
+
+// SetExternalAccountIdentityInteraction : Allow user to set ExternalAccountIdentityInteraction
+func (_options *UpdateSettingsOptions) SetExternalAccountIdentityInteraction(externalAccountIdentityInteraction *ExternalAccountIdentityInteractionPatch) *UpdateSettingsOptions {
+	_options.ExternalAccountIdentityInteraction = externalAccountIdentityInteraction
+	return _options
+}
+
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *UpdateSettingsOptions) SetAcceptLanguage(acceptLanguage string) *UpdateSettingsOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateSettingsOptions) SetHeaders(param map[string]string) *UpdateSettingsOptions {
 	options.Headers = param
 	return options
 }
@@ -7832,6 +8250,18 @@ func UnmarshalV2Policy(m map[string]json.RawMessage, result interface{}) (err er
 
 // V2PolicyCollection : A collection of policies.
 type V2PolicyCollection struct {
+	// The number of documents to include per each page of collection.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Details with href linking to first page of requested collection.
+	First *First `json:"first,omitempty"`
+
+	// Details with href linking to following page of requested collection.
+	Next *Next `json:"next,omitempty"`
+
+	// Details with href linking to previous page of requested collection.
+	Previous *Previous `json:"previous,omitempty"`
+
 	// List of policies.
 	Policies []V2PolicyTemplateMetaData `json:"policies,omitempty"`
 }
@@ -7839,6 +8269,26 @@ type V2PolicyCollection struct {
 // UnmarshalV2PolicyCollection unmarshals an instance of V2PolicyCollection from the specified map of raw messages.
 func UnmarshalV2PolicyCollection(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(V2PolicyCollection)
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPrevious)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "policies", &obj.Policies, UnmarshalV2PolicyTemplateMetaData)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "policies-error", common.GetComponentInfo())
@@ -7846,6 +8296,14 @@ func UnmarshalV2PolicyCollection(m map[string]json.RawMessage, result interface{
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *V2PolicyCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
 }
 
 // V2PolicyResource : The resource attributes to which the policy grants access.
@@ -8372,284 +8830,6 @@ func UnmarshalControlResponseControlWithEnrichedRoles(m map[string]json.RawMessa
 	return
 }
 
-// GetPolicyAssignmentResponsePolicyAssignment : The set of properties associated with the policy template assignment.
-// This model "extends" GetPolicyAssignmentResponse
-type GetPolicyAssignmentResponsePolicyAssignment struct {
-	// policy template id.
-	TemplateID *string `json:"template_id,omitempty"`
-
-	// policy template version.
-	TemplateVersion *string `json:"template_version,omitempty"`
-
-	// Passed in value to correlate with other assignments.
-	AssignmentID *string `json:"assignment_id,omitempty"`
-
-	// Assignment target type.
-	TargetType *string `json:"target_type,omitempty"`
-
-	// ID of the target account.
-	Target *string `json:"target,omitempty"`
-
-	// List of objects with required properties for a policy assignment.
-	Options []PolicyAssignmentOptions `json:"options,omitempty"`
-
-	// Policy assignment ID.
-	ID *string `json:"id,omitempty"`
-
-	// The account GUID that the policies assignments belong to..
-	AccountID *string `json:"account_id,omitempty"`
-
-	// The href URL that links to the policies assignments API by policy assignment ID.
-	Href *string `json:"href,omitempty"`
-
-	// The UTC timestamp when the policy assignment was created.
-	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
-
-	// The iam ID of the entity that created the policy assignment.
-	CreatedByID *string `json:"created_by_id,omitempty"`
-
-	// The UTC timestamp when the policy assignment was last modified.
-	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
-
-	// The iam ID of the entity that last modified the policy assignment.
-	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
-
-	// Object for each account assigned.
-	Resources []PolicyAssignmentResources `json:"resources,omitempty"`
-
-	// The policy assignment status.
-	Status *string `json:"status,omitempty"`
-}
-
-// Constants associated with the GetPolicyAssignmentResponsePolicyAssignment.TargetType property.
-// Assignment target type.
-const (
-	GetPolicyAssignmentResponsePolicyAssignmentTargetTypeAccountConst = "Account"
-)
-
-// Constants associated with the GetPolicyAssignmentResponsePolicyAssignment.Status property.
-// The policy assignment status.
-const (
-	GetPolicyAssignmentResponsePolicyAssignmentStatusFailedConst = "failed"
-	GetPolicyAssignmentResponsePolicyAssignmentStatusInProgressConst = "in_progress"
-	GetPolicyAssignmentResponsePolicyAssignmentStatusSucceedWithErrorsConst = "succeed_with_errors"
-	GetPolicyAssignmentResponsePolicyAssignmentStatusSucceededConst = "succeeded"
-)
-
-func (*GetPolicyAssignmentResponsePolicyAssignment) isaGetPolicyAssignmentResponse() bool {
-	return true
-}
-
-// UnmarshalGetPolicyAssignmentResponsePolicyAssignment unmarshals an instance of GetPolicyAssignmentResponsePolicyAssignment from the specified map of raw messages.
-func UnmarshalGetPolicyAssignmentResponsePolicyAssignment(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GetPolicyAssignmentResponsePolicyAssignment)
-	err = core.UnmarshalPrimitive(m, "template_id", &obj.TemplateID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "template_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "template_version", &obj.TemplateVersion)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "template_version-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "assignment_id", &obj.AssignmentID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "assignment_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "target_type", &obj.TargetType)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "target_type-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "options", &obj.Options, UnmarshalPolicyAssignmentOptions)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "options-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalPolicyAssignmentResources)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// GetPolicyAssignmentResponsePolicyAssignmentV1 : The set of properties associated with the policy template assignment.
-// This model "extends" GetPolicyAssignmentResponse
-type GetPolicyAssignmentResponsePolicyAssignmentV1 struct {
-	// assignment target account and type.
-	Target *AssignmentTargetDetails `json:"target" validate:"required"`
-
-	// The set of properties required for a policy assignment.
-	Options *PolicyAssignmentV1Options `json:"options" validate:"required"`
-
-	// Policy assignment ID.
-	ID *string `json:"id,omitempty"`
-
-	// The account GUID that the policies assignments belong to..
-	AccountID *string `json:"account_id,omitempty"`
-
-	// The href URL that links to the policies assignments API by policy assignment ID.
-	Href *string `json:"href,omitempty"`
-
-	// The UTC timestamp when the policy assignment was created.
-	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
-
-	// The iam ID of the entity that created the policy assignment.
-	CreatedByID *string `json:"created_by_id,omitempty"`
-
-	// The UTC timestamp when the policy assignment was last modified.
-	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
-
-	// The iam ID of the entity that last modified the policy assignment.
-	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
-
-	// Object for each account assigned.
-	Resources []PolicyAssignmentV1Resources `json:"resources" validate:"required"`
-
-	// subject details of access type assignment.
-	Subject *GetPolicyAssignmentResponsePolicyAssignmentV1Subject `json:"subject,omitempty"`
-
-	// policy template details.
-	Template *AssignmentTemplateDetails `json:"template" validate:"required"`
-
-	// The policy assignment status.
-	Status *string `json:"status" validate:"required"`
-}
-
-// Constants associated with the GetPolicyAssignmentResponsePolicyAssignmentV1.Status property.
-// The policy assignment status.
-const (
-	GetPolicyAssignmentResponsePolicyAssignmentV1StatusFailedConst = "failed"
-	GetPolicyAssignmentResponsePolicyAssignmentV1StatusInProgressConst = "in_progress"
-	GetPolicyAssignmentResponsePolicyAssignmentV1StatusSucceedWithErrorsConst = "succeed_with_errors"
-	GetPolicyAssignmentResponsePolicyAssignmentV1StatusSucceededConst = "succeeded"
-)
-
-func (*GetPolicyAssignmentResponsePolicyAssignmentV1) isaGetPolicyAssignmentResponse() bool {
-	return true
-}
-
-// UnmarshalGetPolicyAssignmentResponsePolicyAssignmentV1 unmarshals an instance of GetPolicyAssignmentResponsePolicyAssignmentV1 from the specified map of raw messages.
-func UnmarshalGetPolicyAssignmentResponsePolicyAssignmentV1(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GetPolicyAssignmentResponsePolicyAssignmentV1)
-	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalAssignmentTargetDetails)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "options", &obj.Options, UnmarshalPolicyAssignmentV1Options)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "options-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalPolicyAssignmentV1Resources)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "subject", &obj.Subject, UnmarshalGetPolicyAssignmentResponsePolicyAssignmentV1Subject)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "subject-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "template", &obj.Template, UnmarshalAssignmentTemplateDetails)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "template-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // NestedConditionRuleAttribute : Rule that specifies additional access granted (e.g., time-based condition).
 // This model "extends" NestedCondition
 type NestedConditionRuleAttribute struct {
@@ -8798,9 +8978,6 @@ type PolicyTemplateAssignmentItemsPolicyAssignment struct {
 	// ID of the target account.
 	Target *string `json:"target,omitempty"`
 
-	// List of objects with required properties for a policy assignment.
-	Options []PolicyAssignmentOptions `json:"options,omitempty"`
-
 	// Policy assignment ID.
 	ID *string `json:"id,omitempty"`
 
@@ -8876,11 +9053,6 @@ func UnmarshalPolicyTemplateAssignmentItemsPolicyAssignment(m map[string]json.Ra
 		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "options", &obj.Options, UnmarshalPolicyAssignmentOptions)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "options-error", common.GetComponentInfo())
-		return
-	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
@@ -8936,9 +9108,6 @@ type PolicyTemplateAssignmentItemsPolicyAssignmentV1 struct {
 	// assignment target account and type.
 	Target *AssignmentTargetDetails `json:"target" validate:"required"`
 
-	// The set of properties required for a policy assignment.
-	Options *PolicyAssignmentV1Options `json:"options" validate:"required"`
-
 	// Policy assignment ID.
 	ID *string `json:"id,omitempty"`
 
@@ -8992,11 +9161,6 @@ func UnmarshalPolicyTemplateAssignmentItemsPolicyAssignmentV1(m map[string]json.
 	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalAssignmentTargetDetails)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "options", &obj.Options, UnmarshalPolicyAssignmentV1Options)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "options-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
@@ -9185,5 +9349,440 @@ func UnmarshalV2PolicyRuleRuleWithNestedConditions(m map[string]json.RawMessage,
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+//
+// PoliciesPager can be used to simplify the use of the "ListPolicies" method.
+//
+type PoliciesPager struct {
+	hasNext bool
+	options *ListPoliciesOptions
+	client  *IamPolicyManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewPoliciesPager returns a new PoliciesPager instance.
+func (iamPolicyManagement *IamPolicyManagementV1) NewPoliciesPager(options *ListPoliciesOptions) (pager *PoliciesPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListPoliciesOptions = *options
+	pager = &PoliciesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  iamPolicyManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *PoliciesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *PoliciesPager) GetNextWithContext(ctx context.Context) (page []PolicyTemplateMetaData, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListPoliciesWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Policies
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *PoliciesPager) GetAllWithContext(ctx context.Context) (allItems []PolicyTemplateMetaData, err error) {
+	for pager.HasNext() {
+		var nextPage []PolicyTemplateMetaData
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *PoliciesPager) GetNext() (page []PolicyTemplateMetaData, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *PoliciesPager) GetAll() (allItems []PolicyTemplateMetaData, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+//
+// V2PoliciesPager can be used to simplify the use of the "ListV2Policies" method.
+//
+type V2PoliciesPager struct {
+	hasNext bool
+	options *ListV2PoliciesOptions
+	client  *IamPolicyManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewV2PoliciesPager returns a new V2PoliciesPager instance.
+func (iamPolicyManagement *IamPolicyManagementV1) NewV2PoliciesPager(options *ListV2PoliciesOptions) (pager *V2PoliciesPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListV2PoliciesOptions = *options
+	pager = &V2PoliciesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  iamPolicyManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *V2PoliciesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *V2PoliciesPager) GetNextWithContext(ctx context.Context) (page []V2PolicyTemplateMetaData, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListV2PoliciesWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Policies
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *V2PoliciesPager) GetAllWithContext(ctx context.Context) (allItems []V2PolicyTemplateMetaData, err error) {
+	for pager.HasNext() {
+		var nextPage []V2PolicyTemplateMetaData
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *V2PoliciesPager) GetNext() (page []V2PolicyTemplateMetaData, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *V2PoliciesPager) GetAll() (allItems []V2PolicyTemplateMetaData, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+//
+// PolicyTemplatesPager can be used to simplify the use of the "ListPolicyTemplates" method.
+//
+type PolicyTemplatesPager struct {
+	hasNext bool
+	options *ListPolicyTemplatesOptions
+	client  *IamPolicyManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewPolicyTemplatesPager returns a new PolicyTemplatesPager instance.
+func (iamPolicyManagement *IamPolicyManagementV1) NewPolicyTemplatesPager(options *ListPolicyTemplatesOptions) (pager *PolicyTemplatesPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListPolicyTemplatesOptions = *options
+	pager = &PolicyTemplatesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  iamPolicyManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *PolicyTemplatesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *PolicyTemplatesPager) GetNextWithContext(ctx context.Context) (page []PolicyTemplate, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListPolicyTemplatesWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.PolicyTemplates
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *PolicyTemplatesPager) GetAllWithContext(ctx context.Context) (allItems []PolicyTemplate, err error) {
+	for pager.HasNext() {
+		var nextPage []PolicyTemplate
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *PolicyTemplatesPager) GetNext() (page []PolicyTemplate, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *PolicyTemplatesPager) GetAll() (allItems []PolicyTemplate, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+//
+// PolicyTemplateVersionsPager can be used to simplify the use of the "ListPolicyTemplateVersions" method.
+//
+type PolicyTemplateVersionsPager struct {
+	hasNext bool
+	options *ListPolicyTemplateVersionsOptions
+	client  *IamPolicyManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewPolicyTemplateVersionsPager returns a new PolicyTemplateVersionsPager instance.
+func (iamPolicyManagement *IamPolicyManagementV1) NewPolicyTemplateVersionsPager(options *ListPolicyTemplateVersionsOptions) (pager *PolicyTemplateVersionsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListPolicyTemplateVersionsOptions = *options
+	pager = &PolicyTemplateVersionsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  iamPolicyManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *PolicyTemplateVersionsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *PolicyTemplateVersionsPager) GetNextWithContext(ctx context.Context) (page []PolicyTemplate, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListPolicyTemplateVersionsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Versions
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *PolicyTemplateVersionsPager) GetAllWithContext(ctx context.Context) (allItems []PolicyTemplate, err error) {
+	for pager.HasNext() {
+		var nextPage []PolicyTemplate
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *PolicyTemplateVersionsPager) GetNext() (page []PolicyTemplate, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *PolicyTemplateVersionsPager) GetAll() (allItems []PolicyTemplate, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+//
+// PolicyAssignmentsPager can be used to simplify the use of the "ListPolicyAssignments" method.
+//
+type PolicyAssignmentsPager struct {
+	hasNext bool
+	options *ListPolicyAssignmentsOptions
+	client  *IamPolicyManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewPolicyAssignmentsPager returns a new PolicyAssignmentsPager instance.
+func (iamPolicyManagement *IamPolicyManagementV1) NewPolicyAssignmentsPager(options *ListPolicyAssignmentsOptions) (pager *PolicyAssignmentsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListPolicyAssignmentsOptions = *options
+	pager = &PolicyAssignmentsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  iamPolicyManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *PolicyAssignmentsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *PolicyAssignmentsPager) GetNextWithContext(ctx context.Context) (page []PolicyTemplateAssignmentItemsIntf, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListPolicyAssignmentsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Assignments
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *PolicyAssignmentsPager) GetAllWithContext(ctx context.Context) (allItems []PolicyTemplateAssignmentItemsIntf, err error) {
+	for pager.HasNext() {
+		var nextPage []PolicyTemplateAssignmentItemsIntf
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *PolicyAssignmentsPager) GetNext() (page []PolicyTemplateAssignmentItemsIntf, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *PolicyAssignmentsPager) GetAll() (allItems []PolicyTemplateAssignmentItemsIntf, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
 	return
 }

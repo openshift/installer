@@ -114,6 +114,7 @@ func (s *Service) reconcileSubnets() error {
 
 		for i, sub := range subnetCIDRs {
 			secondarySub := infrav1.SubnetSpec{
+				ID:               fmt.Sprintf("%s-subnet-%s-%s", s.scope.Name(), infrav1.SecondarySubnetTagValue, zones[i]),
 				CidrBlock:        sub.String(),
 				AvailabilityZone: zones[i],
 				IsPublic:         false,
@@ -274,26 +275,38 @@ func (s *Service) getDefaultSubnets() (infrav1.Subnets, error) {
 		s.scope.Debug("zones selected", "region", s.scope.Region(), "zones", zones)
 	}
 
-	// 1 private subnet for each AZ plus 1 other subnet that will be further sub-divided for the public subnets
+	// 1 private subnet for each AZ plus 1 other subnet that will be further sub-divided for the public subnets or vice versa if
+	// the subnet schema is set to prefer public subnets.
 	// All subnets will have an ipv4 address for now as well. We aren't supporting ipv6-only yet.
 	numSubnets := len(zones) + 1
 	var (
-		subnetCIDRs            []*net.IPNet
-		publicSubnetCIDRs      []*net.IPNet
-		ipv6SubnetCIDRs        []*net.IPNet
-		publicIPv6SubnetCIDRs  []*net.IPNet
-		privateIPv6SubnetCIDRs []*net.IPNet
+		subnetCIDRs              []*net.IPNet
+		preferredSubnetCIDRs     []*net.IPNet
+		residualSubnetCIDRs      []*net.IPNet
+		ipv6SubnetCIDRs          []*net.IPNet
+		preferredIPv6SubnetCIDRs []*net.IPNet
+		residualIPv6SubnetCIDRs  []*net.IPNet
 	)
+	subnetScheme := infrav1.SubnetSchemaPreferPrivate
+	if s.scope.VPC().SubnetSchema != nil {
+		subnetScheme = *s.scope.VPC().SubnetSchema
+	}
+
+	residualSubnetsName := infrav1.SubnetSchemaPreferPublic.Name()
+	if subnetScheme == infrav1.SubnetSchemaPreferPublic {
+		residualSubnetsName = infrav1.SubnetSchemaPreferPrivate.Name()
+	}
+
 	subnetCIDRs, err = cidr.SplitIntoSubnetsIPv4(s.scope.VPC().CidrBlock, numSubnets)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed splitting VPC CIDR %q into subnets", s.scope.VPC().CidrBlock)
 	}
 
-	publicSubnetCIDRs, err = cidr.SplitIntoSubnetsIPv4(subnetCIDRs[0].String(), len(zones))
+	residualSubnetCIDRs, err = cidr.SplitIntoSubnetsIPv4(subnetCIDRs[0].String(), len(zones))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed splitting CIDR %q into public subnets", subnetCIDRs[0].String())
+		return nil, errors.Wrapf(err, "failed splitting CIDR %q into %s subnets", subnetCIDRs[0].String(), residualSubnetsName)
 	}
-	privateSubnetCIDRs := append(subnetCIDRs[:0], subnetCIDRs[1:]...)
+	preferredSubnetCIDRs = append(subnetCIDRs[:0], subnetCIDRs[1:]...)
 
 	if s.scope.VPC().IsIPv6Enabled() {
 		ipv6SubnetCIDRs, err = cidr.SplitIntoSubnetsIPv6(s.scope.VPC().IPv6.CidrBlock, numSubnets)
@@ -302,12 +315,23 @@ func (s *Service) getDefaultSubnets() (infrav1.Subnets, error) {
 		}
 
 		// We need to take the last, so it doesn't conflict with the rest. The subnetID is increment each time by 1.
-		publicIPv6SubnetCIDRs, err = cidr.SplitIntoSubnetsIPv6(ipv6SubnetCIDRs[len(ipv6SubnetCIDRs)-1].String(), len(zones))
+		ipv6SubnetCIDRsStr := ipv6SubnetCIDRs[len(ipv6SubnetCIDRs)-1].String()
+		residualIPv6SubnetCIDRs, err = cidr.SplitIntoSubnetsIPv6(ipv6SubnetCIDRsStr, len(zones))
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed splitting IPv6 CIDR %q into public subnets", ipv6SubnetCIDRs[len(ipv6SubnetCIDRs)-1].String())
+			return nil, errors.Wrapf(err, "failed splitting IPv6 CIDR %q into %s subnets", ipv6SubnetCIDRsStr, residualSubnetsName)
 		}
 		// TODO: this might need to be the last instead of the first..
-		privateIPv6SubnetCIDRs = append(ipv6SubnetCIDRs[:0], ipv6SubnetCIDRs[1:]...)
+		preferredIPv6SubnetCIDRs = append(ipv6SubnetCIDRs[:0], ipv6SubnetCIDRs[1:]...)
+	}
+
+	// By default, the preferred subnets are the private subnets and the residual subnets are the public subnets.
+	privateSubnetCIDRs, publicSubnetCIDRs := preferredSubnetCIDRs, residualSubnetCIDRs
+	privateIPv6SubnetCIDRs, publicIPv6SubnetCIDRs := preferredIPv6SubnetCIDRs, residualIPv6SubnetCIDRs
+
+	// If the subnet schema is set to prefer public, we need to swap the private and public subnets.
+	if subnetScheme == infrav1.SubnetSchemaPreferPublic {
+		privateSubnetCIDRs, publicSubnetCIDRs = residualSubnetCIDRs, preferredSubnetCIDRs
+		privateIPv6SubnetCIDRs, publicIPv6SubnetCIDRs = residualIPv6SubnetCIDRs, preferredIPv6SubnetCIDRs
 	}
 
 	subnets := infrav1.Subnets{}
@@ -630,7 +654,11 @@ func (s *Service) getSubnetTagParams(unmanagedVPC bool, id string, public bool, 
 			}
 		}
 		// Add tag needed for Service type=LoadBalancer
-		additionalTags[infrav1.ClusterAWSCloudProviderTagKey(s.scope.KubernetesClusterName())] = string(infrav1.ResourceLifecycleShared)
+		if unmanagedVPC {
+			additionalTags[infrav1.ClusterAWSCloudProviderTagKey(s.scope.KubernetesClusterName())] = string(infrav1.ResourceLifecycleShared)
+		} else {
+			additionalTags[infrav1.ClusterAWSCloudProviderTagKey(s.scope.KubernetesClusterName())] = string(infrav1.ResourceLifecycleOwned)
+		}
 	}
 
 	if !unmanagedVPC {

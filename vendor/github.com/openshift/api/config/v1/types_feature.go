@@ -17,6 +17,7 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=featuregates,scope=Cluster
 // +kubebuilder:subresource:status
+// +kubebuilder:metadata:annotations=release.openshift.io/bootstrap-required=true
 type FeatureGate struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -25,8 +26,8 @@ type FeatureGate struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec holds user settable values for configuration
-	// +kubebuilder:validation:Required
 	// +required
+	// +kubebuilder:validation:XValidation:rule="has(oldSelf.featureSet) ? has(self.featureSet) : true",message=".spec.featureSet cannot be removed"
 	Spec FeatureGateSpec `json:"spec"`
 	// status holds observed values from the cluster. They may not be overridden.
 	// +optional
@@ -66,6 +67,7 @@ type FeatureGateSelection struct {
 	// Turning on or off features may cause irreversible changes in your cluster which cannot be undone.
 	// +unionDiscriminator
 	// +optional
+	// +kubebuilder:validation:Enum=CustomNoUpgrade;DevPreviewNoUpgrade;TechPreviewNoUpgrade;""
 	// +kubebuilder:validation:XValidation:rule="oldSelf == 'CustomNoUpgrade' ? self == 'CustomNoUpgrade' : true",message="CustomNoUpgrade may not be changed"
 	// +kubebuilder:validation:XValidation:rule="oldSelf == 'TechPreviewNoUpgrade' ? self == 'TechPreviewNoUpgrade' : true",message="TechPreviewNoUpgrade may not be changed"
 	// +kubebuilder:validation:XValidation:rule="oldSelf == 'DevPreviewNoUpgrade' ? self == 'DevPreviewNoUpgrade' : true",message="DevPreviewNoUpgrade may not be changed"
@@ -114,7 +116,6 @@ type FeatureGateStatus struct {
 
 type FeatureGateDetails struct {
 	// version matches the version provided by the ClusterVersion and in the ClusterOperator.Status.Versions field.
-	// +kubebuilder:validation:Required
 	// +required
 	Version string `json:"version"`
 	// enabled is a list of all feature gates that are enabled in the cluster for the named version.
@@ -127,7 +128,7 @@ type FeatureGateDetails struct {
 
 type FeatureGateAttributes struct {
 	// name is the name of the FeatureGate.
-	// +kubebuilder:validation:Required
+	// +required
 	Name FeatureGateName `json:"name"`
 
 	// possible (probable?) future additions include

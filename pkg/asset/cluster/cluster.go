@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -24,6 +25,8 @@ import (
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/quota"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/clusterapi"
 	infra "github.com/openshift/installer/pkg/infrastructure/platform"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
@@ -42,7 +45,6 @@ type Cluster struct {
 }
 
 var _ asset.WritableAsset = (*Cluster)(nil)
-var _ asset.Generator = (*Cluster)(nil)
 
 // Name returns the human-friendly name of the asset.
 func (c *Cluster) Name() string {
@@ -71,15 +73,18 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&kubeconfig.AdminClient{},
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
+		&machine.Arbiter{},
+		&machine.Worker{},
 		&machines.Worker{},
 		&machines.ClusterAPI{},
 		new(rhcos.Image),
 		&manifests.Manifests{},
+		&tls.RootCA{},
 	}
 }
 
 // Generate launches the cluster and generates the terraform state file on disk.
-func (c *Cluster) GenerateWithContext(ctx context.Context, parents asset.Parents) (err error) {
+func (c *Cluster) Generate(ctx context.Context, parents asset.Parents) (err error) {
 	if InstallDir == "" {
 		logrus.Fatalf("InstallDir has not been set for the %q asset", c.Name())
 	}
@@ -113,11 +118,11 @@ func (c *Cluster) GenerateWithContext(ctx context.Context, parents asset.Parents
 	logrus.Infof("Creating infrastructure resources...")
 	switch platform {
 	case typesaws.Name:
-		if err := aws.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
+		if err := aws.PreTerraform(ctx, clusterID.InfraID, installConfig); err != nil {
 			return err
 		}
 	case typesazure.Name, typesazure.StackTerraformName:
-		if err := azure.PreTerraform(context.TODO(), clusterID.InfraID, installConfig); err != nil {
+		if err := azure.PreTerraform(ctx, clusterID.InfraID, installConfig); err != nil {
 			return err
 		}
 	case typesopenstack.Name:
@@ -128,7 +133,7 @@ func (c *Cluster) GenerateWithContext(ctx context.Context, parents asset.Parents
 				break
 			}
 		}
-		if err := openstack.PreTerraform(context.TODO(), tfvarsFile, installConfig, clusterID, rhcosImage); err != nil {
+		if err := openstack.PreTerraform(ctx, tfvarsFile, installConfig, clusterID, rhcosImage); err != nil {
 			return err
 		}
 	}
@@ -161,14 +166,20 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 		return true, err
 	}
 	if len(matches) != 0 {
-		return true, errors.Errorf("terraform state files alread exist.  There may already be a running cluster")
+		return true, fmt.Errorf("terraform state files already exist.  There may already be a running cluster")
 	}
 
-	return false, nil
-}
+	matches, err = filepath.Glob(filepath.Join(InstallDir, clusterapi.ArtifactsDir, "envtest.kubeconfig"))
+	if err != nil {
+		return true, fmt.Errorf("error checking for existence of envtest.kubeconfig: %w", err)
+	}
 
-// Generate is implemented so the Cluster Asset maintains compatibility
-// with the Asset interface. It should never be called.
-func (c *Cluster) Generate(_ asset.Parents) (err error) {
-	panic("Cluster.Generate was called instead of Cluster.GenerateWithContext")
+	// Cluster-API based installs can be re-entered, but this is an experimental feature
+	// that should be opted into and only used for testing and development.
+	reentrant := strings.EqualFold(os.Getenv("OPENSHIFT_INSTALL_REENTRANT"), "true")
+
+	if !reentrant && len(matches) != 0 {
+		return true, fmt.Errorf("local infrastructure provisioning artifacts already exist. There may already be a running cluster")
+	}
+	return false, nil
 }

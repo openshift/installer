@@ -27,6 +27,11 @@ func DataSourceIBMISOperatingSystems() *schema.Resource {
 				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						isOperatingSystemAllowUserImageCreation: {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Users may create new images with this operating system",
+						},
 						isOperatingSystemName: {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -69,6 +74,11 @@ func DataSourceIBMISOperatingSystems() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The vendor of the operating system",
+						},
+						isOperatingSystemUserDataFormat: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The user data format for this operating system",
 						},
 					},
 				},
@@ -119,6 +129,12 @@ func osList(d *schema.ResourceData, meta interface{}) error {
 			isOperatingSystemDisplayName:  *os.DisplayName,
 			isOperatingSystemVendor:       *os.Vendor,
 			isOperatingSystemVersion:      *os.Version,
+		}
+		if os.AllowUserImageCreation != nil {
+			l[isOperatingSystemAllowUserImageCreation] = *os.AllowUserImageCreation
+		}
+		if os.UserDataFormat != nil {
+			l[isOperatingSystemUserDataFormat] = *os.UserDataFormat
 		}
 		osInfo = append(osInfo, l)
 	}

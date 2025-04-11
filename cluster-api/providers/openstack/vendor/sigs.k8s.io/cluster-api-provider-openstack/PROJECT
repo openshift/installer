@@ -7,18 +7,6 @@ repo: sigs.k8s.io/cluster-api-provider-openstack
 resources:
 - group: infrastructure
   kind: OpenStackCluster
-  version: v1alpha5
-- group: infrastructure
-  kind: OpenStackMachine
-  version: v1alpha5
-- group: infrastructure
-  kind: OpenStackMachineTemplate
-  version: v1alpha5
-- group: infrastructure
-  kind: OpenStackClusterTemplate
-  version: v1alpha5
-- group: infrastructure
-  kind: OpenStackCluster
   version: v1alpha6
 - group: infrastructure
   kind: OpenStackMachine
@@ -42,18 +30,22 @@ resources:
   kind: OpenStackClusterTemplate
   version: v1alpha7
 - group: infrastructure
-  version: v1beta1
   kind: OpenStackCluster
-- group: infrastructure
   version: v1beta1
+- group: infrastructure
   kind: OpenStackMachine
-- group: infrastructure
   version: v1beta1
+- group: infrastructure
   kind: OpenStackMachineTemplate
+  version: v1beta1
 - group: infrastructure
   kind: OpenStackClusterTemplate
   version: v1beta1
 - group: infrastructure
   kind: OpenStackFloatingIPPool
   version: v1alpha1
+- group: infrastructure
+  kind: OpenStackServer
+  version: v1alpha1
+- group: infrastructure
 version: "2"

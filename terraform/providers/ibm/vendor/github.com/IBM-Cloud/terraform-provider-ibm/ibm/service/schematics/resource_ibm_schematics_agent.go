@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
@@ -26,9 +27,9 @@ func ResourceIbmSchematicsAgent() *schema.Resource {
 		DeleteContext: resourceIbmSchematicsAgentDelete,
 		Importer:      &schema.ResourceImporter{},
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(30 * time.Minute),
+			Update: schema.DefaultTimeout(30 * time.Minute),
+			Delete: schema.DefaultTimeout(30 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -40,6 +41,7 @@ func ResourceIbmSchematicsAgent() *schema.Resource {
 			"resource_group": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The resource-group name for the agent.  By default, agent will be registered in Default Resource Group.",
 			},
 			"version": &schema.Schema{
@@ -132,6 +134,7 @@ func ResourceIbmSchematicsAgent() *schema.Resource {
 			"agent_inputs": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
+				ForceNew:    true,
 				Description: "Additional input variables for the agent.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -265,11 +268,17 @@ func ResourceIbmSchematicsAgent() *schema.Resource {
 					},
 				},
 			},
+			"run_destroy_resources": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Argument which helps to run destroy resources job. Increment the value to destroy resources associated with agent deployment.",
+			},
 			"user_state": &schema.Schema{
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				Optional:    true,
 				Computed:    true,
+				ForceNew:    true,
 				Description: "User defined status of the agent.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -294,40 +303,33 @@ func ResourceIbmSchematicsAgent() *schema.Resource {
 			},
 			"agent_kpi": &schema.Schema{
 				Type:        schema.TypeList,
-				MaxItems:    1,
-				Optional:    true,
 				Computed:    true,
 				Description: "Schematics Agent key performance indicators.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"availability_indicator": &schema.Schema{
 							Type:        schema.TypeString,
-							Optional:    true,
 							Computed:    true,
 							Description: "Overall availability indicator reported by the agent.",
 						},
 						"lifecycle_indicator": &schema.Schema{
 							Type:        schema.TypeString,
-							Optional:    true,
 							Computed:    true,
 							Description: "Overall lifecycle indicator reported by the agents.",
 						},
 						"percent_usage_indicator": &schema.Schema{
 							Type:        schema.TypeString,
-							Optional:    true,
 							Computed:    true,
 							Description: "Percentage usage of the agent resources.",
 						},
 						"application_indicators": &schema.Schema{
 							Type:        schema.TypeList,
-							Optional:    true,
 							Computed:    true,
 							Description: "Agent application key performance indicators.",
 							Elem:        &schema.Schema{Type: schema.TypeMap},
 						},
 						"infra_indicators": &schema.Schema{
 							Type:        schema.TypeList,
-							Optional:    true,
 							Computed:    true,
 							Description: "Agent infrastructure key performance indicators.",
 							Elem:        &schema.Schema{Type: schema.TypeMap},
@@ -556,16 +558,12 @@ func ResourceIbmSchematicsAgent() *schema.Resource {
 func resourceIbmSchematicsAgentCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentCreate schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_agent", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
-	createAgentDataOptions := &schematicsv1.CreateAgentDataOptions{
-		// XFeatureAgents: core.BoolPtr(true),
-	}
-	ff := map[string]string{
-		"X-Feature-Agents": "true",
-	}
-	createAgentDataOptions.Headers = ff
+	createAgentDataOptions := &schematicsv1.CreateAgentDataOptions{}
 
 	createAgentDataOptions.SetName(d.Get("name").(string))
 	createAgentDataOptions.SetResourceGroup(d.Get("resource_group").(string))
@@ -574,14 +572,16 @@ func resourceIbmSchematicsAgentCreate(context context.Context, d *schema.Resourc
 	createAgentDataOptions.SetAgentLocation(d.Get("agent_location").(string))
 	agentInfrastructureModel, err := resourceIbmSchematicsAgentMapToAgentInfrastructure(d.Get("agent_infrastructure.0").(map[string]interface{}))
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentCreate failed: %s", err.Error()), "ibm_schematics_agent", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	createAgentDataOptions.SetAgentInfrastructure(agentInfrastructureModel)
 	if _, ok := d.GetOk("description"); ok {
 		createAgentDataOptions.SetDescription(d.Get("description").(string))
 	}
 	if _, ok := d.GetOk("tags"); ok {
-		createAgentDataOptions.SetTags(d.Get("tags").([]string))
+		createAgentDataOptions.SetTags(flex.ExpandStringList(d.Get("tags").([]interface{})))
 	}
 	if _, ok := d.GetOk("agent_metadata"); ok {
 		var agentMetadata []schematicsv1.AgentMetadataInfo
@@ -589,7 +589,9 @@ func resourceIbmSchematicsAgentCreate(context context.Context, d *schema.Resourc
 			value := e.(map[string]interface{})
 			agentMetadataItem, err := resourceIbmSchematicsAgentMapToAgentMetadataInfo(value)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentCreate failed: %s", err.Error()), "ibm_schematics_agent", "create")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			agentMetadata = append(agentMetadata, *agentMetadataItem)
 		}
@@ -601,7 +603,9 @@ func resourceIbmSchematicsAgentCreate(context context.Context, d *schema.Resourc
 			value := e.(map[string]interface{})
 			agentInputsItem, err := resourceIbmSchematicsAgentMapToVariableData(value)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentCreate failed: %s", err.Error()), "ibm_schematics_agent", "create")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			agentInputs = append(agentInputs, *agentInputsItem)
 		}
@@ -610,22 +614,19 @@ func resourceIbmSchematicsAgentCreate(context context.Context, d *schema.Resourc
 	if _, ok := d.GetOk("user_state"); ok {
 		userStateModel, err := resourceIbmSchematicsAgentMapToAgentUserState(d.Get("user_state.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentCreate failed: %s", err.Error()), "ibm_schematics_agent", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		createAgentDataOptions.SetUserState(userStateModel)
-	}
-	if _, ok := d.GetOk("agent_kpi"); ok {
-		agentKpiModel, err := resourceIbmSchematicsAgentMapToAgentKPIData(d.Get("agent_kpi.0").(map[string]interface{}))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		createAgentDataOptions.SetAgentKpi(agentKpiModel)
 	}
 
 	agentData, response, err := schematicsClient.CreateAgentDataWithContext(context, createAgentDataOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateAgentDataWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateAgentDataWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentCreate CreateAgentDataWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_agent", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*agentData.ID)
@@ -636,17 +637,14 @@ func resourceIbmSchematicsAgentCreate(context context.Context, d *schema.Resourc
 func resourceIbmSchematicsAgentRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getAgentDataOptions := &schematicsv1.GetAgentDataOptions{
-		// XFeatureAgents: core.BoolPtr(true),
 		Profile: core.StringPtr("detailed"),
 	}
-	ff := map[string]string{
-		"X-Feature-Agents": "true",
-	}
-	getAgentDataOptions.Headers = ff
 
 	getAgentDataOptions.SetAgentID(d.Id())
 
@@ -656,38 +654,58 @@ func resourceIbmSchematicsAgentRead(context context.Context, d *schema.ResourceD
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetAgentDataWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetAgentDataWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead GetAgentDataWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("name", agentData.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("resource_group", agentData.ResourceGroup); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resource_group: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("version", agentData.Version); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting version: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("schematics_location", agentData.SchematicsLocation); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting schematics_location: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("agent_location", agentData.AgentLocation); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting agent_location: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	agentInfrastructureMap, err := resourceIbmSchematicsAgentAgentInfrastructureToMap(agentData.AgentInfrastructure)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed: %s", err.Error()), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("agent_infrastructure", []map[string]interface{}{agentInfrastructureMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting agent_infrastructure: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("description", agentData.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if agentData.Tags != nil {
 		if err = d.Set("tags", agentData.Tags); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting tags: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	agentMetadata := []map[string]interface{}{}
@@ -695,111 +713,190 @@ func resourceIbmSchematicsAgentRead(context context.Context, d *schema.ResourceD
 		for _, agentMetadataItem := range agentData.AgentMetadata {
 			agentMetadataItemMap, err := resourceIbmSchematicsAgentAgentMetadataInfoToMap(&agentMetadataItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed: %s", err.Error()), "ibm_schematics_agent", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			agentMetadata = append(agentMetadata, agentMetadataItemMap)
 		}
 	}
 	if err = d.Set("agent_metadata", agentMetadata); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting agent_metadata: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	agentInputs := []map[string]interface{}{}
 	if agentData.AgentInputs != nil {
 		for _, agentInputsItem := range agentData.AgentInputs {
 			agentInputsItemMap, err := resourceIbmSchematicsAgentVariableDataToMap(&agentInputsItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed: %s", err.Error()), "ibm_schematics_agent", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			agentInputs = append(agentInputs, agentInputsItemMap)
 		}
 	}
 	if err = d.Set("agent_inputs", agentInputs); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting agent_inputs: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if agentData.UserState != nil {
 		userStateMap, err := resourceIbmSchematicsAgentAgentUserStateToMap(agentData.UserState)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed: %s", err.Error()), "ibm_schematics_agent", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("user_state", []map[string]interface{}{userStateMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting user_state: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if agentData.AgentKpi != nil {
 		agentKpiMap, err := resourceIbmSchematicsAgentAgentKPIDataToMap(agentData.AgentKpi)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed: %s", err.Error()), "ibm_schematics_agent", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("agent_kpi", []map[string]interface{}{agentKpiMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting agent_kpi: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("agent_crn", agentData.AgentCrn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting agent_crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_at", flex.DateTimeToString(agentData.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("creation_by", agentData.CreationBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting creation_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_at", flex.DateTimeToString(agentData.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_by", agentData.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if agentData.SystemState != nil {
 		systemStateMap, err := resourceIbmSchematicsAgentAgentSystemStatusToMap(agentData.SystemState)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed: %s", err.Error()), "ibm_schematics_agent", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("system_state", []map[string]interface{}{systemStateMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting system_state: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if agentData.RecentPrsJob != nil {
 		recentPrsJobMap, err := resourceIbmSchematicsAgentAgentDataRecentPrsJobToMap(agentData.RecentPrsJob)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed: %s", err.Error()), "ibm_schematics_agent", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("recent_prs_job", []map[string]interface{}{recentPrsJobMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting recent_prs_job: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if agentData.RecentDeployJob != nil {
 		recentDeployJobMap, err := resourceIbmSchematicsAgentAgentDataRecentDeployJobToMap(agentData.RecentDeployJob)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed: %s", err.Error()), "ibm_schematics_agent", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("recent_deploy_job", []map[string]interface{}{recentDeployJobMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting recent_deploy_job: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if agentData.RecentHealthJob != nil {
 		recentHealthJobMap, err := resourceIbmSchematicsAgentAgentDataRecentHealthJobToMap(agentData.RecentHealthJob)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed: %s", err.Error()), "ibm_schematics_agent", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("recent_health_job", []map[string]interface{}{recentHealthJobMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting recent_health_job: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentRead failed with error: %s", err), "ibm_schematics_agent", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	return nil
 }
+func isWaitForAgentDestroyResources(context context.Context, schematicsClient *schematicsv1.SchematicsV1, id string, timeout time.Duration) (interface{}, error) {
+	log.Printf("Waiting for agent (%s) resources to be destroyed.", id)
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"retry", agentProvisioningStatusCodeJobInProgress, agentProvisioningStatusCodeJobPending, agentProvisioningStatusCodeJobReadyToExecute, agentProvisioningStatusCodeJobStopInProgress},
+		Target:     []string{agentProvisioningStatusCodeJobFinished, agentProvisioningStatusCodeJobFailed, agentProvisioningStatusCodeJobCancelled, agentProvisioningStatusCodeJobStopped, ""},
+		Refresh:    agentDestroyRefreshFunc(schematicsClient, id),
+		Timeout:    timeout,
+		Delay:      10 * time.Second,
+		MinTimeout: 10 * time.Second,
+	}
+	return stateConf.WaitForStateContext(context)
+}
+func agentDestroyRefreshFunc(schematicsClient *schematicsv1.SchematicsV1, id string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		getAgentDataOptions := &schematicsv1.GetAgentDataOptions{
+			AgentID: core.StringPtr(id),
+			Profile: core.StringPtr("detailed"),
+		}
 
+		agent, response, err := schematicsClient.GetAgentData(getAgentDataOptions)
+		if err != nil {
+			return nil, "", fmt.Errorf("[ERROR] Error Getting Agent: %s\n%s", err, response)
+		}
+		if agent.RecentDestroyJob.StatusCode != nil {
+			return agent, *agent.RecentDestroyJob.StatusCode, nil
+		}
+		return agent, agentProvisioningStatusCodeJobPending, nil
+	}
+}
 func resourceIbmSchematicsAgentUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentUpdate schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_agent", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
-	updateAgentDataOptions := &schematicsv1.UpdateAgentDataOptions{
-		// XFeatureAgents: core.BoolPtr(true),
+	updateAgentDataOptions := &schematicsv1.UpdateAgentDataOptions{}
+	session, err := meta.(conns.ClientSession).BluemixSession()
+	if err != nil {
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentUpdate bluemixClient initialization failed: %s", err.Error()), "ibm_schematics_agent", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
+	iamAccessToken := session.Config.IAMAccessToken
+	iamRefreshToken := session.Config.IAMRefreshToken
 	ff := map[string]string{
-		"X-Feature-Agents": "true",
+		"Authorization": iamAccessToken,
+		"refresh_token": iamRefreshToken,
 	}
 	updateAgentDataOptions.Headers = ff
 
@@ -807,15 +904,79 @@ func resourceIbmSchematicsAgentUpdate(context context.Context, d *schema.Resourc
 
 	hasChange := false
 
-	if d.HasChange("name") || d.HasChange("resource_group") || d.HasChange("version") || d.HasChange("schematics_location") || d.HasChange("agent_location") || d.HasChange("agent_infrastructure") {
-		updateAgentDataOptions.SetName(d.Get("name").(string))
-		updateAgentDataOptions.SetResourceGroup(d.Get("resource_group").(string))
-		updateAgentDataOptions.SetVersion(d.Get("version").(string))
+	getAgentDataOptions := &schematicsv1.GetAgentDataOptions{
+		Profile: core.StringPtr("detailed"),
+	}
+
+	getAgentDataOptions.SetAgentID(d.Id())
+
+	agentData, response, err := schematicsClient.GetAgentDataWithContext(context, getAgentDataOptions)
+	if err != nil {
+		if response != nil && response.StatusCode == 404 {
+			d.SetId("")
+			return nil
+		}
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentUpdate GetAgentDataWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_agent", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+	}
+	if agentData.Name != nil {
+		updateAgentDataOptions.Name = agentData.Name
+	}
+	if agentData.ResourceGroup != nil {
+		updateAgentDataOptions.ResourceGroup = agentData.ResourceGroup
+	}
+	if agentData.Version != nil {
+		updateAgentDataOptions.Version = agentData.Version
+	}
+	if agentData.SchematicsLocation != nil {
+		updateAgentDataOptions.SchematicsLocation = agentData.SchematicsLocation
+	}
+	if agentData.AgentLocation != nil {
+		updateAgentDataOptions.AgentLocation = agentData.AgentLocation
+	}
+	if agentData.AgentInfrastructure != nil {
+		updateAgentDataOptions.AgentInfrastructure = agentData.AgentInfrastructure
+	}
+	if agentData.Description != nil {
+		updateAgentDataOptions.Description = agentData.Description
+	}
+	if agentData.Tags != nil {
+		updateAgentDataOptions.Tags = agentData.Tags
+	}
+	if agentData.AgentMetadata != nil {
+		updateAgentDataOptions.AgentMetadata = agentData.AgentMetadata
+	}
+	if agentData.AgentInputs != nil {
+		updateAgentDataOptions.AgentInputs = agentData.AgentInputs
+	}
+	if agentData.UserState != nil {
+		updateAgentDataOptions.UserState = agentData.UserState
+	}
+	if agentData.AgentKpi != nil {
+		updateAgentDataOptions.AgentKpi = agentData.AgentKpi
+	}
+
+	if d.HasChange("schematics_location") || d.HasChange("agent_location") {
 		updateAgentDataOptions.SetSchematicsLocation(d.Get("schematics_location").(string))
 		updateAgentDataOptions.SetAgentLocation(d.Get("agent_location").(string))
+		hasChange = true
+	}
+	if d.HasChange("name") {
+		updateAgentDataOptions.SetName(d.Get("name").(string))
+		hasChange = true
+	}
+	if d.HasChange("version") {
+		updateAgentDataOptions.SetVersion(d.Get("version").(string))
+		hasChange = true
+	}
+	if d.HasChange("agent_infrastructure") {
 		agentInfrastructure, err := resourceIbmSchematicsAgentMapToAgentInfrastructure(d.Get("agent_infrastructure.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentUpdate failed: %s", err.Error()), "ibm_schematics_agent", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		updateAgentDataOptions.SetAgentInfrastructure(agentInfrastructure)
 		hasChange = true
@@ -825,7 +986,7 @@ func resourceIbmSchematicsAgentUpdate(context context.Context, d *schema.Resourc
 		hasChange = true
 	}
 	if d.HasChange("tags") {
-		updateAgentDataOptions.SetTags(d.Get("tags").([]string))
+		updateAgentDataOptions.SetTags(flex.ExpandStringList(d.Get("tags").([]interface{})))
 		hasChange = true
 	}
 	if d.HasChange("agent_metadata") {
@@ -834,49 +995,40 @@ func resourceIbmSchematicsAgentUpdate(context context.Context, d *schema.Resourc
 			value := e.(map[string]interface{})
 			agentMetadataItem, err := resourceIbmSchematicsAgentMapToAgentMetadataInfo(value)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentUpdate failed: %s", err.Error()), "ibm_schematics_agent", "update")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			agentMetadata = append(agentMetadata, *agentMetadataItem)
 		}
 		updateAgentDataOptions.SetAgentMetadata(agentMetadata)
 		hasChange = true
 	}
-	if d.HasChange("agent_inputs") {
-		// TODO: handle AgentInputs of type TypeList -- not primitive, not model
-		var agentInputs []schematicsv1.VariableData
-		for _, e := range d.Get("agent_inputs").([]interface{}) {
-			value := e.(map[string]interface{})
-			agentInputsItem, err := resourceIbmSchematicsAgentMapToVariableData(value)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			agentInputs = append(agentInputs, *agentInputsItem)
-		}
-		updateAgentDataOptions.SetAgentInputs(agentInputs)
-		hasChange = true
-	}
-	if d.HasChange("user_state") {
-		userState, err := resourceIbmSchematicsAgentMapToAgentUserState(d.Get("user_state.0").(map[string]interface{}))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		updateAgentDataOptions.SetUserState(userState)
-		hasChange = true
-	}
-	if d.HasChange("agent_kpi") {
-		agentKpi, err := resourceIbmSchematicsAgentMapToAgentKPIData(d.Get("agent_kpi.0").(map[string]interface{}))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		updateAgentDataOptions.SetAgentKpi(agentKpi)
-		hasChange = true
-	}
+	if d.HasChange("run_destroy_resources") {
+		deleteAgentResourcesOptions := &schematicsv1.DeleteAgentResourcesOptions{}
+		deleteAgentResourcesOptions.Headers = ff
 
+		deleteAgentResourcesOptions.SetAgentID(d.Id())
+		deleteAgentResourcesOptions.SetRefreshToken(iamRefreshToken)
+
+		response, err := schematicsClient.DeleteAgentResourcesWithContext(context, deleteAgentResourcesOptions)
+		if err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentUpdate DeleteAgentResourcesWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_agent", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		} else {
+			_, err = isWaitForAgentDestroyResources(context, schematicsClient, *deleteAgentResourcesOptions.AgentID, d.Timeout(schema.TimeoutUpdate))
+			if err != nil {
+
+			}
+		}
+	}
 	if hasChange {
 		_, response, err := schematicsClient.UpdateAgentDataWithContext(context, updateAgentDataOptions)
 		if err != nil {
-			log.Printf("[DEBUG] UpdateAgentDataWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateAgentDataWithContext failed %s\n%s", err, response))
+
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentUpdate failed with error: %s and response:\n%s", err, response), "ibm_schematics_agent", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -886,23 +1038,56 @@ func resourceIbmSchematicsAgentUpdate(context context.Context, d *schema.Resourc
 func resourceIbmSchematicsAgentDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentDelete schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_agent", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteAgentDataOptions := &schematicsv1.DeleteAgentDataOptions{
-		// XFeatureAgents: core.BoolPtr(true),
+		Force: core.BoolPtr(true),
 	}
+	session, err := meta.(conns.ClientSession).BluemixSession()
+	if err != nil {
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentDelete bluemixClient initialization failed: %s", err.Error()), "ibm_schematics_agent", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+	}
+	iamAccessToken := session.Config.IAMAccessToken
+	iamRefreshToken := session.Config.IAMRefreshToken
 	ff := map[string]string{
-		"X-Feature-Agents": "true",
+		"Authorization": iamAccessToken,
+		"refresh_token": iamRefreshToken,
 	}
 	deleteAgentDataOptions.Headers = ff
 
 	deleteAgentDataOptions.SetAgentID(d.Id())
 
-	response, err := schematicsClient.DeleteAgentDataWithContext(context, deleteAgentDataOptions)
+	// first try destroying resources associated with agent deploy and then delete the agent
+
+	deleteAgentResourcesOptions := &schematicsv1.DeleteAgentResourcesOptions{}
+	deleteAgentResourcesOptions.Headers = ff
+
+	deleteAgentResourcesOptions.SetAgentID(d.Id())
+	deleteAgentResourcesOptions.SetRefreshToken(iamRefreshToken)
+
+	response, err := schematicsClient.DeleteAgentResourcesWithContext(context, deleteAgentResourcesOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteAgentDataWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteAgentDataWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentDelete DeleteAgentResourcesWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_agent", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+	} else {
+		_, err = isWaitForAgentDestroyResources(context, schematicsClient, *deleteAgentResourcesOptions.AgentID, d.Timeout(schema.TimeoutDelete))
+		if err != nil {
+
+		}
+	}
+
+	// After deploy associated resources are destroyed, now attempt to delete the agent
+
+	deleteresponse, err := schematicsClient.DeleteAgentDataWithContext(context, deleteAgentDataOptions)
+	if err != nil {
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("resourceIbmSchematicsAgentDelete DeleteAgentDataWithContext failed with error: %s and response:\n%s", err, deleteresponse), "ibm_schematics_agent", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -1052,34 +1237,6 @@ func resourceIbmSchematicsAgentMapToAgentUserState(modelMap map[string]interface
 	}
 	if modelMap["set_at"] != nil {
 
-	}
-	return model, nil
-}
-
-func resourceIbmSchematicsAgentMapToAgentKPIData(modelMap map[string]interface{}) (*schematicsv1.AgentKPIData, error) {
-	model := &schematicsv1.AgentKPIData{}
-	if modelMap["availability_indicator"] != nil && modelMap["availability_indicator"].(string) != "" {
-		model.AvailabilityIndicator = core.StringPtr(modelMap["availability_indicator"].(string))
-	}
-	if modelMap["lifecycle_indicator"] != nil && modelMap["lifecycle_indicator"].(string) != "" {
-		model.LifecycleIndicator = core.StringPtr(modelMap["lifecycle_indicator"].(string))
-	}
-	if modelMap["percent_usage_indicator"] != nil && modelMap["percent_usage_indicator"].(string) != "" {
-		model.PercentUsageIndicator = core.StringPtr(modelMap["percent_usage_indicator"].(string))
-	}
-	if modelMap["application_indicators"] != nil {
-		applicationIndicators := []interface{}{}
-		for _, applicationIndicatorsItem := range modelMap["application_indicators"].([]interface{}) {
-			applicationIndicators = append(applicationIndicators, applicationIndicatorsItem)
-		}
-		model.ApplicationIndicators = applicationIndicators
-	}
-	if modelMap["infra_indicators"] != nil {
-		infraIndicators := []interface{}{}
-		for _, infraIndicatorsItem := range modelMap["infra_indicators"].([]interface{}) {
-			infraIndicators = append(infraIndicators, infraIndicatorsItem)
-		}
-		model.InfraIndicators = infraIndicators
 	}
 	return model, nil
 }

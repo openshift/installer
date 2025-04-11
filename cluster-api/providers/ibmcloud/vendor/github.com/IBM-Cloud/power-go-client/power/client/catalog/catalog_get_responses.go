@@ -6,6 +6,7 @@ package catalog
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -103,11 +104,13 @@ func (o *CatalogGetOK) Code() int {
 }
 
 func (o *CatalogGetOK) Error() string {
-	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetOK %s", 200, payload)
 }
 
 func (o *CatalogGetOK) String() string {
-	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetOK %s", 200, payload)
 }
 
 func (o *CatalogGetOK) GetPayload() *models.Catalog {
@@ -171,11 +174,13 @@ func (o *CatalogGetBadRequest) Code() int {
 }
 
 func (o *CatalogGetBadRequest) Error() string {
-	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetBadRequest %s", 400, payload)
 }
 
 func (o *CatalogGetBadRequest) String() string {
-	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetBadRequest %s", 400, payload)
 }
 
 func (o *CatalogGetBadRequest) GetPayload() *models.Error {
@@ -239,11 +244,13 @@ func (o *CatalogGetUnauthorized) Code() int {
 }
 
 func (o *CatalogGetUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetUnauthorized %s", 401, payload)
 }
 
 func (o *CatalogGetUnauthorized) String() string {
-	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetUnauthorized %s", 401, payload)
 }
 
 func (o *CatalogGetUnauthorized) GetPayload() *models.Error {
@@ -307,11 +314,13 @@ func (o *CatalogGetForbidden) Code() int {
 }
 
 func (o *CatalogGetForbidden) Error() string {
-	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetForbidden %s", 403, payload)
 }
 
 func (o *CatalogGetForbidden) String() string {
-	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetForbidden %s", 403, payload)
 }
 
 func (o *CatalogGetForbidden) GetPayload() *models.Error {
@@ -375,11 +384,13 @@ func (o *CatalogGetNotFound) Code() int {
 }
 
 func (o *CatalogGetNotFound) Error() string {
-	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetNotFound %s", 404, payload)
 }
 
 func (o *CatalogGetNotFound) String() string {
-	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/catalog][%d] catalogGetNotFound %s", 404, payload)
 }
 
 func (o *CatalogGetNotFound) GetPayload() *models.Error {

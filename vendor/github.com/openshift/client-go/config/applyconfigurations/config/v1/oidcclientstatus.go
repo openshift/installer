@@ -4,20 +4,20 @@ package v1
 
 import (
 	configv1 "github.com/openshift/api/config/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
-// OIDCClientStatusApplyConfiguration represents an declarative configuration of the OIDCClientStatus type for use
+// OIDCClientStatusApplyConfiguration represents a declarative configuration of the OIDCClientStatus type for use
 // with apply.
 type OIDCClientStatusApplyConfiguration struct {
 	ComponentName      *string                                 `json:"componentName,omitempty"`
 	ComponentNamespace *string                                 `json:"componentNamespace,omitempty"`
 	CurrentOIDCClients []OIDCClientReferenceApplyConfiguration `json:"currentOIDCClients,omitempty"`
 	ConsumingUsers     []configv1.ConsumingUser                `json:"consumingUsers,omitempty"`
-	Conditions         []metav1.Condition                      `json:"conditions,omitempty"`
+	Conditions         []metav1.ConditionApplyConfiguration    `json:"conditions,omitempty"`
 }
 
-// OIDCClientStatusApplyConfiguration constructs an declarative configuration of the OIDCClientStatus type for use with
+// OIDCClientStatusApplyConfiguration constructs a declarative configuration of the OIDCClientStatus type for use with
 // apply.
 func OIDCClientStatus() *OIDCClientStatusApplyConfiguration {
 	return &OIDCClientStatusApplyConfiguration{}
@@ -65,9 +65,12 @@ func (b *OIDCClientStatusApplyConfiguration) WithConsumingUsers(values ...config
 // WithConditions adds the given value to the Conditions field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Conditions field.
-func (b *OIDCClientStatusApplyConfiguration) WithConditions(values ...metav1.Condition) *OIDCClientStatusApplyConfiguration {
+func (b *OIDCClientStatusApplyConfiguration) WithConditions(values ...*metav1.ConditionApplyConfiguration) *OIDCClientStatusApplyConfiguration {
 	for i := range values {
-		b.Conditions = append(b.Conditions, values[i])
+		if values[i] == nil {
+			panic("nil value passed to WithConditions")
+		}
+		b.Conditions = append(b.Conditions, *values[i])
 	}
 	return b
 }

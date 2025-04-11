@@ -27,13 +27,13 @@ type IPSecPolicy struct {
 	// Diffie-Hellman group
 	// Example: 2
 	// Required: true
-	// Enum: [1 2 5 14 19 20 24]
+	// Enum: [1,2,5,14,19,20,24]
 	DhGroup *int64 `json:"dhGroup"`
 
 	// connection encryption policy
 	// Example: aes-256-cbc
 	// Required: true
-	// Enum: [aes-256-cbc aes-192-cbc aes-128-cbc aes-256-gcm aes-192-gcm aes-128-gcm 3des-cbc]
+	// Enum: ["aes-256-cbc","aes-192-cbc","aes-128-cbc","aes-256-gcm","aes-192-gcm","aes-128-gcm","3des-cbc"]
 	Encryption *string `json:"encryption"`
 
 	// unique identifier of the IPSec Policy

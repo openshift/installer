@@ -6,7 +6,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
 	"k8s.io/utils/ptr"
@@ -15,7 +14,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
-	"github.com/openshift/installer/pkg/types"
 )
 
 type recordListType string
@@ -40,7 +38,6 @@ type recordPrivateList struct {
 
 // Create DNS entries for azure.
 func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN string, resourceGroup string) error {
-	private := in.InstallConfig.Config.Publish == types.InternalPublishingStrategy
 	baseDomainResourceGroup := in.InstallConfig.Config.Azure.BaseDomainResourceGroupName
 	zone := in.InstallConfig.Config.BaseDomain
 	privatezone := in.InstallConfig.Config.ClusterDomain()
@@ -53,6 +50,7 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	for k, v := range in.InstallConfig.Config.Azure.UserTags {
 		azureTags[k] = ptr.To(v)
 	}
+	azureTags[fmt.Sprintf("kubernetes.io_cluster.%s", in.InfraID)] = ptr.To("owned")
 	azureCluster := &capz.AzureCluster{}
 	key := client.ObjectKey{
 		Name:      in.InfraID,
@@ -89,11 +87,7 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	subscriptionID := session.Credentials.SubscriptionID
 	cloudConfiguration := session.CloudConfig
 
-	tokenCreds, err := azidentity.NewClientSecretCredential(session.Credentials.TenantID, session.Credentials.ClientID, session.Credentials.ClientSecret, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create identity: %w", err)
-	}
-	recordSetClient, err := armdns.NewRecordSetsClient(subscriptionID, tokenCreds,
+	recordSetClient, err := armdns.NewRecordSetsClient(subscriptionID, session.TokenCreds,
 		&arm.ClientOptions{
 			ClientOptions: policy.ClientOptions{
 				Cloud: cloudConfiguration,
@@ -103,7 +97,7 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	if err != nil {
 		return fmt.Errorf("failed to create public record client: %w", err)
 	}
-	privateRecordSetClient, err := armprivatedns.NewRecordSetsClient(subscriptionID, tokenCreds,
+	privateRecordSetClient, err := armprivatedns.NewRecordSetsClient(subscriptionID, session.TokenCreds,
 		&arm.ClientOptions{
 			ClientOptions: policy.ClientOptions{
 				Cloud: cloudConfiguration,
@@ -116,7 +110,7 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 
 	// Create the records for api and api-int in the private zone and api.<clustername> for public zone.
 	// CAPI currently creates a record called "apiserver" instead of "api" so creating "api" for the installer in the private zone.
-	if !private {
+	if in.InstallConfig.Config.PublicAPI() {
 		cnameRecordName := apiExternalName
 		// apiExternalNameV6 := fmt.Sprintf("v6-api.%s", infraID)
 		// if useIPv6 {

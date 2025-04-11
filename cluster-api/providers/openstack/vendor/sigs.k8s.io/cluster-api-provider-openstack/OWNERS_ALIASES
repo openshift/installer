@@ -19,9 +19,8 @@ aliases:
     - neolit123
     - vincepri
   cluster-api-openstack-maintainers:
+    - emilienm
     - jichenjc
     - lentzi90
     - mdbooth
   cluster-api-openstack-reviewers:
-    - emilienm
-    - dulek

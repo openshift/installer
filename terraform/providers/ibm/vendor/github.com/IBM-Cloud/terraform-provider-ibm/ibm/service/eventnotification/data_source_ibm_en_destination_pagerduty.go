@@ -6,6 +6,7 @@ package eventnotification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -18,7 +19,6 @@ import (
 func DataSourceIBMEnPagerDutyDestination() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMEnPagerDutyeDestinationRead,
-
 		Schema: map[string]*schema.Schema{
 			"instance_guid": {
 				Type:        schema.TypeString,
@@ -43,7 +43,12 @@ func DataSourceIBMEnPagerDutyDestination() *schema.Resource {
 			"type": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Destination type push_chrome.",
+				Description: "Destination type pagerduty.",
+			},
+			"collect_failed_events": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether to collect the failed event in Cloud Object Storage bucket",
 			},
 			"config": {
 				Type:        schema.TypeList,
@@ -59,12 +64,13 @@ func DataSourceIBMEnPagerDutyDestination() *schema.Resource {
 									"api_key": {
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "The api key for chrome app authorization",
+										Description: "API Key for the PagerDuty account.",
+										Deprecated:  "The api_key parameter under config has  been deprecated and will be removed in future",
 									},
 									"routing_key": {
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "The website url",
+										Description: "Routing Key (Integration Key) for the team in PagerDuty account.",
 									},
 								},
 							},
@@ -97,7 +103,9 @@ func DataSourceIBMEnPagerDutyDestination() *schema.Resource {
 func dataSourceIBMEnPagerDutyeDestinationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	enClient, err := meta.(conns.ClientSession).EventNotificationsApiV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_en_destination_pagerduty", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	options := &en.GetDestinationOptions{}
@@ -105,47 +113,61 @@ func dataSourceIBMEnPagerDutyeDestinationRead(context context.Context, d *schema
 	options.SetInstanceID(d.Get("instance_guid").(string))
 	options.SetID(d.Get("destination_id").(string))
 
-	result, response, err := enClient.GetDestinationWithContext(context, options)
+	result, _, err := enClient.GetDestinationWithContext(context, options)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("GetDestination failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetDestinationWithContext failed: %s", err.Error()), "(Data) ibm_en_destination_pagerduty", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *options.InstanceID, *options.ID))
 
 	if err = d.Set("name", result.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "(Data) ibm_en_destination_pagerduty", "read")
+		return tfErr.GetDiag()
 	}
 
 	if result.Description != nil {
 		if err = d.Set("description", result.Description); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting description: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting description: %s", err), "(Data) ibm_en_destination_pagerduty", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("type", result.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting type: %s", err), "(Data) ibm_en_destination_pagerduty", "read")
+		return tfErr.GetDiag()
+	}
+
+	if err = d.Set("collect_failed_events", result.CollectFailedEvents); err != nil {
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting CollectFailedEvents: %s", err), "(Data) ibm_en_destination_pagerduty", "read")
+		return tfErr.GetDiag()
 	}
 
 	if result.Config != nil {
 		err = d.Set("config", enPagerDutyDestinationFlattenConfig(*result.Config))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting config %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting config: %s", err), "(Data) ibm_en_destination_pagerduty", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if result.SubscriptionNames != nil {
 		err = d.Set("subscription_names", result.SubscriptionNames)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting subscription_names %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting subscription_names: %s", err), "(Data) ibm_en_destination_pagerduty", "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("updated_at", flex.DateTimeToString(result.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at: %s", err), "(Data) ibm_en_destination_pagerduty", "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("subscription_count", flex.IntValue(result.SubscriptionCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error setting subscription_count: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting subscription_count: %s", err), "(Data) ibm_en_destination_pagerduty", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil

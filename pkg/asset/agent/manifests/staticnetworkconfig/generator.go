@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/go-openapi/validate"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -37,6 +38,7 @@ type StaticNetworkConfig interface {
 	GenerateStaticNetworkConfigData(ctx context.Context, hostsYAMLS string) ([]StaticNetworkConfigData, error)
 	FormatStaticNetworkConfigForDB(staticNetworkConfig []*models.HostStaticNetworkConfig) (string, error)
 	ValidateStaticConfigParams(ctx context.Context, staticNetworkConfig []*models.HostStaticNetworkConfig) error
+	ValidateNMStateYaml(ctx context.Context, networkYaml string) error
 }
 
 type staticNetworkConfigGenerator struct {
@@ -218,20 +220,26 @@ func (s *staticNetworkConfigGenerator) formatNMConnection(nmConnection string) (
 func (s *staticNetworkConfigGenerator) ValidateStaticConfigParams(ctx context.Context, staticNetworkConfig []*models.HostStaticNetworkConfig) error {
 	var err *multierror.Error
 	for i, hostConfig := range staticNetworkConfig {
-		err = multierror.Append(err, s.validateMacInterfaceName(i, hostConfig.MacInterfaceMap))
-		if validateErr := s.validateNMStateYaml(ctx, hostConfig.NetworkYaml); validateErr != nil {
+		err = multierror.Append(err, s.validateMacInterfaceTable(i, hostConfig.MacInterfaceMap))
+		if validateErr := s.ValidateNMStateYaml(ctx, hostConfig.NetworkYaml); validateErr != nil {
 			err = multierror.Append(err, fmt.Errorf("failed to validate network yaml for host %d, %w", i, validateErr))
 		}
 	}
 	return err.ErrorOrNil()
 }
 
-func (s *staticNetworkConfigGenerator) validateMacInterfaceName(hostIdx int, macInterfaceMap models.MacInterfaceMap) error {
+func (s *staticNetworkConfigGenerator) validateMacInterfaceTable(hostIdx int, macInterfaceMap models.MacInterfaceMap) error {
+	if len(macInterfaceMap) == 0 {
+		return fmt.Errorf("at least one interface for host %d must be provided", hostIdx)
+	}
 	interfaceCheck := make(map[string]struct{}, len(macInterfaceMap))
 	macCheck := make(map[string]struct{}, len(macInterfaceMap))
 	for _, macInterface := range macInterfaceMap {
 		interfaceCheck[macInterface.LogicalNicName] = struct{}{}
 		macCheck[macInterface.MacAddress] = struct{}{}
+		if err := validate.Pattern("mac_address", "body", macInterface.MacAddress, `^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$`); err != nil {
+			return fmt.Errorf("MAC address %s for host %d is incorrectly formatted, use XX:XX:XX:XX:XX:XX format", macInterface.MacAddress, hostIdx)
+		}
 	}
 	if len(interfaceCheck) < len(macInterfaceMap) || len(macCheck) < len(macInterfaceMap) {
 		return fmt.Errorf("MACs and Interfaces for host %d must be unique", hostIdx)
@@ -239,7 +247,7 @@ func (s *staticNetworkConfigGenerator) validateMacInterfaceName(hostIdx int, mac
 	return nil
 }
 
-func (s *staticNetworkConfigGenerator) validateNMStateYaml(ctx context.Context, networkYaml string) error {
+func (s *staticNetworkConfigGenerator) ValidateNMStateYaml(ctx context.Context, networkYaml string) error {
 	result, err := s.executeNMStatectl(ctx, networkYaml)
 	if err != nil {
 		return err

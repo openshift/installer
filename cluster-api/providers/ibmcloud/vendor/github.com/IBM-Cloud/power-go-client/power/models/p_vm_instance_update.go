@@ -36,7 +36,7 @@ type PVMInstanceUpdate struct {
 	PinPolicy PinPolicy `json:"pinPolicy,omitempty"`
 
 	// Processor type (dedicated, shared, capped)
-	// Enum: [dedicated shared capped]
+	// Enum: ["dedicated","shared","capped"]
 	ProcType string `json:"procType,omitempty"`
 
 	// Number of processors allocated

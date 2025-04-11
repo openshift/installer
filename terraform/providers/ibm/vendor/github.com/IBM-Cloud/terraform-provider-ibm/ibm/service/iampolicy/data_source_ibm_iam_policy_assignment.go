@@ -26,25 +26,11 @@ func DataSourceIBMIAMPolicyAssignment() *schema.Resource {
 				Required:    true,
 				Description: "The policy template assignment ID.",
 			},
-			"template_id": {
+			"version": {
 				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "policy template id.",
-			},
-			"template_version": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "policy template version.",
-			},
-			"target_type": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Assignment target type.",
-			},
-			"target": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "assignment target id.",
+				Optional:    true,
+				Default:     "1.0",
+				Description: "The policy template assignment new format",
 			},
 			"id": {
 				Type:        schema.TypeString,
@@ -76,6 +62,30 @@ func DataSourceIBMIAMPolicyAssignment() *schema.Resource {
 				Computed:    true,
 				Description: "The iam ID of the entity that last modified the policy assignment.",
 			},
+			"subject": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "assignment access type subject details",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"target": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "assignment target details",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"template": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "policy template details",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"resources": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -83,9 +93,12 @@ func DataSourceIBMIAMPolicyAssignment() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"target": {
-							Type:        schema.TypeString,
+							Type:        schema.TypeMap,
 							Computed:    true,
-							Description: "Account ID where resources are assigned.",
+							Description: "assignment target details",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 						},
 						"policy": {
 							Type:        schema.TypeList,
@@ -194,40 +207,6 @@ func DataSourceIBMIAMPolicyAssignment() *schema.Resource {
 					},
 				},
 			},
-			"options": {
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "List of objects with required properties for a policy assignment.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"subject_type": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The policy subject type; either 'iam_id' or 'access_group_id'.",
-						},
-						"subject_id": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The policy subject id.",
-						},
-						"root_requester_id": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The policy assignment requester id.",
-						},
-						"root_template_id": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The template id where this policy is being assigned from.",
-						},
-						"root_template_version": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The template version where this policy is being assigned from.",
-						},
-					},
-				},
-			},
 			"account_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -246,63 +225,59 @@ func dataSourceIBMIAMPolicyAssignmentRead(context context.Context, d *schema.Res
 	getPolicyAssignmentOptions := &iampolicymanagementv1.GetPolicyAssignmentOptions{}
 
 	getPolicyAssignmentOptions.SetAssignmentID(d.Get("assignment_id").(string))
+	getPolicyAssignmentOptions.SetVersion("1.0")
 
-	policyAssignmentRecord, response, err := iamPolicyManagementClient.GetPolicyAssignmentWithContext(context, getPolicyAssignmentOptions)
+	assignmentResponse, response, err := iamPolicyManagementClient.GetPolicyAssignmentWithContext(context, getPolicyAssignmentOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetPolicyAssignmentWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetPolicyAssignmentWithContext failed %s\n%s", err, response))
 	}
 
+	policyAssignmentRecord := assignmentResponse.(*iampolicymanagementv1.PolicyTemplateAssignmentItems)
 	d.SetId(*policyAssignmentRecord.ID)
 
-	if err = d.Set("template_id", policyAssignmentRecord.TemplateID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting template_id: %s", err))
-	}
-
-	if err = d.Set("template_version", policyAssignmentRecord.TemplateVersion); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting template_version: %s", err))
-	}
-
-	if err = d.Set("target_type", policyAssignmentRecord.TargetType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting target_type: %s", err))
-	}
-
-	if err = d.Set("target", policyAssignmentRecord.Target); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting target: %s", err))
+	targetMap, err := ResourceIBMPolicyAssignmentAssignmentTargetDetailsToMap(policyAssignmentRecord.Target)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	if err = d.Set("id", policyAssignmentRecord.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting id: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting id: %s", err))
+	}
+	if err = d.Set("target", targetMap); err != nil {
+		return diag.FromErr(fmt.Errorf("error setting target: %s", err))
+	}
+	if policyAssignmentRecord.Template != nil {
+		templateMap, err := DataSourceIBMPolicyAssignmentAssignmentTemplateDetailsToMap(policyAssignmentRecord.Template)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if err = d.Set("template", templateMap); err != nil {
+			return diag.FromErr(fmt.Errorf("error setting template: %s", err))
+		}
 	}
 
 	if err = d.Set("href", policyAssignmentRecord.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting href: %s", err))
 	}
 
 	if err = d.Set("created_at", flex.DateTimeToString(policyAssignmentRecord.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
-	}
-
-	if err = d.Set("created_by_id", policyAssignmentRecord.CreatedByID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by_id: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting created_at: %s", err))
 	}
 
 	if err = d.Set("last_modified_at", flex.DateTimeToString(policyAssignmentRecord.LastModifiedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting last_modified_at: %s", err))
-	}
-
-	if err = d.Set("last_modified_by_id", policyAssignmentRecord.LastModifiedByID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting last_modified_by_id: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting last_modified_at: %s", err))
 	}
 
 	if err = d.Set("account_id", policyAssignmentRecord.AccountID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting account_id: %s", err))
+		return diag.FromErr(fmt.Errorf("error setting account_id: %s", err))
 	}
 
 	resources := []map[string]interface{}{}
 	if policyAssignmentRecord.Resources != nil {
 		for _, modelItem := range policyAssignmentRecord.Resources {
-			modelMap, err := dataSourceIBMPolicyAssignmentPolicyAssignmentResourcesToMap(&modelItem)
+			modelMap, err := ResourceIBMPolicyAssignmentPolicyAssignmentV1ResourcesToMap(&modelItem)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -310,76 +285,83 @@ func dataSourceIBMIAMPolicyAssignmentRead(context context.Context, d *schema.Res
 		}
 	}
 	if err = d.Set("resources", resources); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resources %s", err))
+		return diag.FromErr(fmt.Errorf("error setting resources %s", err))
 	}
 
-	options := []map[string]interface{}{}
-	if policyAssignmentRecord.Options != nil {
-		for _, modelItem := range policyAssignmentRecord.Options {
-			modelMap, err := dataSourceIBMAssignmentPolicyAssignmentOptionsToMap(&modelItem)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			options = append(options, modelMap)
+	if policyAssignmentRecord.Subject != nil {
+		modelMap, err := DataSourceIBMPolicyAssignmentPolicyAssignmentV1Subject(policyAssignmentRecord.Subject)
+		if err != nil {
+			return diag.FromErr(err)
 		}
-	}
-	if err = d.Set("options", options); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting options %s", err))
+
+		if err = d.Set("subject", modelMap); err != nil {
+			return diag.FromErr(fmt.Errorf("error setting subject %s", err))
+		}
 	}
 
 	return nil
 }
 
-func dataSourceIBMPolicyAssignmentPolicyAssignmentResourcesToMap(model *iampolicymanagementv1.PolicyAssignmentResources) (map[string]interface{}, error) {
+func ResourceIBMPolicyAssignmentConflictsWithToMap(model *iampolicymanagementv1.ConflictsWith) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	if model.Target != nil {
-		modelMap["target"] = model.Target
+	if model.Etag != nil {
+		modelMap["etag"] = *model.Etag
+	}
+	if model.Role != nil {
+		modelMap["role"] = *model.Role
 	}
 	if model.Policy != nil {
-		policyMap, err := dataSourceIBMPolicyAssignmentPolicyAssignmentResourcesPolicyToMap(model.Policy)
-		if err != nil {
-			return modelMap, err
-		}
-		modelMap["policy"] = []map[string]interface{}{policyMap}
+		modelMap["policy"] = *model.Policy
 	}
 	return modelMap, nil
 }
 
-func dataSourceIBMPolicyAssignmentPolicyAssignmentResourcesPolicyToMap(model *iampolicymanagementv1.PolicyAssignmentResourcePolicy) (map[string]interface{}, error) {
+func ResourceIBMPolicyAssignmentErrorDetailsToMap(model *iampolicymanagementv1.ErrorDetails) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	resourceCreatedMap, err := dataSourceIBMPolicyAssignmentAssignmentResourceCreatedToMap(model.ResourceCreated)
-	if err != nil {
-		return modelMap, err
-	}
-	modelMap["resource_created"] = []map[string]interface{}{resourceCreatedMap}
-	if model.ErrorMessage != nil {
-		errorMessageMap, err := dataSourceIBMPolicyAssignmentErrorResponseToMap(model.ErrorMessage)
+	if model.ConflictsWith != nil {
+		conflictsWithMap, err := ResourceIBMPolicyAssignmentConflictsWithToMap(model.ConflictsWith)
 		if err != nil {
 			return modelMap, err
 		}
-		modelMap["error_message"] = []map[string]interface{}{errorMessageMap}
+		modelMap["conflicts_with"] = []map[string]interface{}{conflictsWithMap}
 	}
-	// modelMap["status"] = model.Status
 	return modelMap, nil
 }
 
-func dataSourceIBMPolicyAssignmentAssignmentResourceCreatedToMap(model *iampolicymanagementv1.AssignmentResourceCreated) (map[string]interface{}, error) {
+func ResourceIBMPolicyAssignmentAssignmentResourceCreatedToMap(model *iampolicymanagementv1.AssignmentResourceCreated) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ID != nil {
-		modelMap["id"] = model.ID
+		modelMap["id"] = *model.ID
 	}
 	return modelMap, nil
 }
 
-func dataSourceIBMPolicyAssignmentErrorResponseToMap(model *iampolicymanagementv1.ErrorResponse) (map[string]interface{}, error) {
+func ResourceIBMPolicyAssignmentErrorObjectToMap(model *iampolicymanagementv1.ErrorObject) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["code"] = *model.Code
+	modelMap["message"] = *model.Message
+	if model.Details != nil {
+		detailsMap, err := ResourceIBMPolicyAssignmentErrorDetailsToMap(model.Details)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["details"] = []map[string]interface{}{detailsMap}
+	}
+	if model.MoreInfo != nil {
+		modelMap["more_info"] = *model.MoreInfo
+	}
+	return modelMap, nil
+}
+
+func ResourceIBMPolicyAssignmentErrorResponseToMap(model *iampolicymanagementv1.ErrorResponse) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Trace != nil {
-		modelMap["trace"] = model.Trace
+		modelMap["trace"] = *model.Trace
 	}
 	if model.Errors != nil {
 		errors := []map[string]interface{}{}
 		for _, errorsItem := range model.Errors {
-			errorsItemMap, err := dataSourceIBMPolicyAssignmentErrorObjectToMap(&errorsItem)
+			errorsItemMap, err := ResourceIBMPolicyAssignmentErrorObjectToMap(&errorsItem)
 			if err != nil {
 				return modelMap, err
 			}
@@ -393,45 +375,53 @@ func dataSourceIBMPolicyAssignmentErrorResponseToMap(model *iampolicymanagementv
 	return modelMap, nil
 }
 
-func dataSourceIBMPolicyAssignmentErrorObjectToMap(model *iampolicymanagementv1.ErrorObject) (map[string]interface{}, error) {
+func ResourceIBMPolicyAssignmentPolicyAssignmentResourcePolicyToMap(model *iampolicymanagementv1.PolicyAssignmentResourcePolicy) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["code"] = model.Code
-	modelMap["message"] = model.Message
-	if model.Details != nil {
-		detailsMap, err := dataSourceIBMPolicyAssignmentErrorDetailsToMap(model.Details)
+	if model.ResourceCreated != nil {
+		resourceCreatedMap, err := ResourceIBMPolicyAssignmentAssignmentResourceCreatedToMap(model.ResourceCreated)
 		if err != nil {
 			return modelMap, err
 		}
-		modelMap["details"] = []map[string]interface{}{detailsMap}
+		modelMap["resource_created"] = []map[string]interface{}{resourceCreatedMap}
 	}
-	if model.MoreInfo != nil {
-		modelMap["more_info"] = model.MoreInfo
+	if model.Status != nil {
+		modelMap["status"] = *model.Status
+	}
+	if model.ErrorMessage != nil {
+		errorMessageMap, err := ResourceIBMPolicyAssignmentErrorResponseToMap(model.ErrorMessage)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["error_message"] = []map[string]interface{}{errorMessageMap}
 	}
 	return modelMap, nil
 }
 
-func dataSourceIBMPolicyAssignmentErrorDetailsToMap(model *iampolicymanagementv1.ErrorDetails) (map[string]interface{}, error) {
+func ResourceIBMPolicyAssignmentPolicyAssignmentV1ResourcesToMap(model *iampolicymanagementv1.PolicyAssignmentV1Resources) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	if model.ConflictsWith != nil {
-		conflictsWithMap, err := dataSourceIBMPolicyAssignmentConflictsWithToMap(model.ConflictsWith)
+	if model.Target != nil {
+		targetMap, err := ResourceIBMPolicyAssignmentResourceTargetDetailsToMap(model.Target)
 		if err != nil {
 			return modelMap, err
 		}
-		modelMap["conflicts_with"] = []map[string]interface{}{conflictsWithMap}
-	}
-	return modelMap, nil
-}
-
-func dataSourceIBMPolicyAssignmentConflictsWithToMap(model *iampolicymanagementv1.ConflictsWith) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Etag != nil {
-		modelMap["etag"] = model.Etag
-	}
-	if model.Role != nil {
-		modelMap["role"] = model.Role
+		modelMap["target"] = targetMap
 	}
 	if model.Policy != nil {
-		modelMap["policy"] = model.Policy
+		policyMap, err := ResourceIBMPolicyAssignmentPolicyAssignmentResourcePolicyToMap(model.Policy)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["policy"] = []map[string]interface{}{policyMap}
+	}
+	return modelMap, nil
+}
+func DataSourceIBMPolicyAssignmentPolicyAssignmentV1Subject(model *iampolicymanagementv1.PolicyAssignmentV1Subject) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.ID != nil {
+		modelMap["id"] = *model.ID
+	}
+	if model.Type != nil {
+		modelMap["type"] = *model.Type
 	}
 	return modelMap, nil
 }

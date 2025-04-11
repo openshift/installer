@@ -46,8 +46,9 @@ const (
 	isImageUserTagType   = "user"
 	isImageAccessTagType = "access"
 
-	isImageDeprecate = "deprecate"
-	isImageObsolete  = "obsolete"
+	isImageDeprecate      = "deprecate"
+	isImageObsolete       = "obsolete"
+	isImageUserDataFormat = "user_data_format"
 )
 
 func ResourceIBMISImage() *schema.Resource {
@@ -248,6 +249,11 @@ func ResourceIBMISImage() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_image", "accesstag")},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "List of access management tags",
+			},
+			isImageUserDataFormat: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The user data format for this image",
 			},
 		},
 	}
@@ -733,6 +739,9 @@ func imgGet(d *schema.ResourceData, meta interface{}, id string) error {
 	d.Set(isImageHref, *image.Href)
 	d.Set(isImageStatus, *image.Status)
 	d.Set(isImageVisibility, *image.Visibility)
+	if image.UserDataFormat != nil {
+		d.Set(isImageUserDataFormat, *image.UserDataFormat)
+	}
 	if image.Encryption != nil {
 		d.Set(isImageEncryption, *image.Encryption)
 	}

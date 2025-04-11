@@ -2,15 +2,16 @@
 
 package v1
 
-// AWSPlatformStatusApplyConfiguration represents an declarative configuration of the AWSPlatformStatus type for use
+// AWSPlatformStatusApplyConfiguration represents a declarative configuration of the AWSPlatformStatus type for use
 // with apply.
 type AWSPlatformStatusApplyConfiguration struct {
-	Region           *string                                `json:"region,omitempty"`
-	ServiceEndpoints []AWSServiceEndpointApplyConfiguration `json:"serviceEndpoints,omitempty"`
-	ResourceTags     []AWSResourceTagApplyConfiguration     `json:"resourceTags,omitempty"`
+	Region                  *string                                    `json:"region,omitempty"`
+	ServiceEndpoints        []AWSServiceEndpointApplyConfiguration     `json:"serviceEndpoints,omitempty"`
+	ResourceTags            []AWSResourceTagApplyConfiguration         `json:"resourceTags,omitempty"`
+	CloudLoadBalancerConfig *CloudLoadBalancerConfigApplyConfiguration `json:"cloudLoadBalancerConfig,omitempty"`
 }
 
-// AWSPlatformStatusApplyConfiguration constructs an declarative configuration of the AWSPlatformStatus type for use with
+// AWSPlatformStatusApplyConfiguration constructs a declarative configuration of the AWSPlatformStatus type for use with
 // apply.
 func AWSPlatformStatus() *AWSPlatformStatusApplyConfiguration {
 	return &AWSPlatformStatusApplyConfiguration{}
@@ -47,5 +48,13 @@ func (b *AWSPlatformStatusApplyConfiguration) WithResourceTags(values ...*AWSRes
 		}
 		b.ResourceTags = append(b.ResourceTags, *values[i])
 	}
+	return b
+}
+
+// WithCloudLoadBalancerConfig sets the CloudLoadBalancerConfig field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the CloudLoadBalancerConfig field is set to the value of the last call.
+func (b *AWSPlatformStatusApplyConfiguration) WithCloudLoadBalancerConfig(value *CloudLoadBalancerConfigApplyConfiguration) *AWSPlatformStatusApplyConfiguration {
+	b.CloudLoadBalancerConfig = value
 	return b
 }

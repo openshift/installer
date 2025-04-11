@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -164,7 +165,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 				),
 			)
 			ingressAsset := &Ingress{}
-			err := ingressAsset.Generate(parents)
+			err := ingressAsset.Generate(context.Background(), parents)
 			if !assert.NoError(t, err, "failed to generate asset") {
 				return
 			}

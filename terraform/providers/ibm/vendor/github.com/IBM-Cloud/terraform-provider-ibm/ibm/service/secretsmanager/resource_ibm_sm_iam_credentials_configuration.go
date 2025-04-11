@@ -6,6 +6,7 @@ package secretsmanager
 import (
 	"context"
 	"fmt"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"log"
 	"strings"
 
@@ -43,6 +44,12 @@ func ResourceIbmSmIamCredentialsConfiguration() *schema.Resource {
 				Sensitive:   true,
 				Description: "An IBM Cloud API key that can create and manage service IDs. The API key must be assigned the Editor platform role on the Access Groups Service and the Operator platform role on the IAM Identity Service. For more information, see the [docs](https://cloud.ibm.com/docs/secrets-manager?topic=secrets-manager-configure-iam-engine).",
 			},
+			"disabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "This attribute indicates whether the API key configuration is disabled. If it is set to `true`, the IAM credentials engine doesn't use the configured API key for credentials management.",
+			},
 			"secret_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -70,7 +77,8 @@ func ResourceIbmSmIamCredentialsConfiguration() *schema.Resource {
 func resourceIbmSmIamCredentialsConfigurationCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", IAMCredentialsConfigResourceName, "create")
+		return tfErr.GetDiag()
 	}
 
 	region := getRegion(secretsManagerClient, d)
@@ -81,14 +89,16 @@ func resourceIbmSmIamCredentialsConfigurationCreate(context context.Context, d *
 
 	configurationPrototypeModel, err := resourceIbmSmIamCredentialsConfigurationMapToConfigurationPrototype(d)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", IAMCredentialsConfigResourceName, "create")
+		return tfErr.GetDiag()
 	}
 	createConfigurationOptions.SetConfigurationPrototype(configurationPrototypeModel)
 
 	configurationIntf, response, err := secretsManagerClient.CreateConfigurationWithContext(context, createConfigurationOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateConfigurationWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateConfigurationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateConfigurationWithContext failed %s\n%s", err, response), IAMCredentialsConfigResourceName, "create")
+		return tfErr.GetDiag()
 	}
 	configuration := configurationIntf.(*secretsmanagerv2.IAMCredentialsConfiguration)
 
@@ -100,12 +110,14 @@ func resourceIbmSmIamCredentialsConfigurationCreate(context context.Context, d *
 func resourceIbmSmIamCredentialsConfigurationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", IAMCredentialsConfigResourceName, "read")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
 	if len(id) != 3 {
-		return diag.Errorf("Wrong format of resource ID. To import IAM credentials configuration use the format `<region>/<instance_id>/<name>`")
+		tfErr := flex.TerraformErrorf(nil, "Wrong format of resource ID. To import IAM credentials configuration use the format `<region>/<instance_id>/<name>`", IAMCredentialsConfigResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	region := id[0]
 	instanceId := id[1]
@@ -123,33 +135,46 @@ func resourceIbmSmIamCredentialsConfigurationRead(context context.Context, d *sc
 			return nil
 		}
 		log.Printf("[DEBUG] GetConfigurationWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetConfigurationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetConfigurationWithContext failed %s\n%s", err, response), IAMCredentialsConfigResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	configuration := configurationIntf.(*secretsmanagerv2.IAMCredentialsConfiguration)
 
 	if err = d.Set("instance_id", instanceId); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting instance_id"), IAMCredentialsConfigResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("region", region); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting region: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region"), IAMCredentialsConfigResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("name", configuration.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name"), IAMCredentialsConfigResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("secret_type", configuration.SecretType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_type"), IAMCredentialsConfigResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_by", configuration.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_by"), IAMCredentialsConfigResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_at", DateTimeToRFC3339(configuration.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_at"), IAMCredentialsConfigResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_at", DateTimeToRFC3339(configuration.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at"), IAMCredentialsConfigResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("api_key", configuration.ApiKey); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting api_key: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting api_key"), IAMCredentialsConfigResourceName, "read")
+		return tfErr.GetDiag()
+	}
+	if err = d.Set("disabled", configuration.Disabled); err != nil {
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting disabled"), IAMCredentialsConfigResourceName, "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -158,7 +183,8 @@ func resourceIbmSmIamCredentialsConfigurationRead(context context.Context, d *sc
 func resourceIbmSmIamCredentialsConfigurationUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", IAMCredentialsConfigResourceName, "update")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
@@ -181,12 +207,18 @@ func resourceIbmSmIamCredentialsConfigurationUpdate(context context.Context, d *
 		hasChange = true
 	}
 
+	if d.HasChange("disabled") {
+		patchVals.Disabled = core.BoolPtr(d.Get("disabled").(bool))
+		hasChange = true
+	}
+
 	if hasChange {
 		updateConfigurationOptions.ConfigurationPatch, _ = patchVals.AsPatch()
 		_, response, err := secretsManagerClient.UpdateConfigurationWithContext(context, updateConfigurationOptions)
 		if err != nil {
 			log.Printf("[DEBUG] UpdateConfigurationWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateConfigurationWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateConfigurationWithContext failed %s\n%s", err, response), IAMCredentialsConfigResourceName, "update")
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -212,7 +244,8 @@ func resourceIbmSmIamCredentialsConfigurationDelete(context context.Context, d *
 	response, err := secretsManagerClient.DeleteConfigurationWithContext(context, deleteConfigurationOptions)
 	if err != nil {
 		log.Printf("[DEBUG] DeleteConfigurationWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteConfigurationWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteConfigurationWithContext failed %s\n%s", err, response), IAMCredentialsConfigResourceName, "delete")
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -230,6 +263,9 @@ func resourceIbmSmIamCredentialsConfigurationMapToConfigurationPrototype(d *sche
 	}
 	if _, ok := d.GetOk("api_key"); ok {
 		model.ApiKey = core.StringPtr(d.Get("api_key").(string))
+	}
+	if _, ok := d.GetOk("disabled"); ok {
+		model.Disabled = core.BoolPtr(d.Get("disabled").(bool))
 	}
 	return model, nil
 }

@@ -41,7 +41,10 @@ type NodePool struct {
 	awsNodePool          *AWSNodePool
 	autoscaling          *NodePoolAutoscaling
 	availabilityZone     string
+	azureNodePool        *AzureNodePool
+	kubeletConfigs       []string
 	labels               map[string]string
+	managementUpgrade    *NodePoolManagementUpgrade
 	nodeDrainGracePeriod *Value
 	replicas             int
 	status               *NodePoolStatus
@@ -203,12 +206,58 @@ func (o *NodePool) GetAvailabilityZone() (value string, ok bool) {
 	return
 }
 
+// AzureNodePool returns the value of the 'azure_node_pool' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Azure specific parameters.
+func (o *NodePool) AzureNodePool() *AzureNodePool {
+	if o != nil && o.bitmap_&128 != 0 {
+		return o.azureNodePool
+	}
+	return nil
+}
+
+// GetAzureNodePool returns the value of the 'azure_node_pool' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Azure specific parameters.
+func (o *NodePool) GetAzureNodePool() (value *AzureNodePool, ok bool) {
+	ok = o != nil && o.bitmap_&128 != 0
+	if ok {
+		value = o.azureNodePool
+	}
+	return
+}
+
+// KubeletConfigs returns the value of the 'kubelet_configs' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The names of the KubeletConfigs for this node pool.
+func (o *NodePool) KubeletConfigs() []string {
+	if o != nil && o.bitmap_&256 != 0 {
+		return o.kubeletConfigs
+	}
+	return nil
+}
+
+// GetKubeletConfigs returns the value of the 'kubelet_configs' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The names of the KubeletConfigs for this node pool.
+func (o *NodePool) GetKubeletConfigs() (value []string, ok bool) {
+	ok = o != nil && o.bitmap_&256 != 0
+	if ok {
+		value = o.kubeletConfigs
+	}
+	return
+}
+
 // Labels returns the value of the 'labels' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // The labels set on the Nodes created.
 func (o *NodePool) Labels() map[string]string {
-	if o != nil && o.bitmap_&128 != 0 {
+	if o != nil && o.bitmap_&512 != 0 {
 		return o.labels
 	}
 	return nil
@@ -219,9 +268,32 @@ func (o *NodePool) Labels() map[string]string {
 //
 // The labels set on the Nodes created.
 func (o *NodePool) GetLabels() (value map[string]string, ok bool) {
-	ok = o != nil && o.bitmap_&128 != 0
+	ok = o != nil && o.bitmap_&512 != 0
 	if ok {
 		value = o.labels
+	}
+	return
+}
+
+// ManagementUpgrade returns the value of the 'management_upgrade' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Management parameters (Optional).
+func (o *NodePool) ManagementUpgrade() *NodePoolManagementUpgrade {
+	if o != nil && o.bitmap_&1024 != 0 {
+		return o.managementUpgrade
+	}
+	return nil
+}
+
+// GetManagementUpgrade returns the value of the 'management_upgrade' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Management parameters (Optional).
+func (o *NodePool) GetManagementUpgrade() (value *NodePoolManagementUpgrade, ok bool) {
+	ok = o != nil && o.bitmap_&1024 != 0
+	if ok {
+		value = o.managementUpgrade
 	}
 	return
 }
@@ -231,7 +303,7 @@ func (o *NodePool) GetLabels() (value map[string]string, ok bool) {
 //
 // Time to wait for a NodePool to drain when it is upgraded or replaced before it is forcibly removed.
 func (o *NodePool) NodeDrainGracePeriod() *Value {
-	if o != nil && o.bitmap_&256 != 0 {
+	if o != nil && o.bitmap_&2048 != 0 {
 		return o.nodeDrainGracePeriod
 	}
 	return nil
@@ -242,7 +314,7 @@ func (o *NodePool) NodeDrainGracePeriod() *Value {
 //
 // Time to wait for a NodePool to drain when it is upgraded or replaced before it is forcibly removed.
 func (o *NodePool) GetNodeDrainGracePeriod() (value *Value, ok bool) {
-	ok = o != nil && o.bitmap_&256 != 0
+	ok = o != nil && o.bitmap_&2048 != 0
 	if ok {
 		value = o.nodeDrainGracePeriod
 	}
@@ -255,7 +327,7 @@ func (o *NodePool) GetNodeDrainGracePeriod() (value *Value, ok bool) {
 // The number of Machines (and Nodes) to create.
 // Replicas and autoscaling cannot be used together.
 func (o *NodePool) Replicas() int {
-	if o != nil && o.bitmap_&512 != 0 {
+	if o != nil && o.bitmap_&4096 != 0 {
 		return o.replicas
 	}
 	return 0
@@ -267,7 +339,7 @@ func (o *NodePool) Replicas() int {
 // The number of Machines (and Nodes) to create.
 // Replicas and autoscaling cannot be used together.
 func (o *NodePool) GetReplicas() (value int, ok bool) {
-	ok = o != nil && o.bitmap_&512 != 0
+	ok = o != nil && o.bitmap_&4096 != 0
 	if ok {
 		value = o.replicas
 	}
@@ -279,7 +351,7 @@ func (o *NodePool) GetReplicas() (value int, ok bool) {
 //
 // NodePool status.
 func (o *NodePool) Status() *NodePoolStatus {
-	if o != nil && o.bitmap_&1024 != 0 {
+	if o != nil && o.bitmap_&8192 != 0 {
 		return o.status
 	}
 	return nil
@@ -290,7 +362,7 @@ func (o *NodePool) Status() *NodePoolStatus {
 //
 // NodePool status.
 func (o *NodePool) GetStatus() (value *NodePoolStatus, ok bool) {
-	ok = o != nil && o.bitmap_&1024 != 0
+	ok = o != nil && o.bitmap_&8192 != 0
 	if ok {
 		value = o.status
 	}
@@ -302,7 +374,7 @@ func (o *NodePool) GetStatus() (value *NodePoolStatus, ok bool) {
 //
 // The subnet upon which the nodes are created.
 func (o *NodePool) Subnet() string {
-	if o != nil && o.bitmap_&2048 != 0 {
+	if o != nil && o.bitmap_&16384 != 0 {
 		return o.subnet
 	}
 	return ""
@@ -313,7 +385,7 @@ func (o *NodePool) Subnet() string {
 //
 // The subnet upon which the nodes are created.
 func (o *NodePool) GetSubnet() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&2048 != 0
+	ok = o != nil && o.bitmap_&16384 != 0
 	if ok {
 		value = o.subnet
 	}
@@ -325,7 +397,7 @@ func (o *NodePool) GetSubnet() (value string, ok bool) {
 //
 // The taints set on the Nodes created.
 func (o *NodePool) Taints() []*Taint {
-	if o != nil && o.bitmap_&4096 != 0 {
+	if o != nil && o.bitmap_&32768 != 0 {
 		return o.taints
 	}
 	return nil
@@ -336,7 +408,7 @@ func (o *NodePool) Taints() []*Taint {
 //
 // The taints set on the Nodes created.
 func (o *NodePool) GetTaints() (value []*Taint, ok bool) {
-	ok = o != nil && o.bitmap_&4096 != 0
+	ok = o != nil && o.bitmap_&32768 != 0
 	if ok {
 		value = o.taints
 	}
@@ -348,7 +420,7 @@ func (o *NodePool) GetTaints() (value []*Taint, ok bool) {
 //
 // The names of the tuning configs for this node pool.
 func (o *NodePool) TuningConfigs() []string {
-	if o != nil && o.bitmap_&8192 != 0 {
+	if o != nil && o.bitmap_&65536 != 0 {
 		return o.tuningConfigs
 	}
 	return nil
@@ -359,7 +431,7 @@ func (o *NodePool) TuningConfigs() []string {
 //
 // The names of the tuning configs for this node pool.
 func (o *NodePool) GetTuningConfigs() (value []string, ok bool) {
-	ok = o != nil && o.bitmap_&8192 != 0
+	ok = o != nil && o.bitmap_&65536 != 0
 	if ok {
 		value = o.tuningConfigs
 	}
@@ -371,7 +443,7 @@ func (o *NodePool) GetTuningConfigs() (value []string, ok bool) {
 //
 // Version of the node pool.
 func (o *NodePool) Version() *Version {
-	if o != nil && o.bitmap_&16384 != 0 {
+	if o != nil && o.bitmap_&131072 != 0 {
 		return o.version
 	}
 	return nil
@@ -382,7 +454,7 @@ func (o *NodePool) Version() *Version {
 //
 // Version of the node pool.
 func (o *NodePool) GetVersion() (value *Version, ok bool) {
-	ok = o != nil && o.bitmap_&16384 != 0
+	ok = o != nil && o.bitmap_&131072 != 0
 	if ok {
 		value = o.version
 	}

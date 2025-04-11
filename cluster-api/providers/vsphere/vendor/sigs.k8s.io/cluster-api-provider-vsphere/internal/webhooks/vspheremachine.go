@@ -33,7 +33,7 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 )
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-vspheremachine,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheremachines,versions=v1beta1,name=validation.vspheremachine.infrastructure.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-vspheremachine,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheremachines,versions=v1beta1,name=validation.vspheremachine.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta1-vspheremachine,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspheremachines,versions=v1beta1,name=default.vspheremachine.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 
 // VSphereMachineWebhook implements a validation and defaulting webhook for VSphereMachine.
@@ -46,7 +46,7 @@ func (webhook *VSphereMachineWebhook) SetupWebhookWithManager(mgr ctrl.Manager) 
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&infrav1.VSphereMachine{}).
 		WithValidator(webhook).
-		WithDefaulter(webhook).
+		WithDefaulter(webhook, admission.DefaulterRemoveUnknownOrOmitableFields).
 		Complete()
 }
 
@@ -92,8 +92,10 @@ func (webhook *VSphereMachineWebhook) ValidateCreate(_ context.Context, raw runt
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "guestSoftPowerOffTimeout"), spec.GuestSoftPowerOffTimeout, "should be greater than 0"))
 		}
 	}
+	pciErrs := validatePCIDevices(spec.PciDevices)
+	allErrs = append(allErrs, pciErrs...)
 
-	return nil, aggregateObjErrors(obj.GroupVersionKind().GroupKind(), obj.Name, allErrs)
+	return nil, AggregateObjErrors(obj.GroupVersionKind().GroupKind(), obj.Name, allErrs)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
@@ -153,10 +155,27 @@ func (webhook *VSphereMachineWebhook) ValidateUpdate(_ context.Context, oldRaw r
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec"), "cannot be modified"))
 	}
 
-	return nil, aggregateObjErrors(newTyped.GroupVersionKind().GroupKind(), newTyped.Name, allErrs)
+	return nil, AggregateObjErrors(newTyped.GroupVersionKind().GroupKind(), newTyped.Name, allErrs)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (webhook *VSphereMachineWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
+}
+
+func validatePCIDevices(devices []infrav1.PCIDeviceSpec) field.ErrorList {
+	var allErrs field.ErrorList
+
+	for i, device := range devices {
+		if device.VGPUProfile != "" && device.DeviceID == nil && device.VendorID == nil {
+			// Valid case for vGPU.
+			continue
+		}
+		if device.VGPUProfile == "" && device.DeviceID != nil && device.VendorID != nil {
+			// Valid case for PCI Passthrough.
+			continue
+		}
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "template", "spec", "pciDevices").Index(i), device, "should have either deviceId + vendorId or vGPUProfile set"))
+	}
+	return allErrs
 }

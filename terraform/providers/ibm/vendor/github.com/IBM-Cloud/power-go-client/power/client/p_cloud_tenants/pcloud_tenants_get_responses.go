@@ -6,6 +6,7 @@ package p_cloud_tenants
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *PcloudTenantsGetOK) Code() int {
 }
 
 func (o *PcloudTenantsGetOK) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetOK %s", 200, payload)
 }
 
 func (o *PcloudTenantsGetOK) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetOK %s", 200, payload)
 }
 
 func (o *PcloudTenantsGetOK) GetPayload() *models.Tenant {
@@ -177,11 +180,13 @@ func (o *PcloudTenantsGetBadRequest) Code() int {
 }
 
 func (o *PcloudTenantsGetBadRequest) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetBadRequest %s", 400, payload)
 }
 
 func (o *PcloudTenantsGetBadRequest) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetBadRequest %s", 400, payload)
 }
 
 func (o *PcloudTenantsGetBadRequest) GetPayload() *models.Error {
@@ -245,11 +250,13 @@ func (o *PcloudTenantsGetUnauthorized) Code() int {
 }
 
 func (o *PcloudTenantsGetUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudTenantsGetUnauthorized) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetUnauthorized %s", 401, payload)
 }
 
 func (o *PcloudTenantsGetUnauthorized) GetPayload() *models.Error {
@@ -313,11 +320,13 @@ func (o *PcloudTenantsGetForbidden) Code() int {
 }
 
 func (o *PcloudTenantsGetForbidden) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetForbidden %s", 403, payload)
 }
 
 func (o *PcloudTenantsGetForbidden) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetForbidden %s", 403, payload)
 }
 
 func (o *PcloudTenantsGetForbidden) GetPayload() *models.Error {
@@ -381,11 +390,13 @@ func (o *PcloudTenantsGetNotFound) Code() int {
 }
 
 func (o *PcloudTenantsGetNotFound) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetNotFound %s", 404, payload)
 }
 
 func (o *PcloudTenantsGetNotFound) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetNotFound %s", 404, payload)
 }
 
 func (o *PcloudTenantsGetNotFound) GetPayload() *models.Error {
@@ -449,11 +460,13 @@ func (o *PcloudTenantsGetInternalServerError) Code() int {
 }
 
 func (o *PcloudTenantsGetInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudTenantsGetInternalServerError) String() string {
-	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsGetInternalServerError %s", 500, payload)
 }
 
 func (o *PcloudTenantsGetInternalServerError) GetPayload() *models.Error {

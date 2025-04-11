@@ -191,6 +191,7 @@ func restorev1beta1MachineSpec(previous *infrav1.OpenStackMachineSpec, dst *infr
 		}
 	}
 	dst.FloatingIPPoolRef = previous.FloatingIPPoolRef
+	dst.SchedulerHintAdditionalProperties = previous.SchedulerHintAdditionalProperties
 
 	if dst.RootVolume != nil && previous.RootVolume != nil {
 		restorev1beta1BlockDeviceVolume(

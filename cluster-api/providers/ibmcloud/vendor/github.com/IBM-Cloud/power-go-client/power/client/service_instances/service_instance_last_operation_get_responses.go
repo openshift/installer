@@ -6,6 +6,7 @@ package service_instances
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *ServiceInstanceLastOperationGetOK) Code() int {
 }
 
 func (o *ServiceInstanceLastOperationGetOK) Error() string {
-	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetOK %s", 200, payload)
 }
 
 func (o *ServiceInstanceLastOperationGetOK) String() string {
-	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetOK %s", 200, payload)
 }
 
 func (o *ServiceInstanceLastOperationGetOK) GetPayload() *models.LastOperationResource {
@@ -177,11 +180,13 @@ func (o *ServiceInstanceLastOperationGetBadRequest) Code() int {
 }
 
 func (o *ServiceInstanceLastOperationGetBadRequest) Error() string {
-	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetBadRequest %s", 400, payload)
 }
 
 func (o *ServiceInstanceLastOperationGetBadRequest) String() string {
-	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetBadRequest %s", 400, payload)
 }
 
 func (o *ServiceInstanceLastOperationGetBadRequest) GetPayload() *models.Error {
@@ -245,11 +250,13 @@ func (o *ServiceInstanceLastOperationGetUnauthorized) Code() int {
 }
 
 func (o *ServiceInstanceLastOperationGetUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceInstanceLastOperationGetUnauthorized) String() string {
-	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceInstanceLastOperationGetUnauthorized) GetPayload() *models.Error {
@@ -313,11 +320,13 @@ func (o *ServiceInstanceLastOperationGetForbidden) Code() int {
 }
 
 func (o *ServiceInstanceLastOperationGetForbidden) Error() string {
-	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetForbidden %s", 403, payload)
 }
 
 func (o *ServiceInstanceLastOperationGetForbidden) String() string {
-	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetForbidden %s", 403, payload)
 }
 
 func (o *ServiceInstanceLastOperationGetForbidden) GetPayload() *models.Error {
@@ -381,11 +390,13 @@ func (o *ServiceInstanceLastOperationGetNotFound) Code() int {
 }
 
 func (o *ServiceInstanceLastOperationGetNotFound) Error() string {
-	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetNotFound %s", 404, payload)
 }
 
 func (o *ServiceInstanceLastOperationGetNotFound) String() string {
-	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetNotFound %s", 404, payload)
 }
 
 func (o *ServiceInstanceLastOperationGetNotFound) GetPayload() *models.Error {
@@ -449,11 +460,13 @@ func (o *ServiceInstanceLastOperationGetGone) Code() int {
 }
 
 func (o *ServiceInstanceLastOperationGetGone) Error() string {
-	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetGone  %+v", 410, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetGone %s", 410, payload)
 }
 
 func (o *ServiceInstanceLastOperationGetGone) String() string {
-	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetGone  %+v", 410, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetGone %s", 410, payload)
 }
 
 func (o *ServiceInstanceLastOperationGetGone) GetPayload() *models.Error {

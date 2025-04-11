@@ -3,11 +3,12 @@
 package v1beta1
 
 import (
+	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
-// MachineSpecApplyConfiguration represents an declarative configuration of the MachineSpec type for use
+// MachineSpecApplyConfiguration represents a declarative configuration of the MachineSpec type for use
 // with apply.
 type MachineSpecApplyConfiguration struct {
 	*ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
@@ -15,9 +16,10 @@ type MachineSpecApplyConfiguration struct {
 	Taints                        []v1.Taint                        `json:"taints,omitempty"`
 	ProviderSpec                  *ProviderSpecApplyConfiguration   `json:"providerSpec,omitempty"`
 	ProviderID                    *string                           `json:"providerID,omitempty"`
+	AuthoritativeAPI              *machinev1beta1.MachineAuthority  `json:"authoritativeAPI,omitempty"`
 }
 
-// MachineSpecApplyConfiguration constructs an declarative configuration of the MachineSpec type for use with
+// MachineSpecApplyConfiguration constructs a declarative configuration of the MachineSpec type for use with
 // apply.
 func MachineSpec() *MachineSpecApplyConfiguration {
 	return &MachineSpecApplyConfiguration{}
@@ -131,5 +133,13 @@ func (b *MachineSpecApplyConfiguration) WithProviderSpec(value *ProviderSpecAppl
 // If called multiple times, the ProviderID field is set to the value of the last call.
 func (b *MachineSpecApplyConfiguration) WithProviderID(value string) *MachineSpecApplyConfiguration {
 	b.ProviderID = &value
+	return b
+}
+
+// WithAuthoritativeAPI sets the AuthoritativeAPI field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the AuthoritativeAPI field is set to the value of the last call.
+func (b *MachineSpecApplyConfiguration) WithAuthoritativeAPI(value machinev1beta1.MachineAuthority) *MachineSpecApplyConfiguration {
+	b.AuthoritativeAPI = &value
 	return b
 }

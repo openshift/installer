@@ -61,6 +61,13 @@ func (cluster *ManagedCluster) ExportKubernetesResources(_ context.Context, _ ge
 			}
 		}
 	}
+	if cluster.Spec.OperatorSpec != nil && cluster.Spec.OperatorSpec.ConfigMaps != nil {
+		if cluster.Status.Identity != nil {
+			if cluster.Status.Identity.PrincipalId != nil {
+				collector.AddValue(cluster.Spec.OperatorSpec.ConfigMaps.PrincipalId, *cluster.Status.Identity.PrincipalId)
+			}
+		}
+	}
 	result, err := collector.Values()
 	if err != nil {
 		return nil, err
@@ -218,7 +225,7 @@ type ManagedCluster_Spec struct {
 	Sku                       *ManagedClusterSKU                       `json:"sku,omitempty"`
 	StorageProfile            *ManagedClusterStorageProfile            `json:"storageProfile,omitempty"`
 	SupportPlan               *string                                  `json:"supportPlan,omitempty"`
-	Tags                      map[string]string                        `json:"tags,omitempty"`
+	Tags                      map[string]string                        `json:"tags,omitempty" serializationType:"explicitEmptyCollection"`
 	UpgradeSettings           *ClusterUpgradeSettings                  `json:"upgradeSettings,omitempty"`
 	WindowsProfile            *ManagedClusterWindowsProfile            `json:"windowsProfile,omitempty"`
 	WorkloadAutoScalerProfile *ManagedClusterWorkloadAutoScalerProfile `json:"workloadAutoScalerProfile,omitempty"`
@@ -479,12 +486,12 @@ type ManagedClusterAgentPoolProfile struct {
 	Mode               *string                       `json:"mode,omitempty"`
 	Name               *string                       `json:"name,omitempty"`
 	NetworkProfile     *AgentPoolNetworkProfile      `json:"networkProfile,omitempty"`
-	NodeLabels         map[string]string             `json:"nodeLabels,omitempty"`
+	NodeLabels         map[string]string             `json:"nodeLabels,omitempty" serializationType:"explicitEmptyCollection"`
 
 	// NodePublicIPPrefixReference: This is of the form:
 	// /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}
 	NodePublicIPPrefixReference *genruntime.ResourceReference `armReference:"NodePublicIPPrefixID" json:"nodePublicIPPrefixReference,omitempty"`
-	NodeTaints                  []string                      `json:"nodeTaints,omitempty"`
+	NodeTaints                  []string                      `json:"nodeTaints,omitempty" serializationType:"explicitEmptyCollection"`
 	OrchestratorVersion         *string                       `json:"orchestratorVersion,omitempty"`
 	OsDiskSizeGB                *int                          `json:"osDiskSizeGB,omitempty"`
 	OsDiskType                  *string                       `json:"osDiskType,omitempty"`
@@ -504,7 +511,7 @@ type ManagedClusterAgentPoolProfile struct {
 	ScaleSetEvictionPolicy           *string                       `json:"scaleSetEvictionPolicy,omitempty"`
 	ScaleSetPriority                 *string                       `json:"scaleSetPriority,omitempty"`
 	SpotMaxPrice                     *float64                      `json:"spotMaxPrice,omitempty"`
-	Tags                             map[string]string             `json:"tags,omitempty"`
+	Tags                             map[string]string             `json:"tags,omitempty" serializationType:"explicitEmptyCollection"`
 	Type                             *string                       `json:"type,omitempty"`
 	UpgradeSettings                  *AgentPoolUpgradeSettings     `json:"upgradeSettings,omitempty"`
 	VmSize                           *string                       `json:"vmSize,omitempty"`
@@ -821,18 +828,17 @@ type ManagedClusterStorageProfile_STATUS struct {
 // Storage version of v1api20231001.ManagedClusterWindowsProfile
 // Profile for Windows VMs in the managed cluster.
 type ManagedClusterWindowsProfile struct {
-	AdminPassword  *string                `json:"adminPassword,omitempty"`
-	AdminUsername  *string                `json:"adminUsername,omitempty"`
-	EnableCSIProxy *bool                  `json:"enableCSIProxy,omitempty"`
-	GmsaProfile    *WindowsGmsaProfile    `json:"gmsaProfile,omitempty"`
-	LicenseType    *string                `json:"licenseType,omitempty"`
-	PropertyBag    genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	AdminPassword  *genruntime.SecretReference `json:"adminPassword,omitempty"`
+	AdminUsername  *string                     `json:"adminUsername,omitempty"`
+	EnableCSIProxy *bool                       `json:"enableCSIProxy,omitempty"`
+	GmsaProfile    *WindowsGmsaProfile         `json:"gmsaProfile,omitempty"`
+	LicenseType    *string                     `json:"licenseType,omitempty"`
+	PropertyBag    genruntime.PropertyBag      `json:"$propertyBag,omitempty"`
 }
 
 // Storage version of v1api20231001.ManagedClusterWindowsProfile_STATUS
 // Profile for Windows VMs in the managed cluster.
 type ManagedClusterWindowsProfile_STATUS struct {
-	AdminPassword  *string                    `json:"adminPassword,omitempty"`
 	AdminUsername  *string                    `json:"adminUsername,omitempty"`
 	EnableCSIProxy *bool                      `json:"enableCSIProxy,omitempty"`
 	GmsaProfile    *WindowsGmsaProfile_STATUS `json:"gmsaProfile,omitempty"`
@@ -1089,6 +1095,7 @@ type ManagedClusterNATGatewayProfile_STATUS struct {
 // Storage version of v1api20231001.ManagedClusterOperatorConfigMaps
 type ManagedClusterOperatorConfigMaps struct {
 	OIDCIssuerProfile *genruntime.ConfigMapDestination `json:"oidcIssuerProfile,omitempty"`
+	PrincipalId       *genruntime.ConfigMapDestination `json:"principalId,omitempty"`
 	PropertyBag       genruntime.PropertyBag           `json:"$propertyBag,omitempty"`
 }
 

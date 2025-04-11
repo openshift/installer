@@ -67,10 +67,9 @@ func ResourceIBMCISFirewallrules() *schema.Resource {
 				ValidateFunc: validate.InvokeValidator(ibmCISFirewallrules, cisFirewallrulesPriority),
 			},
 			cisFirewallrulesDescription: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Description:  "Firewallrules Description",
-				ValidateFunc: validate.InvokeValidator(ibmCISFirewallrules, cisFirewallrulesDescription),
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Firewallrules Description",
 			},
 			cisFirewallrulesPaused: {
 				Type:        schema.TypeBool,

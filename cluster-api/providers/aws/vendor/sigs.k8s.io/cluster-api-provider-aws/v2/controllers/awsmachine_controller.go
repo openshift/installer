@@ -292,9 +292,9 @@ func (r *AWSMachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 
 	requeueAWSMachinesForUnpausedCluster := r.requeueAWSMachinesForUnpausedCluster(log)
 	return controller.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(requeueAWSMachinesForUnpausedCluster),
-		predicates.ClusterUnpausedAndInfrastructureReady(log.GetLogger()),
+		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(requeueAWSMachinesForUnpausedCluster),
+			predicates.ClusterUnpausedAndInfrastructureReady(log.GetLogger())),
 	)
 }
 
@@ -407,6 +407,15 @@ func (r *AWSMachineReconciler) reconcileDelete(machineScope *scope.MachineScope,
 				}
 			}
 			conditions.MarkFalse(machineScope.AWSMachine, infrav1.SecurityGroupsReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
+		}
+
+		// Release an Elastic IP when the machine has public IP Address (EIP) with a cluster-wide config
+		// to consume from BYO IPv4 Pool.
+		if machineScope.GetElasticIPPool() != nil {
+			if err := ec2Service.ReleaseElasticIP(instance.ID); err != nil {
+				machineScope.Error(err, "failed to release elastic IP address")
+				return ctrl.Result{}, err
+			}
 		}
 
 		machineScope.Info("EC2 instance successfully terminated", "instance-id", instance.ID)
@@ -522,6 +531,24 @@ func (r *AWSMachineReconciler) reconcileNormal(_ context.Context, machineScope *
 			return ctrl.Result{}, err
 		}
 	}
+
+	// BYO Public IPv4 Pool feature: allocates and associates an EIP to machine when PublicIP and
+	// cluster-wide config Public IPv4 Pool configuration are set. The custom EIP is associated
+	// after the instance is created and transictioned to Running state.
+	// The CreateInstance() is enforcing to not assign public IP address when PublicIP is set with
+	// BYOIpv4 Pool, preventing a duplicated EIP creation.
+	if pool := machineScope.GetElasticIPPool(); pool != nil {
+		requeue, err := ec2svc.ReconcileElasticIPFromPublicPool(pool, instance)
+		if err != nil {
+			machineScope.Error(err, "Failed to reconcile BYO Public IPv4")
+			return ctrl.Result{}, err
+		}
+		if requeue {
+			machineScope.Debug("Found instance in pending state while reconciling publicIpv4Pool, requeue", "instance", instance.ID)
+			return ctrl.Result{RequeueAfter: DefaultReconcilerRequeue}, nil
+		}
+	}
+
 	if feature.Gates.Enabled(feature.EventBridgeInstanceState) {
 		instancestateSvc := instancestate.NewService(ec2Scope)
 		if err := instancestateSvc.AddInstanceToEventPattern(instance.ID); err != nil {
@@ -595,8 +622,14 @@ func (r *AWSMachineReconciler) reconcileNormal(_ context.Context, machineScope *
 		}
 
 		if err := r.reconcileLBAttachment(machineScope, elbScope, instance); err != nil {
-			machineScope.Error(err, "failed to reconcile LB attachment")
-			return ctrl.Result{}, err
+			// We are tolerating InstanceNotRunning error, so we don't report it as an error condition.
+			// Because we are reconciling all load balancers, attempt to treat the error as a list of errors.
+			if err := kerrors.FilterOut(err, elb.IsInstanceNotRunning); err != nil {
+				machineScope.Error(err, "failed to reconcile LB attachment")
+				return ctrl.Result{}, err
+			}
+			// Cannot attach non-running instances to LB
+			shouldRequeue = true
 		}
 	}
 
@@ -976,6 +1009,14 @@ func (r *AWSMachineReconciler) registerInstanceToV2LB(machineScope *scope.Machin
 	if registered {
 		machineScope.Logger.Debug("Instance is already registered.", "instance", instance.ID)
 		return nil
+	}
+
+	// See https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-register-targets.html#register-instances
+	if ptr.Deref(machineScope.GetInstanceState(), infrav1.InstanceStatePending) != infrav1.InstanceStateRunning {
+		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedAttachControlPlaneELB",
+			"Cannot register control plane instance %q with load balancer: instance is not running", instance.ID)
+		conditions.MarkFalse(machineScope.AWSMachine, infrav1.ELBAttachedCondition, infrav1.ELBAttachFailedReason, clusterv1.ConditionSeverityInfo, "instance not running")
+		return elb.NewInstanceNotRunning("instance is not running")
 	}
 
 	if err := elbsvc.RegisterInstanceWithAPIServerLB(instance, lb); err != nil {

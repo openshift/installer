@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
@@ -48,7 +49,7 @@ func (*Ingress) Dependencies() []asset.Asset {
 // A default ingresscontroller is only created if the cluster is using an internal
 // publishing strategy. In this case, the default ingresscontroller is also set
 // to use the internal publishing strategy.
-func (ing *Ingress) Generate(dependencies asset.Parents) error {
+func (ing *Ingress) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(installConfig)
 

@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 )
 
@@ -38,6 +39,12 @@ func DataSourceIbmIsShares() *schema.Resource {
 				Description: "Collection of file shares.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"allowed_transit_encryption_modes": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Description: "Allowed transit encryption modes",
+						},
 						"access_control_mode": {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -372,6 +379,188 @@ func DataSourceIbmIsShares() *schema.Resource {
 							Set:         flex.ResourceIBMVPCHash,
 							Description: "List of tags",
 						},
+						"origin_share": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The origin share this accessor share is referring to.This property will be present when the `accessor_binding_role` is `accessor`.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this file share.",
+									},
+									"deleted": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this file share.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this file share.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The name for this share. The name is unique across all shares in the region.",
+									},
+									"remote": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates that the resource associated with this referenceis remote and therefore may not be directly retrievable.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"account": &schema.Schema{
+													Type:        schema.TypeList,
+													Computed:    true,
+													Description: "If present, this property indicates that the referenced resource is remote to thisaccount, and identifies the owning account.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"id": &schema.Schema{
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The unique identifier for this account.",
+															},
+															"resource_type": &schema.Schema{
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The resource type.",
+															},
+														},
+													},
+												},
+												"region": &schema.Schema{
+													Type:        schema.TypeList,
+													Computed:    true,
+													Description: "If present, this property indicates that the referenced resource is remote to thisregion, and identifies the native region.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"href": &schema.Schema{
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The URL for this region.",
+															},
+															"name": &schema.Schema{
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The globally unique name for this region.",
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+									"resource_type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
+						},
+						"accessor_binding_role": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The accessor binding role of this file share:- `none`: This file share is not participating in access with another file share- `origin`: This file share is the origin for one or more file shares  (which may be in other accounts)- `accessor`: This file share is providing access to another file share  (which may be in another account).",
+						},
+						"accessor_bindings": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The accessor bindings for this file share. Each accessor binding identifies a resource (possibly in another account) with access to this file share's data.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this share accessor binding.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this share accessor binding.",
+									},
+									"resource_type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
+						},
+						"snapshot_count": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The total number of snapshots for this share.",
+						},
+						"snapshot_size": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The total size (in gigabytes) of snapshots used for this file share.",
+						},
+						"source_snapshot": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The snapshot from which this share was cloned.This property will be present when the share was created from a snapshot.The resources supported by this property may[expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in thefuture.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this share snapshot.",
+									},
+									"deleted": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this share snapshot.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this share snapshot.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The name for this share snapshot. The name is unique across all snapshots for the file share.",
+									},
+									"resource_type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -430,9 +619,13 @@ func dataSourceIbmIsSharesRead(context context.Context, d *schema.ResourceData, 
 	d.SetId(dataSourceIbmIsSharesID(d))
 
 	if allrecs != nil {
-		err = d.Set("shares", dataSourceShareCollectionFlattenShares(meta, allrecs))
+		shares, err := dataSourceShareCollectionFlattenShares(meta, allrecs)
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting shares %s", err))
+			return err
+		}
+		errSettingShares := d.Set("shares", shares)
+		if errSettingShares != nil {
+			return diag.FromErr(fmt.Errorf("Error setting shares %s", errSettingShares))
 		}
 	}
 	if err = d.Set("total_count", totalCount); err != nil {
@@ -447,15 +640,19 @@ func dataSourceIbmIsSharesID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceShareCollectionFlattenShares(meta interface{}, result []vpcv1.Share) (shares []map[string]interface{}) {
+func dataSourceShareCollectionFlattenShares(meta interface{}, result []vpcv1.Share) (shares []map[string]interface{}, diag diag.Diagnostics) {
 	for _, sharesItem := range result {
-		shares = append(shares, dataSourceShareCollectionSharesToMap(meta, sharesItem))
+		shareMap, err := dataSourceShareCollectionSharesToMap(meta, sharesItem)
+		if err != nil {
+			return nil, err
+		}
+		shares = append(shares, shareMap)
 	}
 
-	return shares
+	return shares, nil
 }
 
-func dataSourceShareCollectionSharesToMap(meta interface{}, sharesItem vpcv1.Share) (sharesMap map[string]interface{}) {
+func dataSourceShareCollectionSharesToMap(meta interface{}, sharesItem vpcv1.Share) (sharesMap map[string]interface{}, diag diag.Diagnostics) {
 	sharesMap = map[string]interface{}{}
 
 	if sharesItem.CreatedAt != nil {
@@ -511,6 +708,24 @@ func dataSourceShareCollectionSharesToMap(meta interface{}, sharesItem vpcv1.Sha
 	if sharesItem.AccessControlMode != nil {
 		sharesMap["access_control_mode"] = *&sharesItem.AccessControlMode
 	}
+	if !core.IsNil(sharesItem.AllowedTransitEncryptionModes) {
+		sharesMap["allowed_transit_encryption_modes"] = sharesItem.AllowedTransitEncryptionModes
+	}
+	if sharesItem.AccessorBindingRole != nil {
+		sharesMap["accessor_binding_role"] = sharesItem.AccessorBindingRole
+	}
+	accessorBindings := []map[string]interface{}{}
+	for _, accessorBindingsItem := range sharesItem.AccessorBindings {
+		accessorBindingsItemMap := ResourceIBMIsShareShareAccessorBindingReferenceToMap(&accessorBindingsItem)
+		accessorBindings = append(accessorBindings, accessorBindingsItemMap)
+	}
+	sharesMap["accessor_bindings"] = accessorBindings
+
+	if !core.IsNil(sharesItem.OriginShare) {
+		originShareMap := ResourceIBMIsShareShareReferenceToMap(sharesItem.OriginShare)
+
+		sharesMap["origin_share"] = []map[string]interface{}{originShareMap}
+	}
 	sharesMap["replication_role"] = *sharesItem.ReplicationRole
 	sharesMap["replication_status"] = *sharesItem.ReplicationStatus
 
@@ -539,7 +754,21 @@ func dataSourceShareCollectionSharesToMap(meta interface{}, sharesItem vpcv1.Sha
 	if sharesItem.Zone != nil {
 		sharesMap["zone"] = *sharesItem.Zone.Name
 	}
-
+	if sharesItem.SnapshotCount != nil {
+		sharesMap["snapshot_count"] = flex.IntValue(sharesItem.SnapshotCount)
+	}
+	if sharesItem.SnapshotSize != nil {
+		sharesMap["snapshot_size"] = flex.IntValue(sharesItem.SnapshotSize)
+	}
+	sourceSnapshot := []map[string]interface{}{}
+	if sharesItem.SourceSnapshot != nil {
+		modelMap, err := DataSourceIBMIsShareShareSourceSnapshotToMap(sharesItem.SourceSnapshot)
+		if err != nil {
+			return nil, flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_is_share", "read", "source_snapshot-to-map").GetDiag()
+		}
+		sourceSnapshot = append(sourceSnapshot, modelMap)
+	}
+	sharesMap["source_snapshot"] = sourceSnapshot
 	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *sharesItem.CRN, "", isAccessTagType)
 	if err != nil {
 		log.Printf(
@@ -550,7 +779,7 @@ func dataSourceShareCollectionSharesToMap(meta interface{}, sharesItem vpcv1.Sha
 		sharesMap[isFileShareTags] = sharesItem.UserTags
 	}
 	sharesMap[isFileShareAccessTags] = accesstags
-	return sharesMap
+	return sharesMap, nil
 }
 
 func dataSourceShareCollectionSharesTargetsToMap(targetsItem vpcv1.ShareMountTargetReference) (targetsMap map[string]interface{}) {

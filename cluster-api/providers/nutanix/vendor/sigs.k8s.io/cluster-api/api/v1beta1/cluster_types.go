@@ -25,7 +25,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 
 	capierrors "sigs.k8s.io/cluster-api/errors"
 )
@@ -34,6 +35,9 @@ const (
 	// ClusterFinalizer is the finalizer used by the cluster controller to
 	// cleanup the cluster resources when a Cluster is being deleted.
 	ClusterFinalizer = "cluster.cluster.x-k8s.io"
+
+	// ClusterKind represents the Kind of Cluster.
+	ClusterKind = "Cluster"
 )
 
 // ANCHOR: ClusterSpec
@@ -80,6 +84,9 @@ type Topology struct {
 
 	// RolloutAfter performs a rollout of the entire cluster one component at a time,
 	// control plane first and then machine deployments.
+	//
+	// Deprecated: This field has no function and is going to be removed in the next apiVersion.
+	//
 	// +optional
 	RolloutAfter *metav1.Time `json:"rolloutAfter,omitempty"`
 
@@ -96,16 +103,17 @@ type Topology struct {
 	// patches. They must comply to the corresponding
 	// VariableClasses defined in the ClusterClass.
 	// +optional
+	// +listType=map
+	// +listMapKey=name
 	Variables []ClusterVariable `json:"variables,omitempty"`
 }
 
 // ControlPlaneTopology specifies the parameters for the control plane nodes in the cluster.
 type ControlPlaneTopology struct {
-	// Metadata is the metadata applied to the machines of the ControlPlane.
+	// Metadata is the metadata applied to the ControlPlane and the Machines of the ControlPlane
+	// if the ControlPlaneTemplate referenced by the ClusterClass is machine based. If not, it
+	// is applied only to the ControlPlane.
 	// At runtime this metadata is merged with the corresponding metadata from the ClusterClass.
-	//
-	// This field is supported if and only if the control plane provider template
-	// referenced in the ClusterClass is Machine based.
 	// +optional
 	Metadata ObjectMeta `json:"metadata,omitempty"`
 
@@ -137,19 +145,31 @@ type ControlPlaneTopology struct {
 	// Defaults to 10 seconds.
 	// +optional
 	NodeDeletionTimeout *metav1.Duration `json:"nodeDeletionTimeout,omitempty"`
+
+	// Variables can be used to customize the ControlPlane through patches.
+	// +optional
+	Variables *ControlPlaneVariables `json:"variables,omitempty"`
 }
 
 // WorkersTopology represents the different sets of worker nodes in the cluster.
 type WorkersTopology struct {
 	// MachineDeployments is a list of machine deployments in the cluster.
 	// +optional
+	// +listType=map
+	// +listMapKey=name
 	MachineDeployments []MachineDeploymentTopology `json:"machineDeployments,omitempty"`
+
+	// MachinePools is a list of machine pools in the cluster.
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	MachinePools []MachinePoolTopology `json:"machinePools,omitempty"`
 }
 
 // MachineDeploymentTopology specifies the different parameters for a set of worker nodes in the topology.
 // This set of nodes is managed by a MachineDeployment object whose lifecycle is managed by the Cluster controller.
 type MachineDeploymentTopology struct {
-	// Metadata is the metadata applied to the machines of the MachineDeployment.
+	// Metadata is the metadata applied to the MachineDeployment and the machines of the MachineDeployment.
 	// At runtime this metadata is merged with the corresponding metadata from the ClusterClass.
 	// +optional
 	Metadata ObjectMeta `json:"metadata,omitempty"`
@@ -171,7 +191,7 @@ type MachineDeploymentTopology struct {
 	FailureDomain *string `json:"failureDomain,omitempty"`
 
 	// Replicas is the number of worker nodes belonging to this set.
-	// If the value is nil, the MachineDeployment is created without the number of Replicas (defaulting to zero)
+	// If the value is nil, the MachineDeployment is created without the number of Replicas (defaulting to 1)
 	// and it's assumed that an external entity (like cluster autoscaler) is responsible for the management
 	// of this value.
 	// +optional
@@ -235,12 +255,78 @@ type MachineHealthCheckTopology struct {
 	MachineHealthCheckClass `json:",inline"`
 }
 
-// ClusterVariable can be used to customize the Cluster through
-// patches. It must comply to the corresponding
-// ClusterClassVariable defined in the ClusterClass.
+// MachinePoolTopology specifies the different parameters for a pool of worker nodes in the topology.
+// This pool of nodes is managed by a MachinePool object whose lifecycle is managed by the Cluster controller.
+type MachinePoolTopology struct {
+	// Metadata is the metadata applied to the MachinePool.
+	// At runtime this metadata is merged with the corresponding metadata from the ClusterClass.
+	// +optional
+	Metadata ObjectMeta `json:"metadata,omitempty"`
+
+	// Class is the name of the MachinePoolClass used to create the pool of worker nodes.
+	// This should match one of the deployment classes defined in the ClusterClass object
+	// mentioned in the `Cluster.Spec.Class` field.
+	Class string `json:"class"`
+
+	// Name is the unique identifier for this MachinePoolTopology.
+	// The value is used with other unique identifiers to create a MachinePool's Name
+	// (e.g. cluster's name, etc). In case the name is greater than the allowed maximum length,
+	// the values are hashed together.
+	Name string `json:"name"`
+
+	// FailureDomains is the list of failure domains the machine pool will be created in.
+	// Must match a key in the FailureDomains map stored on the cluster object.
+	// +optional
+	FailureDomains []string `json:"failureDomains,omitempty"`
+
+	// NodeDrainTimeout is the total amount of time that the controller will spend on draining a node.
+	// The default value is 0, meaning that the node can be drained without any time limitations.
+	// NOTE: NodeDrainTimeout is different from `kubectl drain --timeout`
+	// +optional
+	NodeDrainTimeout *metav1.Duration `json:"nodeDrainTimeout,omitempty"`
+
+	// NodeVolumeDetachTimeout is the total amount of time that the controller will spend on waiting for all volumes
+	// to be detached. The default value is 0, meaning that the volumes can be detached without any time limitations.
+	// +optional
+	NodeVolumeDetachTimeout *metav1.Duration `json:"nodeVolumeDetachTimeout,omitempty"`
+
+	// NodeDeletionTimeout defines how long the controller will attempt to delete the Node that the MachinePool
+	// hosts after the MachinePool is marked for deletion. A duration of 0 will retry deletion indefinitely.
+	// Defaults to 10 seconds.
+	// +optional
+	NodeDeletionTimeout *metav1.Duration `json:"nodeDeletionTimeout,omitempty"`
+
+	// Minimum number of seconds for which a newly created machine pool should
+	// be ready.
+	// Defaults to 0 (machine will be considered available as soon as it
+	// is ready)
+	// +optional
+	MinReadySeconds *int32 `json:"minReadySeconds,omitempty"`
+
+	// Replicas is the number of nodes belonging to this pool.
+	// If the value is nil, the MachinePool is created without the number of Replicas (defaulting to 1)
+	// and it's assumed that an external entity (like cluster autoscaler) is responsible for the management
+	// of this value.
+	// +optional
+	Replicas *int32 `json:"replicas,omitempty"`
+
+	// Variables can be used to customize the MachinePool through patches.
+	// +optional
+	Variables *MachinePoolVariables `json:"variables,omitempty"`
+}
+
+// ClusterVariable can be used to customize the Cluster through patches. Each ClusterVariable is associated with a
+// Variable definition in the ClusterClass `status` variables.
 type ClusterVariable struct {
 	// Name of the variable.
 	Name string `json:"name"`
+
+	// DefinitionFrom specifies where the definition of this Variable is from.
+	//
+	// Deprecated: This field is deprecated, must not be set anymore and is going to be removed in the next apiVersion.
+	//
+	// +optional
+	DefinitionFrom string `json:"definitionFrom,omitempty"`
 
 	// Value of the variable.
 	// Note: the value will be validated against the schema of the corresponding ClusterClassVariable
@@ -252,10 +338,30 @@ type ClusterVariable struct {
 	Value apiextensionsv1.JSON `json:"value"`
 }
 
+// ControlPlaneVariables can be used to provide variables for the ControlPlane.
+type ControlPlaneVariables struct {
+	// Overrides can be used to override Cluster level variables.
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	Overrides []ClusterVariable `json:"overrides,omitempty"`
+}
+
 // MachineDeploymentVariables can be used to provide variables for a specific MachineDeployment.
 type MachineDeploymentVariables struct {
 	// Overrides can be used to override Cluster level variables.
 	// +optional
+	// +listType=map
+	// +listMapKey=name
+	Overrides []ClusterVariable `json:"overrides,omitempty"`
+}
+
+// MachinePoolVariables can be used to provide variables for a specific MachinePool.
+type MachinePoolVariables struct {
+	// Overrides can be used to override Cluster level variables.
+	// +optional
+	// +listType=map
+	// +listMapKey=name
 	Overrides []ClusterVariable `json:"overrides,omitempty"`
 }
 
@@ -330,7 +436,11 @@ type ClusterStatus struct {
 	// +optional
 	InfrastructureReady bool `json:"infrastructureReady"`
 
-	// ControlPlaneReady defines if the control plane is ready.
+	// ControlPlaneReady denotes if the control plane became ready during initial provisioning
+	// to receive requests.
+	// NOTE: this field is part of the Cluster API contract and it is used to orchestrate provisioning.
+	// The value of this field is never updated after provisioning is completed. Please use conditions
+	// to check the operational state of the control plane.
 	// +optional
 	ControlPlaneReady bool `json:"controlPlaneReady"`
 
@@ -398,6 +508,7 @@ func (v APIEndpoint) String() string {
 // +kubebuilder:resource:path=clusters,shortName=cl,scope=Namespaced,categories=cluster-api
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="ClusterClass",type="string",JSONPath=".spec.topology.class",description="ClusterClass of this Cluster, empty if the Cluster is not using a ClusterClass"
 // +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase",description="Cluster status such as Pending/Provisioning/Provisioned/Deleting/Failed"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Cluster"
 // +kubebuilder:printcolumn:name="Version",type="string",JSONPath=".spec.topology.version",description="Kubernetes version associated with this Cluster"
@@ -411,6 +522,14 @@ type Cluster struct {
 	Status ClusterStatus `json:"status,omitempty"`
 }
 
+// GetClassKey returns the namespaced name for the class associated with this object.
+func (c *Cluster) GetClassKey() types.NamespacedName {
+	if c.Spec.Topology == nil {
+		return types.NamespacedName{}
+	}
+	return types.NamespacedName{Namespace: c.GetNamespace(), Name: c.Spec.Topology.Class}
+}
+
 // GetConditions returns the set of conditions for this object.
 func (c *Cluster) GetConditions() Conditions {
 	return c.Status.Conditions
@@ -422,8 +541,9 @@ func (c *Cluster) SetConditions(conditions Conditions) {
 }
 
 // GetIPFamily returns a ClusterIPFamily from the configuration provided.
-// Note: IPFamily is not a concept in Kubernetes. It was originally introduced in CAPI for CAPD.
-// IPFamily may be dropped in a future release. More details at https://github.com/kubernetes-sigs/cluster-api/issues/7521
+//
+// Deprecated: IPFamily is not a concept in Kubernetes. It was originally introduced in CAPI for CAPD.
+// IPFamily will be dropped in a future release. More details at https://github.com/kubernetes-sigs/cluster-api/issues/7521
 func (c *Cluster) GetIPFamily() (ClusterIPFamily, error) {
 	var podCIDRs, serviceCIDRs []string
 	if c.Spec.ClusterNetwork != nil {
@@ -517,7 +637,7 @@ type ClusterList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Cluster{}, &ClusterList{})
+	objectTypes = append(objectTypes, &Cluster{}, &ClusterList{})
 }
 
 // FailureDomains is a slice of FailureDomains.
@@ -539,7 +659,7 @@ func (in FailureDomains) FilterControlPlane() FailureDomains {
 func (in FailureDomains) GetIDs() []*string {
 	ids := make([]*string, 0, len(in))
 	for id := range in {
-		ids = append(ids, pointer.String(id))
+		ids = append(ids, ptr.To(id))
 	}
 	return ids
 }

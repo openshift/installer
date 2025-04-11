@@ -19,6 +19,9 @@ import (
 // swagger:model VolumeGroup
 type VolumeGroup struct {
 
+	// Indicates whether the volume group is for auxiliary volumes or master volumes
+	Auxiliary *bool `json:"auxiliary,omitempty"`
+
 	// The name of consistencyGroup at storage host level
 	ConsistencyGroupName string `json:"consistencyGroupName,omitempty"`
 
@@ -30,6 +33,9 @@ type VolumeGroup struct {
 	// Required: true
 	Name *string `json:"name"`
 
+	// Indicates the replication site of the volume group
+	ReplicationSites []string `json:"replicationSites"`
+
 	// Replication status of volume group
 	ReplicationStatus string `json:"replicationStatus,omitempty"`
 
@@ -38,6 +44,9 @@ type VolumeGroup struct {
 
 	// Status details of the volume group
 	StatusDescription *StatusDescription `json:"statusDescription,omitempty"`
+
+	// Indicates the storage pool of the volume group
+	StoragePool string `json:"storagePool,omitempty"`
 }
 
 // Validate validates this volume group

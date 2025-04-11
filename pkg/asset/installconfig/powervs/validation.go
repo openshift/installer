@@ -33,8 +33,8 @@ func Validate(config *types.InstallConfig) error {
 			// Each machine pool CIDR must have 24 significant bits (/24)
 			if bits, _ := config.Networking.MachineNetwork[i].CIDR.Mask.Size(); bits != 24 {
 				// If not, create an error displaying the CIDR in the install config vs the expectation (/24)
-				fldPath := field.NewPath("Networking")
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("MachineNetwork").Child("CIDR"), (&config.Networking.MachineNetwork[i].CIDR).String(), "Machine Pool CIDR must be /24."))
+				fldPath := field.NewPath("networking")
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("machineNetwork").Index(i).Child("cidr"), (&config.Networking.MachineNetwork[i].CIDR).String(), "Machine Pool CIDR must be /24."))
 			}
 		}
 	}
@@ -255,14 +255,23 @@ func ValidateResourceGroup(client API, ic *types.InstallConfig) error {
 	return nil
 }
 
-// ValidateSystemTypeForRegion checks if the specified sysType is available in the target region.
-func ValidateSystemTypeForRegion(client API, ic *types.InstallConfig) error {
+// ValidateSystemTypeForZone checks if the specified sysType is available in the target zone.
+func ValidateSystemTypeForZone(client API, ic *types.InstallConfig) error {
+	var (
+		availableOnes []string
+		err           error
+	)
+
 	if ic.ControlPlane == nil || ic.ControlPlane.Platform.PowerVS == nil || ic.ControlPlane.Platform.PowerVS.SysType == "" {
 		return nil
 	}
-	availableOnes, err := powervstypes.AvailableSysTypes(ic.PowerVS.Region)
+	availableOnes, err = client.GetDatacenterSupportedSystems(context.Background(), ic.PowerVS.Zone)
 	if err != nil {
-		return fmt.Errorf("failed to obtain available SysTypes for: %s", ic.PowerVS.Region)
+		// Fallback to hardcoded list
+		availableOnes, err = powervstypes.AvailableSysTypes(ic.PowerVS.Region, ic.PowerVS.Zone)
+		if err != nil {
+			return fmt.Errorf("failed to obtain available SysTypes for: %s", ic.PowerVS.Zone)
+		}
 	}
 	requested := ic.ControlPlane.Platform.PowerVS.SysType
 	found := false
@@ -275,7 +284,7 @@ func ValidateSystemTypeForRegion(client API, ic *types.InstallConfig) error {
 	if found {
 		return nil
 	}
-	return fmt.Errorf("%s is not available in: %s", requested, ic.PowerVS.Region)
+	return fmt.Errorf("%s is not available in: %s, these are %v", requested, ic.PowerVS.Zone, availableOnes)
 }
 
 // ValidateServiceInstance validates the optional service instance GUID in our install config.
@@ -302,6 +311,29 @@ func ValidateServiceInstance(client API, ic *types.InstallConfig) error {
 		}
 		if !found {
 			return errors.New("platform:powervs:serviceInstanceGUID has an invalid guid")
+		}
+	}
+
+	return nil
+}
+
+// ValidateTransitGateway validates the optional transit gateway name in our install config.
+func ValidateTransitGateway(client API, ic *types.InstallConfig) error {
+	var (
+		id  string
+		err error
+	)
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+	defer cancel()
+
+	if len(ic.PowerVS.TGName) > 0 {
+		id, err = client.TransitGatewayID(ctx, ic.PowerVS.TGName)
+		if err != nil {
+			return err
+		}
+		if id == "" {
+			return errors.New("platform:powervs:tgName has an invalid name")
 		}
 	}
 

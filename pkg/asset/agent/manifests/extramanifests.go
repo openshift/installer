@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -33,7 +34,7 @@ func (em *ExtraManifests) Dependencies() []asset.Asset {
 }
 
 // Generate is not required for ExtraManifests.
-func (em *ExtraManifests) Generate(dependencies asset.Parents) error {
+func (em *ExtraManifests) Generate(_ context.Context, dependencies asset.Parents) error {
 	return nil
 }
 

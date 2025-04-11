@@ -24,18 +24,18 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/bootfromvolume"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/keypairs"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/schedulerhints"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
+	"github.com/gophercloud/gophercloud/v2/openstack/blockstorage/v3/volumes"
+	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/keypairs"
+	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servers"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/ports"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	orcv1alpha1 "github.com/k-orc/openstack-resource-controller/api/v1alpha1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-openstack/pkg/clients"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/filterconvert"
@@ -52,23 +52,8 @@ func (s *Service) CreateInstance(eventObject runtime.Object, instanceSpec *Insta
 	return s.createInstanceImpl(eventObject, instanceSpec, retryIntervalInstanceStatus, portIDs)
 }
 
-func (s *Service) getAndValidateFlavor(flavorName string) (*flavors.Flavor, error) {
-	f, err := s.getComputeClient().GetFlavorFromName(flavorName)
-	if err != nil {
-		return nil, fmt.Errorf("error getting flavor from flavor name %s: %v", flavorName, err)
-	}
-
-	return f, nil
-}
-
 func (s *Service) createInstanceImpl(eventObject runtime.Object, instanceSpec *InstanceSpec, retryInterval time.Duration, portIDs []string) (*InstanceStatus, error) {
-	var server *clients.ServerExt
 	portList := []servers.Network{}
-
-	flavor, err := s.getAndValidateFlavor(instanceSpec.Flavor)
-	if err != nil {
-		return nil, err
-	}
 
 	if len(portIDs) == 0 {
 		return nil, fmt.Errorf("portIDs cannot be empty")
@@ -89,36 +74,49 @@ func (s *Service) createInstanceImpl(eventObject runtime.Object, instanceSpec *I
 		serverImageRef = instanceSpec.ImageID
 	}
 
+	blockDevices, err := s.getBlockDevices(eventObject, instanceSpec, instanceSpec.ImageID, instanceCreateTimeout, retryInterval)
+	if err != nil {
+		return nil, err
+	}
+
 	var serverCreateOpts servers.CreateOptsBuilder = servers.CreateOpts{
 		Name:             instanceSpec.Name,
 		ImageRef:         serverImageRef,
-		FlavorRef:        flavor.ID,
+		FlavorRef:        instanceSpec.FlavorID,
 		AvailabilityZone: instanceSpec.FailureDomain,
 		Networks:         portList,
 		UserData:         []byte(instanceSpec.UserData),
 		Tags:             instanceSpec.Tags,
 		Metadata:         instanceSpec.Metadata,
 		ConfigDrive:      &instanceSpec.ConfigDrive,
+		BlockDevice:      blockDevices,
 	}
 
-	blockDevices, err := s.getBlockDevices(eventObject, instanceSpec, instanceSpec.ImageID, instanceCreateTimeout, retryInterval)
-	if err != nil {
-		return nil, err
-	}
-	if len(blockDevices) > 0 {
-		serverCreateOpts = bootfromvolume.CreateOptsExt{
-			CreateOptsBuilder: serverCreateOpts,
-			BlockDevice:       blockDevices,
+	schedulerAdditionalProperties := make(map[string]interface{})
+
+	for _, prop := range instanceSpec.SchedulerAdditionalProperties {
+		switch prop.Value.Type {
+		case infrav1.SchedulerHintTypeBool:
+			schedulerAdditionalProperties[prop.Name] = *prop.Value.Bool
+		case infrav1.SchedulerHintTypeString:
+			schedulerAdditionalProperties[prop.Name] = *prop.Value.String
+		case infrav1.SchedulerHintTypeNumber:
+			schedulerAdditionalProperties[prop.Name] = *prop.Value.Number
 		}
 	}
 
-	serverCreateOpts = applyServerGroupID(serverCreateOpts, instanceSpec.ServerGroupID)
-
-	server, err = s.getComputeClient().CreateServer(keypairs.CreateOptsExt{
-		CreateOptsBuilder: serverCreateOpts,
-		KeyName:           instanceSpec.SSHKeyName,
-	})
+	server, err := s.getComputeClient().CreateServer(
+		keypairs.CreateOptsExt{
+			CreateOptsBuilder: serverCreateOpts,
+			KeyName:           instanceSpec.SSHKeyName,
+		},
+		servers.SchedulerHintOpts{
+			Group:                instanceSpec.ServerGroupID,
+			AdditionalProperties: schedulerAdditionalProperties,
+		},
+	)
 	if err != nil {
+		record.Warnf(eventObject, "FailedCreateServer", "Failed to create server %s: %v", instanceSpec.Name, err)
 		return nil, fmt.Errorf("error creating Openstack instance: %v", err)
 	}
 
@@ -212,7 +210,6 @@ func (s *Service) getOrCreateVolumeBuilder(eventObject runtime.Object, instanceS
 		Description:      description,
 		Size:             blockDeviceSpec.SizeGiB,
 		ImageID:          imageID,
-		Multiattach:      false,
 		AvailabilityZone: availabilityZone,
 		VolumeType:       volType,
 	}
@@ -246,8 +243,8 @@ func resolveVolumeOpts(instanceSpec *InstanceSpec, volumeOpts *infrav1.BlockDevi
 
 // getBlockDevices returns a list of block devices that were created and attached to the instance. It returns an error
 // if the root volume or any of the additional block devices could not be created.
-func (s *Service) getBlockDevices(eventObject runtime.Object, instanceSpec *InstanceSpec, imageID string, timeout time.Duration, retryInterval time.Duration) ([]bootfromvolume.BlockDevice, error) {
-	blockDevices := []bootfromvolume.BlockDevice{}
+func (s *Service) getBlockDevices(eventObject runtime.Object, instanceSpec *InstanceSpec, imageID string, timeout time.Duration, retryInterval time.Duration) ([]servers.BlockDevice, error) {
+	blockDevices := make([]servers.BlockDevice, 0, 1+len(instanceSpec.AdditionalBlockDevices))
 
 	if hasRootVolume(instanceSpec) {
 		rootVolumeToBlockDevice := infrav1.AdditionalBlockDevice{
@@ -262,17 +259,17 @@ func (s *Service) getBlockDevices(eventObject runtime.Object, instanceSpec *Inst
 		if err != nil {
 			return nil, err
 		}
-		blockDevices = append(blockDevices, bootfromvolume.BlockDevice{
-			SourceType:          bootfromvolume.SourceVolume,
-			DestinationType:     bootfromvolume.DestinationVolume,
+		blockDevices = append(blockDevices, servers.BlockDevice{
+			SourceType:          servers.SourceVolume,
+			DestinationType:     servers.DestinationVolume,
 			UUID:                rootVolume.ID,
 			BootIndex:           0,
 			DeleteOnTermination: true,
 		})
 	} else {
-		blockDevices = append(blockDevices, bootfromvolume.BlockDevice{
-			SourceType:          bootfromvolume.SourceImage,
-			DestinationType:     bootfromvolume.DestinationLocal,
+		blockDevices = append(blockDevices, servers.BlockDevice{
+			SourceType:          servers.SourceImage,
+			DestinationType:     servers.DestinationLocal,
 			UUID:                imageID,
 			BootIndex:           0,
 			DeleteOnTermination: true,
@@ -284,8 +281,8 @@ func (s *Service) getBlockDevices(eventObject runtime.Object, instanceSpec *Inst
 
 		var bdUUID string
 		var localDiskSizeGiB int
-		var sourceType bootfromvolume.SourceType
-		var destinationType bootfromvolume.DestinationType
+		var sourceType servers.SourceType
+		var destinationType servers.DestinationType
 
 		// There is also a validation in the openstackmachine webhook.
 		if blockDeviceSpec.Name == "root" {
@@ -298,17 +295,17 @@ func (s *Service) getBlockDevices(eventObject runtime.Object, instanceSpec *Inst
 				return nil, err
 			}
 			bdUUID = blockDevice.ID
-			sourceType = bootfromvolume.SourceVolume
-			destinationType = bootfromvolume.DestinationVolume
+			sourceType = servers.SourceVolume
+			destinationType = servers.DestinationVolume
 		} else if blockDeviceSpec.Storage.Type == infrav1.LocalBlockDevice {
-			sourceType = bootfromvolume.SourceBlank
-			destinationType = bootfromvolume.DestinationLocal
+			sourceType = servers.SourceBlank
+			destinationType = servers.DestinationLocal
 			localDiskSizeGiB = blockDeviceSpec.SizeGiB
 		} else {
 			return nil, fmt.Errorf("invalid block device type %s", blockDeviceSpec.Storage.Type)
 		}
 
-		blockDevices = append(blockDevices, bootfromvolume.BlockDevice{
+		blockDevices = append(blockDevices, servers.BlockDevice{
 			SourceType:          sourceType,
 			DestinationType:     destinationType,
 			UUID:                bdUUID,
@@ -322,7 +319,7 @@ func (s *Service) getBlockDevices(eventObject runtime.Object, instanceSpec *Inst
 	// Wait for any volumes in the block devices to become available
 	if len(blockDevices) > 0 {
 		for _, bd := range blockDevices {
-			if bd.SourceType == bootfromvolume.SourceVolume {
+			if bd.SourceType == servers.SourceVolume {
 				if err := s.waitForVolume(bd.UUID, timeout, retryInterval); err != nil {
 					return nil, fmt.Errorf("volume %s did not become available: %w", bd.UUID, err)
 				}
@@ -333,46 +330,101 @@ func (s *Service) getBlockDevices(eventObject runtime.Object, instanceSpec *Inst
 	return blockDevices, nil
 }
 
-// applyServerGroupID adds a scheduler hint to the CreateOptsBuilder, if the
-// spec contains a server group ID.
-func applyServerGroupID(opts servers.CreateOptsBuilder, serverGroupID string) servers.CreateOptsBuilder {
-	if serverGroupID != "" {
-		return schedulerhints.CreateOptsExt{
-			CreateOptsBuilder: opts,
-			SchedulerHints: schedulerhints.SchedulerHints{
-				Group: serverGroupID,
-			},
-		}
+// Helper function for getting image ID from name, ID, or tags.
+func (s *Service) GetImageID(ctx context.Context, k8sClient client.Client, namespace string, image infrav1.ImageParam) (*string, error) {
+	switch {
+	case image.ID != nil:
+		return image.ID, nil
+	case image.Filter != nil:
+		return s.getImageIDByFilter(image.Filter)
+	case image.ImageRef != nil:
+		return s.getImageIDByReference(ctx, k8sClient, namespace, image.ImageRef)
+	default:
+		// Should have been caught by validation
+		return nil, errors.New("image id, filter, and reference are all nil")
 	}
-	return opts
 }
 
-// Helper function for getting image ID from name, ID, or tags.
-func (s *Service) GetImageID(image infrav1.ImageParam) (string, error) {
-	if image.ID != nil {
-		return *image.ID, nil
-	}
-
-	if image.Filter == nil {
-		// Should have been caught by validation
-		return "", errors.New("image id and filter are both nil")
-	}
-
-	listOpts := filterconvert.ImageFilterToListOpts(image.Filter)
+func (s *Service) getImageIDByFilter(filter *infrav1.ImageFilter) (*string, error) {
+	listOpts := filterconvert.ImageFilterToListOpts(filter)
 	allImages, err := s.getImageClient().ListImages(listOpts)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	switch len(allImages) {
 	case 0:
-		return "", fmt.Errorf("no images were found with the given image filter: %v", image)
+		var name string
+		if filter.Name != nil {
+			name = *filter.Name
+		}
+		return nil, fmt.Errorf("no images were found with the given image filter: name=%v, tags=%v", name, filter.Tags)
 	case 1:
-		return allImages[0].ID, nil
+		return &allImages[0].ID, nil
 	default:
 		// this should never happen
-		return "", fmt.Errorf("too many images were found with the given image filter: %v", image)
+		var name string
+		if filter.Name != nil {
+			name = *filter.Name
+		}
+		return nil, fmt.Errorf("too many images were found with the given image filter: name=%v, tags=%v", name, filter.Tags)
 	}
+}
+
+func (s *Service) getImageIDByReference(ctx context.Context, k8sClient client.Client, namespace string, ref *infrav1.ResourceReference) (*string, error) {
+	orcImage := &orcv1alpha1.Image{}
+	err := k8sClient.Get(ctx, client.ObjectKey{
+		Namespace: namespace,
+		Name:      ref.Name,
+	}, orcImage)
+	if err != nil {
+		// Not an error if it doesn't exist yet
+		if apierrors.IsNotFound(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	if orcv1alpha1.IsAvailable(orcImage) {
+		return orcImage.Status.ID, nil
+	}
+
+	if !orcv1alpha1.IsReconciliationComplete(orcImage) {
+		return nil, nil
+	}
+
+	err = orcv1alpha1.GetTerminalError(orcImage)
+	if err != nil {
+		return nil, capoerrors.Terminal(infrav1.DependencyFailedReason, orcImage.Kind+" "+orcImage.GetNamespace()+"/"+orcImage.GetName()+" failed: "+err.Error())
+	}
+
+	return nil, nil
+}
+
+// Helper to resolve a flavor ID.
+// TODO: needs a breaking CRD change so it works like images.
+func (s *Service) GetFlavorID(flavorID, flavorName *string) (string, error) {
+	if flavorID != nil {
+		return *flavorID, nil
+	}
+
+	if flavorName == nil {
+		return "", fmt.Errorf("no flavors were found: no name set")
+	}
+
+	allFlavors, err := s.getComputeClient().ListFlavors()
+	if err != nil {
+		return "", err
+	}
+
+	for _, flavor := range allFlavors {
+		if flavor.Name == *flavorName {
+			return flavor.ID, nil
+		}
+	}
+
+	return "", fmt.Errorf("no flavors were found: name=%v", *flavorName)
 }
 
 // GetManagementPort returns the port which is used for management and external
@@ -521,6 +573,7 @@ func (s *Service) GetInstanceStatusByName(eventObject runtime.Object, name strin
 
 	if len(serverList) > 1 {
 		record.Warnf(eventObject, "DuplicateServerNames", "Found %d servers with name '%s'. This is likely to cause errors.", len(serverList), name)
+		return nil, capoerrors.ErrMultipleMatches
 	}
 
 	// Return the first returned server, if any

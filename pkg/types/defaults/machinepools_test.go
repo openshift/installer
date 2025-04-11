@@ -8,8 +8,8 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-func defaultMachinePool(name string) *types.MachinePool {
-	repCount := int64(3)
+func defaultMachinePoolWithReplicaCount(name string, replicaCount int) *types.MachinePool {
+	repCount := int64(replicaCount)
 	return &types.MachinePool{
 		Name:           name,
 		Replicas:       &repCount,
@@ -18,11 +18,12 @@ func defaultMachinePool(name string) *types.MachinePool {
 	}
 }
 
+func defaultMachinePool(name string) *types.MachinePool {
+	return defaultMachinePoolWithReplicaCount(name, 3)
+}
+
 func defaultEdgeMachinePool(name string) *types.MachinePool {
-	pool := defaultMachinePool(name)
-	defaultEdgeReplicaCount := int64(0)
-	pool.Replicas = &defaultEdgeReplicaCount
-	return pool
+	return defaultMachinePoolWithReplicaCount(name, 0)
 }
 
 func TestSetMahcinePoolDefaults(t *testing.T) {
@@ -42,6 +43,16 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 			name:     "empty",
 			pool:     &types.MachinePool{Replicas: &defaultEdgeReplicaCount},
 			expected: defaultEdgeMachinePool(""),
+		},
+		{
+			name:     "edge",
+			pool:     &types.MachinePool{Name: "edge"},
+			expected: defaultEdgeMachinePool("edge"),
+		},
+		{
+			name:     "arbiter",
+			pool:     &types.MachinePool{Name: "arbiter"},
+			expected: defaultMachinePoolWithReplicaCount("arbiter", 0),
 		},
 		{
 			name:     "default",
@@ -79,17 +90,6 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 			expected: func() *types.MachinePool {
 				p := defaultEdgeMachinePool("test-name")
 				repCount := int64(5)
-				p.Replicas = &repCount
-				return p
-			}(),
-		},
-		{
-			name:     "libvirt replicas",
-			pool:     &types.MachinePool{},
-			platform: "libvirt",
-			expected: func() *types.MachinePool {
-				p := defaultMachinePool("")
-				repCount := int64(1)
 				p.Replicas = &repCount
 				return p
 			}(),

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC1091  # using path on bootstrap machine
+# shellcheck source=bootstrap-service-record.sh
 . /usr/local/bin/bootstrap-service-record.sh
 
  /usr/bin/kubelet \

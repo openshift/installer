@@ -45,7 +45,7 @@ feature set.
         The default is 10.128.0.0/14 with a host prefix of /23.
         * `cidr` (required [IP network](#ip-networks)): The IP block address pool.
         * `hostPrefix` (required integer): The prefix size to allocate to each node from the CIDR.
-        For example, 24 would allocate 2^8=256 addresses to each node. If this field is not used by the plugin, it can be left unset.
+        For example, 24 would allocate 2^8=256 addresses to each node. If this field is not used by the plugin, it can be left unset. When multiple CIDRs of the same family (i.e. IPv4/IPv6) are present, their `hostPrefix` value must be the same.
     * `machineNetwork` (optional array of objects): The IP address pools for machines.
         * `cidr` (required [IP network](#ip-networks)): The IP block address pool.
             The default is 10.0.0.0/16 for all platforms other than libvirt.

@@ -20,19 +20,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/portsbinding"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/portsecurity"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
+	"github.com/gophercloud/gophercloud/v2"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/portsbinding"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/portsecurity"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/ports"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 
+	infrav1alpha1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1"
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-openstack/internal/futures"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/scope"
 	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
@@ -169,6 +170,9 @@ func (s *Service) CreatePort(eventObject runtime.Object, portSpec *infrav1.Resol
 		createOpts.FixedIPs = fixedIPs
 	}
 	if portSpec.SecurityGroups != nil {
+		if ptr.Deref(portSpec.DisablePortSecurity, false) {
+			return nil, errors.New("security groups cannot be set when port security is disabled")
+		}
 		createOpts.SecurityGroups = &portSpec.SecurityGroups
 	}
 	builder = createOpts
@@ -192,7 +196,7 @@ func (s *Service) CreatePort(eventObject runtime.Object, portSpec *infrav1.Resol
 
 	port, err := s.client.CreatePort(builder)
 	if err != nil {
-		record.Warnf(eventObject, "FailedCreatePort", "Failed to create port %s: %v", port.Name, err)
+		record.Warnf(eventObject, "FailedCreatePort", "Failed to create port %s: %v", portSpec.Name, err)
 		return nil, err
 	}
 
@@ -324,7 +328,7 @@ func getPortName(baseName string, portSpec *infrav1.PortOpts, netIndex int) stri
 	return fmt.Sprintf("%s-%d", baseName, netIndex)
 }
 
-func (s *Service) CreatePorts(eventObject runtime.Object, desiredPorts []infrav1.ResolvedPortSpec, resources *infrav1.MachineResources) error {
+func (s *Service) CreatePorts(eventObject runtime.Object, desiredPorts []infrav1.ResolvedPortSpec, resources *infrav1alpha1.ServerResources) error {
 	for i := range desiredPorts {
 		// Skip creation of ports which already exist
 		if i < len(resources.Ports) {
@@ -346,12 +350,11 @@ func (s *Service) CreatePorts(eventObject runtime.Object, desiredPorts []infrav1
 	return nil
 }
 
-// ConstructPorts builds an array of ports from the machine spec.
-// If no ports are in the spec, returns a single port for a network connection to the default cluster network.
-func (s *Service) ConstructPorts(spec *infrav1.OpenStackMachineSpec, clusterResourceName, baseName string, defaultNetwork *infrav1.NetworkStatusWithSubnets, managedSecurityGroup *string, baseTags []string) ([]infrav1.ResolvedPortSpec, error) {
-	ports := spec.Ports
-
-	defaultSecurityGroupIDs, err := s.GetSecurityGroups(spec.SecurityGroups)
+// ConstructPorts builds an array of ports from given parameters.
+// If no ports are provided, returns a single port for a network connection to the default cluster network. We'll want to remove this default port in the future
+// to call this function without dependency on the default network.
+func (s *Service) ConstructPorts(instancePorts []infrav1.PortOpts, instanceSecurityGroups []infrav1.SecurityGroupParam, instanceTrunk bool, clusterResourceName, baseName string, defaultNetwork *infrav1.NetworkStatusWithSubnets, managedSecurityGroup *string, baseTags []string) ([]infrav1.ResolvedPortSpec, error) {
+	defaultSecurityGroupIDs, err := s.GetSecurityGroups(instanceSecurityGroups)
 	if err != nil {
 		return nil, fmt.Errorf("error getting security groups: %v", err)
 	}
@@ -359,26 +362,15 @@ func (s *Service) ConstructPorts(spec *infrav1.OpenStackMachineSpec, clusterReso
 		defaultSecurityGroupIDs = append(defaultSecurityGroupIDs, *managedSecurityGroup)
 	}
 
-	// Ensure user-specified ports have all required fields
-	resolvedPorts, err := s.normalizePorts(ports, clusterResourceName, baseName, spec.Trunk, defaultSecurityGroupIDs, defaultNetwork, baseTags)
-	if err != nil {
-		return nil, err
+	// If no ports are specified, create a single port which will get default options.
+	if len(instancePorts) == 0 {
+		instancePorts = make([]infrav1.PortOpts, 1)
 	}
 
-	// no networks or ports found in the spec, so create a port on the cluster network
-	if len(resolvedPorts) == 0 {
-		resolvedPorts = make([]infrav1.ResolvedPortSpec, 1)
-		resolvedPort := &resolvedPorts[0]
-		resolvedPort.Name = getPortName(baseName, nil, 0)
-		resolvedPort.Description = names.GetDescription(clusterResourceName)
-		if len(baseTags) > 0 {
-			resolvedPort.Tags = baseTags
-		}
-		if spec.Trunk {
-			resolvedPort.Trunk = &spec.Trunk
-		}
-		resolvedPort.SecurityGroups = defaultSecurityGroupIDs
-		resolvedPort.NetworkID, resolvedPort.FixedIPs, _ = defaultNetworkTarget(defaultNetwork)
+	// Ensure user-specified ports have all required fields
+	resolvedPorts, err := s.normalizePorts(instancePorts, clusterResourceName, baseName, instanceTrunk, defaultSecurityGroupIDs, defaultNetwork, baseTags)
+	if err != nil {
+		return nil, err
 	}
 
 	// trunk support is required if any port has trunk enabled
@@ -427,7 +419,7 @@ func (s *Service) normalizePorts(ports []infrav1.PortOpts, clusterResourceName, 
 		}
 
 		// Tags are inherited base tags plus any port-specific tags
-		normalizedPort.Tags = futures.SlicesConcat(baseTags, port.Tags)
+		normalizedPort.Tags = slices.Concat(baseTags, port.Tags)
 
 		// No Trunk field specified for the port, inherit the machine default
 		if port.Trunk == nil {
@@ -445,13 +437,15 @@ func (s *Service) normalizePorts(ports []infrav1.PortOpts, clusterResourceName, 
 			return nil, err
 		}
 
-		// Resolve security groups
-		if len(port.SecurityGroups) == 0 {
-			normalizedPort.SecurityGroups = defaultSecurityGroupIDs
-		} else {
-			normalizedPort.SecurityGroups, err = s.GetSecurityGroups(port.SecurityGroups)
-			if err != nil {
-				return nil, fmt.Errorf("error getting security groups: %v", err)
+		// Resolve security groups when port security is not disabled
+		if !ptr.Deref(port.DisablePortSecurity, false) {
+			if len(port.SecurityGroups) == 0 {
+				normalizedPort.SecurityGroups = defaultSecurityGroupIDs
+			} else {
+				normalizedPort.SecurityGroups, err = s.GetSecurityGroups(port.SecurityGroups)
+				if err != nil {
+					return nil, fmt.Errorf("error getting security groups: %v", err)
+				}
 			}
 		}
 	}
@@ -510,7 +504,7 @@ func (s *Service) normalizePortTarget(port *infrav1.PortOpts, defaultNetwork *in
 				subnet, err := s.GetSubnetByParam(fixedIP.Subnet)
 				if err != nil {
 					// Multiple matches might be ok later when we restrict matches to a single network
-					if errors.Is(err, ErrMultipleMatches) {
+					if errors.Is(err, capoerrors.ErrMultipleMatches) {
 						s.scope.Logger().V(4).Info("Couldn't infer network from subnet", "subnetIndex", i, "err", err)
 						continue
 					}
@@ -563,9 +557,10 @@ func (s *Service) IsTrunkExtSupported() (trunknSupported bool, err error) {
 	return true, nil
 }
 
-// AdoptPorts looks for ports in desiredPorts which were previously created, and adds them to resources.Ports.
+// AdoptPortsServer looks for ports in desiredPorts which were previously created, and adds them to resources.Ports.
 // A port matches if it has the same name and network ID as the desired port.
-func (s *Service) AdoptPorts(scope *scope.WithLogger, desiredPorts []infrav1.ResolvedPortSpec, resources *infrav1.MachineResources) error {
+// TODO(emilien): remove this function: https://github.com/kubernetes-sigs/cluster-api-provider-openstack/pull/2071
+func (s *Service) AdoptPortsServer(scope *scope.WithLogger, desiredPorts []infrav1.ResolvedPortSpec, resources *infrav1alpha1.ServerResources) error {
 	// We can skip adoption if the ports are already in the status
 	if len(desiredPorts) == len(resources.Ports) {
 		return nil

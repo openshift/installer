@@ -3,11 +3,12 @@
 # oc for getting assets from an existing cluster to spin up multi-architecture compute clusters on libvirt.
 
 # The binaries in these images are dynamically linked
-FROM registry.ci.openshift.org/ocp/4.16:etcd AS etcd
-FROM registry.ci.openshift.org/ocp/4.16:hyperkube AS kas
+FROM registry.ci.openshift.org/ocp/4.17:etcd AS etcd
+FROM registry.ci.openshift.org/ocp/4.17:hyperkube AS kas
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.23-openshift-4.19 AS builder
 ARG TAGS="libvirt fipscapable"
+ARG SKIP_ENVTEST="y"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=etcd /usr/bin/etcd /usr/bin/etcd
@@ -16,7 +17,7 @@ RUN mkdir -p cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH) && \
 	mv /usr/bin/etcd /usr/bin/kube-apiserver -t cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH)/
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/4.16:cli as cli
+FROM registry.ci.openshift.org/ocp/4.17:cli as cli
 FROM quay.io/multi-arch/yq:3.3.0 as yq3
 FROM quay.io/multi-arch/yq:4.30.5 as yq4
 
@@ -46,6 +47,5 @@ RUN ln -s /bin/yq-go /bin/yq && chmod +x /bin/yq
 
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
-ENV PATH /bin
 ENV HOME /output
 WORKDIR /output

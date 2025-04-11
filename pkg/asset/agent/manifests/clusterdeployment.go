@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -44,13 +45,17 @@ func (*ClusterDeployment) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ClusterDeployment manifest.
-func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
+func (cd *ClusterDeployment) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	installConfig := &agent.OptionalInstallConfig{}
 	dependencies.Get(agentWorkflow, installConfig)
 
 	// This manifest is not required for AddNodes workflow
 	if agentWorkflow.Workflow == workflow.AgentWorkflowTypeAddNodes {
+		// Add empty file to keep config ISO loader happy
+		cd.File = &asset.File{
+			Filename: clusterDeploymentFilename,
+		}
 		return nil
 	}
 

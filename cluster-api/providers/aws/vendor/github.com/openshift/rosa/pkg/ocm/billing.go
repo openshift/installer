@@ -98,3 +98,51 @@ func HasValidContracts(cloudAccount *v1.CloudAccount) bool {
 func IsValidAWSAccount(account string) bool {
 	return awsAccountRegexp.MatchString(account)
 }
+
+func ValidateBillingAccount(billingAccount string) error {
+	if billingAccount == "" {
+		return fmt.Errorf("A billing account number is required")
+	}
+	if !IsValidAWSAccount(billingAccount) {
+		return fmt.Errorf("Provided billing account number %s is not valid. "+
+			"Rerun the command with a valid billing account number", billingAccount)
+	}
+	return nil
+}
+
+func GenerateContractDisplay(contract *v1.Contract) string {
+	format := "Jan 02, 2006"
+	dimensions := contract.Dimensions()
+
+	numberOfVCPUs, numberOfClusters := GetNumsOfVCPUsAndClusters(dimensions)
+
+	contractDisplay := fmt.Sprintf(`
+   +---------------------+----------------+ 
+   | Start Date          |%s    | 
+   | End Date            |%s    | 
+   | Number of vCPUs:    |'%s'             | 
+   | Number of clusters: |'%s'             | 
+   +---------------------+----------------+ 
+`,
+		contract.StartDate().Format(format),
+		contract.EndDate().Format(format),
+		strconv.Itoa(numberOfVCPUs),
+		strconv.Itoa(numberOfClusters),
+	)
+
+	return contractDisplay
+}
+
+func GetBillingAccountContracts(cloudAccounts []*v1.CloudAccount,
+	billingAccount string) ([]*v1.Contract, bool) {
+	var contracts []*v1.Contract
+	for _, account := range cloudAccounts {
+		if account.CloudAccountID() == billingAccount {
+			contracts = account.Contracts()
+			if HasValidContracts(account) {
+				return contracts, true
+			}
+		}
+	}
+	return contracts, false
+}

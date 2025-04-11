@@ -54,7 +54,7 @@ func (a *testStoreAssetA) Dependencies() []asset.Asset {
 	return dependenciesTestStoreAsset(a)
 }
 
-func (a *testStoreAssetA) Generate(asset.Parents) error {
+func (a *testStoreAssetA) Generate(context.Context, asset.Parents) error {
 	return generateTestStoreAsset(a)
 }
 
@@ -76,7 +76,7 @@ func (a *testStoreAssetB) Dependencies() []asset.Asset {
 	return dependenciesTestStoreAsset(a)
 }
 
-func (a *testStoreAssetB) Generate(asset.Parents) error {
+func (a *testStoreAssetB) Generate(context.Context, asset.Parents) error {
 	return generateTestStoreAsset(a)
 }
 
@@ -98,7 +98,7 @@ func (a *testStoreAssetC) Dependencies() []asset.Asset {
 	return dependenciesTestStoreAsset(a)
 }
 
-func (a *testStoreAssetC) Generate(asset.Parents) error {
+func (a *testStoreAssetC) Generate(context.Context, asset.Parents) error {
 	return generateTestStoreAsset(a)
 }
 
@@ -120,7 +120,7 @@ func (a *testStoreAssetD) Dependencies() []asset.Asset {
 	return dependenciesTestStoreAsset(a)
 }
 
-func (a *testStoreAssetD) Generate(asset.Parents) error {
+func (a *testStoreAssetD) Generate(context.Context, asset.Parents) error {
 	return generateTestStoreAsset(a)
 }
 
@@ -282,7 +282,7 @@ func TestStoreFetch(t *testing.T) {
 					source: generatedSource,
 				}
 			}
-			err := store.Fetch(context.TODO(), assets[tc.target])
+			err := store.Fetch(context.Background(), assets[tc.target])
 			assert.NoError(t, err, "error fetching asset")
 			assert.EqualValues(t, tc.expectedGenerationLog, generationLog)
 		})
@@ -376,7 +376,7 @@ func TestStoreFetchOnDiskAssets(t *testing.T) {
 			for _, name := range tc.onDiskAssets {
 				onDiskAssets[reflect.TypeOf(assets[name])] = true
 			}
-			err := store.fetch(context.TODO(), assets[tc.target], "")
+			err := store.fetch(context.Background(), assets[tc.target], "")
 			assert.NoError(t, err, "unexpected error")
 			assert.EqualValues(t, tc.expectedGenerationLog, generationLog)
 			assert.Equal(t, tc.expectedDirty, store.assets[reflect.TypeOf(assets[tc.target])].anyParentsDirty)
@@ -396,7 +396,7 @@ func TestStoreFetchIdempotency(t *testing.T) {
 		}
 		assets := []asset.WritableAsset{&testStoreAssetA{}, &testStoreAssetB{}}
 		for _, a := range assets {
-			err = store.Fetch(context.TODO(), a, assets...)
+			err = store.Fetch(context.Background(), a, assets...)
 			if !assert.NoError(t, err, "(loop %d) unexpected error fetching asset %q", a.Name()) {
 				t.Fatal()
 			}

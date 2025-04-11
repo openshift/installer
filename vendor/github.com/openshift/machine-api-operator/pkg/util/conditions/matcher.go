@@ -25,14 +25,14 @@ import (
 )
 
 // MatchConditions returns a custom matcher to check equality of mapiv1.Conditions
-func MatchConditions(expected machinev1.Conditions) types.GomegaMatcher {
+func MatchConditions(expected []machinev1.Condition) types.GomegaMatcher {
 	return &matchConditions{
 		expected: expected,
 	}
 }
 
 type matchConditions struct {
-	expected machinev1.Conditions
+	expected []machinev1.Condition
 }
 
 func (m matchConditions) Match(actual interface{}) (success bool, err error) {

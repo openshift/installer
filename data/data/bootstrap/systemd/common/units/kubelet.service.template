@@ -1,13 +1,7 @@
 [Unit]
 Description=Kubernetes Kubelet
 Wants=rpc-statd.service crio.service release-image.service
-{{if .IsOKD -}}
-Wants=release-image-pivot.service
-{{end -}}
 After=crio.service release-image.service
-{{if .IsOKD -}}
-After=release-image-pivot.service
-{{end -}}
 
 [Service]
 Type=notify

@@ -36,14 +36,14 @@ func (i *BootstrapImage) Dependencies() []asset.Asset {
 }
 
 // Generate the RHCOS Bootstrap image location.
-func (i *BootstrapImage) Generate(p asset.Parents) error {
+func (i *BootstrapImage) Generate(ctx context.Context, p asset.Parents) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
 	ic := &installconfig.InstallConfig{}
 	rhcosImage := new(Image)
 	p.Get(ic, rhcosImage)
 	config := ic.Config
-
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
-	defer cancel()
 
 	switch config.Platform.Name() {
 	case baremetal.Name:
@@ -75,7 +75,7 @@ func (i *BootstrapImage) Generate(p asset.Parents) error {
 		return fmt.Errorf("%s: No qemu build found", st.FormatPrefix(archName))
 	default:
 		// other platforms use the same image for all nodes
-		*i = BootstrapImage(string(*rhcosImage))
+		*i = BootstrapImage(rhcosImage.ControlPlane)
 		return nil
 	}
 }

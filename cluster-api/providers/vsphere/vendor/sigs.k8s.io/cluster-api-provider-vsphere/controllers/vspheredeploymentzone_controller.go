@@ -60,6 +60,7 @@ func AddVSphereDeploymentZoneControllerToManager(ctx context.Context, controller
 	reconciler := vsphereDeploymentZoneReconciler{
 		ControllerManagerContext: controllerManagerCtx,
 	}
+	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "vspheredeploymentzone")
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1.VSphereDeploymentZone{}).
@@ -72,10 +73,12 @@ func AddVSphereDeploymentZoneControllerToManager(ctx context.Context, controller
 		// should cause a resource to be synchronized, such as a goroutine
 		// waiting on some asynchronous, external task to complete.
 		WatchesRawSource(
-			&source.Channel{Source: controllerManagerCtx.GetGenericEventChannelFor(infrav1.GroupVersion.WithKind("VSphereDeploymentZone"))},
-			&handler.EnqueueRequestForObject{},
+			source.Channel(
+				controllerManagerCtx.GetGenericEventChannelFor(infrav1.GroupVersion.WithKind("VSphereDeploymentZone")),
+				&handler.EnqueueRequestForObject{},
+			),
 		).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), controllerManagerCtx.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerCtx.WatchFilterValue)).
 		Complete(reconciler)
 }
 
@@ -105,7 +108,7 @@ func (r vsphereDeploymentZoneReconciler) Reconcile(ctx context.Context, request 
 
 	patchHelper, err := patch.NewHelper(vsphereDeploymentZone, r.Client)
 	if err != nil {
-		return reconcile.Result{}, errors.Wrap(err, "failed to initialize patch helper")
+		return reconcile.Result{}, err
 	}
 
 	vsphereDeploymentZoneContext := &capvcontext.VSphereDeploymentZoneContext{
@@ -191,11 +194,7 @@ func (r vsphereDeploymentZoneReconciler) getVCenterSession(ctx context.Context, 
 	params := session.NewParams().
 		WithServer(deploymentZoneCtx.VSphereDeploymentZone.Spec.Server).
 		WithDatacenter(datacenter).
-		WithUserInfo(r.ControllerManagerContext.Username, r.ControllerManagerContext.Password).
-		WithFeatures(session.Feature{
-			EnableKeepAlive:   r.EnableKeepAlive,
-			KeepAliveDuration: r.KeepAliveDuration,
-		})
+		WithUserInfo(r.ControllerManagerContext.Username, r.ControllerManagerContext.Password)
 
 	clusterList := &infrav1.VSphereClusterList{}
 	if err := r.Client.List(ctx, clusterList); err != nil {
@@ -287,17 +286,14 @@ func (r vsphereDeploymentZoneReconciler) reconcileDelete(ctx context.Context, de
 func updateOwnerReferences(ctx context.Context, obj client.Object, client client.Client, ownerRefFunc func() []metav1.OwnerReference) error {
 	patchHelper, err := patch.NewHelper(obj, client)
 	if err != nil {
-		return errors.Wrapf(err, "failed to init patch helper for %s %s",
-			obj.GetObjectKind(),
-			obj.GetName())
+		return err
 	}
 
 	obj.SetOwnerReferences(ownerRefFunc())
 	if err := patchHelper.Patch(ctx, obj); err != nil {
-		return errors.Wrapf(err, "failed to patch object %s %s",
-			obj.GetObjectKind(),
-			obj.GetName())
+		return errors.Wrapf(err, "failed to update OwnerReferences")
 	}
+
 	return nil
 }
 

@@ -15,7 +15,7 @@ import (
 
 	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/bluemix-go/models"
@@ -25,13 +25,14 @@ import (
 )
 
 const (
-	RsInstanceSuccessStatus      = "active"
-	RsInstanceProgressStatus     = "in progress"
-	RsInstanceProvisioningStatus = "provisioning"
-	RsInstanceInactiveStatus     = "inactive"
-	RsInstanceFailStatus         = "failed"
-	RsInstanceRemovedStatus      = "removed"
-	RsInstanceReclamation        = "pending_reclamation"
+	RsInstanceSuccessStatus       = "active"
+	RsInstanceProgressStatus      = "in progress"
+	RsInstanceProvisioningStatus  = "provisioning"
+	RsInstanceInactiveStatus      = "inactive"
+	RsInstanceFailStatus          = "failed"
+	RsInstanceRemovedStatus       = "removed"
+	RsInstanceReclamation         = "pending_reclamation"
+	RsInstanceUpdateSuccessStatus = "succeeded"
 )
 
 func ResourceIBMResourceInstance() *schema.Resource {
@@ -92,6 +93,13 @@ func ResourceIBMResourceInstance() *schema.Resource {
 				Computed:    true,
 				ValidateFunc: validate.InvokeValidator("ibm_resource_instance",
 					"resource_group_id"),
+			},
+
+			// ### Modification : Adding onetime_credientails into the response scehama
+			"onetime_credentials": {
+				Description: "A boolean that dictates if the onetime_credentials is true or false.",
+				Type:        schema.TypeBool,
+				Computed:    true,
 			},
 
 			"parameters": {
@@ -243,12 +251,14 @@ func ResourceIBMResourceInstance() *schema.Resource {
 			"resource_aliases_url": {
 				Description: "The relative path to the resource aliases for the instance.",
 				Type:        schema.TypeString,
+				Deprecated:  "Remove this attribute's configuration as it's no longer in use and the attribute will be removed in the upcoming major version of the provider 1.71.0.",
 				Computed:    true,
 			},
 
 			"resource_bindings_url": {
 				Description: "The relative path to the resource bindings for the instance.",
 				Type:        schema.TypeString,
+				Deprecated:  "Remove this attribute's configuration as it's no longer in use and the attribute will be removed in the upcoming major version of the provider 1.71.0.",
 				Computed:    true,
 			},
 
@@ -595,6 +605,8 @@ func ResourceIBMResourceInstanceRead(d *schema.ResourceData, meta interface{}) e
 	}
 	d.Set("plan", servicePlan)
 	d.Set("guid", instance.GUID)
+	// ### Modificataion : Setting  "onetime_credentials"
+	d.Set("onetime_credentials", instance.OnetimeCredentials)
 	if instance.Parameters != nil {
 		if endpoint, ok := instance.Parameters["service-endpoints"]; ok {
 			d.Set("service_endpoints", endpoint)
@@ -733,12 +745,14 @@ func ResourceIBMResourceInstanceUpdate(d *schema.ResourceData, meta interface{})
 				}
 			}
 		}
-		serviceEndpoints := d.Get("service_endpoints").(string)
-		if serviceEndpoints != "" {
-			endpoint := d.Get("service_endpoints").(string)
-			params["service-endpoints"] = endpoint
-		} else if _, ok := instance.Parameters["service-endpoints"]; ok {
-			params["service-endpoints"] = instance.Parameters["service-endpoints"]
+		if _, ok := params["service-endpoints"]; !ok {
+			serviceEndpoints := d.Get("service_endpoints").(string)
+			if serviceEndpoints != "" {
+				endpoint := d.Get("service_endpoints").(string)
+				params["service-endpoints"] = endpoint
+			} else if _, ok := instance.Parameters["service-endpoints"]; ok {
+				params["service-endpoints"] = instance.Parameters["service-endpoints"]
+			}
 		}
 
 	}
@@ -844,9 +858,9 @@ func waitForResourceInstanceCreate(d *schema.ResourceData, meta interface{}) (in
 		ID: &instanceID,
 	}
 
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending: []string{RsInstanceProgressStatus, RsInstanceInactiveStatus, RsInstanceProvisioningStatus},
-		Target:  []string{RsInstanceSuccessStatus},
+		Target:  []string{RsInstanceSuccessStatus, RsInstanceUpdateSuccessStatus},
 		Refresh: func() (interface{}, string, error) {
 			instance, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
 			if err != nil {
@@ -855,17 +869,25 @@ func waitForResourceInstanceCreate(d *schema.ResourceData, meta interface{}) (in
 				}
 				return nil, "", fmt.Errorf("[ERROR] Get the resource instance %s failed with resp code: %s, err: %v", d.Id(), resp, err)
 			}
+			if instance.LastOperation != nil && instance.LastOperation.Async != nil && *instance.LastOperation.Async {
+				if *instance.LastOperation.State == RsInstanceFailStatus {
+					return instance, *instance.LastOperation.State, fmt.Errorf("[ERROR] The resource instance '%s' create failed during async operation. error: %v\nlast_operation_description: %+v", d.Id(), err, *instance.LastOperation.Description)
+				}
+				return instance, *instance.LastOperation.State, nil
+			}
+
 			if *instance.State == RsInstanceFailStatus {
-				return instance, *instance.State, fmt.Errorf("[ERROR] The resource instance %s failed: %v", d.Id(), err)
+				return instance, *instance.State, fmt.Errorf("[ERROR] The resource instance '%s' creation failed: %v\n response: %+v", d.Id(), err, resp)
 			}
 			return instance, *instance.State, nil
+
 		},
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 		Delay:      10 * time.Second,
 		MinTimeout: 10 * time.Second,
 	}
 
-	return stateConf.WaitForState()
+	return stateConf.WaitForStateContext(context.Background())
 }
 
 func waitForResourceInstanceUpdate(d *schema.ResourceData, meta interface{}) (interface{}, error) {
@@ -878,9 +900,9 @@ func waitForResourceInstanceUpdate(d *schema.ResourceData, meta interface{}) (in
 		ID: &instanceID,
 	}
 
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending: []string{RsInstanceProgressStatus, RsInstanceInactiveStatus},
-		Target:  []string{RsInstanceSuccessStatus},
+		Target:  []string{RsInstanceSuccessStatus, RsInstanceUpdateSuccessStatus},
 		Refresh: func() (interface{}, string, error) {
 			instance, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
 			if err != nil {
@@ -889,17 +911,24 @@ func waitForResourceInstanceUpdate(d *schema.ResourceData, meta interface{}) (in
 				}
 				return nil, "", fmt.Errorf("[ERROR] Get the resource instance %s failed with resp code: %s, err: %v", d.Id(), resp, err)
 			}
+			if instance.LastOperation != nil && instance.LastOperation.Async != nil && *instance.LastOperation.Async {
+				if *instance.LastOperation.State == RsInstanceFailStatus {
+					return instance, *instance.LastOperation.State, fmt.Errorf("[ERROR] The resource instance '%s' update failed during async operation. error: %v\nlast_operation_description: %+v", d.Id(), err, *instance.LastOperation.Description)
+				}
+				return instance, *instance.LastOperation.State, nil
+			}
 			if *instance.State == RsInstanceFailStatus {
-				return instance, *instance.State, fmt.Errorf("[ERROR] The resource instance %s failed: %v", d.Id(), err)
+				return instance, *instance.State, fmt.Errorf("[ERROR] The resource instance '%s' update failed: %v\n response: %+v", d.Id(), err, resp)
 			}
 			return instance, *instance.State, nil
+
 		},
 		Timeout:    d.Timeout(schema.TimeoutUpdate),
 		Delay:      10 * time.Second,
 		MinTimeout: 10 * time.Second,
 	}
 
-	return stateConf.WaitForState()
+	return stateConf.WaitForStateContext(context.Background())
 }
 
 func waitForResourceInstanceDelete(d *schema.ResourceData, meta interface{}) (interface{}, error) {
@@ -911,7 +940,7 @@ func waitForResourceInstanceDelete(d *schema.ResourceData, meta interface{}) (in
 	resourceInstanceGet := rc.GetResourceInstanceOptions{
 		ID: &instanceID,
 	}
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending: []string{RsInstanceProgressStatus, RsInstanceInactiveStatus, RsInstanceSuccessStatus},
 		Target:  []string{RsInstanceRemovedStatus, RsInstanceReclamation},
 		Refresh: func() (interface{}, string, error) {
@@ -923,7 +952,7 @@ func waitForResourceInstanceDelete(d *schema.ResourceData, meta interface{}) (in
 				return nil, "", fmt.Errorf("[ERROR] Get the resource instance %s failed with resp code: %s, err: %v", d.Id(), resp, err)
 			}
 			if *instance.State == RsInstanceFailStatus {
-				return instance, *instance.State, fmt.Errorf("[ERROR] The resource instance %s failed to delete: %v", d.Id(), err)
+				return instance, *instance.State, fmt.Errorf("[ERROR] The resource instance '%s' deletion failed: %v", d.Id(), err)
 			}
 			return instance, *instance.State, nil
 		},
@@ -932,7 +961,7 @@ func waitForResourceInstanceDelete(d *schema.ResourceData, meta interface{}) (in
 		MinTimeout: 10 * time.Second,
 	}
 
-	return stateConf.WaitForState()
+	return stateConf.WaitForStateContext(context.Background())
 }
 
 func FilterDeployments(deployments []models.ServiceDeployment, location string) ([]models.ServiceDeployment, map[string]bool) {

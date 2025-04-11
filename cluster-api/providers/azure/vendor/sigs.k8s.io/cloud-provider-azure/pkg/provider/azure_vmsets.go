@@ -19,9 +19,9 @@ package provider
 import (
 	"context"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-08-01/compute"
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2022-07-01/network"
-	"github.com/Azure/go-autorest/autorest/azure"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -76,20 +76,16 @@ type VMSet interface {
 	EnsureBackendPoolDeletedFromVMSets(vmSetNamesMap map[string]bool, backendPoolIDs []string) error
 
 	// AttachDisk attaches a disk to vm
-	AttachDisk(ctx context.Context, nodeName types.NodeName, diskMap map[string]*AttachDiskOptions) (*azure.Future, error)
+	AttachDisk(ctx context.Context, nodeName types.NodeName, diskMap map[string]*AttachDiskOptions) error
 	// DetachDisk detaches a disk from vm
-	DetachDisk(ctx context.Context, nodeName types.NodeName, diskMap map[string]string) error
+	DetachDisk(ctx context.Context, nodeName types.NodeName, diskMap map[string]string, forceDetach bool) error
 	// WaitForUpdateResult waits for the response of the update request
-	WaitForUpdateResult(ctx context.Context, future *azure.Future, nodeName types.NodeName, source string) error
 
 	// GetDataDisks gets a list of data disks attached to the node.
-	GetDataDisks(nodeName types.NodeName, crt azcache.AzureCacheReadType) ([]compute.DataDisk, *string, error)
+	GetDataDisks(nodeName types.NodeName, crt azcache.AzureCacheReadType) ([]*armcompute.DataDisk, *string, error)
 
 	// UpdateVM updates a vm
 	UpdateVM(ctx context.Context, nodeName types.NodeName) error
-
-	// UpdateVMAsync updates a vm asynchronously
-	UpdateVMAsync(ctx context.Context, nodeName types.NodeName) (*azure.Future, error)
 
 	// GetPowerStatusByNodeName returns the powerState for the specified node.
 	GetPowerStatusByNodeName(name string) (string, error)
@@ -111,4 +107,13 @@ type VMSet interface {
 
 	// DeleteCacheForNode removes the node entry from cache.
 	DeleteCacheForNode(nodeName string) error
+}
+
+// AttachDiskOptions attach disk options
+type AttachDiskOptions struct {
+	CachingMode             compute.CachingTypes
+	DiskName                string
+	DiskEncryptionSetID     string
+	WriteAcceleratorEnabled bool
+	Lun                     int32
 }

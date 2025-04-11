@@ -20,13 +20,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/attributestags"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/layer3/floatingips"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 
-	"sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1"
+	infrav1alpha1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1"
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/metrics"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
@@ -75,7 +75,7 @@ func (s *Service) GetOrCreateFloatingIP(eventObject runtime.Object, openStackClu
 	return fp, nil
 }
 
-func (s *Service) CreateFloatingIPForPool(pool *v1alpha1.OpenStackFloatingIPPool) (*floatingips.FloatingIP, error) {
+func (s *Service) CreateFloatingIPForPool(pool *infrav1alpha1.OpenStackFloatingIPPool) (*floatingips.FloatingIP, error) {
 	var fpCreateOpts floatingips.CreateOpts
 
 	fpCreateOpts.FloatingNetworkID = pool.Status.FloatingIPNetwork.ID

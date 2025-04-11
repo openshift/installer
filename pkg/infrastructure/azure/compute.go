@@ -88,16 +88,18 @@ type CreateGalleryImageInput struct {
 	GalleryName          string
 	GalleryImageName     string
 	Region               string
-	Tags                 map[string]*string
-	TokenCredential      azcore.TokenCredential
-	CloudConfiguration   cloud.Configuration
-	OSType               armcompute.OperatingSystemTypes
-	OSState              armcompute.OperatingSystemStateTypes
-	HyperVGeneration     armcompute.HyperVGeneration
 	Publisher            string
 	Offer                string
 	SKU                  string
+	Tags                 map[string]*string
+	TokenCredential      azcore.TokenCredential
+	CloudConfiguration   cloud.Configuration
+	Architecture         armcompute.Architecture
+	OSType               armcompute.OperatingSystemTypes
+	OSState              armcompute.OperatingSystemStateTypes
+	HyperVGeneration     armcompute.HyperVGeneration
 	ComputeClientFactory *armcompute.ClientFactory
+	SecurityType         string
 }
 
 // CreateGalleryImageOutput contains the return values after creating a gallery
@@ -110,6 +112,24 @@ type CreateGalleryImageOutput struct {
 func CreateGalleryImage(ctx context.Context, in *CreateGalleryImageInput) (*CreateGalleryImageOutput, error) {
 	logrus.Debugf("Creating gallery image: %s", in.GalleryImageName)
 
+	// Set `Features` within the image properties of Gen V2 images
+	// so that they can be used when encryptionAtHost is enabled.
+	var features []*armcompute.GalleryImageFeature
+	if in.SecurityType != "" {
+		feature := armcompute.GalleryImageFeature{
+			Name:  to.Ptr("SecurityType"),
+			Value: to.Ptr(in.SecurityType),
+		}
+		features = append(features, to.Ptr(feature))
+	}
+	if in.HyperVGeneration == armcompute.HyperVGenerationV2 {
+		feature := armcompute.GalleryImageFeature{
+			Name:  to.Ptr("DiskControllerTypes"),
+			Value: to.Ptr("SCSI, NVMe"),
+		}
+		features = append(features, to.Ptr(feature))
+	}
+
 	galleryImagesClient := in.ComputeClientFactory.NewGalleryImagesClient()
 	galleryImagesPoller, err := galleryImagesClient.BeginCreateOrUpdate(
 		ctx,
@@ -119,6 +139,7 @@ func CreateGalleryImage(ctx context.Context, in *CreateGalleryImageInput) (*Crea
 		armcompute.GalleryImage{
 			Location: to.Ptr(in.Region),
 			Properties: &armcompute.GalleryImageProperties{
+				Architecture:     to.Ptr(in.Architecture),
 				OSType:           to.Ptr(in.OSType),
 				OSState:          to.Ptr(in.OSState),
 				HyperVGeneration: to.Ptr(in.HyperVGeneration),
@@ -127,6 +148,7 @@ func CreateGalleryImage(ctx context.Context, in *CreateGalleryImageInput) (*Crea
 					Offer:     to.Ptr(in.Offer),
 					SKU:       to.Ptr(in.SKU),
 				},
+				Features: features,
 			},
 			Tags: in.Tags,
 		},

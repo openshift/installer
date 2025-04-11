@@ -514,7 +514,7 @@ func resourceIBMIsInstanceNetworkInterfaceFloatingIPReferenceToMap(floatingIPRef
 	return floatingIPReferenceMap
 }
 
-func resourceIBMIsInstanceNetworkInterfaceFloatingIPReferenceDeletedToMap(floatingIPReferenceDeleted vpcv1.FloatingIPReferenceDeleted) map[string]interface{} {
+func resourceIBMIsInstanceNetworkInterfaceFloatingIPReferenceDeletedToMap(floatingIPReferenceDeleted vpcv1.Deleted) map[string]interface{} {
 	floatingIPReferenceDeletedMap := map[string]interface{}{}
 
 	floatingIPReferenceDeletedMap["more_info"] = floatingIPReferenceDeleted.MoreInfo

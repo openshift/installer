@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2021.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.43.0-49eab5c7-20211117-152138
+ * IBM OpenAPI SDK Code Generator Version: 3.82.1-2082d402-20231115-195014
  */
 
 // Package directlinkproviderv2 : Operations and models for the DirectLinkProviderV2 service
@@ -393,7 +393,8 @@ func (directLinkProvider *DirectLinkProviderV2) DeleteProviderGatewayWithContext
 
 // GetProviderGateway : Get gateway
 // Get a Direct Link Connect gateway.
-//      Gateways with either `provider_api_managed=true` or `provider_api_managed=false` can be retrieved.
+//
+//	Gateways with either `provider_api_managed=true` or `provider_api_managed=false` can be retrieved.
 func (directLinkProvider *DirectLinkProviderV2) GetProviderGateway(getProviderGatewayOptions *GetProviderGatewayOptions) (result *ProviderGateway, response *core.DetailedResponse, err error) {
 	return directLinkProvider.GetProviderGatewayWithContext(context.Background(), getProviderGatewayOptions)
 }
@@ -709,7 +710,7 @@ type CreateProviderGatewayOptions struct {
 
 	// VLAN requested for this gateway.
 	//
-	// VLAN provided should be in the range 1 to 4094.
+	// VLAN provided should be in the range 2 to 3967.
 	Vlan *int64 `json:"vlan,omitempty"`
 
 	// When true, perform request validation only and do not create a gateway.
@@ -1321,7 +1322,7 @@ type ProviderGatewayUpdateAttributesUpdatesItem struct {
 
 	// VLAN to be updated for this gateway.
 	//
-	// VLAN provided should be in the range 1 to 4094.
+	// VLAN provided should be in the range 2 to 3967.
 	Vlan *int64 `json:"vlan,omitempty"`
 }
 
@@ -1538,7 +1539,7 @@ type UpdateProviderGatewayOptions struct {
 
 	// VLAN to be modified for this gateway.
 	//
-	// VLAN provided should be in the range 1 to 4094.
+	// VLAN provided should be in the range 2 to 3967.
 	Vlan *int64 `json:"vlan,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -1780,12 +1781,12 @@ func UnmarshalProviderGatewayUpdateAttributesUpdatesItemProviderGatewaySpeedUpda
 
 // ProviderGatewayUpdateAttributesUpdatesItemProviderGatewayVLAN : Update VLAN for this gateway.
 //
-// VLAN provided should be in the range 1 to 4094.
+// VLAN provided should be in the range 2 to 3967.
 // This model "extends" ProviderGatewayUpdateAttributesUpdatesItem
 type ProviderGatewayUpdateAttributesUpdatesItemProviderGatewayVLAN struct {
 	// VLAN to be updated for this gateway.
 	//
-	// VLAN provided should be in the range 1 to 4094.
+	// VLAN provided should be in the range 2 to 3967.
 	Vlan *int64 `json:"vlan,omitempty"`
 }
 
@@ -1802,4 +1803,162 @@ func UnmarshalProviderGatewayUpdateAttributesUpdatesItemProviderGatewayVLAN(m ma
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// ProviderGatewaysPager can be used to simplify the use of the "ListProviderGateways" method.
+type ProviderGatewaysPager struct {
+	hasNext     bool
+	options     *ListProviderGatewaysOptions
+	client      *DirectLinkProviderV2
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewProviderGatewaysPager returns a new ProviderGatewaysPager instance.
+func (directLinkProvider *DirectLinkProviderV2) NewProviderGatewaysPager(options *ListProviderGatewaysOptions) (pager *ProviderGatewaysPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = fmt.Errorf("the 'options.Start' field should not be set")
+		return
+	}
+
+	var optionsCopy ListProviderGatewaysOptions = *options
+	pager = &ProviderGatewaysPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  directLinkProvider,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ProviderGatewaysPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ProviderGatewaysPager) GetNextWithContext(ctx context.Context) (page []ProviderGateway, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListProviderGatewaysWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Gateways
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ProviderGatewaysPager) GetAllWithContext(ctx context.Context) (allItems []ProviderGateway, err error) {
+	for pager.HasNext() {
+		var nextPage []ProviderGateway
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ProviderGatewaysPager) GetNext() (page []ProviderGateway, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ProviderGatewaysPager) GetAll() (allItems []ProviderGateway, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+// ProviderPortsPager can be used to simplify the use of the "ListProviderPorts" method.
+type ProviderPortsPager struct {
+	hasNext     bool
+	options     *ListProviderPortsOptions
+	client      *DirectLinkProviderV2
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewProviderPortsPager returns a new ProviderPortsPager instance.
+func (directLinkProvider *DirectLinkProviderV2) NewProviderPortsPager(options *ListProviderPortsOptions) (pager *ProviderPortsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = fmt.Errorf("the 'options.Start' field should not be set")
+		return
+	}
+
+	var optionsCopy ListProviderPortsOptions = *options
+	pager = &ProviderPortsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  directLinkProvider,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ProviderPortsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ProviderPortsPager) GetNextWithContext(ctx context.Context) (page []ProviderPort, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListProviderPortsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Ports
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ProviderPortsPager) GetAllWithContext(ctx context.Context) (allItems []ProviderPort, err error) {
+	for pager.HasNext() {
+		var nextPage []ProviderPort
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ProviderPortsPager) GetNext() (page []ProviderPort, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ProviderPortsPager) GetAll() (allItems []ProviderPort, err error) {
+	return pager.GetAllWithContext(context.Background())
 }

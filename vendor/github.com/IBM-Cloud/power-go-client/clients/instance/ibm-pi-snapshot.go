@@ -8,6 +8,7 @@ import (
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_p_vm_instances"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_snapshots"
+	"github.com/IBM-Cloud/power-go-client/power/client/snapshots"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
@@ -93,6 +94,62 @@ func (f *IBMPISnapshotClient) Create(instanceID, snapshotID, restoreFailAction s
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to restore PI Snapshot %s of the instance %s", snapshotID, instanceID)
+	}
+	return resp.Payload, nil
+}
+
+// Get a Volume SnapshotV1
+func (f *IBMPISnapshotClient) V1VolumeSnapshotsGet(id string) (*models.SnapshotV1, error) {
+	params := snapshots.NewV1VolumeSnapshotsGetParams().WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).WithVolumeSnapshotUUID(id)
+	resp, err := f.session.Power.Snapshots.V1VolumeSnapshotsGet(params, f.session.AuthInfo(f.cloudInstanceID))
+
+	if err != nil {
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get volume snapshot %s: %w", id, err))
+	}
+	if resp == nil || resp.Payload == nil {
+		return nil, fmt.Errorf("failed to Get PI Snapshot %s", id)
+	}
+	return resp.Payload, nil
+}
+
+// Get Volume All SnapshotsV1
+func (f *IBMPISnapshotClient) V1VolumeSnapshotsGetall() (*models.VolumeSnapshotList, error) {
+	params := snapshots.NewV1VolumeSnapshotsGetallParams().WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut)
+	resp, err := f.session.Power.Snapshots.V1VolumeSnapshotsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
+
+	if err != nil {
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get all volume snapshots: %w", err))
+	}
+	if resp == nil || resp.Payload == nil {
+		return nil, fmt.Errorf("failed to Get all volume Snapshots")
+	}
+	return resp.Payload, nil
+}
+
+// Deprecated Get a SnapshotV1
+func (f *IBMPISnapshotClient) V1SnapshotsGet(id string) (*models.SnapshotV1, error) {
+	params := snapshots.NewV1SnapshotsGetParams().WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).WithSnapshotID(id)
+	resp, err := f.session.Power.Snapshots.V1SnapshotsGet(params, f.session.AuthInfo(f.cloudInstanceID))
+
+	if err != nil {
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get PI Snapshot %s: %w", id, err))
+	}
+	if resp == nil || resp.Payload == nil {
+		return nil, fmt.Errorf("failed to Get PI Snapshot %s", id)
+	}
+	return resp.Payload, nil
+}
+
+// Deprecated Get All SnapshotsV1
+func (f *IBMPISnapshotClient) V1SnapshotsGetall() (*models.SnapshotList, error) {
+	params := snapshots.NewV1SnapshotsGetallParams().WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut)
+	resp, err := f.session.Power.Snapshots.V1SnapshotsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
+
+	if err != nil {
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get all PI Snapshots: %w", err))
+	}
+	if resp == nil || resp.Payload == nil {
+		return nil, fmt.Errorf("failed to Get all PI Snapshots")
 	}
 	return resp.Payload, nil
 }

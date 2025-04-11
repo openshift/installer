@@ -153,7 +153,7 @@ func dataSourceIBMContainerVpcClusterWorkerPoolRead(d *schema.ResourceData, meta
 	clusterName := d.Get("cluster").(string)
 	workerPoolName := d.Get("worker_pool_name").(string)
 	workerPoolsAPI := wpClient.WorkerPools()
-	targetEnv, err := getVpcClusterTargetHeader(d, meta)
+	targetEnv, err := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return err
 	}

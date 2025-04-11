@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2017, 2021 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package database
@@ -7,16 +7,18 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"reflect"
 
 	"github.com/IBM/cloud-databases-go-sdk/clouddatabasesv5"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/IBM-Cloud/bluemix-go/api/resource/resourcev2/controllerv2"
-	"github.com/IBM-Cloud/bluemix-go/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
+	"github.com/IBM/platform-services-go-sdk/globalcatalogv1"
+	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
+	rg "github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 )
 
 func DataSourceIBMDatabaseInstance() *schema.Resource {
@@ -280,6 +282,29 @@ func DataSourceIBMDatabaseInstance() *schema.Resource {
 								},
 							},
 						},
+						"host_flavor": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The host flavor id",
+									},
+									"name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The host flavor name",
+									},
+									"hosting_size": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The host flavor size",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -511,56 +536,56 @@ func DataSourceIBMDatabaseInstanceValidator() *validate.ResourceValidator {
 }
 
 func dataSourceIBMDatabaseInstanceRead(d *schema.ResourceData, meta interface{}) error {
-	rsConClient, err := meta.(conns.ClientSession).ResourceControllerAPIV2()
+	var instance rc.ResourceInstance
+	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
 	if err != nil {
 		return err
 	}
-	rsAPI := rsConClient.ResourceServiceInstanceV2()
 	name := d.Get("name").(string)
-
-	rsInstQuery := controllerv2.ServiceInstanceQuery{
-		Name: name,
+	resourceInstanceListOptions := rc.ListResourceInstancesOptions{
+		Name: &name,
 	}
-
 	if rsGrpID, ok := d.GetOk("resource_group_id"); ok {
-		rsInstQuery.ResourceGroupID = rsGrpID.(string)
+		rg := rsGrpID.(string)
+		resourceInstanceListOptions.ResourceGroupID = &rg
 	} else {
 		defaultRg, err := flex.DefaultResourceGroup(meta)
 		if err != nil {
 			return err
 		}
-		rsInstQuery.ResourceGroupID = defaultRg
+		resourceInstanceListOptions.ResourceGroupID = &defaultRg
 	}
-
-	rsCatClient, err := meta.(conns.ClientSession).ResourceCatalogAPI()
-	if err != nil {
-		return err
-	}
-	rsCatRepo := rsCatClient.ResourceCatalog()
-
 	if service, ok := d.GetOk("service"); ok {
-
-		serviceOff, err := rsCatRepo.FindByName(service.(string), true)
-		if err != nil {
-			return fmt.Errorf("[ERROR] Error retrieving database offering: %s", err)
+		name := service.(string)
+		resourceInstanceListOptions.ResourceID = &name
+	}
+	next_url := ""
+	var instances []rc.ResourceInstance
+	for {
+		if next_url != "" {
+			resourceInstanceListOptions.Start = &next_url
 		}
+		listInstanceResponse, resp, err := rsConClient.ListResourceInstances(&resourceInstanceListOptions)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
+		}
+		next_url, err = getInstancesNext(listInstanceResponse.NextURL)
+		if err != nil {
+			return fmt.Errorf("[DEBUG] ListResourceInstances failed. Error occurred while parsing NextURL: %s", err)
 
-		rsInstQuery.ServiceID = serviceOff[0].ID
+		}
+		instances = append(instances, listInstanceResponse.Resources...)
+		if next_url == "" {
+			break
+		}
 	}
-
-	var instances []models.ServiceInstanceV2
-
-	instances, err = rsAPI.ListInstances(rsInstQuery)
-	if err != nil {
-		return err
-	}
-	var filteredInstances []models.ServiceInstanceV2
+	var filteredInstances []rc.ResourceInstance
 	var location string
 
 	if loc, ok := d.GetOk("location"); ok {
 		location = loc.(string)
 		for _, instance := range instances {
-			if flex.GetLocation(instance) == location {
+			if flex.GetLocationV2(instance) == location {
 				filteredInstances = append(filteredInstances, instance)
 			}
 		}
@@ -572,15 +597,13 @@ func dataSourceIBMDatabaseInstanceRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("[ERROR] No resource instance found with name [%s]\nIf not specified please specify more filters like resource_group_id if instance doesn't exists in default group, location or database", name)
 	}
 
-	var instance models.ServiceInstanceV2
-
 	if len(filteredInstances) > 1 {
 		return fmt.Errorf(
 			"More than one resource instance found with name matching [%s]\nIf not specified please specify more filters like resource_group_id if instance doesn't exists in default group, location or database", name)
 	}
 	instance = filteredInstances[0]
 
-	d.SetId(instance.ID)
+	d.SetId(*instance.ID)
 
 	tags, err := flex.GetTagsUsingCRN(meta, d.Id())
 	if err != nil {
@@ -593,52 +616,71 @@ func dataSourceIBMDatabaseInstanceRead(d *schema.ResourceData, meta interface{})
 	d.Set("status", instance.State)
 	d.Set("resource_group_id", instance.ResourceGroupID)
 	d.Set("location", instance.RegionID)
-	d.Set("guid", instance.Guid)
+	d.Set("guid", instance.GUID)
+	globalClient, err := meta.(conns.ClientSession).GlobalCatalogV1API()
+	if err != nil {
+		return err
+	}
+	options := globalcatalogv1.GetCatalogEntryOptions{
 
-	serviceOff, err := rsCatRepo.GetServiceName(instance.ServiceID)
+		ID: instance.ResourceID,
+	}
+	service, _, err := globalClient.GetCatalogEntry(&options)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error retrieving service offering: %s", err)
 	}
 
-	d.Set("service", serviceOff)
+	d.Set("service", service.Name)
 
-	servicePlan, err := rsCatRepo.GetServicePlanName(instance.ResourcePlanID)
+	planOptions := globalcatalogv1.GetCatalogEntryOptions{
+
+		ID: instance.ResourcePlanID,
+	}
+	plan, _, err := globalClient.GetCatalogEntry(&planOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error retrieving plan: %s", err)
 	}
-	d.Set("plan", servicePlan)
+	d.Set("plan", plan.Name)
 
 	d.Set(flex.ResourceName, instance.Name)
-	d.Set(flex.ResourceCRN, instance.Crn.String())
+	d.Set(flex.ResourceCRN, instance.CRN)
 	d.Set(flex.ResourceStatus, instance.State)
-	d.Set(flex.ResourceGroupName, instance.ResourceGroupName)
+
+	rMgtClient, err := meta.(conns.ClientSession).ResourceManagerV2API()
+	if err != nil {
+		return err
+	}
+	GetResourceGroup := rg.GetResourceGroupOptions{
+		ID: instance.ResourceGroupID,
+	}
+	resourceGroup, resp, err := rMgtClient.GetResourceGroup(&GetResourceGroup)
+	if err != nil || resourceGroup == nil {
+		log.Printf("[ERROR] Error retrieving resource group: %s %s", err, resp)
+	}
+	if resourceGroup != nil && resourceGroup.Name != nil {
+		d.Set(flex.ResourceGroupName, resourceGroup.Name)
+	}
 
 	rcontroller, err := flex.GetBaseController(meta)
 	if err != nil {
 		return err
 	}
-	d.Set(flex.ResourceControllerURL, rcontroller+"/services/"+url.QueryEscape(instance.Crn.String()))
+	d.Set(flex.ResourceControllerURL, rcontroller+"/services/"+url.QueryEscape(*instance.CRN))
 
 	cloudDatabasesClient, err := meta.(conns.ClientSession).CloudDatabasesV5()
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error getting database client settings: %s", err)
 	}
 
-	icdClient, err := meta.(conns.ClientSession).ICDAPI()
-	if err != nil {
-		return fmt.Errorf("[ERROR] Error getting database client settings: %s", err)
-	}
-
-	icdId := flex.EscapeUrlParm(instance.ID)
 	getDeploymentInfoOptions := &clouddatabasesv5.GetDeploymentInfoOptions{
-		ID: core.StringPtr(instance.ID),
+		ID: instance.ID,
 	}
 	getDeploymentInfoResponse, response, err := cloudDatabasesClient.GetDeploymentInfo(getDeploymentInfoOptions)
 	if err != nil {
 		if response.StatusCode == 404 {
 			return fmt.Errorf("[ERROR] The database instance was not found in the region set for the Provider, or the default of us-south. Specify the correct region in the provider definition, or create a provider alias for the correct region. %v", err)
 		}
-		return fmt.Errorf("[ERROR] Error getting database config while updating adminpassword for: %s with error %s", instance.ID, err)
+		return fmt.Errorf("[ERROR] Error getting database config while updating adminpassword for: %s with error %s", *instance.ID, err)
 	}
 
 	deployment := getDeploymentInfoResponse.Deployment
@@ -651,25 +693,29 @@ func dataSourceIBMDatabaseInstanceRead(d *schema.ResourceData, meta interface{})
 		d.Set("platform_options", flex.ExpandPlatformOptions(*deployment))
 	}
 
-	groupList, err := icdClient.Groups().GetGroups(icdId)
+	listDeploymentScalingGroupsOptions := &clouddatabasesv5.ListDeploymentScalingGroupsOptions{
+		ID: instance.ID,
+	}
+
+	groupList, _, err := cloudDatabasesClient.ListDeploymentScalingGroups(listDeploymentScalingGroupsOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error getting database groups: %s", err)
 	}
 	d.Set("groups", flex.FlattenIcdGroups(groupList))
 
 	getAutoscalingConditionsOptions := &clouddatabasesv5.GetAutoscalingConditionsOptions{
-		ID:      &instance.ID,
+		ID:      instance.ID,
 		GroupID: core.StringPtr("member"),
 	}
 
 	autoscalingGroup, _, err := cloudDatabasesClient.GetAutoscalingConditions(getAutoscalingConditionsOptions)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error getting database autoscaling groups: %s", err)
+		return fmt.Errorf("[ERROR] Error getting database autoscaling groups: %s\n Hint: Check if there is a mismatch between your database location and IBMCLOUD_REGION", err)
 	}
 	d.Set("auto_scaling", flattenAutoScalingGroup(*autoscalingGroup))
 
 	alEntry := &clouddatabasesv5.GetAllowlistOptions{
-		ID: &instance.ID,
+		ID: instance.ID,
 	}
 
 	allowlist, _, err := cloudDatabasesClient.GetAllowlist(alEntry)
@@ -679,6 +725,17 @@ func dataSourceIBMDatabaseInstanceRead(d *schema.ResourceData, meta interface{})
 	}
 
 	d.Set("allowlist", flex.FlattenAllowlist(allowlist.IPAddresses))
-
 	return nil
+}
+
+func getInstancesNext(next *string) (string, error) {
+	if reflect.ValueOf(next).IsNil() {
+		return "", nil
+	}
+	u, err := url.Parse(*next)
+	if err != nil {
+		return "", err
+	}
+	q := u.Query()
+	return q.Get("next_url"), nil
 }

@@ -59,6 +59,7 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Status.Bastion.PlacementGroupPartition = restored.Status.Bastion.PlacementGroupPartition
 		dst.Status.Bastion.PrivateDNSName = restored.Status.Bastion.PrivateDNSName
 		dst.Status.Bastion.PublicIPOnLaunch = restored.Status.Bastion.PublicIPOnLaunch
+		dst.Status.Bastion.CapacityReservationID = restored.Status.Bastion.CapacityReservationID
 	}
 	dst.Spec.Partition = restored.Spec.Partition
 
@@ -84,6 +85,7 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.Spec.NetworkSpec.AdditionalControlPlaneIngressRules = restored.Spec.NetworkSpec.AdditionalControlPlaneIngressRules
+	dst.Spec.NetworkSpec.NodePortIngressRuleCidrBlocks = restored.Spec.NetworkSpec.NodePortIngressRuleCidrBlocks
 
 	if restored.Spec.NetworkSpec.VPC.IPAMPool != nil {
 		if dst.Spec.NetworkSpec.VPC.IPAMPool == nil {
@@ -104,6 +106,20 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.NetworkSpec.VPC.EmptyRoutesDefaultVPCSecurityGroup = restored.Spec.NetworkSpec.VPC.EmptyRoutesDefaultVPCSecurityGroup
 	dst.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch = restored.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch
 	dst.Spec.NetworkSpec.VPC.CarrierGatewayID = restored.Spec.NetworkSpec.VPC.CarrierGatewayID
+	dst.Spec.NetworkSpec.VPC.SubnetSchema = restored.Spec.NetworkSpec.VPC.SubnetSchema
+	dst.Spec.NetworkSpec.VPC.SecondaryCidrBlocks = restored.Spec.NetworkSpec.VPC.SecondaryCidrBlocks
+
+	if restored.Spec.NetworkSpec.VPC.ElasticIPPool != nil {
+		if dst.Spec.NetworkSpec.VPC.ElasticIPPool == nil {
+			dst.Spec.NetworkSpec.VPC.ElasticIPPool = &infrav2.ElasticIPPool{}
+		}
+		if restored.Spec.NetworkSpec.VPC.ElasticIPPool.PublicIpv4Pool != nil {
+			dst.Spec.NetworkSpec.VPC.ElasticIPPool.PublicIpv4Pool = restored.Spec.NetworkSpec.VPC.ElasticIPPool.PublicIpv4Pool
+		}
+		if restored.Spec.NetworkSpec.VPC.ElasticIPPool.PublicIpv4PoolFallBackOrder != nil {
+			dst.Spec.NetworkSpec.VPC.ElasticIPPool.PublicIpv4PoolFallBackOrder = restored.Spec.NetworkSpec.VPC.ElasticIPPool.PublicIpv4PoolFallBackOrder
+		}
+	}
 
 	// Restore SubnetSpec.ResourceID, SubnetSpec.ParentZoneName, and SubnetSpec.ZoneType fields, if any.
 	for _, subnet := range restored.Spec.NetworkSpec.Subnets {

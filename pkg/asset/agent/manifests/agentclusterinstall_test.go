@@ -1,25 +1,28 @@
 package manifests
 
 import (
+	"context"
+	"net"
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"github.com/go-openapi/swag"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
-	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	externaltype "github.com/openshift/installer/pkg/types/external"
 )
@@ -38,11 +41,21 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		installConfigOverrides: `{"fips":true}`,
 	})
 
+	_, machineNetCidr, _ := net.ParseCIDR("192.168.122.0/16") //nolint:errcheck
+	machineNetwork := []types.MachineNetworkEntry{
+		{
+			CIDR: ipnet.IPNet{IPNet: *machineNetCidr},
+		},
+	}
+
 	installConfigWithProxy := getValidOptionalInstallConfig()
-	installConfigWithProxy.Config.Proxy = (*types.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy))
+	installConfigWithProxy.Config.Proxy = (*types.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, &machineNetwork, "192.168.122.2"))
 
 	goodProxyACI := getGoodACI()
-	goodProxyACI.Spec.Proxy = (*hiveext.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy))
+	goodProxyACI.Spec.Proxy = (*hiveext.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy, &machineNetwork, "192.168.122.2"))
+
+	installConfigWithNoProxyMachineNetwork := getValidOptionalInstallConfig()
+	installConfigWithNoProxyMachineNetwork.Config.Proxy = (*types.Proxy)(getProxy(getProxyWithMachineNetworkNoProxy().Config.Proxy, &machineNetwork, "192.168.122.2"))
 
 	goodACIDualStackVIPs := getGoodACIDualStack()
 	goodACIDualStackVIPs.Spec.APIVIPs = []string{"192.168.122.10", "2001:db8:1111:2222:ffff:ffff:ffff:cafe"}
@@ -103,7 +116,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	installConfigWExternalOCIPlatform := getValidOptionalInstallConfig()
 	installConfigWExternalOCIPlatform.Config.Platform = types.Platform{
 		External: &externaltype.Platform{
-			PlatformName:           string(models.PlatformTypeOci),
+			PlatformName:           agent.ExternalPlatformNameOci,
 			CloudControllerManager: externaltype.CloudControllerManagerTypeExternal,
 		},
 	}
@@ -117,7 +130,8 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodExternalOCIPlatformACI.Spec.Networking.UserManagedNetworking = &val
 	goodExternalOCIPlatformACI.Spec.PlatformType = hiveext.ExternalPlatformType
 	goodExternalOCIPlatformACI.Spec.ExternalPlatformSpec = &hiveext.ExternalPlatformSpec{
-		PlatformName: string(models.PlatformTypeOci),
+		PlatformName:           agent.ExternalPlatformNameOci,
+		CloudControllerManager: externaltype.CloudControllerManagerTypeExternal,
 	}
 	goodExternalOCIPlatformACI.SetAnnotations(map[string]string{
 		installConfigOverrides: `{"platform":{"external":{"platformName":"oci","cloudControllerManager":"External"}}}`,
@@ -126,6 +140,14 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodBaremetalPlatformBMCACI := getGoodACI()
 	goodBaremetalPlatformBMCACI.SetAnnotations(map[string]string{
 		installConfigOverrides: `{"platform":{"baremetal":{"hosts":[{"name":"control-0.example.org","bmc":{"username":"bmc-user","password":"password","address":"172.22.0.10","disableCertificateVerification":true},"role":"master","bootMACAddress":"98:af:65:a5:8d:01","hardwareProfile":""},{"name":"control-1.example.org","bmc":{"username":"user2","password":"foo","address":"172.22.0.11","disableCertificateVerification":false},"role":"master","bootMACAddress":"98:af:65:a5:8d:02","hardwareProfile":""},{"name":"control-2.example.org","bmc":{"username":"admin","password":"bar","address":"172.22.0.12","disableCertificateVerification":true},"role":"master","bootMACAddress":"98:af:65:a5:8d:03","hardwareProfile":""}],"clusterProvisioningIP":"172.22.0.3","provisioningNetwork":"Managed","provisioningNetworkInterface":"eth0","provisioningNetworkCIDR":"172.22.0.0/24","provisioningDHCPRange":"172.22.0.10,172.22.0.254"}}}`,
+	})
+
+	installConfigWithTrustBundlePolicy := getValidOptionalInstallConfig()
+	installConfigWithTrustBundlePolicy.Config.AdditionalTrustBundlePolicy = types.PolicyAlways
+
+	goodTrustBundlePolicyACI := getGoodACI()
+	goodTrustBundlePolicyACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{"additionalTrustBundlePolicy":"Always"}`,
 	})
 
 	cases := []struct {
@@ -140,6 +162,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				&agent.OptionalInstallConfig{},
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedError: "missing configuration or manifest file",
 		},
@@ -149,6 +172,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfig(),
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodACI,
 		},
@@ -158,6 +182,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithoutNetworkType,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodACI,
 		},
@@ -167,6 +192,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithFIPS,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodFIPSACI,
 		},
@@ -176,6 +202,17 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithProxy,
 				&agentconfig.AgentHosts{},
+				getValidAgentConfig(),
+			},
+			expectedConfig: goodProxyACI,
+		},
+		{
+			name: "valid configuration with proxy and no NOPROXY duplicates",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigWithNoProxyMachineNetwork,
+				&agentconfig.AgentHosts{},
+				getValidAgentConfig(),
 			},
 			expectedConfig: goodProxyACI,
 		},
@@ -185,6 +222,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfigDualStack(),
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: getGoodACIDualStack(),
 		},
@@ -194,6 +232,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfigDualStackDualVIPs(),
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodACIDualStackVIPs,
 		},
@@ -203,6 +242,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithCapabilities,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodCapabilitiesACI,
 		},
@@ -212,6 +252,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithNetworkOverride,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodNetworkOverrideACI,
 		},
@@ -221,6 +262,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithCPUPartitioning,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodCPUPartitioningACI,
 		},
@@ -230,6 +272,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWExternalPlatform,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodExternalPlatformACI,
 		},
@@ -239,6 +282,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWExternalOCIPlatform,
 				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodExternalOCIPlatformACI,
 		},
@@ -248,8 +292,19 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfigWithProvisioning(),
 				getAgentHostsWithBMCConfig(),
+				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodBaremetalPlatformBMCACI,
+		},
+		{
+			name: "valid configuration with AdditionalTrustBundlePolicy",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigWithTrustBundlePolicy,
+				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: goodTrustBundlePolicyACI,
 		},
 	}
 	for _, tc := range cases {
@@ -259,7 +314,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			parents.Add(tc.dependencies...)
 
 			asset := &AgentClusterInstall{}
-			err := asset.Generate(parents)
+			err := asset.Generate(context.Background(), parents)
 
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())
@@ -281,10 +336,6 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 }
 
 func TestAgentClusterInstall_LoadedFromDisk(t *testing.T) {
-
-	emptyACI := &hiveext.AgentClusterInstall{}
-	emptyACI.Spec.Networking.NetworkType = "OVNKubernetes"
-
 	cases := []struct {
 		name           string
 		data           string
@@ -352,7 +403,8 @@ spec:
 						ServiceNetwork: []string{
 							"172.30.0.0/16",
 						},
-						NetworkType: "OVNKubernetes",
+						NetworkType:           "OVNKubernetes",
+						UserManagedNetworking: swag.Bool(false),
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -404,7 +456,7 @@ spec:
 					IngressVIP:   "192.168.111.4",
 					PlatformType: hiveext.ExternalPlatformType,
 					ExternalPlatformSpec: &hiveext.ExternalPlatformSpec{
-						PlatformName: string(models.PlatformTypeOci),
+						PlatformName: agent.ExternalPlatformNameOci,
 					},
 					ClusterDeploymentRef: corev1.LocalObjectReference{
 						Name: "ostest",
@@ -428,7 +480,7 @@ spec:
 							"172.30.0.0/16",
 						},
 						NetworkType:           "OVNKubernetes",
-						UserManagedNetworking: func(b bool) *bool { return &b }(true),
+						UserManagedNetworking: swag.Bool(true),
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -498,7 +550,8 @@ spec:
 						ServiceNetwork: []string{
 							"172.30.0.0/16",
 						},
-						NetworkType: "OVNKubernetes",
+						NetworkType:           "OVNKubernetes",
+						UserManagedNetworking: swag.Bool(false),
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -559,7 +612,8 @@ spec:
 						ServiceNetwork: []string{
 							"172.30.0.0/16",
 						},
-						NetworkType: "OpenShiftSDN",
+						NetworkType:           "OpenShiftSDN",
+						UserManagedNetworking: swag.Bool(false),
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -626,7 +680,8 @@ spec:
 						ServiceNetwork: []string{
 							"172.30.0.0/16",
 						},
-						NetworkType: "OVNKubernetes",
+						NetworkType:           "OVNKubernetes",
+						UserManagedNetworking: swag.Bool(false),
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -704,7 +759,8 @@ spec:
 							"172.30.0.0/16",
 							"fd02::/112",
 						},
-						NetworkType: "OVNKubernetes",
+						NetworkType:           "OVNKubernetes",
+						UserManagedNetworking: swag.Bool(false),
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
@@ -721,10 +777,17 @@ spec:
 			expectedError: "failed to unmarshal cluster-manifests/agent-cluster-install.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1beta1.AgentClusterInstall",
 		},
 		{
-			name:           "empty",
-			data:           "",
-			expectedFound:  true,
-			expectedConfig: emptyACI,
+			name:          "empty",
+			data:          "",
+			expectedFound: true,
+			expectedConfig: &hiveext.AgentClusterInstall{
+				Spec: hiveext.AgentClusterInstallSpec{
+					Networking: hiveext.Networking{
+						NetworkType:           "OVNKubernetes",
+						UserManagedNetworking: swag.Bool(false),
+					},
+				},
+			},
 		},
 		{
 			name:       "file-not-found",
@@ -802,7 +865,7 @@ spec:
   sshPublicKey: |
     ssh-rsa AAAAmyKey`,
 			expectedFound: false,
-			expectedError: "invalid PlatformType configured: spec.platformType: Unsupported value: \"aws\": supported values: \"BareMetal\", \"VSphere\", \"None\", \"External\"",
+			expectedError: "invalid PlatformType configured: spec.platformType: Unsupported value: \"aws\": supported values: \"BareMetal\", \"VSphere\", \"Nutanix\", \"None\", \"External\"",
 		},
 	}
 	for _, tc := range cases {

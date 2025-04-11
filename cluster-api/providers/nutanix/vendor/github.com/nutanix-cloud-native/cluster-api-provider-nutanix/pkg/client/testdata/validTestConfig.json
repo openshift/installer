@@ -1,9 +1,0 @@
-{
-  "address": "cluster-endpoint",
-  "port": 9440,
-  "credentialRef": {
-    "kind": "Secret",
-    "name": "creds",
-    "namespace": "test"
-  }
-}

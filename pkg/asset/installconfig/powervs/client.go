@@ -25,6 +25,7 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/types"
@@ -40,7 +41,10 @@ type API interface {
 	GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]DNSZoneResponse, error)
 	GetDNSInstancePermittedNetworks(ctx context.Context, dnsID string, dnsZone string) ([]string, error)
 	GetDNSCustomResolverIP(ctx context.Context, dnsID string, vpcID string) (string, error)
+	CreateDNSCustomResolver(ctx context.Context, name string, dnsID string, vpcID string) (*dnssvcsv1.CustomResolver, error)
+	EnableDNSCustomResolver(ctx context.Context, dnsID string, resolverID string) (*dnssvcsv1.CustomResolver, error)
 	CreateDNSRecord(ctx context.Context, publish types.PublishingStrategy, crnstr string, baseDomain string, hostname string, cname string) error
+	AddVPCToPermittedNetworks(ctx context.Context, vpcCRN string, dnsID string, dnsZone string) error
 
 	// VPC
 	GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, error)
@@ -50,11 +54,13 @@ type API interface {
 	GetVPCSubnets(ctx context.Context, vpcID string) ([]vpcv1.Subnet, error)
 
 	// TG
+	TransitGatewayID(ctx context.Context, name string) (string, error)
 	GetTGConnectionVPC(ctx context.Context, gatewayID string, vpcSubnetID string) (string, error)
 	GetAttachedTransitGateway(ctx context.Context, svcInsID string) (string, error)
 
 	// Data Center
 	GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error)
+	GetDatacenterSupportedSystems(ctx context.Context, region string) ([]string, error)
 
 	// API
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
@@ -80,6 +86,9 @@ type API interface {
 
 	// Load Balancer
 	AddIPToLoadBalancerPool(ctx context.Context, lbID string, poolName string, port int64, ip string) error
+
+	// Virtual Private Endpoint Gateway
+	CreateVirtualPrivateEndpointGateway(ctx context.Context, name string, vpcID string, subnetID string, rgID string, targetCRN string) (*vpcv1.EndpointGateway, error)
 }
 
 // Client makes calls to the PowerVS API.
@@ -294,6 +303,45 @@ func (c *Client) GetDNSCustomResolverIP(ctx context.Context, dnsID string, vpcID
 	return "", fmt.Errorf("DNS server IP of custom resolver for %q not found", dnsID)
 }
 
+// CreateDNSCustomResolver creates a custom resolver associated with the specified VPC in the specified DNS zone.
+func (c *Client) CreateDNSCustomResolver(ctx context.Context, name string, dnsID string, vpcID string) (*dnssvcsv1.CustomResolver, error) {
+	createCustomResolverOptions := c.dnsServicesAPI.NewCreateCustomResolverOptions(dnsID, name)
+
+	subnets, err := c.GetVPCSubnets(ctx, vpcID)
+	if err != nil {
+		return nil, err
+	}
+
+	locations := []dnssvcsv1.LocationInput{}
+	for _, subnet := range subnets {
+		location, err := c.dnsServicesAPI.NewLocationInput(*subnet.CRN)
+		if err != nil {
+			return nil, err
+		}
+		location.Enabled = core.BoolPtr(true)
+		locations = append(locations, *location)
+	}
+	createCustomResolverOptions.SetLocations(locations)
+
+	customResolver, _, err := c.dnsServicesAPI.CreateCustomResolverWithContext(ctx, createCustomResolverOptions)
+	if err != nil {
+		return nil, err
+	}
+	return customResolver, nil
+}
+
+// EnableDNSCustomResolver enables a specified custom resolver.
+func (c *Client) EnableDNSCustomResolver(ctx context.Context, dnsID string, resolverID string) (*dnssvcsv1.CustomResolver, error) {
+	updateCustomResolverOptions := c.dnsServicesAPI.NewUpdateCustomResolverOptions(dnsID, resolverID)
+	updateCustomResolverOptions.SetEnabled(true)
+
+	customResolver, _, err := c.dnsServicesAPI.UpdateCustomResolverWithContext(ctx, updateCustomResolverOptions)
+	if err != nil {
+		return nil, err
+	}
+	return customResolver, nil
+}
+
 // GetDNSZoneIDByName gets the CIS zone ID from its domain name.
 func (c *Client) GetDNSZoneIDByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error) {
 	zones, err := c.GetDNSZones(ctx, publish)
@@ -381,7 +429,7 @@ func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrate
 			}
 
 			for _, zone := range listZonesResponse.Dnszones {
-				if *zone.State == "ACTIVE" {
+				if *zone.State == "ACTIVE" || *zone.State == "PENDING_NETWORK_ADD" {
 					zoneStruct := DNSZoneResponse{
 						Name:            *zone.Name,
 						ID:              *zone.ID,
@@ -413,6 +461,22 @@ func (c *Client) GetDNSInstancePermittedNetworks(ctx context.Context, dnsID stri
 		networks = append(networks, *network.PermittedNetwork.VpcCrn)
 	}
 	return networks, nil
+}
+
+// AddVPCToPermittedNetworks adds the specified VPC to the specified DNS zone.
+func (c *Client) AddVPCToPermittedNetworks(ctx context.Context, vpcCRN string, dnsID string, dnsZone string) error {
+	permittedNetwork, err := c.dnsServicesAPI.NewPermittedNetworkVpc(vpcCRN)
+	if err != nil {
+		return err
+	}
+
+	createPermittedNetworkOptions := c.dnsServicesAPI.NewCreatePermittedNetworkOptions(dnsID, dnsZone, dnssvcsv1.CreatePermittedNetworkOptions_Type_Vpc, permittedNetwork)
+
+	_, _, err = c.dnsServicesAPI.CreatePermittedNetworkWithContext(ctx, createPermittedNetworkOptions)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // CreateDNSRecord Creates a DNS CNAME record in the given base domain and CRN.
@@ -495,11 +559,10 @@ func (c *Client) createPrivateDNSRecord(ctx context.Context, crnstr string, base
 	if err != nil {
 		return fmt.Errorf("NewResourceRecordInputRdataRdataCnameRecord failed: %w", err)
 	}
-	createOptions := c.dnsServicesAPI.NewCreateResourceRecordOptions(dnsCRN.ServiceInstance, zoneID)
+	createOptions := c.dnsServicesAPI.NewCreateResourceRecordOptions(dnsCRN.ServiceInstance, zoneID, dnssvcsv1.CreateResourceRecordOptions_Type_Cname)
 	createOptions.SetRdata(rdataCnameRecord)
 	createOptions.SetTTL(120)
 	createOptions.SetName(hostname)
-	createOptions.SetType("CNAME")
 	result, resp, err := c.dnsServicesAPI.CreateResourceRecord(createOptions)
 	if err != nil {
 		logrus.Errorf("dnsRecordService.CreateResourceRecord returns %v", err)
@@ -1032,6 +1095,44 @@ func (c *Client) GetDatacenterCapabilities(ctx context.Context, region string) (
 	return getOk.Payload.Capabilities, nil
 }
 
+// GetDatacenterSupportedSystems retrieves the capabilities of the specified datacenter.
+func (c *Client) GetDatacenterSupportedSystems(ctx context.Context, region string) ([]string, error) {
+	var err error
+	if c.BXCli.PISession == nil {
+		err = c.BXCli.NewPISession()
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize PISession in GetDatacenterSupportedSystems: %w", err)
+		}
+	}
+	params := datacenters.NewV1DatacentersGetParamsWithContext(ctx).WithDatacenterRegion(region)
+	getOk, err := c.BXCli.PISession.Power.Datacenters.V1DatacentersGet(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get datacenter supported systems: %w", err)
+	}
+	return getOk.Payload.CapabilitiesDetails.SupportedSystems.General, nil
+}
+
+// TransitGatewayID checks to see if the name is an existing transit gateway name.
+func (c *Client) TransitGatewayID(ctx context.Context, name string) (string, error) {
+	var (
+		gateways []transitgatewayapisv1.TransitGateway
+		gateway  transitgatewayapisv1.TransitGateway
+		err      error
+	)
+
+	gateways, err = c.getTransitGateways(ctx)
+	if err != nil {
+		return "", err
+	}
+	for _, gateway = range gateways {
+		if *gateway.Name == name {
+			return *gateway.ID, nil
+		}
+	}
+
+	return "", nil
+}
+
 // GetAttachedTransitGateway finds an existing Transit Gateway attached to the provided PowerVS cloud instance.
 func (c *Client) GetAttachedTransitGateway(ctx context.Context, svcInsID string) (string, error) {
 	var (
@@ -1360,11 +1461,88 @@ func (c *Client) AddIPToLoadBalancerPool(ctx context.Context, lbID string, poolN
 	clbpmOptions = c.vpcAPI.NewCreateLoadBalancerPoolMemberOptions(lbID, *lbPool.ID, port, lbpmtp)
 	logrus.Debugf("AddIPToLoadBalancerPool: clbpmOptions = %+v", clbpmOptions)
 
-	lbpm, response, err = c.vpcAPI.CreateLoadBalancerPoolMemberWithContext(ctx, clbpmOptions)
-	if err != nil {
-		return fmt.Errorf("could not add the load balancer pool member and the response = %+v, err = %w", response, err)
-	}
-	logrus.Debugf("AddIPToLoadBalancerPool: CLBPMWC lbpm = %+v", lbpm)
+	return wait.PollUntilContextCancel(ctx,
+		time.Second*10,
+		false,
+		func(ctx context.Context) (bool, error) {
+			lbpm, response, err = c.vpcAPI.CreateLoadBalancerPoolMemberWithContext(ctx, clbpmOptions)
+			if err != nil {
+				logrus.Debugf("AddIPToLoadBalancerPool: could not add the load balancer pool member yet, err = %v", err)
+				return false, nil
+			}
 
-	return nil
+			logrus.Debugf("AddIPToLoadBalancerPool: CLBPMWC lbpm = %+v", lbpm)
+
+			return true, nil
+		})
+}
+
+// CreateVirtualPrivateEndpointGateway creates a VPE gateway with given target resource type and CRN.
+func (c *Client) CreateVirtualPrivateEndpointGateway(ctx context.Context, name string, vpcID string, subnetID string, rgID string, targetCRN string) (*vpcv1.EndpointGateway, error) {
+	var (
+		resp   *core.DetailedResponse
+		err    error
+		ok     bool
+		egs    *vpcv1.EndpointGatewayCollection
+		egRef  *vpcv1.EndpointGatewayTarget
+		idIntf *vpcv1.VPCIdentityByID
+		target *vpcv1.EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype
+		rgIntf *vpcv1.ResourceGroupIdentityByID
+		ipIntf *vpcv1.EndpointGatewayReservedIPReservedIPIdentityByID
+	)
+
+	listOpts := c.vpcAPI.NewListEndpointGatewaysOptions()
+	listOpts.SetVPCID(vpcID)
+	egs, _, err = c.vpcAPI.ListEndpointGateways(listOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, eg := range egs.EndpointGateways {
+		egRef, ok = eg.Target.(*vpcv1.EndpointGatewayTarget)
+		if !ok {
+			return nil, fmt.Errorf("invalid target inside returned EndpointGateway: %v", eg.Target)
+		}
+		if *egRef.CRN == targetCRN {
+			return &eg, nil
+		}
+	}
+
+	target, err = c.vpcAPI.NewEndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype(targetCRN, vpcv1.EndpointGatewayTargetPrototypeResourceTypeProviderCloudServiceConst)
+	if err != nil {
+		return nil, err
+	}
+	idIntf, err = c.vpcAPI.NewVPCIdentityByID(vpcID)
+	if err != nil {
+		return nil, err
+	}
+	createOpts := c.vpcAPI.NewCreateEndpointGatewayOptions(target, idIntf)
+	createOpts.SetName(name)
+	createOpts.SetAllowDnsResolutionBinding(true)
+	rgIntf, err = c.vpcAPI.NewResourceGroupIdentityByID(rgID)
+	if err != nil {
+		return nil, err
+	}
+	createOpts.SetResourceGroup(rgIntf)
+	ipName := fmt.Sprintf("%s-ip", name)
+	createIPOpts := c.vpcAPI.NewCreateSubnetReservedIPOptions(subnetID)
+	createIPOpts.SetName(ipName)
+	createIPOpts.SetSubnetID(subnetID)
+	reservedIP, _, err := c.vpcAPI.CreateSubnetReservedIPWithContext(ctx, createIPOpts)
+	if err != nil {
+		return nil, err
+	}
+	ipIntf, err = c.vpcAPI.NewEndpointGatewayReservedIPReservedIPIdentityByID(*reservedIP.ID)
+	if err != nil {
+		return nil, err
+	}
+	ips := []vpcv1.EndpointGatewayReservedIPIntf{ipIntf}
+	createOpts.SetIps(ips)
+
+	eg, resp, err := c.vpcAPI.CreateEndpointGatewayWithContext(ctx, createOpts)
+	if err != nil {
+		logrus.Debugf("CreateEndpointGatewayWithContext returned %v", resp)
+		return nil, err
+	}
+	return eg, nil
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018-2023 VMware, Inc. All Rights Reserved.
+Copyright (c) 2018-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"crypto/md5"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -27,6 +31,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"log"
 	"net/http"
@@ -35,6 +40,8 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -59,6 +66,7 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 	vim "github.com/vmware/govmomi/vim25/types"
 	"github.com/vmware/govmomi/vim25/xml"
+	"github.com/vmware/govmomi/vmdk"
 )
 
 type item struct {
@@ -75,6 +83,7 @@ type content struct {
 }
 
 type update struct {
+	*sync.WaitGroup
 	*library.Session
 	Library *library.Library
 	File    map[string]*library.UpdateFile
@@ -152,6 +161,8 @@ func New(u *url.URL, r *simulator.Registry) ([]string, http.Handler) {
 		{internal.Subscriptions + "/", s.subscriptionsID},
 		{internal.LibraryItemPath, s.libraryItem},
 		{internal.LibraryItemPath + "/", s.libraryItemID},
+		{internal.LibraryItemStoragePath, s.libraryItemStorage},
+		{internal.LibraryItemStoragePath + "/", s.libraryItemStorageID},
 		{internal.SubscribedLibraryItem + "/", s.libraryItemID},
 		{internal.LibraryItemUpdateSession, s.libraryItemUpdateSession},
 		{internal.LibraryItemUpdateSession + "/", s.libraryItemUpdateSessionID},
@@ -184,8 +195,13 @@ func New(u *url.URL, r *simulator.Registry) ([]string, http.Handler) {
 }
 
 func (s *handler) withClient(f func(context.Context, *vim25.Client) error) error {
+	return WithClient(s.URL, f)
+}
+
+// WithClient creates invokes f with an authenticated vim25.Client.
+func WithClient(u url.URL, f func(context.Context, *vim25.Client) error) error {
 	ctx := context.Background()
-	c, err := govmomi.NewClient(ctx, &s.URL, true)
+	c, err := govmomi.NewClient(ctx, &u, true)
 	if err != nil {
 		return err
 	}
@@ -193,6 +209,52 @@ func (s *handler) withClient(f func(context.Context, *vim25.Client) error) error
 		_ = c.Logout(ctx)
 	}()
 	return f(ctx, c.Client)
+}
+
+// RunTask creates a Task with the given spec and sets the task state based on error returned by f.
+func RunTask(u url.URL, spec types.CreateTask, f func(context.Context, *vim25.Client) error) string {
+	var id string
+
+	err := WithClient(u, func(ctx context.Context, c *vim25.Client) error {
+		spec.This = *c.ServiceContent.TaskManager
+		if spec.TaskTypeId == "" {
+			spec.TaskTypeId = "com.vmware.govmomi.simulator.test"
+		}
+		res, err := methods.CreateTask(ctx, c, &spec)
+		if err != nil {
+			return err
+		}
+
+		ref := res.Returnval.Task
+		task := object.NewTask(c, ref)
+		id = ref.Value + ":" + uuid.NewString()
+
+		if err = task.SetState(ctx, types.TaskInfoStateRunning, nil, nil); err != nil {
+			return err
+		}
+
+		var fault *types.LocalizedMethodFault
+		state := types.TaskInfoStateSuccess
+		if f != nil {
+			err = f(ctx, c)
+		}
+
+		if err != nil {
+			fault = &types.LocalizedMethodFault{
+				Fault:            &types.SystemError{Reason: err.Error()},
+				LocalizedMessage: err.Error(),
+			}
+			state = types.TaskInfoStateError
+		}
+
+		return task.SetState(ctx, state, nil, fault)
+	})
+
+	if err != nil {
+		panic(err) // should not happen
+	}
+
+	return id
 }
 
 // HandleFunc wraps the given handler with authorization checks and passes to http.ServeMux.HandleFunc
@@ -860,6 +922,7 @@ func (s *handler) library(w http.ResponseWriter, r *http.Request) {
 
 			id := uuid.New().String()
 			spec.Library.ID = id
+			spec.Library.ServerGUID = uuid.New().String()
 			spec.Library.CreationTime = types.NewTime(time.Now())
 			spec.Library.LastModifiedTime = types.NewTime(time.Now())
 			spec.Library.UnsetSecurityPolicyID = spec.Library.SecurityPolicyID == ""
@@ -885,14 +948,9 @@ func (s *handler) library(w http.ResponseWriter, r *http.Request) {
 				}).String()
 			}
 
-			sub := spec.Library.Subscription
-			if sub != nil {
-				// Share the published Item map
-				pid := path.Base(sub.SubscriptionURL)
-				if p, ok := s.Library[pid]; ok {
-					s.Library[id].Item = p.Item
-				}
-			}
+			s.syncSubLib(s.Library[id])
+
+			spec.Library.StateInfo = &library.StateInfo{State: "ACTIVE"}
 
 			OK(w, id)
 		}
@@ -903,6 +961,356 @@ func (s *handler) library(w http.ResponseWriter, r *http.Request) {
 		}
 		OK(w, ids)
 	}
+}
+
+func (s *handler) syncSubLib(dstLib *content) error {
+
+	sub := dstLib.Subscription
+	if sub == nil {
+		return nil
+	}
+
+	lastSyncTime := time.Now().UTC()
+	dstLib.LastSyncTime = &lastSyncTime
+
+	var syncAll bool
+	if sub.OnDemand != nil && !*sub.OnDemand {
+		syncAll = true
+	}
+
+	srcLib, ok := s.Library[path.Base(sub.SubscriptionURL)]
+	if !ok {
+		return nil
+	}
+
+	if dstLib.Item == nil {
+		dstLib.Item = map[string]*item{}
+	}
+
+	// handledSrcItems tracks which items from the source library have been
+	// seen when iterating over the existing, subscribed library. This enables
+	// the addition of *new* items from the source library that do not yet exist
+	// in the subscribed, destination library.
+	handledSrcItems := map[string]struct{}{}
+
+	// Update any items that already exist in the subscribed library.
+	for _, dstItem := range dstLib.Item {
+
+		// Indicate this source item has been seen.
+		handledSrcItems[dstItem.SourceID] = struct{}{}
+
+		// Synchronize the item.
+		if err := s.syncItem(
+			dstItem,
+			dstLib,
+			srcLib,
+			syncAll,
+			srcLib.LastSyncTime); err != nil {
+
+			return err
+		}
+	}
+
+	// Add any new items from the published library.
+	for _, srcItem := range srcLib.Item {
+
+		// Skip any source items that were handled above.
+		if _, ok := handledSrcItems[srcItem.ID]; ok {
+			continue
+		}
+
+		now := time.Now().UTC()
+
+		// Create the destination item.
+		dstItem := &item{
+			Item: &library.Item{
+				// Give the copy a unique ID.
+				ID: uuid.NewString(),
+
+				// Track the source item's ID.
+				SourceID: srcItem.ID,
+
+				// Track the library to which the new item belongs.
+				LibraryID: dstLib.ID,
+
+				// Ensure the creation/modified times are set.
+				CreationTime:     &now,
+				LastModifiedTime: &now,
+			},
+		}
+
+		// Add the new item to the subscribed library.
+		dstLib.Item[dstItem.ID] = dstItem
+
+		// Synchronize the item.
+		if err := s.syncItem(
+			dstItem,
+			dstLib,
+			srcLib,
+			syncAll,
+			dstLib.LastSyncTime); err != nil {
+
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *handler) evictLibrary(lib *content) {
+	for i := range lib.Item {
+		s.evictItem(lib.Item[i])
+	}
+}
+
+func (s *handler) evictItem(item *item) {
+	item.Cached = false
+	for i := range item.File {
+		item.File[i].Cached = &item.Cached
+	}
+}
+
+var ovfOrManifestRx = regexp.MustCompile(`(?i)^.+\.(ovf|mf)$`)
+
+func (s *handler) syncItem(
+	dstItem *item,
+	dstLib,
+	srcLib *content,
+	syncAll bool,
+	lastSyncTime *time.Time) error {
+
+	// dstLib is nil when this function is called by the workflow for deploying
+	// a subscribed library item.
+	if dstLib == nil {
+		var ok bool
+		if dstLib, ok = s.Library[dstItem.LibraryID]; !ok {
+			return fmt.Errorf("cannot find sub library id %q", dstItem.LibraryID)
+		}
+	}
+
+	// srcLib is nil when this function is used to synchronize an individual
+	// item versus synchronizing the entire library.
+	if srcLib == nil {
+		sub := dstLib.Subscription
+		if sub == nil {
+			return nil
+		}
+		var ok bool
+		srcLibID := path.Base(sub.SubscriptionURL)
+		if srcLib, ok = s.Library[srcLibID]; !ok {
+			return fmt.Errorf("cannot find pub library id %q", srcLibID)
+		}
+	}
+
+	// Get the path to the destination library item on the local filesystem.
+	dstItemPath := libraryPath(dstLib.Library, dstItem.ID)
+
+	// Get the source item.
+	srcItem, ok := srcLib.Item[dstItem.SourceID]
+	if !ok {
+		// The source item is no more, so delete the destination item.
+		delete(dstLib.Item, dstItem.ID)
+
+		// Clean up the destination item's files as well.
+		os.RemoveAll(dstItemPath)
+
+		return nil
+	}
+
+	// lastSyncTime is nil when this function is used to synchronize an
+	// individual item versus synchronizing the entire library.
+	if lastSyncTime == nil {
+		now := time.Now().UTC()
+		lastSyncTime = &now
+	}
+	dstItem.LastSyncTime = lastSyncTime
+
+	// There is nothing to sync if the metadata and content versions have not
+	// changed, the item is already cached, and syncAll is false.
+	if dstItem.MetadataVersion == srcItem.MetadataVersion &&
+		dstItem.ContentVersion == srcItem.ContentVersion &&
+		dstItem.Cached && !syncAll {
+
+		return nil
+	}
+
+	// Since there was a modification, update the last mod time.
+	dstItem.LastModifiedTime = lastSyncTime
+
+	// Copy information from the srcItem to dstItem.
+	dstItem.Name = srcItem.Name
+	dstItem.ContentVersion = srcItem.ContentVersion
+	dstItem.MetadataVersion = srcItem.MetadataVersion
+	dstItem.Type = srcItem.Type
+	dstItem.Description = srcItem.Description
+	dstItem.Version = srcItem.Version
+
+	// Update the destination item's files from the source.
+	dstItem.File = make([]library.File, len(srcItem.File))
+	copy(dstItem.File, srcItem.File)
+
+	// If the destination item was previously cached or syncAll was used, then
+	// mark the destination item as cached.
+	dstItem.Cached = dstItem.Cached || syncAll
+	fileIsCached := true
+	fileIsNotCached := false
+	fileZeroSize := int64(0)
+
+	// Ensure a directory exists on the local filesystem for the destination
+	// item.
+	if err := os.MkdirAll(dstItemPath, 0750); err != nil {
+		return fmt.Errorf(
+			"failed to make directory for library %q item %q: %w",
+			dstLib.ID,
+			dstItem.ID,
+			err)
+	}
+
+	// Update the the destination item's files.
+	srcItemPath := libraryPath(srcLib.Library, srcItem.ID)
+	for i := range dstItem.File {
+		var (
+			dstFile = &dstItem.File[i]
+			srcFile = srcItem.File[i]
+		)
+
+		if !isValidFileName(dstFile.Name) || !isValidFileName(srcFile.Name) {
+			return errors.New("invalid file name")
+		}
+
+		var (
+			dstFilePath = path.Join(dstItemPath, dstFile.Name)
+			srcFilePath = path.Join(srcItemPath, srcFile.Name)
+		)
+
+		// .ovf and .mf files are always cached.
+		if ovfOrManifestRx.MatchString(dstFile.Name) {
+			dstFile.Cached = &fileIsCached
+			if err := copyFile(dstFilePath, srcFilePath); err != nil {
+				return err
+			}
+			continue
+		}
+
+		// For other file types, the behavior depends on syncAll:
+		//
+		// - false -- Create the destination file as a placeholder but do not
+		//            mark it as cached.
+		// - true  -- Copy the source file to the destination and mark it as
+		//            cached.
+		if !syncAll {
+			if err := createFile(dstFilePath); err != nil {
+				return err
+			}
+
+			// Ensure the empty file does not indicate it is cached and does not
+			// report a size.
+			dstFile.Cached = &fileIsNotCached
+			dstFile.Size = &fileZeroSize
+		} else {
+			if err := copyFile(dstFilePath, srcFilePath); err != nil {
+				return err
+			}
+
+			// Ensure the file reports that it is cached.
+			dstFile.Cached = &fileIsCached
+		}
+	}
+
+	return nil
+}
+
+const (
+	createOrCopyFlags = os.O_RDWR | os.O_CREATE | os.O_TRUNC
+	createOrCopyMode  = os.FileMode(0664)
+)
+
+func createFile(dstPath string) error {
+	f, err := os.OpenFile(dstPath, createOrCopyFlags, createOrCopyMode)
+	if err != nil {
+		return fmt.Errorf("failed to create %q: %w", dstPath, err)
+	}
+	return f.Close()
+}
+
+// TODO: considering using object.DatastoreFileManager.Copy here instead
+func openFile(dstPath string, flag int, perm os.FileMode) (*os.File, error) {
+	backing := simulator.VirtualDiskBackingFileName(dstPath)
+	if backing == dstPath {
+		// dstPath is not a .vmdk file
+		return os.OpenFile(dstPath, flag, perm)
+	}
+
+	// Generate the descriptor file using dstPath
+	extent := vmdk.Extent{Info: filepath.Base(backing)}
+	desc := vmdk.NewDescriptor(extent)
+
+	f, err := os.OpenFile(dstPath, flag, perm)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = desc.Write(f); err != nil {
+		_ = f.Close()
+		return nil, err
+	}
+
+	if err = f.Close(); err != nil {
+		return nil, err
+	}
+
+	// Create ${name}-flat.vmdk to store contents
+	return os.OpenFile(backing, flag, perm)
+}
+
+func sourceFile(srcPath string) (*os.File, error) {
+	// Open ${name}-flat.vmdk if src is a .vmdk
+	srcPath = simulator.VirtualDiskBackingFileName(srcPath)
+	return os.Open(srcPath)
+}
+
+func copyFile(dstPath, srcPath string) error {
+	srcStat, err := os.Stat(srcPath)
+	if err != nil {
+		return fmt.Errorf("failed to stat %q: %w", srcPath, err)
+	}
+
+	if !srcStat.Mode().IsRegular() {
+		return fmt.Errorf("%q is not a regular file", srcPath)
+	}
+
+	src, err := sourceFile(srcPath)
+	if err != nil {
+		return fmt.Errorf("failed to open %q: %w", srcPath, err)
+	}
+	defer src.Close()
+
+	dst, err := openFile(dstPath, createOrCopyFlags, createOrCopyMode)
+	if err != nil {
+		return fmt.Errorf("failed to create %q: %w", dstPath, err)
+	}
+	defer dst.Close()
+
+	// Copy the file using a 1MiB buffer.
+	if _, err = copyReaderToWriter(dst, dstPath, src, srcPath); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// copyReaderToWriter copies the contents of src to dst using a 1MiB buffer.
+func copyReaderToWriter(
+	dst io.Writer, dstName string,
+	src io.Reader, srcName string) (int64, error) {
+
+	buf := make([]byte, 1 /* byte */ *1024 /* kibibyte */ *1024 /* mebibyte */)
+	n, err := io.CopyBuffer(dst, src, buf)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy %q to %q: %w", srcName, dstName, err)
+	}
+
+	return n, nil
 }
 
 func (s *handler) publish(w http.ResponseWriter, r *http.Request, sids []internal.SubscriptionDestination, l *content, vmtx *item) bool {
@@ -991,10 +1399,17 @@ func (s *handler) libraryID(w http.ResponseWriter, r *http.Request) {
 		case "sync":
 			if l.Type == "SUBSCRIBED" {
 				l.LastSyncTime = types.NewTime(time.Now())
-				OK(w)
+				if err := s.syncSubLib(l); err != nil {
+					BadRequest(w, err.Error())
+				} else {
+					OK(w)
+				}
 			} else {
 				http.NotFound(w, r)
 			}
+		case "evict":
+			s.evictLibrary(l)
+			OK(w)
 		}
 	case http.MethodGet:
 		OK(w, l)
@@ -1144,10 +1559,24 @@ func (s *handler) libraryItem(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
+
+			if !isValidFileName(spec.Item.Name) {
+				ApiErrorInvalidArgument(w)
+				return
+			}
+
 			id = uuid.New().String()
 			spec.Item.ID = id
 			spec.Item.CreationTime = types.NewTime(time.Now())
 			spec.Item.LastModifiedTime = types.NewTime(time.Now())
+
+			// Local items are always marked Cached=true
+			spec.Item.Cached = true
+
+			// Local items start with a ContentVersion="1"
+			spec.Item.ContentVersion = getVersionString("")
+			spec.Item.MetadataVersion = getVersionString("")
+
 			if l.SecurityPolicyID != "" {
 				// TODO: verify signed items
 				spec.Item.SecurityCompliance = types.NewBool(false)
@@ -1191,7 +1620,7 @@ func (s *handler) libraryItemID(w http.ResponseWriter, r *http.Request) {
 	}
 	item, ok := l.Item[id]
 	if !ok {
-		log.Printf("library item not found: %q", id)
+		log.Printf("libraryItemID: library item not found: %q", id)
 		http.NotFound(w, r)
 		return
 	}
@@ -1242,9 +1671,22 @@ func (s *handler) libraryItemID(w http.ResponseWriter, r *http.Request) {
 
 			OK(w, id)
 		case "sync":
-			if l.Type == "SUBSCRIBED" {
-				item.LastSyncTime = types.NewTime(time.Now())
-				OK(w)
+			if l.Type == "SUBSCRIBED" || l.Publication != nil {
+				var spec internal.SubscriptionItemDestinationSpec
+				if s.decode(r, w, &spec) {
+					if l.Publication != nil {
+						if s.publish(w, r, spec.Subscriptions, l, item) {
+							OK(w)
+						}
+					}
+					if l.Type == "SUBSCRIBED" {
+						if err := s.syncItem(item, l, nil, spec.Force, nil); err != nil {
+							BadRequest(w, err.Error())
+						} else {
+							OK(w)
+						}
+					}
+				}
 			} else {
 				http.NotFound(w, r)
 			}
@@ -1255,9 +1697,99 @@ func (s *handler) libraryItemID(w http.ResponseWriter, r *http.Request) {
 					OK(w)
 				}
 			}
+		case "evict":
+			s.evictItem(item)
+			OK(w, id)
 		}
 	case http.MethodGet:
 		OK(w, item)
+	}
+}
+
+func (s *handler) libraryItemByID(id string) (*content, *item) {
+	for _, l := range s.Library {
+		if item, ok := l.Item[id]; ok {
+			return l, item
+		}
+	}
+
+	log.Printf("library for item %q not found", id)
+
+	return nil, nil
+}
+
+func (s *handler) libraryItemStorageByID(id string) ([]library.Storage, bool) {
+	lib, item := s.libraryItemByID(id)
+	if item == nil {
+		return nil, false
+	}
+
+	storage := make([]library.Storage, len(item.File))
+
+	for i, file := range item.File {
+		storage[i] = library.Storage{
+			StorageBacking: lib.Storage[0],
+			StorageURIs: []string{
+				path.Join(libraryPath(lib.Library, id), file.Name),
+			},
+			Name:    file.Name,
+			Version: file.Version,
+		}
+		if file.Checksum != nil {
+			storage[i].Checksum = *file.Checksum
+		}
+		if file.Size != nil {
+			storage[i].Size = *file.Size
+		}
+		if file.Cached != nil {
+			storage[i].Cached = *file.Cached
+		}
+	}
+
+	return storage, true
+}
+
+func (s *handler) libraryItemStorage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	id := r.URL.Query().Get("library_item_id")
+	storage, ok := s.libraryItemStorageByID(id)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	OK(w, storage)
+}
+
+func (s *handler) libraryItemStorageID(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	id := s.id(r)
+	storage, ok := s.libraryItemStorageByID(id)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	var spec struct {
+		Name string `json:"file_name"`
+	}
+
+	if s.decode(r, w, &spec) {
+		for _, file := range storage {
+			if file.Name == spec.Name {
+				OK(w, []library.Storage{file})
+				return
+			}
+		}
+		http.NotFound(w, r)
 	}
 }
 
@@ -1279,24 +1811,25 @@ func (s *handler) libraryItemUpdateSession(w http.ResponseWriter, r *http.Reques
 
 		switch s.action(r) {
 		case "create", "":
-			lib := s.itemLibrary(spec.Session.LibraryItemID)
+			lib, item := s.libraryItemByID(spec.Session.LibraryItemID)
 			if lib == nil {
-				log.Printf("library for item %q not found", spec.Session.LibraryItemID)
+				log.Printf("library for item %q not found", item.ID)
 				http.NotFound(w, r)
 				return
 			}
 			session := &library.Session{
 				ID:                        uuid.New().String(),
-				LibraryItemID:             spec.Session.LibraryItemID,
-				LibraryItemContentVersion: "1",
+				LibraryItemID:             item.ID,
+				LibraryItemContentVersion: item.ContentVersion,
 				ClientProgress:            0,
 				State:                     "ACTIVE",
 				ExpirationTime:            types.NewTime(time.Now().Add(time.Hour)),
 			}
 			s.Update[session.ID] = update{
-				Session: session,
-				Library: lib,
-				File:    make(map[string]*library.UpdateFile),
+				WaitGroup: new(sync.WaitGroup),
+				Session:   session,
+				Library:   lib.Library,
+				File:      make(map[string]*library.UpdateFile),
 			}
 			OK(w, session.ID)
 		}
@@ -1314,7 +1847,9 @@ func (s *handler) libraryItemUpdateSessionID(w http.ResponseWriter, r *http.Requ
 
 	session := up.Session
 	done := func(state string) {
-		up.State = state
+		if up.State != "ERROR" {
+			up.State = state
+		}
 		go time.AfterFunc(session.ExpirationTime.Sub(time.Now()), func() {
 			s.Lock()
 			delete(s.Update, id)
@@ -1330,7 +1865,10 @@ func (s *handler) libraryItemUpdateSessionID(w http.ResponseWriter, r *http.Requ
 		case "cancel":
 			done("CANCELED")
 		case "complete":
-			done("DONE")
+			go func() {
+				up.Wait() // wait for any PULL sources to complete
+				done("DONE")
+			}()
 		case "fail":
 			done("ERROR")
 		case "keep-alive":
@@ -1445,14 +1983,16 @@ func (s *handler) libraryItemUpdateSessionFile(w http.ResponseWriter, r *http.Re
 }
 
 func (s *handler) pullSource(up update, info *library.UpdateFile) {
+	defer up.Done()
 	done := func(err error) {
 		s.Lock()
 		info.Status = "READY"
 		if err != nil {
 			log.Printf("PULL %s: %s", info.SourceEndpoint.URI, err)
 			info.Status = "ERROR"
-			up.State = "ERROR"
-			up.ErrorMessage = &rest.LocalizableMessage{DefaultMessage: err.Error()}
+			info.ErrorMessage = &rest.LocalizableMessage{DefaultMessage: err.Error()}
+			up.State = info.Status
+			up.ErrorMessage = info.ErrorMessage
 		}
 		s.Unlock()
 	}
@@ -1469,8 +2009,19 @@ func (s *handler) pullSource(up update, info *library.UpdateFile) {
 		return
 	}
 
-	err = s.libraryItemFileCreate(&up, info.Name, res.Body)
+	err = s.libraryItemFileCreate(&up, info.Name, res.Body, info.Checksum)
 	done(err)
+}
+
+func hasChecksum(c *library.Checksum) bool {
+	return c != nil && c.Checksum != ""
+}
+
+var checksum = map[string]func() hash.Hash{
+	"MD5":    md5.New,
+	"SHA1":   sha1.New,
+	"SHA256": sha256.New,
+	"SHA512": sha512.New,
 }
 
 func (s *handler) libraryItemUpdateSessionFileID(w http.ResponseWriter, r *http.Request) {
@@ -1496,6 +2047,7 @@ func (s *handler) libraryItemUpdateSessionFileID(w http.ResponseWriter, r *http.
 			id = uuid.New().String()
 			info := &library.UpdateFile{
 				Name:             spec.File.Name,
+				Checksum:         spec.File.Checksum,
 				SourceType:       spec.File.SourceType,
 				Status:           "WAITING_FOR_TRANSFER",
 				BytesTransferred: 0,
@@ -1509,20 +2061,30 @@ func (s *handler) libraryItemUpdateSessionFileID(w http.ResponseWriter, r *http.
 				}
 				info.UploadEndpoint = &library.TransferEndpoint{URI: u.String()}
 			case "PULL":
+				if hasChecksum(info.Checksum) && checksum[info.Checksum.Algorithm] == nil {
+					BadRequest(w, "com.vmware.vapi.std.errors.invalid_argument")
+					return
+				}
 				info.SourceEndpoint = spec.File.SourceEndpoint
+				info.Status = "TRANSFERRING"
+				up.Add(1)
 				go s.pullSource(up, info)
 			}
 			up.File[id] = info
 			OK(w, info)
 		}
 	case "get":
-		OK(w, up.Session)
-	case "list":
-		var ids []string
-		for id := range up.File {
-			ids = append(ids, id)
+		var spec struct {
+			File string `json:"file_name"`
 		}
-		OK(w, ids)
+		if s.decode(r, w, &spec) {
+			for _, f := range up.File {
+				if f.Name == spec.File {
+					OK(w, f)
+					return
+				}
+			}
+		}
 	case "remove":
 		if up.State != "ACTIVE" {
 			s.error(w, fmt.Errorf("removeFile not allowed in state %s", up.State))
@@ -1559,34 +2121,26 @@ func (s *handler) libraryItemDownloadSession(w http.ResponseWriter, r *http.Requ
 
 		switch s.action(r) {
 		case "create", "":
-			var lib *library.Library
-			var files []library.File
-			for _, l := range s.Library {
-				if item, ok := l.Item[spec.Session.LibraryItemID]; ok {
-					lib = l.Library
-					files = item.File
-					break
-				}
-			}
-			if lib == nil {
-				log.Printf("library for item %q not found", spec.Session.LibraryItemID)
+			lib, item := s.libraryItemByID(spec.Session.LibraryItemID)
+			if item == nil {
 				http.NotFound(w, r)
 				return
 			}
+
 			session := &library.Session{
 				ID:                        uuid.New().String(),
 				LibraryItemID:             spec.Session.LibraryItemID,
-				LibraryItemContentVersion: "1",
+				LibraryItemContentVersion: item.ContentVersion,
 				ClientProgress:            0,
 				State:                     "ACTIVE",
 				ExpirationTime:            types.NewTime(time.Now().Add(time.Hour)),
 			}
 			s.Download[session.ID] = download{
 				Session: session,
-				Library: lib,
+				Library: lib.Library,
 				File:    make(map[string]*library.DownloadFile),
 			}
-			for _, file := range files {
+			for _, file := range item.File {
 				s.Download[session.ID].File[file.Name] = &library.DownloadFile{
 					Name:   file.Name,
 					Status: "UNPREPARED",
@@ -1717,55 +2271,142 @@ func libraryPath(l *library.Library, id string) string {
 	}
 	ds := simulator.Map.Get(dsref).(*simulator.Datastore)
 
+	if !isValidFileName(l.ID) || !isValidFileName(id) {
+		panic("invalid file name")
+	}
+
 	return path.Join(append([]string{ds.Info.GetDatastoreInfo().Url, "contentlib-" + l.ID}, id)...)
 }
 
-func (s *handler) libraryItemFileCreate(up *update, name string, body io.ReadCloser) error {
-	var in io.Reader = body
-	dir := libraryPath(up.Library, up.Session.LibraryItemID)
-	if err := os.MkdirAll(dir, 0750); err != nil {
+func (s *handler) libraryItemFileCreate(
+	up *update,
+	dstFileName string,
+	body io.ReadCloser,
+	cs *library.Checksum) error {
+
+	defer body.Close()
+
+	if !isValidFileName(dstFileName) {
+		return errors.New("invalid file name")
+	}
+
+	dstItemPath := libraryPath(up.Library, up.Session.LibraryItemID)
+	if err := os.MkdirAll(dstItemPath, 0750); err != nil {
 		return err
 	}
 
-	if path.Ext(name) == ".ova" {
-		// All we need is the .ovf, vcsim has no use for .vmdk or .mf
-		r := tar.NewReader(body)
-		for {
-			h, err := r.Next()
+	// handleFile is used to process non-OVA files or files inside of an OVA.
+	handleFile := func(
+		fileName string,
+		src io.Reader,
+		doChecksum bool) (library.File, error) {
+
+		dstFilePath := path.Join(dstItemPath, fileName)
+
+		dst, err := openFile(dstFilePath, createOrCopyFlags, createOrCopyMode)
+		if err != nil {
+			return library.File{}, err
+		}
+		defer dst.Close()
+
+		var h hash.Hash
+
+		if doChecksum {
+			if hasChecksum(cs) {
+				h = checksum[cs.Algorithm]()
+				src = io.TeeReader(src, h)
+			}
+		}
+
+		n, err := copyReaderToWriter(dst, dstFilePath, src, fileName)
+		if err != nil {
+			return library.File{}, err
+		}
+
+		if h != nil {
+			if sum := fmt.Sprintf("%x", h.Sum(nil)); sum != cs.Checksum {
+				return library.File{}, fmt.Errorf(
+					"checksum mismatch: file=%s, alg=%s, actual=%s, expected=%s",
+					fileName, cs.Algorithm, sum, cs.Checksum)
+			}
+		}
+
+		return library.File{
+			Cached:  types.NewBool(true),
+			Name:    fileName,
+			Size:    &n,
+			Version: "1",
+		}, nil
+	}
+
+	// If the file being uploaded is not an OVA then it can be received
+	// directly.
+	if !strings.EqualFold(path.Ext(dstFileName), ".ova") {
+
+		// Handle the non-OVA file.
+		f, err := handleFile(dstFileName, body, true)
+		if err != nil {
+			return err
+		}
+
+		// Update the library item with the uploaded file.
+		i := s.Library[up.Library.ID].Item[up.Session.LibraryItemID]
+		i.File = append(i.File, f)
+		return nil
+	}
+
+	// If this is an OVA then the entire OVA is hashed.
+	var (
+		h   hash.Hash
+		src io.Reader = body
+	)
+
+	// See if the provided checksum is using a supported algorithm.
+	if hasChecksum(cs) {
+		h = checksum[cs.Algorithm]()
+		src = io.TeeReader(src, h)
+	}
+
+	// Otherwise the contents of the OVA should be uploaded.
+	r := tar.NewReader(src)
+
+	// Collect the files from the OVA.
+	var files []library.File
+	for {
+		h, err := r.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return fmt.Errorf("failed to unwind ova: %w", err)
+		}
+		if isValidFileName(h.Name) {
+
+			// Tell the handleFile method *not* to do a checksum on the file
+			// from the OVA. The checksum will occur on the entire OVA once its
+			// contents have been read.
+			f, err := handleFile(h.Name, io.LimitReader(r, h.Size), false)
 			if err != nil {
 				return err
 			}
 
-			if path.Ext(h.Name) == ".ovf" {
-				name = h.Name
-				in = io.LimitReader(body, h.Size)
-				break
-			}
+			files = append(files, f)
 		}
 	}
 
-	file, err := os.Create(path.Join(dir, name))
-	if err != nil {
-		return err
+	// If there was a checksum provided then verify the entire OVA matches the
+	// provided checksum.
+	if h != nil {
+		if sum := fmt.Sprintf("%x", h.Sum(nil)); sum != cs.Checksum {
+			return fmt.Errorf(
+				"checksum mismatch: file=%s, alg=%s, actual=%s, expected=%s",
+				dstFileName, cs.Algorithm, sum, cs.Checksum)
+		}
 	}
 
-	n, err := io.Copy(file, in)
-	_ = body.Close()
-	if err != nil {
-		return err
-	}
-	err = file.Close()
-	if err != nil {
-		return err
-	}
-
+	// Update the library item with the uploaded files.
 	i := s.Library[up.Library.ID].Item[up.Session.LibraryItemID]
-	i.File = append(i.File, library.File{
-		Cached:  types.NewBool(true),
-		Name:    name,
-		Size:    types.NewInt64(n),
-		Version: "1",
-	})
+	i.File = files
 
 	return nil
 }
@@ -1807,7 +2448,7 @@ func (s *handler) libraryItemFileData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.libraryItemFileCreate(up, name, r.Body)
+	err := s.libraryItemFileCreate(up, name, r.Body, nil)
 	if err != nil {
 		s.error(w, err)
 	}
@@ -1851,7 +2492,21 @@ func (s *handler) libraryItemFileID(w http.ResponseWriter, r *http.Request) {
 
 func (i *item) cp() *item {
 	nitem := *i.Item
-	return &item{&nitem, i.File, i.Template}
+
+	nfile := make([]library.File, len(i.File))
+	copy(nfile, i.File)
+
+	var nref *types.ManagedObjectReference
+	if i.Template != nil {
+		iref := *i.Template
+		nref = &iref
+	}
+
+	return &item{
+		Item:     &nitem,
+		File:     nfile,
+		Template: nref,
+	}
 }
 
 func (i *item) ovf() string {
@@ -1959,7 +2614,7 @@ func (s *handler) libraryDeploy(ctx context.Context, c *vim25.Client, lib *libra
 	}
 
 	m := ovf.NewManager(c)
-	spec, err := m.CreateImportSpec(ctx, string(desc), pool, ds, cisp)
+	spec, err := m.CreateImportSpec(ctx, string(desc), pool, ds, &cisp)
 	if err != nil {
 		return nil, err
 	}
@@ -2068,10 +2723,6 @@ func (s *handler) libraryItemOVFID(w http.ResponseWriter, r *http.Request) {
 	var lib *library.Library
 	var item *item
 	for _, l := range s.Library {
-		if l.Library.Type == "SUBSCRIBED" {
-			// Subscribers share the same Item map, we need the LOCAL library to find the .ovf on disk
-			continue
-		}
 		item, ok = l.Item[id]
 		if ok {
 			lib = l.Library
@@ -2079,7 +2730,7 @@ func (s *handler) libraryItemOVFID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !ok {
-		log.Printf("library item not found: %q", id)
+		log.Printf("libraryItemOVFID: library item not found: %q", id)
 		http.NotFound(w, r)
 		return
 	}
@@ -2262,7 +2913,7 @@ func (s *handler) libraryItemTemplateID(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 	if !ok {
-		log.Printf("library item not found: %q", id)
+		log.Printf("libraryItemTemplateID: library item not found: %q", id)
 		http.NotFound(w, r)
 		return
 	}
@@ -2309,6 +2960,7 @@ func (s *handler) libraryItemTemplateID(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
+		s.syncItem(item, nil, nil, true, nil)
 		ref, err := s.cloneVM(item.Template.Value, spec.Name, p, spec.DiskStorage)
 		if err != nil {
 			BadRequest(w, err.Error())
@@ -2444,4 +3096,22 @@ func (s *handler) libraryTrustedCertificatesID(w http.ResponseWriter, r *http.Re
 
 func (s *handler) debugEcho(w http.ResponseWriter, r *http.Request) {
 	r.Write(w)
+}
+
+func isValidFileName(s string) bool {
+	return !strings.Contains(s, "/") &&
+		!strings.Contains(s, "\\") &&
+		!strings.Contains(s, "..")
+}
+
+func getVersionString(current string) string {
+	if current == "" {
+		return "1"
+	}
+	i, err := strconv.Atoi(current)
+	if err != nil {
+		panic(err)
+	}
+	i += 1
+	return strconv.Itoa(i)
 }

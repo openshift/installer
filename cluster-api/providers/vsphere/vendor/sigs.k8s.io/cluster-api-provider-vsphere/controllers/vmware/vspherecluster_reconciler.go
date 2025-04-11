@@ -20,10 +20,8 @@ package vmware
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/pkg/errors"
-	topologyv1 "github.com/vmware-tanzu/vm-operator/external/tanzu-topology/api/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -41,6 +39,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-vsphere/feature"
+	topologyv1 "sigs.k8s.io/cluster-api-provider-vsphere/internal/apis/topology/v1alpha1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context/vmware"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/util"
@@ -62,6 +62,7 @@ type ClusterReconciler struct {
 // +kubebuilder:rbac:groups=vmware.infrastructure.cluster.x-k8s.io,resources=vsphereclusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=vmware.infrastructure.cluster.x-k8s.io,resources=vsphereclusters/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=vmware.infrastructure.cluster.x-k8s.io,resources=vsphereclustertemplates,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=crd.nsx.vmware.com,resources=subnetsets;subnetsets/status,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=vmware.com,resources=virtualnetworks;virtualnetworks/status,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=vmoperator.vmware.com,resources=virtualmachinesetresourcepolicies;virtualmachinesetresourcepolicies/status,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=vmoperator.vmware.com,resources=virtualmachineservices;virtualmachineservices/status,verbs=get;list;watch;create;update;patch;delete
@@ -102,7 +103,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 	// Build the patch helper.
 	patchHelper, err := patch.NewHelper(vsphereCluster, r.Client)
 	if err != nil {
-		return reconcile.Result{}, errors.Wrap(err, "failed to initialize patch helper")
+		return reconcile.Result{}, err
 	}
 
 	// Build the cluster context.
@@ -160,7 +161,7 @@ func (r *ClusterReconciler) reconcileDelete(clusterCtx *vmware.ClusterContext) {
 
 func (r *ClusterReconciler) reconcileNormal(ctx context.Context, clusterCtx *vmware.ClusterContext) error {
 	// Get any failure domains to report back to the CAPI core controller.
-	failureDomains, err := r.getFailureDomains(ctx)
+	failureDomains, err := r.getFailureDomains(ctx, clusterCtx.VSphereCluster.Namespace)
 	if err != nil {
 		return errors.Wrapf(
 			err,
@@ -369,17 +370,68 @@ func (r *ClusterReconciler) VSphereMachineToCluster(ctx context.Context, o clien
 	}}
 }
 
-var isFaultDomainsFSSEnabled = func() bool {
-	return os.Getenv("FSS_WCP_FAULTDOMAINS") == "true"
+// ZoneToVSphereClusters adds reconcile requests for VSphereClusters when Zone has an event.
+func (r *ClusterReconciler) ZoneToVSphereClusters(ctx context.Context, o client.Object) []reconcile.Request {
+	log := ctrl.LoggerFrom(ctx)
+
+	zone, ok := o.(*topologyv1.Zone)
+	if !ok {
+		log.Error(nil, fmt.Sprintf("Expected a Zone but got a %T", o))
+		return nil
+	}
+	log = log.WithValues("Zone", klog.KObj(zone))
+	ctx = ctrl.LoggerInto(ctx, log)
+
+	vsphereClusters := &vmwarev1.VSphereClusterList{}
+	err := r.Client.List(ctx, vsphereClusters, &client.ListOptions{Namespace: zone.Namespace})
+	if err != nil {
+		log.V(4).Error(err, "Failed to get VSphereClusters from Zone")
+		return nil
+	}
+
+	log.V(6).Info("Triggering VSphereCluster reconcile for Zone")
+	requests := []reconcile.Request{}
+	for _, c := range vsphereClusters.Items {
+		r := reconcile.Request{
+			NamespacedName: types.NamespacedName{
+				Name:      c.Name,
+				Namespace: c.Namespace,
+			},
+		}
+		requests = append(requests, r)
+	}
+
+	return requests
 }
 
 // Returns the failure domain information discovered on the cluster
 // hosting this controller.
-func (r *ClusterReconciler) getFailureDomains(ctx context.Context) (clusterv1.FailureDomains, error) {
-	if !isFaultDomainsFSSEnabled() {
-		return nil, nil
-	}
+func (r *ClusterReconciler) getFailureDomains(ctx context.Context, namespace string) (clusterv1.FailureDomains, error) {
+	failureDomains := clusterv1.FailureDomains{}
+	// Determine the source of failure domain based on feature gates NamespaceScopedZones.
+	// If NamespaceScopedZones is enabled, use Zone which is Namespace scoped,otherwise use
+	// Availability Zone which is Cluster scoped.
+	if feature.Gates.Enabled(feature.NamespaceScopedZones) {
+		zoneList := &topologyv1.ZoneList{}
+		listOptions := &client.ListOptions{Namespace: namespace}
+		if err := r.Client.List(ctx, zoneList, listOptions); err != nil {
+			return nil, errors.Wrapf(err, "failed to list Zones in namespace %s", namespace)
+		}
 
+		for _, zone := range zoneList.Items {
+			// Skip zones which are in deletion
+			if !zone.DeletionTimestamp.IsZero() {
+				continue
+			}
+			failureDomains[zone.Name] = clusterv1.FailureDomainSpec{ControlPlane: true}
+		}
+
+		if len(failureDomains) == 0 {
+			return nil, nil
+		}
+
+		return failureDomains, nil
+	}
 	availabilityZoneList := &topologyv1.AvailabilityZoneList{}
 	if err := r.Client.List(ctx, availabilityZoneList); err != nil {
 		return nil, err
@@ -388,8 +440,6 @@ func (r *ClusterReconciler) getFailureDomains(ctx context.Context) (clusterv1.Fa
 	if len(availabilityZoneList.Items) == 0 {
 		return nil, nil
 	}
-
-	failureDomains := clusterv1.FailureDomains{}
 	for _, az := range availabilityZoneList.Items {
 		failureDomains[az.Name] = clusterv1.FailureDomainSpec{
 			ControlPlane: true,

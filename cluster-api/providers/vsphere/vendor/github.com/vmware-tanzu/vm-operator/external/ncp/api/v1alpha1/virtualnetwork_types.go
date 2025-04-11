@@ -21,12 +21,12 @@ type VirtualNetwork struct {
 	Status VirtualNetworkStatus `json:"status,omitempty"`
 }
 
-// VirtualNetworkSpec defines the desired state of VirtualMachineClass
+// VirtualNetworkSpec defines the desired state of VirtualNetwork
 type VirtualNetworkSpec struct {
 	WhitelistSourceRanges string `json:"whitelist_source_ranges,omitempty"`
 }
 
-// VirtualNetworkStatus defines the observed state of VirtualMachineClass
+// VirtualNetworkStatus defines the observed state of VirtualNetwork
 type VirtualNetworkStatus struct {
 	Conditions    []VirtualNetworkCondition `json:"conditions,omitempty"`
 	DefaultSNATIP string                    `json:"defaultSNATIP,omitempty"`

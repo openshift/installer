@@ -2,12 +2,14 @@
 package openstack
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 
-	"github.com/gophercloud/gophercloud"
-	netext "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
-	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/gophercloud/gophercloud/v2"
+	netext "github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/subnets"
+	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,13 +37,16 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, trunkSupport bool) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
+func Machines(ctx context.Context, clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
 		return nil, nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
 	if poolPlatform := pool.Platform.Name(); poolPlatform != openstack.Name {
 		return nil, nil, fmt.Errorf("non-OpenStack machine-pool: %q", poolPlatform)
 	}
+
+	// Only enable config drive when using single stack IPv6
+	configDrive := isSingleStackIPv6(config.Networking.MachineNetwork)
 
 	mpool := pool.Platform.OpenStack
 
@@ -55,14 +60,15 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		failureDomain := failureDomains[uint(idx)%uint(len(failureDomains))]
 
 		providerSpec, err := generateProviderSpec(
+			ctx,
 			clusterID,
 			config.Platform.OpenStack,
 			mpool,
 			osImage,
 			role,
 			userDataSecret,
-			trunkSupport,
 			failureDomain,
+			&configDrive,
 		)
 		if err != nil {
 			return nil, nil, err
@@ -93,14 +99,15 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 
 	machineSetProviderSpec, err := generateProviderSpec(
+		ctx,
 		clusterID,
 		config.Platform.OpenStack,
 		mpool,
 		osImage,
 		role,
 		userDataSecret,
-		trunkSupport,
 		machinev1.OpenStackFailureDomain{RootVolume: &machinev1.RootVolume{}},
+		&configDrive,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -159,7 +166,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, controlPlaneMachineSet, nil
 }
 
-func generateProviderSpec(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, trunkSupport bool, failureDomain machinev1.OpenStackFailureDomain) (*machinev1alpha1.OpenstackProviderSpec, error) {
+func generateProviderSpec(ctx context.Context, clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, failureDomain machinev1.OpenStackFailureDomain, configDrive *bool) (*machinev1alpha1.OpenstackProviderSpec, error) {
 	var controlPlaneNetwork machinev1alpha1.NetworkParam
 	additionalNetworks := make([]machinev1alpha1.NetworkParam, 0, len(mpool.AdditionalNetworkIDs))
 	primarySubnet := ""
@@ -179,7 +186,7 @@ func generateProviderSpec(clusterID string, platform *openstack.Platform, mpool 
 		// be discovered and added to the ProviderSpec for MAPO to create one unique Port with two addresses.
 		var err error
 		if networkID == "" && controlPlanePort.Network.Name == "" && len(controlPlanePort.FixedIPs) == 2 {
-			networkID, err = getNetworkFromSubnet(controlPlanePort.FixedIPs[0], platform.Cloud)
+			networkID, err = getNetworkFromSubnet(ctx, controlPlanePort.FixedIPs[0], platform.Cloud)
 			if err != nil {
 				return nil, err
 			}
@@ -249,7 +256,7 @@ func generateProviderSpec(clusterID string, platform *openstack.Platform, mpool 
 		AvailabilityZone: failureDomain.AvailabilityZone,
 		SecurityGroups:   securityGroups,
 		ServerGroupName:  serverGroupName,
-		Trunk:            trunkSupport,
+		Trunk:            false,
 		Tags: []string{
 			fmt.Sprintf("openshiftClusterID=%s", clusterID),
 		},
@@ -257,6 +264,7 @@ func generateProviderSpec(clusterID string, platform *openstack.Platform, mpool 
 			"Name":               fmt.Sprintf("%s-%s", clusterID, role),
 			"openshiftClusterID": clusterID,
 		},
+		ConfigDrive: configDrive,
 	}
 	if mpool.RootVolume != nil {
 		spec.RootVolume = &machinev1alpha1.RootVolume{
@@ -379,18 +387,18 @@ func failureDomainsFromSpec(mpool openstack.MachinePool) []machinev1.OpenStackFa
 // The `opts` parameter is provided for external consumers needing to configure
 // the client e.g. with custom certs. If unspecified (nil), a default client is
 // built based on the specified `cloud`.
-func CheckNetworkExtensionAvailability(cloud, alias string, opts *clientconfig.ClientOpts) (bool, error) {
+func CheckNetworkExtensionAvailability(ctx context.Context, cloud, alias string, opts *clientconfig.ClientOpts) (bool, error) {
 	if opts == nil {
 		opts = openstackdefaults.DefaultClientOpts(cloud)
 	}
-	conn, err := openstackdefaults.NewServiceClient("network", opts)
+	conn, err := openstackdefaults.NewServiceClient(ctx, "network", opts)
 	if err != nil {
 		return false, err
 	}
 
-	res := netext.Get(conn, alias)
+	res := netext.Get(ctx, conn, alias)
 	if res.Err != nil {
-		if _, ok := res.Err.(gophercloud.ErrDefault404); ok {
+		if gophercloud.ResponseCodeIs(res.Err, http.StatusNotFound) {
 			return false, nil
 		}
 		return false, res.Err
@@ -399,13 +407,13 @@ func CheckNetworkExtensionAvailability(cloud, alias string, opts *clientconfig.C
 	return true, nil
 }
 
-func getNetworkFromSubnet(fixedIP openstack.FixedIP, cloud string) (string, error) {
+func getNetworkFromSubnet(ctx context.Context, fixedIP openstack.FixedIP, cloud string) (string, error) {
 	opts := openstackdefaults.DefaultClientOpts(cloud)
-	conn, err := openstackdefaults.NewServiceClient("network", opts)
+	conn, err := openstackdefaults.NewServiceClient(ctx, "network", opts)
 	if err != nil {
 		return "", err
 	}
-	page, err := subnets.List(conn, subnets.ListOpts{Name: fixedIP.Subnet.Name, ID: fixedIP.Subnet.ID}).AllPages()
+	page, err := subnets.List(conn, subnets.ListOpts{Name: fixedIP.Subnet.Name, ID: fixedIP.Subnet.ID}).AllPages(ctx)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get subnet list")
 	}

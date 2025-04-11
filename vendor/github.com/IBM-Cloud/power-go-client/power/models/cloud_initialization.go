@@ -21,7 +21,7 @@ import (
 type CloudInitialization struct {
 
 	// Virtual Machine's Cloud Initialization Virtual Optical Device
-	// Enum: [attach detach]
+	// Enum: ["attach","detach"]
 	VirtualOpticalDevice string `json:"virtualOpticalDevice,omitempty"`
 }
 

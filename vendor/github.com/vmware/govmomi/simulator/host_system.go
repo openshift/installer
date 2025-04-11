@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,7 +41,11 @@ var (
 type HostSystem struct {
 	mo.HostSystem
 
-	sh *simHost
+	sh  *simHost
+	mme *ManagedMethodExecuter
+	dtm *DynamicTypeManager
+
+	types.QueryTpmAttestationReportResponse
 }
 
 func asHostSystemMO(obj mo.Reference) (*mo.HostSystem, bool) {
@@ -75,6 +79,10 @@ func NewHostSystem(host mo.HostSystem) *HostSystem {
 		info := *esx.HostHardwareInfo
 		hs.Hardware = &info
 	}
+	if hs.Capability == nil {
+		capability := *esx.HostCapability
+		hs.Capability = &capability
+	}
 
 	cfg := new(types.HostConfigInfo)
 	deepCopy(hs.Config, cfg)
@@ -96,9 +104,11 @@ func NewHostSystem(host mo.HostSystem) *HostSystem {
 	}{
 		{&hs.ConfigManager.DatastoreSystem, &HostDatastoreSystem{Host: &hs.HostSystem}},
 		{&hs.ConfigManager.NetworkSystem, NewHostNetworkSystem(&hs.HostSystem)},
+		{&hs.ConfigManager.VirtualNicManager, NewHostVirtualNicManager(&hs.HostSystem)},
 		{&hs.ConfigManager.AdvancedOption, NewOptionManager(nil, nil, &hs.Config.Option)},
 		{&hs.ConfigManager.FirewallSystem, NewHostFirewallSystem(&hs.HostSystem)},
 		{&hs.ConfigManager.StorageSystem, NewHostStorageSystem(&hs.HostSystem)},
+		{&hs.ConfigManager.CertificateManager, NewHostCertificateManager(&hs.HostSystem)},
 	}
 
 	for _, c := range config {
@@ -435,12 +445,12 @@ func CreateDefaultESX(ctx *Context, f *Folder) {
 		Summary: summary,
 		Network: esx.Datacenter.Network,
 	}
-	cr.EnvironmentBrowser = newEnvironmentBrowser()
 	cr.Self = *host.Parent
 	cr.Name = host.Name
 	cr.Host = append(cr.Host, host.Reference())
 	host.Network = cr.Network
 	ctx.Map.PutEntity(cr, host)
+	cr.EnvironmentBrowser = newEnvironmentBrowser(ctx, host.Reference())
 
 	pool := NewResourcePool()
 	cr.ResourcePool = &pool.Self
@@ -480,11 +490,12 @@ func CreateStandaloneHost(ctx *Context, f *Folder, spec types.HostConnectSpec) (
 		ConfigurationEx: &types.ComputeResourceConfigInfo{
 			VmSwapPlacement: string(types.VirtualMachineConfigInfoSwapPlacementTypeVmDirectory),
 		},
-		Summary:            summary,
-		EnvironmentBrowser: newEnvironmentBrowser(),
+		Summary: summary,
 	}
 
 	ctx.Map.PutEntity(cr, ctx.Map.NewEntity(host))
+	cr.EnvironmentBrowser = newEnvironmentBrowser(ctx, host.Reference())
+
 	host.Summary.Host = &host.Self
 	host.Config.Host = host.Self
 
@@ -584,4 +595,16 @@ func (h *HostSystem) ReconnectHostTask(ctx *Context, spec *types.ReconnectHost_T
 			Returnval: task.Run(ctx),
 		},
 	}
+}
+
+func (s *HostSystem) QueryTpmAttestationReport(ctx *Context, req *types.QueryTpmAttestationReport) soap.HasFault {
+	body := new(methods.QueryTpmAttestationReportBody)
+
+	if ctx.Map.IsVPX() {
+		body.Res = &s.QueryTpmAttestationReportResponse
+	} else {
+		body.Fault_ = Fault("", new(types.NotSupported))
+	}
+
+	return body
 }

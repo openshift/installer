@@ -11,16 +11,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
 	v1 "github.com/IBM-Cloud/bluemix-go/api/container/containerv1"
 	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
@@ -53,6 +52,8 @@ const (
 	defaultWorkerPool = "default"
 	computeWorkerPool = "compute"
 	gatewayWorkerpool = "gateway"
+
+	masterDeployed = "deployed"
 )
 
 const PUBLIC_SUBNET_TYPE = "public"
@@ -131,34 +132,28 @@ func ResourceIBMContainerCluster() *schema.Resource {
 				},
 			},
 
-			"worker_num": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Default:      0,
-				Description:  "Number of worker nodes",
-				ValidateFunc: validate.ValidateWorkerNum,
-				Deprecated:   "This field is deprecated",
-			},
-
 			"default_pool_size": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Default:      1,
-				Description:  "The size of the default worker pool",
-				ValidateFunc: validate.ValidateWorkerNum,
+				Type:             schema.TypeInt,
+				Optional:         true,
+				Default:          1,
+				Description:      "The size of the default worker pool",
+				DiffSuppressFunc: flex.ApplyOnce,
+				ValidateFunc:     validate.ValidateWorkerNum,
 			},
 
 			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "list of labels to the default worker pool",
+				Type:             schema.TypeMap,
+				Optional:         true,
+				Computed:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				Description:      "list of labels to the default worker pool",
 			},
 			"taints": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "WorkerPool Taints",
+				Type:             schema.TypeSet,
+				Optional:         true,
+				Description:      "WorkerPool Taints",
+				DiffSuppressFunc: flex.ApplyOnce,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"key": {
@@ -209,11 +204,11 @@ func ResourceIBMContainerCluster() *schema.Resource {
 			},
 
 			"disk_encryption": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     true,
-				Description: "disc encryption done, if set to true.",
+				Type:             schema.TypeBool,
+				Optional:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Default:          true,
+				Description:      "disc encryption done, if set to true.",
 			},
 
 			"kube_version": {
@@ -255,58 +250,34 @@ func ResourceIBMContainerCluster() *schema.Resource {
 			},
 
 			"machine_type": {
-				Type:        schema.TypeString,
-				ForceNew:    true,
-				Optional:    true,
-				Description: "Machine type",
+				Type:             schema.TypeString,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Optional:         true,
+				Description:      "Machine type",
 			},
 
 			"hardware": {
-				Type:         schema.TypeString,
-				ForceNew:     true,
-				Required:     true,
-				ValidateFunc: validate.ValidateAllowedStringValues([]string{hardwareShared, hardwareDedicated}),
-				Description:  "Hardware type",
+				Type:             schema.TypeString,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Required:         true,
+				ValidateFunc:     validate.ValidateAllowedStringValues([]string{hardwareShared, hardwareDedicated}),
+				Description:      "Hardware type",
 			},
 
-			"billing": {
+			"public_vlan_id": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				Deprecated:       "This field is deprecated",
+				Default:          nil,
 				DiffSuppressFunc: flex.ApplyOnce,
-			},
-			"public_vlan_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  nil,
-				DiffSuppressFunc: func(k, o, n string, d *schema.ResourceData) bool {
-					if o == "" {
-						return false
-					}
-					if o != "" && n == "" {
-						return true
-					}
-					return false
-				},
-				Description: "Public VLAN ID",
+				Description:      "Public VLAN ID",
 			},
 
 			"private_vlan_id": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  nil,
-				DiffSuppressFunc: func(k, o, n string, d *schema.ResourceData) bool {
-					if o == "" {
-						return false
-					}
-					if o != "" && n == "" {
-						return true
-					}
-					return false
-				},
-				Description: "Private VLAN ID",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Default:          nil,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "Private VLAN ID",
 			},
 
 			"entitlement": {
@@ -317,11 +288,11 @@ func ResourceIBMContainerCluster() *schema.Resource {
 			},
 
 			"operating_system": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Computed:    true,
-				Description: "The operating system of the workers in the default worker pool.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Computed:         true,
+				Description:      "The operating system of the workers in the default worker pool.",
 			},
 
 			"wait_for_worker_update": {
@@ -371,12 +342,7 @@ func ResourceIBMContainerCluster() *schema.Resource {
 				DiffSuppressFunc: flex.ApplyOnce,
 				Description:      "Boolean value set to true when subnet creation is not required.",
 			},
-			"is_trusted": {
-				Type:             schema.TypeBool,
-				Optional:         true,
-				Deprecated:       "This field is deprecated",
-				DiffSuppressFunc: flex.ApplyOnce,
-			},
+
 			"server_url": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -426,29 +392,6 @@ func ResourceIBMContainerCluster() *schema.Resource {
 				DiffSuppressFunc: flex.ApplyOnce,
 			},
 
-			"org_guid": {
-				Description: "The bluemix organization guid this cluster belongs to",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Deprecated:  "This field is deprecated",
-			},
-			"space_guid": {
-				Description: "The bluemix space guid this cluster belongs to",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Deprecated:  "This field is deprecated",
-			},
-			"account_guid": {
-				Description: "The bluemix account guid this cluster belongs to",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Deprecated:  "This field is deprecated",
-			},
-			"wait_time_minutes": {
-				Type:       schema.TypeInt,
-				Optional:   true,
-				Deprecated: "This field is deprecated",
-			},
 			"tags": {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -746,7 +689,7 @@ func resourceIBMContainerClusterCreate(d *schema.ResourceData, meta interface{})
 	}
 	d.SetId(cls.ID)
 
-	targetEnvV2, err := getVpcClusterTargetHeader(d, meta)
+	targetEnvV2, err := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return err
 	}
@@ -757,31 +700,76 @@ func resourceIBMContainerClusterCreate(d *schema.ResourceData, meta interface{})
 		}
 	}
 
-	_, err = waitForClusterMasterAvailable(d, meta)
+	_, err = waitForClusterMasterAvailable(d, meta, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return err
 	}
-	waitForState := strings.ToLower(d.Get("wait_till").(string))
 
-	switch waitForState {
-	case strings.ToLower(oneWorkerNodeReady):
-		_, err = waitForClusterOneWorkerAvailable(d, meta)
-		if err != nil {
-			return err
-		}
-
-	case strings.ToLower(clusterNormal):
-		pendingStates := []string{clusterDeploying, clusterRequested, clusterPending, clusterDeployed, clusterCritical, clusterWarning}
-		_, err = waitForClusterState(d, meta, waitForState, pendingStates)
-		if err != nil {
-			return err
-		}
-
+	timeoutStage := strings.ToLower(d.Get("wait_till").(string))
+	err = waitForCluster(d, timeoutStage, d.Timeout(schema.TimeoutCreate), meta)
+	if err != nil {
+		return err
 	}
 
 	d.Set("force_delete_storage", d.Get("force_delete_storage").(bool))
 
+	//labels
+	workerPoolsAPI := csClient.WorkerPools()
+	workerPools, err := workerPoolsAPI.ListWorkerPools(cls.ID, targetEnv)
+	if err != nil {
+		return err
+	}
+
+	if len(workerPools) == 0 || !workerPoolContains(workerPools, defaultWorkerPool) {
+		return fmt.Errorf("[ERROR] The default worker pool does not exist. Use ibm_container_worker_pool and ibm_container_worker_pool_zone attachment resources to make changes to your cluster, such as adding zones, adding worker nodes, or updating worker nodes")
+	}
+
+	labels := make(map[string]string)
+	if l, ok := d.GetOk("labels"); ok {
+		for k, v := range l.(map[string]interface{}) {
+			labels[k] = v.(string)
+		}
+	}
+	err = workerPoolsAPI.UpdateLabelsWorkerPool(cls.ID, defaultWorkerPool, labels, targetEnv)
+	if err != nil {
+		return fmt.Errorf("[ERROR] Error updating the labels %s", err)
+	}
+
+	//taints
+	var taints []interface{}
+	if taintRes, ok := d.GetOk("taints"); ok {
+		taints = taintRes.(*schema.Set).List()
+	}
+	if err := updateWorkerpoolTaints(d, meta, cls.ID, defaultWorkerPool, taints); err != nil {
+		return err
+	}
+
 	return resourceIBMContainerClusterUpdate(d, meta)
+}
+
+func waitForCluster(d *schema.ResourceData, timeoutStage string, timeout time.Duration, meta interface{}) error {
+	switch timeoutStage {
+	case strings.ToLower(masterNodeReady):
+		_, err := waitForClusterMasterAvailable(d, meta, timeout)
+		if err != nil {
+			return err
+		}
+
+	case strings.ToLower(oneWorkerNodeReady):
+		_, err := waitForClusterOneWorkerAvailable(d, meta, timeout)
+		if err != nil {
+			return err
+		}
+
+	case clusterNormal:
+		pendingStates := []string{clusterDeploying, clusterRequested, clusterPending, clusterDeployed, clusterCritical, clusterWarning}
+		_, err := waitForClusterState(d, meta, clusterNormal, pendingStates, timeout)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func resourceIBMContainerClusterRead(d *schema.ResourceData, meta interface{}) error {
@@ -822,8 +810,6 @@ func resourceIBMContainerClusterRead(d *schema.ResourceData, meta interface{}) e
 		}
 	}
 
-	d.Set("worker_num", workerCount)
-
 	workerPools, err := workerPoolsAPI.ListWorkerPools(clusterID, targetEnv)
 	if err != nil {
 		return err
@@ -857,12 +843,10 @@ func resourceIBMContainerClusterRead(d *schema.ResourceData, meta interface{}) e
 			d.Set("private_vlan_id", workersByPool[0].PrivateVlan)
 		}
 		d.Set("machine_type", strings.Split(workersByPool[0].MachineType, ".encrypted")[0])
-		if workersByPool[0].MachineType != "free" {
-			if strings.HasSuffix(workersByPool[0].MachineType, ".encrypted") {
-				d.Set("disk_encryption", true)
-			} else {
-				d.Set("disk_encryption", false)
-			}
+		if strings.HasSuffix(workersByPool[0].MachineType, ".encrypted") {
+			d.Set("disk_encryption", true)
+		} else {
+			d.Set("disk_encryption", false)
 		}
 
 		if len(workersByPool) > 0 {
@@ -895,7 +879,7 @@ func resourceIBMContainerClusterRead(d *schema.ResourceData, meta interface{}) e
 	}
 
 	albs, err := albsAPI.ListClusterALBs(clusterID, targetEnv)
-	if err != nil && !strings.Contains(err.Error(), "The specified cluster is a lite cluster.") && !strings.Contains(err.Error(), "This operation is not supported for your cluster's version.") && !strings.Contains(err.Error(), "The specified cluster is a free cluster.") {
+	if err != nil && !strings.Contains(err.Error(), "This operation is not supported for your cluster's version.") {
 
 		return fmt.Errorf("[ERROR] Error retrieving alb's of the cluster %s: %s", clusterID, err)
 	}
@@ -958,7 +942,7 @@ func resourceIBMContainerClusterUpdate(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	targetEnvV2, err := getVpcClusterTargetHeader(d, meta)
+	targetEnvV2, err := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return err
 	}
@@ -995,7 +979,7 @@ func resourceIBMContainerClusterUpdate(d *schema.ResourceData, meta interface{})
 		// with major and minor updates.
 		updateAllWorkers := d.Get("update_all_workers").(bool)
 		if updateAllWorkers || d.HasChange("patch_version") || d.HasChange("retry_patch_version") {
-			workerFields, err := wrkAPI.List(clusterID, targetEnv)
+			workerFields, err := csClientV2.Workers().ListAllWorkers(clusterID, false, targetEnvV2)
 			if err != nil {
 				return fmt.Errorf("[ERROR] Error retrieving workers for cluster: %s", err)
 			}
@@ -1003,11 +987,16 @@ func resourceIBMContainerClusterUpdate(d *schema.ResourceData, meta interface{})
 			waitForWorkerUpdate := d.Get("wait_for_worker_update").(bool)
 
 			for _, w := range workerFields {
+				workerPool, err := csClient.WorkerPools().GetWorkerPool(clusterID, w.PoolID, targetEnv)
+				if err != nil {
+					return fmt.Errorf("[ERROR] Error retrieving worker pool: %s", err)
+				}
+
 				/*kubeversion update done if
 				1. There is a change in Major.Minor version
 				2. Therese is a change in patch_version & Traget kube patch version and patch_version are same
 				*/
-				if w.KubeVersion != w.TargetVersion {
+				if w.KubeVersion.Actual != w.KubeVersion.Target || w.LifeCycle.ActualOperatingSystem != workerPool.OperatingSystem {
 					params := v1.WorkerUpdateParam{
 						Action: "update",
 					}
@@ -1075,149 +1064,6 @@ func resourceIBMContainerClusterUpdate(d *schema.ResourceData, meta interface{})
 			forceDeleteStorage = v.(bool)
 		}
 		d.Set("force_delete_storage", forceDeleteStorage)
-	}
-
-	if d.HasChange("default_pool_size") && !d.IsNewResource() {
-		workerPoolsAPI := csClient.WorkerPools()
-		workerPools, err := workerPoolsAPI.ListWorkerPools(clusterID, targetEnv)
-		if err != nil {
-			return err
-		}
-		var poolName string
-		var poolContains bool
-
-		if len(workerPools) > 0 && workerPoolContains(workerPools, defaultWorkerPool) {
-			poolName = defaultWorkerPool
-
-			poolContains = true
-		} else if len(workerPools) > 0 && workerPoolContains(workerPools, computeWorkerPool) && workerPoolContains(workerPools, gatewayWorkerpool) {
-			poolName = computeWorkerPool
-			poolContains = true
-		}
-		if poolContains {
-			poolSize := d.Get("default_pool_size").(int)
-			err = workerPoolsAPI.ResizeWorkerPool(clusterID, poolName, poolSize, targetEnv)
-			if err != nil {
-				return fmt.Errorf("[ERROR] Error updating the default_pool_size %d: %s", poolSize, err)
-			}
-
-			_, err = WaitForWorkerAvailable(d, meta, targetEnv)
-			if err != nil {
-				return fmt.Errorf("[ERROR] Error waiting for workers of cluster (%s) to become ready: %s", d.Id(), err)
-			}
-		} else {
-			return fmt.Errorf("[ERROR] The default worker pool does not exist. Use ibm_container_worker_pool and ibm_container_worker_pool_zone attachment resources to make changes to your cluster, such as adding zones, adding worker nodes, or updating worker nodes")
-		}
-	}
-
-	if d.HasChange("labels") {
-		workerPoolsAPI := csClient.WorkerPools()
-		workerPools, err := workerPoolsAPI.ListWorkerPools(clusterID, targetEnv)
-		if err != nil {
-			return err
-		}
-		var poolName string
-		var poolContains bool
-
-		if len(workerPools) > 0 && workerPoolContains(workerPools, defaultWorkerPool) {
-			poolName = defaultWorkerPool
-			poolContains = true
-		} else if len(workerPools) > 0 && workerPoolContains(workerPools, computeWorkerPool) && workerPoolContains(workerPools, gatewayWorkerpool) {
-			poolName = computeWorkerPool
-			poolContains = true
-		}
-		if poolContains {
-			labels := make(map[string]string)
-			if l, ok := d.GetOk("labels"); ok {
-				for k, v := range l.(map[string]interface{}) {
-					labels[k] = v.(string)
-				}
-			}
-			err = workerPoolsAPI.UpdateLabelsWorkerPool(clusterID, poolName, labels, targetEnv)
-			if err != nil {
-				return fmt.Errorf("[ERROR] Error updating the labels %s", err)
-			}
-
-			_, err = WaitForWorkerAvailable(d, meta, targetEnv)
-			if err != nil {
-				return fmt.Errorf("[ERROR] Error waiting for workers of cluster (%s) to become ready: %s", d.Id(), err)
-			}
-		} else {
-			return fmt.Errorf("[ERROR] The default worker pool does not exist. Use ibm_container_worker_pool and ibm_container_worker_pool_zone attachment resources to make changes to your cluster, such as adding zones, adding worker nodes, or updating worker nodes")
-		}
-	}
-
-	if d.HasChange("taints") {
-		workerPoolsAPI := csClient.WorkerPools()
-		workerPools, err := workerPoolsAPI.ListWorkerPools(clusterID, targetEnv)
-		if err != nil {
-			return err
-		}
-		var poolName string
-		var poolContains bool
-
-		if len(workerPools) > 0 && workerPoolContains(workerPools, defaultWorkerPool) {
-			poolName = defaultWorkerPool
-			poolContains = true
-		} else if len(workerPools) > 0 && workerPoolContains(workerPools, computeWorkerPool) && workerPoolContains(workerPools, gatewayWorkerpool) {
-			poolName = computeWorkerPool
-			poolContains = true
-		}
-		if poolContains {
-			var taints []interface{}
-			if taintRes, ok := d.GetOk("taints"); ok {
-				taints = taintRes.(*schema.Set).List()
-			}
-			if err := updateWorkerpoolTaints(d, meta, clusterID, poolName, taints); err != nil {
-				return err
-			}
-		} else {
-			return fmt.Errorf("[ERROR] The default worker pool does not exist. Use ibm_container_worker_pool and ibm_container_worker_pool_zone attachment resources to make changes to your cluster, such as adding zones, adding worker nodes, or updating worker nodes")
-		}
-	}
-
-	if d.HasChange("worker_num") {
-		old, new := d.GetChange("worker_num")
-		oldCount := old.(int)
-		newCount := new.(int)
-		if newCount > oldCount {
-			count := newCount - oldCount
-			machineType := d.Get("machine_type").(string)
-			publicVlanID := d.Get("public_vlan_id").(string)
-			privateVlanID := d.Get("private_vlan_id").(string)
-			hardware := d.Get("hardware").(string)
-			switch strings.ToLower(hardware) {
-			case hardwareDedicated:
-				hardware = isolationPrivate
-			case hardwareShared:
-				hardware = isolationPublic
-			}
-			params := v1.WorkerParam{
-				WorkerNum:   count,
-				MachineType: machineType,
-				PublicVlan:  publicVlanID,
-				PrivateVlan: privateVlanID,
-				Isolation:   hardware,
-			}
-			wrkAPI.Add(clusterID, params, targetEnv)
-		} else if oldCount > newCount {
-			count := oldCount - newCount
-			workerFields, err := wrkAPI.List(clusterID, targetEnv)
-			if err != nil {
-				return fmt.Errorf("[ERROR] Error retrieving workers for cluster: %s", err)
-			}
-			for i := 0; i < count; i++ {
-				err := wrkAPI.Delete(clusterID, workerFields[i].ID, targetEnv)
-				if err != nil {
-					return fmt.Errorf("[ERROR] Error deleting workers of cluster (%s): %s", d.Id(), err)
-				}
-			}
-		}
-
-		_, err = WaitForWorkerAvailable(d, meta, targetEnv)
-		if err != nil {
-			return fmt.Errorf("[ERROR] Error waiting for workers of cluster (%s) to become ready: %s", d.Id(), err)
-		}
 	}
 
 	if d.HasChange("workers_info") {
@@ -1447,46 +1293,8 @@ func waitForClusterDelete(d *schema.ResourceData, meta interface{}) (interface{}
 	return stateConf.WaitForState()
 }
 
-// WaitForClusterAvailable Waits for cluster creation
-func WaitForClusterAvailable(d *schema.ResourceData, meta interface{}, target v1.ClusterTargetHeader) (interface{}, error) {
-	csClient, err := meta.(conns.ClientSession).ContainerAPI()
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("Waiting for cluster (%s) to be available.", d.Id())
-	id := d.Id()
-
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"retry", clusterProvisioning},
-		Target:     []string{clusterNormal},
-		Refresh:    clusterStateRefreshFunc(csClient.Clusters(), id, target),
-		Timeout:    d.Timeout(schema.TimeoutCreate),
-		Delay:      10 * time.Second,
-		MinTimeout: 10 * time.Second,
-	}
-
-	return stateConf.WaitForState()
-}
-
-func clusterStateRefreshFunc(client v1.Clusters, instanceID string, target v1.ClusterTargetHeader) resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		clusterFields, err := client.FindWithOutShowResourcesCompatible(instanceID, target)
-		if err != nil {
-			return nil, "", fmt.Errorf("[ERROR] clusterStateRefreshFunc Error retrieving cluster: %s", err)
-		}
-		// Check active transactions
-		log.Println("Checking cluster")
-		//Check for cluster state to be normal
-		log.Println("Checking cluster state", strings.Compare(clusterFields.State, clusterNormal))
-		if strings.Compare(clusterFields.State, clusterNormal) != 0 {
-			return clusterFields, clusterProvisioning, nil
-		}
-		return clusterFields, clusterNormal, nil
-	}
-}
-
 // waitForClusterMasterAvailable Waits for cluster creation
-func waitForClusterMasterAvailable(d *schema.ResourceData, meta interface{}) (interface{}, error) {
+func waitForClusterMasterAvailable(d *schema.ResourceData, meta interface{}, timeout time.Duration) (interface{}, error) {
 	targetEnv, err := getClusterTargetHeader(d, meta)
 	if err != nil {
 		return nil, err
@@ -1511,7 +1319,7 @@ func waitForClusterMasterAvailable(d *schema.ResourceData, meta interface{}) (in
 			}
 			return clusterFields, deployInProgress, nil
 		},
-		Timeout:    d.Timeout(schema.TimeoutCreate),
+		Timeout:    timeout,
 		Delay:      10 * time.Second,
 		MinTimeout: 10 * time.Second,
 	}
@@ -1519,7 +1327,7 @@ func waitForClusterMasterAvailable(d *schema.ResourceData, meta interface{}) (in
 	return stateConf.WaitForState()
 }
 
-func waitForClusterState(d *schema.ResourceData, meta interface{}, waitForState string, pendingState []string) (interface{}, error) {
+func waitForClusterState(d *schema.ResourceData, meta interface{}, waitForState string, pendingState []string, timeout time.Duration) (interface{}, error) {
 	targetEnv, err := getClusterTargetHeader(d, meta)
 	if err != nil {
 		return nil, err
@@ -1548,7 +1356,7 @@ func waitForClusterState(d *schema.ResourceData, meta interface{}, waitForState 
 
 			return cls, cls.State, nil
 		},
-		Timeout:    d.Timeout(schema.TimeoutCreate),
+		Timeout:    timeout,
 		Delay:      10 * time.Second,
 		MinTimeout: 10 * time.Second,
 	}
@@ -1557,7 +1365,7 @@ func waitForClusterState(d *schema.ResourceData, meta interface{}, waitForState 
 }
 
 // waitForClusterOneWorkerAvailable Waits for cluster creation
-func waitForClusterOneWorkerAvailable(d *schema.ResourceData, meta interface{}) (interface{}, error) {
+func waitForClusterOneWorkerAvailable(d *schema.ResourceData, meta interface{}, timeout time.Duration) (interface{}, error) {
 	targetEnv, err := getClusterTargetHeader(d, meta)
 	if err != nil {
 		return nil, err
@@ -1607,7 +1415,7 @@ func waitForClusterOneWorkerAvailable(d *schema.ResourceData, meta interface{}) 
 			}
 			return nil, normal, nil
 		},
-		Timeout:    d.Timeout(schema.TimeoutCreate),
+		Timeout:    timeout,
 		Delay:      10 * time.Second,
 		MinTimeout: 10 * time.Second,
 	}
@@ -1653,41 +1461,6 @@ func workerStateRefreshFunc(client v1.Workers, instanceID string, target v1.Clus
 		}
 		return workerFields, workerNormal, nil
 	}
-}
-
-func WaitForClusterCreation(d *schema.ResourceData, meta interface{}, target v1.ClusterTargetHeader) (interface{}, error) {
-	csClient, err := meta.(conns.ClientSession).ContainerAPI()
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("Waiting for cluster (%s) to be available.", d.Id())
-	ClusterID := d.Id()
-
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{"retry", clusterProvisioning},
-		Target:  []string{clusterNormal},
-		Refresh: func() (interface{}, string, error) {
-			workerFields, err := csClient.Workers().List(ClusterID, target)
-			log.Println("Total workers: ", len(workerFields))
-			if err != nil {
-				return nil, "", fmt.Errorf("[ERROR] Error retrieving workers for cluster: %s", err)
-			}
-			log.Println("Checking workers...")
-			//verifying for atleast sing node to be in normal state
-			for _, e := range workerFields {
-				log.Println("Worker node status: ", e.State)
-				if e.State == workerNormal {
-					return workerFields, workerNormal, nil
-				}
-			}
-			return workerFields, workerProvisioning, nil
-		},
-		Timeout:    d.Timeout(schema.TimeoutCreate),
-		Delay:      10 * time.Second,
-		MinTimeout: 10 * time.Second,
-	}
-
-	return stateConf.WaitForState()
 }
 
 func WaitForSubnetAvailable(d *schema.ResourceData, meta interface{}, target v1.ClusterTargetHeader) (interface{}, error) {
@@ -1739,7 +1512,7 @@ func WaitForClusterVersionUpdate(d *schema.ResourceData, meta interface{}, targe
 		Timeout:                   d.Timeout(schema.TimeoutUpdate),
 		Delay:                     20 * time.Second,
 		MinTimeout:                10 * time.Second,
-		ContinuousTargetOccurence: 5,
+		ContinuousTargetOccurence: 3,
 	}
 
 	return stateConf.WaitForState()

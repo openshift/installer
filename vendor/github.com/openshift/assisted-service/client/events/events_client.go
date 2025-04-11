@@ -20,6 +20,9 @@ type API interface {
 	/*
 	   V2ListEvents Lists events for a cluster.*/
 	V2ListEvents(ctx context.Context, params *V2ListEventsParams) (*V2ListEventsOK, error)
+	/*
+	   V2TriggerEvent Add new assisted installer event.*/
+	V2TriggerEvent(ctx context.Context, params *V2TriggerEventParams) (*V2TriggerEventCreated, error)
 }
 
 // New creates a new events API client.
@@ -62,5 +65,30 @@ func (a *Client) V2ListEvents(ctx context.Context, params *V2ListEventsParams) (
 		return nil, err
 	}
 	return result.(*V2ListEventsOK), nil
+
+}
+
+/*
+V2TriggerEvent Add new assisted installer event.
+*/
+func (a *Client) V2TriggerEvent(ctx context.Context, params *V2TriggerEventParams) (*V2TriggerEventCreated, error) {
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "v2TriggerEvent",
+		Method:             "POST",
+		PathPattern:        "/v2/events",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &V2TriggerEventReader{formats: a.formats},
+		AuthInfo:           a.authInfo,
+		Context:            ctx,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*V2TriggerEventCreated), nil
 
 }

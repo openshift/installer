@@ -49,6 +49,10 @@ const (
 	isSnapshotWaiting           = "waiting"
 	isSnapshotCapturedAt        = "captured_at"
 	isSnapshotBackupPolicyPlan  = "backup_policy_plan"
+
+	isSnapshotCatalogOffering           = "catalog_offering"
+	isSnapshotCatalogOfferingPlanCrn    = "plan_crn"
+	isSnapshotCatalogOfferingVersionCrn = "version_crn"
 )
 
 func ResourceIBMSnapshot() *schema.Resource {
@@ -84,6 +88,13 @@ func ResourceIBMSnapshot() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_is_snapshot", isSnapshotName),
 				Description:  "Snapshot name",
+			},
+
+			"service_tags": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The [service tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) prefixed with `is.snapshot:` associated with this snapshot.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			isSnapshotSourceSnapshotCRN: {
@@ -384,6 +395,39 @@ func ResourceIBMSnapshot() *schema.Resource {
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "User Tags for the snapshot",
 			},
+			isSnapshotCatalogOffering: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The catalog offering inherited from the snapshot's source. If a virtual server instance is provisioned with a source_snapshot specifying this snapshot, the virtual server instance will use this snapshot's catalog offering, including its pricing plan.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isSnapshotCatalogOfferingPlanCrn: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The CRN for this catalog offering version's billing plan",
+						},
+						"deleted": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted and provides some supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						isSnapshotCatalogOfferingVersionCrn: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The CRN for this version of a catalog offering",
+						},
+					},
+				},
+			},
 
 			isSnapshotBackupPolicyPlan: {
 				Type:        schema.TypeList,
@@ -668,6 +712,9 @@ func snapshotGet(d *schema.ResourceData, meta interface{}, id string) error {
 	if snapshot.EncryptionKey != nil && snapshot.EncryptionKey.CRN != nil {
 		d.Set(isSnapshotEncryptionKey, *snapshot.EncryptionKey.CRN)
 	}
+	if err = d.Set("service_tags", snapshot.ServiceTags); err != nil {
+		return fmt.Errorf("[ERROR]Error setting service_tags: %s", err)
+	}
 	d.Set(isSnapshotLCState, *snapshot.LifecycleState)
 	d.Set(isSnapshotResourceType, *snapshot.ResourceType)
 	d.Set(isSnapshotBootable, *snapshot.Bootable)
@@ -747,6 +794,34 @@ func snapshotGet(d *schema.ResourceData, meta interface{}, id string) error {
 		}
 	}
 	d.Set(isSnapshotClones, flex.NewStringSet(schema.HashString, clones))
+
+	// catalog
+	catalogList := make([]map[string]interface{}, 0)
+	if snapshot.CatalogOffering != nil {
+		versionCrn := ""
+		if snapshot.CatalogOffering.Version != nil && snapshot.CatalogOffering.Version.CRN != nil {
+			versionCrn = *snapshot.CatalogOffering.Version.CRN
+		}
+		catalogMap := map[string]interface{}{}
+		if versionCrn != "" {
+			catalogMap[isSnapshotCatalogOfferingVersionCrn] = versionCrn
+		}
+		if snapshot.CatalogOffering.Plan != nil {
+			planCrn := ""
+			if snapshot.CatalogOffering.Plan != nil && snapshot.CatalogOffering.Plan.CRN != nil {
+				planCrn = *snapshot.CatalogOffering.Plan.CRN
+			}
+			if planCrn != "" {
+				catalogMap[isSnapshotCatalogOfferingPlanCrn] = planCrn
+			}
+			if snapshot.CatalogOffering.Plan.Deleted != nil {
+				deletedMap := resourceIbmIsSnapshotCatalogOfferingVersionPlanReferenceDeletedToMap(*snapshot.CatalogOffering.Plan.Deleted)
+				catalogMap["deleted"] = []map[string]interface{}{deletedMap}
+			}
+		}
+		catalogList = append(catalogList, catalogMap)
+	}
+	d.Set(isSnapshotCatalogOffering, catalogList)
 
 	backupPolicyPlanList := []map[string]interface{}{}
 	if snapshot.BackupPolicyPlan != nil {
@@ -1058,7 +1133,7 @@ func snapshotDelete(d *schema.ResourceData, meta interface{}, id string) error {
 	deleteSnapshotOptions := &vpcv1.DeleteSnapshotOptions{
 		ID: &id,
 	}
-	response, err = sess.DeleteSnapshot(deleteSnapshotOptions)
+	_, response, err = sess.DeleteSnapshot(deleteSnapshotOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error deleting Snapshot : %s\n%s", err, response)
 	}

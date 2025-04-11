@@ -81,7 +81,7 @@ func (r *OpenStackFloatingIPPoolReconciler) Reconcile(ctx context.Context, req c
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	clientScope, err := r.ScopeFactory.NewClientScopeFromFloatingIPPool(ctx, r.Client, pool, r.CaCertificates, log)
+	clientScope, err := r.ScopeFactory.NewClientScopeFromObject(ctx, r.Client, r.CaCertificates, log, pool)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -125,7 +125,6 @@ func (r *OpenStackFloatingIPPoolReconciler) Reconcile(ctx context.Context, req c
 	}
 
 	for _, claim := range claims.Items {
-		claim := claim
 		log := log.WithValues("claim", claim.Name)
 		if !claim.ObjectMeta.DeletionTimestamp.IsZero() {
 			continue
@@ -168,7 +167,7 @@ func (r *OpenStackFloatingIPPoolReconciler) Reconcile(ctx context.Context, req c
 							Name: claim.Name,
 						},
 						PoolRef: corev1.TypedLocalObjectReference{
-							APIGroup: ptr.To(infrav1alpha1.GroupVersion.Group),
+							APIGroup: ptr.To(infrav1alpha1.SchemeGroupVersion.Group),
 							Kind:     pool.Kind,
 							Name:     pool.Name,
 						},
@@ -369,7 +368,7 @@ func (r *OpenStackFloatingIPPoolReconciler) getIP(ctx context.Context, scope *sc
 	defer func() {
 		tag := pool.GetFloatingIPTag()
 
-		err := wait.ExponentialBackoffWithContext(ctx, backoff, func(ctx context.Context) (bool, error) {
+		err := wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
 			if err := networkingService.TagFloatingIP(fp.FloatingIP, tag); err != nil {
 				scope.Logger().Error(err, "Failed to tag floating IP, retrying", "ip", fp.FloatingIP, "tag", tag)
 				return false, err

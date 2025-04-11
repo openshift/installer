@@ -82,6 +82,31 @@ func (r *AWSMachinePool) validateRootVolume() field.ErrorList {
 	return allErrs
 }
 
+func (r *AWSMachinePool) validateNonRootVolumes() field.ErrorList {
+	var allErrs field.ErrorList
+
+	for _, volume := range r.Spec.AWSLaunchTemplate.NonRootVolumes {
+		if v1beta2.VolumeTypesProvisioned.Has(string(volume.Type)) && volume.IOPS == 0 {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.nonRootVolumes.iops"), "iops required if type is 'io1' or 'io2'"))
+		}
+
+		if volume.Throughput != nil {
+			if volume.Type != v1beta2.VolumeTypeGP3 {
+				allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.nonRootVolumes.throughput"), "throughput is valid only for type 'gp3'"))
+			}
+			if *volume.Throughput < 0 {
+				allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.nonRootVolumes.throughput"), "throughput must be nonnegative"))
+			}
+		}
+
+		if volume.DeviceName == "" {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.nonRootVolumes.deviceName"), "non root volume should have device name"))
+		}
+	}
+
+	return allErrs
+}
+
 func (r *AWSMachinePool) validateSubnets() field.ErrorList {
 	var allErrs field.ErrorList
 
@@ -108,11 +133,32 @@ func (r *AWSMachinePool) validateAdditionalSecurityGroups() field.ErrorList {
 	}
 	return allErrs
 }
+
 func (r *AWSMachinePool) validateSpotInstances() field.ErrorList {
 	var allErrs field.ErrorList
 	if r.Spec.AWSLaunchTemplate.SpotMarketOptions != nil && r.Spec.MixedInstancesPolicy != nil {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.awsLaunchTemplate.spotMarketOptions"), "either spec.awsLaunchTemplate.spotMarketOptions or spec.mixedInstancesPolicy should be used"))
 	}
+	return allErrs
+}
+
+func (r *AWSMachinePool) validateRefreshPreferences() field.ErrorList {
+	var allErrs field.ErrorList
+
+	if r.Spec.RefreshPreferences == nil {
+		return allErrs
+	}
+
+	if r.Spec.RefreshPreferences.MaxHealthyPercentage != nil && r.Spec.RefreshPreferences.MinHealthyPercentage == nil {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.refreshPreferences.maxHealthyPercentage"), "If you specify spec.refreshPreferences.maxHealthyPercentage, you must also specify spec.refreshPreferences.minHealthyPercentage"))
+	}
+
+	if r.Spec.RefreshPreferences.MaxHealthyPercentage != nil && r.Spec.RefreshPreferences.MinHealthyPercentage != nil {
+		if *r.Spec.RefreshPreferences.MaxHealthyPercentage-*r.Spec.RefreshPreferences.MinHealthyPercentage > 100 {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.refreshPreferences.maxHealthyPercentage"), "the difference between spec.refreshPreferences.maxHealthyPercentage and spec.refreshPreferences.minHealthyPercentage cannot be greater than 100"))
+		}
+	}
+
 	return allErrs
 }
 
@@ -124,10 +170,12 @@ func (r *AWSMachinePool) ValidateCreate() (admission.Warnings, error) {
 
 	allErrs = append(allErrs, r.validateDefaultCoolDown()...)
 	allErrs = append(allErrs, r.validateRootVolume()...)
+	allErrs = append(allErrs, r.validateNonRootVolumes()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.validateSubnets()...)
 	allErrs = append(allErrs, r.validateAdditionalSecurityGroups()...)
 	allErrs = append(allErrs, r.validateSpotInstances()...)
+	allErrs = append(allErrs, r.validateRefreshPreferences()...)
 
 	if len(allErrs) == 0 {
 		return nil, nil
@@ -149,6 +197,7 @@ func (r *AWSMachinePool) ValidateUpdate(_ runtime.Object) (admission.Warnings, e
 	allErrs = append(allErrs, r.validateSubnets()...)
 	allErrs = append(allErrs, r.validateAdditionalSecurityGroups()...)
 	allErrs = append(allErrs, r.validateSpotInstances()...)
+	allErrs = append(allErrs, r.validateRefreshPreferences()...)
 
 	if len(allErrs) == 0 {
 		return nil, nil

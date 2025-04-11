@@ -5,78 +5,94 @@
 $ErrorActionPreference = "Stop"
 
 # since we do not have ca for vsphere certs, we'll just set insecure
-Set-PowerCLIConfiguration -InvalidCertificateAction:Ignore -Confirm:$false | Out-Null
+# we will also set default vi server mode to multiple for multi vcenter support
+Set-PowerCLIConfiguration -InvalidCertificateAction:Ignore -DefaultVIServerMode Multiple -ParticipateInCEIP:$false -Confirm:$false | Out-Null
 $Env:GOVC_INSECURE = 1
 
+$viservers = @{}
+
 # Connect to vCenter
-Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
-
-# Convert the installer metadata to a powershell object
-$metadata = Get-Content -Path ./metadata.json | ConvertFrom-Json
-
-# Get tag for all resources we created
-$tagCategory = Get-TagCategory -Name "openshift-$($metadata.infraID)"
-$tag = Get-Tag -Category $tagCategory -Name "$($metadata.infraID)"
-
-# Clean up all VMs
-$vms = Get-VM -Tag $tag
-foreach ($vm in $vms) {
-    if ($vm.PowerState -eq "PoweredOn") {
-        Write-Output "Stopping VM $vm"
-        Stop-VM -VM $vm -confirm:$false > $null
+if ($null -eq $vcenters) {
+    $viservers[$vcenter] = Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
+}
+else {
+    $vcenters = $vcenters | ConvertFrom-Json
+    foreach ($vc in $vcenters) {
+        Write-Output "Logging into $($vc.server)"
+        $viservers[$($vc.server)] = Connect-VIServer -Server $vc.server -User $vc.user -Password $($vc.password)
     }
-    Write-Output "Removing VM $vm"
-    Remove-VM -VM $vm -DeletePermanently -confirm:$false
 }
 
-# Clean up all templates
-$templates = Get-TagAssignment -Tag $tag -Entity (Get-Template)
-foreach ($template in $templates) {
-    Write-Output "Removing template $($template.Entity)"
-    Remove-Template -Template $($template.Entity) -DeletePermanently -confirm:$false
-}
+foreach ($vc in $vcenters) {
+    $vcenter = $($vc.server)
+    Write-Output "Processing vCenter $($vcenter)"
+    # Convert the installer metadata to a powershell object
+    $metadata = Get-Content -Path ./metadata.json | ConvertFrom-Json
 
-# Clean up all resource pools
-$rps = Get-TagAssignment -Tag $tag -Entity (Get-ResourcePool)
-foreach ($rp in $rps) {
-    Write-Output "Removing resource pool $($rp.Entity)"
-    Remove-ResourcePool -ResourcePool $($rp.Entity) -confirm:$false
-}
+    # Get tag for all resources we created
+    $tagCategory = Get-TagCategory -Server $vcenter -Name "openshift-$($metadata.infraID)"
+    $tag = Get-Tag -Server $vcenter -Category $tagCategory -Name "$($metadata.infraID)"
 
-# Clean up all folders
-$folders = Get-TagAssignment -Tag $tag -Entity (Get-Folder)
-foreach ($folder in $folders) {
-    Write-Output "Removing folder $($folder.Entity)"
-    Remove-Folder -Folder $($folder.Entity) -DeletePermanently -confirm:$false
-}
+    # Clean up all VMs
+    $vms = Get-VM -Tag $tag
+    foreach ($vm in $vms) {
+        if ($vm.PowerState -eq "PoweredOn") {
+            Write-Output "Stopping VM $vm"
+            Stop-VM -Server $vcenter -VM $vm -confirm:$false > $null
+        }
+        Write-Output "Removing VM $vm"
+        Remove-VM -Server $vcenter -VM $vm -DeletePermanently -confirm:$false
+    }
 
-# Clean up storage policy.  Must be done after all other object cleanup except tag/tagCategory
-$storagePolicies = Get-SpbmStoragePolicy -Tag $tag
+    # Clean up all templates
+    $templates = Get-TagAssignment -Server $vcenter -Tag $tag -Entity (Get-Template -Server $vcenter)
+    foreach ($template in $templates) {
+        Write-Output "Removing template $($template.Entity)"
+        Remove-Template -Server $vcenter -Template $($template.Entity) -DeletePermanently -confirm:$false
+    }
 
-foreach ($policy in $storagePolicies) {
+    # Clean up all resource pools
+    $rps = Get-TagAssignment -Server $vcenter -Tag $tag -Entity (Get-ResourcePool -Server $vcenter)
+    foreach ($rp in $rps) {
+        Write-Output "Removing resource pool $($rp.Entity)"
+        Remove-ResourcePool -Server $vcenter -ResourcePool $($rp.Entity) -confirm:$false
+    }
 
-    $clusterInventory = @()
-    $splitResults = @($policy.Name -split "openshift-storage-policy-")
+    # Clean up all folders
+    $folders = Get-TagAssignment -Server $vcenter -Tag $tag -Entity (Get-Folder -Server $vcenter)
+    foreach ($folder in $folders) {
+        Write-Output "Removing folder $($folder.Entity)"
+        Remove-Folder -Server $vcenter -Folder $($folder.Entity) -DeletePermanently -confirm:$false
+    }
 
-    if ($splitResults.Count -eq 2) {
-        $clusterId = $splitResults[1]
-        if ($clusterId -ne "") {
-            Write-Host "Checking for storage policies for "$clusterId
-            $clusterInventory = @(Get-Inventory -Name "$($clusterId)*" -ErrorAction Continue)
+    # Clean up storage policy.  Must be done after all other object cleanup except tag/tagCategory
+    $storagePolicies = Get-SpbmStoragePolicy -Server $vcenter -Tag $tag
 
-            if ($clusterInventory.Count -eq 0) {
-                Write-Host "Removing policy: $($policy.Name)"
-                $policy | Remove-SpbmStoragePolicy -Confirm:$false
-            }
-            else {
-                Write-Host "not deleting: $($clusterInventory)"
+    foreach ($policy in $storagePolicies) {
+
+        $clusterInventory = @()
+        $splitResults = @($policy.Name -split "openshift-storage-policy-")
+
+        if ($splitResults.Count -eq 2) {
+            $clusterId = $splitResults[1]
+            if ($clusterId -ne "") {
+                Write-Host "Checking for storage policies for "$clusterId
+                $clusterInventory = @(Get-Inventory -Server $vcenter -Name "$($clusterId)*" -ErrorAction Continue)
+
+                if ($clusterInventory.Count -eq 0) {
+                    Write-Host "Removing policy: $($policy.Name)"
+                    $policy | Remove-SpbmStoragePolicy -Server $vcenter -Confirm:$false
+                }
+                else {
+                    Write-Host "not deleting: $($clusterInventory)"
+                }
             }
         }
     }
+
+    # Clean up tags
+    Remove-Tag -Server $vcenter -Tag $tag -confirm:$false
+    Remove-TagCategory -Server $vcenter -Category $tagCategory -confirm:$false
+
+    Disconnect-VIServer -Server $vcenter -Force:$true -Confirm:$false
 }
-
-# Clean up tags
-Remove-Tag -Tag $tag -confirm:$false
-Remove-TagCategory -Category $tagCategory -confirm:$false
-
-Disconnect-VIServer -Server $vcenter -Force:$true -Confirm:$false

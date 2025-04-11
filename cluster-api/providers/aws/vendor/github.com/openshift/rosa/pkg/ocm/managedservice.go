@@ -5,7 +5,11 @@ import (
 	"net"
 
 	msv1 "github.com/openshift-online/ocm-sdk-go/servicemgmt/v1"
+
+	"github.com/openshift/rosa/pkg/fedramp"
 )
+
+var fedrampError = fmt.Errorf("managed services are not supported for FedRAMP clusters")
 
 type CreateManagedServiceArgs struct {
 	ServiceType string
@@ -38,6 +42,10 @@ type CreateManagedServiceArgs struct {
 }
 
 func (c *Client) CreateManagedService(args CreateManagedServiceArgs) (*msv1.ManagedService, error) {
+	if fedramp.Enabled() {
+		return nil, fedrampError
+	}
+
 	operatorIamRoles := []*msv1.OperatorIAMRoleBuilder{}
 	for _, operatorIAMRole := range args.AwsOperatorIamRoleList {
 		operatorIamRoles = append(operatorIamRoles,
@@ -128,6 +136,10 @@ func (c *Client) CreateManagedService(args CreateManagedServiceArgs) (*msv1.Mana
 }
 
 func (c *Client) ListManagedServices(count int) (*msv1.ManagedServiceList, error) {
+	if fedramp.Enabled() {
+		return nil, fedrampError
+	}
+
 	if count < 0 {
 		return nil, fmt.Errorf("invalid services count")
 	}
@@ -145,6 +157,10 @@ type DescribeManagedServiceArgs struct {
 }
 
 func (c *Client) GetManagedService(args DescribeManagedServiceArgs) (*msv1.ManagedService, error) {
+	if fedramp.Enabled() {
+		return nil, fedrampError
+	}
+
 	response, err := c.ocm.ServiceMgmt().V1().Services().Service(args.ID).Get().Send()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get managed service with id %s: %w", args.ID, err)
@@ -157,6 +173,10 @@ type DeleteManagedServiceArgs struct {
 }
 
 func (c *Client) DeleteManagedService(args DeleteManagedServiceArgs) (*msv1.ManagedServiceDeleteResponse, error) {
+	if fedramp.Enabled() {
+		return nil, fedrampError
+	}
+
 	deleteResponse, err := c.ocm.ServiceMgmt().V1().Services().
 		Service(args.ID).
 		Delete().
@@ -174,6 +194,10 @@ type UpdateManagedServiceArgs struct {
 }
 
 func (c *Client) UpdateManagedService(args UpdateManagedServiceArgs) error {
+	if fedramp.Enabled() {
+		return fedrampError
+	}
+
 	parameters := []*msv1.ServiceParameterBuilder{}
 	for id, val := range args.Parameters {
 		parameters = append(parameters,

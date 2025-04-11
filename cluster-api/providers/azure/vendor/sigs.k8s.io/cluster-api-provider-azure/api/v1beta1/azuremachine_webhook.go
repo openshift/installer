@@ -86,70 +86,70 @@ func (mw *azureMachineWebhook) ValidateUpdate(ctx context.Context, oldObj, newOb
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Image"),
+		field.NewPath("spec", "image"),
 		old.Spec.Image,
 		m.Spec.Image); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "Identity"),
+		field.NewPath("spec", "identity"),
 		old.Spec.Identity,
 		m.Spec.Identity); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "SystemAssignedIdentityRole"),
+		field.NewPath("spec", "systemAssignedIdentityRole"),
 		old.Spec.SystemAssignedIdentityRole,
 		m.Spec.SystemAssignedIdentityRole); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "UserAssignedIdentities"),
+		field.NewPath("spec", "userAssignedIdentities"),
 		old.Spec.UserAssignedIdentities,
 		m.Spec.UserAssignedIdentities); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "RoleAssignmentName"),
+		field.NewPath("spec", "roleAssignmentName"),
 		old.Spec.RoleAssignmentName,
 		m.Spec.RoleAssignmentName); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "OSDisk"),
+		field.NewPath("spec", "osDisk"),
 		old.Spec.OSDisk,
 		m.Spec.OSDisk); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "DataDisks"),
+		field.NewPath("spec", "dataDisks"),
 		old.Spec.DataDisks,
 		m.Spec.DataDisks); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "SSHPublicKey"),
+		field.NewPath("spec", "sshPublicKey"),
 		old.Spec.SSHPublicKey,
 		m.Spec.SSHPublicKey); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "AllocatePublicIP"),
+		field.NewPath("spec", "allocatePublicIP"),
 		old.Spec.AllocatePublicIP,
 		m.Spec.AllocatePublicIP); err != nil {
 		allErrs = append(allErrs, err)
 	}
 
 	if err := webhookutils.ValidateImmutable(
-		field.NewPath("Spec", "EnableIPForwarding"),
+		field.NewPath("spec", "enableIPForwarding"),
 		old.Spec.EnableIPForwarding,
 		m.Spec.EnableIPForwarding); err != nil {
 		allErrs = append(allErrs, err)
@@ -181,7 +181,7 @@ func (mw *azureMachineWebhook) ValidateUpdate(ctx context.Context, oldObj, newOb
 
 	if old.Spec.Diagnostics != nil {
 		if err := webhookutils.ValidateImmutable(
-			field.NewPath("Spec", "Diagnostics"),
+			field.NewPath("spec", "diagnostics"),
 			old.Spec.Diagnostics,
 			m.Spec.Diagnostics); err != nil {
 			allErrs = append(allErrs, err)
@@ -204,6 +204,20 @@ func (mw *azureMachineWebhook) ValidateUpdate(ctx context.Context, oldObj, newOb
 					m.Spec.NetworkInterfaces, "field is immutable"),
 			)
 		}
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "capacityReservationGroupID"),
+		old.Spec.CapacityReservationGroupID,
+		m.Spec.CapacityReservationGroupID); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "disableExtensionOperations"),
+		old.Spec.DisableExtensionOperations,
+		m.Spec.DisableExtensionOperations); err != nil {
+		allErrs = append(allErrs, err)
 	}
 
 	if len(allErrs) == 0 {

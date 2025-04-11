@@ -22,8 +22,8 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
-	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview"
 	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
+	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview"
 	"github.com/pkg/errors"
 	azprovider "sigs.k8s.io/cloud-provider-azure/pkg/provider"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
@@ -116,11 +116,9 @@ func (s *azureManagedMachinePoolService) Reconcile(ctx context.Context) error {
 	}
 	var agentPoolName string
 	if s.scope.IsPreviewEnabled() {
-		agentPoolTyped := agentPool.(*asocontainerservicev1preview.ManagedClustersAgentPool)
-		agentPoolName = agentPoolTyped.AzureName()
+		agentPoolName = agentPool.(*asocontainerservicev1preview.ManagedClustersAgentPool).AzureName()
 	} else {
-		agentPoolTyped := agentPool.(*asocontainerservicev1.ManagedClustersAgentPool)
-		agentPoolName = agentPoolTyped.AzureName()
+		agentPoolName = agentPool.(*asocontainerservicev1.ManagedClustersAgentPool).AzureName()
 	}
 
 	if err := s.agentPoolsSvc.Reconcile(ctx); err != nil {

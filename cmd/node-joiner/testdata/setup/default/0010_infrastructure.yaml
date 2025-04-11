@@ -1,0 +1,9 @@
+apiVersion: config.openshift.io/v1
+kind: Infrastructure
+metadata:
+  name: cluster
+spec:
+  platformSpec:
+    type: BareMetal
+status:
+  apiServerURL: https://api.ostest.test.metalkube.org:6443

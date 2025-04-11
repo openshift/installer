@@ -1,12 +1,13 @@
 package mirror
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 
-	"github.com/containers/image/pkg/sysregistriesv2"
+	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -116,7 +117,7 @@ type RegistriesConf struct {
 // RegistriesConfig holds the data extracted from registries.conf
 type RegistriesConfig struct {
 	Location string
-	Mirror   string
+	Mirrors  []string
 }
 
 var _ asset.WritableAsset = (*RegistriesConf)(nil)
@@ -138,7 +139,7 @@ func (*RegistriesConf) Dependencies() []asset.Asset {
 }
 
 // Generate generates the registries.conf file from install-config.
-func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
+func (i *RegistriesConf) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	clusterInfo := &joiner.ClusterInfo{}
 	installConfig := &agent.OptionalInstallConfig{}
@@ -162,6 +163,10 @@ func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
 		deprecatedImageContentSources = clusterInfo.DeprecatedImageContentSources
 		image = clusterInfo.ReleaseImage
 
+	case workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
+		// Not required
+		return nil
+
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
 	}
@@ -176,7 +181,7 @@ func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
 	}
 
 	if !i.releaseImageIsSameInRegistriesConf(image) {
-		logrus.Warnf(fmt.Sprintf("The imageDigestSources configuration in install-config.yaml should have at least one source field matching the releaseImage value %s", releaseImage.PullSpec))
+		logrus.Warnf("The imageDigestSources configuration in install-config.yaml should have at least one source field matching the releaseImage value %s", releaseImage.PullSpec)
 	}
 
 	registriesData, err := toml.Marshal(i.Config)
@@ -236,9 +241,12 @@ func (i *RegistriesConf) Files() []*asset.File {
 
 // Load returns RegistriesConf asset from the disk.
 func (i *RegistriesConf) Load(f asset.FileFetcher) (bool, error) {
+	ctx := context.TODO()
 
 	releaseImage := &releaseimage.Image{}
-	releaseImage.Generate(asset.Parents{})
+	if err := releaseImage.Generate(ctx, asset.Parents{}); err != nil {
+		return false, fmt.Errorf("failed to generate the release image asset: %w", err)
+	}
 
 	file, err := f.FetchByName(RegistriesConfFilename)
 	if err != nil {
@@ -299,13 +307,16 @@ func (i *RegistriesConf) setMirrorConfig(registriesConf *sysregistriesv2.V2Regis
 	for i, reg := range registriesConf.Registries {
 		mirrorConfig[i] = RegistriesConfig{
 			Location: reg.Location,
-			Mirror:   reg.Mirrors[0].Location,
+		}
+		for _, mirror := range reg.Mirrors {
+			mirrorConfig[i].Mirrors = append(mirrorConfig[i].Mirrors, mirror.Location)
 		}
 	}
 	i.MirrorConfig = mirrorConfig
 }
 
 // GetMirrorFromRelease gets the matching mirror configured for the releaseImage.
+// If multiple mirrors are configured the first one is returned.
 func GetMirrorFromRelease(releaseImage string, registriesConfig *RegistriesConf) string {
 	source := regexp.MustCompile(`^(.+?)(@sha256)?:(.+)`).FindStringSubmatch(releaseImage)
 	for _, config := range registriesConfig.MirrorConfig {
@@ -314,9 +325,9 @@ func GetMirrorFromRelease(releaseImage string, registriesConfig *RegistriesConf)
 			switch len(source) {
 			case 4:
 				// Has Sha256
-				return fmt.Sprintf("%s%s:%s", config.Mirror, source[2], source[3])
+				return fmt.Sprintf("%s%s:%s", config.Mirrors[0], source[2], source[3])
 			case 3:
-				return fmt.Sprintf("%s:%s", config.Mirror, source[2])
+				return fmt.Sprintf("%s:%s", config.Mirrors[0], source[2])
 			}
 		}
 	}

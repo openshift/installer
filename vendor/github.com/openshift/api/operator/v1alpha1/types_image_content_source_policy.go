@@ -16,6 +16,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/470
 // +openshift:file-pattern=cvoRunLevel=0000_10,operatorName=config-operator,operatorOrdering=01
 // +openshift:compatibility-gen:level=4
+// +kubebuilder:metadata:annotations=release.openshift.io/bootstrap-required=true
 type ImageContentSourcePolicy struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -24,7 +25,6 @@ type ImageContentSourcePolicy struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec holds user settable values for configuration
-	// +kubebuilder:validation:Required
 	// +required
 	Spec ImageContentSourcePolicySpec `json:"spec"`
 }

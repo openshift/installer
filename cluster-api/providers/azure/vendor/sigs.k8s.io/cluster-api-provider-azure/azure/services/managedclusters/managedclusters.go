@@ -20,8 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview"
-	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/pkg/errors"
@@ -31,10 +30,10 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/services/token"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/secret"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
 const (
@@ -68,7 +67,6 @@ type ManagedClusterScope interface {
 	SetAutoUpgradeVersionStatus(version string)
 	SetVersionStatus(version string)
 	IsManagedVersionUpgrade() bool
-	IsPreviewEnabled() bool
 }
 
 // New creates a new service.
@@ -87,23 +85,10 @@ func postCreateOrUpdateResourceHook(ctx context.Context, scope ManagedClusterSco
 		return err
 	}
 
-	// If existing is preview, convert to stable for this function.
-	var existing *asocontainerservicev1.ManagedCluster
-	if scope.IsPreviewEnabled() {
-		existingPreview := obj.(*asocontainerservicev1preview.ManagedCluster)
-		hub := &asocontainerservicev1hub.ManagedCluster{}
-		if err := existingPreview.ConvertTo(hub); err != nil {
-			return err
-		}
-		prev := &asocontainerservicev1.ManagedCluster{}
-		if err := prev.ConvertFrom(hub); err != nil {
-			return err
-		}
-		existing = prev
-	} else {
-		existing = obj.(*asocontainerservicev1.ManagedCluster)
+	managedCluster := &asocontainerservicev1hub.ManagedCluster{}
+	if err := obj.(conversion.Convertible).ConvertTo(managedCluster); err != nil {
+		return err
 	}
-	managedCluster := existing
 
 	// Update control plane endpoint.
 	endpoint := clusterv1.APIEndpoint{
@@ -163,7 +148,7 @@ func reconcileKubeconfig(ctx context.Context, scope ManagedClusterScope, namespa
 	}
 
 	if scope.AreLocalAccountsDisabled() {
-		userKubeconfigWithToken, err := getUserKubeConfigWithToken(userKubeConfigData, ctx, scope)
+		userKubeconfigWithToken, err := getUserKubeConfigWithToken(ctx, userKubeConfigData, scope)
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "error while trying to get user kubeconfig with token")
 		}
@@ -205,28 +190,17 @@ func getUserKubeconfigData(ctx context.Context, scope ManagedClusterScope, names
 }
 
 // getUserKubeConfigWithToken returns the kubeconfig with user token, for capz to create the target cluster.
-func getUserKubeConfigWithToken(userKubeConfigData []byte, ctx context.Context, scope azure.Authorizer) ([]byte, error) {
-	tokenClient, err := token.NewClient(scope)
-	if err != nil {
-		return nil, errors.Wrap(err, "error while getting aad token client")
-	}
-
-	token, err := tokenClient.GetAzureActiveDirectoryToken(ctx, aadResourceID)
+func getUserKubeConfigWithToken(ctx context.Context, userKubeConfigData []byte, auth azure.Authorizer) ([]byte, error) {
+	token, err := auth.Token().GetToken(ctx, policy.TokenRequestOptions{Scopes: []string{aadResourceID + "/.default"}})
 	if err != nil {
 		return nil, errors.Wrap(err, "error while getting aad token for user kubeconfig")
 	}
-
-	return createUserKubeconfigWithToken(token, userKubeConfigData)
-}
-
-// createUserKubeconfigWithToken gets the kubeconfig data for authenticating with target cluster.
-func createUserKubeconfigWithToken(token string, userKubeConfigData []byte) ([]byte, error) {
 	config, err := clientcmd.Load(userKubeConfigData)
 	if err != nil {
 		return nil, errors.Wrap(err, "error while trying to unmarshal new user kubeconfig with token")
 	}
 	for _, auth := range config.AuthInfos {
-		auth.Token = token
+		auth.Token = token.Token
 		auth.Exec = nil
 	}
 	kubeconfig, err := clientcmd.Write(*config)

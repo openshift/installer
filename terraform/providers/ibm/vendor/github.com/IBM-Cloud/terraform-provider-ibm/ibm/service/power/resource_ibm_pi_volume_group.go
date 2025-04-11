@@ -10,15 +10,15 @@ import (
 	"log"
 	"time"
 
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volume_groups"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func ResourceIBMPIVolumeGroup() *schema.Resource {
@@ -35,52 +35,84 @@ func ResourceIBMPIVolumeGroup() *schema.Resource {
 			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
-			helpers.PICloudInstanceId: {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Cloud Instance ID - This is the service_instance_id.",
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
+				Required:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validation.NoZeroValues,
 			},
-			PIVolumeGroupName: {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "Volume Group Name to create",
-				ConflictsWith: []string{PIVolumeGroupConsistencyGroupName},
-			},
-			PIVolumeGroupConsistencyGroupName: {
-				Type:          schema.TypeString,
-				Optional:      true,
+			Arg_ConsistencyGroupName: {
+				ConflictsWith: []string{Arg_VolumeGroupName},
 				Description:   "The name of consistency group at storage controller level",
-				ConflictsWith: []string{PIVolumeGroupName},
+				Optional:      true,
+				Type:          schema.TypeString,
 			},
-			PIVolumeGroupsVolumeIds: {
-				Type:        schema.TypeSet,
-				Required:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Set:         schema.HashString,
+			Arg_VolumeGroupName: {
+				ConflictsWith: []string{Arg_ConsistencyGroupName},
+				Description:   "Volume Group Name to create",
+				Optional:      true,
+				Type:          schema.TypeString,
+			},
+			Arg_VolumeIDs: {
 				Description: "List of volumes to add in volume group",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Required:    true,
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
 			},
 
-			// Computed Attributes
-			"volume_group_id": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Volume Group ID",
-			},
-			"volume_group_status": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Volume Group Status",
-			},
-			"replication_status": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Volume Group Replication Status",
-			},
-			"status_description_errors": vgStatusDescriptionErrors(),
-			"consistency_group_name": {
-				Type:        schema.TypeString,
+			// Attributes
+			Attr_ConsistencyGroupName: {
 				Computed:    true,
 				Description: "Consistency Group Name if volume is a part of volume group",
+				Type:        schema.TypeString,
+			},
+			Attr_ReplicationSites: {
+				Computed:    true,
+				Description: "Indicates the replication sites of the volume group.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+			},
+			Attr_ReplicationStatus: {
+				Computed:    true,
+				Description: "Volume Group Replication Status",
+				Type:        schema.TypeString,
+			},
+			Attr_StatusDescriptionErrors: {
+				Computed:    true,
+				Description: "The status details of the volume group.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						Attr_Key: {
+							Computed:    true,
+							Description: "The volume group error key.",
+							Type:        schema.TypeString,
+						},
+						Attr_Message: {
+							Computed:    true,
+							Description: "The failure message providing more details about the error key.",
+							Type:        schema.TypeString,
+						},
+						Attr_VolumeIDs: {
+							Computed:    true,
+							Description: "List of volume IDs, which failed to be added to or removed from the volume group, with the given error.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Type:        schema.TypeList,
+						},
+					},
+				},
+				Type: schema.TypeSet,
+			},
+			Attr_VolumeGroupID: {
+				Computed:    true,
+				Description: "Volume Group ID",
+				Type:        schema.TypeString,
+			},
+			Attr_VolumeGroupStatus: {
+				Computed:    true,
+				Description: "Volume Group Status",
+				Type:        schema.TypeString,
 			},
 		},
 	}
@@ -92,20 +124,20 @@ func resourceIBMPIVolumeGroupCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	vgName := d.Get(PIVolumeGroupName).(string)
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	vgName := d.Get(Arg_VolumeGroupName).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 	body := &models.VolumeGroupCreate{
 		Name: vgName,
 	}
 
-	volids := flex.ExpandStringList((d.Get(PIVolumeGroupsVolumeIds).(*schema.Set)).List())
+	volids := flex.ExpandStringList((d.Get(Arg_VolumeIDs).(*schema.Set)).List())
 	body.VolumeIDs = volids
 
-	if v, ok := d.GetOk(PIVolumeGroupConsistencyGroupName); ok {
+	if v, ok := d.GetOk(Arg_ConsistencyGroupName); ok {
 		body.ConsistencyGroupName = v.(string)
 	}
 
-	client := st.NewIBMPIVolumeGroupClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIVolumeGroupClient(ctx, sess, cloudInstanceID)
 	vg, err := client.CreateVolumeGroup(body)
 	if err != nil {
 		return diag.FromErr(err)
@@ -132,20 +164,23 @@ func resourceIBMPIVolumeGroupRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	client := st.NewIBMPIVolumeGroupClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIVolumeGroupClient(ctx, sess, cloudInstanceID)
 
 	vg, err := client.GetDetails(vgID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.Set("volume_group_id", vg.ID)
-	d.Set("volume_group_status", vg.Status)
-	d.Set("consistency_group_name", vg.ConsistencyGroupName)
-	d.Set("replication_status", vg.ReplicationStatus)
-	d.Set(PIVolumeGroupName, vg.Name)
-	d.Set(PIVolumeGroupsVolumeIds, vg.VolumeIDs)
-	d.Set("status_description_errors", flattenVolumeGroupStatusDescription(vg.StatusDescription.Errors))
+	d.Set(Arg_VolumeGroupName, vg.Name)
+	d.Set(Arg_VolumeIDs, vg.VolumeIDs)
+	d.Set(Attr_ConsistencyGroupName, vg.ConsistencyGroupName)
+	d.Set(Attr_ReplicationSites, vg.ReplicationSites)
+	d.Set(Attr_ReplicationStatus, vg.ReplicationStatus)
+	if vg.StatusDescription != nil {
+		d.Set(Attr_StatusDescriptionErrors, flattenVolumeGroupStatusDescription(vg.StatusDescription.Errors))
+	}
+	d.Set(Attr_VolumeGroupID, vg.ID)
+	d.Set(Attr_VolumeGroupStatus, vg.Status)
 
 	return nil
 }
@@ -162,9 +197,9 @@ func resourceIBMPIVolumeGroupUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	client := st.NewIBMPIVolumeGroupClient(ctx, sess, cloudInstanceID)
-	if d.HasChanges(PIVolumeGroupsVolumeIds) {
-		old, new := d.GetChange(PIVolumeGroupsVolumeIds)
+	client := instance.NewIBMPIVolumeGroupClient(ctx, sess, cloudInstanceID)
+	if d.HasChanges(Arg_VolumeIDs) {
+		old, new := d.GetChange(Arg_VolumeIDs)
 		oldList := old.(*schema.Set)
 		newList := new.(*schema.Set)
 		body := &models.VolumeGroupUpdate{
@@ -194,9 +229,9 @@ func resourceIBMPIVolumeGroupDelete(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	client := st.NewIBMPIVolumeGroupClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIVolumeGroupClient(ctx, sess, cloudInstanceID)
 
-	volids := flex.ExpandStringList((d.Get(PIVolumeGroupsVolumeIds).(*schema.Set)).List())
+	volids := flex.ExpandStringList((d.Get(Arg_VolumeIDs).(*schema.Set)).List())
 	if len(volids) > 0 {
 		body := &models.VolumeGroupUpdate{
 			RemoveVolumes: volids,
@@ -223,12 +258,12 @@ func resourceIBMPIVolumeGroupDelete(ctx context.Context, d *schema.ResourceData,
 	d.SetId("")
 	return nil
 }
-func isWaitForIBMPIVolumeGroupAvailable(ctx context.Context, client *st.IBMPIVolumeGroupClient, id string, timeout time.Duration) (interface{}, error) {
+func isWaitForIBMPIVolumeGroupAvailable(ctx context.Context, client *instance.IBMPIVolumeGroupClient, id string, timeout time.Duration) (interface{}, error) {
 	log.Printf("Waiting for Volume Group (%s) to be available.", id)
 
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"retry", helpers.PIVolumeProvisioning},
-		Target:     []string{helpers.PIVolumeProvisioningDone},
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Retry, State_Creating},
+		Target:     []string{State_Available},
 		Refresh:    isIBMPIVolumeGroupRefreshFunc(client, id),
 		Delay:      10 * time.Second,
 		MinTimeout: 2 * time.Minute,
@@ -238,25 +273,25 @@ func isWaitForIBMPIVolumeGroupAvailable(ctx context.Context, client *st.IBMPIVol
 	return stateConf.WaitForStateContext(ctx)
 }
 
-func isIBMPIVolumeGroupRefreshFunc(client *st.IBMPIVolumeGroupClient, id string) resource.StateRefreshFunc {
+func isIBMPIVolumeGroupRefreshFunc(client *instance.IBMPIVolumeGroupClient, id string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		vg, err := client.Get(id)
 		if err != nil {
 			return nil, "", err
 		}
 
-		if vg.Status == "available" {
-			return vg, helpers.PIVolumeProvisioningDone, nil
+		if vg.Status == State_Available {
+			return vg, State_Available, nil
 		}
 
-		return vg, helpers.PIVolumeProvisioning, nil
+		return vg, State_Creating, nil
 	}
 }
 
-func isWaitForIBMPIVolumeGroupDeleted(ctx context.Context, client *st.IBMPIVolumeGroupClient, id string, timeout time.Duration) (interface{}, error) {
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"deleting", "updating"},
-		Target:     []string{"deleted"},
+func isWaitForIBMPIVolumeGroupDeleted(ctx context.Context, client *instance.IBMPIVolumeGroupClient, id string, timeout time.Duration) (interface{}, error) {
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Deleting, State_Updating},
+		Target:     []string{State_Deleted},
 		Refresh:    isIBMPIVolumeGroupDeleteRefreshFunc(client, id),
 		Delay:      10 * time.Second,
 		MinTimeout: 2 * time.Minute,
@@ -265,7 +300,7 @@ func isWaitForIBMPIVolumeGroupDeleted(ctx context.Context, client *st.IBMPIVolum
 	return stateConf.WaitForStateContext(ctx)
 }
 
-func isIBMPIVolumeGroupDeleteRefreshFunc(client *st.IBMPIVolumeGroupClient, id string) resource.StateRefreshFunc {
+func isIBMPIVolumeGroupDeleteRefreshFunc(client *instance.IBMPIVolumeGroupClient, id string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		vg, err := client.Get(id)
 		if err != nil {
@@ -273,13 +308,13 @@ func isIBMPIVolumeGroupDeleteRefreshFunc(client *st.IBMPIVolumeGroupClient, id s
 			switch uErr.(type) {
 			case *p_cloud_volume_groups.PcloudVolumegroupsGetNotFound:
 				log.Printf("[DEBUG] volume-group does not exist while deleteing %v", err)
-				return vg, "deleted", nil
+				return vg, State_Deleted, nil
 			}
 			return nil, "", err
 		}
 		if vg == nil {
-			return vg, "deleted", nil
+			return vg, State_Deleted, nil
 		}
-		return vg, "deleting", nil
+		return vg, State_Deleting, nil
 	}
 }

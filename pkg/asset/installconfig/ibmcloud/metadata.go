@@ -6,10 +6,20 @@ import (
 	"sync"
 
 	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
+)
+
+const (
+	// PrivateHostPrefix is the prefix for private API traffic used for DNS Records.
+	PrivateHostPrefix = "api-int."
+	// PublicHostPrefix is the prefix for public API traffic used for DNS Records.
+	PublicHostPrefix = "api."
 )
 
 // Metadata holds additional metadata for InstallConfig resources that
@@ -73,6 +83,67 @@ func (m *Metadata) AccountID(ctx context.Context) (string, error) {
 		m.accountID = *apiKeyDetails.AccountID
 	}
 	return m.accountID, nil
+}
+
+// AddVPCToPermittedNetworks adds a VPC to the DNS Services Zone of Permitted Networks.
+func (m *Metadata) AddVPCToPermittedNetworks(ctx context.Context, vpcID string) error {
+	// The following values are required to add the VPC to Permitted Networks:
+	// - DNS Services Instance ID
+	// - DNS Services Zone ID
+	// - VPC CRN
+	// We should already have the Instance ID and Zone ID, or they will be fetched.
+	dnsInstance, err := m.DNSInstance(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve dns services instance: %w", err)
+	}
+
+	client, err := m.Client()
+	if err != nil {
+		return fmt.Errorf("failed to create ibmcloud client: %w", err)
+	}
+	// Lookup the VPC CRN.
+	vpcDetails, err := client.GetVPC(ctx, vpcID)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve vpc %s: %w", vpcID, err)
+	} else if vpcDetails.CRN == nil {
+		return fmt.Errorf("error vpc crn not set for vpc %s", vpcID)
+	}
+
+	if err = client.CreateDNSServicesPermittedNetwork(ctx, dnsInstance.ID, dnsInstance.Zone, *vpcDetails.CRN); err != nil {
+		return fmt.Errorf("failed to add vpc %s to permitted networks of dns services zone %s and instance %s: %w", vpcID, dnsInstance.Zone, dnsInstance.ID, err)
+	}
+
+	return nil
+}
+
+// CreateDNSRecord creates a CNAME DNS Record in the IBM Cloud Internet Services zone or DNS Services zone for a Load Balancer hostname, based on the PublishStrategy.
+func (m *Metadata) CreateDNSRecord(ctx context.Context, recordName string, loadBalancer *vpcv1.LoadBalancer) error {
+	client, err := m.Client()
+	if err != nil {
+		return fmt.Errorf("failed to create ibmcloud client: %w", err)
+	}
+
+	zoneID, err := client.GetDNSZoneIDByName(ctx, m.BaseDomain, m.publishStrategy)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve dns zone by base domain %s for %s cluster: %w", m.BaseDomain, m.publishStrategy, err)
+	}
+
+	switch m.publishStrategy {
+	case types.ExternalPublishingStrategy:
+		cisInstanceCRN, err := m.CISInstanceCRN(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to retrieve cis instance crn for dns record: %w", err)
+		}
+		return client.CreateCISDNSRecord(ctx, cisInstanceCRN, zoneID, recordName, *loadBalancer.Hostname)
+	case types.InternalPublishingStrategy:
+		dnsInstance, err := m.DNSInstance(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to retrieve dns instance for dns record: %w", err)
+		}
+		return client.CreateDNSServicesDNSRecord(ctx, dnsInstance.ID, zoneID, recordName, *loadBalancer.Hostname)
+	default:
+		return fmt.Errorf("failed to create dns record, invalid publish strategy: %s", m.publishStrategy)
+	}
 }
 
 // CISInstanceCRN returns the Cloud Internet Services instance CRN that is
@@ -173,6 +244,9 @@ func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string) (b
 	}
 
 	vpc, err := client.GetVPCByName(ctx, vpcName)
+	if err != nil {
+		return false, err
+	}
 	for _, network := range networks {
 		if network == *vpc.CRN {
 			return true, nil
@@ -218,6 +292,21 @@ func (m *Metadata) ControlPlaneSubnets(ctx context.Context) (map[string]Subnet, 
 	}
 
 	return m.controlPlaneSubnets, nil
+}
+
+// GetIAMToken will retrieve an IAM access token using an IAM Authenticator and API Key.
+func (m *Metadata) GetIAMToken(apiKey string) (*string, error) {
+	// Get the IAM Service endpoint override, if one was supplied for the authenticator.
+	authenticator, err := NewIamAuthenticator(apiKey, ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, m.serviceEndpoints))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create authenticator to get iam token: %w", err)
+	}
+
+	token, err := authenticator.GetToken()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get iam token: %w", err)
+	}
+	return ptr.To(token), nil
 }
 
 // Client returns a client used for making API calls to IBM Cloud services.

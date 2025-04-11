@@ -64,3 +64,11 @@ func (c *Client) DeleteOidcConfig(id string) error {
 	}
 	return nil
 }
+
+func (c *Client) FetchOidcThumbprint(oidcConfigInput *cmv1.OidcThumbprintInput) (*cmv1.OidcThumbprint, error) {
+	response, err := c.ocm.ClustersMgmt().V1().AWSInquiries().OidcThumbprint().Post().Body(oidcConfigInput).Send()
+	if err != nil {
+		return nil, handleErr(response.Error(), err)
+	}
+	return response.Body(), nil
+}

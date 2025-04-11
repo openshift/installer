@@ -15,6 +15,7 @@ aliases:
   # tasks on the repo, or otherwise approve any PRS.
   cluster-api-admins:
   - fabriziopandini
+  - sbueringer
   - vincepri
 
   # non-admin folks who have write-access and can approve any PRs in the repo
@@ -22,7 +23,6 @@ aliases:
   - chrischdi
   - enxebre
   - fabriziopandini
-  - killianmuldoon
   - sbueringer
   - vincepri
 
@@ -31,7 +31,6 @@ aliases:
   - jackfrancis
   - JoelSpeed
   - richardcase
-  - stmcginnis
 
   # -----------------------------------------------------------
   # OWNER_ALIASES for controllers/topology
@@ -53,10 +52,7 @@ aliases:
   # -----------------------------------------------------------
 
   cluster-api-bootstrap-provider-kubeadm-ignition-maintainers:
-  cluster-api-bootstrap-provider-kubeadm-ignition-reviewers:
-  - dongsupark
-  - invidian
-  - johananl
+  cluster-api-bootstrap-provider-kubeadm-ignition-reviewers: []
 
   # -----------------------------------------------------------
   # OWNER_ALIASES for controlplane/kubeadm
@@ -109,36 +105,31 @@ aliases:
   # OWNER_ALIASES for docs
   # -----------------------------------------------------------
 
-  cluster-api-docs-maintainers:
-  - oscr
+  cluster-api-docs-maintainers: []
   cluster-api-docs-reviewers:
   - elmiko
 
   # -----------------------------------------------------------
-  # OWNER_ALIASES for v1.6 release-team
+  # OWNER_ALIASES for v1.9 release-team
   # -----------------------------------------------------------
 
   cluster-api-release-lead:
-  - cahillsf
-  
+  - Sunnatillo
+
   cluster-api-release-team:
   # members added in commented lines have a pending membership
   # and will be added back once it is acquired.
-  - adilGhaffarDev # release ci lead
-  # - adityabhatia
-  # - akshay196
-  - cahillsf # release lead
-  # - chandankumar4
-  # - Dhairya-Arora01
-  - Fedosin
-  # - mansikulkarni96
-  - mcbenjemaa
-  - nawazkh
-  # - ssuriyan7
-  - SubhasmitaSw
-  # - Sunnatillo
-  - troy0820 
-  # - typeid
-  - VibhorChinda
-  - willie-yao # release comms lead
-  - yrs147 
+  - adilGhaffarDev
+  - cahillsf # release ci lead
+  # - chandankumar4 # release comms lead
+  - jayesh-srivastava
+  - pravarag
+  # - rajankumary2k
+  - SD-13
+  # - serngawy
+  - sivchari
+  - Sunnatillo  # release lead
+  # - tasdikrahman
+  - tormath1
+  # - varshasuryawanshi
+  - vishalanarase

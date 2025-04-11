@@ -24,7 +24,6 @@ import (
 	"net/netip"
 	"net/url"
 	"sync"
-	"time"
 
 	"github.com/blang/semver"
 	"github.com/pkg/errors"
@@ -32,16 +31,13 @@ import (
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/session"
-	"github.com/vmware/govmomi/session/keepalive"
 	"github.com/vmware/govmomi/vapi/rest"
 	"github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25"
-	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/soap"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/constants"
 )
 
 var (
@@ -62,16 +58,11 @@ type Session struct {
 }
 
 // Feature is a set of Features of the session.
-type Feature struct {
-	EnableKeepAlive   bool
-	KeepAliveDuration time.Duration
-}
+type Feature struct{}
 
 // DefaultFeature sets the default values for features.
 func DefaultFeature() Feature {
-	return Feature{
-		EnableKeepAlive: constants.DefaultEnableKeepAlive,
-	}
+	return Feature{}
 }
 
 // Params are the parameters of a VCenter session.
@@ -191,7 +182,7 @@ func GetOrCreate(ctx context.Context, params *Params) (*Session, error) {
 	}
 
 	soapURL.User = params.userinfo
-	client, err := newClient(ctx, sessionKey, soapURL, params.thumbprint, params.feature)
+	client, err := newClient(ctx, soapURL, params.thumbprint, params.feature)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create vCenter session")
 	}
@@ -202,7 +193,7 @@ func GetOrCreate(ctx context.Context, params *Params) (*Session, error) {
 	// Assign the finder to the session.
 	session.Finder = find.NewFinder(session.Client.Client, false)
 	// Assign tag manager to the session.
-	manager, err := newManager(ctx, sessionKey, client.Client, soapURL.User, params.feature)
+	manager, err := newManager(ctx, client.Client, soapURL.User, params.feature)
 	if err != nil {
 		log.Error(err, "Failed to create tags manager, will logout")
 		// Logout of previously logged session to not leak
@@ -238,9 +229,7 @@ func GetOrCreate(ctx context.Context, params *Params) (*Session, error) {
 	return &session, nil
 }
 
-func newClient(ctx context.Context, sessionKey string, url *url.URL, thumbprint string, feature Feature) (*govmomi.Client, error) {
-	log := ctrl.LoggerFrom(ctx)
-
+func newClient(ctx context.Context, url *url.URL, thumbprint string, _ Feature) (*govmomi.Client, error) {
 	insecure := thumbprint == ""
 	soapClient := soap.NewClient(url, insecure)
 	if !insecure {
@@ -258,20 +247,6 @@ func newClient(ctx context.Context, sessionKey string, url *url.URL, thumbprint 
 		SessionManager: session.NewManager(vimClient),
 	}
 
-	if feature.EnableKeepAlive {
-		vimClient.RoundTripper = session.KeepAliveHandler(vimClient.RoundTripper, feature.KeepAliveDuration, func(tripper soap.RoundTripper) error {
-			_, err := methods.GetCurrentTime(ctx, tripper)
-			if err != nil {
-				log.Error(err, "Failed to keep alive govmomi client, Clearing the session now")
-				if errLogout := c.Logout(ctx); errLogout != nil {
-					log.Error(err, "Failed to logout keepalive failed session")
-				}
-				sessionCache.Delete(sessionKey)
-			}
-			return err
-		})
-	}
-
 	if err := c.Login(ctx, url.User); err != nil {
 		return nil, errors.Wrapf(err, "failed to create client: failed to login")
 	}
@@ -280,29 +255,8 @@ func newClient(ctx context.Context, sessionKey string, url *url.URL, thumbprint 
 }
 
 // newManager creates a Manager that encompasses the REST Client for the VSphere tagging API.
-func newManager(ctx context.Context, sessionKey string, client *vim25.Client, user *url.Userinfo, feature Feature) (*tags.Manager, error) {
-	log := ctrl.LoggerFrom(ctx)
-
+func newManager(ctx context.Context, client *vim25.Client, user *url.Userinfo, _ Feature) (*tags.Manager, error) {
 	rc := rest.NewClient(client)
-	if feature.EnableKeepAlive {
-		rc.Transport = keepalive.NewHandlerREST(rc, feature.KeepAliveDuration, func() error {
-			s, err := rc.Session(ctx)
-			if s != nil && err == nil {
-				return nil
-			}
-
-			if err != nil {
-				log.Error(err, "Failed to keep alive REST client")
-			}
-
-			log.Info("REST client session expired, clearing session")
-			if errLogout := rc.Logout(ctx); errLogout != nil {
-				log.Error(err, "Failed to logout keepalive failed REST session")
-			}
-			sessionCache.Delete(sessionKey)
-			return errors.New("REST client session expired")
-		})
-	}
 	if err := rc.Login(ctx, user); err != nil {
 		return nil, errors.Wrapf(err, "failed to create tags manager: failed to login REST client")
 	}
@@ -317,17 +271,15 @@ func (s *Session) GetVersion() (infrav1.VCenterVersion, error) {
 		return "", err
 	}
 
-	switch version.Major {
-	case 6, 7, 8:
+	if version.Major >= 6 {
 		return infrav1.NewVCenterVersion(svcVersion), nil
-	default:
-		return "", unidentifiedVCenterVersion{version: svcVersion}
 	}
+	return "", unidentifiedVCenterVersion{version: svcVersion}
 }
 
 // Clear is meant to destroy all the cached sessions.
 func Clear() {
-	sessionCache.Range(func(key, s any) bool {
+	sessionCache.Range(func(_, s any) bool {
 		cachedSession := s.(*Session)
 		_ = cachedSession.Logout(context.Background())
 		return true

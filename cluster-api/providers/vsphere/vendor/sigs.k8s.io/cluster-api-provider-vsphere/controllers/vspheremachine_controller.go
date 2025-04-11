@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
+	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -88,14 +88,15 @@ func AddMachineControllerToManager(ctx context.Context, controllerManagerContext
 		VMService:       &services.VimMachineService{Client: controllerManagerContext.Client},
 		supervisorBased: supervisorBased,
 	}
+	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "vspheremachine")
 
 	if supervisorBased {
-		r.VMService = &vmoperator.VmopMachineService{Client: controllerManagerContext.Client}
 		networkProvider, err := inframanager.GetNetworkProvider(ctx, controllerManagerContext.Client, controllerManagerContext.NetworkProvider)
 		if err != nil {
 			return errors.Wrap(err, "failed to create a network provider")
 		}
 		r.networkProvider = networkProvider
+		r.VMService = &vmoperator.VmopMachineService{Client: controllerManagerContext.Client, ConfigureControlPlaneVMReadinessProbe: r.networkProvider.SupportsVMReadinessProbe()}
 
 		return ctrl.NewControllerManagedBy(mgr).
 			// Watch the controlled, infrastructure resource.
@@ -110,7 +111,7 @@ func AddMachineControllerToManager(ctx context.Context, controllerManagerContext
 				&clusterv1.Cluster{},
 				handler.EnqueueRequestsFromMapFunc(r.enqueueClusterToMachineRequests),
 				ctrlbldr.WithPredicates(
-					predicates.ClusterUnpausedAndInfrastructureReady(ctrl.LoggerFrom(ctx)),
+					predicates.ClusterUnpausedAndInfrastructureReady(mgr.GetScheme(), predicateLog),
 				),
 			).
 			// Watch a GenericEvent channel for the controlled resource.
@@ -119,10 +120,12 @@ func AddMachineControllerToManager(ctx context.Context, controllerManagerContext
 			// should cause a resource to be synchronized, such as a goroutine
 			// waiting on some asynchronous, external task to complete.
 			WatchesRawSource(
-				&source.Channel{Source: controllerManagerContext.GetGenericEventChannelFor(vmwarev1.GroupVersion.WithKind("VSphereMachine"))},
-				&handler.EnqueueRequestForObject{},
+				source.Channel(
+					controllerManagerContext.GetGenericEventChannelFor(vmwarev1.GroupVersion.WithKind("VSphereMachine")),
+					&handler.EnqueueRequestForObject{},
+				),
 			).
-			WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), controllerManagerContext.WatchFilterValue)).
+			WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerContext.WatchFilterValue)).
 			// Watch any VirtualMachine resources owned by this VSphereMachine
 			Owns(&vmoprv1.VirtualMachine{}).
 			Complete(r)
@@ -143,10 +146,12 @@ func AddMachineControllerToManager(ctx context.Context, controllerManagerContext
 		// should cause a resource to be synchronized, such as a goroutine
 		// waiting on some asynchronous, external task to complete.
 		WatchesRawSource(
-			&source.Channel{Source: controllerManagerContext.GetGenericEventChannelFor(infrav1.GroupVersion.WithKind("VSphereMachine"))},
-			&handler.EnqueueRequestForObject{},
+			source.Channel(
+				controllerManagerContext.GetGenericEventChannelFor(infrav1.GroupVersion.WithKind("VSphereMachine")),
+				&handler.EnqueueRequestForObject{},
+			),
 		).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), controllerManagerContext.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerContext.WatchFilterValue)).
 		// Watch any VSphereVM resources owned by the controlled type.
 		Watches(
 			&infrav1.VSphereVM{},
@@ -154,7 +159,7 @@ func AddMachineControllerToManager(ctx context.Context, controllerManagerContext
 			ctrlbldr.WithPredicates(predicate.Funcs{
 				// ignore creation events since this controller is responsible for
 				// the creation of the type.
-				CreateFunc: func(e event.CreateEvent) bool {
+				CreateFunc: func(event.CreateEvent) bool {
 					return false
 				},
 			}),
@@ -163,7 +168,7 @@ func AddMachineControllerToManager(ctx context.Context, controllerManagerContext
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(r.enqueueClusterToMachineRequests),
 			ctrlbldr.WithPredicates(
-				predicates.ClusterUnpausedAndInfrastructureReady(ctrl.LoggerFrom(ctx)),
+				predicates.ClusterUnpausedAndInfrastructureReady(mgr.GetScheme(), predicateLog),
 			),
 		).Complete(r)
 }
@@ -231,7 +236,7 @@ func (r *machineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 	// Create the patch helper.
 	patchHelper, err := patch.NewHelper(machineContext.GetVSphereMachine(), r.Client)
 	if err != nil {
-		return reconcile.Result{}, errors.Wrap(err, "failed to initialize patch helper")
+		return reconcile.Result{}, err
 	}
 	machineContext.SetBaseMachineContext(&capvcontext.BaseMachineContext{
 		Cluster:     cluster,

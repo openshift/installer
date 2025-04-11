@@ -4,23 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/IBM/vpc-go-sdk/vpcv1"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
-	coreosarch "github.com/coreos/stream-metadata-go/arch"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
-	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -34,31 +31,27 @@ import (
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
-	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
-	rhcospkg "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
 	azuretfvars "github.com/openshift/installer/pkg/tfvars/azure"
 	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
 	gcptfvars "github.com/openshift/installer/pkg/tfvars/gcp"
 	ibmcloudtfvars "github.com/openshift/installer/pkg/tfvars/ibmcloud"
-	libvirttfvars "github.com/openshift/installer/pkg/tfvars/libvirt"
 	nutanixtfvars "github.com/openshift/installer/pkg/tfvars/nutanix"
 	openstacktfvars "github.com/openshift/installer/pkg/tfvars/openstack"
 	ovirttfvars "github.com/openshift/installer/pkg/tfvars/ovirt"
-	powervstfvars "github.com/openshift/installer/pkg/tfvars/powervs"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -82,7 +75,7 @@ const (
 	// https://www.terraform.io/docs/configuration/variables.html#variable-files
 	TfPlatformVarsFileName = "terraform.platform.auto.tfvars.json"
 
-	tfvarsAssetName = "Terraform Variables"
+	tfvarsAssetName = "Cluster Infrastructure Variables"
 )
 
 // TerraformVariables depends on InstallConfig, Manifests,
@@ -108,7 +101,9 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		new(rhcos.BootstrapImage),
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
+		&machine.Arbiter{},
 		&machines.Master{},
+		&machines.Arbiter{},
 		&machines.Worker{},
 		&baremetalbootstrap.IronicCreds{},
 		&installconfig.PlatformProvisionCheck{},
@@ -119,20 +114,21 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 // Generate generates the terraform.tfvars file.
 //
 //nolint:gocyclo // legacy, pre-linter cyclomatic complexity
-func (t *TerraformVariables) Generate(parents asset.Parents) error {
-	ctx := context.TODO()
+func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
+	arbiterIgnAsset := &machine.Arbiter{}
 	mastersAsset := &machines.Master{}
+	arbiterAsset := &machines.Arbiter{}
 	workersAsset := &machines.Worker{}
 	manifestsAsset := &manifests.Manifests{}
 	rhcosImage := new(rhcos.Image)
 	rhcosRelease := new(rhcos.Release)
 	rhcosBootstrapImage := new(rhcos.BootstrapImage)
 	ironicCreds := &baremetalbootstrap.IronicCreds{}
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosRelease, rhcosBootstrapImage, ironicCreds)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, arbiterIgnAsset, arbiterAsset, masterIgnAsset, mastersAsset, workersAsset, manifestsAsset, rhcosImage, rhcosRelease, rhcosBootstrapImage, ironicCreds)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -214,13 +210,18 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		return errors.Errorf("master slice cannot be empty")
 	}
 
+	numWorkers := int64(0)
+	for _, worker := range installConfig.Config.Compute {
+		numWorkers += ptr.Deref(worker.Replicas, 0)
+	}
+
 	switch platform {
 	case aws.Name:
 		var vpc string
 		var privateSubnets []string
 		var publicSubnets []string
 
-		if len(installConfig.Config.Platform.AWS.Subnets) > 0 {
+		if len(installConfig.Config.Platform.AWS.VPC.Subnets) > 0 {
 			subnets, err := installConfig.AWS.PrivateSubnets(ctx)
 			if err != nil {
 				return err
@@ -267,18 +268,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		// Based on the number of workers, we could have the following outcomes:
-		// 1. workers > 0, masters not schedulable, valid cluster
-		// 2. workers = 0, masters schedulable, valid compact cluster but currently unsupported
-		// 3. workers = 0, masters not schedulable, invalid cluster
-		if len(workers) == 0 {
-			return errors.Errorf("compact clusters with 0 workers are not supported at this time")
-		}
+
 		workerConfigs := make([]*machinev1beta1.AWSMachineProviderConfig, len(workers))
 		for i, m := range workers {
 			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
 		}
-		osImage := strings.SplitN(string(*rhcosImage), ",", 2)
+		osImage := strings.SplitN(rhcosImage.ControlPlane, ",", 2)
 		osImageID := osImage[0]
 		osImageRegion := installConfig.Config.AWS.Region
 		if len(osImage) == 2 {
@@ -334,7 +329,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			WorkerIAMRoleName:         workerIAMRoleName,
 			Architecture:              installConfig.Config.ControlPlane.Architecture,
 			Proxy:                     installConfig.Config.Proxy,
-			PreserveBootstrapIgnition: installConfig.Config.AWS.PreserveBootstrapIgnition,
+			PreserveBootstrapIgnition: installConfig.Config.AWS.BestEffortDeleteIgnition,
 			MasterSecurityGroups:      securityGroups,
 			PublicIpv4Pool:            installConfig.Config.AWS.PublicIpv4Pool,
 		})
@@ -372,19 +367,15 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		// Based on the number of workers, we could have the following outcomes:
-		// 1. workers > 0, masters not schedulable, valid cluster
-		// 2. workers = 0, masters schedulable, valid compact cluster but currently unsupported
-		// 3. workers = 0, masters not schedulable, invalid cluster
-		if len(workers) == 0 {
-			return errors.Errorf("compact clusters with 0 workers are not supported at this time")
-		}
 		workerConfigs := make([]*machinev1beta1.AzureMachineProviderSpec, len(workers))
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
 		}
-		client := aztypes.NewClient(session)
-		hyperVGeneration, err := client.GetHyperVGenerationVersion(context.TODO(), masterConfigs[0].VMSize, masterConfigs[0].Location, "")
+		client, err := installConfig.Azure.Client()
+		if err != nil {
+			return err
+		}
+		hyperVGeneration, err := client.GetHyperVGenerationVersion(ctx, masterConfigs[0].VMSize, masterConfigs[0].Location, "")
 		if err != nil {
 			return err
 		}
@@ -427,7 +418,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				BaseDomainResourceGroupName:     installConfig.Config.Azure.BaseDomainResourceGroupName,
 				MasterConfigs:                   masterConfigs,
 				WorkerConfigs:                   workerConfigs,
-				ImageURL:                        string(*rhcosImage),
+				ImageURL:                        rhcosImage.ControlPlane,
 				ImageRelease:                    rhcosRelease.GetAzureReleaseVersion(),
 				PreexistingNetwork:              preexistingnetwork,
 				Publish:                         installConfig.Config.Publish,
@@ -495,12 +486,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 		// Based on the number of workers, we could have the following outcomes:
-		// 1. workers > 0, masters not schedulable, valid cluster
-		// 2. workers = 0, masters schedulable, valid compact cluster but currently unsupported
-		// 3. workers = 0, masters not schedulable, invalid cluster
-		if len(workers) == 0 {
-			return errors.Errorf("compact clusters with 0 workers are not supported at this time")
+		// 1. compute replicas > 0, worker machinesets > 0, masters not schedulable, valid cluster
+		// 2. compute replicas > 0, worker machinesets = 0, invalid cluster
+		// 3. compute replicas = 0, masters schedulable, valid cluster
+		if numWorkers != 0 && len(workers) == 0 {
+			return fmt.Errorf("invalid configuration. No worker assets available for requested number of compute replicas (%d)", numWorkers)
 		}
+		if numWorkers == 0 && !mastersSchedulable {
+			return fmt.Errorf("invalid configuration. No workers requested but masters are not schedulable")
+		}
+
 		workerConfigs := make([]*machinev1beta1.GCPMachineProviderSpec, len(workers))
 		for i, w := range workers {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
@@ -512,7 +507,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		publicZoneName := ""
 		privateZoneName := ""
 
-		if installConfig.Config.GCP.UserProvisionedDNS != gcp.UserProvisionedDNSEnabled {
+		if installConfig.Config.GCP.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
 			if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 				publicZone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain, true)
 				if err != nil {
@@ -521,18 +516,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				publicZoneName = publicZone.Name
 			}
 
-			if installConfig.Config.GCP.NetworkProjectID != "" {
-				privateZone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.ClusterDomain(), false)
-				if err != nil {
-					return errors.Wrapf(err, "failed to get GCP private zone")
-				}
-				if privateZone != nil {
-					privateZoneName = privateZone.Name
-				}
+			// Set the private zone
+			privateZoneName, err = manifests.GetGCPPrivateZoneName(ctx, client, installConfig, clusterID.InfraID)
+			if err != nil {
+				return fmt.Errorf("failed to find gcp private dns zone: %w", err)
 			}
 		}
 
-		ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 		defer cancel()
 
 		url, err := gcpbootstrap.CreateSignedURL(clusterID.InfraID)
@@ -543,21 +534,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		shim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(url, installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
 		if err != nil {
 			return fmt.Errorf("failed to create gcp ignition shim: %w", err)
-		}
-
-		archName := coreosarch.RpmArch(string(installConfig.Config.ControlPlane.Architecture))
-		st, err := rhcospkg.FetchCoreOSBuild(ctx)
-		if err != nil {
-			return err
-		}
-		streamArch, err := st.GetArchitecture(archName)
-		if err != nil {
-			return err
-		}
-
-		img := streamArch.Images.Gcp
-		if img == nil {
-			return fmt.Errorf("%s: No GCP build found", st.FormatPrefix(archName))
 		}
 
 		tags, err := gcpconfig.NewTagManager(client).GetUserTags(ctx,
@@ -578,7 +554,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PrivateZoneName:     privateZoneName,
 				PublishStrategy:     installConfig.Config.Publish,
 				InfrastructureName:  clusterID.InfraID,
-				UserProvisionedDNS:  installConfig.Config.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled,
+				UserProvisionedDNS:  installConfig.Config.GCP.UserProvisionedDNS == dns.UserProvisionedDNSEnabled,
 				UserTags:            tags,
 				IgnitionShim:        string(shim),
 				PresignedURL:        url,
@@ -737,7 +713,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				CISInstanceCRN:             cisCRN,
 				DNSInstanceID:              dnsID,
 				EndpointsJSONFile:          endpointsJSONFile,
-				ImageURL:                   string(*rhcosImage),
+				ImageURL:                   rhcosImage.ControlPlane,
 				MasterConfigs:              masterConfigs,
 				MasterDedicatedHosts:       masterDedicatedHosts,
 				NetworkResourceGroupName:   installConfig.Config.Platform.IBMCloud.NetworkResourceGroupName,
@@ -757,44 +733,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
-	case libvirt.Name:
-		masters, err := mastersAsset.Machines()
-		if err != nil {
-			return err
-		}
-		// convert options list to a list of mappings which can be consumed by terraform
-		var dnsmasqoptions []map[string]string
-		for _, option := range installConfig.Config.Platform.Libvirt.Network.DnsmasqOptions {
-			dnsmasqoptions = append(dnsmasqoptions,
-				map[string]string{
-					"option_name":  option.Name,
-					"option_value": option.Value})
-		}
-
-		data, err = libvirttfvars.TFVars(
-			libvirttfvars.TFVarsSources{
-				MasterConfig:   masters[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
-				OsImage:        string(*rhcosImage),
-				MachineCIDR:    &installConfig.Config.Networking.MachineNetwork[0].CIDR.IPNet,
-				Bridge:         installConfig.Config.Platform.Libvirt.Network.IfName,
-				MasterCount:    masterCount,
-				Architecture:   installConfig.Config.ControlPlane.Architecture,
-				DnsmasqOptions: dnsmasqoptions,
-			},
-		)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
-		}
-		t.FileList = append(t.FileList, &asset.File{
-			Filename: TfPlatformVarsFileName,
-			Data:     data,
-		})
 	case openstack.Name:
 		data, err = openstacktfvars.TFVars(
+			ctx,
 			installConfig,
 			mastersAsset,
 			workersAsset,
-			string(*rhcosImage),
+			rhcosImage.ControlPlane,
 			clusterID,
 			bootstrapIgn,
 		)
@@ -866,7 +811,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			installConfig.Config.Platform.Ovirt.StorageDomainID,
 			installConfig.Config.Platform.Ovirt.NetworkName,
 			installConfig.Config.Platform.Ovirt.VNICProfileID,
-			string(*rhcosImage),
+			rhcosImage.ControlPlane,
 			clusterID.InfraID,
 			masters[0].Spec.ProviderSpec.Value.Object.(*ovirtprovider.OvirtMachineProviderSpec),
 			installConfig.Config.Platform.Ovirt.AffinityGroups,
@@ -879,169 +824,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case powervs.Name:
-		APIKey, err := installConfig.PowerVS.APIKey(ctx)
-		if err != nil {
-			return err
-		}
-
-		masters, err := mastersAsset.Machines()
-		if err != nil {
-			return err
-		}
-
-		var (
-			cisCRN, dnsCRN, vpcGatewayName, vpcSubnet string
-			vpcPermitted, vpcGatewayAttached          bool
-		)
-		if len(installConfig.Config.PowerVS.VPCSubnets) > 0 {
-			vpcSubnet = installConfig.Config.PowerVS.VPCSubnets[0]
-		}
-		switch installConfig.Config.Publish {
-		case types.InternalPublishingStrategy:
-			// Get DNSInstanceCRN from InstallConfig metadata
-			dnsCRN, err = installConfig.PowerVS.DNSInstanceCRN(ctx)
-			if err != nil {
-				return err
-			}
-
-			// If the VPC already exists and the cluster is Private, check if the VPC is already a Permitted Network on DNS Instance
-			if installConfig.Config.PowerVS.VPCName != "" {
-				vpcPermitted, err = installConfig.PowerVS.IsVPCPermittedNetwork(ctx, installConfig.Config.Platform.PowerVS.VPCName, installConfig.Config.BaseDomain)
-				if err != nil {
-					return err
-				}
-				vpcGatewayName, vpcGatewayAttached, err = installConfig.PowerVS.GetExistingVPCGateway(ctx, installConfig.Config.Platform.PowerVS.VPCName, vpcSubnet)
-				if err != nil {
-					return err
-				}
-			}
-		case types.ExternalPublishingStrategy:
-			// Get CISInstanceCRN from InstallConfig metadata
-			cisCRN, err = installConfig.PowerVS.CISInstanceCRN(ctx)
-			if err != nil {
-				return err
-			}
-		default:
-			return errors.New("unknown publishing strategy")
-		}
-
-		masterConfigs := make([]*machinev1.PowerVSMachineProviderConfig, len(masters))
-		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.PowerVSMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
-		}
-
-		client, err := powervsconfig.NewClient()
-		if err != nil {
-			return err
-		}
-		var (
-			vpcRegion, vpcZone string
-			vpc                *vpcv1.VPC
-		)
-		vpcName := installConfig.Config.PowerVS.VPCName
-		if vpcName != "" {
-			vpc, err = client.GetVPCByName(ctx, vpcName)
-			if err != nil {
-				return err
-			}
-			var crnElems = strings.SplitN(*vpc.CRN, ":", 8)
-			vpcRegion = crnElems[5]
-		} else {
-			specified := installConfig.Config.PowerVS.VPCRegion
-			if specified != "" {
-				if powervs.ValidateVPCRegion(specified) {
-					vpcRegion = specified
-				} else {
-					return errors.New("unknown VPC region")
-				}
-			} else if vpcRegion, err = powervs.VPCRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
-				return err
-			}
-		}
-		if vpcSubnet != "" {
-			var sn *vpcv1.Subnet
-			sn, err = client.GetSubnetByName(ctx, vpcSubnet, vpcRegion)
-			if err != nil {
-				return err
-			}
-			vpcZone = *sn.Zone.Name
-		} else {
-			rand.New(rand.NewSource(time.Now().UnixNano()))           //nolint:gosec // we don't need a crypto secure number
-			vpcZone = fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(2)+1) //nolint:gosec // we don't need a crypto secure number
-		}
-
-		cpStanza := installConfig.Config.ControlPlane
-		if cpStanza == nil || cpStanza.Platform.PowerVS == nil || cpStanza.Platform.PowerVS.SysType == "" {
-			sysTypes, err := powervs.AvailableSysTypes(installConfig.Config.PowerVS.Region)
-			if err != nil {
-				return err
-			}
-			for i := range masters {
-				masterConfigs[i].SystemType = sysTypes[0]
-			}
-		}
-
-		attachedTG := ""
-		tgConnectionVPCID := ""
-		if installConfig.Config.PowerVS.ServiceInstanceGUID != "" {
-			attachedTG, err = client.GetAttachedTransitGateway(ctx, installConfig.Config.PowerVS.ServiceInstanceGUID)
-			if err != nil {
-				return err
-			}
-			if attachedTG != "" && vpc != nil {
-				tgConnectionVPCID, err = client.GetTGConnectionVPC(ctx, attachedTG, *vpc.ID)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		// If a service instance GUID was passed in the install-config.yaml file, then
-		// find the corresponding name for it.  Otherwise, we expect our Terraform to
-		// dynamically create one.
-		serviceInstanceName, err := client.ServiceInstanceGUIDToName(ctx, installConfig.Config.PowerVS.ServiceInstanceGUID)
-		if err != nil {
-			return err
-		}
-
-		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
-		data, err = powervstfvars.TFVars(
-			powervstfvars.TFVarsSources{
-				MasterConfigs:          masterConfigs,
-				Region:                 installConfig.Config.Platform.PowerVS.Region,
-				Zone:                   installConfig.Config.Platform.PowerVS.Zone,
-				APIKey:                 APIKey,
-				SSHKey:                 installConfig.Config.SSHKey,
-				PowerVSResourceGroup:   installConfig.Config.PowerVS.PowerVSResourceGroup,
-				ImageBucketName:        osImage[0],
-				ImageBucketFileName:    osImage[1],
-				VPCRegion:              vpcRegion,
-				VPCZone:                vpcZone,
-				VPCName:                vpcName,
-				VPCSubnetName:          vpcSubnet,
-				VPCPermitted:           vpcPermitted,
-				VPCGatewayName:         vpcGatewayName,
-				VPCGatewayAttached:     vpcGatewayAttached,
-				CISInstanceCRN:         cisCRN,
-				DNSInstanceCRN:         dnsCRN,
-				PublishStrategy:        installConfig.Config.Publish,
-				EnableSNAT:             len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0,
-				AttachedTransitGateway: attachedTG,
-				TGConnectionVPCID:      tgConnectionVPCID,
-				ServiceInstanceName:    serviceInstanceName,
-			},
-		)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
-		}
-		t.FileList = append(t.FileList, &asset.File{
-			Filename: TfPlatformVarsFileName,
-			Data:     data,
-		})
-
+		t.FileList = make([]*asset.File, 0)
+		return nil
 	case vsphere.Name:
 		t.FileList = make([]*asset.File, 0)
-		logrus.Warn("installing on vSphere via terraform is no longer supported")
 		return nil
 	case nutanix.Name:
 		controlPlanes, err := mastersAsset.Machines()
@@ -1053,7 +839,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1.NutanixMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
 		}
 
-		imgURI := string(*rhcosImage)
+		imgURI := rhcosImage.ControlPlane
 		if installConfig.Config.Nutanix.ClusterOSImage != "" {
 			imgURI = installConfig.Config.Nutanix.ClusterOSImage
 		}

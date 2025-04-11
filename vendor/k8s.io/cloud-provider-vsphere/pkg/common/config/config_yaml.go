@@ -49,8 +49,6 @@ func (ccy *CommonConfigYAML) CreateConfig() *Config {
 	cfg.Global.SecretName = ccy.Global.SecretName
 	cfg.Global.SecretNamespace = ccy.Global.SecretNamespace
 	cfg.Global.SecretsDirectory = ccy.Global.SecretsDirectory
-	cfg.Global.APIDisable = ccy.Global.APIDisable
-	cfg.Global.APIBinding = ccy.Global.APIBinding
 
 	for keyVcConfig, valVcConfig := range ccy.Vcenter {
 		cfg.VirtualCenter[keyVcConfig] = &VirtualCenterConfig{

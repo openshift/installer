@@ -1,6 +1,7 @@
 package machine
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,14 +49,14 @@ func TestWorkerIgnitionCustomizationsGenerate(t *testing.T) {
 				})
 
 			rootCA := &tls.RootCA{}
-			err := rootCA.Generate(nil)
+			err := rootCA.Generate(context.Background(), nil)
 			assert.NoError(t, err, "unexpected error generating root CA")
 
 			parents := asset.Parents{}
 			parents.Add(installConfig, rootCA)
 
 			worker := &Worker{}
-			err = worker.Generate(parents)
+			err = worker.Generate(context.Background(), parents)
 			assert.NoError(t, err, "unexpected error generating worker asset")
 
 			if tc.customize == true {
@@ -66,7 +67,7 @@ func TestWorkerIgnitionCustomizationsGenerate(t *testing.T) {
 
 			parents.Add(worker)
 			workerIgnCheck := &WorkerIgnitionCustomizations{}
-			err = workerIgnCheck.Generate(parents)
+			err = workerIgnCheck.Generate(context.Background(), parents)
 			assert.NoError(t, err, "unexpected error generating worker ignition check asset")
 
 			actualFiles := workerIgnCheck.Files()

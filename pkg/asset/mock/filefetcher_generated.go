@@ -5,9 +5,10 @@
 package mock
 
 import (
-	gomock "github.com/golang/mock/gomock"
-	asset "github.com/openshift/installer/pkg/asset"
 	reflect "reflect"
+
+	asset "github.com/openshift/installer/pkg/asset"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockFileFetcher is a mock of FileFetcher interface.

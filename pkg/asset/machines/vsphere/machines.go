@@ -19,6 +19,7 @@ import (
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
+	"github.com/openshift/installer/pkg/utils"
 )
 
 // MachineData contains all result output from the Machines() function.
@@ -27,10 +28,12 @@ type MachineData struct {
 	ControlPlaneMachineSet *machinev1.ControlPlaneMachineSet
 	IPClaims               []ipamv1.IPAddressClaim
 	IPAddresses            []ipamv1.IPAddress
+
+	MachineFailureDomain map[string]string
 }
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) (*MachineData, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) (*MachineData, error) {
 	data := &MachineData{}
 	if configPlatform := config.Platform.Name(); configPlatform != vsphere.Name {
 		return data, fmt.Errorf("non vsphere configuration: %q", configPlatform)
@@ -67,12 +70,14 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		}
 	}
 
-	failureDomains := []machinev1.VSphereFailureDomain{}
+	var failureDomains []machinev1.VSphereFailureDomain
 
 	vsphereMachineProvider := &machineapi.VSphereMachineProviderSpec{}
+	data.MachineFailureDomain = make(map[string]string)
 
 	for idx := int32(0); idx < replicas; idx++ {
 		logrus.Debugf("Creating %v machine %v", role, idx)
+
 		var host *vsphere.Host
 		desiredZone := mpool.Zones[int(idx)%numOfZones]
 		if hosts != nil && int(idx) < len(hosts) {
@@ -103,13 +108,14 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 		osImageForZone := failureDomain.Topology.Template
 		if failureDomain.Topology.Template == "" {
-			osImageForZone = fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
+			osImageForZone = utils.GenerateVSphereTemplateName(clusterID, failureDomain.Name)
 		}
 
 		vcenter, err := getVCenterFromServerName(failureDomain.Server, platform)
 		if err != nil {
 			return data, errors.Wrap(err, "unable to find vCenter in failure domains")
 		}
+
 		provider, err := provider(clusterID, vcenter, failureDomain, mpool, osImageForZone, userDataSecret)
 		if err != nil {
 			return data, errors.Wrap(err, "failed to create provider")
@@ -132,6 +138,8 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				// we don't need to set Versions, because we control those via operators.
 			},
 		}
+
+		data.MachineFailureDomain[machine.Name] = failureDomain.Name
 
 		// Apply static IP if configured
 		claim, address, err := applyNetworkConfig(host, provider, machine)
@@ -335,7 +343,17 @@ func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.
 		networkDeviceSpec[i] = machineapi.NetworkDeviceSpec{NetworkName: network}
 	}
 
-	return &machineapi.VSphereMachineProviderSpec{
+	dataDisks := []machineapi.VSphereDisk{}
+	for _, curDisk := range mpool.DataDisks {
+		newDisk := machineapi.VSphereDisk{
+			Name:             curDisk.Name,
+			SizeGiB:          curDisk.SizeGiB,
+			ProvisioningMode: machineapi.ProvisioningMode(curDisk.ProvisioningMode),
+		}
+		dataDisks = append(dataDisks, newDisk)
+	}
+
+	vSphereMachineProviderSpec := &machineapi.VSphereMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: machineapi.SchemeGroupVersion.String(),
 			Kind:       "VSphereMachineProviderSpec",
@@ -358,7 +376,15 @@ func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.
 		NumCoresPerSocket: mpool.NumCoresPerSocket,
 		MemoryMiB:         mpool.MemoryMiB,
 		DiskGiB:           mpool.OSDisk.DiskSizeGB,
-	}, nil
+		DataDisks:         dataDisks,
+	}
+
+	if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
+		vSphereMachineProviderSpec.Workspace.VMGroup = fmt.Sprintf("%s-%s", clusterID, failureDomain.Name)
+	}
+
+	return vSphereMachineProviderSpec, nil
+
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines

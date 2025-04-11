@@ -485,7 +485,7 @@ func (s *ClusterScope) CreateLoadBalancer() (*vpcv1.LoadBalancer, error) {
 		return nil, fmt.Errorf("error subnet required for load balancer creation")
 	}
 
-	options.SetPools([]vpcv1.LoadBalancerPoolPrototype{
+	options.SetPools([]vpcv1.LoadBalancerPoolPrototypeLoadBalancerContext{
 		{
 			Algorithm:     core.StringPtr("round_robin"),
 			HealthMonitor: &vpcv1.LoadBalancerPoolHealthMonitorPrototype{Delay: core.Int64Ptr(5), MaxRetries: core.Int64Ptr(2), Timeout: core.Int64Ptr(2), Type: core.StringPtr("tcp")},

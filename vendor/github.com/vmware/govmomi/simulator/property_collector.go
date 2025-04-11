@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017-2023 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/simulator/internal"
 	"github.com/vmware/govmomi/vim25"
@@ -39,6 +41,7 @@ type PropertyCollector struct {
 	mo.PropertyCollector
 
 	nopLocker
+	pending *types.UpdateSet
 	updates []types.ObjectUpdate
 	mu      sync.Mutex
 	cancel  context.CancelFunc
@@ -105,6 +108,10 @@ func getManagedObject(obj mo.Reference) reflect.Value {
 		}
 		rval = rval.Field(0)
 		rtype = rval.Type()
+		if rtype.Kind() == reflect.Pointer {
+			rval = rval.Elem()
+			rtype = rval.Type()
+		}
 	}
 
 	return rval
@@ -122,6 +129,10 @@ func wrapValue(rval reflect.Value, rtype reflect.Type) interface{} {
 				String: v,
 			}
 		case []uint8:
+			pval = &types.ArrayOfByte{
+				Byte: v,
+			}
+		case types.ByteSlice:
 			pval = &types.ArrayOfByte{
 				Byte: v,
 			}
@@ -151,15 +162,19 @@ func wrapValue(rval reflect.Value, rtype reflect.Type) interface{} {
 	return pval
 }
 
-func fieldValueInterface(f reflect.StructField, rval reflect.Value) interface{} {
+func fieldValueInterface(f reflect.StructField, rval reflect.Value, keyed ...bool) interface{} {
 	if rval.Kind() == reflect.Ptr {
 		rval = rval.Elem()
+	}
+
+	if len(keyed) == 1 && keyed[0] {
+		return rval.Interface() // don't wrap keyed fields in ArrayOf* type
 	}
 
 	return wrapValue(rval, f.Type)
 }
 
-func fieldValue(rval reflect.Value, p string) (interface{}, error) {
+func fieldValue(rval reflect.Value, p string, keyed ...bool) (interface{}, error) {
 	var value interface{}
 	fields := strings.Split(p, ".")
 
@@ -198,7 +213,7 @@ func fieldValue(rval reflect.Value, p string) (interface{}, error) {
 
 		if i == len(fields)-1 {
 			ftype, _ := rval.Type().FieldByName(x)
-			value = fieldValueInterface(ftype, val)
+			value = fieldValueInterface(ftype, val, keyed...)
 			break
 		}
 
@@ -206,6 +221,64 @@ func fieldValue(rval reflect.Value, p string) (interface{}, error) {
 	}
 
 	return value, nil
+}
+
+func fieldValueKey(rval reflect.Value, p mo.Field) (interface{}, error) {
+	if rval.Kind() != reflect.Slice {
+		return nil, errInvalidField
+	}
+
+	zero := reflect.Value{}
+
+	for i := 0; i < rval.Len(); i++ {
+		item := rval.Index(i)
+		if item.Kind() == reflect.Interface {
+			item = item.Elem()
+		}
+		if item.Kind() == reflect.Ptr {
+			item = item.Elem()
+		}
+		if item.Kind() != reflect.Struct {
+			return reflect.Value{}, errInvalidField
+		}
+
+		field := item.FieldByName("Key")
+		if field == zero {
+			return nil, errInvalidField
+		}
+
+		switch key := field.Interface().(type) {
+		case string:
+			s, ok := p.Key.(string)
+			if !ok {
+				return nil, errInvalidField
+			}
+			if s == key {
+				return item.Interface(), nil
+			}
+		case int32:
+			s, ok := p.Key.(int32)
+			if !ok {
+				return nil, errInvalidField
+			}
+			if s == key {
+				return item.Interface(), nil
+			}
+		default:
+			return nil, errInvalidField
+		}
+	}
+
+	return nil, nil
+}
+
+func fieldValueIndex(rval reflect.Value, p mo.Field) (interface{}, error) {
+	val, err := fieldValueKey(rval, p)
+	if err != nil || val == nil || p.Item == "" {
+		return val, err
+	}
+
+	return fieldValue(reflect.ValueOf(val), p.Item)
 }
 
 func fieldRefs(f interface{}) []types.ManagedObjectReference {
@@ -323,7 +396,19 @@ func (rr *retrieveResult) collectFields(ctx *Context, rval reflect.Value, fields
 		}
 		seen[name] = true
 
-		val, err := fieldValue(rval, name)
+		var val interface{}
+		var err error
+		var field mo.Field
+		if field.FromString(name) {
+			keyed := field.Key != nil
+
+			val, err = fieldValue(rval, field.Path, keyed)
+			if err == nil && keyed {
+				val, err = fieldValueIndex(reflect.ValueOf(val), field)
+			}
+		} else {
+			err = errInvalidField
+		}
 
 		switch err {
 		case nil, errEmptyField:
@@ -386,7 +471,10 @@ func (rr *retrieveResult) collect(ctx *Context, ref types.ManagedObjectReference
 	}
 
 	if match {
-		rr.Objects = append(rr.Objects, content)
+		// Copy while content.Obj is locked, as it won't be when final results are encoded.
+		var dst types.ObjectContent
+		deepCopy(&content, &dst)
+		rr.Objects = append(rr.Objects, dst)
 	}
 
 	rr.collected[ref] = true
@@ -430,7 +518,7 @@ func (rr *retrieveResult) selectSet(ctx *Context, obj reflect.Value, s []types.B
 	return nil
 }
 
-func (pc *PropertyCollector) collect(ctx *Context, r *types.RetrievePropertiesEx) (*types.RetrieveResult, types.BaseMethodFault) {
+func collect(ctx *Context, r *types.RetrievePropertiesEx) (*types.RetrieveResult, types.BaseMethodFault) {
 	var refs []types.ManagedObjectReference
 
 	rr := &retrieveResult{
@@ -486,6 +574,8 @@ func (pc *PropertyCollector) CreateFilter(ctx *Context, c *types.CreateFilter) s
 		Returnval: filter.Self,
 	}
 
+	ctx.Map.AddHandler(filter)
+
 	return body
 }
 
@@ -507,8 +597,7 @@ func (pc *PropertyCollector) DestroyPropertyCollector(ctx *Context, c *types.Des
 	body := &methods.DestroyPropertyCollectorBody{}
 
 	for _, ref := range pc.Filter {
-		filter := ctx.Session.Get(ref).(*PropertyFilter)
-		filter.DestroyPropertyFilter(ctx, &types.DestroyPropertyFilter{This: ref})
+		ctx.Session.Remove(ctx, ref)
 	}
 
 	ctx.Session.Remove(ctx, c.This)
@@ -519,10 +608,66 @@ func (pc *PropertyCollector) DestroyPropertyCollector(ctx *Context, c *types.Des
 	return body
 }
 
+var retrievePropertiesExBook sync.Map
+
+type retrievePropertiesExPage struct {
+	MaxObjects int32
+	Objects    []types.ObjectContent
+}
+
+func (pc *PropertyCollector) ContinueRetrievePropertiesEx(ctx *Context, r *types.ContinueRetrievePropertiesEx) soap.HasFault {
+	body := &methods.ContinueRetrievePropertiesExBody{}
+
+	if r.Token == "" {
+		body.Fault_ = Fault("", &types.InvalidPropertyFault{Name: "token"})
+		return body
+	}
+
+	obj, ok := retrievePropertiesExBook.LoadAndDelete(r.Token)
+	if !ok {
+		body.Fault_ = Fault("", &types.InvalidPropertyFault{Name: "token"})
+		return body
+	}
+
+	page := obj.(retrievePropertiesExPage)
+
+	var (
+		objsToStore  []types.ObjectContent
+		objsToReturn []types.ObjectContent
+	)
+	for i := range page.Objects {
+		if page.MaxObjects <= 0 || i < int(page.MaxObjects) {
+			objsToReturn = append(objsToReturn, page.Objects[i])
+		} else {
+			objsToStore = append(objsToStore, page.Objects[i])
+		}
+	}
+
+	if len(objsToStore) > 0 {
+		body.Res = &types.ContinueRetrievePropertiesExResponse{}
+		body.Res.Returnval.Token = uuid.NewString()
+		retrievePropertiesExBook.Store(
+			body.Res.Returnval.Token,
+			retrievePropertiesExPage{
+				MaxObjects: page.MaxObjects,
+				Objects:    objsToStore,
+			})
+	}
+
+	if len(objsToReturn) > 0 {
+		if body.Res == nil {
+			body.Res = &types.ContinueRetrievePropertiesExResponse{}
+		}
+		body.Res.Returnval.Objects = objsToReturn
+	}
+
+	return body
+}
+
 func (pc *PropertyCollector) RetrievePropertiesEx(ctx *Context, r *types.RetrievePropertiesEx) soap.HasFault {
 	body := &methods.RetrievePropertiesExBody{}
 
-	res, fault := pc.collect(ctx, r)
+	res, fault := collect(ctx, r)
 
 	if fault != nil {
 		switch fault.(type) {
@@ -533,7 +678,28 @@ func (pc *PropertyCollector) RetrievePropertiesEx(ctx *Context, r *types.Retriev
 		}
 	} else {
 		objects := res.Objects[:0]
-		for _, o := range res.Objects {
+
+		var (
+			objsToStore  []types.ObjectContent
+			objsToReturn []types.ObjectContent
+		)
+		for i := range res.Objects {
+			if r.Options.MaxObjects <= 0 || i < int(r.Options.MaxObjects) {
+				objsToReturn = append(objsToReturn, res.Objects[i])
+			} else {
+				objsToStore = append(objsToStore, res.Objects[i])
+			}
+		}
+
+		if len(objsToStore) > 0 {
+			res.Token = uuid.NewString()
+			retrievePropertiesExBook.Store(res.Token, retrievePropertiesExPage{
+				MaxObjects: r.Options.MaxObjects,
+				Objects:    objsToStore,
+			})
+		}
+
+		for _, o := range objsToReturn {
 			propSet := o.PropSet[:0]
 			for _, p := range o.PropSet {
 				if p.Val != nil {
@@ -597,7 +763,7 @@ func (pc *PropertyCollector) PutObject(o mo.Reference) {
 	})
 }
 
-func (pc *PropertyCollector) UpdateObject(o mo.Reference, changes []types.PropertyChange) {
+func (pc *PropertyCollector) UpdateObject(_ *Context, o mo.Reference, changes []types.PropertyChange) {
 	pc.update(types.ObjectUpdate{
 		Obj:       o.Reference(),
 		Kind:      types.ObjectUpdateKindModify,
@@ -615,12 +781,12 @@ func (pc *PropertyCollector) RemoveObject(_ *Context, ref types.ManagedObjectRef
 
 func (pc *PropertyCollector) apply(ctx *Context, update *types.UpdateSet) types.BaseMethodFault {
 	for _, ref := range pc.Filter {
-		filter := ctx.Session.Get(ref).(*PropertyFilter)
+		filter, ok := ctx.Session.Get(ref).(*PropertyFilter)
+		if !ok {
+			continue
+		}
 
-		r := &types.RetrievePropertiesEx{}
-		r.SpecSet = append(r.SpecSet, filter.Spec)
-
-		res, fault := pc.collect(ctx, r)
+		res, fault := filter.collect(ctx)
 		if fault != nil {
 			return fault
 		}
@@ -657,9 +823,47 @@ func (pc *PropertyCollector) apply(ctx *Context, update *types.UpdateSet) types.
 	return nil
 }
 
+// pageUpdateSet limits the given UpdateSet to max number of object updates.
+// nil is returned when not truncated, otherwise the remaining UpdateSet.
+func pageUpdateSet(update *types.UpdateSet, max int) *types.UpdateSet {
+	for i := range update.FilterSet {
+		set := update.FilterSet[i].ObjectSet
+		n := len(set)
+		if n+1 > max {
+			update.Truncated = types.NewBool(true)
+			f := types.PropertyFilterUpdate{
+				Filter:    update.FilterSet[i].Filter,
+				ObjectSet: update.FilterSet[i].ObjectSet[max:],
+			}
+			update.FilterSet[i].ObjectSet = update.FilterSet[i].ObjectSet[:max]
+
+			pending := &types.UpdateSet{
+				Version:   "P",
+				FilterSet: []types.PropertyFilterUpdate{f},
+			}
+
+			if len(update.FilterSet) > i {
+				pending.FilterSet = append(pending.FilterSet, update.FilterSet[i+1:]...)
+				update.FilterSet = update.FilterSet[:i+1]
+			}
+
+			return pending
+		}
+		max -= n
+	}
+	return nil
+}
+
+// WaitOptions.maxObjectUpdates says:
+// > PropertyCollector policy may still limit the total count
+// > to something less than maxObjectUpdates.
+// Seems to be "may" == "will" and the default max is 100.
+const defaultMaxObjectUpdates = 100 // vCenter's default
+
 func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpdatesEx) soap.HasFault {
 	wait, cancel := context.WithCancel(context.Background())
 	oneUpdate := false
+	maxObject := defaultMaxObjectUpdates
 	if r.Options != nil {
 		if max := r.Options.MaxWaitSeconds; max != nil {
 			// A value of 0 causes WaitForUpdatesEx to do one update calculation and return any results.
@@ -667,6 +871,9 @@ func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpda
 			if *max > 0 {
 				wait, cancel = context.WithTimeout(context.Background(), time.Second*time.Duration(*max))
 			}
+		}
+		if max := r.Options.MaxObjectUpdates; max > 0 && max < defaultMaxObjectUpdates {
+			maxObject = int(max)
 		}
 	}
 	pc.mu.Lock()
@@ -683,6 +890,12 @@ func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpda
 		Returnval: set,
 	}
 
+	if pc.pending != nil {
+		body.Res.Returnval = pc.pending
+		pc.pending = pageUpdateSet(body.Res.Returnval, maxObject)
+		return body
+	}
+
 	apply := func() bool {
 		if fault := pc.apply(ctx, set); fault != nil {
 			body.Fault_ = Fault("", fault)
@@ -696,6 +909,9 @@ func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpda
 		ctx.Map.AddHandler(pc) // Listen for create, update, delete of managed objects
 		apply()                // Collect current state
 		set.Version = "-"      // Next request with Version set will wait via loop below
+		if body.Res != nil {
+			pc.pending = pageUpdateSet(body.Res.Returnval, maxObject)
+		}
 		return body
 	}
 
@@ -736,6 +952,7 @@ func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpda
 
 			for _, f := range pc.Filter {
 				filter := ctx.Session.Get(f).(*PropertyFilter)
+				filter.update(ctx)
 				fu := types.PropertyFilterUpdate{Filter: f}
 
 				for _, update := range updates {
@@ -771,6 +988,7 @@ func (pc *PropertyCollector) WaitForUpdatesEx(ctx *Context, r *types.WaitForUpda
 				}
 			}
 			if len(set.FilterSet) != 0 {
+				pc.pending = pageUpdateSet(body.Res.Returnval, maxObject)
 				return body
 			}
 			if oneUpdate {
@@ -855,9 +1073,12 @@ func (pc *PropertyCollector) Fetch(ctx *Context, req *internal.Fetch) soap.HasFa
 
 	obj := res.(*methods.RetrievePropertiesExBody).Res.Returnval.Objects[0]
 	if len(obj.PropSet) == 0 {
-		fault := obj.MissingSet[0].Fault
-		body.Fault_ = Fault(fault.LocalizedMessage, fault.Fault)
-		return body
+		if len(obj.MissingSet) > 0 {
+			fault := obj.MissingSet[0].Fault
+			body.Fault_ = Fault(fault.LocalizedMessage, fault.Fault)
+			return body
+		}
+		return res
 	}
 
 	body.Res = &internal.FetchResponse{

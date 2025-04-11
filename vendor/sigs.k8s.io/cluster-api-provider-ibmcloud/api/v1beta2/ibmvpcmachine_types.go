@@ -19,6 +19,8 @@ package v1beta2
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -30,15 +32,28 @@ const (
 
 // IBMVPCMachineSpec defines the desired state of IBMVPCMachine.
 type IBMVPCMachineSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+	// INSERT ADDITIONAL SPEC FIELDS - desired state of machine.
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Name of the instance.
 	Name string `json:"name,omitempty"`
 
+	// CatalogOffering is the Catalog Offering OS image which would be installed on the instance.
+	// An OfferingCRN or VersionCRN is required, the PlanCRN is optional.
+	// +optional
+	CatalogOffering *IBMCloudCatalogOffering `json:"catalogOffering,omitempty"`
+
+	// PlacementTarget is the placement restrictions to use for the virtual server instance. No restrictions are used when this field is not defined.
+	// +optional
+	PlacementTarget *VPCMachinePlacementTarget `json:"placementTarget,omitempty"`
+
 	// Image is the OS image which would be install on the instance.
 	// ID will take higher precedence over Name if both specified.
 	Image *IBMVPCResourceReference `json:"image"`
+
+	// LoadBalancerPoolMembers is the set of IBM Cloud VPC Load Balancer Backend Pools the machine should be added to as a member.
+	// +optional
+	LoadBalancerPoolMembers []VPCLoadBalancerBackendPoolMember `json:"loadBalancerPoolMembers,omitempty"`
 
 	// Zone is the place where the instance should be created. Example: us-south-3
 	// TODO: Actually zone is transparent to user. The field user can access is location. Example: Dallas 2
@@ -126,18 +141,40 @@ type IBMVPCMachineStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
+	// InstanceID defines the IBM Cloud VPC Instance UUID.
+	// +optional
 	InstanceID string `json:"instanceID,omitempty"`
 
 	// Ready is true when the provider resource is ready.
 	// +optional
 	Ready bool `json:"ready"`
 
-	// Addresses contains the GCP instance associated addresses.
+	// Addresses contains the IBM Cloud instance associated addresses.
 	Addresses []corev1.NodeAddress `json:"addresses,omitempty"`
 
-	// InstanceStatus is the status of the GCP instance for this machine.
+	// Conditions deefines current service state of the IBMVPCMachine.
+	// +optional
+	Conditions capiv1beta1.Conditions `json:"conditions,omitempty"`
+
+	// FailureReason will be set in the event that there is a terminal problem
+	// reconciling the Machine and will contain a succinct value suitable
+	// for machine interpretation.
+	// +optional
+	FailureReason *string `json:"failureReason,omitempty"`
+
+	// FailureMessage will be set in the event that there is a terminal problem
+	// reconciling the Machine and will contain a more verbose string suitable
+	// for logging and human consumption.
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
+
+	// InstanceStatus is the status of the IBM Cloud instance for this machine.
 	// +optional
 	InstanceStatus string `json:"instanceState,omitempty"`
+
+	// LoadBalancerPoolMembers is the status of IBM Cloud VPC Load Balancer Backend Pools the machine is a member.
+	// +optional
+	LoadBalancerPoolMembers []VPCLoadBalancerBackendPoolMember `json:"loadBalancerPoolMembers,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -153,6 +190,16 @@ type IBMVPCMachine struct {
 
 	Spec   IBMVPCMachineSpec   `json:"spec,omitempty"`
 	Status IBMVPCMachineStatus `json:"status,omitempty"`
+}
+
+// GetConditions returns the observations of the operational state of the IBMVPCMachine resource.
+func (r *IBMVPCMachine) GetConditions() capiv1beta1.Conditions {
+	return r.Status.Conditions
+}
+
+// SetConditions sets the underlying service state of the IBMVPCMachine to the predescribed clusterv1.Conditions.
+func (r *IBMVPCMachine) SetConditions(conditions capiv1beta1.Conditions) {
+	r.Status.Conditions = conditions
 }
 
 //+kubebuilder:object:root=true

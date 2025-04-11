@@ -1,6 +1,7 @@
 package openshift
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -32,7 +33,7 @@ func (t *AzureCloudProviderSecret) Name() string {
 }
 
 // Generate generates the actual files by this asset
-func (t *AzureCloudProviderSecret) Generate(parents asset.Parents) error {
+func (t *AzureCloudProviderSecret) Generate(_ context.Context, parents asset.Parents) error {
 	t.FileList = []*asset.File{}
 
 	for _, fileName := range []string{

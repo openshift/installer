@@ -22,27 +22,28 @@ import (
 	"sort"
 
 	"github.com/go-logr/logr"
+	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servers"
 	corev1 "k8s.io/api/core/v1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-openstack/pkg/clients"
 )
 
 // InstanceSpec defines the fields which can be set on a new OpenStack instance.
 type InstanceSpec struct {
-	Name                   string
-	ImageID                string
-	Flavor                 string
-	SSHKeyName             string
-	UserData               string
-	Metadata               map[string]string
-	ConfigDrive            bool
-	FailureDomain          string
-	RootVolume             *infrav1.RootVolume
-	AdditionalBlockDevices []infrav1.AdditionalBlockDevice
-	ServerGroupID          string
-	Trunk                  bool
-	Tags                   []string
+	Name                          string
+	ImageID                       string
+	FlavorID                      string
+	SSHKeyName                    string
+	UserData                      string
+	Metadata                      map[string]string
+	ConfigDrive                   bool
+	FailureDomain                 string
+	RootVolume                    *infrav1.RootVolume
+	AdditionalBlockDevices        []infrav1.AdditionalBlockDevice
+	ServerGroupID                 string
+	Trunk                         bool
+	Tags                          []string
+	SchedulerAdditionalProperties []infrav1.SchedulerHintAdditionalProperty
 }
 
 // InstanceIdentifier describes an instance which has not necessarily been fetched.
@@ -53,11 +54,11 @@ type InstanceIdentifier struct {
 
 // InstanceStatus represents instance data which has been returned by OpenStack.
 type InstanceStatus struct {
-	server *clients.ServerExt
+	server *servers.Server
 	logger logr.Logger
 }
 
-func NewInstanceStatusFromServer(server *clients.ServerExt, logger logr.Logger) *InstanceStatus {
+func NewInstanceStatusFromServer(server *servers.Server, logger logr.Logger) *InstanceStatus {
 	return &InstanceStatus{server, logger}
 }
 

@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 )
@@ -22,41 +21,90 @@ func DataSourceIBMPIVolumeGroups() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIVolumeGroupsRead,
 		Schema: map[string]*schema.Schema{
-			helpers.PICloudInstanceId: {
-				Type:         schema.TypeString,
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
 
-			// Computed Attributes
-			"volume_groups": {
-				Type:     schema.TypeList,
-				Computed: true,
+			// Attributes
+			Attr_VolumeGroups: {
+				Computed:    true,
+				Description: "List of all volume groups.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
+						Attr_Auxiliary: {
+							Computed:    true,
+							Description: "Indicates if the volume is auxiliary or not.",
+							Type:        schema.TypeBool,
 						},
-						"volume_group_name": {
-							Type:     schema.TypeString,
-							Computed: true,
+						Attr_ConsistencyGroupName: {
+							Computed:    true,
+							Description: "The name of consistency group at storage controller level.",
+							Type:        schema.TypeString,
 						},
-						"status": {
-							Type:     schema.TypeString,
-							Computed: true,
+						Attr_ID: {
+							Computed:    true,
+							Description: "The unique identifier of the volume group.",
+							Type:        schema.TypeString,
 						},
-						"replication_status": {
-							Type:     schema.TypeString,
-							Computed: true,
+						Attr_ReplicationStatus: {
+							Computed:    true,
+							Description: "The replication status of volume group.",
+							Type:        schema.TypeString,
 						},
-						"consistency_group_name": {
-							Type:     schema.TypeString,
-							Computed: true,
+						Attr_ReplicationSites: {
+							Computed:    true,
+							Description: "Indicates the replication sites of the volume group.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Type:        schema.TypeList,
 						},
-						"status_description_errors": vgStatusDescriptionErrors(),
+						Attr_Status: {
+							Computed:    true,
+							Description: "The status of the volume group.",
+							Type:        schema.TypeString,
+						},
+						Attr_StatusDescriptionErrors: {
+							Computed:    true,
+							Description: "The status details of the volume group.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									Attr_Key: {
+										Computed:    true,
+										Description: "The volume group error key.",
+										Type:        schema.TypeString,
+									},
+									Attr_Message: {
+										Computed:    true,
+										Description: "The failure message providing more details about the error key.",
+										Type:        schema.TypeString,
+									},
+									Attr_VolumeIDs: {
+										Computed:    true,
+										Description: "List of volume IDs, which failed to be added/removed to/from the volume group, with the given error.",
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Type:        schema.TypeList,
+									},
+								},
+							},
+							Type: schema.TypeSet,
+						},
+						Attr_StoragePool: {
+							Computed:    true,
+							Description: "Indicates the storage pool of the volume group",
+							Type:        schema.TypeString,
+						},
+						Attr_VolumeGroupName: {
+							Computed:    true,
+							Description: "The name of the volume group.",
+							Type:        schema.TypeString,
+						},
 					},
-				}},
+				},
+				Type: schema.TypeList,
+			},
 		},
 	}
 }
@@ -67,7 +115,7 @@ func dataSourceIBMPIVolumeGroupsRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 	vgClient := instance.NewIBMPIVolumeGroupClient(ctx, sess, cloudInstanceID)
 	vgData, err := vgClient.GetAll()
 	if err != nil {
@@ -76,7 +124,7 @@ func dataSourceIBMPIVolumeGroupsRead(ctx context.Context, d *schema.ResourceData
 
 	var clientgenU, _ = uuid.GenerateUUID()
 	d.SetId(clientgenU)
-	d.Set("volume_groups", flattenVolumeGroups(vgData.VolumeGroups))
+	d.Set(Attr_VolumeGroups, flattenVolumeGroups(vgData.VolumeGroups))
 
 	return nil
 }
@@ -86,16 +134,20 @@ func flattenVolumeGroups(list []*models.VolumeGroup) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0, len(list))
 	for _, i := range list {
 		l := map[string]interface{}{
-			"id":                        *i.ID,
-			"replication_status":        i.ReplicationStatus,
-			"consistency_group_name":    i.ConsistencyGroupName,
-			"status":                    i.Status,
-			"status_description_errors": flattenVolumeGroupStatusDescription(i.StatusDescription.Errors),
-			"volume_group_name":         i.Name,
+			Attr_Auxiliary:               i.Auxiliary,
+			Attr_ConsistencyGroupName:    i.ConsistencyGroupName,
+			Attr_ID:                      *i.ID,
+			Attr_ReplicationStatus:       i.ReplicationStatus,
+			Attr_Status:                  i.Status,
+			Attr_StatusDescriptionErrors: flattenVolumeGroupStatusDescription(i.StatusDescription.Errors),
+			Attr_StoragePool:             i.StoragePool,
+			Attr_VolumeGroupName:         i.Name,
+		}
+		if len(i.ReplicationSites) > 0 {
+			l[Attr_ReplicationSites] = i.ReplicationSites
 		}
 
 		result = append(result, l)
 	}
-
 	return result
 }

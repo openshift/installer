@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2025.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.77.0-42417df0-20230811-192318
+ * IBM OpenAPI SDK Code Generator Version: 3.99.1-daeb6e46-20250131-173156
  */
 
 // Package catalogmanagementv1 : Operations and models for the CatalogManagementV1 service
@@ -67,22 +67,26 @@ func NewCatalogManagementV1UsingExternalConfig(options *CatalogManagementV1Optio
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	catalogManagement, err = NewCatalogManagementV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = catalogManagement.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = catalogManagement.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -96,12 +100,14 @@ func NewCatalogManagementV1(options *CatalogManagementV1Options) (service *Catal
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -115,7 +121,7 @@ func NewCatalogManagementV1(options *CatalogManagementV1Options) (service *Catal
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "catalogManagement" suitable for processing requests.
@@ -130,7 +136,11 @@ func (catalogManagement *CatalogManagementV1) Clone() *CatalogManagementV1 {
 
 // SetServiceURL sets the service URL
 func (catalogManagement *CatalogManagementV1) SetServiceURL(url string) error {
-	return catalogManagement.Service.SetServiceURL(url)
+	err := catalogManagement.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -167,13 +177,16 @@ func (catalogManagement *CatalogManagementV1) DisableRetries() {
 // GetCatalogAccount : Get catalog account settings
 // Get the account level settings for the account for private catalog.
 func (catalogManagement *CatalogManagementV1) GetCatalogAccount(getCatalogAccountOptions *GetCatalogAccountOptions) (result *Account, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetCatalogAccountWithContext(context.Background(), getCatalogAccountOptions)
+	result, response, err = catalogManagement.GetCatalogAccountWithContext(context.Background(), getCatalogAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetCatalogAccountWithContext is an alternate form of the GetCatalogAccount method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetCatalogAccountWithContext(ctx context.Context, getCatalogAccountOptions *GetCatalogAccountOptions) (result *Account, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getCatalogAccountOptions, "getCatalogAccountOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -182,6 +195,7 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAccountWithContext(ctx c
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogaccount`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -197,17 +211,21 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAccountWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_catalog_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccount)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -219,13 +237,16 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAccountWithContext(ctx c
 // UpdateCatalogAccount : Update account settings
 // Update the account level settings for the account for private catalog.
 func (catalogManagement *CatalogManagementV1) UpdateCatalogAccount(updateCatalogAccountOptions *UpdateCatalogAccountOptions) (result *Account, response *core.DetailedResponse, err error) {
-	return catalogManagement.UpdateCatalogAccountWithContext(context.Background(), updateCatalogAccountOptions)
+	result, response, err = catalogManagement.UpdateCatalogAccountWithContext(context.Background(), updateCatalogAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateCatalogAccountWithContext is an alternate form of the UpdateCatalogAccount method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) UpdateCatalogAccountWithContext(ctx context.Context, updateCatalogAccountOptions *UpdateCatalogAccountOptions) (result *Account, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateCatalogAccountOptions, "updateCatalogAccountOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -234,6 +255,7 @@ func (catalogManagement *CatalogManagementV1) UpdateCatalogAccountWithContext(ct
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogaccount`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -261,24 +283,32 @@ func (catalogManagement *CatalogManagementV1) UpdateCatalogAccountWithContext(ct
 	if updateCatalogAccountOptions.AccountFilters != nil {
 		body["account_filters"] = updateCatalogAccountOptions.AccountFilters
 	}
+	if updateCatalogAccountOptions.RegionFilter != nil {
+		body["region_filter"] = updateCatalogAccountOptions.RegionFilter
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_catalog_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccount)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -290,13 +320,16 @@ func (catalogManagement *CatalogManagementV1) UpdateCatalogAccountWithContext(ct
 // ListCatalogAccountAudits : Get catalog account audit logs
 // Get the audit logs associated with a catalog account.
 func (catalogManagement *CatalogManagementV1) ListCatalogAccountAudits(listCatalogAccountAuditsOptions *ListCatalogAccountAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
-	return catalogManagement.ListCatalogAccountAuditsWithContext(context.Background(), listCatalogAccountAuditsOptions)
+	result, response, err = catalogManagement.ListCatalogAccountAuditsWithContext(context.Background(), listCatalogAccountAuditsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListCatalogAccountAuditsWithContext is an alternate form of the ListCatalogAccountAudits method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ListCatalogAccountAuditsWithContext(ctx context.Context, listCatalogAccountAuditsOptions *ListCatalogAccountAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listCatalogAccountAuditsOptions, "listCatalogAccountAuditsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -305,6 +338,7 @@ func (catalogManagement *CatalogManagementV1) ListCatalogAccountAuditsWithContex
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogaccount/audits`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -330,17 +364,21 @@ func (catalogManagement *CatalogManagementV1) ListCatalogAccountAuditsWithContex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_catalog_account_audits", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLogs)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -352,17 +390,21 @@ func (catalogManagement *CatalogManagementV1) ListCatalogAccountAuditsWithContex
 // GetCatalogAccountAudit : Get a catalog account audit log entry
 // Get the full audit log entry associated with a catalog account.
 func (catalogManagement *CatalogManagementV1) GetCatalogAccountAudit(getCatalogAccountAuditOptions *GetCatalogAccountAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetCatalogAccountAuditWithContext(context.Background(), getCatalogAccountAuditOptions)
+	result, response, err = catalogManagement.GetCatalogAccountAuditWithContext(context.Background(), getCatalogAccountAuditOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetCatalogAccountAuditWithContext is an alternate form of the GetCatalogAccountAudit method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetCatalogAccountAuditWithContext(ctx context.Context, getCatalogAccountAuditOptions *GetCatalogAccountAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getCatalogAccountAuditOptions, "getCatalogAccountAuditOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getCatalogAccountAuditOptions, "getCatalogAccountAuditOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -375,6 +417,7 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAccountAuditWithContext(
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogaccount/audits/{auditlog_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -394,17 +437,21 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAccountAuditWithContext(
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_catalog_account_audit", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLog)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -416,13 +463,16 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAccountAuditWithContext(
 // GetCatalogAccountFilters : Get catalog account filters
 // Get the accumulated filters of the account and of the catalogs you have access to.
 func (catalogManagement *CatalogManagementV1) GetCatalogAccountFilters(getCatalogAccountFiltersOptions *GetCatalogAccountFiltersOptions) (result *AccumulatedFilters, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetCatalogAccountFiltersWithContext(context.Background(), getCatalogAccountFiltersOptions)
+	result, response, err = catalogManagement.GetCatalogAccountFiltersWithContext(context.Background(), getCatalogAccountFiltersOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetCatalogAccountFiltersWithContext is an alternate form of the GetCatalogAccountFilters method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetCatalogAccountFiltersWithContext(ctx context.Context, getCatalogAccountFiltersOptions *GetCatalogAccountFiltersOptions) (result *AccumulatedFilters, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getCatalogAccountFiltersOptions, "getCatalogAccountFiltersOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -431,6 +481,7 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAccountFiltersWithContex
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogaccount/filters`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -450,17 +501,412 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAccountFiltersWithContex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_catalog_account_filters", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccumulatedFilters)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetShareApprovalList : Get share approval access list
+// Get the share approval access list associated with the specified object type.
+func (catalogManagement *CatalogManagementV1) GetShareApprovalList(getShareApprovalListOptions *GetShareApprovalListOptions) (result *ShareApprovalListAccessResult, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.GetShareApprovalListWithContext(context.Background(), getShareApprovalListOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetShareApprovalListWithContext is an alternate form of the GetShareApprovalList method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetShareApprovalListWithContext(ctx context.Context, getShareApprovalListOptions *GetShareApprovalListOptions) (result *ShareApprovalListAccessResult, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getShareApprovalListOptions, "getShareApprovalListOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getShareApprovalListOptions, "getShareApprovalListOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"object_type": *getShareApprovalListOptions.ObjectType,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/shareapproval/{object_type}/access`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getShareApprovalListOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetShareApprovalList")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getShareApprovalListOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*getShareApprovalListOptions.Start))
+	}
+	if getShareApprovalListOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*getShareApprovalListOptions.Limit))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_share_approval_list", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalShareApprovalListAccessResult)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteShareApprovalList : Delete share approval access
+// Delete share approval accesses associated with the specified object type.
+func (catalogManagement *CatalogManagementV1) DeleteShareApprovalList(deleteShareApprovalListOptions *DeleteShareApprovalListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.DeleteShareApprovalListWithContext(context.Background(), deleteShareApprovalListOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteShareApprovalListWithContext is an alternate form of the DeleteShareApprovalList method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) DeleteShareApprovalListWithContext(ctx context.Context, deleteShareApprovalListOptions *DeleteShareApprovalListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteShareApprovalListOptions, "deleteShareApprovalListOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteShareApprovalListOptions, "deleteShareApprovalListOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"object_type": *deleteShareApprovalListOptions.ObjectType,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/shareapproval/{object_type}/access`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deleteShareApprovalListOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "DeleteShareApprovalList")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	_, err = builder.SetBodyContentJSON(deleteShareApprovalListOptions.Accesses)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_share_approval_list", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessListBulkResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// AddShareApprovalList : Add accesses to share approval access list
+// Add one or more accesses to the share approval access list for a specific object type.
+func (catalogManagement *CatalogManagementV1) AddShareApprovalList(addShareApprovalListOptions *AddShareApprovalListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.AddShareApprovalListWithContext(context.Background(), addShareApprovalListOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// AddShareApprovalListWithContext is an alternate form of the AddShareApprovalList method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) AddShareApprovalListWithContext(ctx context.Context, addShareApprovalListOptions *AddShareApprovalListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(addShareApprovalListOptions, "addShareApprovalListOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(addShareApprovalListOptions, "addShareApprovalListOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"object_type": *addShareApprovalListOptions.ObjectType,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/shareapproval/{object_type}/access`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range addShareApprovalListOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "AddShareApprovalList")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	_, err = builder.SetBodyContentJSON(addShareApprovalListOptions.Accesses)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "add_share_approval_list", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessListBulkResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetShareApprovalListAsSource : Get share approval access list for requesting accounts
+// Get the share approval access list associated with the specified object type in a certain approval state for
+// requesting accounts.
+func (catalogManagement *CatalogManagementV1) GetShareApprovalListAsSource(getShareApprovalListAsSourceOptions *GetShareApprovalListAsSourceOptions) (result *ShareApprovalListAccessResult, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.GetShareApprovalListAsSourceWithContext(context.Background(), getShareApprovalListAsSourceOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetShareApprovalListAsSourceWithContext is an alternate form of the GetShareApprovalListAsSource method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetShareApprovalListAsSourceWithContext(ctx context.Context, getShareApprovalListAsSourceOptions *GetShareApprovalListAsSourceOptions) (result *ShareApprovalListAccessResult, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getShareApprovalListAsSourceOptions, "getShareApprovalListAsSourceOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getShareApprovalListAsSourceOptions, "getShareApprovalListAsSourceOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"object_type":               *getShareApprovalListAsSourceOptions.ObjectType,
+		"approval_state_identifier": *getShareApprovalListAsSourceOptions.ApprovalStateIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/shareapproval/{object_type}/access/source/{approval_state_identifier}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getShareApprovalListAsSourceOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetShareApprovalListAsSource")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getShareApprovalListAsSourceOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*getShareApprovalListAsSourceOptions.Start))
+	}
+	if getShareApprovalListAsSourceOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*getShareApprovalListAsSourceOptions.Limit))
+	}
+	if getShareApprovalListAsSourceOptions.EnterpriseID != nil {
+		builder.AddQuery("enterprise_id", fmt.Sprint(*getShareApprovalListAsSourceOptions.EnterpriseID))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_share_approval_list_as_source", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalShareApprovalListAccessResult)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateShareApprovalListAsSource : Update approval states for share approval access list for requesting accounts
+// Update one or more access approval states from the share approval access list for a specific object type for
+// requesting accounts.
+func (catalogManagement *CatalogManagementV1) UpdateShareApprovalListAsSource(updateShareApprovalListAsSourceOptions *UpdateShareApprovalListAsSourceOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.UpdateShareApprovalListAsSourceWithContext(context.Background(), updateShareApprovalListAsSourceOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateShareApprovalListAsSourceWithContext is an alternate form of the UpdateShareApprovalListAsSource method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) UpdateShareApprovalListAsSourceWithContext(ctx context.Context, updateShareApprovalListAsSourceOptions *UpdateShareApprovalListAsSourceOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateShareApprovalListAsSourceOptions, "updateShareApprovalListAsSourceOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateShareApprovalListAsSourceOptions, "updateShareApprovalListAsSourceOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"object_type":               *updateShareApprovalListAsSourceOptions.ObjectType,
+		"approval_state_identifier": *updateShareApprovalListAsSourceOptions.ApprovalStateIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/shareapproval/{object_type}/access/source/{approval_state_identifier}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updateShareApprovalListAsSourceOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "UpdateShareApprovalListAsSource")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	if updateShareApprovalListAsSourceOptions.EnterpriseID != nil {
+		builder.AddQuery("enterprise_id", fmt.Sprint(*updateShareApprovalListAsSourceOptions.EnterpriseID))
+	}
+
+	_, err = builder.SetBodyContentJSON(updateShareApprovalListAsSourceOptions.Accesses)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_share_approval_list_as_source", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessListBulkResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -473,13 +919,16 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAccountFiltersWithContex
 // Retrieves the available catalogs for a given account. This can be used by an unauthenticated user to retrieve the
 // public catalog.
 func (catalogManagement *CatalogManagementV1) ListCatalogs(listCatalogsOptions *ListCatalogsOptions) (result *CatalogSearchResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.ListCatalogsWithContext(context.Background(), listCatalogsOptions)
+	result, response, err = catalogManagement.ListCatalogsWithContext(context.Background(), listCatalogsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListCatalogsWithContext is an alternate form of the ListCatalogs method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ListCatalogsWithContext(ctx context.Context, listCatalogsOptions *ListCatalogsOptions) (result *CatalogSearchResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listCatalogsOptions, "listCatalogsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -488,6 +937,7 @@ func (catalogManagement *CatalogManagementV1) ListCatalogsWithContext(ctx contex
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -503,17 +953,21 @@ func (catalogManagement *CatalogManagementV1) ListCatalogsWithContext(ctx contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_catalogs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCatalogSearchResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -525,13 +979,16 @@ func (catalogManagement *CatalogManagementV1) ListCatalogsWithContext(ctx contex
 // CreateCatalog : Create a catalog
 // Create a catalog for a given account.
 func (catalogManagement *CatalogManagementV1) CreateCatalog(createCatalogOptions *CreateCatalogOptions) (result *Catalog, response *core.DetailedResponse, err error) {
-	return catalogManagement.CreateCatalogWithContext(context.Background(), createCatalogOptions)
+	result, response, err = catalogManagement.CreateCatalogWithContext(context.Background(), createCatalogOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateCatalogWithContext is an alternate form of the CreateCatalog method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) CreateCatalogWithContext(ctx context.Context, createCatalogOptions *CreateCatalogOptions) (result *Catalog, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(createCatalogOptions, "createCatalogOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -540,6 +997,7 @@ func (catalogManagement *CatalogManagementV1) CreateCatalogWithContext(ctx conte
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -591,9 +1049,6 @@ func (catalogManagement *CatalogManagementV1) CreateCatalogWithContext(ctx conte
 	if createCatalogOptions.CatalogFilters != nil {
 		body["catalog_filters"] = createCatalogOptions.CatalogFilters
 	}
-	if createCatalogOptions.SyndicationSettings != nil {
-		body["syndication_settings"] = createCatalogOptions.SyndicationSettings
-	}
 	if createCatalogOptions.Kind != nil {
 		body["kind"] = createCatalogOptions.Kind
 	}
@@ -605,22 +1060,27 @@ func (catalogManagement *CatalogManagementV1) CreateCatalogWithContext(ctx conte
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_catalog", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCatalog)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -632,17 +1092,21 @@ func (catalogManagement *CatalogManagementV1) CreateCatalogWithContext(ctx conte
 // GetCatalog : Get catalog
 // Get a catalog. This can also be used by an unauthenticated user to get the public catalog.
 func (catalogManagement *CatalogManagementV1) GetCatalog(getCatalogOptions *GetCatalogOptions) (result *Catalog, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetCatalogWithContext(context.Background(), getCatalogOptions)
+	result, response, err = catalogManagement.GetCatalogWithContext(context.Background(), getCatalogOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetCatalogWithContext is an alternate form of the GetCatalog method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetCatalogWithContext(ctx context.Context, getCatalogOptions *GetCatalogOptions) (result *Catalog, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getCatalogOptions, "getCatalogOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getCatalogOptions, "getCatalogOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -655,6 +1119,7 @@ func (catalogManagement *CatalogManagementV1) GetCatalogWithContext(ctx context.
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -670,17 +1135,21 @@ func (catalogManagement *CatalogManagementV1) GetCatalogWithContext(ctx context.
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_catalog", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCatalog)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -692,17 +1161,21 @@ func (catalogManagement *CatalogManagementV1) GetCatalogWithContext(ctx context.
 // ReplaceCatalog : Update catalog
 // Update a catalog.
 func (catalogManagement *CatalogManagementV1) ReplaceCatalog(replaceCatalogOptions *ReplaceCatalogOptions) (result *Catalog, response *core.DetailedResponse, err error) {
-	return catalogManagement.ReplaceCatalogWithContext(context.Background(), replaceCatalogOptions)
+	result, response, err = catalogManagement.ReplaceCatalogWithContext(context.Background(), replaceCatalogOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ReplaceCatalogWithContext is an alternate form of the ReplaceCatalog method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ReplaceCatalogWithContext(ctx context.Context, replaceCatalogOptions *ReplaceCatalogOptions) (result *Catalog, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(replaceCatalogOptions, "replaceCatalogOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(replaceCatalogOptions, "replaceCatalogOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -715,6 +1188,7 @@ func (catalogManagement *CatalogManagementV1) ReplaceCatalogWithContext(ctx cont
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -772,9 +1246,6 @@ func (catalogManagement *CatalogManagementV1) ReplaceCatalogWithContext(ctx cont
 	if replaceCatalogOptions.CatalogFilters != nil {
 		body["catalog_filters"] = replaceCatalogOptions.CatalogFilters
 	}
-	if replaceCatalogOptions.SyndicationSettings != nil {
-		body["syndication_settings"] = replaceCatalogOptions.SyndicationSettings
-	}
 	if replaceCatalogOptions.Kind != nil {
 		body["kind"] = replaceCatalogOptions.Kind
 	}
@@ -786,22 +1257,27 @@ func (catalogManagement *CatalogManagementV1) ReplaceCatalogWithContext(ctx cont
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "replace_catalog", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCatalog)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -813,17 +1289,21 @@ func (catalogManagement *CatalogManagementV1) ReplaceCatalogWithContext(ctx cont
 // DeleteCatalog : Delete catalog
 // Delete a catalog.
 func (catalogManagement *CatalogManagementV1) DeleteCatalog(deleteCatalogOptions *DeleteCatalogOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.DeleteCatalogWithContext(context.Background(), deleteCatalogOptions)
+	response, err = catalogManagement.DeleteCatalogWithContext(context.Background(), deleteCatalogOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteCatalogWithContext is an alternate form of the DeleteCatalog method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) DeleteCatalogWithContext(ctx context.Context, deleteCatalogOptions *DeleteCatalogOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteCatalogOptions, "deleteCatalogOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteCatalogOptions, "deleteCatalogOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -836,6 +1316,7 @@ func (catalogManagement *CatalogManagementV1) DeleteCatalogWithContext(ctx conte
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -850,10 +1331,16 @@ func (catalogManagement *CatalogManagementV1) DeleteCatalogWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_catalog", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -861,17 +1348,21 @@ func (catalogManagement *CatalogManagementV1) DeleteCatalogWithContext(ctx conte
 // ListCatalogAudits : Get catalog audit logs
 // Get the audit logs associated with a catalog.
 func (catalogManagement *CatalogManagementV1) ListCatalogAudits(listCatalogAuditsOptions *ListCatalogAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
-	return catalogManagement.ListCatalogAuditsWithContext(context.Background(), listCatalogAuditsOptions)
+	result, response, err = catalogManagement.ListCatalogAuditsWithContext(context.Background(), listCatalogAuditsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListCatalogAuditsWithContext is an alternate form of the ListCatalogAudits method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ListCatalogAuditsWithContext(ctx context.Context, listCatalogAuditsOptions *ListCatalogAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listCatalogAuditsOptions, "listCatalogAuditsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listCatalogAuditsOptions, "listCatalogAuditsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -884,6 +1375,7 @@ func (catalogManagement *CatalogManagementV1) ListCatalogAuditsWithContext(ctx c
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/audits`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -909,17 +1401,21 @@ func (catalogManagement *CatalogManagementV1) ListCatalogAuditsWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_catalog_audits", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLogs)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -931,22 +1427,26 @@ func (catalogManagement *CatalogManagementV1) ListCatalogAuditsWithContext(ctx c
 // GetCatalogAudit : Get a catalog audit log entry
 // Get the full audit log entry associated with a catalog.
 func (catalogManagement *CatalogManagementV1) GetCatalogAudit(getCatalogAuditOptions *GetCatalogAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetCatalogAuditWithContext(context.Background(), getCatalogAuditOptions)
+	result, response, err = catalogManagement.GetCatalogAuditWithContext(context.Background(), getCatalogAuditOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetCatalogAuditWithContext is an alternate form of the GetCatalogAudit method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetCatalogAuditWithContext(ctx context.Context, getCatalogAuditOptions *GetCatalogAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getCatalogAuditOptions, "getCatalogAuditOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getCatalogAuditOptions, "getCatalogAuditOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"catalog_identifier": *getCatalogAuditOptions.CatalogIdentifier,
+		"catalog_identifier":  *getCatalogAuditOptions.CatalogIdentifier,
 		"auditlog_identifier": *getCatalogAuditOptions.AuditlogIdentifier,
 	}
 
@@ -955,6 +1455,7 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAuditWithContext(ctx con
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/audits/{auditlog_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -974,17 +1475,21 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAuditWithContext(ctx con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_catalog_audit", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLog)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -996,17 +1501,21 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAuditWithContext(ctx con
 // ListEnterpriseAudits : Get enterprise audit logs
 // Get the audit logs associated with an enterprise.
 func (catalogManagement *CatalogManagementV1) ListEnterpriseAudits(listEnterpriseAuditsOptions *ListEnterpriseAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
-	return catalogManagement.ListEnterpriseAuditsWithContext(context.Background(), listEnterpriseAuditsOptions)
+	result, response, err = catalogManagement.ListEnterpriseAuditsWithContext(context.Background(), listEnterpriseAuditsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListEnterpriseAuditsWithContext is an alternate form of the ListEnterpriseAudits method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ListEnterpriseAuditsWithContext(ctx context.Context, listEnterpriseAuditsOptions *ListEnterpriseAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listEnterpriseAuditsOptions, "listEnterpriseAuditsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listEnterpriseAuditsOptions, "listEnterpriseAuditsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1019,6 +1528,7 @@ func (catalogManagement *CatalogManagementV1) ListEnterpriseAuditsWithContext(ct
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/enterprises/{enterprise_identifier}/audits`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1044,17 +1554,21 @@ func (catalogManagement *CatalogManagementV1) ListEnterpriseAuditsWithContext(ct
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_enterprise_audits", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLogs)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1066,23 +1580,27 @@ func (catalogManagement *CatalogManagementV1) ListEnterpriseAuditsWithContext(ct
 // GetEnterpriseAudit : Get an enterprise audit log entry
 // Get the full audit log entry associated with an enterprise.
 func (catalogManagement *CatalogManagementV1) GetEnterpriseAudit(getEnterpriseAuditOptions *GetEnterpriseAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetEnterpriseAuditWithContext(context.Background(), getEnterpriseAuditOptions)
+	result, response, err = catalogManagement.GetEnterpriseAuditWithContext(context.Background(), getEnterpriseAuditOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetEnterpriseAuditWithContext is an alternate form of the GetEnterpriseAudit method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetEnterpriseAuditWithContext(ctx context.Context, getEnterpriseAuditOptions *GetEnterpriseAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getEnterpriseAuditOptions, "getEnterpriseAuditOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getEnterpriseAuditOptions, "getEnterpriseAuditOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"enterprise_identifier": *getEnterpriseAuditOptions.EnterpriseIdentifier,
-		"auditlog_identifier": *getEnterpriseAuditOptions.AuditlogIdentifier,
+		"auditlog_identifier":   *getEnterpriseAuditOptions.AuditlogIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1090,6 +1608,7 @@ func (catalogManagement *CatalogManagementV1) GetEnterpriseAuditWithContext(ctx 
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/enterprises/{enterprise_identifier}/audits/{auditlog_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1109,17 +1628,21 @@ func (catalogManagement *CatalogManagementV1) GetEnterpriseAuditWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_enterprise_audit", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLog)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1133,13 +1656,16 @@ func (catalogManagement *CatalogManagementV1) GetEnterpriseAuditWithContext(ctx 
 // copies cannot be used for updating. They are not complete and only return what is visible to the caller. This can be
 // used by an unauthenticated user to retreive publicly available offerings.
 func (catalogManagement *CatalogManagementV1) GetConsumptionOfferings(getConsumptionOfferingsOptions *GetConsumptionOfferingsOptions) (result *OfferingSearchResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetConsumptionOfferingsWithContext(context.Background(), getConsumptionOfferingsOptions)
+	result, response, err = catalogManagement.GetConsumptionOfferingsWithContext(context.Background(), getConsumptionOfferingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetConsumptionOfferingsWithContext is an alternate form of the GetConsumptionOfferings method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetConsumptionOfferingsWithContext(ctx context.Context, getConsumptionOfferingsOptions *GetConsumptionOfferingsOptions) (result *OfferingSearchResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getConsumptionOfferingsOptions, "getConsumptionOfferingsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1148,6 +1674,7 @@ func (catalogManagement *CatalogManagementV1) GetConsumptionOfferingsWithContext
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/offerings`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1182,17 +1709,21 @@ func (catalogManagement *CatalogManagementV1) GetConsumptionOfferingsWithContext
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_consumption_offerings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOfferingSearchResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1205,17 +1736,21 @@ func (catalogManagement *CatalogManagementV1) GetConsumptionOfferingsWithContext
 // Retrieve the available offerings in the specified catalog. This can also be used by an unauthenticated user to
 // retreive publicly available offerings.
 func (catalogManagement *CatalogManagementV1) ListOfferings(listOfferingsOptions *ListOfferingsOptions) (result *OfferingSearchResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.ListOfferingsWithContext(context.Background(), listOfferingsOptions)
+	result, response, err = catalogManagement.ListOfferingsWithContext(context.Background(), listOfferingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListOfferingsWithContext is an alternate form of the ListOfferings method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ListOfferingsWithContext(ctx context.Context, listOfferingsOptions *ListOfferingsOptions) (result *OfferingSearchResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listOfferingsOptions, "listOfferingsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listOfferingsOptions, "listOfferingsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1228,6 +1763,7 @@ func (catalogManagement *CatalogManagementV1) ListOfferingsWithContext(ctx conte
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1262,17 +1798,21 @@ func (catalogManagement *CatalogManagementV1) ListOfferingsWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_offerings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOfferingSearchResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1284,17 +1824,21 @@ func (catalogManagement *CatalogManagementV1) ListOfferingsWithContext(ctx conte
 // CreateOffering : Create offering
 // Create an offering.
 func (catalogManagement *CatalogManagementV1) CreateOffering(createOfferingOptions *CreateOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
-	return catalogManagement.CreateOfferingWithContext(context.Background(), createOfferingOptions)
+	result, response, err = catalogManagement.CreateOfferingWithContext(context.Background(), createOfferingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateOfferingWithContext is an alternate form of the CreateOffering method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) CreateOfferingWithContext(ctx context.Context, createOfferingOptions *CreateOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createOfferingOptions, "createOfferingOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createOfferingOptions, "createOfferingOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1307,6 +1851,7 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingWithContext(ctx cont
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1379,6 +1924,9 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingWithContext(ctx cont
 	if createOfferingOptions.Kinds != nil {
 		body["kinds"] = createOfferingOptions.Kinds
 	}
+	if createOfferingOptions.Publish != nil {
+		body["publish"] = createOfferingOptions.Publish
+	}
 	if createOfferingOptions.PcManaged != nil {
 		body["pc_managed"] = createOfferingOptions.PcManaged
 	}
@@ -1393,15 +1941,6 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingWithContext(ctx cont
 	}
 	if createOfferingOptions.ShareEnabled != nil {
 		body["share_enabled"] = createOfferingOptions.ShareEnabled
-	}
-	if createOfferingOptions.PermitRequestIBMPublicPublish != nil {
-		body["permit_request_ibm_public_publish"] = createOfferingOptions.PermitRequestIBMPublicPublish
-	}
-	if createOfferingOptions.IBMPublishApproved != nil {
-		body["ibm_publish_approved"] = createOfferingOptions.IBMPublishApproved
-	}
-	if createOfferingOptions.PublicPublishApproved != nil {
-		body["public_publish_approved"] = createOfferingOptions.PublicPublishApproved
 	}
 	if createOfferingOptions.PublicOriginalCRN != nil {
 		body["public_original_crn"] = createOfferingOptions.PublicOriginalCRN
@@ -1457,24 +1996,32 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingWithContext(ctx cont
 	if createOfferingOptions.Badges != nil {
 		body["badges"] = createOfferingOptions.Badges
 	}
+	if createOfferingOptions.Plans != nil {
+		body["plans"] = createOfferingOptions.Plans
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_offering", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOffering)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1486,23 +2033,27 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingWithContext(ctx cont
 // ImportOfferingVersion : Import offering version
 // Import new version to an offering.
 func (catalogManagement *CatalogManagementV1) ImportOfferingVersion(importOfferingVersionOptions *ImportOfferingVersionOptions) (result *Offering, response *core.DetailedResponse, err error) {
-	return catalogManagement.ImportOfferingVersionWithContext(context.Background(), importOfferingVersionOptions)
+	result, response, err = catalogManagement.ImportOfferingVersionWithContext(context.Background(), importOfferingVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ImportOfferingVersionWithContext is an alternate form of the ImportOfferingVersion method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ImportOfferingVersionWithContext(ctx context.Context, importOfferingVersionOptions *ImportOfferingVersionOptions) (result *Offering, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(importOfferingVersionOptions, "importOfferingVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(importOfferingVersionOptions, "importOfferingVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *importOfferingVersionOptions.CatalogIdentifier,
-		"offering_id": *importOfferingVersionOptions.OfferingID,
+		"offering_id":        *importOfferingVersionOptions.OfferingID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -1510,6 +2061,7 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingVersionWithContext(c
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/version`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1547,6 +2099,9 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingVersionWithContext(c
 	if importOfferingVersionOptions.Tags != nil {
 		body["tags"] = importOfferingVersionOptions.Tags
 	}
+	if importOfferingVersionOptions.Keywords != nil {
+		body["keywords"] = importOfferingVersionOptions.Keywords
+	}
 	if importOfferingVersionOptions.Content != nil {
 		body["content"] = importOfferingVersionOptions.Content
 	}
@@ -1568,6 +2123,9 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingVersionWithContext(c
 	if importOfferingVersionOptions.ProductKind != nil {
 		body["product_kind"] = importOfferingVersionOptions.ProductKind
 	}
+	if importOfferingVersionOptions.ProductKindLabel != nil {
+		body["product_kind_label"] = importOfferingVersionOptions.ProductKindLabel
+	}
 	if importOfferingVersionOptions.Sha != nil {
 		body["sha"] = importOfferingVersionOptions.Sha
 	}
@@ -1583,24 +2141,32 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingVersionWithContext(c
 	if importOfferingVersionOptions.WorkingDirectory != nil {
 		body["working_directory"] = importOfferingVersionOptions.WorkingDirectory
 	}
+	if importOfferingVersionOptions.InstallType != nil {
+		body["install_type"] = importOfferingVersionOptions.InstallType
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "import_offering_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOffering)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1612,17 +2178,21 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingVersionWithContext(c
 // ImportOffering : Import offering
 // Import a new offering.
 func (catalogManagement *CatalogManagementV1) ImportOffering(importOfferingOptions *ImportOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
-	return catalogManagement.ImportOfferingWithContext(context.Background(), importOfferingOptions)
+	result, response, err = catalogManagement.ImportOfferingWithContext(context.Background(), importOfferingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ImportOfferingWithContext is an alternate form of the ImportOffering method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ImportOfferingWithContext(ctx context.Context, importOfferingOptions *ImportOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(importOfferingOptions, "importOfferingOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(importOfferingOptions, "importOfferingOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1635,6 +2205,7 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingWithContext(ctx cont
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/import/offerings`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1675,6 +2246,9 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingWithContext(ctx cont
 	if importOfferingOptions.Tags != nil {
 		body["tags"] = importOfferingOptions.Tags
 	}
+	if importOfferingOptions.Keywords != nil {
+		body["keywords"] = importOfferingOptions.Keywords
+	}
 	if importOfferingOptions.Content != nil {
 		body["content"] = importOfferingOptions.Content
 	}
@@ -1696,6 +2270,9 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingWithContext(ctx cont
 	if importOfferingOptions.ProductKind != nil {
 		body["product_kind"] = importOfferingOptions.ProductKind
 	}
+	if importOfferingOptions.ProductKindLabel != nil {
+		body["product_kind_label"] = importOfferingOptions.ProductKindLabel
+	}
 	if importOfferingOptions.Sha != nil {
 		body["sha"] = importOfferingOptions.Sha
 	}
@@ -1711,24 +2288,32 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingWithContext(ctx cont
 	if importOfferingOptions.WorkingDirectory != nil {
 		body["working_directory"] = importOfferingOptions.WorkingDirectory
 	}
+	if importOfferingOptions.InstallType != nil {
+		body["install_type"] = importOfferingOptions.InstallType
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "import_offering", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOffering)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1740,23 +2325,27 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingWithContext(ctx cont
 // ReloadOffering : Reload offering
 // Reload an existing version in offering from a tgz.
 func (catalogManagement *CatalogManagementV1) ReloadOffering(reloadOfferingOptions *ReloadOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
-	return catalogManagement.ReloadOfferingWithContext(context.Background(), reloadOfferingOptions)
+	result, response, err = catalogManagement.ReloadOfferingWithContext(context.Background(), reloadOfferingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ReloadOfferingWithContext is an alternate form of the ReloadOffering method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ReloadOfferingWithContext(ctx context.Context, reloadOfferingOptions *ReloadOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(reloadOfferingOptions, "reloadOfferingOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(reloadOfferingOptions, "reloadOfferingOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *reloadOfferingOptions.CatalogIdentifier,
-		"offering_id": *reloadOfferingOptions.OfferingID,
+		"offering_id":        *reloadOfferingOptions.OfferingID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -1764,6 +2353,7 @@ func (catalogManagement *CatalogManagementV1) ReloadOfferingWithContext(ctx cont
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/reload`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1805,24 +2395,32 @@ func (catalogManagement *CatalogManagementV1) ReloadOfferingWithContext(ctx cont
 	if reloadOfferingOptions.WorkingDirectory != nil {
 		body["working_directory"] = reloadOfferingOptions.WorkingDirectory
 	}
+	if reloadOfferingOptions.InstallType != nil {
+		body["install_type"] = reloadOfferingOptions.InstallType
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "reload_offering", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOffering)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1834,23 +2432,27 @@ func (catalogManagement *CatalogManagementV1) ReloadOfferingWithContext(ctx cont
 // GetOffering : Get offering
 // Get an offering. This can be used by an unauthenticated user for publicly available offerings.
 func (catalogManagement *CatalogManagementV1) GetOffering(getOfferingOptions *GetOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOfferingWithContext(context.Background(), getOfferingOptions)
+	result, response, err = catalogManagement.GetOfferingWithContext(context.Background(), getOfferingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOfferingWithContext is an alternate form of the GetOffering method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetOfferingWithContext(ctx context.Context, getOfferingOptions *GetOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOfferingOptions, "getOfferingOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOfferingOptions, "getOfferingOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *getOfferingOptions.CatalogIdentifier,
-		"offering_id": *getOfferingOptions.OfferingID,
+		"offering_id":        *getOfferingOptions.OfferingID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1858,6 +2460,7 @@ func (catalogManagement *CatalogManagementV1) GetOfferingWithContext(ctx context
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1880,17 +2483,21 @@ func (catalogManagement *CatalogManagementV1) GetOfferingWithContext(ctx context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOffering)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1902,23 +2509,27 @@ func (catalogManagement *CatalogManagementV1) GetOfferingWithContext(ctx context
 // ReplaceOffering : Update offering
 // Update an offering.
 func (catalogManagement *CatalogManagementV1) ReplaceOffering(replaceOfferingOptions *ReplaceOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
-	return catalogManagement.ReplaceOfferingWithContext(context.Background(), replaceOfferingOptions)
+	result, response, err = catalogManagement.ReplaceOfferingWithContext(context.Background(), replaceOfferingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ReplaceOfferingWithContext is an alternate form of the ReplaceOffering method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ReplaceOfferingWithContext(ctx context.Context, replaceOfferingOptions *ReplaceOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(replaceOfferingOptions, "replaceOfferingOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(replaceOfferingOptions, "replaceOfferingOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *replaceOfferingOptions.CatalogIdentifier,
-		"offering_id": *replaceOfferingOptions.OfferingID,
+		"offering_id":        *replaceOfferingOptions.OfferingID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -1926,6 +2537,7 @@ func (catalogManagement *CatalogManagementV1) ReplaceOfferingWithContext(ctx con
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2004,6 +2616,9 @@ func (catalogManagement *CatalogManagementV1) ReplaceOfferingWithContext(ctx con
 	if replaceOfferingOptions.Kinds != nil {
 		body["kinds"] = replaceOfferingOptions.Kinds
 	}
+	if replaceOfferingOptions.Publish != nil {
+		body["publish"] = replaceOfferingOptions.Publish
+	}
 	if replaceOfferingOptions.PcManaged != nil {
 		body["pc_managed"] = replaceOfferingOptions.PcManaged
 	}
@@ -2018,15 +2633,6 @@ func (catalogManagement *CatalogManagementV1) ReplaceOfferingWithContext(ctx con
 	}
 	if replaceOfferingOptions.ShareEnabled != nil {
 		body["share_enabled"] = replaceOfferingOptions.ShareEnabled
-	}
-	if replaceOfferingOptions.PermitRequestIBMPublicPublish != nil {
-		body["permit_request_ibm_public_publish"] = replaceOfferingOptions.PermitRequestIBMPublicPublish
-	}
-	if replaceOfferingOptions.IBMPublishApproved != nil {
-		body["ibm_publish_approved"] = replaceOfferingOptions.IBMPublishApproved
-	}
-	if replaceOfferingOptions.PublicPublishApproved != nil {
-		body["public_publish_approved"] = replaceOfferingOptions.PublicPublishApproved
 	}
 	if replaceOfferingOptions.PublicOriginalCRN != nil {
 		body["public_original_crn"] = replaceOfferingOptions.PublicOriginalCRN
@@ -2082,24 +2688,32 @@ func (catalogManagement *CatalogManagementV1) ReplaceOfferingWithContext(ctx con
 	if replaceOfferingOptions.Badges != nil {
 		body["badges"] = replaceOfferingOptions.Badges
 	}
+	if replaceOfferingOptions.Plans != nil {
+		body["plans"] = replaceOfferingOptions.Plans
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "replace_offering", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOffering)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2111,23 +2725,27 @@ func (catalogManagement *CatalogManagementV1) ReplaceOfferingWithContext(ctx con
 // UpdateOffering : Update offering
 // Update an offering using a JSONPatch document as defined by RFC 6902.
 func (catalogManagement *CatalogManagementV1) UpdateOffering(updateOfferingOptions *UpdateOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
-	return catalogManagement.UpdateOfferingWithContext(context.Background(), updateOfferingOptions)
+	result, response, err = catalogManagement.UpdateOfferingWithContext(context.Background(), updateOfferingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateOfferingWithContext is an alternate form of the UpdateOffering method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) UpdateOfferingWithContext(ctx context.Context, updateOfferingOptions *UpdateOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateOfferingOptions, "updateOfferingOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateOfferingOptions, "updateOfferingOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *updateOfferingOptions.CatalogIdentifier,
-		"offering_id": *updateOfferingOptions.OfferingID,
+		"offering_id":        *updateOfferingOptions.OfferingID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -2135,6 +2753,7 @@ func (catalogManagement *CatalogManagementV1) UpdateOfferingWithContext(ctx cont
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2154,22 +2773,27 @@ func (catalogManagement *CatalogManagementV1) UpdateOfferingWithContext(ctx cont
 
 	_, err = builder.SetBodyContentJSON(updateOfferingOptions.Updates)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_offering", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOffering)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2181,23 +2805,27 @@ func (catalogManagement *CatalogManagementV1) UpdateOfferingWithContext(ctx cont
 // DeleteOffering : Delete offering
 // Delete an offering.
 func (catalogManagement *CatalogManagementV1) DeleteOffering(deleteOfferingOptions *DeleteOfferingOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.DeleteOfferingWithContext(context.Background(), deleteOfferingOptions)
+	response, err = catalogManagement.DeleteOfferingWithContext(context.Background(), deleteOfferingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteOfferingWithContext is an alternate form of the DeleteOffering method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) DeleteOfferingWithContext(ctx context.Context, deleteOfferingOptions *DeleteOfferingOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteOfferingOptions, "deleteOfferingOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteOfferingOptions, "deleteOfferingOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *deleteOfferingOptions.CatalogIdentifier,
-		"offering_id": *deleteOfferingOptions.OfferingID,
+		"offering_id":        *deleteOfferingOptions.OfferingID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -2205,6 +2833,7 @@ func (catalogManagement *CatalogManagementV1) DeleteOfferingWithContext(ctx cont
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2216,13 +2845,92 @@ func (catalogManagement *CatalogManagementV1) DeleteOfferingWithContext(ctx cont
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
+	if deleteOfferingOptions.XApproverToken != nil {
+		builder.AddHeader("X-Approver-Token", fmt.Sprint(*deleteOfferingOptions.XApproverToken))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_offering", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetOfferingStats : Get offering statistics
+// Get the usage statistics for the specified offering.
+func (catalogManagement *CatalogManagementV1) GetOfferingStats(getOfferingStatsOptions *GetOfferingStatsOptions) (result *MetricStats, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.GetOfferingStatsWithContext(context.Background(), getOfferingStatsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetOfferingStatsWithContext is an alternate form of the GetOfferingStats method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetOfferingStatsWithContext(ctx context.Context, getOfferingStatsOptions *GetOfferingStatsOptions) (result *MetricStats, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getOfferingStatsOptions, "getOfferingStatsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getOfferingStatsOptions, "getOfferingStatsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"catalog_identifier": *getOfferingStatsOptions.CatalogIdentifier,
+		"offering_id":        *getOfferingStatsOptions.OfferingID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/stats`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getOfferingStatsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetOfferingStats")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_stats", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMetricStats)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
 
 	return
 }
@@ -2230,23 +2938,27 @@ func (catalogManagement *CatalogManagementV1) DeleteOfferingWithContext(ctx cont
 // ListOfferingAudits : Get offering audit logs
 // Get the audit logs associated with an offering.
 func (catalogManagement *CatalogManagementV1) ListOfferingAudits(listOfferingAuditsOptions *ListOfferingAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
-	return catalogManagement.ListOfferingAuditsWithContext(context.Background(), listOfferingAuditsOptions)
+	result, response, err = catalogManagement.ListOfferingAuditsWithContext(context.Background(), listOfferingAuditsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListOfferingAuditsWithContext is an alternate form of the ListOfferingAudits method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ListOfferingAuditsWithContext(ctx context.Context, listOfferingAuditsOptions *ListOfferingAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listOfferingAuditsOptions, "listOfferingAuditsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listOfferingAuditsOptions, "listOfferingAuditsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *listOfferingAuditsOptions.CatalogIdentifier,
-		"offering_id": *listOfferingAuditsOptions.OfferingID,
+		"offering_id":        *listOfferingAuditsOptions.OfferingID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -2254,6 +2966,7 @@ func (catalogManagement *CatalogManagementV1) ListOfferingAuditsWithContext(ctx 
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/audits`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2279,17 +2992,21 @@ func (catalogManagement *CatalogManagementV1) ListOfferingAuditsWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_offering_audits", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLogs)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2301,23 +3018,27 @@ func (catalogManagement *CatalogManagementV1) ListOfferingAuditsWithContext(ctx 
 // GetOfferingAudit : Get an offering audit log entry
 // Get the full audit log entry associated with an offering.
 func (catalogManagement *CatalogManagementV1) GetOfferingAudit(getOfferingAuditOptions *GetOfferingAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOfferingAuditWithContext(context.Background(), getOfferingAuditOptions)
+	result, response, err = catalogManagement.GetOfferingAuditWithContext(context.Background(), getOfferingAuditOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOfferingAuditWithContext is an alternate form of the GetOfferingAudit method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetOfferingAuditWithContext(ctx context.Context, getOfferingAuditOptions *GetOfferingAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOfferingAuditOptions, "getOfferingAuditOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOfferingAuditOptions, "getOfferingAuditOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"catalog_identifier": *getOfferingAuditOptions.CatalogIdentifier,
-		"offering_id": *getOfferingAuditOptions.OfferingID,
+		"catalog_identifier":  *getOfferingAuditOptions.CatalogIdentifier,
+		"offering_id":         *getOfferingAuditOptions.OfferingID,
 		"auditlog_identifier": *getOfferingAuditOptions.AuditlogIdentifier,
 	}
 
@@ -2326,6 +3047,7 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAuditWithContext(ctx co
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/audits/{auditlog_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2345,17 +3067,21 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAuditWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_audit", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLog)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2365,29 +3091,33 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAuditWithContext(ctx co
 }
 
 // SetOfferingPublish : Set offering publish approval settings
-// Approve or disapprove the offering to be allowed to publish to the IBM Public Catalog. This is used only by Partner
-// Center. Only users with Approval IAM authority can use this. Approvers should use the catalog and offering id from
-// the public catalog since they wouldn't have access to the private offering.
+// Approve or disapprove the offering to be allowed to publish to a particular public catalog based on the approval
+// type.  Approvers should use the catalog and offering id from the public catalog since they wouldn't have access to
+// the private offering.
 func (catalogManagement *CatalogManagementV1) SetOfferingPublish(setOfferingPublishOptions *SetOfferingPublishOptions) (result *ApprovalResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.SetOfferingPublishWithContext(context.Background(), setOfferingPublishOptions)
+	result, response, err = catalogManagement.SetOfferingPublishWithContext(context.Background(), setOfferingPublishOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SetOfferingPublishWithContext is an alternate form of the SetOfferingPublish method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) SetOfferingPublishWithContext(ctx context.Context, setOfferingPublishOptions *SetOfferingPublishOptions) (result *ApprovalResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(setOfferingPublishOptions, "setOfferingPublishOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(setOfferingPublishOptions, "setOfferingPublishOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *setOfferingPublishOptions.CatalogIdentifier,
-		"offering_id": *setOfferingPublishOptions.OfferingID,
-		"approval_type": *setOfferingPublishOptions.ApprovalType,
-		"approved": *setOfferingPublishOptions.Approved,
+		"offering_id":        *setOfferingPublishOptions.OfferingID,
+		"approval_type":      *setOfferingPublishOptions.ApprovalType,
+		"approved":           *setOfferingPublishOptions.Approved,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -2395,6 +3125,7 @@ func (catalogManagement *CatalogManagementV1) SetOfferingPublishWithContext(ctx 
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/publish/{approval_type}/{approved}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2410,6 +3141,9 @@ func (catalogManagement *CatalogManagementV1) SetOfferingPublishWithContext(ctx 
 	if setOfferingPublishOptions.XApproverToken != nil {
 		builder.AddHeader("X-Approver-Token", fmt.Sprint(*setOfferingPublishOptions.XApproverToken))
 	}
+	if setOfferingPublishOptions.XAuthToken != nil {
+		builder.AddHeader("X-Auth-Token", fmt.Sprint(*setOfferingPublishOptions.XAuthToken))
+	}
 
 	if setOfferingPublishOptions.PortalRecord != nil {
 		builder.AddQuery("portal_record", fmt.Sprint(*setOfferingPublishOptions.PortalRecord))
@@ -2420,17 +3154,21 @@ func (catalogManagement *CatalogManagementV1) SetOfferingPublishWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "set_offering_publish", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalApprovalResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2442,24 +3180,28 @@ func (catalogManagement *CatalogManagementV1) SetOfferingPublishWithContext(ctx 
 // DeprecateOffering : Allows offering to be deprecated
 // Approve or disapprove the offering to be deprecated.
 func (catalogManagement *CatalogManagementV1) DeprecateOffering(deprecateOfferingOptions *DeprecateOfferingOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.DeprecateOfferingWithContext(context.Background(), deprecateOfferingOptions)
+	response, err = catalogManagement.DeprecateOfferingWithContext(context.Background(), deprecateOfferingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeprecateOfferingWithContext is an alternate form of the DeprecateOffering method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) DeprecateOfferingWithContext(ctx context.Context, deprecateOfferingOptions *DeprecateOfferingOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deprecateOfferingOptions, "deprecateOfferingOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deprecateOfferingOptions, "deprecateOfferingOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *deprecateOfferingOptions.CatalogIdentifier,
-		"offering_id": *deprecateOfferingOptions.OfferingID,
-		"setting": *deprecateOfferingOptions.Setting,
+		"offering_id":        *deprecateOfferingOptions.OfferingID,
+		"setting":            *deprecateOfferingOptions.Setting,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -2467,6 +3209,7 @@ func (catalogManagement *CatalogManagementV1) DeprecateOfferingWithContext(ctx c
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/deprecate/{setting}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2489,15 +3232,22 @@ func (catalogManagement *CatalogManagementV1) DeprecateOfferingWithContext(ctx c
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "deprecate_offering", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2505,23 +3255,27 @@ func (catalogManagement *CatalogManagementV1) DeprecateOfferingWithContext(ctx c
 // ShareOffering : Allows offering to be shared
 // Set the share options on an offering.
 func (catalogManagement *CatalogManagementV1) ShareOffering(shareOfferingOptions *ShareOfferingOptions) (result *ShareSetting, response *core.DetailedResponse, err error) {
-	return catalogManagement.ShareOfferingWithContext(context.Background(), shareOfferingOptions)
+	result, response, err = catalogManagement.ShareOfferingWithContext(context.Background(), shareOfferingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ShareOfferingWithContext is an alternate form of the ShareOffering method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ShareOfferingWithContext(ctx context.Context, shareOfferingOptions *ShareOfferingOptions) (result *ShareSetting, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(shareOfferingOptions, "shareOfferingOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(shareOfferingOptions, "shareOfferingOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *shareOfferingOptions.CatalogIdentifier,
-		"offering_id": *shareOfferingOptions.OfferingID,
+		"offering_id":        *shareOfferingOptions.OfferingID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -2529,6 +3283,7 @@ func (catalogManagement *CatalogManagementV1) ShareOfferingWithContext(ctx conte
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/share`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2555,22 +3310,27 @@ func (catalogManagement *CatalogManagementV1) ShareOfferingWithContext(ctx conte
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "share_offering", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalShareSetting)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2582,24 +3342,28 @@ func (catalogManagement *CatalogManagementV1) ShareOfferingWithContext(ctx conte
 // GetOfferingAccess : Check for account ID in offering access list
 // Determine if an account ID is in an offering's access list.
 func (catalogManagement *CatalogManagementV1) GetOfferingAccess(getOfferingAccessOptions *GetOfferingAccessOptions) (result *Access, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOfferingAccessWithContext(context.Background(), getOfferingAccessOptions)
+	result, response, err = catalogManagement.GetOfferingAccessWithContext(context.Background(), getOfferingAccessOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOfferingAccessWithContext is an alternate form of the GetOfferingAccess method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetOfferingAccessWithContext(ctx context.Context, getOfferingAccessOptions *GetOfferingAccessOptions) (result *Access, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOfferingAccessOptions, "getOfferingAccessOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOfferingAccessOptions, "getOfferingAccessOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *getOfferingAccessOptions.CatalogIdentifier,
-		"offering_id": *getOfferingAccessOptions.OfferingID,
-		"access_identifier": *getOfferingAccessOptions.AccessIdentifier,
+		"offering_id":        *getOfferingAccessOptions.OfferingID,
+		"access_identifier":  *getOfferingAccessOptions.AccessIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -2607,6 +3371,7 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAccessWithContext(ctx c
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/access/{access_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2622,17 +3387,21 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAccessWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_access", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccess)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2644,23 +3413,27 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAccessWithContext(ctx c
 // GetOfferingAccessList : Get offering access list
 // Get the access list associated with the specified offering.
 func (catalogManagement *CatalogManagementV1) GetOfferingAccessList(getOfferingAccessListOptions *GetOfferingAccessListOptions) (result *AccessListResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOfferingAccessListWithContext(context.Background(), getOfferingAccessListOptions)
+	result, response, err = catalogManagement.GetOfferingAccessListWithContext(context.Background(), getOfferingAccessListOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOfferingAccessListWithContext is an alternate form of the GetOfferingAccessList method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetOfferingAccessListWithContext(ctx context.Context, getOfferingAccessListOptions *GetOfferingAccessListOptions) (result *AccessListResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOfferingAccessListOptions, "getOfferingAccessListOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOfferingAccessListOptions, "getOfferingAccessListOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *getOfferingAccessListOptions.CatalogIdentifier,
-		"offering_id": *getOfferingAccessListOptions.OfferingID,
+		"offering_id":        *getOfferingAccessListOptions.OfferingID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -2668,6 +3441,7 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAccessListWithContext(c
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/access`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2690,17 +3464,21 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAccessListWithContext(c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_access_list", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessListResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2712,23 +3490,27 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAccessListWithContext(c
 // DeleteOfferingAccessList : Delete accesses from offering access list
 // Delete all or a set of accesses from an offering's access list.
 func (catalogManagement *CatalogManagementV1) DeleteOfferingAccessList(deleteOfferingAccessListOptions *DeleteOfferingAccessListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
-	return catalogManagement.DeleteOfferingAccessListWithContext(context.Background(), deleteOfferingAccessListOptions)
+	result, response, err = catalogManagement.DeleteOfferingAccessListWithContext(context.Background(), deleteOfferingAccessListOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteOfferingAccessListWithContext is an alternate form of the DeleteOfferingAccessList method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) DeleteOfferingAccessListWithContext(ctx context.Context, deleteOfferingAccessListOptions *DeleteOfferingAccessListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteOfferingAccessListOptions, "deleteOfferingAccessListOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteOfferingAccessListOptions, "deleteOfferingAccessListOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *deleteOfferingAccessListOptions.CatalogIdentifier,
-		"offering_id": *deleteOfferingAccessListOptions.OfferingID,
+		"offering_id":        *deleteOfferingAccessListOptions.OfferingID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -2736,6 +3518,7 @@ func (catalogManagement *CatalogManagementV1) DeleteOfferingAccessListWithContex
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/access`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2752,22 +3535,27 @@ func (catalogManagement *CatalogManagementV1) DeleteOfferingAccessListWithContex
 
 	_, err = builder.SetBodyContentJSON(deleteOfferingAccessListOptions.Accesses)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_offering_access_list", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessListBulkResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2779,23 +3567,27 @@ func (catalogManagement *CatalogManagementV1) DeleteOfferingAccessListWithContex
 // AddOfferingAccessList : Add accesses to offering access list
 // Add one or more accesses to the specified offering's access list.
 func (catalogManagement *CatalogManagementV1) AddOfferingAccessList(addOfferingAccessListOptions *AddOfferingAccessListOptions) (result *AccessListResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.AddOfferingAccessListWithContext(context.Background(), addOfferingAccessListOptions)
+	result, response, err = catalogManagement.AddOfferingAccessListWithContext(context.Background(), addOfferingAccessListOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // AddOfferingAccessListWithContext is an alternate form of the AddOfferingAccessList method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) AddOfferingAccessListWithContext(ctx context.Context, addOfferingAccessListOptions *AddOfferingAccessListOptions) (result *AccessListResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(addOfferingAccessListOptions, "addOfferingAccessListOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(addOfferingAccessListOptions, "addOfferingAccessListOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *addOfferingAccessListOptions.CatalogIdentifier,
-		"offering_id": *addOfferingAccessListOptions.OfferingID,
+		"offering_id":        *addOfferingAccessListOptions.OfferingID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -2803,6 +3595,7 @@ func (catalogManagement *CatalogManagementV1) AddOfferingAccessListWithContext(c
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/access`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2819,22 +3612,27 @@ func (catalogManagement *CatalogManagementV1) AddOfferingAccessListWithContext(c
 
 	_, err = builder.SetBodyContentJSON(addOfferingAccessListOptions.Accesses)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "add_offering_access_list", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessListResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2846,23 +3644,27 @@ func (catalogManagement *CatalogManagementV1) AddOfferingAccessListWithContext(c
 // GetOfferingUpdates : Get version updates
 // Get available updates for the specified version.
 func (catalogManagement *CatalogManagementV1) GetOfferingUpdates(getOfferingUpdatesOptions *GetOfferingUpdatesOptions) (result []VersionUpdateDescriptor, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOfferingUpdatesWithContext(context.Background(), getOfferingUpdatesOptions)
+	result, response, err = catalogManagement.GetOfferingUpdatesWithContext(context.Background(), getOfferingUpdatesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOfferingUpdatesWithContext is an alternate form of the GetOfferingUpdates method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetOfferingUpdatesWithContext(ctx context.Context, getOfferingUpdatesOptions *GetOfferingUpdatesOptions) (result []VersionUpdateDescriptor, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOfferingUpdatesOptions, "getOfferingUpdatesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOfferingUpdatesOptions, "getOfferingUpdatesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *getOfferingUpdatesOptions.CatalogIdentifier,
-		"offering_id": *getOfferingUpdatesOptions.OfferingID,
+		"offering_id":        *getOfferingUpdatesOptions.OfferingID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -2870,6 +3672,7 @@ func (catalogManagement *CatalogManagementV1) GetOfferingUpdatesWithContext(ctx 
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/updates`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2926,17 +3729,105 @@ func (catalogManagement *CatalogManagementV1) GetOfferingUpdatesWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse []json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_updates", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVersionUpdateDescriptor)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetOfferingChangeNotices : Get version change notices
+// Get change notices for the specified version.
+func (catalogManagement *CatalogManagementV1) GetOfferingChangeNotices(getOfferingChangeNoticesOptions *GetOfferingChangeNoticesOptions) (result *ChangeNoticesResponse, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.GetOfferingChangeNoticesWithContext(context.Background(), getOfferingChangeNoticesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetOfferingChangeNoticesWithContext is an alternate form of the GetOfferingChangeNotices method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetOfferingChangeNoticesWithContext(ctx context.Context, getOfferingChangeNoticesOptions *GetOfferingChangeNoticesOptions) (result *ChangeNoticesResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getOfferingChangeNoticesOptions, "getOfferingChangeNoticesOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getOfferingChangeNoticesOptions, "getOfferingChangeNoticesOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"catalog_identifier": *getOfferingChangeNoticesOptions.CatalogIdentifier,
+		"offering_id":        *getOfferingChangeNoticesOptions.OfferingID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/changeNotices`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getOfferingChangeNoticesOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetOfferingChangeNotices")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("kind", fmt.Sprint(*getOfferingChangeNoticesOptions.Kind))
+	if getOfferingChangeNoticesOptions.Target != nil {
+		builder.AddQuery("target", fmt.Sprint(*getOfferingChangeNoticesOptions.Target))
+	}
+	if getOfferingChangeNoticesOptions.Version != nil {
+		builder.AddQuery("version", fmt.Sprint(*getOfferingChangeNoticesOptions.Version))
+	}
+	if getOfferingChangeNoticesOptions.Flavor != nil {
+		builder.AddQuery("flavor", fmt.Sprint(*getOfferingChangeNoticesOptions.Flavor))
+	}
+	if getOfferingChangeNoticesOptions.Versions != nil {
+		builder.AddQuery("versions", fmt.Sprint(*getOfferingChangeNoticesOptions.Versions))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_change_notices", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalChangeNoticesResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2946,19 +3837,23 @@ func (catalogManagement *CatalogManagementV1) GetOfferingUpdatesWithContext(ctx 
 }
 
 // GetOfferingSource : Get offering source
-// Get an offering's source.  This request requires authorization, even for public offerings.
+// Get an offering's source.  This request requires authorization for private offerings.
 func (catalogManagement *CatalogManagementV1) GetOfferingSource(getOfferingSourceOptions *GetOfferingSourceOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOfferingSourceWithContext(context.Background(), getOfferingSourceOptions)
+	result, response, err = catalogManagement.GetOfferingSourceWithContext(context.Background(), getOfferingSourceOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOfferingSourceWithContext is an alternate form of the GetOfferingSource method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetOfferingSourceWithContext(ctx context.Context, getOfferingSourceOptions *GetOfferingSourceOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOfferingSourceOptions, "getOfferingSourceOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOfferingSourceOptions, "getOfferingSourceOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2967,6 +3862,7 @@ func (catalogManagement *CatalogManagementV1) GetOfferingSourceWithContext(ctx c
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/offering/source`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3011,10 +3907,103 @@ func (catalogManagement *CatalogManagementV1) GetOfferingSourceWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_source", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetOfferingSourceArchive : Get offering source
+// Get an offering's source.  This request requires authorization for private offerings.  Note that the URL can include
+// an additional 'working directory' value (i.e. /offering/source/archive//solutions/standard), which allows this single
+// URL to be used in a Terraform module statement as well.
+func (catalogManagement *CatalogManagementV1) GetOfferingSourceArchive(getOfferingSourceArchiveOptions *GetOfferingSourceArchiveOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.GetOfferingSourceArchiveWithContext(context.Background(), getOfferingSourceArchiveOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetOfferingSourceArchiveWithContext is an alternate form of the GetOfferingSourceArchive method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetOfferingSourceArchiveWithContext(ctx context.Context, getOfferingSourceArchiveOptions *GetOfferingSourceArchiveOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getOfferingSourceArchiveOptions, "getOfferingSourceArchiveOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getOfferingSourceArchiveOptions, "getOfferingSourceArchiveOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/offering/source/archive`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getOfferingSourceArchiveOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetOfferingSourceArchive")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/yaml")
+	if getOfferingSourceArchiveOptions.Accept != nil {
+		builder.AddHeader("Accept", fmt.Sprint(*getOfferingSourceArchiveOptions.Accept))
+	}
+
+	builder.AddQuery("version", fmt.Sprint(*getOfferingSourceArchiveOptions.Version))
+	if getOfferingSourceArchiveOptions.CatalogID != nil {
+		builder.AddQuery("catalogID", fmt.Sprint(*getOfferingSourceArchiveOptions.CatalogID))
+	}
+	if getOfferingSourceArchiveOptions.Name != nil {
+		builder.AddQuery("name", fmt.Sprint(*getOfferingSourceArchiveOptions.Name))
+	}
+	if getOfferingSourceArchiveOptions.ID != nil {
+		builder.AddQuery("id", fmt.Sprint(*getOfferingSourceArchiveOptions.ID))
+	}
+	if getOfferingSourceArchiveOptions.Kind != nil {
+		builder.AddQuery("kind", fmt.Sprint(*getOfferingSourceArchiveOptions.Kind))
+	}
+	if getOfferingSourceArchiveOptions.Channel != nil {
+		builder.AddQuery("channel", fmt.Sprint(*getOfferingSourceArchiveOptions.Channel))
+	}
+	if getOfferingSourceArchiveOptions.Flavor != nil {
+		builder.AddQuery("flavor", fmt.Sprint(*getOfferingSourceArchiveOptions.Flavor))
+	}
+	if getOfferingSourceArchiveOptions.AsIs != nil {
+		builder.AddQuery("asIs", fmt.Sprint(*getOfferingSourceArchiveOptions.AsIs))
+	}
+	if getOfferingSourceArchiveOptions.InstallType != nil {
+		builder.AddQuery("installType", fmt.Sprint(*getOfferingSourceArchiveOptions.InstallType))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = catalogManagement.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_source_archive", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3022,17 +4011,21 @@ func (catalogManagement *CatalogManagementV1) GetOfferingSourceWithContext(ctx c
 // GetOfferingSourceURL : Get offering source URL
 // Get an offering's private source image.
 func (catalogManagement *CatalogManagementV1) GetOfferingSourceURL(getOfferingSourceURLOptions *GetOfferingSourceURLOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOfferingSourceURLWithContext(context.Background(), getOfferingSourceURLOptions)
+	result, response, err = catalogManagement.GetOfferingSourceURLWithContext(context.Background(), getOfferingSourceURLOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOfferingSourceURLWithContext is an alternate form of the GetOfferingSourceURL method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetOfferingSourceURLWithContext(ctx context.Context, getOfferingSourceURLOptions *GetOfferingSourceURLOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOfferingSourceURLOptions, "getOfferingSourceURLOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOfferingSourceURLOptions, "getOfferingSourceURLOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3045,6 +4038,7 @@ func (catalogManagement *CatalogManagementV1) GetOfferingSourceURLWithContext(ct
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/offering/source/url/{key_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3073,10 +4067,101 @@ func (catalogManagement *CatalogManagementV1) GetOfferingSourceURLWithContext(ct
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_source_url", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetVersions : Get versions
+// Get the versions of the specified kind in the specified offering. This can be used by an unauthenticated user for
+// publicly available offerings.
+func (catalogManagement *CatalogManagementV1) GetVersions(getVersionsOptions *GetVersionsOptions) (result *VersionsResult, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.GetVersionsWithContext(context.Background(), getVersionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetVersionsWithContext is an alternate form of the GetVersions method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetVersionsWithContext(ctx context.Context, getVersionsOptions *GetVersionsOptions) (result *VersionsResult, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getVersionsOptions, "getVersionsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getVersionsOptions, "getVersionsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"catalog_identifier": *getVersionsOptions.CatalogIdentifier,
+		"offering_id":        *getVersionsOptions.OfferingID,
+		"kind_id":            *getVersionsOptions.KindID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/kinds/{kind_id}/versions`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getVersionsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetVersions")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getVersionsOptions.Digest != nil {
+		builder.AddQuery("digest", fmt.Sprint(*getVersionsOptions.Digest))
+	}
+	if getVersionsOptions.Catalog != nil {
+		builder.AddQuery("catalog", fmt.Sprint(*getVersionsOptions.Catalog))
+	}
+	if getVersionsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*getVersionsOptions.Start))
+	}
+	if getVersionsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*getVersionsOptions.Limit))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_versions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVersionsResult)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
 
 	return
 }
@@ -3084,17 +4169,21 @@ func (catalogManagement *CatalogManagementV1) GetOfferingSourceURLWithContext(ct
 // GetOfferingAbout : Get version about information
 // Get the about information, in markdown, for the current version.
 func (catalogManagement *CatalogManagementV1) GetOfferingAbout(getOfferingAboutOptions *GetOfferingAboutOptions) (result *string, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOfferingAboutWithContext(context.Background(), getOfferingAboutOptions)
+	result, response, err = catalogManagement.GetOfferingAboutWithContext(context.Background(), getOfferingAboutOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOfferingAboutWithContext is an alternate form of the GetOfferingAbout method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetOfferingAboutWithContext(ctx context.Context, getOfferingAboutOptions *GetOfferingAboutOptions) (result *string, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOfferingAboutOptions, "getOfferingAboutOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOfferingAboutOptions, "getOfferingAboutOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3107,6 +4196,7 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAboutWithContext(ctx co
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/about`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3122,10 +4212,85 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAboutWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_about", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetIamPermissions : Get the required IAM permissions for this version with the specified user context
+// Get the required IAM permissions for this version with the specified user context.
+func (catalogManagement *CatalogManagementV1) GetIamPermissions(getIamPermissionsOptions *GetIamPermissionsOptions) (result []CheckedIamPermission, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.GetIamPermissionsWithContext(context.Background(), getIamPermissionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetIamPermissionsWithContext is an alternate form of the GetIamPermissions method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetIamPermissionsWithContext(ctx context.Context, getIamPermissionsOptions *GetIamPermissionsOptions) (result []CheckedIamPermission, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getIamPermissionsOptions, "getIamPermissionsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getIamPermissionsOptions, "getIamPermissionsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"version_loc_id": *getIamPermissionsOptions.VersionLocID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/iamPermissions`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getIamPermissionsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetIamPermissions")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse []json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_iam_permissions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCheckedIamPermission)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
 
 	return
 }
@@ -3133,23 +4298,27 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAboutWithContext(ctx co
 // GetOfferingLicense : Get version license content
 // Get the license content for the specified license ID in the specified version.
 func (catalogManagement *CatalogManagementV1) GetOfferingLicense(getOfferingLicenseOptions *GetOfferingLicenseOptions) (result *string, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOfferingLicenseWithContext(context.Background(), getOfferingLicenseOptions)
+	result, response, err = catalogManagement.GetOfferingLicenseWithContext(context.Background(), getOfferingLicenseOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOfferingLicenseWithContext is an alternate form of the GetOfferingLicense method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetOfferingLicenseWithContext(ctx context.Context, getOfferingLicenseOptions *GetOfferingLicenseOptions) (result *string, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOfferingLicenseOptions, "getOfferingLicenseOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOfferingLicenseOptions, "getOfferingLicenseOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"version_loc_id": *getOfferingLicenseOptions.VersionLocID,
-		"license_id": *getOfferingLicenseOptions.LicenseID,
+		"license_id":     *getOfferingLicenseOptions.LicenseID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -3157,6 +4326,7 @@ func (catalogManagement *CatalogManagementV1) GetOfferingLicenseWithContext(ctx 
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/licenses/{license_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3172,10 +4342,16 @@ func (catalogManagement *CatalogManagementV1) GetOfferingLicenseWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_license", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3184,17 +4360,21 @@ func (catalogManagement *CatalogManagementV1) GetOfferingLicenseWithContext(ctx 
 // Get the list of container images associated with the specified version. The "image_manifest_url" property of the
 // version should be the URL for the image manifest, and the operation will return that content.
 func (catalogManagement *CatalogManagementV1) GetOfferingContainerImages(getOfferingContainerImagesOptions *GetOfferingContainerImagesOptions) (result *ImageManifest, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOfferingContainerImagesWithContext(context.Background(), getOfferingContainerImagesOptions)
+	result, response, err = catalogManagement.GetOfferingContainerImagesWithContext(context.Background(), getOfferingContainerImagesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOfferingContainerImagesWithContext is an alternate form of the GetOfferingContainerImages method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetOfferingContainerImagesWithContext(ctx context.Context, getOfferingContainerImagesOptions *GetOfferingContainerImagesOptions) (result *ImageManifest, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOfferingContainerImagesOptions, "getOfferingContainerImagesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOfferingContainerImagesOptions, "getOfferingContainerImagesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3207,6 +4387,7 @@ func (catalogManagement *CatalogManagementV1) GetOfferingContainerImagesWithCont
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/containerImages`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3222,17 +4403,21 @@ func (catalogManagement *CatalogManagementV1) GetOfferingContainerImagesWithCont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_container_images", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImageManifest)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3244,17 +4429,21 @@ func (catalogManagement *CatalogManagementV1) GetOfferingContainerImagesWithCont
 // ArchiveVersion : Archive version immediately
 // Archive the specified version.
 func (catalogManagement *CatalogManagementV1) ArchiveVersion(archiveVersionOptions *ArchiveVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.ArchiveVersionWithContext(context.Background(), archiveVersionOptions)
+	response, err = catalogManagement.ArchiveVersionWithContext(context.Background(), archiveVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ArchiveVersionWithContext is an alternate form of the ArchiveVersion method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ArchiveVersionWithContext(ctx context.Context, archiveVersionOptions *ArchiveVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(archiveVersionOptions, "archiveVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(archiveVersionOptions, "archiveVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3267,6 +4456,7 @@ func (catalogManagement *CatalogManagementV1) ArchiveVersionWithContext(ctx cont
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/archive`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3281,10 +4471,16 @@ func (catalogManagement *CatalogManagementV1) ArchiveVersionWithContext(ctx cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "archive_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3292,23 +4488,27 @@ func (catalogManagement *CatalogManagementV1) ArchiveVersionWithContext(ctx cont
 // SetDeprecateVersion : Sets version to be deprecated in a certain time period
 // Set or cancel the version to be deprecated.
 func (catalogManagement *CatalogManagementV1) SetDeprecateVersion(setDeprecateVersionOptions *SetDeprecateVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.SetDeprecateVersionWithContext(context.Background(), setDeprecateVersionOptions)
+	response, err = catalogManagement.SetDeprecateVersionWithContext(context.Background(), setDeprecateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SetDeprecateVersionWithContext is an alternate form of the SetDeprecateVersion method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) SetDeprecateVersionWithContext(ctx context.Context, setDeprecateVersionOptions *SetDeprecateVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(setDeprecateVersionOptions, "setDeprecateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(setDeprecateVersionOptions, "setDeprecateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"version_loc_id": *setDeprecateVersionOptions.VersionLocID,
-		"setting": *setDeprecateVersionOptions.Setting,
+		"setting":        *setDeprecateVersionOptions.Setting,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -3316,6 +4516,7 @@ func (catalogManagement *CatalogManagementV1) SetDeprecateVersionWithContext(ctx
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/deprecate/{setting}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3338,15 +4539,22 @@ func (catalogManagement *CatalogManagementV1) SetDeprecateVersionWithContext(ctx
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "set_deprecate_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3354,17 +4562,21 @@ func (catalogManagement *CatalogManagementV1) SetDeprecateVersionWithContext(ctx
 // ConsumableVersion : Make version consumable for sharing
 // Set the version as consumable in order to inherit the offering sharing permissions.
 func (catalogManagement *CatalogManagementV1) ConsumableVersion(consumableVersionOptions *ConsumableVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.ConsumableVersionWithContext(context.Background(), consumableVersionOptions)
+	response, err = catalogManagement.ConsumableVersionWithContext(context.Background(), consumableVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ConsumableVersionWithContext is an alternate form of the ConsumableVersion method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ConsumableVersionWithContext(ctx context.Context, consumableVersionOptions *ConsumableVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(consumableVersionOptions, "consumableVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(consumableVersionOptions, "consumableVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3377,6 +4589,7 @@ func (catalogManagement *CatalogManagementV1) ConsumableVersionWithContext(ctx c
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/consume-publish`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3391,28 +4604,38 @@ func (catalogManagement *CatalogManagementV1) ConsumableVersionWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "consumable_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
-// PrereleaseVersion : Make version prerelease for sharing
-// Set the version as prerelease in order to inherit the offering sharing permissions.
+// PrereleaseVersion : Make version prerelease
+// Set the version as prerelease.
 func (catalogManagement *CatalogManagementV1) PrereleaseVersion(prereleaseVersionOptions *PrereleaseVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.PrereleaseVersionWithContext(context.Background(), prereleaseVersionOptions)
+	response, err = catalogManagement.PrereleaseVersionWithContext(context.Background(), prereleaseVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PrereleaseVersionWithContext is an alternate form of the PrereleaseVersion method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) PrereleaseVersionWithContext(ctx context.Context, prereleaseVersionOptions *PrereleaseVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(prereleaseVersionOptions, "prereleaseVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(prereleaseVersionOptions, "prereleaseVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3425,6 +4648,7 @@ func (catalogManagement *CatalogManagementV1) PrereleaseVersionWithContext(ctx c
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/prerelease-publish`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3439,10 +4663,16 @@ func (catalogManagement *CatalogManagementV1) PrereleaseVersionWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "prerelease_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3450,17 +4680,21 @@ func (catalogManagement *CatalogManagementV1) PrereleaseVersionWithContext(ctx c
 // SuspendVersion : Suspend a version
 // Limits the visibility of a version by moving a version state from consumable back to validated.
 func (catalogManagement *CatalogManagementV1) SuspendVersion(suspendVersionOptions *SuspendVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.SuspendVersionWithContext(context.Background(), suspendVersionOptions)
+	response, err = catalogManagement.SuspendVersionWithContext(context.Background(), suspendVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SuspendVersionWithContext is an alternate form of the SuspendVersion method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) SuspendVersionWithContext(ctx context.Context, suspendVersionOptions *SuspendVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(suspendVersionOptions, "suspendVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(suspendVersionOptions, "suspendVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3473,6 +4707,7 @@ func (catalogManagement *CatalogManagementV1) SuspendVersionWithContext(ctx cont
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/suspend`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3487,10 +4722,16 @@ func (catalogManagement *CatalogManagementV1) SuspendVersionWithContext(ctx cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "suspend_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3498,17 +4739,21 @@ func (catalogManagement *CatalogManagementV1) SuspendVersionWithContext(ctx cont
 // CommitVersion : Commit version
 // Commit a working copy of the specified version.
 func (catalogManagement *CatalogManagementV1) CommitVersion(commitVersionOptions *CommitVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.CommitVersionWithContext(context.Background(), commitVersionOptions)
+	response, err = catalogManagement.CommitVersionWithContext(context.Background(), commitVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CommitVersionWithContext is an alternate form of the CommitVersion method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) CommitVersionWithContext(ctx context.Context, commitVersionOptions *CommitVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(commitVersionOptions, "commitVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(commitVersionOptions, "commitVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3521,6 +4766,7 @@ func (catalogManagement *CatalogManagementV1) CommitVersionWithContext(ctx conte
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/commit`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3535,10 +4781,16 @@ func (catalogManagement *CatalogManagementV1) CommitVersionWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "commit_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3546,17 +4798,21 @@ func (catalogManagement *CatalogManagementV1) CommitVersionWithContext(ctx conte
 // CopyVersion : Copy version to new target kind
 // Copy the specified version to a new target kind within the same offering.
 func (catalogManagement *CatalogManagementV1) CopyVersion(copyVersionOptions *CopyVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.CopyVersionWithContext(context.Background(), copyVersionOptions)
+	response, err = catalogManagement.CopyVersionWithContext(context.Background(), copyVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CopyVersionWithContext is an alternate form of the CopyVersion method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) CopyVersionWithContext(ctx context.Context, copyVersionOptions *CopyVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(copyVersionOptions, "copyVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(copyVersionOptions, "copyVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3569,6 +4825,7 @@ func (catalogManagement *CatalogManagementV1) CopyVersionWithContext(ctx context
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/copy`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3601,17 +4858,27 @@ func (catalogManagement *CatalogManagementV1) CopyVersionWithContext(ctx context
 	if copyVersionOptions.WorkingDirectory != nil {
 		body["working_directory"] = copyVersionOptions.WorkingDirectory
 	}
+	if copyVersionOptions.InstallType != nil {
+		body["install_type"] = copyVersionOptions.InstallType
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "copy_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3619,17 +4886,21 @@ func (catalogManagement *CatalogManagementV1) CopyVersionWithContext(ctx context
 // GetOfferingWorkingCopy : Create working copy of version
 // Create a working copy of the specified version.
 func (catalogManagement *CatalogManagementV1) GetOfferingWorkingCopy(getOfferingWorkingCopyOptions *GetOfferingWorkingCopyOptions) (result *Version, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOfferingWorkingCopyWithContext(context.Background(), getOfferingWorkingCopyOptions)
+	result, response, err = catalogManagement.GetOfferingWorkingCopyWithContext(context.Background(), getOfferingWorkingCopyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOfferingWorkingCopyWithContext is an alternate form of the GetOfferingWorkingCopy method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetOfferingWorkingCopyWithContext(ctx context.Context, getOfferingWorkingCopyOptions *GetOfferingWorkingCopyOptions) (result *Version, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOfferingWorkingCopyOptions, "getOfferingWorkingCopyOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOfferingWorkingCopyOptions, "getOfferingWorkingCopyOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3642,6 +4913,7 @@ func (catalogManagement *CatalogManagementV1) GetOfferingWorkingCopyWithContext(
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/workingcopy`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3657,17 +4929,21 @@ func (catalogManagement *CatalogManagementV1) GetOfferingWorkingCopyWithContext(
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_working_copy", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVersion)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3679,23 +4955,27 @@ func (catalogManagement *CatalogManagementV1) GetOfferingWorkingCopyWithContext(
 // CopyFromPreviousVersion : Copy values from a previous version
 // Copy values from a specified previous version.
 func (catalogManagement *CatalogManagementV1) CopyFromPreviousVersion(copyFromPreviousVersionOptions *CopyFromPreviousVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.CopyFromPreviousVersionWithContext(context.Background(), copyFromPreviousVersionOptions)
+	response, err = catalogManagement.CopyFromPreviousVersionWithContext(context.Background(), copyFromPreviousVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CopyFromPreviousVersionWithContext is an alternate form of the CopyFromPreviousVersion method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) CopyFromPreviousVersionWithContext(ctx context.Context, copyFromPreviousVersionOptions *CopyFromPreviousVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(copyFromPreviousVersionOptions, "copyFromPreviousVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(copyFromPreviousVersionOptions, "copyFromPreviousVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"version_loc_id": *copyFromPreviousVersionOptions.VersionLocID,
-		"type": *copyFromPreviousVersionOptions.Type,
+		"version_loc_id":              *copyFromPreviousVersionOptions.VersionLocID,
+		"type":                        *copyFromPreviousVersionOptions.Type,
 		"version_loc_id_to_copy_from": *copyFromPreviousVersionOptions.VersionLocIDToCopyFrom,
 	}
 
@@ -3704,6 +4984,7 @@ func (catalogManagement *CatalogManagementV1) CopyFromPreviousVersionWithContext
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/copy/{type}/{version_loc_id_to_copy_from}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3718,10 +4999,99 @@ func (catalogManagement *CatalogManagementV1) CopyFromPreviousVersionWithContext
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "copy_from_previous_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// ValidateInputs : Validates deployment input variables
+// Validates deployment input variables.
+func (catalogManagement *CatalogManagementV1) ValidateInputs(validateInputsOptions *ValidateInputsOptions) (result *VersionInputValidationResponse, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.ValidateInputsWithContext(context.Background(), validateInputsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ValidateInputsWithContext is an alternate form of the ValidateInputs method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ValidateInputsWithContext(ctx context.Context, validateInputsOptions *ValidateInputsOptions) (result *VersionInputValidationResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(validateInputsOptions, "validateInputsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(validateInputsOptions, "validateInputsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"version_loc_id": *validateInputsOptions.VersionLocID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/validateInputs`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range validateInputsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ValidateInputs")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if validateInputsOptions.Input1 != nil {
+		body["input1"] = validateInputsOptions.Input1
+	}
+	if validateInputsOptions.Input2 != nil {
+		body["input2"] = validateInputsOptions.Input2
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "validate_inputs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVersionInputValidationResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
 
 	return
 }
@@ -3729,17 +5099,21 @@ func (catalogManagement *CatalogManagementV1) CopyFromPreviousVersionWithContext
 // GetVersion : Get offering/kind/version 'branch'
 // Get the Offering/Kind/Version 'branch' for the specified locator ID.
 func (catalogManagement *CatalogManagementV1) GetVersion(getVersionOptions *GetVersionOptions) (result *Offering, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetVersionWithContext(context.Background(), getVersionOptions)
+	result, response, err = catalogManagement.GetVersionWithContext(context.Background(), getVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetVersionWithContext is an alternate form of the GetVersion method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetVersionWithContext(ctx context.Context, getVersionOptions *GetVersionOptions) (result *Offering, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getVersionOptions, "getVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getVersionOptions, "getVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3752,6 +5126,7 @@ func (catalogManagement *CatalogManagementV1) GetVersionWithContext(ctx context.
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3767,17 +5142,317 @@ func (catalogManagement *CatalogManagementV1) GetVersionWithContext(ctx context.
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOffering)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateVersion : Update a version
+// Update the version for the specified locator ID using an offering 'branch'.  Note that any changes to the Offering
+// and Kind in the provided Offering 'branch' are discarded.
+func (catalogManagement *CatalogManagementV1) UpdateVersion(updateVersionOptions *UpdateVersionOptions) (result *Offering, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.UpdateVersionWithContext(context.Background(), updateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateVersionWithContext is an alternate form of the UpdateVersion method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) UpdateVersionWithContext(ctx context.Context, updateVersionOptions *UpdateVersionOptions) (result *Offering, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateVersionOptions, "updateVersionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateVersionOptions, "updateVersionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"version_loc_id": *updateVersionOptions.VersionLocID,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "UpdateVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if updateVersionOptions.ID != nil {
+		body["id"] = updateVersionOptions.ID
+	}
+	if updateVersionOptions.Rev != nil {
+		body["_rev"] = updateVersionOptions.Rev
+	}
+	if updateVersionOptions.URL != nil {
+		body["url"] = updateVersionOptions.URL
+	}
+	if updateVersionOptions.CRN != nil {
+		body["crn"] = updateVersionOptions.CRN
+	}
+	if updateVersionOptions.Label != nil {
+		body["label"] = updateVersionOptions.Label
+	}
+	if updateVersionOptions.LabelI18n != nil {
+		body["label_i18n"] = updateVersionOptions.LabelI18n
+	}
+	if updateVersionOptions.Name != nil {
+		body["name"] = updateVersionOptions.Name
+	}
+	if updateVersionOptions.OfferingIconURL != nil {
+		body["offering_icon_url"] = updateVersionOptions.OfferingIconURL
+	}
+	if updateVersionOptions.OfferingDocsURL != nil {
+		body["offering_docs_url"] = updateVersionOptions.OfferingDocsURL
+	}
+	if updateVersionOptions.OfferingSupportURL != nil {
+		body["offering_support_url"] = updateVersionOptions.OfferingSupportURL
+	}
+	if updateVersionOptions.Tags != nil {
+		body["tags"] = updateVersionOptions.Tags
+	}
+	if updateVersionOptions.Keywords != nil {
+		body["keywords"] = updateVersionOptions.Keywords
+	}
+	if updateVersionOptions.Rating != nil {
+		body["rating"] = updateVersionOptions.Rating
+	}
+	if updateVersionOptions.Created != nil {
+		body["created"] = updateVersionOptions.Created
+	}
+	if updateVersionOptions.Updated != nil {
+		body["updated"] = updateVersionOptions.Updated
+	}
+	if updateVersionOptions.ShortDescription != nil {
+		body["short_description"] = updateVersionOptions.ShortDescription
+	}
+	if updateVersionOptions.ShortDescriptionI18n != nil {
+		body["short_description_i18n"] = updateVersionOptions.ShortDescriptionI18n
+	}
+	if updateVersionOptions.LongDescription != nil {
+		body["long_description"] = updateVersionOptions.LongDescription
+	}
+	if updateVersionOptions.LongDescriptionI18n != nil {
+		body["long_description_i18n"] = updateVersionOptions.LongDescriptionI18n
+	}
+	if updateVersionOptions.Features != nil {
+		body["features"] = updateVersionOptions.Features
+	}
+	if updateVersionOptions.Kinds != nil {
+		body["kinds"] = updateVersionOptions.Kinds
+	}
+	if updateVersionOptions.Publish != nil {
+		body["publish"] = updateVersionOptions.Publish
+	}
+	if updateVersionOptions.PcManaged != nil {
+		body["pc_managed"] = updateVersionOptions.PcManaged
+	}
+	if updateVersionOptions.PublishApproved != nil {
+		body["publish_approved"] = updateVersionOptions.PublishApproved
+	}
+	if updateVersionOptions.ShareWithAll != nil {
+		body["share_with_all"] = updateVersionOptions.ShareWithAll
+	}
+	if updateVersionOptions.ShareWithIBM != nil {
+		body["share_with_ibm"] = updateVersionOptions.ShareWithIBM
+	}
+	if updateVersionOptions.ShareEnabled != nil {
+		body["share_enabled"] = updateVersionOptions.ShareEnabled
+	}
+	if updateVersionOptions.PublicOriginalCRN != nil {
+		body["public_original_crn"] = updateVersionOptions.PublicOriginalCRN
+	}
+	if updateVersionOptions.PublishPublicCRN != nil {
+		body["publish_public_crn"] = updateVersionOptions.PublishPublicCRN
+	}
+	if updateVersionOptions.PortalApprovalRecord != nil {
+		body["portal_approval_record"] = updateVersionOptions.PortalApprovalRecord
+	}
+	if updateVersionOptions.PortalUIURL != nil {
+		body["portal_ui_url"] = updateVersionOptions.PortalUIURL
+	}
+	if updateVersionOptions.CatalogID != nil {
+		body["catalog_id"] = updateVersionOptions.CatalogID
+	}
+	if updateVersionOptions.CatalogName != nil {
+		body["catalog_name"] = updateVersionOptions.CatalogName
+	}
+	if updateVersionOptions.Metadata != nil {
+		body["metadata"] = updateVersionOptions.Metadata
+	}
+	if updateVersionOptions.Disclaimer != nil {
+		body["disclaimer"] = updateVersionOptions.Disclaimer
+	}
+	if updateVersionOptions.Hidden != nil {
+		body["hidden"] = updateVersionOptions.Hidden
+	}
+	if updateVersionOptions.Provider != nil {
+		body["provider"] = updateVersionOptions.Provider
+	}
+	if updateVersionOptions.ProviderInfo != nil {
+		body["provider_info"] = updateVersionOptions.ProviderInfo
+	}
+	if updateVersionOptions.RepoInfo != nil {
+		body["repo_info"] = updateVersionOptions.RepoInfo
+	}
+	if updateVersionOptions.ImagePullKeys != nil {
+		body["image_pull_keys"] = updateVersionOptions.ImagePullKeys
+	}
+	if updateVersionOptions.Support != nil {
+		body["support"] = updateVersionOptions.Support
+	}
+	if updateVersionOptions.Media != nil {
+		body["media"] = updateVersionOptions.Media
+	}
+	if updateVersionOptions.DeprecatePending != nil {
+		body["deprecate_pending"] = updateVersionOptions.DeprecatePending
+	}
+	if updateVersionOptions.ProductKind != nil {
+		body["product_kind"] = updateVersionOptions.ProductKind
+	}
+	if updateVersionOptions.Badges != nil {
+		body["badges"] = updateVersionOptions.Badges
+	}
+	if updateVersionOptions.Plans != nil {
+		body["plans"] = updateVersionOptions.Plans
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOffering)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// PatchUpdateVersion : Update a version
+// Update a version using a JSONPatch document as defined by RFC 6902.  Note that the path must always reference
+// '/kinds/0/versions/0/...'.
+func (catalogManagement *CatalogManagementV1) PatchUpdateVersion(patchUpdateVersionOptions *PatchUpdateVersionOptions) (result *Offering, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.PatchUpdateVersionWithContext(context.Background(), patchUpdateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// PatchUpdateVersionWithContext is an alternate form of the PatchUpdateVersion method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) PatchUpdateVersionWithContext(ctx context.Context, patchUpdateVersionOptions *PatchUpdateVersionOptions) (result *Offering, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(patchUpdateVersionOptions, "patchUpdateVersionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(patchUpdateVersionOptions, "patchUpdateVersionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"version_loc_id": *patchUpdateVersionOptions.VersionLocID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range patchUpdateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "PatchUpdateVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json-patch+json")
+	if patchUpdateVersionOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*patchUpdateVersionOptions.IfMatch))
+	}
+
+	_, err = builder.SetBodyContentJSON(patchUpdateVersionOptions.Updates)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "patch_update_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOffering)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3790,17 +5465,21 @@ func (catalogManagement *CatalogManagementV1) GetVersionWithContext(ctx context.
 // Delete the specified version.  If the version is an active version with a working copy, the working copy will be
 // deleted as well.
 func (catalogManagement *CatalogManagementV1) DeleteVersion(deleteVersionOptions *DeleteVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.DeleteVersionWithContext(context.Background(), deleteVersionOptions)
+	response, err = catalogManagement.DeleteVersionWithContext(context.Background(), deleteVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteVersionWithContext is an alternate form of the DeleteVersion method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) DeleteVersionWithContext(ctx context.Context, deleteVersionOptions *DeleteVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteVersionOptions, "deleteVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteVersionOptions, "deleteVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3813,6 +5492,7 @@ func (catalogManagement *CatalogManagementV1) DeleteVersionWithContext(ctx conte
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3827,10 +5507,85 @@ func (catalogManagement *CatalogManagementV1) DeleteVersionWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetVersionDependencies : Get offering/kind/version 'dependencies'
+// Get the latest version of all offerings/variations that depends on this version locator.
+func (catalogManagement *CatalogManagementV1) GetVersionDependencies(getVersionDependenciesOptions *GetVersionDependenciesOptions) (result *VersionDependant, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.GetVersionDependenciesWithContext(context.Background(), getVersionDependenciesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetVersionDependenciesWithContext is an alternate form of the GetVersionDependencies method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetVersionDependenciesWithContext(ctx context.Context, getVersionDependenciesOptions *GetVersionDependenciesOptions) (result *VersionDependant, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getVersionDependenciesOptions, "getVersionDependenciesOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getVersionDependenciesOptions, "getVersionDependenciesOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"version_loc_id": *getVersionDependenciesOptions.VersionLocID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/dependencies`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getVersionDependenciesOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetVersionDependencies")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_version_dependencies", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVersionDependant)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
 
 	return
 }
@@ -3839,7 +5594,9 @@ func (catalogManagement *CatalogManagementV1) DeleteVersionWithContext(ctx conte
 // Deprecate the specified version.
 // Deprecated: this method is deprecated and may be removed in a future release.
 func (catalogManagement *CatalogManagementV1) DeprecateVersion(deprecateVersionOptions *DeprecateVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.DeprecateVersionWithContext(context.Background(), deprecateVersionOptions)
+	response, err = catalogManagement.DeprecateVersionWithContext(context.Background(), deprecateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeprecateVersionWithContext is an alternate form of the DeprecateVersion method which supports a Context parameter
@@ -3848,10 +5605,12 @@ func (catalogManagement *CatalogManagementV1) DeprecateVersionWithContext(ctx co
 	core.GetLogger().Warn("A deprecated operation has been invoked: DeprecateVersion")
 	err = core.ValidateNotNil(deprecateVersionOptions, "deprecateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deprecateVersionOptions, "deprecateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3864,6 +5623,7 @@ func (catalogManagement *CatalogManagementV1) DeprecateVersionWithContext(ctx co
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/deprecate`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3878,10 +5638,16 @@ func (catalogManagement *CatalogManagementV1) DeprecateVersionWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "deprecate_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3889,17 +5655,21 @@ func (catalogManagement *CatalogManagementV1) DeprecateVersionWithContext(ctx co
 // GetCluster : Get kubernetes cluster
 // Get the contents of the specified kubernetes cluster.
 func (catalogManagement *CatalogManagementV1) GetCluster(getClusterOptions *GetClusterOptions) (result *ClusterInfo, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetClusterWithContext(context.Background(), getClusterOptions)
+	result, response, err = catalogManagement.GetClusterWithContext(context.Background(), getClusterOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetClusterWithContext is an alternate form of the GetCluster method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetClusterWithContext(ctx context.Context, getClusterOptions *GetClusterOptions) (result *ClusterInfo, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getClusterOptions, "getClusterOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getClusterOptions, "getClusterOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3912,6 +5682,7 @@ func (catalogManagement *CatalogManagementV1) GetClusterWithContext(ctx context.
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/deploy/kubernetes/clusters/{cluster_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3932,17 +5703,21 @@ func (catalogManagement *CatalogManagementV1) GetClusterWithContext(ctx context.
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_cluster", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalClusterInfo)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3954,17 +5729,21 @@ func (catalogManagement *CatalogManagementV1) GetClusterWithContext(ctx context.
 // GetNamespaces : Get cluster namespaces
 // Get the namespaces associated with the specified kubernetes cluster.
 func (catalogManagement *CatalogManagementV1) GetNamespaces(getNamespacesOptions *GetNamespacesOptions) (result *NamespaceSearchResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetNamespacesWithContext(context.Background(), getNamespacesOptions)
+	result, response, err = catalogManagement.GetNamespacesWithContext(context.Background(), getNamespacesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetNamespacesWithContext is an alternate form of the GetNamespaces method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetNamespacesWithContext(ctx context.Context, getNamespacesOptions *GetNamespacesOptions) (result *NamespaceSearchResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getNamespacesOptions, "getNamespacesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getNamespacesOptions, "getNamespacesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3977,6 +5756,7 @@ func (catalogManagement *CatalogManagementV1) GetNamespacesWithContext(ctx conte
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/deploy/kubernetes/clusters/{cluster_id}/namespaces`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4003,17 +5783,21 @@ func (catalogManagement *CatalogManagementV1) GetNamespacesWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_namespaces", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalNamespaceSearchResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4025,17 +5809,21 @@ func (catalogManagement *CatalogManagementV1) GetNamespacesWithContext(ctx conte
 // DeployOperators : Deploy operators
 // Deploy operators on a kubernetes cluster.
 func (catalogManagement *CatalogManagementV1) DeployOperators(deployOperatorsOptions *DeployOperatorsOptions) (result []OperatorDeployResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.DeployOperatorsWithContext(context.Background(), deployOperatorsOptions)
+	result, response, err = catalogManagement.DeployOperatorsWithContext(context.Background(), deployOperatorsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeployOperatorsWithContext is an alternate form of the DeployOperators method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) DeployOperatorsWithContext(ctx context.Context, deployOperatorsOptions *DeployOperatorsOptions) (result []OperatorDeployResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deployOperatorsOptions, "deployOperatorsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deployOperatorsOptions, "deployOperatorsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4044,6 +5832,7 @@ func (catalogManagement *CatalogManagementV1) DeployOperatorsWithContext(ctx con
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/deploy/kubernetes/olm/operator`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4085,22 +5874,27 @@ func (catalogManagement *CatalogManagementV1) DeployOperatorsWithContext(ctx con
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse []json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "deploy_operators", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOperatorDeployResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4112,17 +5906,21 @@ func (catalogManagement *CatalogManagementV1) DeployOperatorsWithContext(ctx con
 // ListOperators : List operators
 // List the operators from a kubernetes cluster.
 func (catalogManagement *CatalogManagementV1) ListOperators(listOperatorsOptions *ListOperatorsOptions) (result []OperatorDeployResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.ListOperatorsWithContext(context.Background(), listOperatorsOptions)
+	result, response, err = catalogManagement.ListOperatorsWithContext(context.Background(), listOperatorsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListOperatorsWithContext is an alternate form of the ListOperators method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ListOperatorsWithContext(ctx context.Context, listOperatorsOptions *ListOperatorsOptions) (result []OperatorDeployResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listOperatorsOptions, "listOperatorsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listOperatorsOptions, "listOperatorsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4131,6 +5929,7 @@ func (catalogManagement *CatalogManagementV1) ListOperatorsWithContext(ctx conte
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/deploy/kubernetes/olm/operator`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4153,17 +5952,21 @@ func (catalogManagement *CatalogManagementV1) ListOperatorsWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse []json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_operators", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOperatorDeployResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4175,17 +5978,21 @@ func (catalogManagement *CatalogManagementV1) ListOperatorsWithContext(ctx conte
 // ReplaceOperators : Update operators
 // Update the operators on a kubernetes cluster.
 func (catalogManagement *CatalogManagementV1) ReplaceOperators(replaceOperatorsOptions *ReplaceOperatorsOptions) (result []OperatorDeployResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.ReplaceOperatorsWithContext(context.Background(), replaceOperatorsOptions)
+	result, response, err = catalogManagement.ReplaceOperatorsWithContext(context.Background(), replaceOperatorsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ReplaceOperatorsWithContext is an alternate form of the ReplaceOperators method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ReplaceOperatorsWithContext(ctx context.Context, replaceOperatorsOptions *ReplaceOperatorsOptions) (result []OperatorDeployResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(replaceOperatorsOptions, "replaceOperatorsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(replaceOperatorsOptions, "replaceOperatorsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4194,6 +6001,7 @@ func (catalogManagement *CatalogManagementV1) ReplaceOperatorsWithContext(ctx co
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/deploy/kubernetes/olm/operator`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4235,22 +6043,27 @@ func (catalogManagement *CatalogManagementV1) ReplaceOperatorsWithContext(ctx co
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse []json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "replace_operators", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOperatorDeployResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4262,17 +6075,21 @@ func (catalogManagement *CatalogManagementV1) ReplaceOperatorsWithContext(ctx co
 // DeleteOperators : Delete operators
 // Delete operators from a kubernetes cluster.
 func (catalogManagement *CatalogManagementV1) DeleteOperators(deleteOperatorsOptions *DeleteOperatorsOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.DeleteOperatorsWithContext(context.Background(), deleteOperatorsOptions)
+	response, err = catalogManagement.DeleteOperatorsWithContext(context.Background(), deleteOperatorsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteOperatorsWithContext is an alternate form of the DeleteOperators method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) DeleteOperatorsWithContext(ctx context.Context, deleteOperatorsOptions *DeleteOperatorsOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteOperatorsOptions, "deleteOperatorsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteOperatorsOptions, "deleteOperatorsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4281,6 +6098,7 @@ func (catalogManagement *CatalogManagementV1) DeleteOperatorsWithContext(ctx con
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/deploy/kubernetes/olm/operator`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4302,10 +6120,16 @@ func (catalogManagement *CatalogManagementV1) DeleteOperatorsWithContext(ctx con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_operators", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -4313,17 +6137,21 @@ func (catalogManagement *CatalogManagementV1) DeleteOperatorsWithContext(ctx con
 // InstallVersion : Install version
 // Create an install for the specified version.
 func (catalogManagement *CatalogManagementV1) InstallVersion(installVersionOptions *InstallVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.InstallVersionWithContext(context.Background(), installVersionOptions)
+	response, err = catalogManagement.InstallVersionWithContext(context.Background(), installVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // InstallVersionWithContext is an alternate form of the InstallVersion method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) InstallVersionWithContext(ctx context.Context, installVersionOptions *InstallVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(installVersionOptions, "installVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(installVersionOptions, "installVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4336,6 +6164,7 @@ func (catalogManagement *CatalogManagementV1) InstallVersionWithContext(ctx cont
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/install`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4362,8 +6191,17 @@ func (catalogManagement *CatalogManagementV1) InstallVersionWithContext(ctx cont
 	if installVersionOptions.Namespace != nil {
 		body["namespace"] = installVersionOptions.Namespace
 	}
+	if installVersionOptions.Namespaces != nil {
+		body["namespaces"] = installVersionOptions.Namespaces
+	}
+	if installVersionOptions.AllNamespaces != nil {
+		body["all_namespaces"] = installVersionOptions.AllNamespaces
+	}
 	if installVersionOptions.OverrideValues != nil {
 		body["override_values"] = installVersionOptions.OverrideValues
+	}
+	if installVersionOptions.DependencyConfigs != nil {
+		body["dependency_configs"] = installVersionOptions.DependencyConfigs
 	}
 	if installVersionOptions.EnvironmentVariables != nil {
 		body["environment_variables"] = installVersionOptions.EnvironmentVariables
@@ -4398,17 +6236,33 @@ func (catalogManagement *CatalogManagementV1) InstallVersionWithContext(ctx cont
 	if installVersionOptions.VcenterDatastore != nil {
 		body["vcenter_datastore"] = installVersionOptions.VcenterDatastore
 	}
+	if installVersionOptions.PlanID != nil {
+		body["plan_id"] = installVersionOptions.PlanID
+	}
+	if installVersionOptions.Channel != nil {
+		body["channel"] = installVersionOptions.Channel
+	}
+	if installVersionOptions.InstallPlan != nil {
+		body["install_plan"] = installVersionOptions.InstallPlan
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "install_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -4416,17 +6270,21 @@ func (catalogManagement *CatalogManagementV1) InstallVersionWithContext(ctx cont
 // PreinstallVersion : Pre-install version
 // Create a pre-install for the specified version.
 func (catalogManagement *CatalogManagementV1) PreinstallVersion(preinstallVersionOptions *PreinstallVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.PreinstallVersionWithContext(context.Background(), preinstallVersionOptions)
+	response, err = catalogManagement.PreinstallVersionWithContext(context.Background(), preinstallVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PreinstallVersionWithContext is an alternate form of the PreinstallVersion method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) PreinstallVersionWithContext(ctx context.Context, preinstallVersionOptions *PreinstallVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(preinstallVersionOptions, "preinstallVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(preinstallVersionOptions, "preinstallVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4439,6 +6297,7 @@ func (catalogManagement *CatalogManagementV1) PreinstallVersionWithContext(ctx c
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/preinstall`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4465,8 +6324,17 @@ func (catalogManagement *CatalogManagementV1) PreinstallVersionWithContext(ctx c
 	if preinstallVersionOptions.Namespace != nil {
 		body["namespace"] = preinstallVersionOptions.Namespace
 	}
+	if preinstallVersionOptions.Namespaces != nil {
+		body["namespaces"] = preinstallVersionOptions.Namespaces
+	}
+	if preinstallVersionOptions.AllNamespaces != nil {
+		body["all_namespaces"] = preinstallVersionOptions.AllNamespaces
+	}
 	if preinstallVersionOptions.OverrideValues != nil {
 		body["override_values"] = preinstallVersionOptions.OverrideValues
+	}
+	if preinstallVersionOptions.DependencyConfigs != nil {
+		body["dependency_configs"] = preinstallVersionOptions.DependencyConfigs
 	}
 	if preinstallVersionOptions.EnvironmentVariables != nil {
 		body["environment_variables"] = preinstallVersionOptions.EnvironmentVariables
@@ -4501,17 +6369,33 @@ func (catalogManagement *CatalogManagementV1) PreinstallVersionWithContext(ctx c
 	if preinstallVersionOptions.VcenterDatastore != nil {
 		body["vcenter_datastore"] = preinstallVersionOptions.VcenterDatastore
 	}
+	if preinstallVersionOptions.PlanID != nil {
+		body["plan_id"] = preinstallVersionOptions.PlanID
+	}
+	if preinstallVersionOptions.Channel != nil {
+		body["channel"] = preinstallVersionOptions.Channel
+	}
+	if preinstallVersionOptions.InstallPlan != nil {
+		body["install_plan"] = preinstallVersionOptions.InstallPlan
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "preinstall_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -4519,17 +6403,21 @@ func (catalogManagement *CatalogManagementV1) PreinstallVersionWithContext(ctx c
 // GetPreinstall : Get version pre-install status
 // Get the pre-install status for the specified version.
 func (catalogManagement *CatalogManagementV1) GetPreinstall(getPreinstallOptions *GetPreinstallOptions) (result *InstallStatus, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetPreinstallWithContext(context.Background(), getPreinstallOptions)
+	result, response, err = catalogManagement.GetPreinstallWithContext(context.Background(), getPreinstallOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetPreinstallWithContext is an alternate form of the GetPreinstall method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetPreinstallWithContext(ctx context.Context, getPreinstallOptions *GetPreinstallOptions) (result *InstallStatus, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getPreinstallOptions, "getPreinstallOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getPreinstallOptions, "getPreinstallOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4542,6 +6430,7 @@ func (catalogManagement *CatalogManagementV1) GetPreinstallWithContext(ctx conte
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/preinstall`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4570,17 +6459,21 @@ func (catalogManagement *CatalogManagementV1) GetPreinstallWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_preinstall", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalInstallStatus)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4592,17 +6485,21 @@ func (catalogManagement *CatalogManagementV1) GetPreinstallWithContext(ctx conte
 // ValidateInstall : Validate offering
 // Validate the offering associated with the specified version.
 func (catalogManagement *CatalogManagementV1) ValidateInstall(validateInstallOptions *ValidateInstallOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.ValidateInstallWithContext(context.Background(), validateInstallOptions)
+	response, err = catalogManagement.ValidateInstallWithContext(context.Background(), validateInstallOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ValidateInstallWithContext is an alternate form of the ValidateInstall method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ValidateInstallWithContext(ctx context.Context, validateInstallOptions *ValidateInstallOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(validateInstallOptions, "validateInstallOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(validateInstallOptions, "validateInstallOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4615,6 +6512,7 @@ func (catalogManagement *CatalogManagementV1) ValidateInstallWithContext(ctx con
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/validation/install`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4645,8 +6543,17 @@ func (catalogManagement *CatalogManagementV1) ValidateInstallWithContext(ctx con
 	if validateInstallOptions.Namespace != nil {
 		body["namespace"] = validateInstallOptions.Namespace
 	}
+	if validateInstallOptions.Namespaces != nil {
+		body["namespaces"] = validateInstallOptions.Namespaces
+	}
+	if validateInstallOptions.AllNamespaces != nil {
+		body["all_namespaces"] = validateInstallOptions.AllNamespaces
+	}
 	if validateInstallOptions.OverrideValues != nil {
 		body["override_values"] = validateInstallOptions.OverrideValues
+	}
+	if validateInstallOptions.DependencyConfigs != nil {
+		body["dependency_configs"] = validateInstallOptions.DependencyConfigs
 	}
 	if validateInstallOptions.EnvironmentVariables != nil {
 		body["environment_variables"] = validateInstallOptions.EnvironmentVariables
@@ -4681,17 +6588,33 @@ func (catalogManagement *CatalogManagementV1) ValidateInstallWithContext(ctx con
 	if validateInstallOptions.VcenterDatastore != nil {
 		body["vcenter_datastore"] = validateInstallOptions.VcenterDatastore
 	}
+	if validateInstallOptions.PlanID != nil {
+		body["plan_id"] = validateInstallOptions.PlanID
+	}
+	if validateInstallOptions.Channel != nil {
+		body["channel"] = validateInstallOptions.Channel
+	}
+	if validateInstallOptions.InstallPlan != nil {
+		body["install_plan"] = validateInstallOptions.InstallPlan
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "validate_install", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -4699,17 +6622,21 @@ func (catalogManagement *CatalogManagementV1) ValidateInstallWithContext(ctx con
 // GetValidationStatus : Get offering install status
 // Returns the install status for the specified offering version.
 func (catalogManagement *CatalogManagementV1) GetValidationStatus(getValidationStatusOptions *GetValidationStatusOptions) (result *Validation, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetValidationStatusWithContext(context.Background(), getValidationStatusOptions)
+	result, response, err = catalogManagement.GetValidationStatusWithContext(context.Background(), getValidationStatusOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetValidationStatusWithContext is an alternate form of the GetValidationStatus method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetValidationStatusWithContext(ctx context.Context, getValidationStatusOptions *GetValidationStatusOptions) (result *Validation, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getValidationStatusOptions, "getValidationStatusOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getValidationStatusOptions, "getValidationStatusOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4722,6 +6649,7 @@ func (catalogManagement *CatalogManagementV1) GetValidationStatusWithContext(ctx
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/validation/install`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4744,17 +6672,21 @@ func (catalogManagement *CatalogManagementV1) GetValidationStatusWithContext(ctx
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_validation_status", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalValidation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4763,70 +6695,25 @@ func (catalogManagement *CatalogManagementV1) GetValidationStatusWithContext(ctx
 	return
 }
 
-// GetOverrideValues : Get override values
-// Returns the override values that were used to validate the specified offering version.
-func (catalogManagement *CatalogManagementV1) GetOverrideValues(getOverrideValuesOptions *GetOverrideValuesOptions) (result map[string]interface{}, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOverrideValuesWithContext(context.Background(), getOverrideValuesOptions)
-}
-
-// GetOverrideValuesWithContext is an alternate form of the GetOverrideValues method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) GetOverrideValuesWithContext(ctx context.Context, getOverrideValuesOptions *GetOverrideValuesOptions) (result map[string]interface{}, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getOverrideValuesOptions, "getOverrideValuesOptions cannot be nil")
-	if err != nil {
-		return
-	}
-	err = core.ValidateStruct(getOverrideValuesOptions, "getOverrideValuesOptions")
-	if err != nil {
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"version_loc_id": *getOverrideValuesOptions.VersionLocID,
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/validation/overridevalues`, pathParamsMap)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range getOverrideValuesOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetOverrideValues")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	response, err = catalogManagement.Service.Request(request, &result)
-
-	return
-}
-
 // SearchObjects : List objects across catalogs
 // List the available objects from both public and private catalogs. These copies cannot be used for updating. They are
 // not complete and only return what is visible to the caller.
 func (catalogManagement *CatalogManagementV1) SearchObjects(searchObjectsOptions *SearchObjectsOptions) (result *ObjectSearchResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.SearchObjectsWithContext(context.Background(), searchObjectsOptions)
+	result, response, err = catalogManagement.SearchObjectsWithContext(context.Background(), searchObjectsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SearchObjectsWithContext is an alternate form of the SearchObjects method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) SearchObjectsWithContext(ctx context.Context, searchObjectsOptions *SearchObjectsOptions) (result *ObjectSearchResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(searchObjectsOptions, "searchObjectsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(searchObjectsOptions, "searchObjectsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4835,6 +6722,7 @@ func (catalogManagement *CatalogManagementV1) SearchObjectsWithContext(ctx conte
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/objects`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4867,17 +6755,21 @@ func (catalogManagement *CatalogManagementV1) SearchObjectsWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "search_objects", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalObjectSearchResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4889,17 +6781,21 @@ func (catalogManagement *CatalogManagementV1) SearchObjectsWithContext(ctx conte
 // ListObjects : List objects within a catalog
 // List the available objects within the specified catalog.
 func (catalogManagement *CatalogManagementV1) ListObjects(listObjectsOptions *ListObjectsOptions) (result *ObjectListResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.ListObjectsWithContext(context.Background(), listObjectsOptions)
+	result, response, err = catalogManagement.ListObjectsWithContext(context.Background(), listObjectsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListObjectsWithContext is an alternate form of the ListObjects method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ListObjectsWithContext(ctx context.Context, listObjectsOptions *ListObjectsOptions) (result *ObjectListResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listObjectsOptions, "listObjectsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listObjectsOptions, "listObjectsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4912,6 +6808,7 @@ func (catalogManagement *CatalogManagementV1) ListObjectsWithContext(ctx context
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4940,17 +6837,21 @@ func (catalogManagement *CatalogManagementV1) ListObjectsWithContext(ctx context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_objects", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalObjectListResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4962,17 +6863,21 @@ func (catalogManagement *CatalogManagementV1) ListObjectsWithContext(ctx context
 // CreateObject : Create catalog object
 // Create an object with a specific catalog.
 func (catalogManagement *CatalogManagementV1) CreateObject(createObjectOptions *CreateObjectOptions) (result *CatalogObject, response *core.DetailedResponse, err error) {
-	return catalogManagement.CreateObjectWithContext(context.Background(), createObjectOptions)
+	result, response, err = catalogManagement.CreateObjectWithContext(context.Background(), createObjectOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateObjectWithContext is an alternate form of the CreateObject method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) CreateObjectWithContext(ctx context.Context, createObjectOptions *CreateObjectOptions) (result *CatalogObject, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createObjectOptions, "createObjectOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createObjectOptions, "createObjectOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4985,6 +6890,7 @@ func (catalogManagement *CatalogManagementV1) CreateObjectWithContext(ctx contex
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5053,22 +6959,27 @@ func (catalogManagement *CatalogManagementV1) CreateObjectWithContext(ctx contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_object", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCatalogObject)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5080,23 +6991,27 @@ func (catalogManagement *CatalogManagementV1) CreateObjectWithContext(ctx contex
 // GetObject : Get catalog object
 // Get the specified object from within the specified catalog.
 func (catalogManagement *CatalogManagementV1) GetObject(getObjectOptions *GetObjectOptions) (result *CatalogObject, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetObjectWithContext(context.Background(), getObjectOptions)
+	result, response, err = catalogManagement.GetObjectWithContext(context.Background(), getObjectOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetObjectWithContext is an alternate form of the GetObject method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetObjectWithContext(ctx context.Context, getObjectOptions *GetObjectOptions) (result *CatalogObject, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getObjectOptions, "getObjectOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getObjectOptions, "getObjectOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *getObjectOptions.CatalogIdentifier,
-		"object_identifier": *getObjectOptions.ObjectIdentifier,
+		"object_identifier":  *getObjectOptions.ObjectIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -5104,6 +7019,7 @@ func (catalogManagement *CatalogManagementV1) GetObjectWithContext(ctx context.C
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5119,17 +7035,21 @@ func (catalogManagement *CatalogManagementV1) GetObjectWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_object", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCatalogObject)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5141,23 +7061,27 @@ func (catalogManagement *CatalogManagementV1) GetObjectWithContext(ctx context.C
 // ReplaceObject : Update catalog object
 // Update an object within a specific catalog.
 func (catalogManagement *CatalogManagementV1) ReplaceObject(replaceObjectOptions *ReplaceObjectOptions) (result *CatalogObject, response *core.DetailedResponse, err error) {
-	return catalogManagement.ReplaceObjectWithContext(context.Background(), replaceObjectOptions)
+	result, response, err = catalogManagement.ReplaceObjectWithContext(context.Background(), replaceObjectOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ReplaceObjectWithContext is an alternate form of the ReplaceObject method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ReplaceObjectWithContext(ctx context.Context, replaceObjectOptions *ReplaceObjectOptions) (result *CatalogObject, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(replaceObjectOptions, "replaceObjectOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(replaceObjectOptions, "replaceObjectOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *replaceObjectOptions.CatalogIdentifier,
-		"object_identifier": *replaceObjectOptions.ObjectIdentifier,
+		"object_identifier":  *replaceObjectOptions.ObjectIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -5165,6 +7089,7 @@ func (catalogManagement *CatalogManagementV1) ReplaceObjectWithContext(ctx conte
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5239,22 +7164,27 @@ func (catalogManagement *CatalogManagementV1) ReplaceObjectWithContext(ctx conte
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "replace_object", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCatalogObject)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5266,23 +7196,27 @@ func (catalogManagement *CatalogManagementV1) ReplaceObjectWithContext(ctx conte
 // DeleteObject : Delete catalog object
 // Delete a specific object within a specific catalog.
 func (catalogManagement *CatalogManagementV1) DeleteObject(deleteObjectOptions *DeleteObjectOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.DeleteObjectWithContext(context.Background(), deleteObjectOptions)
+	response, err = catalogManagement.DeleteObjectWithContext(context.Background(), deleteObjectOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteObjectWithContext is an alternate form of the DeleteObject method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) DeleteObjectWithContext(ctx context.Context, deleteObjectOptions *DeleteObjectOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteObjectOptions, "deleteObjectOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteObjectOptions, "deleteObjectOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *deleteObjectOptions.CatalogIdentifier,
-		"object_identifier": *deleteObjectOptions.ObjectIdentifier,
+		"object_identifier":  *deleteObjectOptions.ObjectIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -5290,6 +7224,7 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectWithContext(ctx contex
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5304,10 +7239,16 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectWithContext(ctx contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_object", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -5315,23 +7256,27 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectWithContext(ctx contex
 // ListObjectAudits : Get object audit logs
 // Get the audit logs associated with an object.
 func (catalogManagement *CatalogManagementV1) ListObjectAudits(listObjectAuditsOptions *ListObjectAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
-	return catalogManagement.ListObjectAuditsWithContext(context.Background(), listObjectAuditsOptions)
+	result, response, err = catalogManagement.ListObjectAuditsWithContext(context.Background(), listObjectAuditsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListObjectAuditsWithContext is an alternate form of the ListObjectAudits method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ListObjectAuditsWithContext(ctx context.Context, listObjectAuditsOptions *ListObjectAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listObjectAuditsOptions, "listObjectAuditsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listObjectAuditsOptions, "listObjectAuditsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *listObjectAuditsOptions.CatalogIdentifier,
-		"object_identifier": *listObjectAuditsOptions.ObjectIdentifier,
+		"object_identifier":  *listObjectAuditsOptions.ObjectIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -5339,6 +7284,7 @@ func (catalogManagement *CatalogManagementV1) ListObjectAuditsWithContext(ctx co
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/audits`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5364,17 +7310,21 @@ func (catalogManagement *CatalogManagementV1) ListObjectAuditsWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_object_audits", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLogs)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5386,23 +7336,27 @@ func (catalogManagement *CatalogManagementV1) ListObjectAuditsWithContext(ctx co
 // GetObjectAudit : Get an object audit log entry
 // Get the full audit log entry associated with an object.
 func (catalogManagement *CatalogManagementV1) GetObjectAudit(getObjectAuditOptions *GetObjectAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetObjectAuditWithContext(context.Background(), getObjectAuditOptions)
+	result, response, err = catalogManagement.GetObjectAuditWithContext(context.Background(), getObjectAuditOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetObjectAuditWithContext is an alternate form of the GetObjectAudit method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetObjectAuditWithContext(ctx context.Context, getObjectAuditOptions *GetObjectAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getObjectAuditOptions, "getObjectAuditOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getObjectAuditOptions, "getObjectAuditOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"catalog_identifier": *getObjectAuditOptions.CatalogIdentifier,
-		"object_identifier": *getObjectAuditOptions.ObjectIdentifier,
+		"catalog_identifier":  *getObjectAuditOptions.CatalogIdentifier,
+		"object_identifier":   *getObjectAuditOptions.ObjectIdentifier,
 		"auditlog_identifier": *getObjectAuditOptions.AuditlogIdentifier,
 	}
 
@@ -5411,6 +7365,7 @@ func (catalogManagement *CatalogManagementV1) GetObjectAuditWithContext(ctx cont
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/audits/{auditlog_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5430,17 +7385,21 @@ func (catalogManagement *CatalogManagementV1) GetObjectAuditWithContext(ctx cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_object_audit", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLog)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5452,23 +7411,27 @@ func (catalogManagement *CatalogManagementV1) GetObjectAuditWithContext(ctx cont
 // ConsumableShareObject : Make object consumable for sharing
 // Set the object as consumable in order to use the object sharing permissions.
 func (catalogManagement *CatalogManagementV1) ConsumableShareObject(consumableShareObjectOptions *ConsumableShareObjectOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.ConsumableShareObjectWithContext(context.Background(), consumableShareObjectOptions)
+	response, err = catalogManagement.ConsumableShareObjectWithContext(context.Background(), consumableShareObjectOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ConsumableShareObjectWithContext is an alternate form of the ConsumableShareObject method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ConsumableShareObjectWithContext(ctx context.Context, consumableShareObjectOptions *ConsumableShareObjectOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(consumableShareObjectOptions, "consumableShareObjectOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(consumableShareObjectOptions, "consumableShareObjectOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *consumableShareObjectOptions.CatalogIdentifier,
-		"object_identifier": *consumableShareObjectOptions.ObjectIdentifier,
+		"object_identifier":  *consumableShareObjectOptions.ObjectIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -5476,6 +7439,7 @@ func (catalogManagement *CatalogManagementV1) ConsumableShareObjectWithContext(c
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/consume-publish`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5490,10 +7454,16 @@ func (catalogManagement *CatalogManagementV1) ConsumableShareObjectWithContext(c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "consumable_share_object", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -5501,23 +7471,27 @@ func (catalogManagement *CatalogManagementV1) ConsumableShareObjectWithContext(c
 // ShareObject : Allows object to be shared
 // Set the share options on an object.
 func (catalogManagement *CatalogManagementV1) ShareObject(shareObjectOptions *ShareObjectOptions) (result *ShareSetting, response *core.DetailedResponse, err error) {
-	return catalogManagement.ShareObjectWithContext(context.Background(), shareObjectOptions)
+	result, response, err = catalogManagement.ShareObjectWithContext(context.Background(), shareObjectOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ShareObjectWithContext is an alternate form of the ShareObject method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ShareObjectWithContext(ctx context.Context, shareObjectOptions *ShareObjectOptions) (result *ShareSetting, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(shareObjectOptions, "shareObjectOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(shareObjectOptions, "shareObjectOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *shareObjectOptions.CatalogIdentifier,
-		"object_identifier": *shareObjectOptions.ObjectIdentifier,
+		"object_identifier":  *shareObjectOptions.ObjectIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -5525,6 +7499,7 @@ func (catalogManagement *CatalogManagementV1) ShareObjectWithContext(ctx context
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/share`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5551,22 +7526,27 @@ func (catalogManagement *CatalogManagementV1) ShareObjectWithContext(ctx context
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "share_object", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalShareSetting)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5578,23 +7558,27 @@ func (catalogManagement *CatalogManagementV1) ShareObjectWithContext(ctx context
 // GetObjectAccessList : Get object access list
 // Get the access list associated with the specified object.
 func (catalogManagement *CatalogManagementV1) GetObjectAccessList(getObjectAccessListOptions *GetObjectAccessListOptions) (result *AccessListResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetObjectAccessListWithContext(context.Background(), getObjectAccessListOptions)
+	result, response, err = catalogManagement.GetObjectAccessListWithContext(context.Background(), getObjectAccessListOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetObjectAccessListWithContext is an alternate form of the GetObjectAccessList method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetObjectAccessListWithContext(ctx context.Context, getObjectAccessListOptions *GetObjectAccessListOptions) (result *AccessListResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getObjectAccessListOptions, "getObjectAccessListOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getObjectAccessListOptions, "getObjectAccessListOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *getObjectAccessListOptions.CatalogIdentifier,
-		"object_identifier": *getObjectAccessListOptions.ObjectIdentifier,
+		"object_identifier":  *getObjectAccessListOptions.ObjectIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -5602,6 +7586,7 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessListWithContext(ctx
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/accessv1`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5624,17 +7609,21 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessListWithContext(ctx
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_object_access_list", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessListResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5646,24 +7635,28 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessListWithContext(ctx
 // GetObjectAccess : Check for account ID in object access list
 // Determine if an account ID is in an object's access list.
 func (catalogManagement *CatalogManagementV1) GetObjectAccess(getObjectAccessOptions *GetObjectAccessOptions) (result *Access, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetObjectAccessWithContext(context.Background(), getObjectAccessOptions)
+	result, response, err = catalogManagement.GetObjectAccessWithContext(context.Background(), getObjectAccessOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetObjectAccessWithContext is an alternate form of the GetObjectAccess method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetObjectAccessWithContext(ctx context.Context, getObjectAccessOptions *GetObjectAccessOptions) (result *Access, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getObjectAccessOptions, "getObjectAccessOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getObjectAccessOptions, "getObjectAccessOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *getObjectAccessOptions.CatalogIdentifier,
-		"object_identifier": *getObjectAccessOptions.ObjectIdentifier,
-		"access_identifier": *getObjectAccessOptions.AccessIdentifier,
+		"object_identifier":  *getObjectAccessOptions.ObjectIdentifier,
+		"access_identifier":  *getObjectAccessOptions.AccessIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -5671,6 +7664,7 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessWithContext(ctx con
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/access/{access_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5686,17 +7680,21 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessWithContext(ctx con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_object_access", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccess)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5709,7 +7707,9 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessWithContext(ctx con
 // Add an account ID to an object's access list.
 // Deprecated: this method is deprecated and may be removed in a future release.
 func (catalogManagement *CatalogManagementV1) CreateObjectAccess(createObjectAccessOptions *CreateObjectAccessOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.CreateObjectAccessWithContext(context.Background(), createObjectAccessOptions)
+	response, err = catalogManagement.CreateObjectAccessWithContext(context.Background(), createObjectAccessOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateObjectAccessWithContext is an alternate form of the CreateObjectAccess method which supports a Context parameter
@@ -5718,17 +7718,19 @@ func (catalogManagement *CatalogManagementV1) CreateObjectAccessWithContext(ctx 
 	core.GetLogger().Warn("A deprecated operation has been invoked: CreateObjectAccess")
 	err = core.ValidateNotNil(createObjectAccessOptions, "createObjectAccessOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createObjectAccessOptions, "createObjectAccessOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *createObjectAccessOptions.CatalogIdentifier,
-		"object_identifier": *createObjectAccessOptions.ObjectIdentifier,
-		"access_identifier": *createObjectAccessOptions.AccessIdentifier,
+		"object_identifier":  *createObjectAccessOptions.ObjectIdentifier,
+		"access_identifier":  *createObjectAccessOptions.AccessIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -5736,6 +7738,7 @@ func (catalogManagement *CatalogManagementV1) CreateObjectAccessWithContext(ctx 
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/access/{access_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5750,10 +7753,16 @@ func (catalogManagement *CatalogManagementV1) CreateObjectAccessWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_object_access", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -5762,7 +7771,9 @@ func (catalogManagement *CatalogManagementV1) CreateObjectAccessWithContext(ctx 
 // Delete the specified account ID from the specified object's access list.
 // Deprecated: this method is deprecated and may be removed in a future release.
 func (catalogManagement *CatalogManagementV1) DeleteObjectAccess(deleteObjectAccessOptions *DeleteObjectAccessOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.DeleteObjectAccessWithContext(context.Background(), deleteObjectAccessOptions)
+	response, err = catalogManagement.DeleteObjectAccessWithContext(context.Background(), deleteObjectAccessOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteObjectAccessWithContext is an alternate form of the DeleteObjectAccess method which supports a Context parameter
@@ -5771,17 +7782,19 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectAccessWithContext(ctx 
 	core.GetLogger().Warn("A deprecated operation has been invoked: DeleteObjectAccess")
 	err = core.ValidateNotNil(deleteObjectAccessOptions, "deleteObjectAccessOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteObjectAccessOptions, "deleteObjectAccessOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *deleteObjectAccessOptions.CatalogIdentifier,
-		"object_identifier": *deleteObjectAccessOptions.ObjectIdentifier,
-		"access_identifier": *deleteObjectAccessOptions.AccessIdentifier,
+		"object_identifier":  *deleteObjectAccessOptions.ObjectIdentifier,
+		"access_identifier":  *deleteObjectAccessOptions.AccessIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -5789,6 +7802,7 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectAccessWithContext(ctx 
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/access/{access_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5803,10 +7817,16 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectAccessWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_object_access", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -5815,7 +7835,9 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectAccessWithContext(ctx 
 // Deprecated - use /accessv1 instead.
 // Deprecated: this method is deprecated and may be removed in a future release.
 func (catalogManagement *CatalogManagementV1) GetObjectAccessListDeprecated(getObjectAccessListDeprecatedOptions *GetObjectAccessListDeprecatedOptions) (result *ObjectAccessListResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetObjectAccessListDeprecatedWithContext(context.Background(), getObjectAccessListDeprecatedOptions)
+	result, response, err = catalogManagement.GetObjectAccessListDeprecatedWithContext(context.Background(), getObjectAccessListDeprecatedOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetObjectAccessListDeprecatedWithContext is an alternate form of the GetObjectAccessListDeprecated method which supports a Context parameter
@@ -5824,16 +7846,18 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessListDeprecatedWithC
 	core.GetLogger().Warn("A deprecated operation has been invoked: GetObjectAccessListDeprecated")
 	err = core.ValidateNotNil(getObjectAccessListDeprecatedOptions, "getObjectAccessListDeprecatedOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getObjectAccessListDeprecatedOptions, "getObjectAccessListDeprecatedOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *getObjectAccessListDeprecatedOptions.CatalogIdentifier,
-		"object_identifier": *getObjectAccessListDeprecatedOptions.ObjectIdentifier,
+		"object_identifier":  *getObjectAccessListDeprecatedOptions.ObjectIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -5841,6 +7865,7 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessListDeprecatedWithC
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/access`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5863,17 +7888,21 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessListDeprecatedWithC
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_object_access_list_deprecated", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalObjectAccessListResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5885,23 +7914,27 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessListDeprecatedWithC
 // DeleteObjectAccessList : Delete accesses from object access list
 // Delete all or a set of accesses from an object's access list.
 func (catalogManagement *CatalogManagementV1) DeleteObjectAccessList(deleteObjectAccessListOptions *DeleteObjectAccessListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
-	return catalogManagement.DeleteObjectAccessListWithContext(context.Background(), deleteObjectAccessListOptions)
+	result, response, err = catalogManagement.DeleteObjectAccessListWithContext(context.Background(), deleteObjectAccessListOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteObjectAccessListWithContext is an alternate form of the DeleteObjectAccessList method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) DeleteObjectAccessListWithContext(ctx context.Context, deleteObjectAccessListOptions *DeleteObjectAccessListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteObjectAccessListOptions, "deleteObjectAccessListOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteObjectAccessListOptions, "deleteObjectAccessListOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *deleteObjectAccessListOptions.CatalogIdentifier,
-		"object_identifier": *deleteObjectAccessListOptions.ObjectIdentifier,
+		"object_identifier":  *deleteObjectAccessListOptions.ObjectIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -5909,6 +7942,7 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectAccessListWithContext(
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/access`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5925,22 +7959,27 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectAccessListWithContext(
 
 	_, err = builder.SetBodyContentJSON(deleteObjectAccessListOptions.Accesses)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_object_access_list", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessListBulkResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5952,23 +7991,27 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectAccessListWithContext(
 // AddObjectAccessList : Add accesses to object access list
 // Add one or more accesses to the specified object's access list.
 func (catalogManagement *CatalogManagementV1) AddObjectAccessList(addObjectAccessListOptions *AddObjectAccessListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
-	return catalogManagement.AddObjectAccessListWithContext(context.Background(), addObjectAccessListOptions)
+	result, response, err = catalogManagement.AddObjectAccessListWithContext(context.Background(), addObjectAccessListOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // AddObjectAccessListWithContext is an alternate form of the AddObjectAccessList method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) AddObjectAccessListWithContext(ctx context.Context, addObjectAccessListOptions *AddObjectAccessListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(addObjectAccessListOptions, "addObjectAccessListOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(addObjectAccessListOptions, "addObjectAccessListOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *addObjectAccessListOptions.CatalogIdentifier,
-		"object_identifier": *addObjectAccessListOptions.ObjectIdentifier,
+		"object_identifier":  *addObjectAccessListOptions.ObjectIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -5976,6 +8019,7 @@ func (catalogManagement *CatalogManagementV1) AddObjectAccessListWithContext(ctx
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/access`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5992,22 +8036,27 @@ func (catalogManagement *CatalogManagementV1) AddObjectAccessListWithContext(ctx
 
 	_, err = builder.SetBodyContentJSON(addObjectAccessListOptions.Accesses)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "add_object_access_list", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessListBulkResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6019,17 +8068,21 @@ func (catalogManagement *CatalogManagementV1) AddObjectAccessListWithContext(ctx
 // CreateOfferingInstance : Create an offering resource instance
 // Provision a new offering in a given account, and return its resource instance.
 func (catalogManagement *CatalogManagementV1) CreateOfferingInstance(createOfferingInstanceOptions *CreateOfferingInstanceOptions) (result *OfferingInstance, response *core.DetailedResponse, err error) {
-	return catalogManagement.CreateOfferingInstanceWithContext(context.Background(), createOfferingInstanceOptions)
+	result, response, err = catalogManagement.CreateOfferingInstanceWithContext(context.Background(), createOfferingInstanceOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateOfferingInstanceWithContext is an alternate form of the CreateOfferingInstance method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) CreateOfferingInstanceWithContext(ctx context.Context, createOfferingInstanceOptions *CreateOfferingInstanceOptions) (result *OfferingInstance, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createOfferingInstanceOptions, "createOfferingInstanceOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createOfferingInstanceOptions, "createOfferingInstanceOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6038,6 +8091,7 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingInstanceWithContext(
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/instances/offerings`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6079,6 +8133,9 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingInstanceWithContext(
 	}
 	if createOfferingInstanceOptions.KindFormat != nil {
 		body["kind_format"] = createOfferingInstanceOptions.KindFormat
+	}
+	if createOfferingInstanceOptions.KindFormatLabel != nil {
+		body["kind_format_label"] = createOfferingInstanceOptions.KindFormatLabel
 	}
 	if createOfferingInstanceOptions.Version != nil {
 		body["version"] = createOfferingInstanceOptions.Version
@@ -6134,27 +8191,41 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingInstanceWithContext(
 	if createOfferingInstanceOptions.KindTarget != nil {
 		body["kind_target"] = createOfferingInstanceOptions.KindTarget
 	}
+	if createOfferingInstanceOptions.KindTargetLabel != nil {
+		body["kind_target_label"] = createOfferingInstanceOptions.KindTargetLabel
+	}
 	if createOfferingInstanceOptions.Sha != nil {
 		body["sha"] = createOfferingInstanceOptions.Sha
 	}
+	if createOfferingInstanceOptions.PlanID != nil {
+		body["plan_id"] = createOfferingInstanceOptions.PlanID
+	}
+	if createOfferingInstanceOptions.ParentCRN != nil {
+		body["parent_crn"] = createOfferingInstanceOptions.ParentCRN
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_offering_instance", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOfferingInstance)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6166,17 +8237,21 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingInstanceWithContext(
 // GetOfferingInstance : Get Offering Instance
 // Get the resource associated with an installed offering instance.
 func (catalogManagement *CatalogManagementV1) GetOfferingInstance(getOfferingInstanceOptions *GetOfferingInstanceOptions) (result *OfferingInstance, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOfferingInstanceWithContext(context.Background(), getOfferingInstanceOptions)
+	result, response, err = catalogManagement.GetOfferingInstanceWithContext(context.Background(), getOfferingInstanceOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOfferingInstanceWithContext is an alternate form of the GetOfferingInstance method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetOfferingInstanceWithContext(ctx context.Context, getOfferingInstanceOptions *GetOfferingInstanceOptions) (result *OfferingInstance, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOfferingInstanceOptions, "getOfferingInstanceOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOfferingInstanceOptions, "getOfferingInstanceOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6189,6 +8264,7 @@ func (catalogManagement *CatalogManagementV1) GetOfferingInstanceWithContext(ctx
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/instances/offerings/{instance_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6204,17 +8280,21 @@ func (catalogManagement *CatalogManagementV1) GetOfferingInstanceWithContext(ctx
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_instance", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOfferingInstance)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6226,17 +8306,21 @@ func (catalogManagement *CatalogManagementV1) GetOfferingInstanceWithContext(ctx
 // PutOfferingInstance : Update Offering Instance
 // Update an installed offering instance.
 func (catalogManagement *CatalogManagementV1) PutOfferingInstance(putOfferingInstanceOptions *PutOfferingInstanceOptions) (result *OfferingInstance, response *core.DetailedResponse, err error) {
-	return catalogManagement.PutOfferingInstanceWithContext(context.Background(), putOfferingInstanceOptions)
+	result, response, err = catalogManagement.PutOfferingInstanceWithContext(context.Background(), putOfferingInstanceOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PutOfferingInstanceWithContext is an alternate form of the PutOfferingInstance method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) PutOfferingInstanceWithContext(ctx context.Context, putOfferingInstanceOptions *PutOfferingInstanceOptions) (result *OfferingInstance, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(putOfferingInstanceOptions, "putOfferingInstanceOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(putOfferingInstanceOptions, "putOfferingInstanceOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6249,6 +8333,7 @@ func (catalogManagement *CatalogManagementV1) PutOfferingInstanceWithContext(ctx
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/instances/offerings/{instance_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6290,6 +8375,9 @@ func (catalogManagement *CatalogManagementV1) PutOfferingInstanceWithContext(ctx
 	}
 	if putOfferingInstanceOptions.KindFormat != nil {
 		body["kind_format"] = putOfferingInstanceOptions.KindFormat
+	}
+	if putOfferingInstanceOptions.KindFormatLabel != nil {
+		body["kind_format_label"] = putOfferingInstanceOptions.KindFormatLabel
 	}
 	if putOfferingInstanceOptions.Version != nil {
 		body["version"] = putOfferingInstanceOptions.Version
@@ -6345,27 +8433,41 @@ func (catalogManagement *CatalogManagementV1) PutOfferingInstanceWithContext(ctx
 	if putOfferingInstanceOptions.KindTarget != nil {
 		body["kind_target"] = putOfferingInstanceOptions.KindTarget
 	}
+	if putOfferingInstanceOptions.KindTargetLabel != nil {
+		body["kind_target_label"] = putOfferingInstanceOptions.KindTargetLabel
+	}
 	if putOfferingInstanceOptions.Sha != nil {
 		body["sha"] = putOfferingInstanceOptions.Sha
 	}
+	if putOfferingInstanceOptions.PlanID != nil {
+		body["plan_id"] = putOfferingInstanceOptions.PlanID
+	}
+	if putOfferingInstanceOptions.ParentCRN != nil {
+		body["parent_crn"] = putOfferingInstanceOptions.ParentCRN
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "put_offering_instance", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOfferingInstance)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6377,17 +8479,21 @@ func (catalogManagement *CatalogManagementV1) PutOfferingInstanceWithContext(ctx
 // DeleteOfferingInstance : Delete a version instance
 // Delete and instance deployed out of a product version.
 func (catalogManagement *CatalogManagementV1) DeleteOfferingInstance(deleteOfferingInstanceOptions *DeleteOfferingInstanceOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.DeleteOfferingInstanceWithContext(context.Background(), deleteOfferingInstanceOptions)
+	response, err = catalogManagement.DeleteOfferingInstanceWithContext(context.Background(), deleteOfferingInstanceOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteOfferingInstanceWithContext is an alternate form of the DeleteOfferingInstance method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) DeleteOfferingInstanceWithContext(ctx context.Context, deleteOfferingInstanceOptions *DeleteOfferingInstanceOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteOfferingInstanceOptions, "deleteOfferingInstanceOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteOfferingInstanceOptions, "deleteOfferingInstanceOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6400,6 +8506,7 @@ func (catalogManagement *CatalogManagementV1) DeleteOfferingInstanceWithContext(
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/instances/offerings/{instance_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6417,10 +8524,16 @@ func (catalogManagement *CatalogManagementV1) DeleteOfferingInstanceWithContext(
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_offering_instance", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -6428,17 +8541,21 @@ func (catalogManagement *CatalogManagementV1) DeleteOfferingInstanceWithContext(
 // ListOfferingInstanceAudits : Get offering instance audit logs
 // Get the audit logs associated with an offering instance.
 func (catalogManagement *CatalogManagementV1) ListOfferingInstanceAudits(listOfferingInstanceAuditsOptions *ListOfferingInstanceAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
-	return catalogManagement.ListOfferingInstanceAuditsWithContext(context.Background(), listOfferingInstanceAuditsOptions)
+	result, response, err = catalogManagement.ListOfferingInstanceAuditsWithContext(context.Background(), listOfferingInstanceAuditsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListOfferingInstanceAuditsWithContext is an alternate form of the ListOfferingInstanceAudits method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) ListOfferingInstanceAuditsWithContext(ctx context.Context, listOfferingInstanceAuditsOptions *ListOfferingInstanceAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listOfferingInstanceAuditsOptions, "listOfferingInstanceAuditsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listOfferingInstanceAuditsOptions, "listOfferingInstanceAuditsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6451,6 +8568,7 @@ func (catalogManagement *CatalogManagementV1) ListOfferingInstanceAuditsWithCont
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/instances/offerings/{instance_identifier}/audits`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6476,17 +8594,21 @@ func (catalogManagement *CatalogManagementV1) ListOfferingInstanceAuditsWithCont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_offering_instance_audits", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLogs)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6498,17 +8620,21 @@ func (catalogManagement *CatalogManagementV1) ListOfferingInstanceAuditsWithCont
 // GetOfferingInstanceAudit : Get an offering instance audit log entry
 // Get the full audit log entry associated with an offering instance.
 func (catalogManagement *CatalogManagementV1) GetOfferingInstanceAudit(getOfferingInstanceAuditOptions *GetOfferingInstanceAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetOfferingInstanceAuditWithContext(context.Background(), getOfferingInstanceAuditOptions)
+	result, response, err = catalogManagement.GetOfferingInstanceAuditWithContext(context.Background(), getOfferingInstanceAuditOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetOfferingInstanceAuditWithContext is an alternate form of the GetOfferingInstanceAudit method which supports a Context parameter
 func (catalogManagement *CatalogManagementV1) GetOfferingInstanceAuditWithContext(ctx context.Context, getOfferingInstanceAuditOptions *GetOfferingInstanceAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getOfferingInstanceAuditOptions, "getOfferingInstanceAuditOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getOfferingInstanceAuditOptions, "getOfferingInstanceAuditOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6522,6 +8648,7 @@ func (catalogManagement *CatalogManagementV1) GetOfferingInstanceAuditWithContex
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/instances/offerings/{instance_identifier}/audits/{auditlog_identifier}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6541,23 +8668,437 @@ func (catalogManagement *CatalogManagementV1) GetOfferingInstanceAuditWithContex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_offering_instance_audit", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLog)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
 	}
 
 	return
+}
+
+// GetPlan : Get offering/plan 'branch'
+// Get the Offering/Plan 'branch' for the specified locator ID.
+func (catalogManagement *CatalogManagementV1) GetPlan(getPlanOptions *GetPlanOptions) (result *Offering, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.GetPlanWithContext(context.Background(), getPlanOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetPlanWithContext is an alternate form of the GetPlan method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetPlanWithContext(ctx context.Context, getPlanOptions *GetPlanOptions) (result *Offering, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getPlanOptions, "getPlanOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getPlanOptions, "getPlanOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"plan_loc_id": *getPlanOptions.PlanLocID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/plans/{plan_loc_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getPlanOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetPlan")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_plan", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOffering)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeletePlan : Delete plan
+// Delete the specified plan.  A plan cannot be deleted if it published.
+func (catalogManagement *CatalogManagementV1) DeletePlan(deletePlanOptions *DeletePlanOptions) (response *core.DetailedResponse, err error) {
+	response, err = catalogManagement.DeletePlanWithContext(context.Background(), deletePlanOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeletePlanWithContext is an alternate form of the DeletePlan method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) DeletePlanWithContext(ctx context.Context, deletePlanOptions *DeletePlanOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deletePlanOptions, "deletePlanOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deletePlanOptions, "deletePlanOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"plan_loc_id": *deletePlanOptions.PlanLocID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/plans/{plan_loc_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deletePlanOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "DeletePlan")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_plan", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// ConsumablePlan : Make plan consumable for sharing
+// Set the plan as consumable in order to inherit the offering sharing permissions.
+func (catalogManagement *CatalogManagementV1) ConsumablePlan(consumablePlanOptions *ConsumablePlanOptions) (response *core.DetailedResponse, err error) {
+	response, err = catalogManagement.ConsumablePlanWithContext(context.Background(), consumablePlanOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ConsumablePlanWithContext is an alternate form of the ConsumablePlan method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ConsumablePlanWithContext(ctx context.Context, consumablePlanOptions *ConsumablePlanOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(consumablePlanOptions, "consumablePlanOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(consumablePlanOptions, "consumablePlanOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"plan_loc_id": *consumablePlanOptions.PlanLocID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/plans/{plan_loc_id}/consume-publish`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range consumablePlanOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ConsumablePlan")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "consumable_plan", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// SetDeprecatePlan : Sets plan to be deprecated in a certain time period
+// Set or cancel the plan to be deprecated.
+func (catalogManagement *CatalogManagementV1) SetDeprecatePlan(setDeprecatePlanOptions *SetDeprecatePlanOptions) (response *core.DetailedResponse, err error) {
+	response, err = catalogManagement.SetDeprecatePlanWithContext(context.Background(), setDeprecatePlanOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// SetDeprecatePlanWithContext is an alternate form of the SetDeprecatePlan method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) SetDeprecatePlanWithContext(ctx context.Context, setDeprecatePlanOptions *SetDeprecatePlanOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(setDeprecatePlanOptions, "setDeprecatePlanOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(setDeprecatePlanOptions, "setDeprecatePlanOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"plan_loc_id": *setDeprecatePlanOptions.PlanLocID,
+		"setting":     *setDeprecatePlanOptions.Setting,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/plans/{plan_loc_id}/deprecate/{setting}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range setDeprecatePlanOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "SetDeprecatePlan")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if setDeprecatePlanOptions.Description != nil {
+		body["description"] = setDeprecatePlanOptions.Description
+	}
+	if setDeprecatePlanOptions.DaysUntilDeprecate != nil {
+		body["days_until_deprecate"] = setDeprecatePlanOptions.DaysUntilDeprecate
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = catalogManagement.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "set_deprecate_plan", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// PreviewRegions : Returns available locations based on supplied filter
+// Returns available locations based on supplied filter.
+func (catalogManagement *CatalogManagementV1) PreviewRegions(previewRegionsOptions *PreviewRegionsOptions) (result *RegionsSearchResult, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.PreviewRegionsWithContext(context.Background(), previewRegionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// PreviewRegionsWithContext is an alternate form of the PreviewRegions method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) PreviewRegionsWithContext(ctx context.Context, previewRegionsOptions *PreviewRegionsOptions) (result *RegionsSearchResult, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(previewRegionsOptions, "previewRegionsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/regions`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range previewRegionsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "PreviewRegions")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if previewRegionsOptions.Filter != nil {
+		builder.AddQuery("filter", fmt.Sprint(*previewRegionsOptions.Filter))
+	}
+	if previewRegionsOptions.GetInactive != nil {
+		builder.AddQuery("get_inactive", fmt.Sprint(*previewRegionsOptions.GetInactive))
+	}
+	if previewRegionsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*previewRegionsOptions.Limit))
+	}
+	if previewRegionsOptions.Offset != nil {
+		builder.AddQuery("offset", fmt.Sprint(*previewRegionsOptions.Offset))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "preview_regions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRegionsSearchResult)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListRegions : Returns available locations based on filter set on the account and supplied filter
+// Returns available locations based on filter set on the account and supplied filter.
+func (catalogManagement *CatalogManagementV1) ListRegions(listRegionsOptions *ListRegionsOptions) (result *RegionsSearchResult, response *core.DetailedResponse, err error) {
+	result, response, err = catalogManagement.ListRegionsWithContext(context.Background(), listRegionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListRegionsWithContext is an alternate form of the ListRegions method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ListRegionsWithContext(ctx context.Context, listRegionsOptions *ListRegionsOptions) (result *RegionsSearchResult, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(listRegionsOptions, "listRegionsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/regions`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range listRegionsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ListRegions")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listRegionsOptions.Filter != nil {
+		builder.AddQuery("filter", fmt.Sprint(*listRegionsOptions.Filter))
+	}
+	if listRegionsOptions.GetInactive != nil {
+		builder.AddQuery("get_inactive", fmt.Sprint(*listRegionsOptions.GetInactive))
+	}
+	if listRegionsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listRegionsOptions.Limit))
+	}
+	if listRegionsOptions.Offset != nil {
+		builder.AddQuery("offset", fmt.Sprint(*listRegionsOptions.Offset))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_regions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRegionsSearchResult)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.0")
 }
 
 // Access : access.
@@ -6583,11 +9124,11 @@ type Access struct {
 	// entity type.
 	TargetKind *string `json:"target_kind,omitempty"`
 
-	// accessible to the private object.
-	PrivateAccessible *bool `json:"private_accessible,omitempty"`
-
 	// date and time create.
 	Created *strfmt.DateTime `json:"created,omitempty"`
+
+	// Approval state for access. If this field is an empty string, then it means that it's approved.
+	ApprovalState *string `json:"approval_state,omitempty"`
 }
 
 // UnmarshalAccess unmarshals an instance of Access from the specified map of raw messages.
@@ -6595,38 +9136,47 @@ func UnmarshalAccess(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Access)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account", &obj.Account)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_type", &obj.AccountType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_id", &obj.TargetID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_account", &obj.TargetAccount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_account-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_kind", &obj.TargetKind)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "private_accessible", &obj.PrivateAccessible)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "target_kind-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "approval_state", &obj.ApprovalState)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "approval_state-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6644,6 +9194,7 @@ func UnmarshalAccessListBulkResponse(m map[string]json.RawMessage, result interf
 	obj := new(AccessListBulkResponse)
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6685,38 +9236,47 @@ func UnmarshalAccessListResult(m map[string]json.RawMessage, result interface{})
 	obj := new(AccessListResult)
 	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationTokenLink)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationTokenLink)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "prev", &obj.Prev, UnmarshalPaginationTokenLink)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "prev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationTokenLink)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalAccess)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6744,6 +9304,9 @@ type Account struct {
 
 	// Filters for account and catalog filters.
 	AccountFilters *Filters `json:"account_filters,omitempty"`
+
+	// Region filter string.
+	RegionFilter *string `json:"region_filter,omitempty"`
 }
 
 // UnmarshalAccount unmarshals an instance of Account from the specified map of raw messages.
@@ -6751,18 +9314,27 @@ func UnmarshalAccount(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Account)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_rev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "hide_IBM_cloud_catalog", &obj.HideIBMCloudCatalog)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hide_IBM_cloud_catalog-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "account_filters", &obj.AccountFilters, UnmarshalFilters)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_filters-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "region_filter", &obj.RegionFilter)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "region_filter-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6780,6 +9352,12 @@ type AccumulatedFilters struct {
 
 	// The filters for all of the accessible catalogs.
 	CatalogFilters []AccumulatedFiltersCatalogFiltersItem `json:"catalog_filters,omitempty"`
+
+	RegionFilters []string `json:"region_filters,omitempty"`
+
+	FilteredRegions []string `json:"filtered_regions,omitempty"`
+
+	FilterRegions *bool `json:"filter_regions,omitempty"`
 }
 
 // UnmarshalAccumulatedFilters unmarshals an instance of AccumulatedFilters from the specified map of raw messages.
@@ -6787,14 +9365,32 @@ func UnmarshalAccumulatedFilters(m map[string]json.RawMessage, result interface{
 	obj := new(AccumulatedFilters)
 	err = core.UnmarshalPrimitive(m, "hide_IBM_cloud_catalog", &obj.HideIBMCloudCatalog)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hide_IBM_cloud_catalog-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "account_filters", &obj.AccountFilters, UnmarshalFilters)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_filters-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "catalog_filters", &obj.CatalogFilters, UnmarshalAccumulatedFiltersCatalogFiltersItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_filters-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "region_filters", &obj.RegionFilters)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "region_filters-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "filtered_regions", &obj.FilteredRegions)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "filtered_regions-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "filter_regions", &obj.FilterRegions)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "filter_regions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6815,10 +9411,12 @@ func UnmarshalAccumulatedFiltersCatalogFiltersItem(m map[string]json.RawMessage,
 	obj := new(AccumulatedFiltersCatalogFiltersItem)
 	err = core.UnmarshalModel(m, "catalog", &obj.Catalog, UnmarshalAccumulatedFiltersCatalogFiltersItemCatalog)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "filters", &obj.Filters, UnmarshalFilters)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "filters-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6839,10 +9437,12 @@ func UnmarshalAccumulatedFiltersCatalogFiltersItemCatalog(m map[string]json.RawM
 	obj := new(AccumulatedFiltersCatalogFiltersItemCatalog)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6860,7 +9460,7 @@ type AddObjectAccessListOptions struct {
 	// A list of accesses to add.
 	Accesses []string `json:"accesses" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6868,8 +9468,8 @@ type AddObjectAccessListOptions struct {
 func (*CatalogManagementV1) NewAddObjectAccessListOptions(catalogIdentifier string, objectIdentifier string, accesses []string) *AddObjectAccessListOptions {
 	return &AddObjectAccessListOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
-		Accesses: accesses,
+		ObjectIdentifier:  core.StringPtr(objectIdentifier),
+		Accesses:          accesses,
 	}
 }
 
@@ -6908,7 +9508,7 @@ type AddOfferingAccessListOptions struct {
 	// A list of accesses to add.
 	Accesses []string `json:"accesses" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6916,8 +9516,8 @@ type AddOfferingAccessListOptions struct {
 func (*CatalogManagementV1) NewAddOfferingAccessListOptions(catalogIdentifier string, offeringID string, accesses []string) *AddOfferingAccessListOptions {
 	return &AddOfferingAccessListOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
-		Accesses: accesses,
+		OfferingID:        core.StringPtr(offeringID),
+		Accesses:          accesses,
 	}
 }
 
@@ -6941,6 +9541,53 @@ func (_options *AddOfferingAccessListOptions) SetAccesses(accesses []string) *Ad
 
 // SetHeaders : Allow user to set Headers
 func (options *AddOfferingAccessListOptions) SetHeaders(param map[string]string) *AddOfferingAccessListOptions {
+	options.Headers = param
+	return options
+}
+
+// AddShareApprovalListOptions : The AddShareApprovalList options.
+type AddShareApprovalListOptions struct {
+	// The type for the object.
+	ObjectType *string `json:"object_type" validate:"required,ne="`
+
+	// A list of accesses to add.
+	Accesses []string `json:"accesses" validate:"required"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// Constants associated with the AddShareApprovalListOptions.ObjectType property.
+// The type for the object.
+const (
+	AddShareApprovalListOptionsObjectTypeOfferingConst            = "offering"
+	AddShareApprovalListOptionsObjectTypePresetConfigurationConst = "preset_configuration"
+	AddShareApprovalListOptionsObjectTypeProxySourceConst         = "proxy_source"
+	AddShareApprovalListOptionsObjectTypeVpeConst                 = "vpe"
+)
+
+// NewAddShareApprovalListOptions : Instantiate AddShareApprovalListOptions
+func (*CatalogManagementV1) NewAddShareApprovalListOptions(objectType string, accesses []string) *AddShareApprovalListOptions {
+	return &AddShareApprovalListOptions{
+		ObjectType: core.StringPtr(objectType),
+		Accesses:   accesses,
+	}
+}
+
+// SetObjectType : Allow user to set ObjectType
+func (_options *AddShareApprovalListOptions) SetObjectType(objectType string) *AddShareApprovalListOptions {
+	_options.ObjectType = core.StringPtr(objectType)
+	return _options
+}
+
+// SetAccesses : Allow user to set Accesses
+func (_options *AddShareApprovalListOptions) SetAccesses(accesses []string) *AddShareApprovalListOptions {
+	_options.Accesses = accesses
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *AddShareApprovalListOptions) SetHeaders(param map[string]string) *AddShareApprovalListOptions {
 	options.Headers = param
 	return options
 }
@@ -6980,34 +9627,42 @@ func UnmarshalApprovalResult(m map[string]json.RawMessage, result interface{}) (
 	obj := new(ApprovalResult)
 	err = core.UnmarshalPrimitive(m, "shared", &obj.Shared)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "shared-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ibm", &obj.IBM)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibm-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "public", &obj.Public)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "public-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "allow_request", &obj.AllowRequest)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allow_request-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "approved", &obj.Approved)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "approved-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "portal_record", &obj.PortalRecord)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "portal_record-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "portal_url", &obj.PortalURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "portal_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "changed", &obj.Changed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "changed-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7031,14 +9686,17 @@ func UnmarshalArchitectureDiagram(m map[string]json.RawMessage, result interface
 	obj := new(ArchitectureDiagram)
 	err = core.UnmarshalModel(m, "diagram", &obj.Diagram, UnmarshalMediaItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "diagram-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description_i18n", &obj.DescriptionI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description_i18n-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7050,7 +9708,7 @@ type ArchiveVersionOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7127,62 +9785,77 @@ func UnmarshalAuditLog(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(AuditLog)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_rev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "change_type", &obj.ChangeType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "change_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_type", &obj.TargetType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_id", &obj.TargetID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "who_email", &obj.WhoEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "who_email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "who_delegate_email", &obj.WhoDelegateEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "who_delegate_email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "gid", &obj.Gid)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "gid-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "who_id", &obj.WhoID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "who_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "who_name", &obj.WhoName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "who_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "who_delegate_id", &obj.WhoDelegateID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "who_delegate_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "who_delegate_name", &obj.WhoDelegateName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "who_delegate_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "data", &obj.Data)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "data-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7225,38 +9898,47 @@ func UnmarshalAuditLogDigest(m map[string]json.RawMessage, result interface{}) (
 	obj := new(AuditLogDigest)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_rev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "change_type", &obj.ChangeType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "change_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_type", &obj.TargetType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_id", &obj.TargetID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "who_email", &obj.WhoEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "who_email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "who_delegate_email", &obj.WhoDelegateEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "who_delegate_email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7298,38 +9980,47 @@ func UnmarshalAuditLogs(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(AuditLogs)
 	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationTokenLink)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationTokenLink)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "prev", &obj.Prev, UnmarshalPaginationTokenLink)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "prev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationTokenLink)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "audits", &obj.Audits, UnmarshalAuditLogDigest)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "audits-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7382,42 +10073,52 @@ func UnmarshalBadge(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(Badge)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label_i18n", &obj.LabelI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description_i18n", &obj.DescriptionI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "icon", &obj.Icon)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "icon-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "authority", &obj.Authority)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authority-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tag", &obj.Tag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tag-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "learn_more_links", &obj.LearnMoreLinks, UnmarshalLearnMoreLinks)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "learn_more_links-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "constraints", &obj.Constraints, UnmarshalConstraint)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "constraints-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7483,9 +10184,6 @@ type Catalog struct {
 	// Filters for account and catalog filters.
 	CatalogFilters *Filters `json:"catalog_filters,omitempty"`
 
-	// Feature information.
-	SyndicationSettings *SyndicationResource `json:"syndication_settings,omitempty"`
-
 	// Kind of catalog. Supported kinds are offering and vpe.
 	Kind *string `json:"kind,omitempty"`
 
@@ -7501,94 +10199,112 @@ func UnmarshalCatalog(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Catalog)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_rev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label_i18n", &obj.LabelI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "short_description", &obj.ShortDescription)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "short_description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "short_description_i18n", &obj.ShortDescriptionI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "short_description_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_icon_url", &obj.CatalogIconURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_icon_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_banner_url", &obj.CatalogBannerURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_banner_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tags-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offerings_url", &obj.OfferingsURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offerings_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "features", &obj.Features, UnmarshalFeature)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "features-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "disabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group_id", &obj.ResourceGroupID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "owning_account", &obj.OwningAccount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "owning_account-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "catalog_filters", &obj.CatalogFilters, UnmarshalFilters)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "syndication_settings", &obj.SyndicationSettings, UnmarshalSyndicationResource)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_filters-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "kind", &obj.Kind)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "kind-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metadata-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "target_account_contexts", &obj.TargetAccountContexts, UnmarshalTargetAccountContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_account_contexts-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7660,78 +10376,97 @@ func UnmarshalCatalogObject(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(CatalogObject)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_rev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "parent_id", &obj.ParentID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parent_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label_i18n", &obj.LabelI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tags-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "short_description", &obj.ShortDescription)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "short_description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "short_description_i18n", &obj.ShortDescriptionI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "short_description_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "kind", &obj.Kind)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "kind-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "publish", &obj.Publish, UnmarshalPublishObject)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "publish-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "state", &obj.State, UnmarshalState)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_name", &obj.CatalogName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "data", &obj.Data)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "data-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7752,10 +10487,12 @@ func UnmarshalCatalogSearchResult(m map[string]json.RawMessage, result interface
 	obj := new(CatalogSearchResult)
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalCatalog)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7776,10 +10513,230 @@ func UnmarshalCategoryFilter(m map[string]json.RawMessage, result interface{}) (
 	obj := new(CategoryFilter)
 	err = core.UnmarshalPrimitive(m, "include", &obj.Include)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "include-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "filter", &obj.Filter, UnmarshalFilterTerms)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "filter-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ChangeNotices : Change notices for a version.
+type ChangeNotices struct {
+	// Breaking changes for this version.
+	Breaking []Feature `json:"breaking,omitempty"`
+
+	// New changes for this version.
+	New []Feature `json:"new,omitempty"`
+
+	// Updates for this version.
+	Update []Feature `json:"update,omitempty"`
+}
+
+// UnmarshalChangeNotices unmarshals an instance of ChangeNotices from the specified map of raw messages.
+func UnmarshalChangeNotices(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ChangeNotices)
+	err = core.UnmarshalModel(m, "breaking", &obj.Breaking, UnmarshalFeature)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "breaking-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "new", &obj.New, UnmarshalFeature)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "new-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "update", &obj.Update, UnmarshalFeature)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "update-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ChangeNoticesResponse : Change notices response.
+type ChangeNoticesResponse struct {
+	// Set to true if any of the included change notices contain a breaking change.
+	HasBreaking *bool `json:"has_breaking,omitempty"`
+
+	// Set to true if any of the included change notices contain a new change.
+	HasNew *bool `json:"has_new,omitempty"`
+
+	// Set to true if any of the included change notices contain an update.
+	HasUpdate *bool `json:"has_update,omitempty"`
+
+	// All changes notices for the requested versions.
+	ChangeNotices []ChangeNoticesResponseChangeNoticesItem `json:"change_notices,omitempty"`
+}
+
+// UnmarshalChangeNoticesResponse unmarshals an instance of ChangeNoticesResponse from the specified map of raw messages.
+func UnmarshalChangeNoticesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ChangeNoticesResponse)
+	err = core.UnmarshalPrimitive(m, "has_breaking", &obj.HasBreaking)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "has_breaking-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "has_new", &obj.HasNew)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "has_new-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "has_update", &obj.HasUpdate)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "has_update-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "change_notices", &obj.ChangeNotices, UnmarshalChangeNoticesResponseChangeNoticesItem)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "change_notices-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ChangeNoticesResponseChangeNoticesItem : Change notices for the specified version.
+type ChangeNoticesResponseChangeNoticesItem struct {
+	// A dotted value of `catalogID`.`versionID`.
+	VersionLocator *string `json:"version_locator,omitempty"`
+
+	// the version number of this version.
+	Version *string `json:"version,omitempty"`
+
+	// Version Flavor Information.  Only supported for Product kind Solution.
+	Flavor *Flavor `json:"flavor,omitempty"`
+
+	// Breaking changes for this version.
+	Breaking []Feature `json:"breaking,omitempty"`
+
+	// New changes for this version.
+	New []Feature `json:"new,omitempty"`
+
+	// Updates for this version.
+	Update []Feature `json:"update,omitempty"`
+}
+
+// UnmarshalChangeNoticesResponseChangeNoticesItem unmarshals an instance of ChangeNoticesResponseChangeNoticesItem from the specified map of raw messages.
+func UnmarshalChangeNoticesResponseChangeNoticesItem(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ChangeNoticesResponseChangeNoticesItem)
+	err = core.UnmarshalPrimitive(m, "version_locator", &obj.VersionLocator)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version_locator-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "flavor", &obj.Flavor, UnmarshalFlavor)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "flavor-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "breaking", &obj.Breaking, UnmarshalFeature)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "breaking-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "new", &obj.New, UnmarshalFeature)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "new-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "update", &obj.Update, UnmarshalFeature)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "update-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// CheckedIamPermission : Checked IAM Permission for the current user context.
+type CheckedIamPermission struct {
+	// Service name.
+	ServiceName *string `json:"service_name,omitempty"`
+
+	// Service display name.
+	ServiceDisplayName *string `json:"service_display_name,omitempty"`
+
+	// Checked Role CRNs for this permission.
+	RoleCrns []CheckedRoleCRN `json:"role_crns,omitempty"`
+
+	// Resources for this permission.
+	Resources []IamResource `json:"resources,omitempty"`
+}
+
+// UnmarshalCheckedIamPermission unmarshals an instance of CheckedIamPermission from the specified map of raw messages.
+func UnmarshalCheckedIamPermission(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(CheckedIamPermission)
+	err = core.UnmarshalPrimitive(m, "service_name", &obj.ServiceName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "service_display_name", &obj.ServiceDisplayName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service_display_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "role_crns", &obj.RoleCrns, UnmarshalCheckedRoleCRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "role_crns-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalIamResource)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// CheckedRoleCRN : Checked IAM role permission for the current user context.
+type CheckedRoleCRN struct {
+	// Role id.
+	ID *string `json:"id,omitempty"`
+
+	// Role display name.
+	DisplayName *string `json:"display_name,omitempty"`
+
+	// Role description.
+	Description *string `json:"description,omitempty"`
+
+	// Checked permission.
+	HasPermissions *bool `json:"has_permissions,omitempty"`
+}
+
+// UnmarshalCheckedRoleCRN unmarshals an instance of CheckedRoleCRN from the specified map of raw messages.
+func UnmarshalCheckedRoleCRN(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(CheckedRoleCRN)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "display_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "has_permissions", &obj.HasPermissions)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "has_permissions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7800,10 +10757,12 @@ func UnmarshalClaimedControl(m map[string]json.RawMessage, result interface{}) (
 	obj := new(ClaimedControl)
 	err = core.UnmarshalModel(m, "profile", &obj.Profile, UnmarshalSccProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "names", &obj.Names)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "names-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7824,10 +10783,12 @@ func UnmarshalClaims(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Claims)
 	err = core.UnmarshalModel(m, "profiles", &obj.Profiles, UnmarshalSccProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "profiles-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "controls", &obj.Controls, UnmarshalClaimedControl)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "controls-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7866,34 +10827,42 @@ func UnmarshalClusterInfo(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(ClusterInfo)
 	err = core.UnmarshalPrimitive(m, "resource_group_id", &obj.ResourceGroupID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group_name", &obj.ResourceGroupName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "region", &obj.Region)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "region-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ingress_hostname", &obj.IngressHostname)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ingress_hostname-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "provider", &obj.Provider)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provider-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7905,7 +10874,7 @@ type CommitVersionOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7945,14 +10914,17 @@ func UnmarshalCompliance(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(Compliance)
 	err = core.UnmarshalPrimitive(m, "authority", &obj.Authority)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authority-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "claims", &obj.Claims, UnmarshalClaims)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "claims-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "evaluations", &obj.Evaluations, UnmarshalEvaluation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "evaluations-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8001,46 +10973,57 @@ func UnmarshalConfiguration(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(Configuration)
 	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "default_value", &obj.DefaultValue)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "default_value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "display_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value_constraint", &obj.ValueConstraint)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value_constraint-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "required", &obj.Required)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "required-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "options", &obj.Options)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "options-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "hidden", &obj.Hidden)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hidden-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "custom_config", &obj.CustomConfig, UnmarshalRenderType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "custom_config-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type_metadata", &obj.TypeMetadata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type_metadata-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8061,14 +11044,44 @@ func UnmarshalConstraint(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(Constraint)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "rule", &obj.Rule)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rule-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// ConsumablePlanOptions : The ConsumablePlan options.
+type ConsumablePlanOptions struct {
+	// A dotted value of `sw`.`catalogID`.`resourceID`.
+	PlanLocID *string `json:"plan_loc_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewConsumablePlanOptions : Instantiate ConsumablePlanOptions
+func (*CatalogManagementV1) NewConsumablePlanOptions(planLocID string) *ConsumablePlanOptions {
+	return &ConsumablePlanOptions{
+		PlanLocID: core.StringPtr(planLocID),
+	}
+}
+
+// SetPlanLocID : Allow user to set PlanLocID
+func (_options *ConsumablePlanOptions) SetPlanLocID(planLocID string) *ConsumablePlanOptions {
+	_options.PlanLocID = core.StringPtr(planLocID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ConsumablePlanOptions) SetHeaders(param map[string]string) *ConsumablePlanOptions {
+	options.Headers = param
+	return options
 }
 
 // ConsumableShareObjectOptions : The ConsumableShareObject options.
@@ -8079,7 +11092,7 @@ type ConsumableShareObjectOptions struct {
 	// Object identifier.
 	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8087,7 +11100,7 @@ type ConsumableShareObjectOptions struct {
 func (*CatalogManagementV1) NewConsumableShareObjectOptions(catalogIdentifier string, objectIdentifier string) *ConsumableShareObjectOptions {
 	return &ConsumableShareObjectOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
+		ObjectIdentifier:  core.StringPtr(objectIdentifier),
 	}
 }
 
@@ -8114,7 +11127,7 @@ type ConsumableVersionOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8148,15 +11161,15 @@ type CopyFromPreviousVersionOptions struct {
 	// The version locator id of the version you wish to copy data from.
 	VersionLocIDToCopyFrom *string `json:"version_loc_id_to_copy_from" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewCopyFromPreviousVersionOptions : Instantiate CopyFromPreviousVersionOptions
 func (*CatalogManagementV1) NewCopyFromPreviousVersionOptions(versionLocID string, typeVar string, versionLocIDToCopyFrom string) *CopyFromPreviousVersionOptions {
 	return &CopyFromPreviousVersionOptions{
-		VersionLocID: core.StringPtr(versionLocID),
-		Type: core.StringPtr(typeVar),
+		VersionLocID:           core.StringPtr(versionLocID),
+		Type:                   core.StringPtr(typeVar),
 		VersionLocIDToCopyFrom: core.StringPtr(versionLocIDToCopyFrom),
 	}
 }
@@ -8208,7 +11221,10 @@ type CopyVersionOptions struct {
 	// Optional - The sub-folder within the specified tgz file that contains the software being onboarded.
 	WorkingDirectory *string `json:"working_directory,omitempty"`
 
-	// Allows users to set headers on API requests
+	// The install type of the current software being onboarded.
+	InstallType *string `json:"install_type,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8233,7 +11249,7 @@ func (_options *CopyVersionOptions) SetTags(tags []string) *CopyVersionOptions {
 
 // SetContent : Allow user to set Content
 func (_options *CopyVersionOptions) SetContent(content []byte) *CopyVersionOptions {
-	_options.Content = &content
+	_options.Content = core.ByteArrayPtr(content)
 	return _options
 }
 
@@ -8261,6 +11277,12 @@ func (_options *CopyVersionOptions) SetWorkingDirectory(workingDirectory string)
 	return _options
 }
 
+// SetInstallType : Allow user to set InstallType
+func (_options *CopyVersionOptions) SetInstallType(installType string) *CopyVersionOptions {
+	_options.InstallType = core.StringPtr(installType)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *CopyVersionOptions) SetHeaders(param map[string]string) *CopyVersionOptions {
 	options.Headers = param
@@ -8284,14 +11306,17 @@ func UnmarshalCostBreakdown(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(CostBreakdown)
 	err = core.UnmarshalPrimitive(m, "totalHourlyCost", &obj.TotalHourlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "totalHourlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "totalMonthlyCost", &obj.TotalMonthlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "totalMonthlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalCostResource)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8327,30 +11352,37 @@ func UnmarshalCostComponent(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(CostComponent)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "unit", &obj.Unit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "hourlyQuantity", &obj.HourlyQuantity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hourlyQuantity-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "monthlyQuantity", &obj.MonthlyQuantity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "monthlyQuantity-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "price", &obj.Price)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "price-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "hourlyCost", &obj.HourlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hourlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "monthlyCost", &obj.MonthlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "monthlyCost-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8398,46 +11430,57 @@ func UnmarshalCostEstimate(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(CostEstimate)
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "currency", &obj.Currency)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "currency-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "projects", &obj.Projects, UnmarshalProject)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "projects-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "summary", &obj.Summary, UnmarshalCostSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "summary-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "totalHourlyCost", &obj.TotalHourlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "totalHourlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "totalMonthlyCost", &obj.TotalMonthlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "totalMonthlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pastTotalHourlyCost", &obj.PastTotalHourlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pastTotalHourlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pastTotalMonthlyCost", &obj.PastTotalMonthlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pastTotalMonthlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "diffTotalHourlyCost", &obj.DiffTotalHourlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "diffTotalHourlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "diffTotalMonthlyCost", &obj.DiffTotalMonthlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "diffTotalMonthlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "timeGenerated", &obj.TimeGenerated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "timeGenerated-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8467,22 +11510,27 @@ func UnmarshalCostResource(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(CostResource)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metadata-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "hourlyCost", &obj.HourlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hourlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "monthlyCost", &obj.MonthlyCost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "monthlyCost-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "costComponents", &obj.CostComponents, UnmarshalCostComponent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "costComponents-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8518,30 +11566,37 @@ func UnmarshalCostSummary(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(CostSummary)
 	err = core.UnmarshalPrimitive(m, "totalDetectedResources", &obj.TotalDetectedResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "totalDetectedResources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "totalSupportedResources", &obj.TotalSupportedResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "totalSupportedResources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "totalUnsupportedResources", &obj.TotalUnsupportedResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "totalUnsupportedResources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "totalUsageBasedResources", &obj.TotalUsageBasedResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "totalUsageBasedResources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "totalNoPriceResources", &obj.TotalNoPriceResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "totalNoPriceResources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "unsupportedResourceCounts", &obj.UnsupportedResourceCounts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unsupportedResourceCounts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "noPriceResourceCounts", &obj.NoPriceResourceCounts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "noPriceResourceCounts-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8586,9 +11641,6 @@ type CreateCatalogOptions struct {
 	// Filters for account and catalog filters.
 	CatalogFilters *Filters `json:"catalog_filters,omitempty"`
 
-	// Feature information.
-	SyndicationSettings *SyndicationResource `json:"syndication_settings,omitempty"`
-
 	// Kind of catalog. Supported kinds are offering and vpe.
 	Kind *string `json:"kind,omitempty"`
 
@@ -8598,7 +11650,7 @@ type CreateCatalogOptions struct {
 	// List of target accounts contexts on this catalog.
 	TargetAccountContexts []TargetAccountContext `json:"target_account_contexts,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8679,12 +11731,6 @@ func (_options *CreateCatalogOptions) SetCatalogFilters(catalogFilters *Filters)
 	return _options
 }
 
-// SetSyndicationSettings : Allow user to set SyndicationSettings
-func (_options *CreateCatalogOptions) SetSyndicationSettings(syndicationSettings *SyndicationResource) *CreateCatalogOptions {
-	_options.SyndicationSettings = syndicationSettings
-	return _options
-}
-
 // SetKind : Allow user to set Kind
 func (_options *CreateCatalogOptions) SetKind(kind string) *CreateCatalogOptions {
 	_options.Kind = core.StringPtr(kind)
@@ -8717,11 +11763,11 @@ type CreateObjectAccessOptions struct {
 	// Object identifier.
 	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
 
-	// Identifier for access. Use 'accountId' for an account, '-ent-enterpriseid' for an enterprise, and
-	// '-entgroup-enterprisegroupid' for an enterprise group.
+	// Identifier for access. Use 'accountId' or '-acct-accountId' for an account, '-ent-enterpriseid' for an enterprise,
+	// and '-entgrp-enterprisegroupid' for an enterprise group.
 	AccessIdentifier *string `json:"access_identifier" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8729,8 +11775,8 @@ type CreateObjectAccessOptions struct {
 func (*CatalogManagementV1) NewCreateObjectAccessOptions(catalogIdentifier string, objectIdentifier string, accessIdentifier string) *CreateObjectAccessOptions {
 	return &CreateObjectAccessOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
-		AccessIdentifier: core.StringPtr(accessIdentifier),
+		ObjectIdentifier:  core.StringPtr(objectIdentifier),
+		AccessIdentifier:  core.StringPtr(accessIdentifier),
 	}
 }
 
@@ -8814,7 +11860,7 @@ type CreateObjectOptions struct {
 	// Map of data values for this object.
 	Data map[string]interface{} `json:"data,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8968,6 +12014,9 @@ type CreateOfferingInstanceOptions struct {
 	// the format this instance has (helm, operator, ova...).
 	KindFormat *string `json:"kind_format,omitempty"`
 
+	// Display value for the format this instance has (helm, operator, ova...).
+	KindFormatLabel *string `json:"kind_format_label,omitempty"`
+
 	// The version this instance was installed from (semver - not version id).
 	Version *string `json:"version,omitempty"`
 
@@ -9023,10 +12072,19 @@ type CreateOfferingInstanceOptions struct {
 	// The target kind for the installed software version.
 	KindTarget *string `json:"kind_target,omitempty"`
 
+	// Display value for the target kind for the installed software version.
+	KindTargetLabel *string `json:"kind_target_label,omitempty"`
+
 	// The digest value of the installed software version.
 	Sha *string `json:"sha,omitempty"`
 
-	// Allows users to set headers on API requests
+	// The software plan ID used when creating this software instance.
+	PlanID *string `json:"plan_id,omitempty"`
+
+	// The CRN of the resource that is considered a parent of this software instance.
+	ParentCRN *string `json:"parent_crn,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9088,6 +12146,12 @@ func (_options *CreateOfferingInstanceOptions) SetOfferingID(offeringID string) 
 // SetKindFormat : Allow user to set KindFormat
 func (_options *CreateOfferingInstanceOptions) SetKindFormat(kindFormat string) *CreateOfferingInstanceOptions {
 	_options.KindFormat = core.StringPtr(kindFormat)
+	return _options
+}
+
+// SetKindFormatLabel : Allow user to set KindFormatLabel
+func (_options *CreateOfferingInstanceOptions) SetKindFormatLabel(kindFormatLabel string) *CreateOfferingInstanceOptions {
+	_options.KindFormatLabel = core.StringPtr(kindFormatLabel)
 	return _options
 }
 
@@ -9199,9 +12263,27 @@ func (_options *CreateOfferingInstanceOptions) SetKindTarget(kindTarget string) 
 	return _options
 }
 
+// SetKindTargetLabel : Allow user to set KindTargetLabel
+func (_options *CreateOfferingInstanceOptions) SetKindTargetLabel(kindTargetLabel string) *CreateOfferingInstanceOptions {
+	_options.KindTargetLabel = core.StringPtr(kindTargetLabel)
+	return _options
+}
+
 // SetSha : Allow user to set Sha
 func (_options *CreateOfferingInstanceOptions) SetSha(sha string) *CreateOfferingInstanceOptions {
 	_options.Sha = core.StringPtr(sha)
+	return _options
+}
+
+// SetPlanID : Allow user to set PlanID
+func (_options *CreateOfferingInstanceOptions) SetPlanID(planID string) *CreateOfferingInstanceOptions {
+	_options.PlanID = core.StringPtr(planID)
+	return _options
+}
+
+// SetParentCRN : Allow user to set ParentCRN
+func (_options *CreateOfferingInstanceOptions) SetParentCRN(parentCRN string) *CreateOfferingInstanceOptions {
+	_options.ParentCRN = core.StringPtr(parentCRN)
 	return _options
 }
 
@@ -9274,13 +12356,16 @@ type CreateOfferingOptions struct {
 	// Array of kind.
 	Kinds []Kind `json:"kinds,omitempty"`
 
+	// Publish information.
+	Publish *PublishObject `json:"publish,omitempty"`
+
 	// Offering is managed by Partner Center.
 	PcManaged *bool `json:"pc_managed,omitempty"`
 
 	// Offering has been approved to publish to permitted to IBM or Public Catalog.
 	PublishApproved *bool `json:"publish_approved,omitempty"`
 
-	// Denotes public availability of an Offering - if share_enabled is true.
+	// Denotes public availability of an Offering.
 	ShareWithAll *bool `json:"share_with_all,omitempty"`
 
 	// Denotes IBM employee availability of an Offering - if share_enabled is true.
@@ -9288,18 +12373,6 @@ type CreateOfferingOptions struct {
 
 	// Denotes sharing including access list availability of an Offering is enabled.
 	ShareEnabled *bool `json:"share_enabled,omitempty"`
-
-	// Is it permitted to request publishing to IBM or Public.
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	PermitRequestIBMPublicPublish *bool `json:"permit_request_ibm_public_publish,omitempty"`
-
-	// Indicates if this offering has been approved for use by all IBMers.
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	IBMPublishApproved *bool `json:"ibm_publish_approved,omitempty"`
-
-	// Indicates if this offering has been approved for use by all IBM Cloud users.
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	PublicPublishApproved *bool `json:"public_publish_approved,omitempty"`
 
 	// The original offering CRN that this publish entry came from.
 	PublicOriginalCRN *string `json:"public_original_crn,omitempty"`
@@ -9356,7 +12429,10 @@ type CreateOfferingOptions struct {
 	// A list of badges for this offering.
 	Badges []Badge `json:"badges,omitempty"`
 
-	// Allows users to set headers on API requests
+	// A list of plans for this offering.
+	Plans []Plan `json:"plans,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9487,6 +12563,12 @@ func (_options *CreateOfferingOptions) SetKinds(kinds []Kind) *CreateOfferingOpt
 	return _options
 }
 
+// SetPublish : Allow user to set Publish
+func (_options *CreateOfferingOptions) SetPublish(publish *PublishObject) *CreateOfferingOptions {
+	_options.Publish = publish
+	return _options
+}
+
 // SetPcManaged : Allow user to set PcManaged
 func (_options *CreateOfferingOptions) SetPcManaged(pcManaged bool) *CreateOfferingOptions {
 	_options.PcManaged = core.BoolPtr(pcManaged)
@@ -9514,27 +12596,6 @@ func (_options *CreateOfferingOptions) SetShareWithIBM(shareWithIBM bool) *Creat
 // SetShareEnabled : Allow user to set ShareEnabled
 func (_options *CreateOfferingOptions) SetShareEnabled(shareEnabled bool) *CreateOfferingOptions {
 	_options.ShareEnabled = core.BoolPtr(shareEnabled)
-	return _options
-}
-
-// SetPermitRequestIBMPublicPublish : Allow user to set PermitRequestIBMPublicPublish
-// Deprecated: this method is deprecated and may be removed in a future release.
-func (_options *CreateOfferingOptions) SetPermitRequestIBMPublicPublish(permitRequestIBMPublicPublish bool) *CreateOfferingOptions {
-	_options.PermitRequestIBMPublicPublish = core.BoolPtr(permitRequestIBMPublicPublish)
-	return _options
-}
-
-// SetIBMPublishApproved : Allow user to set IBMPublishApproved
-// Deprecated: this method is deprecated and may be removed in a future release.
-func (_options *CreateOfferingOptions) SetIBMPublishApproved(ibmPublishApproved bool) *CreateOfferingOptions {
-	_options.IBMPublishApproved = core.BoolPtr(ibmPublishApproved)
-	return _options
-}
-
-// SetPublicPublishApproved : Allow user to set PublicPublishApproved
-// Deprecated: this method is deprecated and may be removed in a future release.
-func (_options *CreateOfferingOptions) SetPublicPublishApproved(publicPublishApproved bool) *CreateOfferingOptions {
-	_options.PublicPublishApproved = core.BoolPtr(publicPublishApproved)
 	return _options
 }
 
@@ -9647,6 +12708,12 @@ func (_options *CreateOfferingOptions) SetBadges(badges []Badge) *CreateOffering
 	return _options
 }
 
+// SetPlans : Allow user to set Plans
+func (_options *CreateOfferingOptions) SetPlans(plans []Plan) *CreateOfferingOptions {
+	_options.Plans = plans
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *CreateOfferingOptions) SetHeaders(param map[string]string) *CreateOfferingOptions {
 	options.Headers = param
@@ -9658,7 +12725,7 @@ type DeleteCatalogOptions struct {
 	// Catalog identifier.
 	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9692,7 +12759,7 @@ type DeleteObjectAccessListOptions struct {
 	// A list of accesses to delete.  An entry with star["*"] will remove all accesses.
 	Accesses []string `json:"accesses" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9700,8 +12767,8 @@ type DeleteObjectAccessListOptions struct {
 func (*CatalogManagementV1) NewDeleteObjectAccessListOptions(catalogIdentifier string, objectIdentifier string, accesses []string) *DeleteObjectAccessListOptions {
 	return &DeleteObjectAccessListOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
-		Accesses: accesses,
+		ObjectIdentifier:  core.StringPtr(objectIdentifier),
+		Accesses:          accesses,
 	}
 }
 
@@ -9737,11 +12804,11 @@ type DeleteObjectAccessOptions struct {
 	// Object identifier.
 	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
 
-	// Identifier for access. Use 'accountId' for an account, '-ent-enterpriseid' for an enterprise, and
-	// '-entgroup-enterprisegroupid' for an enterprise group.
+	// Identifier for access. Use 'accountId' or '-acct-accountId' for an account, '-ent-enterpriseid' for an enterprise,
+	// and '-entgrp-enterprisegroupid' for an enterprise group.
 	AccessIdentifier *string `json:"access_identifier" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9749,8 +12816,8 @@ type DeleteObjectAccessOptions struct {
 func (*CatalogManagementV1) NewDeleteObjectAccessOptions(catalogIdentifier string, objectIdentifier string, accessIdentifier string) *DeleteObjectAccessOptions {
 	return &DeleteObjectAccessOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
-		AccessIdentifier: core.StringPtr(accessIdentifier),
+		ObjectIdentifier:  core.StringPtr(objectIdentifier),
+		AccessIdentifier:  core.StringPtr(accessIdentifier),
 	}
 }
 
@@ -9786,7 +12853,7 @@ type DeleteObjectOptions struct {
 	// Object identifier.
 	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9794,7 +12861,7 @@ type DeleteObjectOptions struct {
 func (*CatalogManagementV1) NewDeleteObjectOptions(catalogIdentifier string, objectIdentifier string) *DeleteObjectOptions {
 	return &DeleteObjectOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
+		ObjectIdentifier:  core.StringPtr(objectIdentifier),
 	}
 }
 
@@ -9827,7 +12894,7 @@ type DeleteOfferingAccessListOptions struct {
 	// A list of accesses to delete.  An entry with star["*"] will remove all accesses.
 	Accesses []string `json:"accesses" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9835,8 +12902,8 @@ type DeleteOfferingAccessListOptions struct {
 func (*CatalogManagementV1) NewDeleteOfferingAccessListOptions(catalogIdentifier string, offeringID string, accesses []string) *DeleteOfferingAccessListOptions {
 	return &DeleteOfferingAccessListOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
-		Accesses: accesses,
+		OfferingID:        core.StringPtr(offeringID),
+		Accesses:          accesses,
 	}
 }
 
@@ -9872,7 +12939,7 @@ type DeleteOfferingInstanceOptions struct {
 	// IAM Refresh token.
 	XAuthRefreshToken *string `json:"X-Auth-Refresh-Token" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9880,7 +12947,7 @@ type DeleteOfferingInstanceOptions struct {
 func (*CatalogManagementV1) NewDeleteOfferingInstanceOptions(instanceIdentifier string, xAuthRefreshToken string) *DeleteOfferingInstanceOptions {
 	return &DeleteOfferingInstanceOptions{
 		InstanceIdentifier: core.StringPtr(instanceIdentifier),
-		XAuthRefreshToken: core.StringPtr(xAuthRefreshToken),
+		XAuthRefreshToken:  core.StringPtr(xAuthRefreshToken),
 	}
 }
 
@@ -9910,7 +12977,11 @@ type DeleteOfferingOptions struct {
 	// Offering identification.
 	OfferingID *string `json:"offering_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// IAM token of partner center. Only needed when Partner Center accessing the private catalog offering. When accessing
+	// the public offering Partner Center only needs to use their token in the authorization header.
+	XApproverToken *string `json:"X-Approver-Token,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9918,7 +12989,7 @@ type DeleteOfferingOptions struct {
 func (*CatalogManagementV1) NewDeleteOfferingOptions(catalogIdentifier string, offeringID string) *DeleteOfferingOptions {
 	return &DeleteOfferingOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
+		OfferingID:        core.StringPtr(offeringID),
 	}
 }
 
@@ -9931,6 +13002,12 @@ func (_options *DeleteOfferingOptions) SetCatalogIdentifier(catalogIdentifier st
 // SetOfferingID : Allow user to set OfferingID
 func (_options *DeleteOfferingOptions) SetOfferingID(offeringID string) *DeleteOfferingOptions {
 	_options.OfferingID = core.StringPtr(offeringID)
+	return _options
+}
+
+// SetXApproverToken : Allow user to set XApproverToken
+func (_options *DeleteOfferingOptions) SetXApproverToken(xApproverToken string) *DeleteOfferingOptions {
+	_options.XApproverToken = core.StringPtr(xApproverToken)
 	return _options
 }
 
@@ -9954,7 +13031,7 @@ type DeleteOperatorsOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocatorID *string `json:"version_locator_id" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9962,9 +13039,9 @@ type DeleteOperatorsOptions struct {
 func (*CatalogManagementV1) NewDeleteOperatorsOptions(xAuthRefreshToken string, clusterID string, region string, versionLocatorID string) *DeleteOperatorsOptions {
 	return &DeleteOperatorsOptions{
 		XAuthRefreshToken: core.StringPtr(xAuthRefreshToken),
-		ClusterID: core.StringPtr(clusterID),
-		Region: core.StringPtr(region),
-		VersionLocatorID: core.StringPtr(versionLocatorID),
+		ClusterID:         core.StringPtr(clusterID),
+		Region:            core.StringPtr(region),
+		VersionLocatorID:  core.StringPtr(versionLocatorID),
 	}
 }
 
@@ -9998,12 +13075,87 @@ func (options *DeleteOperatorsOptions) SetHeaders(param map[string]string) *Dele
 	return options
 }
 
+// DeletePlanOptions : The DeletePlan options.
+type DeletePlanOptions struct {
+	// A dotted value of `sw`.`catalogID`.`resourceID`.
+	PlanLocID *string `json:"plan_loc_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeletePlanOptions : Instantiate DeletePlanOptions
+func (*CatalogManagementV1) NewDeletePlanOptions(planLocID string) *DeletePlanOptions {
+	return &DeletePlanOptions{
+		PlanLocID: core.StringPtr(planLocID),
+	}
+}
+
+// SetPlanLocID : Allow user to set PlanLocID
+func (_options *DeletePlanOptions) SetPlanLocID(planLocID string) *DeletePlanOptions {
+	_options.PlanLocID = core.StringPtr(planLocID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeletePlanOptions) SetHeaders(param map[string]string) *DeletePlanOptions {
+	options.Headers = param
+	return options
+}
+
+// DeleteShareApprovalListOptions : The DeleteShareApprovalList options.
+type DeleteShareApprovalListOptions struct {
+	// The type for the object.
+	ObjectType *string `json:"object_type" validate:"required,ne="`
+
+	// A list of accesses to delete.  An entry with star["*"] will remove all accesses.
+	Accesses []string `json:"accesses" validate:"required"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// Constants associated with the DeleteShareApprovalListOptions.ObjectType property.
+// The type for the object.
+const (
+	DeleteShareApprovalListOptionsObjectTypeOfferingConst            = "offering"
+	DeleteShareApprovalListOptionsObjectTypePresetConfigurationConst = "preset_configuration"
+	DeleteShareApprovalListOptionsObjectTypeProxySourceConst         = "proxy_source"
+	DeleteShareApprovalListOptionsObjectTypeVpeConst                 = "vpe"
+)
+
+// NewDeleteShareApprovalListOptions : Instantiate DeleteShareApprovalListOptions
+func (*CatalogManagementV1) NewDeleteShareApprovalListOptions(objectType string, accesses []string) *DeleteShareApprovalListOptions {
+	return &DeleteShareApprovalListOptions{
+		ObjectType: core.StringPtr(objectType),
+		Accesses:   accesses,
+	}
+}
+
+// SetObjectType : Allow user to set ObjectType
+func (_options *DeleteShareApprovalListOptions) SetObjectType(objectType string) *DeleteShareApprovalListOptions {
+	_options.ObjectType = core.StringPtr(objectType)
+	return _options
+}
+
+// SetAccesses : Allow user to set Accesses
+func (_options *DeleteShareApprovalListOptions) SetAccesses(accesses []string) *DeleteShareApprovalListOptions {
+	_options.Accesses = accesses
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteShareApprovalListOptions) SetHeaders(param map[string]string) *DeleteShareApprovalListOptions {
+	options.Headers = param
+	return options
+}
+
 // DeleteVersionOptions : The DeleteVersion options.
 type DeleteVersionOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10052,7 +13204,7 @@ type DeployOperatorsOptions struct {
 	// Plan.
 	InstallPlan *string `json:"install_plan,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10137,18 +13289,22 @@ func UnmarshalDeployRequestBodyEnvironmentVariablesItem(m map[string]json.RawMes
 	obj := new(DeployRequestBodyEnvironmentVariablesItem)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "secure", &obj.Secure)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "secure-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "hidden", &obj.Hidden)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hidden-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10156,6 +13312,7 @@ func UnmarshalDeployRequestBodyEnvironmentVariablesItem(m map[string]json.RawMes
 }
 
 // DeployRequestBodyOverrideValues : Validation override values. Required for virtual server image for VPC.
+// This type supports additional properties of type interface{}.
 type DeployRequestBodyOverrideValues struct {
 	// Name of virtual server image instance to create. Required for virtual server image for VPC.
 	VsiInstanceName *string `json:"vsi_instance_name,omitempty"`
@@ -10178,11 +13335,11 @@ type DeployRequestBodyOverrideValues struct {
 	// Region virtual server image exists in. Required for virtual server image for VPC.
 	VPCRegion *string `json:"vpc_region,omitempty"`
 
-	// Allows users to set arbitrary properties
+	// Allows users to set arbitrary properties of type interface{}.
 	additionalProperties map[string]interface{}
 }
 
-// SetProperty allows the user to set an arbitrary property on an instance of DeployRequestBodyOverrideValues
+// SetProperty allows the user to set an arbitrary property on an instance of DeployRequestBodyOverrideValues.
 func (o *DeployRequestBodyOverrideValues) SetProperty(key string, value interface{}) {
 	if o.additionalProperties == nil {
 		o.additionalProperties = make(map[string]interface{})
@@ -10190,7 +13347,7 @@ func (o *DeployRequestBodyOverrideValues) SetProperty(key string, value interfac
 	o.additionalProperties[key] = value
 }
 
-// SetProperties allows the user to set a map of arbitrary properties on an instance of DeployRequestBodyOverrideValues
+// SetProperties allows the user to set a map of arbitrary properties on an instance of DeployRequestBodyOverrideValues.
 func (o *DeployRequestBodyOverrideValues) SetProperties(m map[string]interface{}) {
 	o.additionalProperties = make(map[string]interface{})
 	for k, v := range m {
@@ -10198,12 +13355,12 @@ func (o *DeployRequestBodyOverrideValues) SetProperties(m map[string]interface{}
 	}
 }
 
-// GetProperty allows the user to retrieve an arbitrary property from an instance of DeployRequestBodyOverrideValues
+// GetProperty allows the user to retrieve an arbitrary property from an instance of DeployRequestBodyOverrideValues.
 func (o *DeployRequestBodyOverrideValues) GetProperty(key string) interface{} {
 	return o.additionalProperties[key]
 }
 
-// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of DeployRequestBodyOverrideValues
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of DeployRequestBodyOverrideValues.
 func (o *DeployRequestBodyOverrideValues) GetProperties() map[string]interface{} {
 	return o.additionalProperties
 }
@@ -10238,6 +13395,9 @@ func (o *DeployRequestBodyOverrideValues) MarshalJSON() (buffer []byte, err erro
 		m["vpc_region"] = o.VPCRegion
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -10246,36 +13406,43 @@ func UnmarshalDeployRequestBodyOverrideValues(m map[string]json.RawMessage, resu
 	obj := new(DeployRequestBodyOverrideValues)
 	err = core.UnmarshalPrimitive(m, "vsi_instance_name", &obj.VsiInstanceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "vsi_instance_name-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "vsi_instance_name")
 	err = core.UnmarshalPrimitive(m, "vpc_profile", &obj.VPCProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "vpc_profile-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "vpc_profile")
 	err = core.UnmarshalPrimitive(m, "subnet_id", &obj.SubnetID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subnet_id-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "subnet_id")
 	err = core.UnmarshalPrimitive(m, "vpc_id", &obj.VPCID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "vpc_id-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "vpc_id")
 	err = core.UnmarshalPrimitive(m, "subnet_zone", &obj.SubnetZone)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subnet_zone-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "subnet_zone")
 	err = core.UnmarshalPrimitive(m, "ssh_key_id", &obj.SSHKeyID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ssh_key_id-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "ssh_key_id")
 	err = core.UnmarshalPrimitive(m, "vpc_region", &obj.VPCRegion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "vpc_region-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "vpc_region")
@@ -10283,7 +13450,7 @@ func UnmarshalDeployRequestBodyOverrideValues(m map[string]json.RawMessage, resu
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -10318,26 +13485,32 @@ func UnmarshalDeployRequestBodySchematics(m map[string]json.RawMessage, result i
 	obj := new(DeployRequestBodySchematics)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tags-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group_id", &obj.ResourceGroupID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "terraform_version", &obj.TerraformVersion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "terraform_version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "region", &obj.Region)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "region-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10361,7 +13534,7 @@ type DeprecateOfferingOptions struct {
 	// Specifies the amount of days until product is not available in catalog.
 	DaysUntilDeprecate *int64 `json:"days_until_deprecate,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10369,15 +13542,15 @@ type DeprecateOfferingOptions struct {
 // Set deprecation (true) or cancel deprecation (false).
 const (
 	DeprecateOfferingOptionsSettingFalseConst = "false"
-	DeprecateOfferingOptionsSettingTrueConst = "true"
+	DeprecateOfferingOptionsSettingTrueConst  = "true"
 )
 
 // NewDeprecateOfferingOptions : Instantiate DeprecateOfferingOptions
 func (*CatalogManagementV1) NewDeprecateOfferingOptions(catalogIdentifier string, offeringID string, setting string) *DeprecateOfferingOptions {
 	return &DeprecateOfferingOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
-		Setting: core.StringPtr(setting),
+		OfferingID:        core.StringPtr(offeringID),
+		Setting:           core.StringPtr(setting),
 	}
 }
 
@@ -10433,14 +13606,17 @@ func UnmarshalDeprecatePending(m map[string]json.RawMessage, result interface{})
 	obj := new(DeprecatePending)
 	err = core.UnmarshalPrimitive(m, "deprecate_date", &obj.DeprecateDate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deprecate_date-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deprecate_state", &obj.DeprecateState)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deprecate_state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10452,7 +13628,7 @@ type DeprecateVersionOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10510,38 +13686,47 @@ func UnmarshalEvaluatedControl(m map[string]json.RawMessage, result interface{})
 	obj := new(EvaluatedControl)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "specifications", &obj.Specifications, UnmarshalSccSpecification)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "specifications-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "child_controls", &obj.ChildControls, UnmarshalEvaluatedControl)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "child_controls-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "failure_count", &obj.FailureCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "failure_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pass_count", &obj.PassCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pass_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "parent", &obj.Parent, UnmarshalSccControl)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parent-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ui_href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10571,22 +13756,27 @@ func UnmarshalEvaluation(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(Evaluation)
 	err = core.UnmarshalPrimitive(m, "scan_id", &obj.ScanID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "scan_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "profile", &obj.Profile, UnmarshalSccProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "controls", &obj.Controls, UnmarshalEvaluatedControl)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "controls-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10613,18 +13803,22 @@ func UnmarshalFeature(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Feature)
 	err = core.UnmarshalPrimitive(m, "title", &obj.Title)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "title-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "title_i18n", &obj.TitleI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "title_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description_i18n", &obj.DescriptionI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description_i18n-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10643,6 +13837,7 @@ func UnmarshalFilterTerms(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(FilterTerms)
 	err = core.UnmarshalPrimitive(m, "filter_terms", &obj.FilterTerms)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "filter_terms-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10668,14 +13863,17 @@ func UnmarshalFilters(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Filters)
 	err = core.UnmarshalPrimitive(m, "include_all", &obj.IncludeAll)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "include_all-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "category_filters", &obj.CategoryFilters, UnmarshalCategoryFilter)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "category_filters-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "id_filters", &obj.IDFilters, UnmarshalIDFilter)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id_filters-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10702,18 +13900,22 @@ func UnmarshalFlavor(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Flavor)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label_i18n", &obj.LabelI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "index", &obj.Index)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "index-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10728,7 +13930,7 @@ type GetCatalogAccountAuditOptions struct {
 	// Auditlog Lookup Names - by default names are not returned in auditlog.
 	Lookupnames *bool `json:"lookupnames,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10762,7 +13964,7 @@ type GetCatalogAccountFiltersOptions struct {
 	// catalog id. Narrow down filters to the account and just the one catalog.
 	Catalog *string `json:"catalog,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10786,7 +13988,7 @@ func (options *GetCatalogAccountFiltersOptions) SetHeaders(param map[string]stri
 // GetCatalogAccountOptions : The GetCatalogAccount options.
 type GetCatalogAccountOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10812,14 +14014,14 @@ type GetCatalogAuditOptions struct {
 	// Auditlog Lookup Names - by default names are not returned in auditlog.
 	Lookupnames *bool `json:"lookupnames,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewGetCatalogAuditOptions : Instantiate GetCatalogAuditOptions
 func (*CatalogManagementV1) NewGetCatalogAuditOptions(catalogIdentifier string, auditlogIdentifier string) *GetCatalogAuditOptions {
 	return &GetCatalogAuditOptions{
-		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		CatalogIdentifier:  core.StringPtr(catalogIdentifier),
 		AuditlogIdentifier: core.StringPtr(auditlogIdentifier),
 	}
 }
@@ -10853,7 +14055,7 @@ type GetCatalogOptions struct {
 	// Catalog identifier.
 	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10887,15 +14089,15 @@ type GetClusterOptions struct {
 	// IAM Refresh token.
 	XAuthRefreshToken *string `json:"X-Auth-Refresh-Token" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewGetClusterOptions : Instantiate GetClusterOptions
 func (*CatalogManagementV1) NewGetClusterOptions(clusterID string, region string, xAuthRefreshToken string) *GetClusterOptions {
 	return &GetClusterOptions{
-		ClusterID: core.StringPtr(clusterID),
-		Region: core.StringPtr(region),
+		ClusterID:         core.StringPtr(clusterID),
+		Region:            core.StringPtr(region),
 		XAuthRefreshToken: core.StringPtr(xAuthRefreshToken),
 	}
 }
@@ -10948,7 +14150,7 @@ type GetConsumptionOfferingsOptions struct {
 	// number of results to skip before returning values.
 	Offset *int64 `json:"offset,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10956,9 +14158,9 @@ type GetConsumptionOfferingsOptions struct {
 // What should be selected. Default is 'all' which will return both public and private offerings. 'public' returns only
 // the public offerings and 'private' returns only the private offerings.
 const (
-	GetConsumptionOfferingsOptionsSelectAllConst = "all"
+	GetConsumptionOfferingsOptionsSelectAllConst     = "all"
 	GetConsumptionOfferingsOptionsSelectPrivateConst = "private"
-	GetConsumptionOfferingsOptionsSelectPublicConst = "public"
+	GetConsumptionOfferingsOptionsSelectPublicConst  = "public"
 )
 
 // NewGetConsumptionOfferingsOptions : Instantiate GetConsumptionOfferingsOptions
@@ -11019,7 +14221,7 @@ type GetEnterpriseAuditOptions struct {
 	// Auditlog Lookup Names - by default names are not returned in auditlog.
 	Lookupnames *bool `json:"lookupnames,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11027,7 +14229,7 @@ type GetEnterpriseAuditOptions struct {
 func (*CatalogManagementV1) NewGetEnterpriseAuditOptions(enterpriseIdentifier string, auditlogIdentifier string) *GetEnterpriseAuditOptions {
 	return &GetEnterpriseAuditOptions{
 		EnterpriseIdentifier: core.StringPtr(enterpriseIdentifier),
-		AuditlogIdentifier: core.StringPtr(auditlogIdentifier),
+		AuditlogIdentifier:   core.StringPtr(auditlogIdentifier),
 	}
 }
 
@@ -11055,6 +14257,34 @@ func (options *GetEnterpriseAuditOptions) SetHeaders(param map[string]string) *G
 	return options
 }
 
+// GetIamPermissionsOptions : The GetIamPermissions options.
+type GetIamPermissionsOptions struct {
+	// A dotted value of `catalogID`.`versionID`.
+	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetIamPermissionsOptions : Instantiate GetIamPermissionsOptions
+func (*CatalogManagementV1) NewGetIamPermissionsOptions(versionLocID string) *GetIamPermissionsOptions {
+	return &GetIamPermissionsOptions{
+		VersionLocID: core.StringPtr(versionLocID),
+	}
+}
+
+// SetVersionLocID : Allow user to set VersionLocID
+func (_options *GetIamPermissionsOptions) SetVersionLocID(versionLocID string) *GetIamPermissionsOptions {
+	_options.VersionLocID = core.StringPtr(versionLocID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetIamPermissionsOptions) SetHeaders(param map[string]string) *GetIamPermissionsOptions {
+	options.Headers = param
+	return options
+}
+
 // GetNamespacesOptions : The GetNamespaces options.
 type GetNamespacesOptions struct {
 	// ID of the cluster.
@@ -11072,15 +14302,15 @@ type GetNamespacesOptions struct {
 	// The number of results to skip before returning values.
 	Offset *int64 `json:"offset,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewGetNamespacesOptions : Instantiate GetNamespacesOptions
 func (*CatalogManagementV1) NewGetNamespacesOptions(clusterID string, region string, xAuthRefreshToken string) *GetNamespacesOptions {
 	return &GetNamespacesOptions{
-		ClusterID: core.StringPtr(clusterID),
-		Region: core.StringPtr(region),
+		ClusterID:         core.StringPtr(clusterID),
+		Region:            core.StringPtr(region),
 		XAuthRefreshToken: core.StringPtr(xAuthRefreshToken),
 	}
 }
@@ -11135,7 +14365,7 @@ type GetObjectAccessListDeprecatedOptions struct {
 	// The number of results to skip before returning values.
 	Offset *int64 `json:"offset,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11143,7 +14373,7 @@ type GetObjectAccessListDeprecatedOptions struct {
 func (*CatalogManagementV1) NewGetObjectAccessListDeprecatedOptions(catalogIdentifier string, objectIdentifier string) *GetObjectAccessListDeprecatedOptions {
 	return &GetObjectAccessListDeprecatedOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
+		ObjectIdentifier:  core.StringPtr(objectIdentifier),
 	}
 }
 
@@ -11191,7 +14421,7 @@ type GetObjectAccessListOptions struct {
 	// number or results to return in the query.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11199,7 +14429,7 @@ type GetObjectAccessListOptions struct {
 func (*CatalogManagementV1) NewGetObjectAccessListOptions(catalogIdentifier string, objectIdentifier string) *GetObjectAccessListOptions {
 	return &GetObjectAccessListOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
+		ObjectIdentifier:  core.StringPtr(objectIdentifier),
 	}
 }
 
@@ -11241,11 +14471,11 @@ type GetObjectAccessOptions struct {
 	// Object identifier.
 	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
 
-	// Identifier for access. Use 'accountId' for an account, '-ent-enterpriseid' for an enterprise, and
-	// '-entgroup-enterprisegroupid' for an enterprise group.
+	// Identifier for access. Use 'accountId' or '-acct-accountId' for an account, '-ent-enterpriseid' for an enterprise,
+	// and '-entgrp-enterprisegroupid' for an enterprise group.
 	AccessIdentifier *string `json:"access_identifier" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11253,8 +14483,8 @@ type GetObjectAccessOptions struct {
 func (*CatalogManagementV1) NewGetObjectAccessOptions(catalogIdentifier string, objectIdentifier string, accessIdentifier string) *GetObjectAccessOptions {
 	return &GetObjectAccessOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
-		AccessIdentifier: core.StringPtr(accessIdentifier),
+		ObjectIdentifier:  core.StringPtr(objectIdentifier),
+		AccessIdentifier:  core.StringPtr(accessIdentifier),
 	}
 }
 
@@ -11296,15 +14526,15 @@ type GetObjectAuditOptions struct {
 	// Auditlog Lookup Names - by default names are not returned in auditlog.
 	Lookupnames *bool `json:"lookupnames,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewGetObjectAuditOptions : Instantiate GetObjectAuditOptions
 func (*CatalogManagementV1) NewGetObjectAuditOptions(catalogIdentifier string, objectIdentifier string, auditlogIdentifier string) *GetObjectAuditOptions {
 	return &GetObjectAuditOptions{
-		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
+		CatalogIdentifier:  core.StringPtr(catalogIdentifier),
+		ObjectIdentifier:   core.StringPtr(objectIdentifier),
 		AuditlogIdentifier: core.StringPtr(auditlogIdentifier),
 	}
 }
@@ -11347,7 +14577,7 @@ type GetObjectOptions struct {
 	// Object identifier.
 	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11355,7 +14585,7 @@ type GetObjectOptions struct {
 func (*CatalogManagementV1) NewGetObjectOptions(catalogIdentifier string, objectIdentifier string) *GetObjectOptions {
 	return &GetObjectOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
+		ObjectIdentifier:  core.StringPtr(objectIdentifier),
 	}
 }
 
@@ -11382,7 +14612,7 @@ type GetOfferingAboutOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11419,7 +14649,7 @@ type GetOfferingAccessListOptions struct {
 	// number or results to return in the query.
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11427,7 +14657,7 @@ type GetOfferingAccessListOptions struct {
 func (*CatalogManagementV1) NewGetOfferingAccessListOptions(catalogIdentifier string, offeringID string) *GetOfferingAccessListOptions {
 	return &GetOfferingAccessListOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
+		OfferingID:        core.StringPtr(offeringID),
 	}
 }
 
@@ -11469,11 +14699,11 @@ type GetOfferingAccessOptions struct {
 	// Offering identification.
 	OfferingID *string `json:"offering_id" validate:"required,ne="`
 
-	// Identifier for access. Use 'accountId' for an account, '-ent-enterpriseid' for an enterprise, and
-	// '-entgroup-enterprisegroupid' for an enterprise group.
+	// Identifier for access. Use 'accountId' or '-acct-accountId' for an account, '-ent-enterpriseid' for an enterprise,
+	// and '-entgrp-enterprisegroupid' for an enterprise group.
 	AccessIdentifier *string `json:"access_identifier" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11481,8 +14711,8 @@ type GetOfferingAccessOptions struct {
 func (*CatalogManagementV1) NewGetOfferingAccessOptions(catalogIdentifier string, offeringID string, accessIdentifier string) *GetOfferingAccessOptions {
 	return &GetOfferingAccessOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
-		AccessIdentifier: core.StringPtr(accessIdentifier),
+		OfferingID:        core.StringPtr(offeringID),
+		AccessIdentifier:  core.StringPtr(accessIdentifier),
 	}
 }
 
@@ -11524,15 +14754,15 @@ type GetOfferingAuditOptions struct {
 	// Auditlog Lookup Names - by default names are not returned in auditlog.
 	Lookupnames *bool `json:"lookupnames,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewGetOfferingAuditOptions : Instantiate GetOfferingAuditOptions
 func (*CatalogManagementV1) NewGetOfferingAuditOptions(catalogIdentifier string, offeringID string, auditlogIdentifier string) *GetOfferingAuditOptions {
 	return &GetOfferingAuditOptions{
-		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
+		CatalogIdentifier:  core.StringPtr(catalogIdentifier),
+		OfferingID:         core.StringPtr(offeringID),
 		AuditlogIdentifier: core.StringPtr(auditlogIdentifier),
 	}
 }
@@ -11567,12 +14797,105 @@ func (options *GetOfferingAuditOptions) SetHeaders(param map[string]string) *Get
 	return options
 }
 
+// GetOfferingChangeNoticesOptions : The GetOfferingChangeNotices options.
+type GetOfferingChangeNoticesOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Offering identification.
+	OfferingID *string `json:"offering_id" validate:"required,ne="`
+
+	// The kind of offering (e.g, helm, ova, terraform ...).
+	Kind *string `json:"kind" validate:"required"`
+
+	// The target kind of the currently installed version (e.g. iks, roks, etc).
+	Target *string `json:"target,omitempty"`
+
+	// optionaly provide an existing version to check updates for if one is not given, all version will be returned.
+	Version *string `json:"version,omitempty"`
+
+	// The programmatic flavor name of the version that was installed.
+	Flavor *string `json:"flavor,omitempty"`
+
+	// optionaly specify if change notices should be returned for all versions of this kind and flavor, or for all versions
+	// that are newer than the specified version, including the specified version.
+	Versions *string `json:"versions,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// Constants associated with the GetOfferingChangeNoticesOptions.Versions property.
+// optionaly specify if change notices should be returned for all versions of this kind and flavor, or for all versions
+// that are newer than the specified version, including the specified version.
+const (
+	GetOfferingChangeNoticesOptionsVersionsAllConst    = "all"
+	GetOfferingChangeNoticesOptionsVersionsLatestConst = "latest"
+)
+
+// NewGetOfferingChangeNoticesOptions : Instantiate GetOfferingChangeNoticesOptions
+func (*CatalogManagementV1) NewGetOfferingChangeNoticesOptions(catalogIdentifier string, offeringID string, kind string) *GetOfferingChangeNoticesOptions {
+	return &GetOfferingChangeNoticesOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		OfferingID:        core.StringPtr(offeringID),
+		Kind:              core.StringPtr(kind),
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *GetOfferingChangeNoticesOptions) SetCatalogIdentifier(catalogIdentifier string) *GetOfferingChangeNoticesOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetOfferingID : Allow user to set OfferingID
+func (_options *GetOfferingChangeNoticesOptions) SetOfferingID(offeringID string) *GetOfferingChangeNoticesOptions {
+	_options.OfferingID = core.StringPtr(offeringID)
+	return _options
+}
+
+// SetKind : Allow user to set Kind
+func (_options *GetOfferingChangeNoticesOptions) SetKind(kind string) *GetOfferingChangeNoticesOptions {
+	_options.Kind = core.StringPtr(kind)
+	return _options
+}
+
+// SetTarget : Allow user to set Target
+func (_options *GetOfferingChangeNoticesOptions) SetTarget(target string) *GetOfferingChangeNoticesOptions {
+	_options.Target = core.StringPtr(target)
+	return _options
+}
+
+// SetVersion : Allow user to set Version
+func (_options *GetOfferingChangeNoticesOptions) SetVersion(version string) *GetOfferingChangeNoticesOptions {
+	_options.Version = core.StringPtr(version)
+	return _options
+}
+
+// SetFlavor : Allow user to set Flavor
+func (_options *GetOfferingChangeNoticesOptions) SetFlavor(flavor string) *GetOfferingChangeNoticesOptions {
+	_options.Flavor = core.StringPtr(flavor)
+	return _options
+}
+
+// SetVersions : Allow user to set Versions
+func (_options *GetOfferingChangeNoticesOptions) SetVersions(versions string) *GetOfferingChangeNoticesOptions {
+	_options.Versions = core.StringPtr(versions)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetOfferingChangeNoticesOptions) SetHeaders(param map[string]string) *GetOfferingChangeNoticesOptions {
+	options.Headers = param
+	return options
+}
+
 // GetOfferingContainerImagesOptions : The GetOfferingContainerImages options.
 type GetOfferingContainerImagesOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11606,7 +14929,7 @@ type GetOfferingInstanceAuditOptions struct {
 	// Auditlog Lookup Names - by default names are not returned in auditlog.
 	Lookupnames *bool `json:"lookupnames,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11647,7 +14970,7 @@ type GetOfferingInstanceOptions struct {
 	// Version Instance identifier.
 	InstanceIdentifier *string `json:"instance_identifier" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11678,7 +15001,7 @@ type GetOfferingLicenseOptions struct {
 	// The ID of the license, which maps to the file name in the 'licenses' directory of this verions tgz file.
 	LicenseID *string `json:"license_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11686,7 +15009,7 @@ type GetOfferingLicenseOptions struct {
 func (*CatalogManagementV1) NewGetOfferingLicenseOptions(versionLocID string, licenseID string) *GetOfferingLicenseOptions {
 	return &GetOfferingLicenseOptions{
 		VersionLocID: core.StringPtr(versionLocID),
-		LicenseID: core.StringPtr(licenseID),
+		LicenseID:    core.StringPtr(licenseID),
 	}
 }
 
@@ -11722,7 +15045,7 @@ type GetOfferingOptions struct {
 	// Return the digest format of the specified offering.  Default is false.
 	Digest *bool `json:"digest,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11730,7 +15053,7 @@ type GetOfferingOptions struct {
 func (*CatalogManagementV1) NewGetOfferingOptions(catalogIdentifier string, offeringID string) *GetOfferingOptions {
 	return &GetOfferingOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
+		OfferingID:        core.StringPtr(offeringID),
 	}
 }
 
@@ -11760,6 +15083,116 @@ func (_options *GetOfferingOptions) SetDigest(digest bool) *GetOfferingOptions {
 
 // SetHeaders : Allow user to set Headers
 func (options *GetOfferingOptions) SetHeaders(param map[string]string) *GetOfferingOptions {
+	options.Headers = param
+	return options
+}
+
+// GetOfferingSourceArchiveOptions : The GetOfferingSourceArchive options.
+type GetOfferingSourceArchiveOptions struct {
+	// The version being requested.
+	Version *string `json:"version" validate:"required"`
+
+	// The type of the response: application/yaml, application/json, or application/x-gzip.
+	Accept *string `json:"Accept,omitempty"`
+
+	// Catalog ID.  If not specified, this value will default to the public catalog.
+	CatalogID *string `json:"catalogID,omitempty"`
+
+	// Offering name.  An offering name or ID must be specified.
+	Name *string `json:"name,omitempty"`
+
+	// Offering id.  An offering name or ID must be specified.
+	ID *string `json:"id,omitempty"`
+
+	// The kind of offering (e.g. helm, ova, terraform...).
+	Kind *string `json:"kind,omitempty"`
+
+	// The channel value of the specified version.
+	Channel *string `json:"channel,omitempty"`
+
+	// The programmatic flavor name of the specified version.
+	Flavor *string `json:"flavor,omitempty"`
+
+	// If false (the default), the root folder from the original onboarded tgz file is removed.  If true, the root folder
+	// is returned.
+	AsIs *bool `json:"asIs,omitempty"`
+
+	// The install type of the specified version.
+	InstallType *string `json:"installType,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetOfferingSourceArchiveOptions : Instantiate GetOfferingSourceArchiveOptions
+func (*CatalogManagementV1) NewGetOfferingSourceArchiveOptions(version string) *GetOfferingSourceArchiveOptions {
+	return &GetOfferingSourceArchiveOptions{
+		Version: core.StringPtr(version),
+	}
+}
+
+// SetVersion : Allow user to set Version
+func (_options *GetOfferingSourceArchiveOptions) SetVersion(version string) *GetOfferingSourceArchiveOptions {
+	_options.Version = core.StringPtr(version)
+	return _options
+}
+
+// SetAccept : Allow user to set Accept
+func (_options *GetOfferingSourceArchiveOptions) SetAccept(accept string) *GetOfferingSourceArchiveOptions {
+	_options.Accept = core.StringPtr(accept)
+	return _options
+}
+
+// SetCatalogID : Allow user to set CatalogID
+func (_options *GetOfferingSourceArchiveOptions) SetCatalogID(catalogID string) *GetOfferingSourceArchiveOptions {
+	_options.CatalogID = core.StringPtr(catalogID)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *GetOfferingSourceArchiveOptions) SetName(name string) *GetOfferingSourceArchiveOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetOfferingSourceArchiveOptions) SetID(id string) *GetOfferingSourceArchiveOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetKind : Allow user to set Kind
+func (_options *GetOfferingSourceArchiveOptions) SetKind(kind string) *GetOfferingSourceArchiveOptions {
+	_options.Kind = core.StringPtr(kind)
+	return _options
+}
+
+// SetChannel : Allow user to set Channel
+func (_options *GetOfferingSourceArchiveOptions) SetChannel(channel string) *GetOfferingSourceArchiveOptions {
+	_options.Channel = core.StringPtr(channel)
+	return _options
+}
+
+// SetFlavor : Allow user to set Flavor
+func (_options *GetOfferingSourceArchiveOptions) SetFlavor(flavor string) *GetOfferingSourceArchiveOptions {
+	_options.Flavor = core.StringPtr(flavor)
+	return _options
+}
+
+// SetAsIs : Allow user to set AsIs
+func (_options *GetOfferingSourceArchiveOptions) SetAsIs(asIs bool) *GetOfferingSourceArchiveOptions {
+	_options.AsIs = core.BoolPtr(asIs)
+	return _options
+}
+
+// SetInstallType : Allow user to set InstallType
+func (_options *GetOfferingSourceArchiveOptions) SetInstallType(installType string) *GetOfferingSourceArchiveOptions {
+	_options.InstallType = core.StringPtr(installType)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetOfferingSourceArchiveOptions) SetHeaders(param map[string]string) *GetOfferingSourceArchiveOptions {
 	options.Headers = param
 	return options
 }
@@ -11797,7 +15230,7 @@ type GetOfferingSourceOptions struct {
 	// The install type of the specified version.
 	InstallType *string `json:"installType,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11891,7 +15324,7 @@ type GetOfferingSourceURLOptions struct {
 	// Offering id. An offering name or ID must be specified.
 	ID *string `json:"id,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11934,6 +15367,44 @@ func (_options *GetOfferingSourceURLOptions) SetID(id string) *GetOfferingSource
 
 // SetHeaders : Allow user to set Headers
 func (options *GetOfferingSourceURLOptions) SetHeaders(param map[string]string) *GetOfferingSourceURLOptions {
+	options.Headers = param
+	return options
+}
+
+// GetOfferingStatsOptions : The GetOfferingStats options.
+type GetOfferingStatsOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Offering identification.
+	OfferingID *string `json:"offering_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetOfferingStatsOptions : Instantiate GetOfferingStatsOptions
+func (*CatalogManagementV1) NewGetOfferingStatsOptions(catalogIdentifier string, offeringID string) *GetOfferingStatsOptions {
+	return &GetOfferingStatsOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		OfferingID:        core.StringPtr(offeringID),
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *GetOfferingStatsOptions) SetCatalogIdentifier(catalogIdentifier string) *GetOfferingStatsOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetOfferingID : Allow user to set OfferingID
+func (_options *GetOfferingStatsOptions) SetOfferingID(offeringID string) *GetOfferingStatsOptions {
+	_options.OfferingID = core.StringPtr(offeringID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetOfferingStatsOptions) SetHeaders(param map[string]string) *GetOfferingStatsOptions {
 	options.Headers = param
 	return options
 }
@@ -11988,7 +15459,7 @@ type GetOfferingUpdatesOptions struct {
 	// The install type of the version that was installed.
 	InstallType *string `json:"install_type,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11996,8 +15467,8 @@ type GetOfferingUpdatesOptions struct {
 func (*CatalogManagementV1) NewGetOfferingUpdatesOptions(catalogIdentifier string, offeringID string, kind string, xAuthRefreshToken string) *GetOfferingUpdatesOptions {
 	return &GetOfferingUpdatesOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
-		Kind: core.StringPtr(kind),
+		OfferingID:        core.StringPtr(offeringID),
+		Kind:              core.StringPtr(kind),
 		XAuthRefreshToken: core.StringPtr(xAuthRefreshToken),
 	}
 }
@@ -12109,7 +15580,7 @@ type GetOfferingWorkingCopyOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12132,30 +15603,30 @@ func (options *GetOfferingWorkingCopyOptions) SetHeaders(param map[string]string
 	return options
 }
 
-// GetOverrideValuesOptions : The GetOverrideValues options.
-type GetOverrideValuesOptions struct {
-	// A dotted value of `catalogID`.`versionID`.
-	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
+// GetPlanOptions : The GetPlan options.
+type GetPlanOptions struct {
+	// A dotted value of `sw`.`catalogID`.`resourceID`.
+	PlanLocID *string `json:"plan_loc_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
-// NewGetOverrideValuesOptions : Instantiate GetOverrideValuesOptions
-func (*CatalogManagementV1) NewGetOverrideValuesOptions(versionLocID string) *GetOverrideValuesOptions {
-	return &GetOverrideValuesOptions{
-		VersionLocID: core.StringPtr(versionLocID),
+// NewGetPlanOptions : Instantiate GetPlanOptions
+func (*CatalogManagementV1) NewGetPlanOptions(planLocID string) *GetPlanOptions {
+	return &GetPlanOptions{
+		PlanLocID: core.StringPtr(planLocID),
 	}
 }
 
-// SetVersionLocID : Allow user to set VersionLocID
-func (_options *GetOverrideValuesOptions) SetVersionLocID(versionLocID string) *GetOverrideValuesOptions {
-	_options.VersionLocID = core.StringPtr(versionLocID)
+// SetPlanLocID : Allow user to set PlanLocID
+func (_options *GetPlanOptions) SetPlanLocID(planLocID string) *GetPlanOptions {
+	_options.PlanLocID = core.StringPtr(planLocID)
 	return _options
 }
 
 // SetHeaders : Allow user to set Headers
-func (options *GetOverrideValuesOptions) SetHeaders(param map[string]string) *GetOverrideValuesOptions {
+func (options *GetPlanOptions) SetHeaders(param map[string]string) *GetPlanOptions {
 	options.Headers = param
 	return options
 }
@@ -12177,14 +15648,14 @@ type GetPreinstallOptions struct {
 	// Required if the version's pre-install scope is `namespace`.
 	Namespace *string `json:"namespace,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewGetPreinstallOptions : Instantiate GetPreinstallOptions
 func (*CatalogManagementV1) NewGetPreinstallOptions(versionLocID string, xAuthRefreshToken string) *GetPreinstallOptions {
 	return &GetPreinstallOptions{
-		VersionLocID: core.StringPtr(versionLocID),
+		VersionLocID:      core.StringPtr(versionLocID),
 		XAuthRefreshToken: core.StringPtr(xAuthRefreshToken),
 	}
 }
@@ -12225,6 +15696,144 @@ func (options *GetPreinstallOptions) SetHeaders(param map[string]string) *GetPre
 	return options
 }
 
+// GetShareApprovalListAsSourceOptions : The GetShareApprovalListAsSource options.
+type GetShareApprovalListAsSourceOptions struct {
+	// The type for the object.
+	ObjectType *string `json:"object_type" validate:"required,ne="`
+
+	// The different possible approval states for share requests or access request.
+	ApprovalStateIdentifier *string `json:"approval_state_identifier" validate:"required,ne="`
+
+	// Start token for a query.
+	Start *string `json:"start,omitempty"`
+
+	// number or results to return in the query.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Execute the request in the context of an enterprise or enterpise account group ID. Use '-ent-enterpriseid' for an
+	// enterprise and '-entgrp-enterprisegroupid for an enterprise group.
+	EnterpriseID *string `json:"enterprise_id,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// Constants associated with the GetShareApprovalListAsSourceOptions.ObjectType property.
+// The type for the object.
+const (
+	GetShareApprovalListAsSourceOptionsObjectTypeOfferingConst            = "offering"
+	GetShareApprovalListAsSourceOptionsObjectTypePresetConfigurationConst = "preset_configuration"
+	GetShareApprovalListAsSourceOptionsObjectTypeProxySourceConst         = "proxy_source"
+	GetShareApprovalListAsSourceOptionsObjectTypeVpeConst                 = "vpe"
+)
+
+// Constants associated with the GetShareApprovalListAsSourceOptions.ApprovalStateIdentifier property.
+// The different possible approval states for share requests or access request.
+const (
+	GetShareApprovalListAsSourceOptionsApprovalStateIdentifierApprovedConst = "approved"
+	GetShareApprovalListAsSourceOptionsApprovalStateIdentifierPendingConst  = "pending"
+	GetShareApprovalListAsSourceOptionsApprovalStateIdentifierRejectedConst = "rejected"
+)
+
+// NewGetShareApprovalListAsSourceOptions : Instantiate GetShareApprovalListAsSourceOptions
+func (*CatalogManagementV1) NewGetShareApprovalListAsSourceOptions(objectType string, approvalStateIdentifier string) *GetShareApprovalListAsSourceOptions {
+	return &GetShareApprovalListAsSourceOptions{
+		ObjectType:              core.StringPtr(objectType),
+		ApprovalStateIdentifier: core.StringPtr(approvalStateIdentifier),
+	}
+}
+
+// SetObjectType : Allow user to set ObjectType
+func (_options *GetShareApprovalListAsSourceOptions) SetObjectType(objectType string) *GetShareApprovalListAsSourceOptions {
+	_options.ObjectType = core.StringPtr(objectType)
+	return _options
+}
+
+// SetApprovalStateIdentifier : Allow user to set ApprovalStateIdentifier
+func (_options *GetShareApprovalListAsSourceOptions) SetApprovalStateIdentifier(approvalStateIdentifier string) *GetShareApprovalListAsSourceOptions {
+	_options.ApprovalStateIdentifier = core.StringPtr(approvalStateIdentifier)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *GetShareApprovalListAsSourceOptions) SetStart(start string) *GetShareApprovalListAsSourceOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *GetShareApprovalListAsSourceOptions) SetLimit(limit int64) *GetShareApprovalListAsSourceOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetEnterpriseID : Allow user to set EnterpriseID
+func (_options *GetShareApprovalListAsSourceOptions) SetEnterpriseID(enterpriseID string) *GetShareApprovalListAsSourceOptions {
+	_options.EnterpriseID = core.StringPtr(enterpriseID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetShareApprovalListAsSourceOptions) SetHeaders(param map[string]string) *GetShareApprovalListAsSourceOptions {
+	options.Headers = param
+	return options
+}
+
+// GetShareApprovalListOptions : The GetShareApprovalList options.
+type GetShareApprovalListOptions struct {
+	// The type for the object.
+	ObjectType *string `json:"object_type" validate:"required,ne="`
+
+	// Start token for a query.
+	Start *string `json:"start,omitempty"`
+
+	// number or results to return in the query.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// Constants associated with the GetShareApprovalListOptions.ObjectType property.
+// The type for the object.
+const (
+	GetShareApprovalListOptionsObjectTypeOfferingConst            = "offering"
+	GetShareApprovalListOptionsObjectTypePresetConfigurationConst = "preset_configuration"
+	GetShareApprovalListOptionsObjectTypeProxySourceConst         = "proxy_source"
+	GetShareApprovalListOptionsObjectTypeVpeConst                 = "vpe"
+)
+
+// NewGetShareApprovalListOptions : Instantiate GetShareApprovalListOptions
+func (*CatalogManagementV1) NewGetShareApprovalListOptions(objectType string) *GetShareApprovalListOptions {
+	return &GetShareApprovalListOptions{
+		ObjectType: core.StringPtr(objectType),
+	}
+}
+
+// SetObjectType : Allow user to set ObjectType
+func (_options *GetShareApprovalListOptions) SetObjectType(objectType string) *GetShareApprovalListOptions {
+	_options.ObjectType = core.StringPtr(objectType)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *GetShareApprovalListOptions) SetStart(start string) *GetShareApprovalListOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *GetShareApprovalListOptions) SetLimit(limit int64) *GetShareApprovalListOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetShareApprovalListOptions) SetHeaders(param map[string]string) *GetShareApprovalListOptions {
+	options.Headers = param
+	return options
+}
+
 // GetValidationStatusOptions : The GetValidationStatus options.
 type GetValidationStatusOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
@@ -12236,14 +15845,14 @@ type GetValidationStatusOptions struct {
 	// The name of a target account context on a catalog.
 	TargetContextName *string `json:"targetContextName,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewGetValidationStatusOptions : Instantiate GetValidationStatusOptions
 func (*CatalogManagementV1) NewGetValidationStatusOptions(versionLocID string, xAuthRefreshToken string) *GetValidationStatusOptions {
 	return &GetValidationStatusOptions{
-		VersionLocID: core.StringPtr(versionLocID),
+		VersionLocID:      core.StringPtr(versionLocID),
 		XAuthRefreshToken: core.StringPtr(xAuthRefreshToken),
 	}
 }
@@ -12272,12 +15881,40 @@ func (options *GetValidationStatusOptions) SetHeaders(param map[string]string) *
 	return options
 }
 
+// GetVersionDependenciesOptions : The GetVersionDependencies options.
+type GetVersionDependenciesOptions struct {
+	// A dotted value of `catalogID`.`versionID`.
+	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetVersionDependenciesOptions : Instantiate GetVersionDependenciesOptions
+func (*CatalogManagementV1) NewGetVersionDependenciesOptions(versionLocID string) *GetVersionDependenciesOptions {
+	return &GetVersionDependenciesOptions{
+		VersionLocID: core.StringPtr(versionLocID),
+	}
+}
+
+// SetVersionLocID : Allow user to set VersionLocID
+func (_options *GetVersionDependenciesOptions) SetVersionLocID(versionLocID string) *GetVersionDependenciesOptions {
+	_options.VersionLocID = core.StringPtr(versionLocID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetVersionDependenciesOptions) SetHeaders(param map[string]string) *GetVersionDependenciesOptions {
+	options.Headers = param
+	return options
+}
+
 // GetVersionOptions : The GetVersion options.
 type GetVersionOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12300,6 +15937,90 @@ func (options *GetVersionOptions) SetHeaders(param map[string]string) *GetVersio
 	return options
 }
 
+// GetVersionsOptions : The GetVersions options.
+type GetVersionsOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Offering identification.
+	OfferingID *string `json:"offering_id" validate:"required,ne="`
+
+	// Kind identification.
+	KindID *string `json:"kind_id" validate:"required,ne="`
+
+	// Return the digest format of the specified offering.  Default is false.
+	Digest *bool `json:"digest,omitempty"`
+
+	// Return consumable versions.  Default is false.
+	Catalog *bool `json:"catalog,omitempty"`
+
+	// Start token for a query.
+	Start *string `json:"start,omitempty"`
+
+	// number or results to return in the query.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetVersionsOptions : Instantiate GetVersionsOptions
+func (*CatalogManagementV1) NewGetVersionsOptions(catalogIdentifier string, offeringID string, kindID string) *GetVersionsOptions {
+	return &GetVersionsOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		OfferingID:        core.StringPtr(offeringID),
+		KindID:            core.StringPtr(kindID),
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *GetVersionsOptions) SetCatalogIdentifier(catalogIdentifier string) *GetVersionsOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetOfferingID : Allow user to set OfferingID
+func (_options *GetVersionsOptions) SetOfferingID(offeringID string) *GetVersionsOptions {
+	_options.OfferingID = core.StringPtr(offeringID)
+	return _options
+}
+
+// SetKindID : Allow user to set KindID
+func (_options *GetVersionsOptions) SetKindID(kindID string) *GetVersionsOptions {
+	_options.KindID = core.StringPtr(kindID)
+	return _options
+}
+
+// SetDigest : Allow user to set Digest
+func (_options *GetVersionsOptions) SetDigest(digest bool) *GetVersionsOptions {
+	_options.Digest = core.BoolPtr(digest)
+	return _options
+}
+
+// SetCatalog : Allow user to set Catalog
+func (_options *GetVersionsOptions) SetCatalog(catalog bool) *GetVersionsOptions {
+	_options.Catalog = core.BoolPtr(catalog)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *GetVersionsOptions) SetStart(start string) *GetVersionsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *GetVersionsOptions) SetLimit(limit int64) *GetVersionsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetVersionsOptions) SetHeaders(param map[string]string) *GetVersionsOptions {
+	options.Headers = param
+	return options
+}
+
 // IamPermission : IAM Permission definition.
 type IamPermission struct {
 	// Service name.
@@ -12317,14 +16038,17 @@ func UnmarshalIamPermission(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(IamPermission)
 	err = core.UnmarshalPrimitive(m, "service_name", &obj.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "service_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "role_crns", &obj.RoleCrns)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "role_crns-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalIamResource)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12348,14 +16072,17 @@ func UnmarshalIamResource(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(IamResource)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "role_crns", &obj.RoleCrns)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "role_crns-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12376,10 +16103,12 @@ func UnmarshalIDFilter(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(IDFilter)
 	err = core.UnmarshalModel(m, "include", &obj.Include, UnmarshalFilterTerms)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "include-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "exclude", &obj.Exclude, UnmarshalFilterTerms)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "exclude-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12397,6 +16126,7 @@ func UnmarshalImage(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(Image)
 	err = core.UnmarshalPrimitive(m, "image", &obj.Image)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "image-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12417,10 +16147,12 @@ func UnmarshalImageManifest(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(ImageManifest)
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "images", &obj.Images, UnmarshalImage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "images-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12444,14 +16176,17 @@ func UnmarshalImagePullKey(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(ImagePullKey)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12479,18 +16214,22 @@ func UnmarshalImportOfferingBodyMetadata(m map[string]json.RawMessage, result in
 	obj := new(ImportOfferingBodyMetadata)
 	err = core.UnmarshalModel(m, "operating_system", &obj.OperatingSystem, UnmarshalImportOfferingBodyMetadataOperatingSystem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "operating_system-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "file", &obj.File, UnmarshalImportOfferingBodyMetadataFile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "file-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "minimum_provisioned_size", &obj.MinimumProvisionedSize)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "minimum_provisioned_size-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "images", &obj.Images, UnmarshalImportOfferingBodyMetadataImagesItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "images-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12508,6 +16247,7 @@ func UnmarshalImportOfferingBodyMetadataFile(m map[string]json.RawMessage, resul
 	obj := new(ImportOfferingBodyMetadataFile)
 	err = core.UnmarshalPrimitive(m, "size", &obj.Size)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "size-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12531,14 +16271,17 @@ func UnmarshalImportOfferingBodyMetadataImagesItem(m map[string]json.RawMessage,
 	obj := new(ImportOfferingBodyMetadataImagesItem)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "region", &obj.Region)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "region-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12578,34 +16321,42 @@ func UnmarshalImportOfferingBodyMetadataOperatingSystem(m map[string]json.RawMes
 	obj := new(ImportOfferingBodyMetadataOperatingSystem)
 	err = core.UnmarshalPrimitive(m, "dedicated_host_only", &obj.DedicatedHostOnly)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dedicated_host_only-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "vendor", &obj.Vendor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "vendor-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "display_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "family", &obj.Family)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "family-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "architecture", &obj.Architecture)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "architecture-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12619,6 +16370,9 @@ type ImportOfferingOptions struct {
 
 	// Tags array.
 	Tags []string `json:"tags,omitempty"`
+
+	// Keywords array.
+	Keywords []string `json:"keywords,omitempty"`
 
 	// Byte array representing the content to be imported. Only supported for OVA images at this time.
 	Content *[]byte `json:"content,omitempty"`
@@ -12643,6 +16397,9 @@ type ImportOfferingOptions struct {
 	// value is software.
 	ProductKind *string `json:"product_kind,omitempty"`
 
+	// Display value for optional product kind for the software being onboarded.
+	ProductKindLabel *string `json:"product_kind_label,omitempty"`
+
 	// SHA256 fingerprint of the image file. Required for virtual server image for VPC.
 	Sha *string `json:"sha,omitempty"`
 
@@ -12657,6 +16414,9 @@ type ImportOfferingOptions struct {
 
 	// Optional - The sub-folder within the specified tgz file that contains the software being onboarded.
 	WorkingDirectory *string `json:"working_directory,omitempty"`
+
+	// The install type of the variation.  Specify extension or fullstack.
+	InstallType *string `json:"install_type,omitempty"`
 
 	// URL path to zip location.  If not specified, must provide content in this post body.
 	Zipurl *string `json:"zipurl,omitempty"`
@@ -12679,7 +16439,7 @@ type ImportOfferingOptions struct {
 	// Authentication token used to access the specified zip file.
 	XAuthToken *string `json:"X-Auth-Token,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12702,9 +16462,15 @@ func (_options *ImportOfferingOptions) SetTags(tags []string) *ImportOfferingOpt
 	return _options
 }
 
+// SetKeywords : Allow user to set Keywords
+func (_options *ImportOfferingOptions) SetKeywords(keywords []string) *ImportOfferingOptions {
+	_options.Keywords = keywords
+	return _options
+}
+
 // SetContent : Allow user to set Content
 func (_options *ImportOfferingOptions) SetContent(content []byte) *ImportOfferingOptions {
-	_options.Content = &content
+	_options.Content = core.ByteArrayPtr(content)
 	return _options
 }
 
@@ -12744,6 +16510,12 @@ func (_options *ImportOfferingOptions) SetProductKind(productKind string) *Impor
 	return _options
 }
 
+// SetProductKindLabel : Allow user to set ProductKindLabel
+func (_options *ImportOfferingOptions) SetProductKindLabel(productKindLabel string) *ImportOfferingOptions {
+	_options.ProductKindLabel = core.StringPtr(productKindLabel)
+	return _options
+}
+
 // SetSha : Allow user to set Sha
 func (_options *ImportOfferingOptions) SetSha(sha string) *ImportOfferingOptions {
 	_options.Sha = core.StringPtr(sha)
@@ -12771,6 +16543,12 @@ func (_options *ImportOfferingOptions) SetMetadata(metadata *ImportOfferingBodyM
 // SetWorkingDirectory : Allow user to set WorkingDirectory
 func (_options *ImportOfferingOptions) SetWorkingDirectory(workingDirectory string) *ImportOfferingOptions {
 	_options.WorkingDirectory = core.StringPtr(workingDirectory)
+	return _options
+}
+
+// SetInstallType : Allow user to set InstallType
+func (_options *ImportOfferingOptions) SetInstallType(installType string) *ImportOfferingOptions {
+	_options.InstallType = core.StringPtr(installType)
 	return _options
 }
 
@@ -12833,6 +16611,9 @@ type ImportOfferingVersionOptions struct {
 	// Tags array.
 	Tags []string `json:"tags,omitempty"`
 
+	// Keywords array.
+	Keywords []string `json:"keywords,omitempty"`
+
 	// Byte array representing the content to be imported. Only supported for OVA images at this time.
 	Content *[]byte `json:"content,omitempty"`
 
@@ -12856,6 +16637,9 @@ type ImportOfferingVersionOptions struct {
 	// value is software.
 	ProductKind *string `json:"product_kind,omitempty"`
 
+	// Display value for optional product kind for the software being onboarded.
+	ProductKindLabel *string `json:"product_kind_label,omitempty"`
+
 	// SHA256 fingerprint of the image file. Required for virtual server image for VPC.
 	Sha *string `json:"sha,omitempty"`
 
@@ -12870,6 +16654,9 @@ type ImportOfferingVersionOptions struct {
 
 	// Optional - The sub-folder within the specified tgz file that contains the software being onboarded.
 	WorkingDirectory *string `json:"working_directory,omitempty"`
+
+	// The install type of the variation.  Specify extension or fullstack.
+	InstallType *string `json:"install_type,omitempty"`
 
 	// URL path to zip location.  If not specified, must provide content in the body of this call.
 	Zipurl *string `json:"zipurl,omitempty"`
@@ -12889,7 +16676,7 @@ type ImportOfferingVersionOptions struct {
 	// Authentication token used to access the specified zip file.
 	XAuthToken *string `json:"X-Auth-Token,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12897,7 +16684,7 @@ type ImportOfferingVersionOptions struct {
 func (*CatalogManagementV1) NewImportOfferingVersionOptions(catalogIdentifier string, offeringID string) *ImportOfferingVersionOptions {
 	return &ImportOfferingVersionOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
+		OfferingID:        core.StringPtr(offeringID),
 	}
 }
 
@@ -12919,9 +16706,15 @@ func (_options *ImportOfferingVersionOptions) SetTags(tags []string) *ImportOffe
 	return _options
 }
 
+// SetKeywords : Allow user to set Keywords
+func (_options *ImportOfferingVersionOptions) SetKeywords(keywords []string) *ImportOfferingVersionOptions {
+	_options.Keywords = keywords
+	return _options
+}
+
 // SetContent : Allow user to set Content
 func (_options *ImportOfferingVersionOptions) SetContent(content []byte) *ImportOfferingVersionOptions {
-	_options.Content = &content
+	_options.Content = core.ByteArrayPtr(content)
 	return _options
 }
 
@@ -12961,6 +16754,12 @@ func (_options *ImportOfferingVersionOptions) SetProductKind(productKind string)
 	return _options
 }
 
+// SetProductKindLabel : Allow user to set ProductKindLabel
+func (_options *ImportOfferingVersionOptions) SetProductKindLabel(productKindLabel string) *ImportOfferingVersionOptions {
+	_options.ProductKindLabel = core.StringPtr(productKindLabel)
+	return _options
+}
+
 // SetSha : Allow user to set Sha
 func (_options *ImportOfferingVersionOptions) SetSha(sha string) *ImportOfferingVersionOptions {
 	_options.Sha = core.StringPtr(sha)
@@ -12988,6 +16787,12 @@ func (_options *ImportOfferingVersionOptions) SetMetadata(metadata *ImportOfferi
 // SetWorkingDirectory : Allow user to set WorkingDirectory
 func (_options *ImportOfferingVersionOptions) SetWorkingDirectory(workingDirectory string) *ImportOfferingVersionOptions {
 	_options.WorkingDirectory = core.StringPtr(workingDirectory)
+	return _options
+}
+
+// SetInstallType : Allow user to set InstallType
+func (_options *ImportOfferingVersionOptions) SetInstallType(installType string) *ImportOfferingVersionOptions {
+	_options.InstallType = core.StringPtr(installType)
 	return _options
 }
 
@@ -13050,14 +16855,17 @@ func UnmarshalInstallStatus(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(InstallStatus)
 	err = core.UnmarshalModel(m, "metadata", &obj.Metadata, UnmarshalInstallStatusMetadata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metadata-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "release", &obj.Release, UnmarshalInstallStatusRelease)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "release-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "content_mgmt", &obj.ContentMgmt, UnmarshalInstallStatusContentMgmt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "content_mgmt-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13078,10 +16886,12 @@ func UnmarshalInstallStatusContentMgmt(m map[string]json.RawMessage, result inte
 	obj := new(InstallStatusContentMgmt)
 	err = core.UnmarshalPrimitive(m, "pods", &obj.Pods)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pods-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13111,22 +16921,27 @@ func UnmarshalInstallStatusMetadata(m map[string]json.RawMessage, result interfa
 	obj := new(InstallStatusMetadata)
 	err = core.UnmarshalPrimitive(m, "cluster_id", &obj.ClusterID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cluster_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "region", &obj.Region)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "region-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "namespace", &obj.Namespace)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "namespace-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "workspace_id", &obj.WorkspaceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "workspace_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "workspace_name", &obj.WorkspaceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "workspace_name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13156,22 +16971,27 @@ func UnmarshalInstallStatusRelease(m map[string]json.RawMessage, result interfac
 	obj := new(InstallStatusRelease)
 	err = core.UnmarshalPrimitive(m, "deployments", &obj.Deployments)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployments-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "replicasets", &obj.Replicasets)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "replicasets-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "statefulsets", &obj.Statefulsets)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "statefulsets-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pods", &obj.Pods)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pods-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13195,8 +17015,18 @@ type InstallVersionOptions struct {
 	// Kube namespace.
 	Namespace *string `json:"namespace,omitempty"`
 
+	// Kube namespaces.
+	Namespaces []string `json:"namespaces,omitempty"`
+
+	// Used when installing an operator, to indicate that it should be made avaiable in all namespaces on the target
+	// cluster.
+	AllNamespaces *bool `json:"all_namespaces,omitempty"`
+
 	// Validation override values. Required for virtual server image for VPC.
 	OverrideValues *DeployRequestBodyOverrideValues `json:"override_values,omitempty"`
+
+	// Used when the product has required dependencies, to indicated existing dependencies to reuse during validation.
+	DependencyConfigs []string `json:"dependency_configs,omitempty"`
 
 	// Schematics environment variables to use with this workspace.
 	EnvironmentVariables []DeployRequestBodyEnvironmentVariablesItem `json:"environment_variables,omitempty"`
@@ -13231,14 +17061,23 @@ type InstallVersionOptions struct {
 	// VCenter Datastore.
 	VcenterDatastore *string `json:"vcenter_datastore,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Software plan ID.
+	PlanID *string `json:"plan_id,omitempty"`
+
+	// Used when installing an operator, to indicate which channel to use.
+	Channel *string `json:"channel,omitempty"`
+
+	// Used when installing an operator, to indicate which install plan to use.
+	InstallPlan *string `json:"install_plan,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewInstallVersionOptions : Instantiate InstallVersionOptions
 func (*CatalogManagementV1) NewInstallVersionOptions(versionLocID string, xAuthRefreshToken string) *InstallVersionOptions {
 	return &InstallVersionOptions{
-		VersionLocID: core.StringPtr(versionLocID),
+		VersionLocID:      core.StringPtr(versionLocID),
 		XAuthRefreshToken: core.StringPtr(xAuthRefreshToken),
 	}
 }
@@ -13273,9 +17112,27 @@ func (_options *InstallVersionOptions) SetNamespace(namespace string) *InstallVe
 	return _options
 }
 
+// SetNamespaces : Allow user to set Namespaces
+func (_options *InstallVersionOptions) SetNamespaces(namespaces []string) *InstallVersionOptions {
+	_options.Namespaces = namespaces
+	return _options
+}
+
+// SetAllNamespaces : Allow user to set AllNamespaces
+func (_options *InstallVersionOptions) SetAllNamespaces(allNamespaces bool) *InstallVersionOptions {
+	_options.AllNamespaces = core.BoolPtr(allNamespaces)
+	return _options
+}
+
 // SetOverrideValues : Allow user to set OverrideValues
 func (_options *InstallVersionOptions) SetOverrideValues(overrideValues *DeployRequestBodyOverrideValues) *InstallVersionOptions {
 	_options.OverrideValues = overrideValues
+	return _options
+}
+
+// SetDependencyConfigs : Allow user to set DependencyConfigs
+func (_options *InstallVersionOptions) SetDependencyConfigs(dependencyConfigs []string) *InstallVersionOptions {
+	_options.DependencyConfigs = dependencyConfigs
 	return _options
 }
 
@@ -13345,6 +17202,24 @@ func (_options *InstallVersionOptions) SetVcenterDatastore(vcenterDatastore stri
 	return _options
 }
 
+// SetPlanID : Allow user to set PlanID
+func (_options *InstallVersionOptions) SetPlanID(planID string) *InstallVersionOptions {
+	_options.PlanID = core.StringPtr(planID)
+	return _options
+}
+
+// SetChannel : Allow user to set Channel
+func (_options *InstallVersionOptions) SetChannel(channel string) *InstallVersionOptions {
+	_options.Channel = core.StringPtr(channel)
+	return _options
+}
+
+// SetInstallPlan : Allow user to set InstallPlan
+func (_options *InstallVersionOptions) SetInstallPlan(installPlan string) *InstallVersionOptions {
+	_options.InstallPlan = core.StringPtr(installPlan)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *InstallVersionOptions) SetHeaders(param map[string]string) *InstallVersionOptions {
 	options.Headers = param
@@ -13369,21 +17244,24 @@ type JSONPatchOperation struct {
 // Constants associated with the JSONPatchOperation.Op property.
 // The operation to be performed.
 const (
-	JSONPatchOperationOpAddConst = "add"
-	JSONPatchOperationOpCopyConst = "copy"
-	JSONPatchOperationOpMoveConst = "move"
-	JSONPatchOperationOpRemoveConst = "remove"
+	JSONPatchOperationOpAddConst     = "add"
+	JSONPatchOperationOpCopyConst    = "copy"
+	JSONPatchOperationOpMoveConst    = "move"
+	JSONPatchOperationOpRemoveConst  = "remove"
 	JSONPatchOperationOpReplaceConst = "replace"
-	JSONPatchOperationOpTestConst = "test"
+	JSONPatchOperationOpTestConst    = "test"
 )
 
 // NewJSONPatchOperation : Instantiate JSONPatchOperation (Generic Model Constructor)
 func (*CatalogManagementV1) NewJSONPatchOperation(op string, path string) (_model *JSONPatchOperation, err error) {
 	_model = &JSONPatchOperation{
-		Op: core.StringPtr(op),
+		Op:   core.StringPtr(op),
 		Path: core.StringPtr(path),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -13392,18 +17270,22 @@ func UnmarshalJSONPatchOperation(m map[string]json.RawMessage, result interface{
 	obj := new(JSONPatchOperation)
 	err = core.UnmarshalPrimitive(m, "op", &obj.Op)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "op-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "path-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "from", &obj.From)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13418,11 +17300,20 @@ type Kind struct {
 	// content kind, e.g., helm, vm image.
 	FormatKind *string `json:"format_kind,omitempty"`
 
+	// display value for content kind, e.g., helm, vm image.
+	FormatKindLabel *string `json:"format_kind_label,omitempty"`
+
 	// install kind, e.g., helm, operator, terraform.
 	InstallKind *string `json:"install_kind,omitempty"`
 
+	// display value for install kind, e.g., helm, operator, terraform.
+	InstallKindLabel *string `json:"install_kind_label,omitempty"`
+
 	// target cloud to install, e.g., iks, open_shift_iks.
 	TargetKind *string `json:"target_kind,omitempty"`
+
+	// display value for target cloud to install, e.g., iks, open_shift_iks.
+	TargetKindLabel *string `json:"target_kind_label,omitempty"`
 
 	// Open ended metadata information.
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
@@ -13441,6 +17332,9 @@ type Kind struct {
 
 	// list of versions.
 	Versions []Version `json:"versions,omitempty"`
+
+	// URLs for paging through all versions within this kind.
+	AllVersions *KindAllVersions `json:"all_versions,omitempty"`
 }
 
 // UnmarshalKind unmarshals an instance of Kind from the specified map of raw messages.
@@ -13448,42 +17342,98 @@ func UnmarshalKind(m map[string]json.RawMessage, result interface{}) (err error)
 	obj := new(Kind)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "format_kind", &obj.FormatKind)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "format_kind-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "format_kind_label", &obj.FormatKindLabel)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "format_kind_label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "install_kind", &obj.InstallKind)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "install_kind-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "install_kind_label", &obj.InstallKindLabel)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "install_kind_label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_kind", &obj.TargetKind)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_kind-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_kind_label", &obj.TargetKindLabel)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target_kind_label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metadata-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tags-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "additional_features", &obj.AdditionalFeatures, UnmarshalFeature)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "additional_features-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "versions", &obj.Versions, UnmarshalVersion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "versions-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "all_versions", &obj.AllVersions, UnmarshalKindAllVersions)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "all_versions-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// KindAllVersions : URLs for paging through all versions within this kind.
+type KindAllVersions struct {
+	// Link response on a token paginated query.
+	First *PaginationTokenLink `json:"first,omitempty"`
+
+	// Link response on a token paginated query.
+	Next *PaginationTokenLink `json:"next,omitempty"`
+}
+
+// UnmarshalKindAllVersions unmarshals an instance of KindAllVersions from the specified map of raw messages.
+func UnmarshalKindAllVersions(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KindAllVersions)
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13504,10 +17454,12 @@ func UnmarshalLearnMoreLinks(m map[string]json.RawMessage, result interface{}) (
 	obj := new(LearnMoreLinks)
 	err = core.UnmarshalPrimitive(m, "first_party", &obj.FirstParty)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first_party-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "third_party", &obj.ThirdParty)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "third_party-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13537,22 +17489,27 @@ func UnmarshalLicense(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(License)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13570,7 +17527,7 @@ type ListCatalogAccountAuditsOptions struct {
 	// Auditlog Lookup Names - by default names are not returned in auditlog.
 	Lookupnames *bool `json:"lookupnames,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13617,7 +17574,7 @@ type ListCatalogAuditsOptions struct {
 	// Auditlog Lookup Names - by default names are not returned in auditlog.
 	Lookupnames *bool `json:"lookupnames,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13661,7 +17618,7 @@ func (options *ListCatalogAuditsOptions) SetHeaders(param map[string]string) *Li
 // ListCatalogsOptions : The ListCatalogs options.
 type ListCatalogsOptions struct {
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13690,7 +17647,7 @@ type ListEnterpriseAuditsOptions struct {
 	// Auditlog Lookup Names - by default names are not returned in auditlog.
 	Lookupnames *bool `json:"lookupnames,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13748,7 +17705,7 @@ type ListObjectAuditsOptions struct {
 	// Auditlog Lookup Names - by default names are not returned in auditlog.
 	Lookupnames *bool `json:"lookupnames,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13756,7 +17713,7 @@ type ListObjectAuditsOptions struct {
 func (*CatalogManagementV1) NewListObjectAuditsOptions(catalogIdentifier string, objectIdentifier string) *ListObjectAuditsOptions {
 	return &ListObjectAuditsOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
+		ObjectIdentifier:  core.StringPtr(objectIdentifier),
 	}
 }
 
@@ -13815,7 +17772,7 @@ type ListObjectsOptions struct {
 	// specify descending order. Default is ascending order.
 	Sort *string `json:"sort,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13879,7 +17836,7 @@ type ListOfferingAuditsOptions struct {
 	// Auditlog Lookup Names - by default names are not returned in auditlog.
 	Lookupnames *bool `json:"lookupnames,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13887,7 +17844,7 @@ type ListOfferingAuditsOptions struct {
 func (*CatalogManagementV1) NewListOfferingAuditsOptions(catalogIdentifier string, offeringID string) *ListOfferingAuditsOptions {
 	return &ListOfferingAuditsOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
+		OfferingID:        core.StringPtr(offeringID),
 	}
 }
 
@@ -13941,7 +17898,7 @@ type ListOfferingInstanceAuditsOptions struct {
 	// Auditlog Lookup Names - by default names are not returned in auditlog.
 	Lookupnames *bool `json:"lookupnames,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -14009,7 +17966,7 @@ type ListOfferingsOptions struct {
 	// must be explicitly set.
 	IncludeHidden *bool `json:"includeHidden,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -14082,7 +18039,7 @@ type ListOperatorsOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocatorID *string `json:"version_locator_id" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -14090,9 +18047,9 @@ type ListOperatorsOptions struct {
 func (*CatalogManagementV1) NewListOperatorsOptions(xAuthRefreshToken string, clusterID string, region string, versionLocatorID string) *ListOperatorsOptions {
 	return &ListOperatorsOptions{
 		XAuthRefreshToken: core.StringPtr(xAuthRefreshToken),
-		ClusterID: core.StringPtr(clusterID),
-		Region: core.StringPtr(region),
-		VersionLocatorID: core.StringPtr(versionLocatorID),
+		ClusterID:         core.StringPtr(clusterID),
+		Region:            core.StringPtr(region),
+		VersionLocatorID:  core.StringPtr(versionLocatorID),
 	}
 }
 
@@ -14126,6 +18083,59 @@ func (options *ListOperatorsOptions) SetHeaders(param map[string]string) *ListOp
 	return options
 }
 
+// ListRegionsOptions : The ListRegions options.
+type ListRegionsOptions struct {
+	// Filter to apply for search.
+	Filter *string `json:"filter,omitempty"`
+
+	// Returns inactive locations when true.
+	GetInactive *bool `json:"get_inactive,omitempty"`
+
+	// The maximum number of results to return.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// The number of results to skip before returning values.
+	Offset *int64 `json:"offset,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewListRegionsOptions : Instantiate ListRegionsOptions
+func (*CatalogManagementV1) NewListRegionsOptions() *ListRegionsOptions {
+	return &ListRegionsOptions{}
+}
+
+// SetFilter : Allow user to set Filter
+func (_options *ListRegionsOptions) SetFilter(filter string) *ListRegionsOptions {
+	_options.Filter = core.StringPtr(filter)
+	return _options
+}
+
+// SetGetInactive : Allow user to set GetInactive
+func (_options *ListRegionsOptions) SetGetInactive(getInactive bool) *ListRegionsOptions {
+	_options.GetInactive = core.BoolPtr(getInactive)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListRegionsOptions) SetLimit(limit int64) *ListRegionsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetOffset : Allow user to set Offset
+func (_options *ListRegionsOptions) SetOffset(offset int64) *ListRegionsOptions {
+	_options.Offset = core.Int64Ptr(offset)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListRegionsOptions) SetHeaders(param map[string]string) *ListRegionsOptions {
+	options.Headers = param
+	return options
+}
+
 // MediaItem : Offering Media information.
 type MediaItem struct {
 	// URL of the specified media item.
@@ -14155,30 +18165,80 @@ func UnmarshalMediaItem(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(MediaItem)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "api_url", &obj.APIURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "url_proxy", &obj.URLProxy, UnmarshalURLProxy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url_proxy-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "caption", &obj.Caption)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "caption-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "caption_i18n", &obj.CaptionI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "caption_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "thumbnail_url", &obj.ThumbnailURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "thumbnail_url-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// MetricStats : Accumulated statistics for the specified target.  Statistics are accumulated on a weekly basis for at most a year.
+type MetricStats struct {
+	// What these statistics are for (i.e. Offering, Object, Plan, etc).
+	TargetType *string `json:"target_type,omitempty"`
+
+	// Target ID.
+	ID *string `json:"id,omitempty"`
+
+	// Statistics array.  Sorted on YearWeekIdx.  This array may have at most 52 entries, but may contain fewer if there
+	// are no statistics in a particular week.
+	Stats []WeeklyMetricBucket `json:"stats,omitempty"`
+
+	// Statistics for a given week.
+	Totals *WeeklyMetricBucket `json:"totals,omitempty"`
+}
+
+// UnmarshalMetricStats unmarshals an instance of MetricStats from the specified map of raw messages.
+func UnmarshalMetricStats(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(MetricStats)
+	err = core.UnmarshalPrimitive(m, "target_type", &obj.TargetType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "stats", &obj.Stats, UnmarshalWeeklyMetricBucket)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "stats-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "totals", &obj.Totals, UnmarshalWeeklyMetricBucket)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "totals-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -14220,38 +18280,47 @@ func UnmarshalNamespaceSearchResult(m map[string]json.RawMessage, result interfa
 	obj := new(NamespaceSearchResult)
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last", &obj.Last)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "prev", &obj.Prev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "prev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resources", &obj.Resources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -14264,12 +18333,16 @@ func (resp *NamespaceSearchResult) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -14310,38 +18383,47 @@ func UnmarshalObjectAccessListResult(m map[string]json.RawMessage, result interf
 	obj := new(ObjectAccessListResult)
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last", &obj.Last)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "prev", &obj.Prev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "prev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalAccess)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -14354,12 +18436,16 @@ func (resp *ObjectAccessListResult) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -14400,38 +18486,47 @@ func UnmarshalObjectListResult(m map[string]json.RawMessage, result interface{})
 	obj := new(ObjectListResult)
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last", &obj.Last)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "prev", &obj.Prev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "prev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalCatalogObject)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -14444,12 +18539,16 @@ func (resp *ObjectListResult) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -14490,38 +18589,47 @@ func UnmarshalObjectSearchResult(m map[string]json.RawMessage, result interface{
 	obj := new(ObjectSearchResult)
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last", &obj.Last)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "prev", &obj.Prev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "prev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalCatalogObject)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -14534,12 +18642,16 @@ func (resp *ObjectSearchResult) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -14611,13 +18723,16 @@ type Offering struct {
 	// Array of kind.
 	Kinds []Kind `json:"kinds,omitempty"`
 
+	// Publish information.
+	Publish *PublishObject `json:"publish,omitempty"`
+
 	// Offering is managed by Partner Center.
 	PcManaged *bool `json:"pc_managed,omitempty"`
 
 	// Offering has been approved to publish to permitted to IBM or Public Catalog.
 	PublishApproved *bool `json:"publish_approved,omitempty"`
 
-	// Denotes public availability of an Offering - if share_enabled is true.
+	// Denotes public availability of an Offering.
 	ShareWithAll *bool `json:"share_with_all,omitempty"`
 
 	// Denotes IBM employee availability of an Offering - if share_enabled is true.
@@ -14625,18 +18740,6 @@ type Offering struct {
 
 	// Denotes sharing including access list availability of an Offering is enabled.
 	ShareEnabled *bool `json:"share_enabled,omitempty"`
-
-	// Is it permitted to request publishing to IBM or Public.
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	PermitRequestIBMPublicPublish *bool `json:"permit_request_ibm_public_publish,omitempty"`
-
-	// Indicates if this offering has been approved for use by all IBMers.
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	IBMPublishApproved *bool `json:"ibm_publish_approved,omitempty"`
-
-	// Indicates if this offering has been approved for use by all IBM Cloud users.
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	PublicPublishApproved *bool `json:"public_publish_approved,omitempty"`
 
 	// The original offering CRN that this publish entry came from.
 	PublicOriginalCRN *string `json:"public_original_crn,omitempty"`
@@ -14692,6 +18795,9 @@ type Offering struct {
 
 	// A list of badges for this offering.
 	Badges []Badge `json:"badges,omitempty"`
+
+	// A list of plans for this offering.
+	Plans []Plan `json:"plans,omitempty"`
 }
 
 // UnmarshalOffering unmarshals an instance of Offering from the specified map of raw messages.
@@ -14699,190 +18805,232 @@ func UnmarshalOffering(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Offering)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_rev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label_i18n", &obj.LabelI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offering_icon_url", &obj.OfferingIconURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offering_icon_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offering_docs_url", &obj.OfferingDocsURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offering_docs_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offering_support_url", &obj.OfferingSupportURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offering_support_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tags-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "keywords", &obj.Keywords)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "keywords-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rating", &obj.Rating, UnmarshalRating)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rating-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "short_description", &obj.ShortDescription)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "short_description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "short_description_i18n", &obj.ShortDescriptionI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "short_description_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "long_description", &obj.LongDescription)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "long_description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "long_description_i18n", &obj.LongDescriptionI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "long_description_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "features", &obj.Features, UnmarshalFeature)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "features-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "kinds", &obj.Kinds, UnmarshalKind)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "kinds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "publish", &obj.Publish, UnmarshalPublishObject)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "publish-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pc_managed", &obj.PcManaged)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pc_managed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "publish_approved", &obj.PublishApproved)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "publish_approved-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "share_with_all", &obj.ShareWithAll)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "share_with_all-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "share_with_ibm", &obj.ShareWithIBM)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "share_with_ibm-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "share_enabled", &obj.ShareEnabled)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "permit_request_ibm_public_publish", &obj.PermitRequestIBMPublicPublish)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "ibm_publish_approved", &obj.IBMPublishApproved)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "public_publish_approved", &obj.PublicPublishApproved)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "share_enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "public_original_crn", &obj.PublicOriginalCRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "public_original_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "publish_public_crn", &obj.PublishPublicCRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "publish_public_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "portal_approval_record", &obj.PortalApprovalRecord)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "portal_approval_record-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "portal_ui_url", &obj.PortalUIURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "portal_ui_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_name", &obj.CatalogName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metadata-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "disclaimer", &obj.Disclaimer)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "disclaimer-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "hidden", &obj.Hidden)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hidden-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "provider", &obj.Provider)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provider-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "provider_info", &obj.ProviderInfo, UnmarshalProviderInfo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provider_info-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "repo_info", &obj.RepoInfo, UnmarshalRepoInfo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "repo_info-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "image_pull_keys", &obj.ImagePullKeys, UnmarshalImagePullKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "image_pull_keys-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "support", &obj.Support, UnmarshalSupport)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "support-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "media", &obj.Media, UnmarshalMediaItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "media-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "deprecate_pending", &obj.DeprecatePending, UnmarshalDeprecatePending)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deprecate_pending-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "product_kind", &obj.ProductKind)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "product_kind-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "badges", &obj.Badges, UnmarshalBadge)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "badges-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "plans", &obj.Plans, UnmarshalPlan)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "plans-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -14914,6 +19062,9 @@ type OfferingInstance struct {
 
 	// the format this instance has (helm, operator, ova...).
 	KindFormat *string `json:"kind_format,omitempty"`
+
+	// Display value for the format this instance has (helm, operator, ova...).
+	KindFormatLabel *string `json:"kind_format_label,omitempty"`
 
 	// The version this instance was installed from (semver - not version id).
 	Version *string `json:"version,omitempty"`
@@ -14970,8 +19121,17 @@ type OfferingInstance struct {
 	// The target kind for the installed software version.
 	KindTarget *string `json:"kind_target,omitempty"`
 
+	// Display value for the target kind for the installed software version.
+	KindTargetLabel *string `json:"kind_target_label,omitempty"`
+
 	// The digest value of the installed software version.
 	Sha *string `json:"sha,omitempty"`
+
+	// The software plan ID used when creating this software instance.
+	PlanID *string `json:"plan_id,omitempty"`
+
+	// The CRN of the resource that is considered a parent of this software instance.
+	ParentCRN *string `json:"parent_crn,omitempty"`
 }
 
 // UnmarshalOfferingInstance unmarshals an instance of OfferingInstance from the specified map of raw messages.
@@ -14979,110 +19139,157 @@ func UnmarshalOfferingInstance(m map[string]json.RawMessage, result interface{})
 	obj := new(OfferingInstance)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_rev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offering_id", &obj.OfferingID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offering_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "kind_format", &obj.KindFormat)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "kind_format-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "kind_format_label", &obj.KindFormatLabel)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "kind_format_label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version_id", &obj.VersionID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cluster_id", &obj.ClusterID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cluster_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cluster_region", &obj.ClusterRegion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cluster_region-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cluster_namespaces", &obj.ClusterNamespaces)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cluster_namespaces-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cluster_all_namespaces", &obj.ClusterAllNamespaces)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cluster_all_namespaces-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "schematics_workspace_id", &obj.SchematicsWorkspaceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "schematics_workspace_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "install_plan", &obj.InstallPlan)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "install_plan-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "channel", &obj.Channel)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "channel-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metadata-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group_id", &obj.ResourceGroupID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "location-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "disabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account", &obj.Account)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "last_operation", &obj.LastOperation, UnmarshalOfferingInstanceLastOperation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_operation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "kind_target", &obj.KindTarget)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "kind_target-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "kind_target_label", &obj.KindTargetLabel)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "kind_target_label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sha", &obj.Sha)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sha-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "plan_id", &obj.PlanID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "plan_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "parent_crn", &obj.ParentCRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "parent_crn-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -15115,26 +19322,32 @@ func UnmarshalOfferingInstanceLastOperation(m map[string]json.RawMessage, result
 	obj := new(OfferingInstanceLastOperation)
 	err = core.UnmarshalPrimitive(m, "operation", &obj.Operation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "operation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "transaction_id", &obj.TransactionID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "transaction_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -15167,26 +19380,32 @@ func UnmarshalOfferingReference(m map[string]json.RawMessage, result interface{}
 	obj := new(OfferingReference)
 	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "kind", &obj.Kind)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "kind-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "flavors", &obj.Flavors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "flavors-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -15228,38 +19447,47 @@ func UnmarshalOfferingSearchResult(m map[string]json.RawMessage, result interfac
 	obj := new(OfferingSearchResult)
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last", &obj.Last)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "prev", &obj.Prev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "prev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalOffering)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -15272,12 +19500,16 @@ func (resp *OfferingSearchResult) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -15315,34 +19547,42 @@ func UnmarshalOperatorDeployResult(m map[string]json.RawMessage, result interfac
 	obj := new(OperatorDeployResult)
 	err = core.UnmarshalPrimitive(m, "phase", &obj.Phase)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "phase-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "link", &obj.Link)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "link-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "namespace", &obj.Namespace)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "namespace-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "package_name", &obj.PackageName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "package_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -15363,10 +19603,12 @@ func UnmarshalOutput(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Output)
 	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -15382,15 +19624,245 @@ type PaginationTokenLink struct {
 	Start *string `json:"start,omitempty"`
 }
 
+// NewPaginationTokenLink : Instantiate PaginationTokenLink (Generic Model Constructor)
+func (*CatalogManagementV1) NewPaginationTokenLink(href string) (_model *PaginationTokenLink, err error) {
+	_model = &PaginationTokenLink{
+		Href: core.StringPtr(href),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
 // UnmarshalPaginationTokenLink unmarshals an instance of PaginationTokenLink from the specified map of raw messages.
 func UnmarshalPaginationTokenLink(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(PaginationTokenLink)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PatchUpdateVersionOptions : The PatchUpdateVersion options.
+type PatchUpdateVersionOptions struct {
+	// A dotted value of `catalogID`.`versionID`.
+	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
+
+	// Offering etag contained in quotes.
+	IfMatch *string `json:"If-Match" validate:"required"`
+
+	Updates []JSONPatchOperation `json:"updates,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewPatchUpdateVersionOptions : Instantiate PatchUpdateVersionOptions
+func (*CatalogManagementV1) NewPatchUpdateVersionOptions(versionLocID string, ifMatch string) *PatchUpdateVersionOptions {
+	return &PatchUpdateVersionOptions{
+		VersionLocID: core.StringPtr(versionLocID),
+		IfMatch:      core.StringPtr(ifMatch),
+	}
+}
+
+// SetVersionLocID : Allow user to set VersionLocID
+func (_options *PatchUpdateVersionOptions) SetVersionLocID(versionLocID string) *PatchUpdateVersionOptions {
+	_options.VersionLocID = core.StringPtr(versionLocID)
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *PatchUpdateVersionOptions) SetIfMatch(ifMatch string) *PatchUpdateVersionOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
+}
+
+// SetUpdates : Allow user to set Updates
+func (_options *PatchUpdateVersionOptions) SetUpdates(updates []JSONPatchOperation) *PatchUpdateVersionOptions {
+	_options.Updates = updates
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *PatchUpdateVersionOptions) SetHeaders(param map[string]string) *PatchUpdateVersionOptions {
+	options.Headers = param
+	return options
+}
+
+// Plan : Plan information.
+type Plan struct {
+	// Unique ID.
+	ID *string `json:"id,omitempty"`
+
+	// Cloudant revision.
+	Rev *string `json:"_rev,omitempty"`
+
+	// The url for this specific plan.
+	URL *string `json:"url,omitempty"`
+
+	// Plans's CRN.
+	CRN *string `json:"crn,omitempty"`
+
+	// The date and time this plan was created.
+	Created *strfmt.DateTime `json:"created,omitempty"`
+
+	// The date and time this plan was last updated.
+	Updated *strfmt.DateTime `json:"updated,omitempty"`
+
+	// Offering ID.
+	OfferingID *string `json:"offering_id,omitempty"`
+
+	// Catalog ID.
+	CatalogID *string `json:"catalog_id,omitempty"`
+
+	// Display name for the current plan.
+	Label *string `json:"label,omitempty"`
+
+	// A map of translated strings, by language code.
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
+
+	// Programmatic name for the current plan.
+	Name *string `json:"name,omitempty"`
+
+	// Description of the current plan.
+	ShortDescription *string `json:"short_description,omitempty"`
+
+	// A map of translated strings, by language code.
+	ShortDescriptionI18n map[string]string `json:"short_description_i18n,omitempty"`
+
+	// Tags array.
+	PricingTags []string `json:"pricing_tags,omitempty"`
+
+	// Version range information.
+	VersionRange *VersionRange `json:"version_range,omitempty"`
+
+	// List of features associated with this catalog.
+	Features []Feature `json:"features,omitempty"`
+
+	// Offering state.
+	State *State `json:"state,omitempty"`
+
+	// Deprecation information for an Offering.
+	DeprecatePending *DeprecatePending `json:"deprecate_pending,omitempty"`
+
+	// Map of metadata values for this plan.
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+
+	// Plan has been approved to publish for other users.
+	PublishApproved *bool `json:"publish_approved,omitempty"`
+}
+
+// UnmarshalPlan unmarshals an instance of Plan from the specified map of raw messages.
+func UnmarshalPlan(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Plan)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "_rev-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "updated-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "offering_id", &obj.OfferingID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "offering_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label_i18n", &obj.LabelI18n)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "label_i18n-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "short_description", &obj.ShortDescription)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "short_description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "short_description_i18n", &obj.ShortDescriptionI18n)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "short_description_i18n-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "pricing_tags", &obj.PricingTags)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing_tags-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "version_range", &obj.VersionRange, UnmarshalVersionRange)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version_range-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "features", &obj.Features, UnmarshalFeature)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "features-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "state", &obj.State, UnmarshalState)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "deprecate_pending", &obj.DeprecatePending, UnmarshalDeprecatePending)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deprecate_pending-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "metadata-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "publish_approved", &obj.PublishApproved)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "publish_approved-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -15414,8 +19886,18 @@ type PreinstallVersionOptions struct {
 	// Kube namespace.
 	Namespace *string `json:"namespace,omitempty"`
 
+	// Kube namespaces.
+	Namespaces []string `json:"namespaces,omitempty"`
+
+	// Used when installing an operator, to indicate that it should be made avaiable in all namespaces on the target
+	// cluster.
+	AllNamespaces *bool `json:"all_namespaces,omitempty"`
+
 	// Validation override values. Required for virtual server image for VPC.
 	OverrideValues *DeployRequestBodyOverrideValues `json:"override_values,omitempty"`
+
+	// Used when the product has required dependencies, to indicated existing dependencies to reuse during validation.
+	DependencyConfigs []string `json:"dependency_configs,omitempty"`
 
 	// Schematics environment variables to use with this workspace.
 	EnvironmentVariables []DeployRequestBodyEnvironmentVariablesItem `json:"environment_variables,omitempty"`
@@ -15450,14 +19932,23 @@ type PreinstallVersionOptions struct {
 	// VCenter Datastore.
 	VcenterDatastore *string `json:"vcenter_datastore,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Software plan ID.
+	PlanID *string `json:"plan_id,omitempty"`
+
+	// Used when installing an operator, to indicate which channel to use.
+	Channel *string `json:"channel,omitempty"`
+
+	// Used when installing an operator, to indicate which install plan to use.
+	InstallPlan *string `json:"install_plan,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewPreinstallVersionOptions : Instantiate PreinstallVersionOptions
 func (*CatalogManagementV1) NewPreinstallVersionOptions(versionLocID string, xAuthRefreshToken string) *PreinstallVersionOptions {
 	return &PreinstallVersionOptions{
-		VersionLocID: core.StringPtr(versionLocID),
+		VersionLocID:      core.StringPtr(versionLocID),
 		XAuthRefreshToken: core.StringPtr(xAuthRefreshToken),
 	}
 }
@@ -15492,9 +19983,27 @@ func (_options *PreinstallVersionOptions) SetNamespace(namespace string) *Preins
 	return _options
 }
 
+// SetNamespaces : Allow user to set Namespaces
+func (_options *PreinstallVersionOptions) SetNamespaces(namespaces []string) *PreinstallVersionOptions {
+	_options.Namespaces = namespaces
+	return _options
+}
+
+// SetAllNamespaces : Allow user to set AllNamespaces
+func (_options *PreinstallVersionOptions) SetAllNamespaces(allNamespaces bool) *PreinstallVersionOptions {
+	_options.AllNamespaces = core.BoolPtr(allNamespaces)
+	return _options
+}
+
 // SetOverrideValues : Allow user to set OverrideValues
 func (_options *PreinstallVersionOptions) SetOverrideValues(overrideValues *DeployRequestBodyOverrideValues) *PreinstallVersionOptions {
 	_options.OverrideValues = overrideValues
+	return _options
+}
+
+// SetDependencyConfigs : Allow user to set DependencyConfigs
+func (_options *PreinstallVersionOptions) SetDependencyConfigs(dependencyConfigs []string) *PreinstallVersionOptions {
+	_options.DependencyConfigs = dependencyConfigs
 	return _options
 }
 
@@ -15564,6 +20073,24 @@ func (_options *PreinstallVersionOptions) SetVcenterDatastore(vcenterDatastore s
 	return _options
 }
 
+// SetPlanID : Allow user to set PlanID
+func (_options *PreinstallVersionOptions) SetPlanID(planID string) *PreinstallVersionOptions {
+	_options.PlanID = core.StringPtr(planID)
+	return _options
+}
+
+// SetChannel : Allow user to set Channel
+func (_options *PreinstallVersionOptions) SetChannel(channel string) *PreinstallVersionOptions {
+	_options.Channel = core.StringPtr(channel)
+	return _options
+}
+
+// SetInstallPlan : Allow user to set InstallPlan
+func (_options *PreinstallVersionOptions) SetInstallPlan(installPlan string) *PreinstallVersionOptions {
+	_options.InstallPlan = core.StringPtr(installPlan)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *PreinstallVersionOptions) SetHeaders(param map[string]string) *PreinstallVersionOptions {
 	options.Headers = param
@@ -15575,7 +20102,7 @@ type PrereleaseVersionOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -15594,6 +20121,59 @@ func (_options *PrereleaseVersionOptions) SetVersionLocID(versionLocID string) *
 
 // SetHeaders : Allow user to set Headers
 func (options *PrereleaseVersionOptions) SetHeaders(param map[string]string) *PrereleaseVersionOptions {
+	options.Headers = param
+	return options
+}
+
+// PreviewRegionsOptions : The PreviewRegions options.
+type PreviewRegionsOptions struct {
+	// Filter to apply for search.
+	Filter *string `json:"filter,omitempty"`
+
+	// Returns inactive locations when true.
+	GetInactive *bool `json:"get_inactive,omitempty"`
+
+	// The maximum number of results to return.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// The number of results to skip before returning values.
+	Offset *int64 `json:"offset,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewPreviewRegionsOptions : Instantiate PreviewRegionsOptions
+func (*CatalogManagementV1) NewPreviewRegionsOptions() *PreviewRegionsOptions {
+	return &PreviewRegionsOptions{}
+}
+
+// SetFilter : Allow user to set Filter
+func (_options *PreviewRegionsOptions) SetFilter(filter string) *PreviewRegionsOptions {
+	_options.Filter = core.StringPtr(filter)
+	return _options
+}
+
+// SetGetInactive : Allow user to set GetInactive
+func (_options *PreviewRegionsOptions) SetGetInactive(getInactive bool) *PreviewRegionsOptions {
+	_options.GetInactive = core.BoolPtr(getInactive)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *PreviewRegionsOptions) SetLimit(limit int64) *PreviewRegionsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetOffset : Allow user to set Offset
+func (_options *PreviewRegionsOptions) SetOffset(offset int64) *PreviewRegionsOptions {
+	_options.Offset = core.Int64Ptr(offset)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *PreviewRegionsOptions) SetHeaders(param map[string]string) *PreviewRegionsOptions {
 	options.Headers = param
 	return options
 }
@@ -15624,26 +20204,32 @@ func UnmarshalProject(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Project)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metadata-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "pastBreakdown", &obj.PastBreakdown, UnmarshalCostBreakdown)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pastBreakdown-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "breakdown", &obj.Breakdown, UnmarshalCostBreakdown)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "breakdown-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "diff", &obj.Diff, UnmarshalCostBreakdown)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "diff-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "summary", &obj.Summary, UnmarshalCostSummary)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "summary-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -15664,10 +20250,12 @@ func UnmarshalProviderInfo(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(ProviderInfo)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -15676,6 +20264,34 @@ func UnmarshalProviderInfo(m map[string]json.RawMessage, result interface{}) (er
 
 // PublishObject : Publish information.
 type PublishObject struct {
+	// Offering is managed by Partner Center.
+	PcManaged *bool `json:"pc_managed,omitempty"`
+
+	// Determines how the offering gets approved into the public catalog. The values supported right now are `pc_managed`,
+	// `ibm_module_repo`, and `ibm_community`.
+	ApprovalType *string `json:"approval_type,omitempty"`
+
+	// Offering has been approved to publish to permitted to IBM or Public Catalog.
+	PublishApproved *bool `json:"publish_approved,omitempty"`
+
+	// Denotes public availability of an Offering.
+	ShareWithAll *bool `json:"share_with_all,omitempty"`
+
+	// Denotes IBM employee availability of an Offering - if share_enabled is true.
+	ShareWithIBM *bool `json:"share_with_ibm,omitempty"`
+
+	// Denotes sharing including access list availability of an Offering is enabled.
+	ShareEnabled *bool `json:"share_enabled,omitempty"`
+
+	// The original offering CRN that this publish entry came from.
+	OriginalCRN *string `json:"original_crn,omitempty"`
+
+	// The crn of the public catalog entry of this offering.
+	PublicCRN *string `json:"public_crn,omitempty"`
+
+	// Record describing offering's approval details.
+	ApprovalRecord map[string]interface{} `json:"approval_record,omitempty"`
+
 	// Is it permitted to request publishing to IBM or Public.
 	PermitIBMPublicPublish *bool `json:"permit_ibm_public_publish,omitempty"`
 
@@ -15684,35 +20300,69 @@ type PublishObject struct {
 
 	// Indicates if this offering has been approved for use by all IBM Cloud users.
 	PublicApproved *bool `json:"public_approved,omitempty"`
-
-	// The portal's approval record ID.
-	PortalApprovalRecord *string `json:"portal_approval_record,omitempty"`
-
-	// The portal UI URL.
-	PortalURL *string `json:"portal_url,omitempty"`
 }
 
 // UnmarshalPublishObject unmarshals an instance of PublishObject from the specified map of raw messages.
 func UnmarshalPublishObject(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(PublishObject)
+	err = core.UnmarshalPrimitive(m, "pc_managed", &obj.PcManaged)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "pc_managed-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "approval_type", &obj.ApprovalType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "approval_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "publish_approved", &obj.PublishApproved)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "publish_approved-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "share_with_all", &obj.ShareWithAll)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "share_with_all-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "share_with_ibm", &obj.ShareWithIBM)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "share_with_ibm-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "share_enabled", &obj.ShareEnabled)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "share_enabled-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "original_crn", &obj.OriginalCRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "original_crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "public_crn", &obj.PublicCRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "public_crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "approval_record", &obj.ApprovalRecord)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "approval_record-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "permit_ibm_public_publish", &obj.PermitIBMPublicPublish)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "permit_ibm_public_publish-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ibm_approved", &obj.IBMApproved)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibm_approved-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "public_approved", &obj.PublicApproved)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "portal_approval_record", &obj.PortalApprovalRecord)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "portal_url", &obj.PortalURL)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "public_approved-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -15750,6 +20400,9 @@ type PutOfferingInstanceOptions struct {
 
 	// the format this instance has (helm, operator, ova...).
 	KindFormat *string `json:"kind_format,omitempty"`
+
+	// Display value for the format this instance has (helm, operator, ova...).
+	KindFormatLabel *string `json:"kind_format_label,omitempty"`
 
 	// The version this instance was installed from (semver - not version id).
 	Version *string `json:"version,omitempty"`
@@ -15806,10 +20459,19 @@ type PutOfferingInstanceOptions struct {
 	// The target kind for the installed software version.
 	KindTarget *string `json:"kind_target,omitempty"`
 
+	// Display value for the target kind for the installed software version.
+	KindTargetLabel *string `json:"kind_target_label,omitempty"`
+
 	// The digest value of the installed software version.
 	Sha *string `json:"sha,omitempty"`
 
-	// Allows users to set headers on API requests
+	// The software plan ID used when creating this software instance.
+	PlanID *string `json:"plan_id,omitempty"`
+
+	// The CRN of the resource that is considered a parent of this software instance.
+	ParentCRN *string `json:"parent_crn,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -15817,7 +20479,7 @@ type PutOfferingInstanceOptions struct {
 func (*CatalogManagementV1) NewPutOfferingInstanceOptions(instanceIdentifier string, xAuthRefreshToken string) *PutOfferingInstanceOptions {
 	return &PutOfferingInstanceOptions{
 		InstanceIdentifier: core.StringPtr(instanceIdentifier),
-		XAuthRefreshToken: core.StringPtr(xAuthRefreshToken),
+		XAuthRefreshToken:  core.StringPtr(xAuthRefreshToken),
 	}
 }
 
@@ -15878,6 +20540,12 @@ func (_options *PutOfferingInstanceOptions) SetOfferingID(offeringID string) *Pu
 // SetKindFormat : Allow user to set KindFormat
 func (_options *PutOfferingInstanceOptions) SetKindFormat(kindFormat string) *PutOfferingInstanceOptions {
 	_options.KindFormat = core.StringPtr(kindFormat)
+	return _options
+}
+
+// SetKindFormatLabel : Allow user to set KindFormatLabel
+func (_options *PutOfferingInstanceOptions) SetKindFormatLabel(kindFormatLabel string) *PutOfferingInstanceOptions {
+	_options.KindFormatLabel = core.StringPtr(kindFormatLabel)
 	return _options
 }
 
@@ -15989,9 +20657,27 @@ func (_options *PutOfferingInstanceOptions) SetKindTarget(kindTarget string) *Pu
 	return _options
 }
 
+// SetKindTargetLabel : Allow user to set KindTargetLabel
+func (_options *PutOfferingInstanceOptions) SetKindTargetLabel(kindTargetLabel string) *PutOfferingInstanceOptions {
+	_options.KindTargetLabel = core.StringPtr(kindTargetLabel)
+	return _options
+}
+
 // SetSha : Allow user to set Sha
 func (_options *PutOfferingInstanceOptions) SetSha(sha string) *PutOfferingInstanceOptions {
 	_options.Sha = core.StringPtr(sha)
+	return _options
+}
+
+// SetPlanID : Allow user to set PlanID
+func (_options *PutOfferingInstanceOptions) SetPlanID(planID string) *PutOfferingInstanceOptions {
+	_options.PlanID = core.StringPtr(planID)
+	return _options
+}
+
+// SetParentCRN : Allow user to set ParentCRN
+func (_options *PutOfferingInstanceOptions) SetParentCRN(parentCRN string) *PutOfferingInstanceOptions {
+	_options.ParentCRN = core.StringPtr(parentCRN)
 	return _options
 }
 
@@ -16021,18 +20707,296 @@ func UnmarshalRating(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Rating)
 	err = core.UnmarshalPrimitive(m, "one_star_count", &obj.OneStarCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "one_star_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "two_star_count", &obj.TwoStarCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "two_star_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "three_star_count", &obj.ThreeStarCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "three_star_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "four_star_count", &obj.FourStarCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "four_star_count-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Region : Region information.
+type Region struct {
+	ID *string `json:"id,omitempty"`
+
+	Name *string `json:"name,omitempty"`
+
+	CatalogCRN *string `json:"catalog_crn,omitempty"`
+
+	Kind *string `json:"kind,omitempty"`
+
+	Public *bool `json:"public,omitempty"`
+
+	UI *RegionUI `json:"ui,omitempty"`
+
+	Icon *string `json:"icon,omitempty"`
+
+	ParentID *string `json:"parent_id,omitempty"`
+
+	MetroID *string `json:"metro_id,omitempty"`
+
+	CountryID *string `json:"country_id,omitempty"`
+
+	GeoID *string `json:"geo_id,omitempty"`
+
+	Authority *RegionAuthority `json:"authority,omitempty"`
+
+	Tags []string `json:"tags,omitempty"`
+
+	Capabilities *string `json:"capabilities,omitempty"`
+
+	Created *string `json:"created,omitempty"`
+
+	Updated *string `json:"updated,omitempty"`
+
+	Active *bool `json:"active,omitempty"`
+
+	Visibility map[string]interface{} `json:"visibility,omitempty"`
+}
+
+// UnmarshalRegion unmarshals an instance of Region from the specified map of raw messages.
+func UnmarshalRegion(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Region)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "catalog_crn", &obj.CatalogCRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "kind", &obj.Kind)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "kind-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "public", &obj.Public)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "public-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "ui", &obj.UI, UnmarshalRegionUI)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ui-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "icon", &obj.Icon)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "icon-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "parent_id", &obj.ParentID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "parent_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "metro_id", &obj.MetroID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "metro_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "country_id", &obj.CountryID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "country_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "geo_id", &obj.GeoID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "geo_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "authority", &obj.Authority, UnmarshalRegionAuthority)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "authority-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "tags-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "capabilities", &obj.Capabilities)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "capabilities-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "updated-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "active", &obj.Active)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "active-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "visibility", &obj.Visibility)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "visibility-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RegionAuthority : RegionAuthority struct
+type RegionAuthority struct {
+	URL *string `json:"url,omitempty"`
+
+	CRN *string `json:"crn,omitempty"`
+
+	Provider *string `json:"provider,omitempty"`
+}
+
+// UnmarshalRegionAuthority unmarshals an instance of RegionAuthority from the specified map of raw messages.
+func UnmarshalRegionAuthority(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RegionAuthority)
+	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "provider", &obj.Provider)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "provider-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RegionUI : RegionUI struct
+type RegionUI struct {
+	Language *RegionUILanguage `json:"_language_,omitempty"`
+}
+
+// UnmarshalRegionUI unmarshals an instance of RegionUI from the specified map of raw messages.
+func UnmarshalRegionUI(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RegionUI)
+	err = core.UnmarshalModel(m, "_language_", &obj.Language, UnmarshalRegionUILanguage)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "_language_-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RegionUILanguage : RegionUILanguage struct
+type RegionUILanguage struct {
+	Description *string `json:"description,omitempty"`
+
+	DisplayName *string `json:"display_name,omitempty"`
+}
+
+// UnmarshalRegionUILanguage unmarshals an instance of RegionUILanguage from the specified map of raw messages.
+func UnmarshalRegionUILanguage(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RegionUILanguage)
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "display_name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RegionsSearchResult : Paginated location search result.
+type RegionsSearchResult struct {
+	// The offset (origin 0) of the first resource in this page of search results.
+	Offset *int64 `json:"offset" validate:"required"`
+
+	// The maximum number of resources returned in each page of search results.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// The overall total number of resources in the search result set.
+	TotalCount *int64 `json:"total_count,omitempty"`
+
+	// The number of resources returned in this page of search results.
+	ResourceCount *int64 `json:"resource_count,omitempty"`
+
+	// Link response on a token paginated query.
+	First *PaginationTokenLink `json:"first,omitempty"`
+
+	// Link response on a token paginated query.
+	Last *PaginationTokenLink `json:"last,omitempty"`
+
+	// Resulting objects.
+	Regions []Region `json:"regions,omitempty"`
+}
+
+// UnmarshalRegionsSearchResult unmarshals an instance of RegionsSearchResult from the specified map of raw messages.
+func UnmarshalRegionsSearchResult(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RegionsSearchResult)
+	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "regions", &obj.Regions, UnmarshalRegion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "regions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -16068,13 +21032,16 @@ type ReloadOfferingOptions struct {
 	// Optional - The sub-folder within the specified tgz file that contains the software being onboarded.
 	WorkingDirectory *string `json:"working_directory,omitempty"`
 
+	// The install type of the current software being onboarded.
+	InstallType *string `json:"install_type,omitempty"`
+
 	// URL path to zip location.  If not specified, must provide content in this post body.
 	Zipurl *string `json:"zipurl,omitempty"`
 
 	// The type of repository containing this version.  Valid values are 'public_git' or 'enterprise_git'.
 	RepoType *string `json:"repoType,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -16082,8 +21049,8 @@ type ReloadOfferingOptions struct {
 func (*CatalogManagementV1) NewReloadOfferingOptions(catalogIdentifier string, offeringID string, targetVersion string) *ReloadOfferingOptions {
 	return &ReloadOfferingOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
-		TargetVersion: core.StringPtr(targetVersion),
+		OfferingID:        core.StringPtr(offeringID),
+		TargetVersion:     core.StringPtr(targetVersion),
 	}
 }
 
@@ -16113,7 +21080,7 @@ func (_options *ReloadOfferingOptions) SetTags(tags []string) *ReloadOfferingOpt
 
 // SetContent : Allow user to set Content
 func (_options *ReloadOfferingOptions) SetContent(content []byte) *ReloadOfferingOptions {
-	_options.Content = &content
+	_options.Content = core.ByteArrayPtr(content)
 	return _options
 }
 
@@ -16138,6 +21105,12 @@ func (_options *ReloadOfferingOptions) SetFlavor(flavor *Flavor) *ReloadOffering
 // SetWorkingDirectory : Allow user to set WorkingDirectory
 func (_options *ReloadOfferingOptions) SetWorkingDirectory(workingDirectory string) *ReloadOfferingOptions {
 	_options.WorkingDirectory = core.StringPtr(workingDirectory)
+	return _options
+}
+
+// SetInstallType : Allow user to set InstallType
+func (_options *ReloadOfferingOptions) SetInstallType(installType string) *ReloadOfferingOptions {
+	_options.InstallType = core.StringPtr(installType)
 	return _options
 }
 
@@ -16185,26 +21158,32 @@ func UnmarshalRenderType(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(RenderType)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "grouping", &obj.Grouping)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "grouping-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "original_grouping", &obj.OriginalGrouping)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "original_grouping-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "grouping_index", &obj.GroupingIndex)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "grouping_index-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "config_constraints", &obj.ConfigConstraints)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "config_constraints-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "associations", &obj.Associations, UnmarshalRenderTypeAssociations)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "associations-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -16222,6 +21201,7 @@ func UnmarshalRenderTypeAssociations(m map[string]json.RawMessage, result interf
 	obj := new(RenderTypeAssociations)
 	err = core.UnmarshalModel(m, "parameters", &obj.Parameters, UnmarshalRenderTypeAssociationsParametersItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parameters-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -16242,10 +21222,12 @@ func UnmarshalRenderTypeAssociationsParametersItem(m map[string]json.RawMessage,
 	obj := new(RenderTypeAssociationsParametersItem)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "optionsRefresh", &obj.OptionsRefresh)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "optionsRefresh-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -16299,9 +21281,6 @@ type ReplaceCatalogOptions struct {
 	// Filters for account and catalog filters.
 	CatalogFilters *Filters `json:"catalog_filters,omitempty"`
 
-	// Feature information.
-	SyndicationSettings *SyndicationResource `json:"syndication_settings,omitempty"`
-
 	// Kind of catalog. Supported kinds are offering and vpe.
 	Kind *string `json:"kind,omitempty"`
 
@@ -16311,7 +21290,7 @@ type ReplaceCatalogOptions struct {
 	// List of target accounts contexts on this catalog.
 	TargetAccountContexts []TargetAccountContext `json:"target_account_contexts,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -16412,12 +21391,6 @@ func (_options *ReplaceCatalogOptions) SetCatalogFilters(catalogFilters *Filters
 	return _options
 }
 
-// SetSyndicationSettings : Allow user to set SyndicationSettings
-func (_options *ReplaceCatalogOptions) SetSyndicationSettings(syndicationSettings *SyndicationResource) *ReplaceCatalogOptions {
-	_options.SyndicationSettings = syndicationSettings
-	return _options
-}
-
 // SetKind : Allow user to set Kind
 func (_options *ReplaceCatalogOptions) SetKind(kind string) *ReplaceCatalogOptions {
 	_options.Kind = core.StringPtr(kind)
@@ -16507,7 +21480,7 @@ type ReplaceObjectOptions struct {
 	// Map of data values for this object.
 	Data map[string]interface{} `json:"data,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -16515,7 +21488,7 @@ type ReplaceObjectOptions struct {
 func (*CatalogManagementV1) NewReplaceObjectOptions(catalogIdentifier string, objectIdentifier string) *ReplaceObjectOptions {
 	return &ReplaceObjectOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
+		ObjectIdentifier:  core.StringPtr(objectIdentifier),
 	}
 }
 
@@ -16723,13 +21696,16 @@ type ReplaceOfferingOptions struct {
 	// Array of kind.
 	Kinds []Kind `json:"kinds,omitempty"`
 
+	// Publish information.
+	Publish *PublishObject `json:"publish,omitempty"`
+
 	// Offering is managed by Partner Center.
 	PcManaged *bool `json:"pc_managed,omitempty"`
 
 	// Offering has been approved to publish to permitted to IBM or Public Catalog.
 	PublishApproved *bool `json:"publish_approved,omitempty"`
 
-	// Denotes public availability of an Offering - if share_enabled is true.
+	// Denotes public availability of an Offering.
 	ShareWithAll *bool `json:"share_with_all,omitempty"`
 
 	// Denotes IBM employee availability of an Offering - if share_enabled is true.
@@ -16737,18 +21713,6 @@ type ReplaceOfferingOptions struct {
 
 	// Denotes sharing including access list availability of an Offering is enabled.
 	ShareEnabled *bool `json:"share_enabled,omitempty"`
-
-	// Is it permitted to request publishing to IBM or Public.
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	PermitRequestIBMPublicPublish *bool `json:"permit_request_ibm_public_publish,omitempty"`
-
-	// Indicates if this offering has been approved for use by all IBMers.
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	IBMPublishApproved *bool `json:"ibm_publish_approved,omitempty"`
-
-	// Indicates if this offering has been approved for use by all IBM Cloud users.
-	// Deprecated: this field is deprecated and may be removed in a future release.
-	PublicPublishApproved *bool `json:"public_publish_approved,omitempty"`
 
 	// The original offering CRN that this publish entry came from.
 	PublicOriginalCRN *string `json:"public_original_crn,omitempty"`
@@ -16805,7 +21769,10 @@ type ReplaceOfferingOptions struct {
 	// A list of badges for this offering.
 	Badges []Badge `json:"badges,omitempty"`
 
-	// Allows users to set headers on API requests
+	// A list of plans for this offering.
+	Plans []Plan `json:"plans,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -16813,7 +21780,7 @@ type ReplaceOfferingOptions struct {
 func (*CatalogManagementV1) NewReplaceOfferingOptions(catalogIdentifier string, offeringID string) *ReplaceOfferingOptions {
 	return &ReplaceOfferingOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
+		OfferingID:        core.StringPtr(offeringID),
 	}
 }
 
@@ -16955,6 +21922,12 @@ func (_options *ReplaceOfferingOptions) SetKinds(kinds []Kind) *ReplaceOfferingO
 	return _options
 }
 
+// SetPublish : Allow user to set Publish
+func (_options *ReplaceOfferingOptions) SetPublish(publish *PublishObject) *ReplaceOfferingOptions {
+	_options.Publish = publish
+	return _options
+}
+
 // SetPcManaged : Allow user to set PcManaged
 func (_options *ReplaceOfferingOptions) SetPcManaged(pcManaged bool) *ReplaceOfferingOptions {
 	_options.PcManaged = core.BoolPtr(pcManaged)
@@ -16982,27 +21955,6 @@ func (_options *ReplaceOfferingOptions) SetShareWithIBM(shareWithIBM bool) *Repl
 // SetShareEnabled : Allow user to set ShareEnabled
 func (_options *ReplaceOfferingOptions) SetShareEnabled(shareEnabled bool) *ReplaceOfferingOptions {
 	_options.ShareEnabled = core.BoolPtr(shareEnabled)
-	return _options
-}
-
-// SetPermitRequestIBMPublicPublish : Allow user to set PermitRequestIBMPublicPublish
-// Deprecated: this method is deprecated and may be removed in a future release.
-func (_options *ReplaceOfferingOptions) SetPermitRequestIBMPublicPublish(permitRequestIBMPublicPublish bool) *ReplaceOfferingOptions {
-	_options.PermitRequestIBMPublicPublish = core.BoolPtr(permitRequestIBMPublicPublish)
-	return _options
-}
-
-// SetIBMPublishApproved : Allow user to set IBMPublishApproved
-// Deprecated: this method is deprecated and may be removed in a future release.
-func (_options *ReplaceOfferingOptions) SetIBMPublishApproved(ibmPublishApproved bool) *ReplaceOfferingOptions {
-	_options.IBMPublishApproved = core.BoolPtr(ibmPublishApproved)
-	return _options
-}
-
-// SetPublicPublishApproved : Allow user to set PublicPublishApproved
-// Deprecated: this method is deprecated and may be removed in a future release.
-func (_options *ReplaceOfferingOptions) SetPublicPublishApproved(publicPublishApproved bool) *ReplaceOfferingOptions {
-	_options.PublicPublishApproved = core.BoolPtr(publicPublishApproved)
 	return _options
 }
 
@@ -17115,6 +22067,12 @@ func (_options *ReplaceOfferingOptions) SetBadges(badges []Badge) *ReplaceOfferi
 	return _options
 }
 
+// SetPlans : Allow user to set Plans
+func (_options *ReplaceOfferingOptions) SetPlans(plans []Plan) *ReplaceOfferingOptions {
+	_options.Plans = plans
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ReplaceOfferingOptions) SetHeaders(param map[string]string) *ReplaceOfferingOptions {
 	options.Headers = param
@@ -17147,7 +22105,7 @@ type ReplaceOperatorsOptions struct {
 	// Plan.
 	InstallPlan *string `json:"install_plan,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -17226,10 +22184,12 @@ func UnmarshalRepoInfo(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(RepoInfo)
 	err = core.UnmarshalPrimitive(m, "token", &obj.Token)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "token-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17241,18 +22201,20 @@ type Resource struct {
 	// Type of requirement.
 	Type *string `json:"type,omitempty"`
 
-	// mem, disk, cores, and nodes can be parsed as an int.  targetVersion will be a semver range value.
+	// mem, disk, cores, and nodes can be parsed as an int.  targetVersion and terraformVersion will be a semver range
+	// value.
 	Value interface{} `json:"value,omitempty"`
 }
 
 // Constants associated with the Resource.Type property.
 // Type of requirement.
 const (
-	ResourceTypeCoresConst = "cores"
-	ResourceTypeDiskConst = "disk"
-	ResourceTypeMemConst = "mem"
-	ResourceTypeNodesConst = "nodes"
-	ResourceTypeTargetversionConst = "targetVersion"
+	ResourceTypeCoresConst            = "cores"
+	ResourceTypeDiskConst             = "disk"
+	ResourceTypeMemConst              = "mem"
+	ResourceTypeNodesConst            = "nodes"
+	ResourceTypeTargetversionConst    = "targetVersion"
+	ResourceTypeTerraformversionConst = "terraformVersion"
 )
 
 // UnmarshalResource unmarshals an instance of Resource from the specified map of raw messages.
@@ -17260,10 +22222,12 @@ func UnmarshalResource(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Resource)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17293,22 +22257,27 @@ func UnmarshalResult(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Result)
 	err = core.UnmarshalPrimitive(m, "failure_count", &obj.FailureCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "failure_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "scan_time", &obj.ScanTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "scan_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "error_message", &obj.ErrorMessage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error_message-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "complete_scan", &obj.CompleteScan)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "complete_scan-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "unscanned_resources", &obj.UnscannedResources)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unscanned_resources-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17341,26 +22310,32 @@ func UnmarshalSccAssessment(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(SccAssessment)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "method", &obj.Method)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "method-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ui_href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17402,38 +22377,47 @@ func UnmarshalSccControl(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(SccControl)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "profile", &obj.Profile, UnmarshalSccProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "parent", &obj.Parent, UnmarshalSccControl)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parent-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "parent_name", &obj.ParentName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parent_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "specifications", &obj.Specifications, UnmarshalSccSpecification)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "specifications-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ui_href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17466,26 +22450,32 @@ func UnmarshalSccProfile(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(SccProfile)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ui_href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17515,22 +22505,27 @@ func UnmarshalSccSpecification(m map[string]json.RawMessage, result interface{})
 	obj := new(SccSpecification)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "component_name", &obj.ComponentName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "component_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "assessments", &obj.Assessments, UnmarshalSccAssessment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assessments-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ui_href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17553,10 +22548,12 @@ func UnmarshalSchematicsEnvValues(m map[string]json.RawMessage, result interface
 	obj := new(SchematicsEnvValues)
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sm_ref", &obj.SmRef)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sm_ref-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17590,26 +22587,97 @@ func UnmarshalScript(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Script)
 	err = core.UnmarshalPrimitive(m, "instructions", &obj.Instructions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instructions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instructions_i18n", &obj.InstructionsI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instructions_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "script", &obj.Script)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "script-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "script_permission", &obj.ScriptPermission)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "script_permission-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "delete_script", &obj.DeleteScript)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "delete_script-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "scope", &obj.Scope)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "scope-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ScriptRef : A script to be run as part of a Project configuration, during the specified stage and action.
+type ScriptRef struct {
+	// The short description for this script.
+	ShortDescription *string `json:"short_description,omitempty"`
+
+	// The type of the script.
+	Type *string `json:"type,omitempty"`
+
+	// The path to this script within the current version source.  Must begin with scripts/.
+	Path *string `json:"path,omitempty"`
+
+	// The stage of the specified action where this script should be run.
+	Stage *string `json:"stage,omitempty"`
+
+	// The action where this script should be run.
+	Action *string `json:"action,omitempty"`
+}
+
+// Constants associated with the ScriptRef.Stage property.
+// The stage of the specified action where this script should be run.
+const (
+	ScriptRefStagePostConst = "post"
+	ScriptRefStagePreConst  = "pre"
+)
+
+// Constants associated with the ScriptRef.Action property.
+// The action where this script should be run.
+const (
+	ScriptRefActionDeployConst   = "deploy"
+	ScriptRefActionUndeployConst = "undeploy"
+	ScriptRefActionValidateConst = "validate"
+)
+
+// UnmarshalScriptRef unmarshals an instance of ScriptRef from the specified map of raw messages.
+func UnmarshalScriptRef(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ScriptRef)
+	err = core.UnmarshalPrimitive(m, "short_description", &obj.ShortDescription)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "short_description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "path-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "stage", &obj.Stage)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "stage-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "action-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17636,7 +22704,7 @@ type SearchObjectsOptions struct {
 	// Display a digests of search results, has default value of true.
 	Digest *bool `json:"digest,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -17695,6 +22763,69 @@ func (options *SearchObjectsOptions) SetHeaders(param map[string]string) *Search
 	return options
 }
 
+// SetDeprecatePlanOptions : The SetDeprecatePlan options.
+type SetDeprecatePlanOptions struct {
+	// A dotted value of `sw`.`catalogID`.`resourceID`.
+	PlanLocID *string `json:"plan_loc_id" validate:"required,ne="`
+
+	// Set deprecation (true) or cancel deprecation (false).
+	Setting *string `json:"setting" validate:"required,ne="`
+
+	// Additional information that users can provide to be displayed in deprecation notification.
+	Description *string `json:"description,omitempty"`
+
+	// Specifies the amount of days until product is not available in catalog.
+	DaysUntilDeprecate *int64 `json:"days_until_deprecate,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// Constants associated with the SetDeprecatePlanOptions.Setting property.
+// Set deprecation (true) or cancel deprecation (false).
+const (
+	SetDeprecatePlanOptionsSettingFalseConst = "false"
+	SetDeprecatePlanOptionsSettingTrueConst  = "true"
+)
+
+// NewSetDeprecatePlanOptions : Instantiate SetDeprecatePlanOptions
+func (*CatalogManagementV1) NewSetDeprecatePlanOptions(planLocID string, setting string) *SetDeprecatePlanOptions {
+	return &SetDeprecatePlanOptions{
+		PlanLocID: core.StringPtr(planLocID),
+		Setting:   core.StringPtr(setting),
+	}
+}
+
+// SetPlanLocID : Allow user to set PlanLocID
+func (_options *SetDeprecatePlanOptions) SetPlanLocID(planLocID string) *SetDeprecatePlanOptions {
+	_options.PlanLocID = core.StringPtr(planLocID)
+	return _options
+}
+
+// SetSetting : Allow user to set Setting
+func (_options *SetDeprecatePlanOptions) SetSetting(setting string) *SetDeprecatePlanOptions {
+	_options.Setting = core.StringPtr(setting)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *SetDeprecatePlanOptions) SetDescription(description string) *SetDeprecatePlanOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetDaysUntilDeprecate : Allow user to set DaysUntilDeprecate
+func (_options *SetDeprecatePlanOptions) SetDaysUntilDeprecate(daysUntilDeprecate int64) *SetDeprecatePlanOptions {
+	_options.DaysUntilDeprecate = core.Int64Ptr(daysUntilDeprecate)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *SetDeprecatePlanOptions) SetHeaders(param map[string]string) *SetDeprecatePlanOptions {
+	options.Headers = param
+	return options
+}
+
 // SetDeprecateVersionOptions : The SetDeprecateVersion options.
 type SetDeprecateVersionOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
@@ -17709,7 +22840,7 @@ type SetDeprecateVersionOptions struct {
 	// Specifies the amount of days until product is not available in catalog.
 	DaysUntilDeprecate *int64 `json:"days_until_deprecate,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -17717,14 +22848,14 @@ type SetDeprecateVersionOptions struct {
 // Set deprecation (true) or cancel deprecation (false).
 const (
 	SetDeprecateVersionOptionsSettingFalseConst = "false"
-	SetDeprecateVersionOptionsSettingTrueConst = "true"
+	SetDeprecateVersionOptionsSettingTrueConst  = "true"
 )
 
 // NewSetDeprecateVersionOptions : Instantiate SetDeprecateVersionOptions
 func (*CatalogManagementV1) NewSetDeprecateVersionOptions(versionLocID string, setting string) *SetDeprecateVersionOptions {
 	return &SetDeprecateVersionOptions{
 		VersionLocID: core.StringPtr(versionLocID),
-		Setting: core.StringPtr(setting),
+		Setting:      core.StringPtr(setting),
 	}
 }
 
@@ -17768,10 +22899,11 @@ type SetOfferingPublishOptions struct {
 
 	// Type of approval.
 	//  * `pc_managed` - Partner Center is managing this offering
+	//  * `ibm_module_repo` -  Offering is from an approved repository can be published into the module registry.
+	//  * `ibm_community` - Offering is from an approved repository can be published into the Community registry.
 	//  * `publish_approved` - Publishing approved, offering owners can now set who sees the offering in public catalog
-	//  * `allow_request` - (deprecated)
-	//  * `ibm` - (deprecated)
-	//  * `public` - (deprecated).
+	//  * `approval_required` - Offering will be removed from public catalog when this flag is set to true, regardless of
+	// the approval and visibility settings.
 	ApprovalType *string `json:"approval_type" validate:"required,ne="`
 
 	// Approve (true) or disapprove (false).
@@ -17787,36 +22919,45 @@ type SetOfferingPublishOptions struct {
 	// the public offering Partner Center only needs to use their token in the authorization header.
 	XApproverToken *string `json:"X-Approver-Token,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Authentication token used to verify if user is a collaborator of a repository as part of the checks to set the
+	// approval type as `ibm_module_repo` or `ibm_community`.
+	XAuthToken *string `json:"X-Auth-Token,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the SetOfferingPublishOptions.ApprovalType property.
 // Type of approval.
-//  * `pc_managed` - Partner Center is managing this offering
-//  * `publish_approved` - Publishing approved, offering owners can now set who sees the offering in public catalog
-//  * `allow_request` - (deprecated)
-//  * `ibm` - (deprecated)
-//  * `public` - (deprecated).
+//   - `pc_managed` - Partner Center is managing this offering
+//   - `ibm_module_repo` -  Offering is from an approved repository can be published into the module registry.
+//   - `ibm_community` - Offering is from an approved repository can be published into the Community registry.
+//   - `publish_approved` - Publishing approved, offering owners can now set who sees the offering in public catalog
+//   - `approval_required` - Offering will be removed from public catalog when this flag is set to true, regardless of
+//
+// the approval and visibility settings.
 const (
-	SetOfferingPublishOptionsApprovalTypePcManagedConst = "pc_managed"
-	SetOfferingPublishOptionsApprovalTypePublishApprovedConst = "publish_approved"
+	SetOfferingPublishOptionsApprovalTypeApprovalRequiredConst = "approval_required"
+	SetOfferingPublishOptionsApprovalTypeIBMCommunityConst     = "ibm_community"
+	SetOfferingPublishOptionsApprovalTypeIBMModuleRepoConst    = "ibm_module_repo"
+	SetOfferingPublishOptionsApprovalTypePcManagedConst        = "pc_managed"
+	SetOfferingPublishOptionsApprovalTypePublishApprovedConst  = "publish_approved"
 )
 
 // Constants associated with the SetOfferingPublishOptions.Approved property.
 // Approve (true) or disapprove (false).
 const (
 	SetOfferingPublishOptionsApprovedFalseConst = "false"
-	SetOfferingPublishOptionsApprovedTrueConst = "true"
+	SetOfferingPublishOptionsApprovedTrueConst  = "true"
 )
 
 // NewSetOfferingPublishOptions : Instantiate SetOfferingPublishOptions
 func (*CatalogManagementV1) NewSetOfferingPublishOptions(catalogIdentifier string, offeringID string, approvalType string, approved string) *SetOfferingPublishOptions {
 	return &SetOfferingPublishOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
-		ApprovalType: core.StringPtr(approvalType),
-		Approved: core.StringPtr(approved),
+		OfferingID:        core.StringPtr(offeringID),
+		ApprovalType:      core.StringPtr(approvalType),
+		Approved:          core.StringPtr(approved),
 	}
 }
 
@@ -17862,10 +23003,167 @@ func (_options *SetOfferingPublishOptions) SetXApproverToken(xApproverToken stri
 	return _options
 }
 
+// SetXAuthToken : Allow user to set XAuthToken
+func (_options *SetOfferingPublishOptions) SetXAuthToken(xAuthToken string) *SetOfferingPublishOptions {
+	_options.XAuthToken = core.StringPtr(xAuthToken)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *SetOfferingPublishOptions) SetHeaders(param map[string]string) *SetOfferingPublishOptions {
 	options.Headers = param
 	return options
+}
+
+// ShareApprovalAccess : access for share approval.
+type ShareApprovalAccess struct {
+	// unique id.
+	ID *string `json:"id,omitempty"`
+
+	// account id.
+	Account *string `json:"account,omitempty"`
+
+	// Normal account or enterprise.
+	AccountType *int64 `json:"account_type,omitempty"`
+
+	// object's owner's account.
+	TargetAccount *string `json:"target_account,omitempty"`
+
+	// entity type.
+	TargetKind *string `json:"target_kind,omitempty"`
+
+	// date and time create.
+	Created *strfmt.DateTime `json:"created,omitempty"`
+
+	// Approval state for access. If this field is an empty string, then it means that it's approved.
+	ApprovalState *string `json:"approval_state,omitempty"`
+}
+
+// UnmarshalShareApprovalAccess unmarshals an instance of ShareApprovalAccess from the specified map of raw messages.
+func UnmarshalShareApprovalAccess(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareApprovalAccess)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account", &obj.Account)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account_type", &obj.AccountType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_account", &obj.TargetAccount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target_account-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_kind", &obj.TargetKind)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "target_kind-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "approval_state", &obj.ApprovalState)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "approval_state-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareApprovalListAccessResult : Paginated search result for share approval requests.
+type ShareApprovalListAccessResult struct {
+	// The start token used for this response.
+	Start *string `json:"start,omitempty"`
+
+	// The limit that was applied to this response. It may be smaller than in the request because that was too large.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// The total count of resources in the system that matches the request.
+	TotalCount *int64 `json:"total_count,omitempty"`
+
+	// The number of resources returned in this response.
+	ResourceCount *int64 `json:"resource_count" validate:"required"`
+
+	// Link response on a token paginated query.
+	First *PaginationTokenLink `json:"first" validate:"required"`
+
+	// Link response on a token paginated query.
+	Next *PaginationTokenLink `json:"next,omitempty"`
+
+	// Link response on a token paginated query.
+	Prev *PaginationTokenLink `json:"prev,omitempty"`
+
+	// Link response on a token paginated query.
+	Last *PaginationTokenLink `json:"last,omitempty"`
+
+	// A list of access records.
+	Resources []ShareApprovalAccess `json:"resources" validate:"required"`
+}
+
+// UnmarshalShareApprovalListAccessResult unmarshals an instance of ShareApprovalListAccessResult from the specified map of raw messages.
+func UnmarshalShareApprovalListAccessResult(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareApprovalListAccessResult)
+	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "start-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "prev", &obj.Prev, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "prev-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalShareApprovalAccess)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ShareApprovalListAccessResult) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
 }
 
 // ShareObjectOptions : The ShareObject options.
@@ -17885,7 +23183,7 @@ type ShareObjectOptions struct {
 	// Visible to access list.
 	Enabled *bool `json:"enabled,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -17893,7 +23191,7 @@ type ShareObjectOptions struct {
 func (*CatalogManagementV1) NewShareObjectOptions(catalogIdentifier string, objectIdentifier string) *ShareObjectOptions {
 	return &ShareObjectOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
+		ObjectIdentifier:  core.StringPtr(objectIdentifier),
 	}
 }
 
@@ -17950,7 +23248,7 @@ type ShareOfferingOptions struct {
 	// Visible to access list.
 	Enabled *bool `json:"enabled,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -17958,7 +23256,7 @@ type ShareOfferingOptions struct {
 func (*CatalogManagementV1) NewShareOfferingOptions(catalogIdentifier string, offeringID string) *ShareOfferingOptions {
 	return &ShareOfferingOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
+		OfferingID:        core.StringPtr(offeringID),
 	}
 }
 
@@ -18015,14 +23313,17 @@ func UnmarshalShareSetting(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(ShareSetting)
 	err = core.UnmarshalPrimitive(m, "ibm", &obj.IBM)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibm-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "public", &obj.Public)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "public-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18052,22 +23353,27 @@ func UnmarshalSolutionInfo(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(SolutionInfo)
 	err = core.UnmarshalModel(m, "architecture_diagrams", &obj.ArchitectureDiagrams, UnmarshalArchitectureDiagram)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "architecture_diagrams-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "features", &obj.Features, UnmarshalFeature)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "features-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cost_estimate", &obj.CostEstimate, UnmarshalCostEstimate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cost_estimate-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "dependencies", &obj.Dependencies, UnmarshalOfferingReference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dependencies-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "install_type", &obj.InstallType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "install_type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18097,22 +23403,27 @@ func UnmarshalState(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(State)
 	err = core.UnmarshalPrimitive(m, "current", &obj.Current)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "current-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "current_entered", &obj.CurrentEntered)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "current_entered-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pending", &obj.Pending)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pending-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pending_requested", &obj.PendingRequested)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pending_requested-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "previous", &obj.Previous)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18148,30 +23459,37 @@ func UnmarshalSupport(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Support)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "process", &obj.Process)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "process-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "process_i18n", &obj.ProcessI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "process_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "locations", &obj.Locations)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "locations-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "support_details", &obj.SupportDetails, UnmarshalSupportDetail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "support_details-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "support_escalation", &obj.SupportEscalation, UnmarshalSupportEscalation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "support_escalation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "support_type", &obj.SupportType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "support_type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18195,14 +23513,17 @@ func UnmarshalSupportAvailability(m map[string]json.RawMessage, result interface
 	obj := new(SupportAvailability)
 	err = core.UnmarshalModel(m, "times", &obj.Times, UnmarshalSupportTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "times-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "timezone", &obj.Timezone)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "timezone-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "always_available", &obj.AlwaysAvailable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "always_available-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18229,18 +23550,22 @@ func UnmarshalSupportDetail(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(SupportDetail)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "contact", &obj.Contact)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "contact-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "response_wait_time", &obj.ResponseWaitTime, UnmarshalSupportWaitTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "response_wait_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "availability", &obj.Availability, UnmarshalSupportAvailability)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "availability-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18264,14 +23589,17 @@ func UnmarshalSupportEscalation(m map[string]json.RawMessage, result interface{}
 	obj := new(SupportEscalation)
 	err = core.UnmarshalModel(m, "escalation_wait_time", &obj.EscalationWaitTime, UnmarshalSupportWaitTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "escalation_wait_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "response_wait_time", &obj.ResponseWaitTime, UnmarshalSupportWaitTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "response_wait_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "contact", &obj.Contact)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "contact-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18295,14 +23623,17 @@ func UnmarshalSupportTime(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(SupportTime)
 	err = core.UnmarshalPrimitive(m, "day", &obj.Day)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "day-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "start_time", &obj.StartTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "end_time", &obj.EndTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "end_time-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18323,10 +23654,12 @@ func UnmarshalSupportWaitTime(m map[string]json.RawMessage, result interface{}) 
 	obj := new(SupportWaitTime)
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18338,7 +23671,7 @@ type SuspendVersionOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -18359,158 +23692,6 @@ func (_options *SuspendVersionOptions) SetVersionLocID(versionLocID string) *Sus
 func (options *SuspendVersionOptions) SetHeaders(param map[string]string) *SuspendVersionOptions {
 	options.Headers = param
 	return options
-}
-
-// SyndicationAuthorization : Feature information.
-type SyndicationAuthorization struct {
-	// Array of syndicated namespaces.
-	Token *string `json:"token,omitempty"`
-
-	// Date and time last updated.
-	LastRun *strfmt.DateTime `json:"last_run,omitempty"`
-}
-
-// UnmarshalSyndicationAuthorization unmarshals an instance of SyndicationAuthorization from the specified map of raw messages.
-func UnmarshalSyndicationAuthorization(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(SyndicationAuthorization)
-	err = core.UnmarshalPrimitive(m, "token", &obj.Token)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "last_run", &obj.LastRun)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// SyndicationCluster : Feature information.
-type SyndicationCluster struct {
-	// Cluster region.
-	Region *string `json:"region,omitempty"`
-
-	// Cluster ID.
-	ID *string `json:"id,omitempty"`
-
-	// Cluster name.
-	Name *string `json:"name,omitempty"`
-
-	// Resource group ID.
-	ResourceGroupName *string `json:"resource_group_name,omitempty"`
-
-	// Syndication type.
-	Type *string `json:"type,omitempty"`
-
-	// Syndicated namespaces.
-	Namespaces []string `json:"namespaces,omitempty"`
-
-	// Syndicated to all namespaces on cluster.
-	AllNamespaces *bool `json:"all_namespaces,omitempty"`
-}
-
-// UnmarshalSyndicationCluster unmarshals an instance of SyndicationCluster from the specified map of raw messages.
-func UnmarshalSyndicationCluster(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(SyndicationCluster)
-	err = core.UnmarshalPrimitive(m, "region", &obj.Region)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "resource_group_name", &obj.ResourceGroupName)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "namespaces", &obj.Namespaces)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "all_namespaces", &obj.AllNamespaces)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// SyndicationHistory : Feature information.
-type SyndicationHistory struct {
-	// Array of syndicated namespaces.
-	Namespaces []string `json:"namespaces,omitempty"`
-
-	// Array of syndicated namespaces.
-	Clusters []SyndicationCluster `json:"clusters,omitempty"`
-
-	// Date and time last syndicated.
-	LastRun *strfmt.DateTime `json:"last_run,omitempty"`
-}
-
-// UnmarshalSyndicationHistory unmarshals an instance of SyndicationHistory from the specified map of raw messages.
-func UnmarshalSyndicationHistory(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(SyndicationHistory)
-	err = core.UnmarshalPrimitive(m, "namespaces", &obj.Namespaces)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "clusters", &obj.Clusters, UnmarshalSyndicationCluster)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "last_run", &obj.LastRun)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// SyndicationResource : Feature information.
-type SyndicationResource struct {
-	// Remove related components.
-	RemoveRelatedComponents *bool `json:"remove_related_components,omitempty"`
-
-	// Syndication clusters.
-	Clusters []SyndicationCluster `json:"clusters,omitempty"`
-
-	// Feature information.
-	History *SyndicationHistory `json:"history,omitempty"`
-
-	// Feature information.
-	Authorization *SyndicationAuthorization `json:"authorization,omitempty"`
-}
-
-// UnmarshalSyndicationResource unmarshals an instance of SyndicationResource from the specified map of raw messages.
-func UnmarshalSyndicationResource(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(SyndicationResource)
-	err = core.UnmarshalPrimitive(m, "remove_related_components", &obj.RemoveRelatedComponents)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "clusters", &obj.Clusters, UnmarshalSyndicationCluster)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalSyndicationHistory)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "authorization", &obj.Authorization, UnmarshalSyndicationAuthorization)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
 }
 
 // TargetAccountContext : Target account context.
@@ -18536,22 +23717,27 @@ func UnmarshalTargetAccountContext(m map[string]json.RawMessage, result interfac
 	obj := new(TargetAccountContext)
 	err = core.UnmarshalPrimitive(m, "api_key", &obj.APIKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "trusted_profile", &obj.TrustedProfile, UnmarshalTrustedProfileInfo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "trusted_profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "label-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "project_id", &obj.ProjectID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "project_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18578,18 +23764,22 @@ func UnmarshalTrustedProfileInfo(m map[string]json.RawMessage, result interface{
 	obj := new(TrustedProfileInfo)
 	err = core.UnmarshalPrimitive(m, "trusted_profile_id", &obj.TrustedProfileID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "trusted_profile_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_crn", &obj.CatalogCRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_name", &obj.CatalogName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_service_id", &obj.TargetServiceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_service_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18610,10 +23800,12 @@ func UnmarshalURLProxy(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(URLProxy)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sha", &obj.Sha)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sha-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18634,7 +23826,10 @@ type UpdateCatalogAccountOptions struct {
 	// Filters for account and catalog filters.
 	AccountFilters *Filters `json:"account_filters,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Region filter string.
+	RegionFilter *string `json:"region_filter,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -18667,6 +23862,12 @@ func (_options *UpdateCatalogAccountOptions) SetAccountFilters(accountFilters *F
 	return _options
 }
 
+// SetRegionFilter : Allow user to set RegionFilter
+func (_options *UpdateCatalogAccountOptions) SetRegionFilter(regionFilter string) *UpdateCatalogAccountOptions {
+	_options.RegionFilter = core.StringPtr(regionFilter)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *UpdateCatalogAccountOptions) SetHeaders(param map[string]string) *UpdateCatalogAccountOptions {
 	options.Headers = param
@@ -18686,7 +23887,7 @@ type UpdateOfferingOptions struct {
 
 	Updates []JSONPatchOperation `json:"updates,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -18694,8 +23895,8 @@ type UpdateOfferingOptions struct {
 func (*CatalogManagementV1) NewUpdateOfferingOptions(catalogIdentifier string, offeringID string, ifMatch string) *UpdateOfferingOptions {
 	return &UpdateOfferingOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
-		IfMatch: core.StringPtr(ifMatch),
+		OfferingID:        core.StringPtr(offeringID),
+		IfMatch:           core.StringPtr(ifMatch),
 	}
 }
 
@@ -18729,6 +23930,572 @@ func (options *UpdateOfferingOptions) SetHeaders(param map[string]string) *Updat
 	return options
 }
 
+// UpdateShareApprovalListAsSourceOptions : The UpdateShareApprovalListAsSource options.
+type UpdateShareApprovalListAsSourceOptions struct {
+	// The type for the object.
+	ObjectType *string `json:"object_type" validate:"required,ne="`
+
+	// The different possible approval states for share requests or access request.
+	ApprovalStateIdentifier *string `json:"approval_state_identifier" validate:"required,ne="`
+
+	// A list of accesses to update to the specified approval state.
+	Accesses []string `json:"accesses" validate:"required"`
+
+	// Execute the request in the context of an enterprise or enterpise account group ID. Use '-ent-enterpriseid' for an
+	// enterprise and '-entgrp-enterprisegroupid for an enterprise group.
+	EnterpriseID *string `json:"enterprise_id,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// Constants associated with the UpdateShareApprovalListAsSourceOptions.ObjectType property.
+// The type for the object.
+const (
+	UpdateShareApprovalListAsSourceOptionsObjectTypeOfferingConst            = "offering"
+	UpdateShareApprovalListAsSourceOptionsObjectTypePresetConfigurationConst = "preset_configuration"
+	UpdateShareApprovalListAsSourceOptionsObjectTypeProxySourceConst         = "proxy_source"
+	UpdateShareApprovalListAsSourceOptionsObjectTypeVpeConst                 = "vpe"
+)
+
+// Constants associated with the UpdateShareApprovalListAsSourceOptions.ApprovalStateIdentifier property.
+// The different possible approval states for share requests or access request.
+const (
+	UpdateShareApprovalListAsSourceOptionsApprovalStateIdentifierApprovedConst = "approved"
+	UpdateShareApprovalListAsSourceOptionsApprovalStateIdentifierPendingConst  = "pending"
+	UpdateShareApprovalListAsSourceOptionsApprovalStateIdentifierRejectedConst = "rejected"
+)
+
+// NewUpdateShareApprovalListAsSourceOptions : Instantiate UpdateShareApprovalListAsSourceOptions
+func (*CatalogManagementV1) NewUpdateShareApprovalListAsSourceOptions(objectType string, approvalStateIdentifier string, accesses []string) *UpdateShareApprovalListAsSourceOptions {
+	return &UpdateShareApprovalListAsSourceOptions{
+		ObjectType:              core.StringPtr(objectType),
+		ApprovalStateIdentifier: core.StringPtr(approvalStateIdentifier),
+		Accesses:                accesses,
+	}
+}
+
+// SetObjectType : Allow user to set ObjectType
+func (_options *UpdateShareApprovalListAsSourceOptions) SetObjectType(objectType string) *UpdateShareApprovalListAsSourceOptions {
+	_options.ObjectType = core.StringPtr(objectType)
+	return _options
+}
+
+// SetApprovalStateIdentifier : Allow user to set ApprovalStateIdentifier
+func (_options *UpdateShareApprovalListAsSourceOptions) SetApprovalStateIdentifier(approvalStateIdentifier string) *UpdateShareApprovalListAsSourceOptions {
+	_options.ApprovalStateIdentifier = core.StringPtr(approvalStateIdentifier)
+	return _options
+}
+
+// SetAccesses : Allow user to set Accesses
+func (_options *UpdateShareApprovalListAsSourceOptions) SetAccesses(accesses []string) *UpdateShareApprovalListAsSourceOptions {
+	_options.Accesses = accesses
+	return _options
+}
+
+// SetEnterpriseID : Allow user to set EnterpriseID
+func (_options *UpdateShareApprovalListAsSourceOptions) SetEnterpriseID(enterpriseID string) *UpdateShareApprovalListAsSourceOptions {
+	_options.EnterpriseID = core.StringPtr(enterpriseID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateShareApprovalListAsSourceOptions) SetHeaders(param map[string]string) *UpdateShareApprovalListAsSourceOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdateVersionOptions : The UpdateVersion options.
+type UpdateVersionOptions struct {
+	// A dotted value of `catalogID`.`versionID`.
+	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
+
+	// unique id.
+	ID *string `json:"id,omitempty"`
+
+	// Cloudant revision.
+	Rev *string `json:"_rev,omitempty"`
+
+	// The url for this specific offering.
+	URL *string `json:"url,omitempty"`
+
+	// The crn for this specific offering.
+	CRN *string `json:"crn,omitempty"`
+
+	// Display Name in the requested language.
+	Label *string `json:"label,omitempty"`
+
+	// A map of translated strings, by language code.
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
+
+	// The programmatic name of this offering.
+	Name *string `json:"name,omitempty"`
+
+	// URL for an icon associated with this offering.
+	OfferingIconURL *string `json:"offering_icon_url,omitempty"`
+
+	// URL for an additional docs with this offering.
+	OfferingDocsURL *string `json:"offering_docs_url,omitempty"`
+
+	// [deprecated] - Use offering.support instead.  URL to be displayed in the Consumption UI for getting support on this
+	// offering.
+	OfferingSupportURL *string `json:"offering_support_url,omitempty"`
+
+	// List of tags associated with this catalog.
+	Tags []string `json:"tags,omitempty"`
+
+	// List of keywords associated with offering, typically used to search for it.
+	Keywords []string `json:"keywords,omitempty"`
+
+	// Repository info for offerings.
+	Rating *Rating `json:"rating,omitempty"`
+
+	// The date and time this catalog was created.
+	Created *strfmt.DateTime `json:"created,omitempty"`
+
+	// The date and time this catalog was last updated.
+	Updated *strfmt.DateTime `json:"updated,omitempty"`
+
+	// Short description in the requested language.
+	ShortDescription *string `json:"short_description,omitempty"`
+
+	// A map of translated strings, by language code.
+	ShortDescriptionI18n map[string]string `json:"short_description_i18n,omitempty"`
+
+	// Long description in the requested language.
+	LongDescription *string `json:"long_description,omitempty"`
+
+	// A map of translated strings, by language code.
+	LongDescriptionI18n map[string]string `json:"long_description_i18n,omitempty"`
+
+	// list of features associated with this offering.
+	Features []Feature `json:"features,omitempty"`
+
+	// Array of kind.
+	Kinds []Kind `json:"kinds,omitempty"`
+
+	// Publish information.
+	Publish *PublishObject `json:"publish,omitempty"`
+
+	// Offering is managed by Partner Center.
+	PcManaged *bool `json:"pc_managed,omitempty"`
+
+	// Offering has been approved to publish to permitted to IBM or Public Catalog.
+	PublishApproved *bool `json:"publish_approved,omitempty"`
+
+	// Denotes public availability of an Offering.
+	ShareWithAll *bool `json:"share_with_all,omitempty"`
+
+	// Denotes IBM employee availability of an Offering - if share_enabled is true.
+	ShareWithIBM *bool `json:"share_with_ibm,omitempty"`
+
+	// Denotes sharing including access list availability of an Offering is enabled.
+	ShareEnabled *bool `json:"share_enabled,omitempty"`
+
+	// The original offering CRN that this publish entry came from.
+	PublicOriginalCRN *string `json:"public_original_crn,omitempty"`
+
+	// The crn of the public catalog entry of this offering.
+	PublishPublicCRN *string `json:"publish_public_crn,omitempty"`
+
+	// The portal's approval record ID.
+	PortalApprovalRecord *string `json:"portal_approval_record,omitempty"`
+
+	// The portal UI URL.
+	PortalUIURL *string `json:"portal_ui_url,omitempty"`
+
+	// The id of the catalog containing this offering.
+	CatalogID *string `json:"catalog_id,omitempty"`
+
+	// The name of the catalog.
+	CatalogName *string `json:"catalog_name,omitempty"`
+
+	// Map of metadata values for this offering.
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+
+	// A disclaimer for this offering.
+	Disclaimer *string `json:"disclaimer,omitempty"`
+
+	// Determine if this offering should be displayed in the Consumption UI.
+	Hidden *bool `json:"hidden,omitempty"`
+
+	// Deprecated - Provider of this offering.
+	// Deprecated: this field is deprecated and may be removed in a future release.
+	Provider *string `json:"provider,omitempty"`
+
+	// Information on the provider for this offering, or omitted if no provider information is given.
+	ProviderInfo *ProviderInfo `json:"provider_info,omitempty"`
+
+	// Repository info for offerings.
+	RepoInfo *RepoInfo `json:"repo_info,omitempty"`
+
+	// Image pull keys for this offering.
+	ImagePullKeys []ImagePullKey `json:"image_pull_keys,omitempty"`
+
+	// Offering Support information.
+	Support *Support `json:"support,omitempty"`
+
+	// A list of media items related to this offering.
+	Media []MediaItem `json:"media,omitempty"`
+
+	// Deprecation information for an Offering.
+	DeprecatePending *DeprecatePending `json:"deprecate_pending,omitempty"`
+
+	// The product kind.  Valid values are module, solution, or empty string.
+	ProductKind *string `json:"product_kind,omitempty"`
+
+	// A list of badges for this offering.
+	Badges []Badge `json:"badges,omitempty"`
+
+	// A list of plans for this offering.
+	Plans []Plan `json:"plans,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewUpdateVersionOptions : Instantiate UpdateVersionOptions
+func (*CatalogManagementV1) NewUpdateVersionOptions(versionLocID string) *UpdateVersionOptions {
+	return &UpdateVersionOptions{
+		VersionLocID: core.StringPtr(versionLocID),
+	}
+}
+
+// SetVersionLocID : Allow user to set VersionLocID
+func (_options *UpdateVersionOptions) SetVersionLocID(versionLocID string) *UpdateVersionOptions {
+	_options.VersionLocID = core.StringPtr(versionLocID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *UpdateVersionOptions) SetID(id string) *UpdateVersionOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetRev : Allow user to set Rev
+func (_options *UpdateVersionOptions) SetRev(rev string) *UpdateVersionOptions {
+	_options.Rev = core.StringPtr(rev)
+	return _options
+}
+
+// SetURL : Allow user to set URL
+func (_options *UpdateVersionOptions) SetURL(url string) *UpdateVersionOptions {
+	_options.URL = core.StringPtr(url)
+	return _options
+}
+
+// SetCRN : Allow user to set CRN
+func (_options *UpdateVersionOptions) SetCRN(crn string) *UpdateVersionOptions {
+	_options.CRN = core.StringPtr(crn)
+	return _options
+}
+
+// SetLabel : Allow user to set Label
+func (_options *UpdateVersionOptions) SetLabel(label string) *UpdateVersionOptions {
+	_options.Label = core.StringPtr(label)
+	return _options
+}
+
+// SetLabelI18n : Allow user to set LabelI18n
+func (_options *UpdateVersionOptions) SetLabelI18n(labelI18n map[string]string) *UpdateVersionOptions {
+	_options.LabelI18n = labelI18n
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *UpdateVersionOptions) SetName(name string) *UpdateVersionOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetOfferingIconURL : Allow user to set OfferingIconURL
+func (_options *UpdateVersionOptions) SetOfferingIconURL(offeringIconURL string) *UpdateVersionOptions {
+	_options.OfferingIconURL = core.StringPtr(offeringIconURL)
+	return _options
+}
+
+// SetOfferingDocsURL : Allow user to set OfferingDocsURL
+func (_options *UpdateVersionOptions) SetOfferingDocsURL(offeringDocsURL string) *UpdateVersionOptions {
+	_options.OfferingDocsURL = core.StringPtr(offeringDocsURL)
+	return _options
+}
+
+// SetOfferingSupportURL : Allow user to set OfferingSupportURL
+func (_options *UpdateVersionOptions) SetOfferingSupportURL(offeringSupportURL string) *UpdateVersionOptions {
+	_options.OfferingSupportURL = core.StringPtr(offeringSupportURL)
+	return _options
+}
+
+// SetTags : Allow user to set Tags
+func (_options *UpdateVersionOptions) SetTags(tags []string) *UpdateVersionOptions {
+	_options.Tags = tags
+	return _options
+}
+
+// SetKeywords : Allow user to set Keywords
+func (_options *UpdateVersionOptions) SetKeywords(keywords []string) *UpdateVersionOptions {
+	_options.Keywords = keywords
+	return _options
+}
+
+// SetRating : Allow user to set Rating
+func (_options *UpdateVersionOptions) SetRating(rating *Rating) *UpdateVersionOptions {
+	_options.Rating = rating
+	return _options
+}
+
+// SetCreated : Allow user to set Created
+func (_options *UpdateVersionOptions) SetCreated(created *strfmt.DateTime) *UpdateVersionOptions {
+	_options.Created = created
+	return _options
+}
+
+// SetUpdated : Allow user to set Updated
+func (_options *UpdateVersionOptions) SetUpdated(updated *strfmt.DateTime) *UpdateVersionOptions {
+	_options.Updated = updated
+	return _options
+}
+
+// SetShortDescription : Allow user to set ShortDescription
+func (_options *UpdateVersionOptions) SetShortDescription(shortDescription string) *UpdateVersionOptions {
+	_options.ShortDescription = core.StringPtr(shortDescription)
+	return _options
+}
+
+// SetShortDescriptionI18n : Allow user to set ShortDescriptionI18n
+func (_options *UpdateVersionOptions) SetShortDescriptionI18n(shortDescriptionI18n map[string]string) *UpdateVersionOptions {
+	_options.ShortDescriptionI18n = shortDescriptionI18n
+	return _options
+}
+
+// SetLongDescription : Allow user to set LongDescription
+func (_options *UpdateVersionOptions) SetLongDescription(longDescription string) *UpdateVersionOptions {
+	_options.LongDescription = core.StringPtr(longDescription)
+	return _options
+}
+
+// SetLongDescriptionI18n : Allow user to set LongDescriptionI18n
+func (_options *UpdateVersionOptions) SetLongDescriptionI18n(longDescriptionI18n map[string]string) *UpdateVersionOptions {
+	_options.LongDescriptionI18n = longDescriptionI18n
+	return _options
+}
+
+// SetFeatures : Allow user to set Features
+func (_options *UpdateVersionOptions) SetFeatures(features []Feature) *UpdateVersionOptions {
+	_options.Features = features
+	return _options
+}
+
+// SetKinds : Allow user to set Kinds
+func (_options *UpdateVersionOptions) SetKinds(kinds []Kind) *UpdateVersionOptions {
+	_options.Kinds = kinds
+	return _options
+}
+
+// SetPublish : Allow user to set Publish
+func (_options *UpdateVersionOptions) SetPublish(publish *PublishObject) *UpdateVersionOptions {
+	_options.Publish = publish
+	return _options
+}
+
+// SetPcManaged : Allow user to set PcManaged
+func (_options *UpdateVersionOptions) SetPcManaged(pcManaged bool) *UpdateVersionOptions {
+	_options.PcManaged = core.BoolPtr(pcManaged)
+	return _options
+}
+
+// SetPublishApproved : Allow user to set PublishApproved
+func (_options *UpdateVersionOptions) SetPublishApproved(publishApproved bool) *UpdateVersionOptions {
+	_options.PublishApproved = core.BoolPtr(publishApproved)
+	return _options
+}
+
+// SetShareWithAll : Allow user to set ShareWithAll
+func (_options *UpdateVersionOptions) SetShareWithAll(shareWithAll bool) *UpdateVersionOptions {
+	_options.ShareWithAll = core.BoolPtr(shareWithAll)
+	return _options
+}
+
+// SetShareWithIBM : Allow user to set ShareWithIBM
+func (_options *UpdateVersionOptions) SetShareWithIBM(shareWithIBM bool) *UpdateVersionOptions {
+	_options.ShareWithIBM = core.BoolPtr(shareWithIBM)
+	return _options
+}
+
+// SetShareEnabled : Allow user to set ShareEnabled
+func (_options *UpdateVersionOptions) SetShareEnabled(shareEnabled bool) *UpdateVersionOptions {
+	_options.ShareEnabled = core.BoolPtr(shareEnabled)
+	return _options
+}
+
+// SetPublicOriginalCRN : Allow user to set PublicOriginalCRN
+func (_options *UpdateVersionOptions) SetPublicOriginalCRN(publicOriginalCRN string) *UpdateVersionOptions {
+	_options.PublicOriginalCRN = core.StringPtr(publicOriginalCRN)
+	return _options
+}
+
+// SetPublishPublicCRN : Allow user to set PublishPublicCRN
+func (_options *UpdateVersionOptions) SetPublishPublicCRN(publishPublicCRN string) *UpdateVersionOptions {
+	_options.PublishPublicCRN = core.StringPtr(publishPublicCRN)
+	return _options
+}
+
+// SetPortalApprovalRecord : Allow user to set PortalApprovalRecord
+func (_options *UpdateVersionOptions) SetPortalApprovalRecord(portalApprovalRecord string) *UpdateVersionOptions {
+	_options.PortalApprovalRecord = core.StringPtr(portalApprovalRecord)
+	return _options
+}
+
+// SetPortalUIURL : Allow user to set PortalUIURL
+func (_options *UpdateVersionOptions) SetPortalUIURL(portalUIURL string) *UpdateVersionOptions {
+	_options.PortalUIURL = core.StringPtr(portalUIURL)
+	return _options
+}
+
+// SetCatalogID : Allow user to set CatalogID
+func (_options *UpdateVersionOptions) SetCatalogID(catalogID string) *UpdateVersionOptions {
+	_options.CatalogID = core.StringPtr(catalogID)
+	return _options
+}
+
+// SetCatalogName : Allow user to set CatalogName
+func (_options *UpdateVersionOptions) SetCatalogName(catalogName string) *UpdateVersionOptions {
+	_options.CatalogName = core.StringPtr(catalogName)
+	return _options
+}
+
+// SetMetadata : Allow user to set Metadata
+func (_options *UpdateVersionOptions) SetMetadata(metadata map[string]interface{}) *UpdateVersionOptions {
+	_options.Metadata = metadata
+	return _options
+}
+
+// SetDisclaimer : Allow user to set Disclaimer
+func (_options *UpdateVersionOptions) SetDisclaimer(disclaimer string) *UpdateVersionOptions {
+	_options.Disclaimer = core.StringPtr(disclaimer)
+	return _options
+}
+
+// SetHidden : Allow user to set Hidden
+func (_options *UpdateVersionOptions) SetHidden(hidden bool) *UpdateVersionOptions {
+	_options.Hidden = core.BoolPtr(hidden)
+	return _options
+}
+
+// SetProvider : Allow user to set Provider
+// Deprecated: this method is deprecated and may be removed in a future release.
+func (_options *UpdateVersionOptions) SetProvider(provider string) *UpdateVersionOptions {
+	_options.Provider = core.StringPtr(provider)
+	return _options
+}
+
+// SetProviderInfo : Allow user to set ProviderInfo
+func (_options *UpdateVersionOptions) SetProviderInfo(providerInfo *ProviderInfo) *UpdateVersionOptions {
+	_options.ProviderInfo = providerInfo
+	return _options
+}
+
+// SetRepoInfo : Allow user to set RepoInfo
+func (_options *UpdateVersionOptions) SetRepoInfo(repoInfo *RepoInfo) *UpdateVersionOptions {
+	_options.RepoInfo = repoInfo
+	return _options
+}
+
+// SetImagePullKeys : Allow user to set ImagePullKeys
+func (_options *UpdateVersionOptions) SetImagePullKeys(imagePullKeys []ImagePullKey) *UpdateVersionOptions {
+	_options.ImagePullKeys = imagePullKeys
+	return _options
+}
+
+// SetSupport : Allow user to set Support
+func (_options *UpdateVersionOptions) SetSupport(support *Support) *UpdateVersionOptions {
+	_options.Support = support
+	return _options
+}
+
+// SetMedia : Allow user to set Media
+func (_options *UpdateVersionOptions) SetMedia(media []MediaItem) *UpdateVersionOptions {
+	_options.Media = media
+	return _options
+}
+
+// SetDeprecatePending : Allow user to set DeprecatePending
+func (_options *UpdateVersionOptions) SetDeprecatePending(deprecatePending *DeprecatePending) *UpdateVersionOptions {
+	_options.DeprecatePending = deprecatePending
+	return _options
+}
+
+// SetProductKind : Allow user to set ProductKind
+func (_options *UpdateVersionOptions) SetProductKind(productKind string) *UpdateVersionOptions {
+	_options.ProductKind = core.StringPtr(productKind)
+	return _options
+}
+
+// SetBadges : Allow user to set Badges
+func (_options *UpdateVersionOptions) SetBadges(badges []Badge) *UpdateVersionOptions {
+	_options.Badges = badges
+	return _options
+}
+
+// SetPlans : Allow user to set Plans
+func (_options *UpdateVersionOptions) SetPlans(plans []Plan) *UpdateVersionOptions {
+	_options.Plans = plans
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateVersionOptions) SetHeaders(param map[string]string) *UpdateVersionOptions {
+	options.Headers = param
+	return options
+}
+
+// ValidateInputsOptions : The ValidateInputs options.
+type ValidateInputsOptions struct {
+	// A dotted value of `catalogID`.`versionID`.
+	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
+
+	// A deployment variable to validate.
+	Input1 *string `json:"input1,omitempty"`
+
+	// Another deployment variable to validate.
+	Input2 *string `json:"input2,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewValidateInputsOptions : Instantiate ValidateInputsOptions
+func (*CatalogManagementV1) NewValidateInputsOptions(versionLocID string) *ValidateInputsOptions {
+	return &ValidateInputsOptions{
+		VersionLocID: core.StringPtr(versionLocID),
+	}
+}
+
+// SetVersionLocID : Allow user to set VersionLocID
+func (_options *ValidateInputsOptions) SetVersionLocID(versionLocID string) *ValidateInputsOptions {
+	_options.VersionLocID = core.StringPtr(versionLocID)
+	return _options
+}
+
+// SetInput1 : Allow user to set Input1
+func (_options *ValidateInputsOptions) SetInput1(input1 string) *ValidateInputsOptions {
+	_options.Input1 = core.StringPtr(input1)
+	return _options
+}
+
+// SetInput2 : Allow user to set Input2
+func (_options *ValidateInputsOptions) SetInput2(input2 string) *ValidateInputsOptions {
+	_options.Input2 = core.StringPtr(input2)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ValidateInputsOptions) SetHeaders(param map[string]string) *ValidateInputsOptions {
+	options.Headers = param
+	return options
+}
+
 // ValidateInstallOptions : The ValidateInstall options.
 type ValidateInstallOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
@@ -18746,8 +24513,18 @@ type ValidateInstallOptions struct {
 	// Kube namespace.
 	Namespace *string `json:"namespace,omitempty"`
 
+	// Kube namespaces.
+	Namespaces []string `json:"namespaces,omitempty"`
+
+	// Used when installing an operator, to indicate that it should be made avaiable in all namespaces on the target
+	// cluster.
+	AllNamespaces *bool `json:"all_namespaces,omitempty"`
+
 	// Validation override values. Required for virtual server image for VPC.
 	OverrideValues *DeployRequestBodyOverrideValues `json:"override_values,omitempty"`
+
+	// Used when the product has required dependencies, to indicated existing dependencies to reuse during validation.
+	DependencyConfigs []string `json:"dependency_configs,omitempty"`
 
 	// Schematics environment variables to use with this workspace.
 	EnvironmentVariables []DeployRequestBodyEnvironmentVariablesItem `json:"environment_variables,omitempty"`
@@ -18782,17 +24559,26 @@ type ValidateInstallOptions struct {
 	// VCenter Datastore.
 	VcenterDatastore *string `json:"vcenter_datastore,omitempty"`
 
+	// Software plan ID.
+	PlanID *string `json:"plan_id,omitempty"`
+
+	// Used when installing an operator, to indicate which channel to use.
+	Channel *string `json:"channel,omitempty"`
+
+	// Used when installing an operator, to indicate which install plan to use.
+	InstallPlan *string `json:"install_plan,omitempty"`
+
 	// The name of a target account context on a catalog.
 	TargetContextName *string `json:"targetContextName,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewValidateInstallOptions : Instantiate ValidateInstallOptions
 func (*CatalogManagementV1) NewValidateInstallOptions(versionLocID string, xAuthRefreshToken string) *ValidateInstallOptions {
 	return &ValidateInstallOptions{
-		VersionLocID: core.StringPtr(versionLocID),
+		VersionLocID:      core.StringPtr(versionLocID),
 		XAuthRefreshToken: core.StringPtr(xAuthRefreshToken),
 	}
 }
@@ -18827,9 +24613,27 @@ func (_options *ValidateInstallOptions) SetNamespace(namespace string) *Validate
 	return _options
 }
 
+// SetNamespaces : Allow user to set Namespaces
+func (_options *ValidateInstallOptions) SetNamespaces(namespaces []string) *ValidateInstallOptions {
+	_options.Namespaces = namespaces
+	return _options
+}
+
+// SetAllNamespaces : Allow user to set AllNamespaces
+func (_options *ValidateInstallOptions) SetAllNamespaces(allNamespaces bool) *ValidateInstallOptions {
+	_options.AllNamespaces = core.BoolPtr(allNamespaces)
+	return _options
+}
+
 // SetOverrideValues : Allow user to set OverrideValues
 func (_options *ValidateInstallOptions) SetOverrideValues(overrideValues *DeployRequestBodyOverrideValues) *ValidateInstallOptions {
 	_options.OverrideValues = overrideValues
+	return _options
+}
+
+// SetDependencyConfigs : Allow user to set DependencyConfigs
+func (_options *ValidateInstallOptions) SetDependencyConfigs(dependencyConfigs []string) *ValidateInstallOptions {
+	_options.DependencyConfigs = dependencyConfigs
 	return _options
 }
 
@@ -18899,6 +24703,24 @@ func (_options *ValidateInstallOptions) SetVcenterDatastore(vcenterDatastore str
 	return _options
 }
 
+// SetPlanID : Allow user to set PlanID
+func (_options *ValidateInstallOptions) SetPlanID(planID string) *ValidateInstallOptions {
+	_options.PlanID = core.StringPtr(planID)
+	return _options
+}
+
+// SetChannel : Allow user to set Channel
+func (_options *ValidateInstallOptions) SetChannel(channel string) *ValidateInstallOptions {
+	_options.Channel = core.StringPtr(channel)
+	return _options
+}
+
+// SetInstallPlan : Allow user to set InstallPlan
+func (_options *ValidateInstallOptions) SetInstallPlan(installPlan string) *ValidateInstallOptions {
+	_options.InstallPlan = core.StringPtr(installPlan)
+	return _options
+}
+
 // SetTargetContextName : Allow user to set TargetContextName
 func (_options *ValidateInstallOptions) SetTargetContextName(targetContextName string) *ValidateInstallOptions {
 	_options.TargetContextName = core.StringPtr(targetContextName)
@@ -18937,26 +24759,32 @@ func UnmarshalValidation(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(Validation)
 	err = core.UnmarshalPrimitive(m, "validated", &obj.Validated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "validated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "requested", &obj.Requested)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "requested-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_operation", &obj.LastOperation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_operation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -19040,6 +24868,10 @@ type Version struct {
 	// Optional pre-install instructions.
 	PreInstall []Script `json:"pre_install,omitempty"`
 
+	// A map of scripts to be run by a Project during a particular stage of a specified action.  Each key in the map must
+	// match the format "action"_"stage" in the specified ScriptRef.
+	Scripts map[string]ScriptRef `json:"scripts,omitempty"`
+
 	// Entitlement license info.
 	Entitlement *VersionEntitlement `json:"entitlement,omitempty"`
 
@@ -19084,6 +24916,18 @@ type Version struct {
 
 	// Compliance info for a version.
 	ComplianceV3 *Compliance `json:"compliance_v3,omitempty"`
+
+	// Change notices for a version.
+	ChangeNotices *ChangeNotices `json:"change_notices,omitempty"`
+
+	// A list of plan ids that are applicable for this version.
+	PlanIds []string `json:"plan_ids,omitempty"`
+
+	// Optional. Stack definition that was used to create this version.
+	Stack map[string]interface{} `json:"stack,omitempty"`
+
+	// The lowest version (semver) that can upgrade to this version.
+	MinimumCompatibleVersion *string `json:"minimum_compatible_version,omitempty"`
 }
 
 // UnmarshalVersion unmarshals an instance of Version from the specified map of raw messages.
@@ -19091,162 +24935,366 @@ func UnmarshalVersion(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Version)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_rev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "flavor", &obj.Flavor, UnmarshalFlavor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "flavor-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sha", &obj.Sha)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sha-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offering_id", &obj.OfferingID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offering_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "kind_id", &obj.KindID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "kind_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tags-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "repo_url", &obj.RepoURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "repo_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "source_url", &obj.SourceURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "source_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tgz_url", &obj.TgzURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tgz_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "configuration", &obj.Configuration, UnmarshalConfiguration)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "configuration-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "outputs", &obj.Outputs, UnmarshalOutput)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "outputs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "iam_permissions", &obj.IamPermissions, UnmarshalIamPermission)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_permissions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metadata-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "validation", &obj.Validation, UnmarshalValidation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "validation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "required_resources", &obj.RequiredResources, UnmarshalResource)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "required_resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "single_instance", &obj.SingleInstance)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "single_instance-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "schematics_env_values", &obj.SchematicsEnvValues, UnmarshalSchematicsEnvValues)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "schematics_env_values-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "install", &obj.Install, UnmarshalScript)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "install-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "pre_install", &obj.PreInstall, UnmarshalScript)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pre_install-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "scripts", &obj.Scripts, UnmarshalScriptRef)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "scripts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "entitlement", &obj.Entitlement, UnmarshalVersionEntitlement)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "entitlement-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "licenses", &obj.Licenses, UnmarshalLicense)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "licenses-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "image_manifest_url", &obj.ImageManifestURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "image_manifest_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deprecated", &obj.Deprecated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deprecated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "package_version", &obj.PackageVersion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "package_version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "state", &obj.State, UnmarshalState)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version_locator", &obj.VersionLocator)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version_locator-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "long_description", &obj.LongDescription)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "long_description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "long_description_i18n", &obj.LongDescriptionI18n)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "long_description_i18n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "whitelisted_accounts", &obj.WhitelistedAccounts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "whitelisted_accounts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "image_pull_key_name", &obj.ImagePullKeyName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "image_pull_key_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "deprecate_pending", &obj.DeprecatePending, UnmarshalDeprecatePending)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deprecate_pending-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "solution_info", &obj.SolutionInfo, UnmarshalSolutionInfo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "solution_info-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_consumable", &obj.IsConsumable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_consumable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "compliance_v3", &obj.ComplianceV3, UnmarshalCompliance)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compliance_v3-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "change_notices", &obj.ChangeNotices, UnmarshalChangeNotices)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "change_notices-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "plan_ids", &obj.PlanIds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "plan_ids-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "stack", &obj.Stack)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "stack-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "minimum_compatible_version", &obj.MinimumCompatibleVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "minimum_compatible_version-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VersionDependant : Version dependency on a VersionLocator.
+type VersionDependant struct {
+	// The start token used for this response.
+	Start *string `json:"start,omitempty"`
+
+	// The limit that was applied to this response. It may be smaller than in the request because that was too large.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// The total count of resources in the system that matches the request.
+	TotalCount *int64 `json:"total_count,omitempty"`
+
+	// The number of resources returned in this response.
+	ResourceCount *int64 `json:"resource_count" validate:"required"`
+
+	Version *VersionDependantVersion `json:"version,omitempty"`
+
+	// Link response on a token paginated query.
+	Next *PaginationTokenLink `json:"next,omitempty"`
+
+	// Link response on a token paginated query.
+	Prev *PaginationTokenLink `json:"prev,omitempty"`
+
+	// Link response on a token paginated query.
+	Last *PaginationTokenLink `json:"last,omitempty"`
+}
+
+// UnmarshalVersionDependant unmarshals an instance of VersionDependant from the specified map of raw messages.
+func UnmarshalVersionDependant(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VersionDependant)
+	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "start-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "version", &obj.Version, UnmarshalVersionDependantVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "prev", &obj.Prev, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "prev-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VersionDependantVersion : VersionDependantVersion struct
+type VersionDependantVersion struct {
+	// Dependant account.
+	AccountID *string `json:"account_id,omitempty"`
+
+	// Dependant Catalog.
+	CatalogID *string `json:"catalog_id,omitempty"`
+
+	// Dependant Offering.
+	OfferingID *string `json:"offering_id,omitempty"`
+
+	// Dependant Version.
+	VersionID *string `json:"version_id,omitempty"`
+
+	// Dependant (semver) version.
+	Version *string `json:"version,omitempty"`
+
+	// Dependant variation.
+	Flavor *string `json:"flavor,omitempty"`
+
+	// Dependencies semver range.
+	Semver *string `json:"semver,omitempty"`
+}
+
+// UnmarshalVersionDependantVersion unmarshals an instance of VersionDependantVersion from the specified map of raw messages.
+func UnmarshalVersionDependantVersion(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VersionDependantVersion)
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "catalog_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "offering_id", &obj.OfferingID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "offering_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version_id", &obj.VersionID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "flavor", &obj.Flavor)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "flavor-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "semver", &obj.Semver)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "semver-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -19276,22 +25324,134 @@ func UnmarshalVersionEntitlement(m map[string]json.RawMessage, result interface{
 	obj := new(VersionEntitlement)
 	err = core.UnmarshalPrimitive(m, "provider_name", &obj.ProviderName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provider_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "provider_id", &obj.ProviderID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "provider_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "product_id", &obj.ProductID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "product_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "part_numbers", &obj.PartNumbers)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "part_numbers-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "image_repo_name", &obj.ImageRepoName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "image_repo_name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VersionInputValidationResponse : Validate deployment variables.
+type VersionInputValidationResponse struct {
+	// Failure message.
+	Message *string `json:"message,omitempty"`
+
+	// Response code.
+	Code *string `json:"code,omitempty"`
+
+	// Transaction ID.
+	GlobalTransactionID *string `json:"global_transaction_id,omitempty"`
+
+	// Transaction ID.
+	Errors []VersionInputValidationResponseErrorsItem `json:"errors,omitempty"`
+}
+
+// UnmarshalVersionInputValidationResponse unmarshals an instance of VersionInputValidationResponse from the specified map of raw messages.
+func UnmarshalVersionInputValidationResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VersionInputValidationResponse)
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "global_transaction_id", &obj.GlobalTransactionID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "global_transaction_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "errors", &obj.Errors, UnmarshalVersionInputValidationResponseErrorsItem)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VersionInputValidationResponseErrorsItem : VersionInputValidationResponseErrorsItem struct
+type VersionInputValidationResponseErrorsItem struct {
+	Message *string `json:"message,omitempty"`
+
+	Entity *string `json:"entity,omitempty"`
+
+	ErrorCode *string `json:"error_code,omitempty"`
+}
+
+// UnmarshalVersionInputValidationResponseErrorsItem unmarshals an instance of VersionInputValidationResponseErrorsItem from the specified map of raw messages.
+func UnmarshalVersionInputValidationResponseErrorsItem(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VersionInputValidationResponseErrorsItem)
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "entity", &obj.Entity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "entity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "error_code", &obj.ErrorCode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "error_code-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VersionRange : Version range information.
+type VersionRange struct {
+	// Format kinds that this plan applies to in the current offering.  If empty, applies to all kinds.
+	Kinds []string `json:"kinds,omitempty"`
+
+	// Semantic version range that this plan applies to.  If empty, applies to all versions.
+	Version *string `json:"version,omitempty"`
+
+	// List of applicable flavors in the specified range.  If empty, or not specified, applies to all flavors.
+	Flavors []string `json:"flavors,omitempty"`
+}
+
+// UnmarshalVersionRange unmarshals an instance of VersionRange from the specified map of raw messages.
+func UnmarshalVersionRange(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VersionRange)
+	err = core.UnmarshalPrimitive(m, "kinds", &obj.Kinds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "kinds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "flavors", &obj.Flavors)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "flavors-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -19334,51 +25494,198 @@ func UnmarshalVersionUpdateDescriptor(m map[string]json.RawMessage, result inter
 	obj := new(VersionUpdateDescriptor)
 	err = core.UnmarshalPrimitive(m, "version_locator", &obj.VersionLocator)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version_locator-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "flavor", &obj.Flavor, UnmarshalFlavor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "flavor-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "state", &obj.State, UnmarshalState)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "required_resources", &obj.RequiredResources, UnmarshalResource)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "required_resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "package_version", &obj.PackageVersion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "package_version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sha", &obj.Sha)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sha-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "can_update", &obj.CanUpdate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "can_update-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "messages-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-//
+// VersionsResult : Paginated search result for Versions.
+type VersionsResult struct {
+	// The start token used for this response.
+	Start *string `json:"start,omitempty"`
+
+	// The limit that was applied to this response. It may be smaller than in the request because that was too large.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// The total count of resources in the system that matches the request.
+	TotalCount *int64 `json:"total_count,omitempty"`
+
+	// The number of resources returned in this response.
+	ResourceCount *int64 `json:"resource_count" validate:"required"`
+
+	// Link response on a token paginated query.
+	First *PaginationTokenLink `json:"first" validate:"required"`
+
+	// Link response on a token paginated query.
+	Next *PaginationTokenLink `json:"next,omitempty"`
+
+	// Link response on a token paginated query.
+	Prev *PaginationTokenLink `json:"prev,omitempty"`
+
+	// Link response on a token paginated query.
+	Last *PaginationTokenLink `json:"last,omitempty"`
+
+	// A list of versions.
+	Versions []Version `json:"versions" validate:"required"`
+}
+
+// UnmarshalVersionsResult unmarshals an instance of VersionsResult from the specified map of raw messages.
+func UnmarshalVersionsResult(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VersionsResult)
+	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "start-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "prev", &obj.Prev, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "prev-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationTokenLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "versions", &obj.Versions, UnmarshalVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "versions-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *VersionsResult) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
+}
+
+// WeeklyMetricBucket : Statistics for a given week.
+type WeeklyMetricBucket struct {
+	// ISO based YearWeek index yyyyww,  e.g., 202303 for third week in 2003.
+	YearWeekIdx *int64 `json:"year_week_idx,omitempty"`
+
+	// Number of times the resource was downloaded.
+	Download *int64 `json:"download,omitempty"`
+
+	// Number of times the resource was updated.
+	Update *int64 `json:"update,omitempty"`
+
+	// Number of times the resource was accessed.
+	Get *int64 `json:"get,omitempty"`
+
+	// Number of times the customization bundle was downloaded for this resource.
+	BundleDownload *int64 `json:"bundle_download,omitempty"`
+}
+
+// UnmarshalWeeklyMetricBucket unmarshals an instance of WeeklyMetricBucket from the specified map of raw messages.
+func UnmarshalWeeklyMetricBucket(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(WeeklyMetricBucket)
+	err = core.UnmarshalPrimitive(m, "year_week_idx", &obj.YearWeekIdx)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "year_week_idx-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "download", &obj.Download)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "download-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "update", &obj.Update)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "update-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "get", &obj.Get)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "get-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bundle_download", &obj.BundleDownload)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bundle_download-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // CatalogAccountAuditsPager can be used to simplify the use of the "ListCatalogAccountAudits" method.
-//
 type CatalogAccountAuditsPager struct {
-	hasNext bool
-	options *ListCatalogAccountAuditsOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *ListCatalogAccountAuditsOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -19387,7 +25694,7 @@ type CatalogAccountAuditsPager struct {
 // NewCatalogAccountAuditsPager returns a new CatalogAccountAuditsPager instance.
 func (catalogManagement *CatalogManagementV1) NewCatalogAccountAuditsPager(options *ListCatalogAccountAuditsOptions) (pager *CatalogAccountAuditsPager, err error) {
 	if options.Start != nil && *options.Start != "" {
-		err = fmt.Errorf("the 'options.Start' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -19415,6 +25722,7 @@ func (pager *CatalogAccountAuditsPager) GetNextWithContext(ctx context.Context) 
 
 	result, _, err := pager.client.ListCatalogAccountAuditsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -19436,6 +25744,7 @@ func (pager *CatalogAccountAuditsPager) GetAllWithContext(ctx context.Context) (
 		var nextPage []AuditLogDigest
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -19445,21 +25754,193 @@ func (pager *CatalogAccountAuditsPager) GetAllWithContext(ctx context.Context) (
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *CatalogAccountAuditsPager) GetNext() (page []AuditLogDigest, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *CatalogAccountAuditsPager) GetAll() (allItems []AuditLogDigest, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
+// GetShareApprovalListPager can be used to simplify the use of the "GetShareApprovalList" method.
+type GetShareApprovalListPager struct {
+	hasNext     bool
+	options     *GetShareApprovalListOptions
+	client      *CatalogManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewGetShareApprovalListPager returns a new GetShareApprovalListPager instance.
+func (catalogManagement *CatalogManagementV1) NewGetShareApprovalListPager(options *GetShareApprovalListOptions) (pager *GetShareApprovalListPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy GetShareApprovalListOptions = *options
+	pager = &GetShareApprovalListPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *GetShareApprovalListPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *GetShareApprovalListPager) GetNextWithContext(ctx context.Context) (page []ShareApprovalAccess, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.GetShareApprovalListWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Resources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *GetShareApprovalListPager) GetAllWithContext(ctx context.Context) (allItems []ShareApprovalAccess, err error) {
+	for pager.HasNext() {
+		var nextPage []ShareApprovalAccess
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *GetShareApprovalListPager) GetNext() (page []ShareApprovalAccess, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *GetShareApprovalListPager) GetAll() (allItems []ShareApprovalAccess, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetShareApprovalListAsSourcePager can be used to simplify the use of the "GetShareApprovalListAsSource" method.
+type GetShareApprovalListAsSourcePager struct {
+	hasNext     bool
+	options     *GetShareApprovalListAsSourceOptions
+	client      *CatalogManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewGetShareApprovalListAsSourcePager returns a new GetShareApprovalListAsSourcePager instance.
+func (catalogManagement *CatalogManagementV1) NewGetShareApprovalListAsSourcePager(options *GetShareApprovalListAsSourceOptions) (pager *GetShareApprovalListAsSourcePager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy GetShareApprovalListAsSourceOptions = *options
+	pager = &GetShareApprovalListAsSourcePager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *GetShareApprovalListAsSourcePager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *GetShareApprovalListAsSourcePager) GetNextWithContext(ctx context.Context) (page []ShareApprovalAccess, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.GetShareApprovalListAsSourceWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Resources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *GetShareApprovalListAsSourcePager) GetAllWithContext(ctx context.Context) (allItems []ShareApprovalAccess, err error) {
+	for pager.HasNext() {
+		var nextPage []ShareApprovalAccess
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *GetShareApprovalListAsSourcePager) GetNext() (page []ShareApprovalAccess, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *GetShareApprovalListAsSourcePager) GetAll() (allItems []ShareApprovalAccess, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
 // CatalogAuditsPager can be used to simplify the use of the "ListCatalogAudits" method.
-//
 type CatalogAuditsPager struct {
-	hasNext bool
-	options *ListCatalogAuditsOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *ListCatalogAuditsOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -19468,7 +25949,7 @@ type CatalogAuditsPager struct {
 // NewCatalogAuditsPager returns a new CatalogAuditsPager instance.
 func (catalogManagement *CatalogManagementV1) NewCatalogAuditsPager(options *ListCatalogAuditsOptions) (pager *CatalogAuditsPager, err error) {
 	if options.Start != nil && *options.Start != "" {
-		err = fmt.Errorf("the 'options.Start' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -19496,6 +25977,7 @@ func (pager *CatalogAuditsPager) GetNextWithContext(ctx context.Context) (page [
 
 	result, _, err := pager.client.ListCatalogAuditsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -19517,6 +25999,7 @@ func (pager *CatalogAuditsPager) GetAllWithContext(ctx context.Context) (allItem
 		var nextPage []AuditLogDigest
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -19526,21 +26009,23 @@ func (pager *CatalogAuditsPager) GetAllWithContext(ctx context.Context) (allItem
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *CatalogAuditsPager) GetNext() (page []AuditLogDigest, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *CatalogAuditsPager) GetAll() (allItems []AuditLogDigest, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // EnterpriseAuditsPager can be used to simplify the use of the "ListEnterpriseAudits" method.
-//
 type EnterpriseAuditsPager struct {
-	hasNext bool
-	options *ListEnterpriseAuditsOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *ListEnterpriseAuditsOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -19549,7 +26034,7 @@ type EnterpriseAuditsPager struct {
 // NewEnterpriseAuditsPager returns a new EnterpriseAuditsPager instance.
 func (catalogManagement *CatalogManagementV1) NewEnterpriseAuditsPager(options *ListEnterpriseAuditsOptions) (pager *EnterpriseAuditsPager, err error) {
 	if options.Start != nil && *options.Start != "" {
-		err = fmt.Errorf("the 'options.Start' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -19577,6 +26062,7 @@ func (pager *EnterpriseAuditsPager) GetNextWithContext(ctx context.Context) (pag
 
 	result, _, err := pager.client.ListEnterpriseAuditsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -19598,6 +26084,7 @@ func (pager *EnterpriseAuditsPager) GetAllWithContext(ctx context.Context) (allI
 		var nextPage []AuditLogDigest
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -19607,21 +26094,23 @@ func (pager *EnterpriseAuditsPager) GetAllWithContext(ctx context.Context) (allI
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *EnterpriseAuditsPager) GetNext() (page []AuditLogDigest, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *EnterpriseAuditsPager) GetAll() (allItems []AuditLogDigest, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // GetConsumptionOfferingsPager can be used to simplify the use of the "GetConsumptionOfferings" method.
-//
 type GetConsumptionOfferingsPager struct {
-	hasNext bool
-	options *GetConsumptionOfferingsOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *GetConsumptionOfferingsOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *int64
 	}
@@ -19630,7 +26119,7 @@ type GetConsumptionOfferingsPager struct {
 // NewGetConsumptionOfferingsPager returns a new GetConsumptionOfferingsPager instance.
 func (catalogManagement *CatalogManagementV1) NewGetConsumptionOfferingsPager(options *GetConsumptionOfferingsOptions) (pager *GetConsumptionOfferingsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -19658,6 +26147,7 @@ func (pager *GetConsumptionOfferingsPager) GetNextWithContext(ctx context.Contex
 
 	result, _, err := pager.client.GetConsumptionOfferingsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -19666,7 +26156,8 @@ func (pager *GetConsumptionOfferingsPager) GetNextWithContext(ctx context.Contex
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -19685,6 +26176,7 @@ func (pager *GetConsumptionOfferingsPager) GetAllWithContext(ctx context.Context
 		var nextPage []Offering
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -19694,21 +26186,23 @@ func (pager *GetConsumptionOfferingsPager) GetAllWithContext(ctx context.Context
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *GetConsumptionOfferingsPager) GetNext() (page []Offering, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *GetConsumptionOfferingsPager) GetAll() (allItems []Offering, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // OfferingsPager can be used to simplify the use of the "ListOfferings" method.
-//
 type OfferingsPager struct {
-	hasNext bool
-	options *ListOfferingsOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *ListOfferingsOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *int64
 	}
@@ -19717,7 +26211,7 @@ type OfferingsPager struct {
 // NewOfferingsPager returns a new OfferingsPager instance.
 func (catalogManagement *CatalogManagementV1) NewOfferingsPager(options *ListOfferingsOptions) (pager *OfferingsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -19745,6 +26239,7 @@ func (pager *OfferingsPager) GetNextWithContext(ctx context.Context) (page []Off
 
 	result, _, err := pager.client.ListOfferingsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -19753,7 +26248,8 @@ func (pager *OfferingsPager) GetNextWithContext(ctx context.Context) (page []Off
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -19772,6 +26268,7 @@ func (pager *OfferingsPager) GetAllWithContext(ctx context.Context) (allItems []
 		var nextPage []Offering
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -19781,21 +26278,23 @@ func (pager *OfferingsPager) GetAllWithContext(ctx context.Context) (allItems []
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *OfferingsPager) GetNext() (page []Offering, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *OfferingsPager) GetAll() (allItems []Offering, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // OfferingAuditsPager can be used to simplify the use of the "ListOfferingAudits" method.
-//
 type OfferingAuditsPager struct {
-	hasNext bool
-	options *ListOfferingAuditsOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *ListOfferingAuditsOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -19804,7 +26303,7 @@ type OfferingAuditsPager struct {
 // NewOfferingAuditsPager returns a new OfferingAuditsPager instance.
 func (catalogManagement *CatalogManagementV1) NewOfferingAuditsPager(options *ListOfferingAuditsOptions) (pager *OfferingAuditsPager, err error) {
 	if options.Start != nil && *options.Start != "" {
-		err = fmt.Errorf("the 'options.Start' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -19832,6 +26331,7 @@ func (pager *OfferingAuditsPager) GetNextWithContext(ctx context.Context) (page 
 
 	result, _, err := pager.client.ListOfferingAuditsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -19853,6 +26353,7 @@ func (pager *OfferingAuditsPager) GetAllWithContext(ctx context.Context) (allIte
 		var nextPage []AuditLogDigest
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -19862,21 +26363,23 @@ func (pager *OfferingAuditsPager) GetAllWithContext(ctx context.Context) (allIte
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *OfferingAuditsPager) GetNext() (page []AuditLogDigest, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *OfferingAuditsPager) GetAll() (allItems []AuditLogDigest, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // GetOfferingAccessListPager can be used to simplify the use of the "GetOfferingAccessList" method.
-//
 type GetOfferingAccessListPager struct {
-	hasNext bool
-	options *GetOfferingAccessListOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *GetOfferingAccessListOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -19885,7 +26388,7 @@ type GetOfferingAccessListPager struct {
 // NewGetOfferingAccessListPager returns a new GetOfferingAccessListPager instance.
 func (catalogManagement *CatalogManagementV1) NewGetOfferingAccessListPager(options *GetOfferingAccessListOptions) (pager *GetOfferingAccessListPager, err error) {
 	if options.Start != nil && *options.Start != "" {
-		err = fmt.Errorf("the 'options.Start' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -19913,6 +26416,7 @@ func (pager *GetOfferingAccessListPager) GetNextWithContext(ctx context.Context)
 
 	result, _, err := pager.client.GetOfferingAccessListWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -19934,6 +26438,7 @@ func (pager *GetOfferingAccessListPager) GetAllWithContext(ctx context.Context) 
 		var nextPage []Access
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -19943,21 +26448,108 @@ func (pager *GetOfferingAccessListPager) GetAllWithContext(ctx context.Context) 
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *GetOfferingAccessListPager) GetNext() (page []Access, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *GetOfferingAccessListPager) GetAll() (allItems []Access, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
+// GetVersionsPager can be used to simplify the use of the "GetVersions" method.
+type GetVersionsPager struct {
+	hasNext     bool
+	options     *GetVersionsOptions
+	client      *CatalogManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewGetVersionsPager returns a new GetVersionsPager instance.
+func (catalogManagement *CatalogManagementV1) NewGetVersionsPager(options *GetVersionsOptions) (pager *GetVersionsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy GetVersionsOptions = *options
+	pager = &GetVersionsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *GetVersionsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *GetVersionsPager) GetNextWithContext(ctx context.Context) (page []Version, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.GetVersionsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Versions
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *GetVersionsPager) GetAllWithContext(ctx context.Context) (allItems []Version, err error) {
+	for pager.HasNext() {
+		var nextPage []Version
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *GetVersionsPager) GetNext() (page []Version, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *GetVersionsPager) GetAll() (allItems []Version, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
 // GetNamespacesPager can be used to simplify the use of the "GetNamespaces" method.
-//
 type GetNamespacesPager struct {
-	hasNext bool
-	options *GetNamespacesOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *GetNamespacesOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *int64
 	}
@@ -19966,7 +26558,7 @@ type GetNamespacesPager struct {
 // NewGetNamespacesPager returns a new GetNamespacesPager instance.
 func (catalogManagement *CatalogManagementV1) NewGetNamespacesPager(options *GetNamespacesOptions) (pager *GetNamespacesPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -19994,6 +26586,7 @@ func (pager *GetNamespacesPager) GetNextWithContext(ctx context.Context) (page [
 
 	result, _, err := pager.client.GetNamespacesWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -20002,7 +26595,8 @@ func (pager *GetNamespacesPager) GetNextWithContext(ctx context.Context) (page [
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -20021,6 +26615,7 @@ func (pager *GetNamespacesPager) GetAllWithContext(ctx context.Context) (allItem
 		var nextPage []string
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -20030,21 +26625,23 @@ func (pager *GetNamespacesPager) GetAllWithContext(ctx context.Context) (allItem
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *GetNamespacesPager) GetNext() (page []string, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *GetNamespacesPager) GetAll() (allItems []string, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // SearchObjectsPager can be used to simplify the use of the "SearchObjects" method.
-//
 type SearchObjectsPager struct {
-	hasNext bool
-	options *SearchObjectsOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *SearchObjectsOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *int64
 	}
@@ -20053,7 +26650,7 @@ type SearchObjectsPager struct {
 // NewSearchObjectsPager returns a new SearchObjectsPager instance.
 func (catalogManagement *CatalogManagementV1) NewSearchObjectsPager(options *SearchObjectsOptions) (pager *SearchObjectsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -20081,6 +26678,7 @@ func (pager *SearchObjectsPager) GetNextWithContext(ctx context.Context) (page [
 
 	result, _, err := pager.client.SearchObjectsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -20089,7 +26687,8 @@ func (pager *SearchObjectsPager) GetNextWithContext(ctx context.Context) (page [
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -20108,6 +26707,7 @@ func (pager *SearchObjectsPager) GetAllWithContext(ctx context.Context) (allItem
 		var nextPage []CatalogObject
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -20117,21 +26717,23 @@ func (pager *SearchObjectsPager) GetAllWithContext(ctx context.Context) (allItem
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *SearchObjectsPager) GetNext() (page []CatalogObject, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *SearchObjectsPager) GetAll() (allItems []CatalogObject, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // ObjectsPager can be used to simplify the use of the "ListObjects" method.
-//
 type ObjectsPager struct {
-	hasNext bool
-	options *ListObjectsOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *ListObjectsOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *int64
 	}
@@ -20140,7 +26742,7 @@ type ObjectsPager struct {
 // NewObjectsPager returns a new ObjectsPager instance.
 func (catalogManagement *CatalogManagementV1) NewObjectsPager(options *ListObjectsOptions) (pager *ObjectsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -20168,6 +26770,7 @@ func (pager *ObjectsPager) GetNextWithContext(ctx context.Context) (page []Catal
 
 	result, _, err := pager.client.ListObjectsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -20176,7 +26779,8 @@ func (pager *ObjectsPager) GetNextWithContext(ctx context.Context) (page []Catal
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -20195,6 +26799,7 @@ func (pager *ObjectsPager) GetAllWithContext(ctx context.Context) (allItems []Ca
 		var nextPage []CatalogObject
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -20204,21 +26809,23 @@ func (pager *ObjectsPager) GetAllWithContext(ctx context.Context) (allItems []Ca
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *ObjectsPager) GetNext() (page []CatalogObject, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *ObjectsPager) GetAll() (allItems []CatalogObject, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // ObjectAuditsPager can be used to simplify the use of the "ListObjectAudits" method.
-//
 type ObjectAuditsPager struct {
-	hasNext bool
-	options *ListObjectAuditsOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *ListObjectAuditsOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -20227,7 +26834,7 @@ type ObjectAuditsPager struct {
 // NewObjectAuditsPager returns a new ObjectAuditsPager instance.
 func (catalogManagement *CatalogManagementV1) NewObjectAuditsPager(options *ListObjectAuditsOptions) (pager *ObjectAuditsPager, err error) {
 	if options.Start != nil && *options.Start != "" {
-		err = fmt.Errorf("the 'options.Start' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -20255,6 +26862,7 @@ func (pager *ObjectAuditsPager) GetNextWithContext(ctx context.Context) (page []
 
 	result, _, err := pager.client.ListObjectAuditsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -20276,6 +26884,7 @@ func (pager *ObjectAuditsPager) GetAllWithContext(ctx context.Context) (allItems
 		var nextPage []AuditLogDigest
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -20285,21 +26894,23 @@ func (pager *ObjectAuditsPager) GetAllWithContext(ctx context.Context) (allItems
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *ObjectAuditsPager) GetNext() (page []AuditLogDigest, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *ObjectAuditsPager) GetAll() (allItems []AuditLogDigest, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // GetObjectAccessListPager can be used to simplify the use of the "GetObjectAccessList" method.
-//
 type GetObjectAccessListPager struct {
-	hasNext bool
-	options *GetObjectAccessListOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *GetObjectAccessListOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -20308,7 +26919,7 @@ type GetObjectAccessListPager struct {
 // NewGetObjectAccessListPager returns a new GetObjectAccessListPager instance.
 func (catalogManagement *CatalogManagementV1) NewGetObjectAccessListPager(options *GetObjectAccessListOptions) (pager *GetObjectAccessListPager, err error) {
 	if options.Start != nil && *options.Start != "" {
-		err = fmt.Errorf("the 'options.Start' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -20336,6 +26947,7 @@ func (pager *GetObjectAccessListPager) GetNextWithContext(ctx context.Context) (
 
 	result, _, err := pager.client.GetObjectAccessListWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -20357,6 +26969,7 @@ func (pager *GetObjectAccessListPager) GetAllWithContext(ctx context.Context) (a
 		var nextPage []Access
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -20366,21 +26979,23 @@ func (pager *GetObjectAccessListPager) GetAllWithContext(ctx context.Context) (a
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *GetObjectAccessListPager) GetNext() (page []Access, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *GetObjectAccessListPager) GetAll() (allItems []Access, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // GetObjectAccessListDeprecatedPager can be used to simplify the use of the "GetObjectAccessListDeprecated" method.
-//
 type GetObjectAccessListDeprecatedPager struct {
-	hasNext bool
-	options *GetObjectAccessListDeprecatedOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *GetObjectAccessListDeprecatedOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *int64
 	}
@@ -20389,7 +27004,7 @@ type GetObjectAccessListDeprecatedPager struct {
 // NewGetObjectAccessListDeprecatedPager returns a new GetObjectAccessListDeprecatedPager instance.
 func (catalogManagement *CatalogManagementV1) NewGetObjectAccessListDeprecatedPager(options *GetObjectAccessListDeprecatedOptions) (pager *GetObjectAccessListDeprecatedPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -20417,6 +27032,7 @@ func (pager *GetObjectAccessListDeprecatedPager) GetNextWithContext(ctx context.
 
 	result, _, err := pager.client.GetObjectAccessListDeprecatedWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -20425,7 +27041,8 @@ func (pager *GetObjectAccessListDeprecatedPager) GetNextWithContext(ctx context.
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -20444,6 +27061,7 @@ func (pager *GetObjectAccessListDeprecatedPager) GetAllWithContext(ctx context.C
 		var nextPage []Access
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -20453,21 +27071,23 @@ func (pager *GetObjectAccessListDeprecatedPager) GetAllWithContext(ctx context.C
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *GetObjectAccessListDeprecatedPager) GetNext() (page []Access, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *GetObjectAccessListDeprecatedPager) GetAll() (allItems []Access, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-//
 // OfferingInstanceAuditsPager can be used to simplify the use of the "ListOfferingInstanceAudits" method.
-//
 type OfferingInstanceAuditsPager struct {
-	hasNext bool
-	options *ListOfferingInstanceAuditsOptions
-	client  *CatalogManagementV1
+	hasNext     bool
+	options     *ListOfferingInstanceAuditsOptions
+	client      *CatalogManagementV1
 	pageContext struct {
 		next *string
 	}
@@ -20476,7 +27096,7 @@ type OfferingInstanceAuditsPager struct {
 // NewOfferingInstanceAuditsPager returns a new OfferingInstanceAuditsPager instance.
 func (catalogManagement *CatalogManagementV1) NewOfferingInstanceAuditsPager(options *ListOfferingInstanceAuditsOptions) (pager *OfferingInstanceAuditsPager, err error) {
 	if options.Start != nil && *options.Start != "" {
-		err = fmt.Errorf("the 'options.Start' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -20504,6 +27124,7 @@ func (pager *OfferingInstanceAuditsPager) GetNextWithContext(ctx context.Context
 
 	result, _, err := pager.client.ListOfferingInstanceAuditsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -20525,6 +27146,7 @@ func (pager *OfferingInstanceAuditsPager) GetAllWithContext(ctx context.Context)
 		var nextPage []AuditLogDigest
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -20534,10 +27156,14 @@ func (pager *OfferingInstanceAuditsPager) GetAllWithContext(ctx context.Context)
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *OfferingInstanceAuditsPager) GetNext() (page []AuditLogDigest, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *OfferingInstanceAuditsPager) GetAll() (allItems []AuditLogDigest, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }

@@ -1,0 +1,11 @@
+[Unit]
+Description=Initiates iSCSI Boot Process by Preparing and Connecting to iSCSI Target
+
+[Service]
+Type=oneshot
+ExecStartPre=-/usr/sbin/modprobe iscsi_ibft
+ExecStartPre=-/usr/sbin/iscsistart -f
+ExecStart=-/usr/sbin/iscsistart -b
+
+[Install]
+WantedBy=multi-user.target

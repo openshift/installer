@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2015-2022 VMware, Inc. All Rights Reserved.
+Copyright (c) 2015-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,11 +17,26 @@ limitations under the License.
 package types
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
 	"time"
 )
+
+func EnumValuesAsStrings[T ~string](enumValues []T) []string {
+	stringValues := make([]string, len(enumValues))
+	for i := range enumValues {
+		stringValues[i] = string(enumValues[i])
+	}
+	return stringValues
+}
+
+func New[T any](t T) *T {
+	return &t
+}
 
 func NewBool(v bool) *bool {
 	return &v
@@ -120,6 +135,7 @@ func (ci VirtualMachineConfigInfo) ToConfigSpec() VirtualMachineConfigSpec {
 		Flags:                        &ci.Flags,
 		ConsolePreferences:           ci.ConsolePreferences,
 		PowerOpInfo:                  &ci.DefaultPowerOps,
+		RebootPowerOff:               ci.RebootPowerOff,
 		NumCPUs:                      ci.Hardware.NumCPU,
 		VcpuConfig:                   ci.VcpuConfig,
 		NumCoresPerSocket:            ci.Hardware.NumCoresPerSocket,
@@ -129,14 +145,14 @@ func (ci VirtualMachineConfigInfo) ToConfigSpec() VirtualMachineConfigSpec {
 		CpuHotRemoveEnabled:          ci.CpuHotRemoveEnabled,
 		VirtualICH7MPresent:          ci.Hardware.VirtualICH7MPresent,
 		VirtualSMCPresent:            ci.Hardware.VirtualSMCPresent,
-		DeviceChange:                 make([]BaseVirtualDeviceConfigSpec, len(ci.Hardware.Device)),
+		DeviceChange:                 nil, // See below
 		CpuAllocation:                ci.CpuAllocation,
 		MemoryAllocation:             ci.MemoryAllocation,
 		LatencySensitivity:           ci.LatencySensitivity,
 		CpuAffinity:                  ci.CpuAffinity,
 		MemoryAffinity:               ci.MemoryAffinity,
 		NetworkShaper:                ci.NetworkShaper,
-		CpuFeatureMask:               make([]VirtualMachineCpuIdInfoSpec, len(ci.CpuFeatureMask)),
+		CpuFeatureMask:               nil, // See below
 		ExtraConfig:                  ci.ExtraConfig,
 		SwapPlacement:                ci.SwapPlacement,
 		BootOptions:                  ci.BootOptions,
@@ -155,20 +171,21 @@ func (ci VirtualMachineConfigInfo) ToConfigSpec() VirtualMachineConfigSpec {
 		MigrateEncryption:            ci.MigrateEncryption,
 		FtEncryptionMode:             ci.FtEncryptionMode,
 		SevEnabled:                   ci.SevEnabled,
-		PmemFailoverEnabled:          ci.PmemFailoverEnabled,
-		Pmem:                         ci.Pmem,
-		NpivWorldWideNameOp:          ci.NpivWorldWideNameType,
-		RebootPowerOff:               ci.RebootPowerOff,
+		MotherboardLayout:            ci.Hardware.MotherboardLayout,
 		ScheduledHardwareUpgradeInfo: ci.ScheduledHardwareUpgradeInfo,
 		SgxInfo:                      ci.SgxInfo,
 		GuestMonitoringModeInfo:      ci.GuestMonitoringModeInfo,
+		PmemFailoverEnabled:          ci.PmemFailoverEnabled,
 		VmxStatsCollectionEnabled:    ci.VmxStatsCollectionEnabled,
 		VmOpNotificationToAppEnabled: ci.VmOpNotificationToAppEnabled,
 		VmOpNotificationTimeout:      ci.VmOpNotificationTimeout,
 		DeviceSwap:                   ci.DeviceSwap,
 		SimultaneousThreads:          ci.Hardware.SimultaneousThreads,
+		Pmem:                         ci.Pmem,
 		DeviceGroups:                 ci.DeviceGroups,
-		MotherboardLayout:            ci.Hardware.MotherboardLayout,
+		FixedPassthruHotPlugEnabled:  ci.FixedPassthruHotPlugEnabled,
+		MetroFtEnabled:               ci.MetroFtEnabled,
+		MetroFtHostGroup:             ci.MetroFtHostGroup,
 	}
 
 	// Unassign the Files field if all of its fields are empty.
@@ -210,39 +227,36 @@ func (ci VirtualMachineConfigInfo) ToConfigSpec() VirtualMachineConfigSpec {
 		cs.PowerOpInfo = nil
 	}
 
-	for i := 0; i < len(cs.CpuFeatureMask); i++ {
-		cs.CpuFeatureMask[i] = VirtualMachineCpuIdInfoSpec{
-			ArrayUpdateSpec: ArrayUpdateSpec{
-				Operation: ArrayUpdateOperationAdd,
-			},
-			Info: &HostCpuIdInfo{
-				// TODO: Does DynamicData need to be copied?
-				//       It is an empty struct...
-				Level:  ci.CpuFeatureMask[i].Level,
-				Vendor: ci.CpuFeatureMask[i].Vendor,
-				Eax:    ci.CpuFeatureMask[i].Eax,
-				Ebx:    ci.CpuFeatureMask[i].Ebx,
-				Ecx:    ci.CpuFeatureMask[i].Ecx,
-				Edx:    ci.CpuFeatureMask[i].Edx,
-			},
+	if l := len(ci.CpuFeatureMask); l > 0 {
+		cs.CpuFeatureMask = make([]VirtualMachineCpuIdInfoSpec, l)
+		for i := 0; i < l; i++ {
+			cs.CpuFeatureMask[i] = VirtualMachineCpuIdInfoSpec{
+				ArrayUpdateSpec: ArrayUpdateSpec{
+					Operation: ArrayUpdateOperationAdd,
+				},
+				Info: &HostCpuIdInfo{
+					Level:  ci.CpuFeatureMask[i].Level,
+					Vendor: ci.CpuFeatureMask[i].Vendor,
+					Eax:    ci.CpuFeatureMask[i].Eax,
+					Ebx:    ci.CpuFeatureMask[i].Ebx,
+					Ecx:    ci.CpuFeatureMask[i].Ecx,
+					Edx:    ci.CpuFeatureMask[i].Edx,
+				},
+			}
 		}
 	}
 
-	for i := 0; i < len(cs.DeviceChange); i++ {
-		cs.DeviceChange[i] = &VirtualDeviceConfigSpec{
-			// TODO: Does DynamicData need to be copied?
-			//       It is an empty struct...
-			Operation:     VirtualDeviceConfigSpecOperationAdd,
-			FileOperation: VirtualDeviceConfigSpecFileOperationCreate,
-			Device:        ci.Hardware.Device[i],
-			// TODO: It is unclear how the profiles associated with the VM or
-			//       its hardware can be reintroduced/persisted in the
-			//       ConfigSpec.
-			Profile: nil,
-			// The backing will come from the device.
-			Backing: nil,
-			// TODO: Investigate futher.
-			FilterSpec: nil,
+	if l := len(ci.Hardware.Device); l > 0 {
+		cs.DeviceChange = make([]BaseVirtualDeviceConfigSpec, l)
+		for i := 0; i < l; i++ {
+			cs.DeviceChange[i] = &VirtualDeviceConfigSpec{
+				Operation:     VirtualDeviceConfigSpecOperationAdd,
+				FileOperation: VirtualDeviceConfigSpecFileOperationCreate,
+				Device:        ci.Hardware.Device[i],
+				Profile:       nil,
+				Backing:       nil,
+				FilterSpec:    nil,
+			}
 		}
 	}
 
@@ -307,6 +321,78 @@ func (ci VirtualMachineConfigInfo) ToConfigSpec() VirtualMachineConfigSpec {
 	}
 
 	return cs
+}
+
+// ToString returns the string-ified version of the provided input value by
+// first attempting to encode the value to JSON using the vimtype JSON encoder,
+// and if that should fail, using the standard JSON encoder, and if that fails,
+// returning the value formatted with Sprintf("%v").
+//
+// Please note, this function is not intended to replace marshaling the data
+// to JSON using the normal workflows. This function is for when a string-ified
+// version of the data is needed for things like logging.
+func ToString(in AnyType) (s string) {
+	if in == nil {
+		return "null"
+	}
+
+	marshalWithSprintf := func() string {
+		return fmt.Sprintf("%v", in)
+	}
+
+	defer func() {
+		if err := recover(); err != nil {
+			s = marshalWithSprintf()
+		}
+	}()
+
+	rv := reflect.ValueOf(in)
+	switch rv.Kind() {
+
+	case reflect.Bool,
+		reflect.Complex64, reflect.Complex128,
+		reflect.Float32, reflect.Float64:
+
+		return fmt.Sprintf("%v", in)
+
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Uintptr:
+
+		return fmt.Sprintf("%d", in)
+
+	case reflect.String:
+		return in.(string)
+
+	case reflect.Interface, reflect.Pointer:
+		if rv.IsZero() {
+			return "null"
+		}
+		return ToString(rv.Elem().Interface())
+	}
+
+	marshalWithStdlibJSONEncoder := func() string {
+		data, err := json.Marshal(in)
+		if err != nil {
+			return marshalWithSprintf()
+		}
+		return string(data)
+	}
+
+	defer func() {
+		if err := recover(); err != nil {
+			s = marshalWithStdlibJSONEncoder()
+		}
+	}()
+
+	var w bytes.Buffer
+	enc := NewJSONEncoder(&w)
+	if err := enc.Encode(in); err != nil {
+		return marshalWithStdlibJSONEncoder()
+	}
+
+	// Do not include the newline character added by the vimtype JSON encoder.
+	return strings.TrimSuffix(w.String(), "\n")
 }
 
 func init() {

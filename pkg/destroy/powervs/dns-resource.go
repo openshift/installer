@@ -22,13 +22,13 @@ const (
 func (o *ClusterUninstaller) listResourceRecords() (cloudResources, error) {
 	o.Logger.Debugf("Listing DNS resource records")
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("listResourceRecords: case <-ctx.Done()")
-		return nil, o.Context.Err() // we're cancelled, abort
+		return nil, ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -78,13 +78,13 @@ func (o *ClusterUninstaller) destroyResourceRecord(item cloudResource) error {
 		err      error
 	)
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("destroyResourceRecord: case <-ctx.Done()")
-		return o.Context.Err() // we're cancelled, abort
+		return ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -141,14 +141,14 @@ func (o *ClusterUninstaller) destroyResourceRecords() error {
 
 	items := o.insertPendingItems(ibmDNSRecordTypeName, firstPassList.list())
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
 		case <-ctx.Done():
 			o.Logger.Debugf("destroyResourceRecords: case <-ctx.Done()")
-			return o.Context.Err() // we're cancelled, abort
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 

@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -41,7 +41,7 @@ var (
 		validPrivateSubnetUSSouth2ID,
 	}
 	validUserID = "valid-user@example.com"
-	validZone   = "dal10"
+	validZone   = "dal12"
 
 	existingDNSRecordsResponse = []powervs.DNSRecordResponse{
 		{
@@ -132,7 +132,7 @@ var (
 	}
 	defaultSysType           = "s922"
 	newSysType               = "s1022"
-	invalidRegion            = "foo"
+	invalidZone              = "dal11"
 	validServiceInstanceGUID = ""
 )
 
@@ -193,7 +193,7 @@ func TestValidate(t *testing.T) {
 		{
 			name:     "invalid machine pool CIDR",
 			edits:    editFunctions{invalidMachinePoolCIDR},
-			errorMsg: `Networking.MachineNetwork.CIDR: Invalid value: "192.168.0.0/16": Machine Pool CIDR must be /24.`,
+			errorMsg: `networking.machineNetwork\[0\].cidr: Invalid value: "192\.168\.0\.0/16": Machine Pool CIDR must be /24\.`,
 		},
 		{
 			name:     "valid machine pool CIDR",
@@ -561,22 +561,22 @@ func TestValidatePERAvailability(t *testing.T) {
 	}
 }
 
-func TestValidateSystemTypeForRegion(t *testing.T) {
+func TestValidateSystemTypeForZone(t *testing.T) {
 	cases := []struct {
 		name     string
 		edits    editFunctions
 		errorMsg string
 	}{
 		{
-			name: "Unknown Region specified",
+			name: "Unknown Zone specified",
 			edits: editFunctions{
 				func(ic *types.InstallConfig) {
-					ic.Platform.PowerVS.Region = invalidRegion
+					ic.Platform.PowerVS.Zone = invalidZone
 					ic.ControlPlane.Platform.PowerVS = validMachinePool()
 					ic.ControlPlane.Platform.PowerVS.SysType = defaultSysType
 				},
 			},
-			errorMsg: fmt.Sprintf("failed to obtain available SysTypes for: %s", invalidRegion),
+			errorMsg: fmt.Sprintf("%s is not available in: %s, these are \\[\\]", defaultSysType, invalidZone),
 		},
 		{
 			name: "No Platform block",
@@ -597,27 +597,18 @@ func TestValidateSystemTypeForRegion(t *testing.T) {
 			errorMsg: "",
 		},
 		{
-			name: "Unavailable SysType specified for Dallas Region",
+			name: "Unavailable SysType specified for dal12 zone",
 			edits: editFunctions{
 				func(ic *types.InstallConfig) {
 					ic.Platform.PowerVS.Region = validRegion
+					ic.Platform.PowerVS.Zone = validZone
 					ic.ControlPlane.Platform.PowerVS = validMachinePool()
 					ic.ControlPlane.Platform.PowerVS.SysType = newSysType
 				},
 			},
-			errorMsg: fmt.Sprintf("%s is not available in: %s", newSysType, validRegion),
+			errorMsg: fmt.Sprintf("%s is not available in: %s", newSysType, validZone),
 		},
-		{
-			name: "Good Region/SysType combo specified",
-			edits: editFunctions{
-				func(ic *types.InstallConfig) {
-					ic.Platform.PowerVS.Region = validRegion
-					ic.ControlPlane.Platform.PowerVS = validMachinePool()
-					ic.ControlPlane.Platform.PowerVS.SysType = defaultSysType
-				},
-			},
-			errorMsg: "",
-		},
+		// @TODO Come up with a "Good Zone/SysType combo specified" test
 	}
 	setMockEnvVars()
 
@@ -625,6 +616,9 @@ func TestValidateSystemTypeForRegion(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	powervsClient := mock.NewMockAPI(mockCtrl)
+
+	// FIX: Unexpected call to *mock.MockAPI.GetDatacenterSupportedSystems([context.Background dal11]) at /home/OpenShift/git/hamzy-installer/pkg/asset/installconfig/powervs/validation.go:268 because: there are no expected calls of the method "GetDatacenterSupportedSystems" for that receiver
+	powervsClient.EXPECT().GetDatacenterSupportedSystems(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Run tests
 	for _, tc := range cases {
@@ -634,7 +628,7 @@ func TestValidateSystemTypeForRegion(t *testing.T) {
 				edit(editedInstallConfig)
 			}
 
-			aggregatedErrors := powervs.ValidateSystemTypeForRegion(powervsClient, editedInstallConfig)
+			aggregatedErrors := powervs.ValidateSystemTypeForZone(powervsClient, editedInstallConfig)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {

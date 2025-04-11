@@ -392,6 +392,25 @@ func DataSourceIBMIsVolumes() *schema.Resource {
 								},
 							},
 						},
+
+						// defined_performance changes
+
+						"adjustable_capacity_states": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The attachment states that support adjustable capacity for this volume.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"adjustable_iops_states": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The attachment states that support adjustable IOPS for this volume.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
 						isVolumesStatus: &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -584,7 +603,39 @@ func DataSourceIBMIsVolumes() *schema.Resource {
 								},
 							},
 						},
-
+						isVolumeCatalogOffering: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The catalog offering this volume was created from. If a virtual server instance is provisioned with a boot_volume_attachment specifying this volume, the virtual server instance will use this volume's catalog offering, including its pricing plan.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									isVolumeCatalogOfferingPlanCrn: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this catalog offering version's billing plan",
+									},
+									"deleted": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted and provides some supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									isVolumeCatalogOfferingVersionCrn: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this version of a catalog offering",
+									},
+								},
+							},
+						},
 						isVolumeHealthState: {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -774,6 +825,34 @@ func dataSourceVolumeCollectionVolumesToMap(volumesItem vpcv1.Volume, meta inter
 		}
 		volumesMap[isVolumeHealthReasons] = healthReasonsList
 	}
+	volumesMap["adjustable_capacity_states"] = volumesItem.AdjustableCapacityStates
+	volumesMap["adjustable_iops_states"] = volumesItem.AdjustableIopsStates
+	if volumesItem.CatalogOffering != nil {
+		versionCrn := ""
+		if volumesItem.CatalogOffering.Version != nil && volumesItem.CatalogOffering.Version.CRN != nil {
+			versionCrn = *volumesItem.CatalogOffering.Version.CRN
+		}
+		catalogList := make([]map[string]interface{}, 0)
+		catalogMap := map[string]interface{}{}
+		if versionCrn != "" {
+			catalogMap[isVolumeCatalogOfferingVersionCrn] = versionCrn
+		}
+		if volumesItem.CatalogOffering.Plan != nil {
+			planCrn := ""
+			if volumesItem.CatalogOffering.Plan.CRN != nil {
+				planCrn = *volumesItem.CatalogOffering.Plan.CRN
+			}
+			if planCrn != "" {
+				catalogMap[isVolumeCatalogOfferingPlanCrn] = *volumesItem.CatalogOffering.Plan.CRN
+			}
+			if volumesItem.CatalogOffering.Plan.Deleted != nil {
+				deletedMap := resourceIbmIsVolumeCatalogOfferingVersionPlanReferenceDeletedToMap(*volumesItem.CatalogOffering.Plan.Deleted)
+				catalogMap["deleted"] = []map[string]interface{}{deletedMap}
+			}
+		}
+		catalogList = append(catalogList, catalogMap)
+		volumesMap[isVolumeCatalogOffering] = catalogList
+	}
 	if volumesItem.VolumeAttachments != nil {
 		volumeAttachmentsList := []map[string]interface{}{}
 		for _, volumeAttachmentsItem := range volumesItem.VolumeAttachments {
@@ -894,7 +973,7 @@ func dataSourceVolumeCollectionVolumesSourceImageToMap(sourceImageItem vpcv1.Ima
 	return sourceImageMap
 }
 
-func dataSourceVolumeCollectionSourceImageDeletedToMap(deletedItem vpcv1.ImageReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceVolumeCollectionSourceImageDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -932,7 +1011,7 @@ func dataSourceVolumeCollectionVolumesSourceSnapshotToMap(sourceSnapshotItem vpc
 	return sourceSnapshotMap
 }
 
-func dataSourceVolumeCollectionSourceSnapshotDeletedToMap(deletedItem vpcv1.SnapshotReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceVolumeCollectionSourceSnapshotDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -1014,7 +1093,7 @@ func dataSourceVolumeCollectionVolumesVolumeAttachmentsToMap(volumeAttachmentsIt
 	return volumeAttachmentsMap
 }
 
-func dataSourceVolumeCollectionVolumeAttachmentsDeletedToMap(deletedItem vpcv1.VolumeAttachmentReferenceVolumeContextDeleted) (deletedMap map[string]interface{}) {
+func dataSourceVolumeCollectionVolumeAttachmentsDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -1059,7 +1138,7 @@ func dataSourceVolumeCollectionVolumeAttachmentsInstanceToMap(instanceItem vpcv1
 	return instanceMap
 }
 
-func dataSourceVolumeCollectionInstanceDeletedToMap(deletedItem vpcv1.InstanceReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceVolumeCollectionInstanceDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

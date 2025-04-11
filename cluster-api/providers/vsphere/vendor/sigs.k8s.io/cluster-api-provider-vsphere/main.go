@@ -19,7 +19,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -30,20 +29,26 @@ import (
 	perrors "github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"gopkg.in/fsnotify.v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/logs"
 	logsv1 "k8s.io/component-base/logs/api/v1"
 	_ "k8s.io/component-base/logs/json/register"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	"sigs.k8s.io/cluster-api/controllers/remote"
+	"sigs.k8s.io/cluster-api/util/apiwarnings"
 	capiflags "sigs.k8s.io/cluster-api/util/flags"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	ctrlmgr "sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -51,9 +56,10 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/controllers"
+	"sigs.k8s.io/cluster-api-provider-vsphere/controllers/vmware"
 	"sigs.k8s.io/cluster-api-provider-vsphere/feature"
 	"sigs.k8s.io/cluster-api-provider-vsphere/internal/webhooks"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/constants"
+	vmwarewebhooks "sigs.k8s.io/cluster-api-provider-vsphere/internal/webhooks/vmware"
 	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/manager"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
@@ -72,29 +78,28 @@ var (
 	managerOpts                 manager.Options
 	restConfigBurst             int
 	restConfigQPS               float32
+	clusterCacheClientQPS       float32
+	clusterCacheClientBurst     int
 	syncPeriod                  time.Duration
 	webhookOpts                 webhook.Options
 	watchNamespace              string
 
-	clusterCacheTrackerConcurrency    int
+	clusterCacheConcurrency           int
 	vSphereClusterConcurrency         int
 	vSphereMachineConcurrency         int
+	vSphereMachineTemplateConcurrency int
 	providerServiceAccountConcurrency int
 	serviceDiscoveryConcurrency       int
 	vSphereVMConcurrency              int
 	vSphereClusterIdentityConcurrency int
 	vSphereDeploymentZoneConcurrency  int
 
-	tlsOptions         = capiflags.TLSOptions{}
-	diagnosticsOptions = capiflags.DiagnosticsOptions{}
+	managerOptions = capiflags.ManagerOptions{}
 
-	defaultProfilerAddr      = os.Getenv("PROFILER_ADDR")
-	defaultSyncPeriod        = manager.DefaultSyncPeriod
-	defaultLeaderElectionID  = manager.DefaultLeaderElectionID
-	defaultPodName           = manager.DefaultPodName
-	defaultWebhookPort       = manager.DefaultWebhookServiceContainerPort
-	defaultEnableKeepAlive   = constants.DefaultEnableKeepAlive
-	defaultKeepAliveDuration = constants.DefaultKeepAliveDuration
+	defaultProfilerAddr     = os.Getenv("PROFILER_ADDR")
+	defaultSyncPeriod       = manager.DefaultSyncPeriod
+	defaultLeaderElectionID = manager.DefaultLeaderElectionID
+	defaultPodName          = manager.DefaultPodName
 )
 
 // InitFlags initializes the flags.
@@ -107,7 +112,7 @@ func InitFlags(fs *pflag.FlagSet) {
 		defaultLeaderElectionID,
 		"Name of the config map to use as the locking resource when configuring leader election.")
 
-	fs.IntVar(&clusterCacheTrackerConcurrency, "clustercachetracker-concurrency", 10,
+	fs.IntVar(&clusterCacheConcurrency, "clustercache-concurrency", 100,
 		"Number of clusters to process simultaneously")
 
 	fs.IntVar(&vSphereClusterConcurrency, "vspherecluster-concurrency", 10,
@@ -115,6 +120,9 @@ func InitFlags(fs *pflag.FlagSet) {
 
 	fs.IntVar(&vSphereMachineConcurrency, "vspheremachine-concurrency", 10,
 		"Number of vSphere machines to process simultaneously")
+
+	fs.IntVar(&vSphereMachineTemplateConcurrency, "vspheremachinetemplate-concurrency", 10,
+		"Number of vSphere machine templates to process simultaneously")
 
 	fs.IntVar(&providerServiceAccountConcurrency, "providerserviceaccount-concurrency", 10,
 		"Number of provider service accounts to process simultaneously")
@@ -143,17 +151,7 @@ func InitFlags(fs *pflag.FlagSet) {
 		"/etc/capv/credentials.yaml",
 		"path to CAPV's credentials file",
 	)
-	fs.BoolVar(
-		&managerOpts.EnableKeepAlive,
-		"enable-keep-alive",
-		defaultEnableKeepAlive,
-		"feature to enable keep alive handler in vsphere sessions. This functionality is enabled by default.")
-	fs.DurationVar(
-		&managerOpts.KeepAliveDuration,
-		"keep-alive-duration",
-		defaultKeepAliveDuration,
-		"idle time interval(minutes) in between send() requests in keepalive handler",
-	)
+
 	fs.StringVar(
 		&managerOpts.NetworkProvider,
 		"network-provider",
@@ -193,23 +191,34 @@ func InitFlags(fs *pflag.FlagSet) {
 		"The minimum interval at which watched resources are reconciled (e.g. 15m)")
 
 	fs.Float32Var(&restConfigQPS, "kube-api-qps", 20,
-		"Maximum queries per second from the controller client to the Kubernetes API server. Defaults to 20")
+		"Maximum queries per second from the controller client to the Kubernetes API server.")
 
 	fs.IntVar(&restConfigBurst, "kube-api-burst", 30,
-		"Maximum number of queries that should be allowed in one burst from the controller client to the Kubernetes API server. Default 30")
+		"Maximum number of queries that should be allowed in one burst from the controller client to the Kubernetes API server.")
 
-	fs.IntVar(&webhookOpts.Port, "webhook-port", defaultWebhookPort,
-		"Webhook Server port")
+	fs.Float32Var(&clusterCacheClientQPS, "clustercache-client-qps", 20,
+		"Maximum queries per second from the cluster cache clients to the Kubernetes API server of workload clusters.")
+
+	fs.IntVar(&clusterCacheClientBurst, "clustercache-client-burst", 30,
+		"Maximum number of queries that should be allowed in one burst from the cluster cache clients to the Kubernetes API server of workload clusters.")
+
+	fs.IntVar(&webhookOpts.Port, "webhook-port", 9443,
+		"Webhook Server port.")
 
 	fs.StringVar(&webhookOpts.CertDir, "webhook-cert-dir", "/tmp/k8s-webhook-server/serving-certs/",
-		"Webhook cert dir, only used when webhook-port is specified.")
+		"Webhook cert dir.")
+
+	fs.StringVar(&webhookOpts.CertName, "webhook-cert-name", "tls.crt",
+		"Webhook cert name.")
+
+	fs.StringVar(&webhookOpts.KeyName, "webhook-key-name", "tls.key",
+		"Webhook key name.")
 
 	fs.StringVar(&managerOpts.HealthProbeBindAddress, "health-addr", ":9440",
 		"The address the health endpoint binds to.",
 	)
 
-	capiflags.AddTLSOptions(fs, &tlsOptions)
-	capiflags.AddDiagnosticsOptions(fs, &diagnosticsOptions)
+	capiflags.AddManagerOptions(fs, &managerOptions)
 	feature.MutableGates.AddFlag(fs)
 }
 
@@ -240,6 +249,7 @@ func main() {
 	managerOpts.KubeConfig.QPS = restConfigQPS
 	managerOpts.KubeConfig.Burst = restConfigBurst
 	managerOpts.KubeConfig.UserAgent = remote.DefaultClusterAPIUserAgent(controllerName)
+	managerOpts.KubeConfig.WarningHandler = apiwarnings.DefaultHandler(klog.Background().WithName("API Server Warning"))
 
 	if watchNamespace != "" {
 		managerOpts.Cache.DefaultNamespaces = map[string]cache.Config{
@@ -260,56 +270,68 @@ func main() {
 
 	// Create a function that adds all the controllers and webhooks to the manager.
 	addToManager := func(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext, mgr ctrlmgr.Manager) error {
-		tracker, err := setupRemoteClusterCacheTracker(ctx, mgr)
+		clusterCache, err := setupClusterCache(ctx, mgr)
 		if err != nil {
 			return perrors.Wrapf(err, "unable to create remote cluster cache tracker")
 		}
 
-		// Check for non-supervisor VSphereCluster and start controller if found
-		gvr := infrav1.GroupVersion.WithResource(reflect.TypeOf(&infrav1.VSphereCluster{}).Elem().Name())
-		isNonSupervisorCRDLoaded, err := isCRDDeployed(mgr, gvr)
-		if err != nil {
-			return err
+		govmomiGVR := infrav1.GroupVersion.WithResource(reflect.TypeOf(&infrav1.VSphereCluster{}).Elem().Name())
+		supervisorGVR := vmwarev1.GroupVersion.WithResource(reflect.TypeOf(&vmwarev1.VSphereCluster{}).Elem().Name())
+
+		var isSupervisorCRDLoaded, isGovmomiCRDLoaded bool
+		var errGovmomi, errSupervisor error
+		if err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 30*time.Second, true, func(_ context.Context) (bool, error) {
+			// Check for non-supervisor VSphereCluster and start controller if found
+			isGovmomiCRDLoaded, errGovmomi = isCRDDeployed(mgr, govmomiGVR)
+
+			// Check for supervisor VSphereCluster and start controller if found
+			isSupervisorCRDLoaded, errSupervisor = isCRDDeployed(mgr, supervisorGVR)
+
+			// One of govmomi/supervisor mode should be detected, otherwise keep trying until timeout to handle
+			// race conditions during controllers startup right after install or upgrades, when also CRDs
+			// are installed in a short time frame.
+			if (isGovmomiCRDLoaded && errGovmomi == nil) || (isSupervisorCRDLoaded && errSupervisor == nil) {
+				return true, nil
+			}
+			return false, nil
+		}); err != nil {
+			// Continuing startup does not make sense without one of govmomi/supervisor mode detected.
+			// The Pod goes in CrashLoopBack and eventually recover, but failing to detect CRD after 30s is usually
+			// a signal of some problem.
+			return fmt.Errorf("neither supervisor nor govmomi CRDs detected: %w", kerrors.NewAggregate([]error{err, errGovmomi, errSupervisor}))
 		}
-		if isNonSupervisorCRDLoaded {
-			if err := setupVAPIControllers(ctx, controllerCtx, mgr, tracker); err != nil {
+
+		if isGovmomiCRDLoaded {
+			if err := setupVAPIControllers(ctx, controllerCtx, mgr, clusterCache); err != nil {
 				return fmt.Errorf("setupVAPIControllers: %w", err)
 			}
 		} else {
-			setupLog.Info(fmt.Sprintf("CRD for %s not loaded, skipping.", gvr.String()))
+			setupLog.Info(fmt.Sprintf("CRD for %s not loaded, skipping.", govmomiGVR.String()))
 		}
 
-		// Check for supervisor VSphereCluster and start controller if found
-		gvr = vmwarev1.GroupVersion.WithResource(reflect.TypeOf(&vmwarev1.VSphereCluster{}).Elem().Name())
-		isSupervisorCRDLoaded, err := isCRDDeployed(mgr, gvr)
-		if err != nil {
-			return err
-		}
 		if isSupervisorCRDLoaded {
-			if err := setupSupervisorControllers(ctx, controllerCtx, mgr, tracker); err != nil {
+			if err := setupSupervisorControllers(ctx, controllerCtx, mgr, clusterCache); err != nil {
 				return fmt.Errorf("setupSupervisorControllers: %w", err)
 			}
 		} else {
-			setupLog.Info(fmt.Sprintf("CRD for %s not loaded, skipping.", gvr.String()))
-		}
-
-		// Continuing startup does not make sense without having managers added.
-		if !isSupervisorCRDLoaded && !isNonSupervisorCRDLoaded {
-			return errors.New("neither supervisor nor non-supervisor CRDs detected")
+			setupLog.Info(fmt.Sprintf("CRD for %s not loaded, skipping.", supervisorGVR.String()))
 		}
 
 		return nil
 	}
 
-	tlsOptionOverrides, err := capiflags.GetTLSOptionOverrideFuncs(tlsOptions)
+	tlsOptions, metricsOptions, err := capiflags.GetManagerOptions(managerOptions)
 	if err != nil {
-		setupLog.Error(err, "unable to add TLS settings to the webhook server")
+		setupLog.Error(err, "Unable to start manager: invalid flags")
 		os.Exit(1)
 	}
-	webhookOpts.TLSOpts = tlsOptionOverrides
+	webhookOpts.TLSOpts = tlsOptions
 	managerOpts.WebhookServer = webhook.NewServer(webhookOpts)
 	managerOpts.AddToManager = addToManager
-	managerOpts.Metrics = capiflags.GetDiagnosticsOptions(diagnosticsOptions)
+	managerOpts.Metrics = *metricsOptions
+	managerOpts.Controller = config.Controller{
+		UsePriorityQueue: ptr.To[bool](feature.Gates.Enabled(feature.PriorityQueue)),
+	}
 
 	// Set up the context that's going to be used in controllers and for the manager.
 	ctx := ctrl.SetupSignalHandler()
@@ -340,7 +362,7 @@ func main() {
 	defer session.Clear()
 }
 
-func setupVAPIControllers(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext, mgr ctrlmgr.Manager, tracker *remote.ClusterCacheTracker) error {
+func setupVAPIControllers(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext, mgr ctrlmgr.Manager, clusterCache clustercache.ClusterCache) error {
 	if err := (&webhooks.VSphereClusterTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
@@ -371,7 +393,7 @@ func setupVAPIControllers(ctx context.Context, controllerCtx *capvcontext.Contro
 	if err := controllers.AddMachineControllerToManager(ctx, controllerCtx, mgr, false, concurrency(vSphereMachineConcurrency)); err != nil {
 		return err
 	}
-	if err := controllers.AddVMControllerToManager(ctx, controllerCtx, mgr, tracker, concurrency(vSphereVMConcurrency)); err != nil {
+	if err := controllers.AddVMControllerToManager(ctx, controllerCtx, mgr, clusterCache, concurrency(vSphereVMConcurrency)); err != nil {
 		return err
 	}
 	if err := controllers.AddVsphereClusterIdentityControllerToManager(ctx, controllerCtx, mgr, concurrency(vSphereClusterIdentityConcurrency)); err != nil {
@@ -381,7 +403,13 @@ func setupVAPIControllers(ctx context.Context, controllerCtx *capvcontext.Contro
 	return controllers.AddVSphereDeploymentZoneControllerToManager(ctx, controllerCtx, mgr, concurrency(vSphereDeploymentZoneConcurrency))
 }
 
-func setupSupervisorControllers(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext, mgr ctrlmgr.Manager, tracker *remote.ClusterCacheTracker) error {
+func setupSupervisorControllers(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext, mgr ctrlmgr.Manager, clusterCache clustercache.ClusterCache) error {
+	if err := (&vmwarewebhooks.VSphereMachineTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+		return err
+	}
+	if err := (&vmwarewebhooks.VSphereMachineWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+		return err
+	}
 	if err := controllers.AddClusterControllerToManager(ctx, controllerCtx, mgr, true, concurrency(vSphereClusterConcurrency)); err != nil {
 		return err
 	}
@@ -390,11 +418,15 @@ func setupSupervisorControllers(ctx context.Context, controllerCtx *capvcontext.
 		return err
 	}
 
-	if err := controllers.AddServiceAccountProviderControllerToManager(ctx, controllerCtx, mgr, tracker, concurrency(providerServiceAccountConcurrency)); err != nil {
+	if err := vmware.AddVSphereMachineTemplateControllerToManager(ctx, controllerCtx, mgr, concurrency(vSphereMachineTemplateConcurrency)); err != nil {
 		return err
 	}
 
-	return controllers.AddServiceDiscoveryControllerToManager(ctx, controllerCtx, mgr, tracker, concurrency(serviceDiscoveryConcurrency))
+	if err := vmware.AddServiceAccountProviderControllerToManager(ctx, controllerCtx, mgr, clusterCache, concurrency(providerServiceAccountConcurrency)); err != nil {
+		return err
+	}
+
+	return vmware.AddServiceDiscoveryControllerToManager(ctx, controllerCtx, mgr, clusterCache, concurrency(serviceDiscoveryConcurrency))
 }
 
 func setupChecks(mgr ctrlmgr.Manager) {
@@ -412,17 +444,7 @@ func setupChecks(mgr ctrlmgr.Manager) {
 func isCRDDeployed(mgr ctrlmgr.Manager, gvr schema.GroupVersionResource) (bool, error) {
 	_, err := mgr.GetRESTMapper().KindFor(gvr)
 	if err != nil {
-		var discoveryErr *apiutil.ErrResourceDiscoveryFailed
-		ok := errors.As(errors.Unwrap(err), &discoveryErr)
-		if !ok {
-			return false, err
-		}
-		discoveryErrs := *discoveryErr
-		gvrErr, ok := discoveryErrs[gvr.GroupVersion()]
-		if !ok {
-			return false, err
-		}
-		if apierrors.IsNotFound(gvrErr) {
+		if meta.IsNoMatchError(err) {
 			return false, nil
 		}
 		return false, err
@@ -434,7 +456,7 @@ func concurrency(c int) controller.Options {
 	return controller.Options{MaxConcurrentReconciles: c}
 }
 
-func setupRemoteClusterCacheTracker(ctx context.Context, mgr ctrlmgr.Manager) (*remote.ClusterCacheTracker, error) {
+func setupClusterCache(ctx context.Context, mgr ctrlmgr.Manager) (clustercache.ClusterCache, error) {
 	secretCachingClient, err := client.New(mgr.GetConfig(), client.Options{
 		HTTPClient: mgr.GetHTTPClient(),
 		Cache: &client.CacheOptions{
@@ -445,28 +467,26 @@ func setupRemoteClusterCacheTracker(ctx context.Context, mgr ctrlmgr.Manager) (*
 		return nil, perrors.Wrapf(err, "unable to create secret caching client")
 	}
 
-	// Set up a ClusterCacheTracker and ClusterCacheReconciler to provide to controllers
-	// requiring a connection to a remote cluster
-	log := ctrl.Log.WithValues("component", "remote/clustercachetracker")
-	tracker, err := remote.NewClusterCacheTracker(
-		mgr,
-		remote.ClusterCacheTrackerOptions{
-			SecretCachingClient: secretCachingClient,
-			ControllerName:      controllerName,
-			Log:                 &log,
+	clusterCache, err := clustercache.SetupWithManager(ctx, mgr, clustercache.Options{
+		SecretClient: secretCachingClient,
+		Cache:        clustercache.CacheOptions{},
+		Client: clustercache.ClientOptions{
+			QPS:       clusterCacheClientQPS,
+			Burst:     clusterCacheClientBurst,
+			UserAgent: remote.DefaultClusterAPIUserAgent(controllerName),
+			Cache: clustercache.ClientCacheOptions{
+				DisableFor: []client.Object{
+					// Don't cache ConfigMaps & Secrets.
+					&corev1.ConfigMap{},
+					&corev1.Secret{},
+				},
+			},
 		},
-	)
-	if err != nil {
-		return nil, perrors.Wrapf(err, "unable to create cluster cache tracker")
-	}
-
-	if err := (&remote.ClusterCacheReconciler{
-		Client:           mgr.GetClient(),
-		Tracker:          tracker,
 		WatchFilterValue: managerOpts.WatchFilterValue,
-	}).SetupWithManager(ctx, mgr, concurrency(clusterCacheTrackerConcurrency)); err != nil {
-		return nil, perrors.Wrapf(err, "unable to create ClusterCacheReconciler controller")
+	}, concurrency(clusterCacheConcurrency))
+	if err != nil {
+		return nil, perrors.Wrapf(err, "Unable to create ClusterCache")
 	}
 
-	return tracker, nil
+	return clusterCache, nil
 }

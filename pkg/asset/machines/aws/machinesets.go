@@ -81,6 +81,11 @@ func MachineSets(in *MachineSetInput) ([]*machineapi.MachineSet, error) {
 			})
 		}
 
+		instanceProfile := mpool.IAMProfile
+		if len(instanceProfile) == 0 {
+			instanceProfile = fmt.Sprintf("%s-worker-profile", in.ClusterID)
+		}
+
 		provider, err := provider(&machineProviderInput{
 			clusterID:        in.ClusterID,
 			region:           in.InstallConfigPlatformAWS.Region,
@@ -90,6 +95,7 @@ func MachineSets(in *MachineSetInput) ([]*machineapi.MachineSet, error) {
 			zone:             az,
 			role:             "worker",
 			userDataSecret:   in.UserDataSecret,
+			instanceProfile:  instanceProfile,
 			root:             &mpool.EC2RootVolume,
 			imds:             mpool.EC2Metadata,
 			userTags:         in.InstallConfigPlatformAWS.UserTags,

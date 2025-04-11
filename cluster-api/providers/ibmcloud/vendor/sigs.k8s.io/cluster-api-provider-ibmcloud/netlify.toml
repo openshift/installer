@@ -4,7 +4,7 @@ command = "make -C docs/book build"
 publish = "docs/book/book"
 
 [build.environment]
-GO_VERSION = "1.21"
+GO_VERSION = "1.23.7"
 
 # Standard Netlify redirects
 [[redirects]]

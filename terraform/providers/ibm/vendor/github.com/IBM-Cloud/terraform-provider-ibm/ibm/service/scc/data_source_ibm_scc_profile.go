@@ -333,65 +333,65 @@ func dataSourceIbmSccProfileRead(context context.Context, d *schema.ResourceData
 	profile, response, err := securityandcompliancecenterapiClient.GetProfileWithContext(context, getProfileOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetProfileWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetProfileWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetProfileWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(fmt.Sprintf("%s", *getProfileOptions.ProfileID))
 
 	if err = d.Set("profile_name", profile.ProfileName); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting profile_name: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting profile_name: %s", err))
 	}
 
 	if err = d.Set("profile_description", profile.ProfileDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting profile_description: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting profile_description: %s", err))
 	}
 
 	if err = d.Set("profile_type", profile.ProfileType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting profile_type: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting profile_type: %s", err))
 	}
 
 	if err = d.Set("profile_version", profile.ProfileVersion); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting profile_version: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting profile_version: %s", err))
 	}
 
 	if err = d.Set("version_group_label", profile.VersionGroupLabel); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting version_group_label: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting version_group_label: %s", err))
 	}
 
 	if err = d.Set("latest", profile.Latest); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting latest: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting latest: %s", err))
 	}
 
 	if err = d.Set("hierarchy_enabled", profile.HierarchyEnabled); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting hierarchy_enabled: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting hierarchy_enabled: %s", err))
 	}
 
 	if err = d.Set("created_by", profile.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_by: %s", err))
 	}
 
 	if err = d.Set("created_on", flex.DateTimeToString(profile.CreatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_on: %s", err))
 	}
 
 	if err = d.Set("updated_by", profile.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_by: %s", err))
 	}
 
 	if err = d.Set("updated_on", flex.DateTimeToString(profile.UpdatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_on: %s", err))
 	}
 
 	if err = d.Set("controls_count", flex.IntValue(profile.ControlsCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting controls_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting controls_count: %s", err))
 	}
 
 	if err = d.Set("control_parents_count", flex.IntValue(profile.ControlParentsCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting control_parents_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting control_parents_count: %s", err))
 	}
 
 	if err = d.Set("attachments_count", flex.IntValue(profile.AttachmentsCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting attachments_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting attachments_count: %s", err))
 	}
 
 	controls := []map[string]interface{}{}
@@ -405,7 +405,7 @@ func dataSourceIbmSccProfileRead(context context.Context, d *schema.ResourceData
 		}
 	}
 	if err = d.Set("controls", controls); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting controls %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting controls %s", err))
 	}
 
 	defaultParameters := []map[string]interface{}{}
@@ -419,13 +419,13 @@ func dataSourceIbmSccProfileRead(context context.Context, d *schema.ResourceData
 		}
 	}
 	if err = d.Set("default_parameters", defaultParameters); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting default_parameters %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting default_parameters %s", err))
 	}
 
 	return nil
 }
 
-func dataSourceIbmSccProfileProfileControlsToMap(model *securityandcompliancecenterapiv3.ProfileControls) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileProfileControlsToMap(model *securityandcompliancecenterapiv3.ProfileControlsInResponse) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ControlLibraryID != nil {
 		modelMap["control_library_id"] = model.ControlLibraryID
@@ -475,7 +475,7 @@ func dataSourceIbmSccProfileProfileControlsToMap(model *securityandcompliancecen
 	return modelMap, nil
 }
 
-func dataSourceIbmSccProfileControlDocsToMap(model *securityandcompliancecenterapiv3.ControlDocs) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileControlDocsToMap(model *securityandcompliancecenterapiv3.ControlDoc) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ControlDocsID != nil {
 		modelMap["control_docs_id"] = model.ControlDocsID
@@ -486,10 +486,10 @@ func dataSourceIbmSccProfileControlDocsToMap(model *securityandcompliancecentera
 	return modelMap, nil
 }
 
-func dataSourceIbmSccProfileControlSpecificationsToMap(model *securityandcompliancecenterapiv3.ControlSpecifications) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileControlSpecificationsToMap(model *securityandcompliancecenterapiv3.ControlSpecification) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	if model.ControlSpecificationID != nil {
-		modelMap["control_specification_id"] = model.ControlSpecificationID
+	if model.ID != nil {
+		modelMap["control_specification_id"] = model.ID
 	}
 	if model.Responsibility != nil {
 		modelMap["responsibility"] = model.Responsibility
@@ -503,8 +503,8 @@ func dataSourceIbmSccProfileControlSpecificationsToMap(model *securityandcomplia
 	if model.Environment != nil {
 		modelMap["environment"] = model.Environment
 	}
-	if model.ControlSpecificationDescription != nil {
-		modelMap["control_specification_description"] = model.ControlSpecificationDescription
+	if model.Description != nil {
+		modelMap["control_specification_description"] = model.Description
 	}
 	if model.AssessmentsCount != nil {
 		modelMap["assessments_count"] = flex.IntValue(model.AssessmentsCount)
@@ -523,7 +523,7 @@ func dataSourceIbmSccProfileControlSpecificationsToMap(model *securityandcomplia
 	return modelMap, nil
 }
 
-func dataSourceIbmSccProfileImplementationToMap(model *securityandcompliancecenterapiv3.Implementation) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileImplementationToMap(model *securityandcompliancecenterapiv3.Assessment) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AssessmentID != nil {
 		modelMap["assessment_id"] = model.AssessmentID
@@ -554,7 +554,7 @@ func dataSourceIbmSccProfileImplementationToMap(model *securityandcompliancecent
 	return modelMap, nil
 }
 
-func dataSourceIbmSccProfileParameterInfoToMap(model *securityandcompliancecenterapiv3.ParameterInfo) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileParameterInfoToMap(model *securityandcompliancecenterapiv3.Parameter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ParameterName != nil {
 		modelMap["parameter_name"] = model.ParameterName
@@ -568,7 +568,7 @@ func dataSourceIbmSccProfileParameterInfoToMap(model *securityandcompliancecente
 	return modelMap, nil
 }
 
-func dataSourceIbmSccProfileDefaultParametersPrototypeToMap(model *securityandcompliancecenterapiv3.DefaultParametersPrototype) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileDefaultParametersPrototypeToMap(model *securityandcompliancecenterapiv3.DefaultParameters) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AssessmentType != nil {
 		modelMap["assessment_type"] = model.AssessmentType

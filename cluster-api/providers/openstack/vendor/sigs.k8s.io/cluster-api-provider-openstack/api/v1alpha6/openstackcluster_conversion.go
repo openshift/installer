@@ -17,9 +17,11 @@ limitations under the License.
 package v1alpha6
 
 import (
+	"math"
 	"reflect"
 
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	ctrlconversion "sigs.k8s.io/controller-runtime/pkg/conversion"
 
@@ -178,6 +180,11 @@ func restorev1alpha6ClusterSpec(previous *OpenStackClusterSpec, dst *OpenStackCl
 	restorev1alpha6SubnetFilter(&previous.Subnet, &dst.Subnet)
 
 	restorev1alpha6NetworkFilter(&previous.Network, &dst.Network)
+
+	// APIServerPort is now uint16
+	if previous.APIServerPort > math.MaxUint16 {
+		dst.APIServerPort = previous.APIServerPort
+	}
 }
 
 func restorev1beta1ClusterSpec(previous *infrav1.OpenStackClusterSpec, dst *infrav1.OpenStackClusterSpec) {
@@ -222,6 +229,7 @@ func restorev1beta1ClusterSpec(previous *infrav1.OpenStackClusterSpec, dst *infr
 			dst.APIServerLoadBalancer.Enabled = previous.APIServerLoadBalancer.Enabled
 		}
 		optional.RestoreString(&previous.APIServerLoadBalancer.Provider, &dst.APIServerLoadBalancer.Provider)
+		optional.RestoreString(&previous.APIServerLoadBalancer.Flavor, &dst.APIServerLoadBalancer.Flavor)
 
 		if previous.APIServerLoadBalancer.Network != nil {
 			dst.APIServerLoadBalancer.Network = previous.APIServerLoadBalancer.Network
@@ -240,7 +248,7 @@ func restorev1beta1ClusterSpec(previous *infrav1.OpenStackClusterSpec, dst *infr
 
 	optional.RestoreString(&previous.APIServerFloatingIP, &dst.APIServerFloatingIP)
 	optional.RestoreString(&previous.APIServerFixedIP, &dst.APIServerFixedIP)
-	optional.RestoreInt(&previous.APIServerPort, &dst.APIServerPort)
+	optional.RestoreUInt16(&previous.APIServerPort, &dst.APIServerPort)
 	optional.RestoreBool(&previous.DisableAPIServerFloatingIP, &dst.DisableAPIServerFloatingIP)
 	optional.RestoreBool(&previous.ControlPlaneOmitAvailabilityZone, &dst.ControlPlaneOmitAvailabilityZone)
 	optional.RestoreBool(&previous.DisablePortSecurity, &dst.DisablePortSecurity)
@@ -277,7 +285,7 @@ func Convert_v1alpha6_OpenStackClusterSpec_To_v1beta1_OpenStackClusterSpec(in *O
 	}
 
 	// DNSNameservers without NodeCIDR doesn't make sense, so we drop that.
-	if len(in.NodeCIDR) > 0 {
+	if in.NodeCIDR != "" {
 		out.ManagedSubnets = []infrav1.SubnetSpec{
 			{
 				CIDR:           in.NodeCIDR,
@@ -310,6 +318,10 @@ func Convert_v1alpha6_OpenStackClusterSpec_To_v1beta1_OpenStackClusterSpec(in *O
 	}
 	if !apiServerLoadBalancer.IsZero() {
 		out.APIServerLoadBalancer = apiServerLoadBalancer
+	}
+
+	if in.APIServerPort > 0 && in.APIServerPort < math.MaxUint16 {
+		out.APIServerPort = ptr.To(uint16(in.APIServerPort)) //nolint:gosec
 	}
 
 	return nil
@@ -364,13 +376,18 @@ func Convert_v1beta1_OpenStackClusterSpec_To_v1alpha6_OpenStackClusterSpec(in *i
 	}
 
 	out.CloudName = in.IdentityRef.CloudName
-	out.IdentityRef = &OpenStackIdentityReference{Name: in.IdentityRef.Name}
+	out.IdentityRef = &OpenStackIdentityReference{}
+	if err := Convert_v1beta1_OpenStackIdentityReference_To_v1alpha6_OpenStackIdentityReference(&in.IdentityRef, out.IdentityRef, s); err != nil {
+		return err
+	}
 
 	if in.APIServerLoadBalancer != nil {
 		if err := Convert_v1beta1_APIServerLoadBalancer_To_v1alpha6_APIServerLoadBalancer(in.APIServerLoadBalancer, &out.APIServerLoadBalancer, s); err != nil {
 			return err
 		}
 	}
+
+	out.APIServerPort = int(ptr.Deref(in.APIServerPort, 0))
 
 	return nil
 }
@@ -478,7 +495,10 @@ func restorev1beta1Bastion(previous **infrav1.Bastion, dst **infrav1.Bastion) {
 
 	optional.RestoreString(&(*previous).FloatingIP, &(*dst).FloatingIP)
 	optional.RestoreString(&(*previous).AvailabilityZone, &(*dst).AvailabilityZone)
-	optional.RestoreBool(&(*previous).Enabled, &(*dst).Enabled)
+
+	if (*dst).Enabled != nil && !*(*dst).Enabled {
+		(*dst).Enabled = (*previous).Enabled
+	}
 }
 
 func Convert_v1alpha6_Bastion_To_v1beta1_Bastion(in *Bastion, out *infrav1.Bastion, s apiconversion.Scope) error {

@@ -59,7 +59,9 @@ func DataSourceIBMSchematicsState() *schema.Resource {
 func dataSourceIBMSchematicsStateRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	schematicsClient, err := meta.(conns.ClientSession).SchematicsV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsStateRead schematicsClient initialization failed: %s", err.Error()), "ibm_schematics_state", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if r, ok := d.GetOk("location"); ok {
 		region := r.(string)
@@ -76,8 +78,10 @@ func dataSourceIBMSchematicsStateRead(context context.Context, d *schema.Resourc
 
 	_, response, _ := schematicsClient.GetWorkspaceTemplateStateWithContext(context, getWorkspaceTemplateStateOptions)
 	if response.StatusCode != 200 {
-		log.Printf("[DEBUG] GetWorkspaceTemplateStateWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetWorkspaceTemplateStateWithContext failed %s\n%s", err, response))
+
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsStateRead GetWorkspaceTemplateStateWithContext failed with error: %s and response:\n%s", err, response), "ibm_schematics_state", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(dataSourceIBMSchematicsStateID(d))
@@ -96,7 +100,9 @@ func dataSourceIBMSchematicsStateRead(context context.Context, d *schema.Resourc
 
 	stateByte, err := json.MarshalIndent(stateStore, "", "")
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsStateRead failed: %s", err.Error()), "ibm_schematics_state", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	stateStoreJSON := string(stateByte[:])
@@ -104,7 +110,9 @@ func dataSourceIBMSchematicsStateRead(context context.Context, d *schema.Resourc
 
 	controller, err := flex.GetBaseController(meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("dataSourceIBMSchematicsStateRead failed: %s", err.Error()), "ibm_schematics_state", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	d.Set(flex.ResourceControllerURL, controller+"/schematics")
 

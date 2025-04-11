@@ -36,13 +36,14 @@ const (
 	LowestHttpTokensRequiredSupport = "4.11.0"
 	LowestSTSMinor                  = "4.7"
 
-	LowestHostedCpSupport            = "4.14.0"
+	LowestHostedCpSupport            = "4.12.0-0.a"
 	MinVersionForManagedIngressV2    = "4.14.0-0.a"
 	MinVersionForMachinePoolRootDisk = "4.10.0-0.a"
 	VersionPrefix                    = "openshift-v"
 
 	MinVersionForAdditionalComputeSecurityGroupIdsDay1 = "4.14.0-0.a"
 	MinVersionForAdditionalComputeSecurityGroupIdsDay2 = "4.11.0-0.a"
+	// TODO: Add new minimal versions to the `features.go` package.
 )
 
 func (c *Client) ManagedServiceVersionInquiry(serviceType string) (string, error) {

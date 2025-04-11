@@ -4,16 +4,21 @@
 package v1api20230501
 
 import (
+	"context"
 	"fmt"
-	v20230501s "github.com/Azure/azure-service-operator/v2/api/kubernetesconfiguration/v1api20230501/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/kubernetesconfiguration/v1api20230501/storage"
+	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
@@ -50,7 +55,7 @@ var _ conversion.Convertible = &Extension{}
 
 // ConvertFrom populates our Extension from the provided hub Extension
 func (extension *Extension) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20230501s.Extension)
+	source, ok := hub.(*storage.Extension)
 	if !ok {
 		return fmt.Errorf("expected kubernetesconfiguration/v1api20230501/storage/Extension but received %T instead", hub)
 	}
@@ -60,7 +65,7 @@ func (extension *Extension) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub Extension from our Extension
 func (extension *Extension) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20230501s.Extension)
+	destination, ok := hub.(*storage.Extension)
 	if !ok {
 		return fmt.Errorf("expected kubernetesconfiguration/v1api20230501/storage/Extension but received %T instead", hub)
 	}
@@ -100,6 +105,25 @@ func (extension *Extension) InitializeSpec(status genruntime.ConvertibleStatus) 
 	}
 
 	return fmt.Errorf("expected Status of type Extension_STATUS but received %T instead", status)
+}
+
+var _ genruntime.KubernetesExporter = &Extension{}
+
+// ExportKubernetesResources defines a resource which can create other resources in Kubernetes.
+func (extension *Extension) ExportKubernetesResources(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
+	collector := configmaps.NewCollector(extension.Namespace)
+	if extension.Spec.OperatorSpec != nil && extension.Spec.OperatorSpec.ConfigMaps != nil {
+		if extension.Status.AksAssignedIdentity != nil {
+			if extension.Status.AksAssignedIdentity.PrincipalId != nil {
+				collector.AddValue(extension.Spec.OperatorSpec.ConfigMaps.PrincipalId, *extension.Status.AksAssignedIdentity.PrincipalId)
+			}
+		}
+	}
+	result, err := collector.Values()
+	if err != nil {
+		return nil, err
+	}
+	return configmaps.SliceToClientObjectSlice(result), nil
 }
 
 var _ genruntime.KubernetesResource = &Extension{}
@@ -208,7 +232,7 @@ func (extension *Extension) ValidateUpdate(old runtime.Object) (admission.Warnin
 
 // createValidations validates the creation of the resource
 func (extension *Extension) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){extension.validateResourceReferences}
+	return []func() (admission.Warnings, error){extension.validateResourceReferences, extension.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -222,7 +246,25 @@ func (extension *Extension) updateValidations() []func(old runtime.Object) (admi
 		func(old runtime.Object) (admission.Warnings, error) {
 			return extension.validateResourceReferences()
 		},
-		extension.validateWriteOnceProperties}
+		extension.validateWriteOnceProperties,
+		func(old runtime.Object) (admission.Warnings, error) {
+			return extension.validateConfigMapDestinations()
+		},
+	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (extension *Extension) validateConfigMapDestinations() (admission.Warnings, error) {
+	if extension.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	if extension.Spec.OperatorSpec.ConfigMaps == nil {
+		return nil, nil
+	}
+	toValidate := []*genruntime.ConfigMapDestination{
+		extension.Spec.OperatorSpec.ConfigMaps.PrincipalId,
+	}
+	return genruntime.ValidateConfigMapDestinations(toValidate)
 }
 
 // validateResourceReferences validates all resource references
@@ -245,7 +287,7 @@ func (extension *Extension) validateWriteOnceProperties(old runtime.Object) (adm
 }
 
 // AssignProperties_From_Extension populates our Extension from the provided source Extension
-func (extension *Extension) AssignProperties_From_Extension(source *v20230501s.Extension) error {
+func (extension *Extension) AssignProperties_From_Extension(source *storage.Extension) error {
 
 	// ObjectMeta
 	extension.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -271,13 +313,13 @@ func (extension *Extension) AssignProperties_From_Extension(source *v20230501s.E
 }
 
 // AssignProperties_To_Extension populates the provided destination Extension from our Extension
-func (extension *Extension) AssignProperties_To_Extension(destination *v20230501s.Extension) error {
+func (extension *Extension) AssignProperties_To_Extension(destination *storage.Extension) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *extension.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20230501s.Extension_Spec
+	var spec storage.Extension_Spec
 	err := extension.Spec.AssignProperties_To_Extension_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Extension_Spec() to populate field Spec")
@@ -285,7 +327,7 @@ func (extension *Extension) AssignProperties_To_Extension(destination *v20230501
 	destination.Spec = spec
 
 	// Status
-	var status v20230501s.Extension_STATUS
+	var status storage.Extension_STATUS
 	err = extension.Status.AssignProperties_To_Extension_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Extension_STATUS() to populate field Status")
@@ -331,6 +373,10 @@ type Extension_Spec struct {
 	// doesn't have to be.
 	AzureName string `json:"azureName,omitempty"`
 
+	// ConfigurationProtectedSettings: Configuration settings that are sensitive, as name-value pairs for configuring this
+	// extension.
+	ConfigurationProtectedSettings *genruntime.SecretMapReference `json:"configurationProtectedSettings,omitempty"`
+
 	// ConfigurationSettings: Configuration settings, as name-value pairs for configuring this extension.
 	ConfigurationSettings map[string]string `json:"configurationSettings,omitempty"`
 
@@ -340,6 +386,10 @@ type Extension_Spec struct {
 
 	// Identity: Identity of the Extension resource
 	Identity *Identity `json:"identity,omitempty"`
+
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *ExtensionOperatorSpec `json:"operatorSpec,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -401,6 +451,7 @@ func (extension *Extension_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 	// Set property "Properties":
 	if extension.AksAssignedIdentity != nil ||
 		extension.AutoUpgradeMinorVersion != nil ||
+		extension.ConfigurationProtectedSettings != nil ||
 		extension.ConfigurationSettings != nil ||
 		extension.ExtensionType != nil ||
 		extension.ReleaseTrain != nil ||
@@ -419,6 +470,15 @@ func (extension *Extension_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 	if extension.AutoUpgradeMinorVersion != nil {
 		autoUpgradeMinorVersion := *extension.AutoUpgradeMinorVersion
 		result.Properties.AutoUpgradeMinorVersion = &autoUpgradeMinorVersion
+	}
+	if extension.ConfigurationProtectedSettings != nil {
+		var temp map[string]string
+		tempSecret, err := resolved.ResolvedSecretMaps.Lookup(*extension.ConfigurationProtectedSettings)
+		if err != nil {
+			return nil, errors.Wrap(err, "looking up secret for property temp")
+		}
+		temp = tempSecret
+		result.Properties.ConfigurationProtectedSettings = temp
 	}
 	if extension.ConfigurationSettings != nil {
 		result.Properties.ConfigurationSettings = make(map[string]string, len(extension.ConfigurationSettings))
@@ -497,6 +557,8 @@ func (extension *Extension_Spec) PopulateFromARM(owner genruntime.ArbitraryOwner
 	// Set property "AzureName":
 	extension.SetAzureName(genruntime.ExtractKubernetesResourceNameFromARMName(typedInput.Name))
 
+	// no assignment for property "ConfigurationProtectedSettings"
+
 	// Set property "ConfigurationSettings":
 	// copying flattened property:
 	if typedInput.Properties != nil {
@@ -527,6 +589,8 @@ func (extension *Extension_Spec) PopulateFromARM(owner genruntime.ArbitraryOwner
 		identity := identity1
 		extension.Identity = &identity
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	extension.Owner = &owner
@@ -593,14 +657,14 @@ var _ genruntime.ConvertibleSpec = &Extension_Spec{}
 
 // ConvertSpecFrom populates our Extension_Spec from the provided source
 func (extension *Extension_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20230501s.Extension_Spec)
+	src, ok := source.(*storage.Extension_Spec)
 	if ok {
 		// Populate our instance from source
 		return extension.AssignProperties_From_Extension_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230501s.Extension_Spec{}
+	src = &storage.Extension_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -617,14 +681,14 @@ func (extension *Extension_Spec) ConvertSpecFrom(source genruntime.ConvertibleSp
 
 // ConvertSpecTo populates the provided destination from our Extension_Spec
 func (extension *Extension_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20230501s.Extension_Spec)
+	dst, ok := destination.(*storage.Extension_Spec)
 	if ok {
 		// Populate destination from our instance
 		return extension.AssignProperties_To_Extension_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230501s.Extension_Spec{}
+	dst = &storage.Extension_Spec{}
 	err := extension.AssignProperties_To_Extension_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -640,7 +704,7 @@ func (extension *Extension_Spec) ConvertSpecTo(destination genruntime.Convertibl
 }
 
 // AssignProperties_From_Extension_Spec populates our Extension_Spec from the provided source Extension_Spec
-func (extension *Extension_Spec) AssignProperties_From_Extension_Spec(source *v20230501s.Extension_Spec) error {
+func (extension *Extension_Spec) AssignProperties_From_Extension_Spec(source *storage.Extension_Spec) error {
 
 	// AksAssignedIdentity
 	if source.AksAssignedIdentity != nil {
@@ -665,6 +729,14 @@ func (extension *Extension_Spec) AssignProperties_From_Extension_Spec(source *v2
 	// AzureName
 	extension.AzureName = source.AzureName
 
+	// ConfigurationProtectedSettings
+	if source.ConfigurationProtectedSettings != nil {
+		configurationProtectedSetting := source.ConfigurationProtectedSettings.Copy()
+		extension.ConfigurationProtectedSettings = &configurationProtectedSetting
+	} else {
+		extension.ConfigurationProtectedSettings = nil
+	}
+
 	// ConfigurationSettings
 	extension.ConfigurationSettings = genruntime.CloneMapOfStringToString(source.ConfigurationSettings)
 
@@ -681,6 +753,18 @@ func (extension *Extension_Spec) AssignProperties_From_Extension_Spec(source *v2
 		extension.Identity = &identity
 	} else {
 		extension.Identity = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ExtensionOperatorSpec
+		err := operatorSpec.AssignProperties_From_ExtensionOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ExtensionOperatorSpec() to populate field OperatorSpec")
+		}
+		extension.OperatorSpec = &operatorSpec
+	} else {
+		extension.OperatorSpec = nil
 	}
 
 	// Owner
@@ -738,13 +822,13 @@ func (extension *Extension_Spec) AssignProperties_From_Extension_Spec(source *v2
 }
 
 // AssignProperties_To_Extension_Spec populates the provided destination Extension_Spec from our Extension_Spec
-func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination *v20230501s.Extension_Spec) error {
+func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination *storage.Extension_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AksAssignedIdentity
 	if extension.AksAssignedIdentity != nil {
-		var aksAssignedIdentity v20230501s.Extension_Properties_AksAssignedIdentity_Spec
+		var aksAssignedIdentity storage.Extension_Properties_AksAssignedIdentity_Spec
 		err := extension.AksAssignedIdentity.AssignProperties_To_Extension_Properties_AksAssignedIdentity_Spec(&aksAssignedIdentity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Extension_Properties_AksAssignedIdentity_Spec() to populate field AksAssignedIdentity")
@@ -765,6 +849,14 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 	// AzureName
 	destination.AzureName = extension.AzureName
 
+	// ConfigurationProtectedSettings
+	if extension.ConfigurationProtectedSettings != nil {
+		configurationProtectedSetting := extension.ConfigurationProtectedSettings.Copy()
+		destination.ConfigurationProtectedSettings = &configurationProtectedSetting
+	} else {
+		destination.ConfigurationProtectedSettings = nil
+	}
+
 	// ConfigurationSettings
 	destination.ConfigurationSettings = genruntime.CloneMapOfStringToString(extension.ConfigurationSettings)
 
@@ -773,7 +865,7 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 
 	// Identity
 	if extension.Identity != nil {
-		var identity v20230501s.Identity
+		var identity storage.Identity
 		err := extension.Identity.AssignProperties_To_Identity(&identity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Identity() to populate field Identity")
@@ -781,6 +873,18 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 		destination.Identity = &identity
 	} else {
 		destination.Identity = nil
+	}
+
+	// OperatorSpec
+	if extension.OperatorSpec != nil {
+		var operatorSpec storage.ExtensionOperatorSpec
+		err := extension.OperatorSpec.AssignProperties_To_ExtensionOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ExtensionOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
 	}
 
 	// OriginalVersion
@@ -796,7 +900,7 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 
 	// Plan
 	if extension.Plan != nil {
-		var plan v20230501s.Plan
+		var plan storage.Plan
 		err := extension.Plan.AssignProperties_To_Plan(&plan)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Plan() to populate field Plan")
@@ -811,7 +915,7 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 
 	// Scope
 	if extension.Scope != nil {
-		var scope v20230501s.Scope
+		var scope storage.Scope
 		err := extension.Scope.AssignProperties_To_Scope(&scope)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Scope() to populate field Scope")
@@ -823,7 +927,7 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 
 	// SystemData
 	if extension.SystemData != nil {
-		var systemDatum v20230501s.SystemData
+		var systemDatum storage.SystemData
 		err := extension.SystemData.AssignProperties_To_SystemData(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData() to populate field SystemData")
@@ -953,6 +1057,10 @@ type Extension_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
+	// ConfigurationProtectedSettings: Configuration settings that are sensitive, as name-value pairs for configuring this
+	// extension.
+	ConfigurationProtectedSettings map[string]string `json:"configurationProtectedSettings,omitempty"`
+
 	// ConfigurationSettings: Configuration settings, as name-value pairs for configuring this extension.
 	ConfigurationSettings map[string]string `json:"configurationSettings,omitempty"`
 
@@ -1017,14 +1125,14 @@ var _ genruntime.ConvertibleStatus = &Extension_STATUS{}
 
 // ConvertStatusFrom populates our Extension_STATUS from the provided source
 func (extension *Extension_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20230501s.Extension_STATUS)
+	src, ok := source.(*storage.Extension_STATUS)
 	if ok {
 		// Populate our instance from source
 		return extension.AssignProperties_From_Extension_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230501s.Extension_STATUS{}
+	src = &storage.Extension_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -1041,14 +1149,14 @@ func (extension *Extension_STATUS) ConvertStatusFrom(source genruntime.Convertib
 
 // ConvertStatusTo populates the provided destination from our Extension_STATUS
 func (extension *Extension_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20230501s.Extension_STATUS)
+	dst, ok := destination.(*storage.Extension_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return extension.AssignProperties_To_Extension_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230501s.Extension_STATUS{}
+	dst = &storage.Extension_STATUS{}
 	err := extension.AssignProperties_To_Extension_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -1101,6 +1209,17 @@ func (extension *Extension_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwn
 	}
 
 	// no assignment for property "Conditions"
+
+	// Set property "ConfigurationProtectedSettings":
+	// copying flattened property:
+	if typedInput.Properties != nil {
+		if typedInput.Properties.ConfigurationProtectedSettings != nil {
+			extension.ConfigurationProtectedSettings = make(map[string]string, len(typedInput.Properties.ConfigurationProtectedSettings))
+			for key, value := range typedInput.Properties.ConfigurationProtectedSettings {
+				extension.ConfigurationProtectedSettings[key] = value
+			}
+		}
+	}
 
 	// Set property "ConfigurationSettings":
 	// copying flattened property:
@@ -1284,7 +1403,7 @@ func (extension *Extension_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwn
 }
 
 // AssignProperties_From_Extension_STATUS populates our Extension_STATUS from the provided source Extension_STATUS
-func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source *v20230501s.Extension_STATUS) error {
+func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source *storage.Extension_STATUS) error {
 
 	// AksAssignedIdentity
 	if source.AksAssignedIdentity != nil {
@@ -1308,6 +1427,9 @@ func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source
 
 	// Conditions
 	extension.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// ConfigurationProtectedSettings
+	extension.ConfigurationProtectedSettings = genruntime.CloneMapOfStringToString(source.ConfigurationProtectedSettings)
 
 	// ConfigurationSettings
 	extension.ConfigurationSettings = genruntime.CloneMapOfStringToString(source.ConfigurationSettings)
@@ -1376,8 +1498,9 @@ func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := ProvisioningStateDefinition_STATUS(*source.ProvisioningState)
-		extension.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, provisioningStateDefinition_STATUS_Values)
+		extension.ProvisioningState = &provisioningStateTemp
 	} else {
 		extension.ProvisioningState = nil
 	}
@@ -1438,13 +1561,13 @@ func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source
 }
 
 // AssignProperties_To_Extension_STATUS populates the provided destination Extension_STATUS from our Extension_STATUS
-func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destination *v20230501s.Extension_STATUS) error {
+func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destination *storage.Extension_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AksAssignedIdentity
 	if extension.AksAssignedIdentity != nil {
-		var aksAssignedIdentity v20230501s.Extension_Properties_AksAssignedIdentity_STATUS
+		var aksAssignedIdentity storage.Extension_Properties_AksAssignedIdentity_STATUS
 		err := extension.AksAssignedIdentity.AssignProperties_To_Extension_Properties_AksAssignedIdentity_STATUS(&aksAssignedIdentity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Extension_Properties_AksAssignedIdentity_STATUS() to populate field AksAssignedIdentity")
@@ -1465,6 +1588,9 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 	// Conditions
 	destination.Conditions = genruntime.CloneSliceOfCondition(extension.Conditions)
 
+	// ConfigurationProtectedSettings
+	destination.ConfigurationProtectedSettings = genruntime.CloneMapOfStringToString(extension.ConfigurationProtectedSettings)
+
 	// ConfigurationSettings
 	destination.ConfigurationSettings = genruntime.CloneMapOfStringToString(extension.ConfigurationSettings)
 
@@ -1476,7 +1602,7 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 
 	// ErrorInfo
 	if extension.ErrorInfo != nil {
-		var errorInfo v20230501s.ErrorDetail_STATUS
+		var errorInfo storage.ErrorDetail_STATUS
 		err := extension.ErrorInfo.AssignProperties_To_ErrorDetail_STATUS(&errorInfo)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS() to populate field ErrorInfo")
@@ -1494,7 +1620,7 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 
 	// Identity
 	if extension.Identity != nil {
-		var identity v20230501s.Identity_STATUS
+		var identity storage.Identity_STATUS
 		err := extension.Identity.AssignProperties_To_Identity_STATUS(&identity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Identity_STATUS() to populate field Identity")
@@ -1520,7 +1646,7 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 
 	// Plan
 	if extension.Plan != nil {
-		var plan v20230501s.Plan_STATUS
+		var plan storage.Plan_STATUS
 		err := extension.Plan.AssignProperties_To_Plan_STATUS(&plan)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Plan_STATUS() to populate field Plan")
@@ -1543,7 +1669,7 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 
 	// Scope
 	if extension.Scope != nil {
-		var scope v20230501s.Scope_STATUS
+		var scope storage.Scope_STATUS
 		err := extension.Scope.AssignProperties_To_Scope_STATUS(&scope)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Scope_STATUS() to populate field Scope")
@@ -1555,11 +1681,11 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 
 	// Statuses
 	if extension.Statuses != nil {
-		statusList := make([]v20230501s.ExtensionStatus_STATUS, len(extension.Statuses))
+		statusList := make([]storage.ExtensionStatus_STATUS, len(extension.Statuses))
 		for statusIndex, statusItem := range extension.Statuses {
 			// Shadow the loop variable to avoid aliasing
 			statusItem := statusItem
-			var status v20230501s.ExtensionStatus_STATUS
+			var status storage.ExtensionStatus_STATUS
 			err := statusItem.AssignProperties_To_ExtensionStatus_STATUS(&status)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ExtensionStatus_STATUS() to populate field Statuses")
@@ -1573,7 +1699,7 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 
 	// SystemData
 	if extension.SystemData != nil {
-		var systemDatum v20230501s.SystemData_STATUS
+		var systemDatum storage.SystemData_STATUS
 		err := extension.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
@@ -1675,7 +1801,7 @@ func (detail *ErrorDetail_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwne
 }
 
 // AssignProperties_From_ErrorDetail_STATUS populates our ErrorDetail_STATUS from the provided source ErrorDetail_STATUS
-func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(source *v20230501s.ErrorDetail_STATUS) error {
+func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(source *storage.ErrorDetail_STATUS) error {
 
 	// AdditionalInfo
 	if source.AdditionalInfo != nil {
@@ -1727,17 +1853,17 @@ func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(sourc
 }
 
 // AssignProperties_To_ErrorDetail_STATUS populates the provided destination ErrorDetail_STATUS from our ErrorDetail_STATUS
-func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destination *v20230501s.ErrorDetail_STATUS) error {
+func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destination *storage.ErrorDetail_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AdditionalInfo
 	if detail.AdditionalInfo != nil {
-		additionalInfoList := make([]v20230501s.ErrorAdditionalInfo_STATUS, len(detail.AdditionalInfo))
+		additionalInfoList := make([]storage.ErrorAdditionalInfo_STATUS, len(detail.AdditionalInfo))
 		for additionalInfoIndex, additionalInfoItem := range detail.AdditionalInfo {
 			// Shadow the loop variable to avoid aliasing
 			additionalInfoItem := additionalInfoItem
-			var additionalInfo v20230501s.ErrorAdditionalInfo_STATUS
+			var additionalInfo storage.ErrorAdditionalInfo_STATUS
 			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
@@ -1754,11 +1880,11 @@ func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destina
 
 	// Details
 	if detail.Details != nil {
-		detailList := make([]v20230501s.ErrorDetail_STATUS_Unrolled, len(detail.Details))
+		detailList := make([]storage.ErrorDetail_STATUS_Unrolled, len(detail.Details))
 		for detailIndex, detailItem := range detail.Details {
 			// Shadow the loop variable to avoid aliasing
 			detailItem := detailItem
-			var detailLocal v20230501s.ErrorDetail_STATUS_Unrolled
+			var detailLocal storage.ErrorDetail_STATUS_Unrolled
 			err := detailItem.AssignProperties_To_ErrorDetail_STATUS_Unrolled(&detailLocal)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS_Unrolled() to populate field Details")
@@ -1832,12 +1958,13 @@ func (identity *Extension_Properties_AksAssignedIdentity_Spec) PopulateFromARM(o
 }
 
 // AssignProperties_From_Extension_Properties_AksAssignedIdentity_Spec populates our Extension_Properties_AksAssignedIdentity_Spec from the provided source Extension_Properties_AksAssignedIdentity_Spec
-func (identity *Extension_Properties_AksAssignedIdentity_Spec) AssignProperties_From_Extension_Properties_AksAssignedIdentity_Spec(source *v20230501s.Extension_Properties_AksAssignedIdentity_Spec) error {
+func (identity *Extension_Properties_AksAssignedIdentity_Spec) AssignProperties_From_Extension_Properties_AksAssignedIdentity_Spec(source *storage.Extension_Properties_AksAssignedIdentity_Spec) error {
 
 	// Type
 	if source.Type != nil {
-		typeVar := Extension_Properties_AksAssignedIdentity_Type_Spec(*source.Type)
-		identity.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, extension_Properties_AksAssignedIdentity_Type_Spec_Values)
+		identity.Type = &typeTemp
 	} else {
 		identity.Type = nil
 	}
@@ -1847,7 +1974,7 @@ func (identity *Extension_Properties_AksAssignedIdentity_Spec) AssignProperties_
 }
 
 // AssignProperties_To_Extension_Properties_AksAssignedIdentity_Spec populates the provided destination Extension_Properties_AksAssignedIdentity_Spec from our Extension_Properties_AksAssignedIdentity_Spec
-func (identity *Extension_Properties_AksAssignedIdentity_Spec) AssignProperties_To_Extension_Properties_AksAssignedIdentity_Spec(destination *v20230501s.Extension_Properties_AksAssignedIdentity_Spec) error {
+func (identity *Extension_Properties_AksAssignedIdentity_Spec) AssignProperties_To_Extension_Properties_AksAssignedIdentity_Spec(destination *storage.Extension_Properties_AksAssignedIdentity_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1875,7 +2002,7 @@ func (identity *Extension_Properties_AksAssignedIdentity_Spec) Initialize_From_E
 
 	// Type
 	if source.Type != nil {
-		typeVar := Extension_Properties_AksAssignedIdentity_Type_Spec(*source.Type)
+		typeVar := genruntime.ToEnum(string(*source.Type), extension_Properties_AksAssignedIdentity_Type_Spec_Values)
 		identity.Type = &typeVar
 	} else {
 		identity.Type = nil
@@ -1933,7 +2060,7 @@ func (identity *Extension_Properties_AksAssignedIdentity_STATUS) PopulateFromARM
 }
 
 // AssignProperties_From_Extension_Properties_AksAssignedIdentity_STATUS populates our Extension_Properties_AksAssignedIdentity_STATUS from the provided source Extension_Properties_AksAssignedIdentity_STATUS
-func (identity *Extension_Properties_AksAssignedIdentity_STATUS) AssignProperties_From_Extension_Properties_AksAssignedIdentity_STATUS(source *v20230501s.Extension_Properties_AksAssignedIdentity_STATUS) error {
+func (identity *Extension_Properties_AksAssignedIdentity_STATUS) AssignProperties_From_Extension_Properties_AksAssignedIdentity_STATUS(source *storage.Extension_Properties_AksAssignedIdentity_STATUS) error {
 
 	// PrincipalId
 	identity.PrincipalId = genruntime.ClonePointerToString(source.PrincipalId)
@@ -1943,8 +2070,9 @@ func (identity *Extension_Properties_AksAssignedIdentity_STATUS) AssignPropertie
 
 	// Type
 	if source.Type != nil {
-		typeVar := Extension_Properties_AksAssignedIdentity_Type_STATUS(*source.Type)
-		identity.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, extension_Properties_AksAssignedIdentity_Type_STATUS_Values)
+		identity.Type = &typeTemp
 	} else {
 		identity.Type = nil
 	}
@@ -1954,7 +2082,7 @@ func (identity *Extension_Properties_AksAssignedIdentity_STATUS) AssignPropertie
 }
 
 // AssignProperties_To_Extension_Properties_AksAssignedIdentity_STATUS populates the provided destination Extension_Properties_AksAssignedIdentity_STATUS from our Extension_Properties_AksAssignedIdentity_STATUS
-func (identity *Extension_Properties_AksAssignedIdentity_STATUS) AssignProperties_To_Extension_Properties_AksAssignedIdentity_STATUS(destination *v20230501s.Extension_Properties_AksAssignedIdentity_STATUS) error {
+func (identity *Extension_Properties_AksAssignedIdentity_STATUS) AssignProperties_To_Extension_Properties_AksAssignedIdentity_STATUS(destination *storage.Extension_Properties_AksAssignedIdentity_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1970,6 +2098,59 @@ func (identity *Extension_Properties_AksAssignedIdentity_STATUS) AssignPropertie
 		destination.Type = &typeVar
 	} else {
 		destination.Type = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ExtensionOperatorSpec struct {
+	// ConfigMaps: configures where to place operator written ConfigMaps.
+	ConfigMaps *ExtensionOperatorConfigMaps `json:"configMaps,omitempty"`
+}
+
+// AssignProperties_From_ExtensionOperatorSpec populates our ExtensionOperatorSpec from the provided source ExtensionOperatorSpec
+func (operator *ExtensionOperatorSpec) AssignProperties_From_ExtensionOperatorSpec(source *storage.ExtensionOperatorSpec) error {
+
+	// ConfigMaps
+	if source.ConfigMaps != nil {
+		var configMap ExtensionOperatorConfigMaps
+		err := configMap.AssignProperties_From_ExtensionOperatorConfigMaps(source.ConfigMaps)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ExtensionOperatorConfigMaps() to populate field ConfigMaps")
+		}
+		operator.ConfigMaps = &configMap
+	} else {
+		operator.ConfigMaps = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ExtensionOperatorSpec populates the provided destination ExtensionOperatorSpec from our ExtensionOperatorSpec
+func (operator *ExtensionOperatorSpec) AssignProperties_To_ExtensionOperatorSpec(destination *storage.ExtensionOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMaps
+	if operator.ConfigMaps != nil {
+		var configMap storage.ExtensionOperatorConfigMaps
+		err := operator.ConfigMaps.AssignProperties_To_ExtensionOperatorConfigMaps(&configMap)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ExtensionOperatorConfigMaps() to populate field ConfigMaps")
+		}
+		destination.ConfigMaps = &configMap
+	} else {
+		destination.ConfigMaps = nil
 	}
 
 	// Update the property bag
@@ -2050,7 +2231,7 @@ func (status *ExtensionStatus_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 }
 
 // AssignProperties_From_ExtensionStatus_STATUS populates our ExtensionStatus_STATUS from the provided source ExtensionStatus_STATUS
-func (status *ExtensionStatus_STATUS) AssignProperties_From_ExtensionStatus_STATUS(source *v20230501s.ExtensionStatus_STATUS) error {
+func (status *ExtensionStatus_STATUS) AssignProperties_From_ExtensionStatus_STATUS(source *storage.ExtensionStatus_STATUS) error {
 
 	// Code
 	status.Code = genruntime.ClonePointerToString(source.Code)
@@ -2060,8 +2241,9 @@ func (status *ExtensionStatus_STATUS) AssignProperties_From_ExtensionStatus_STAT
 
 	// Level
 	if source.Level != nil {
-		level := ExtensionStatus_Level_STATUS(*source.Level)
-		status.Level = &level
+		level := *source.Level
+		levelTemp := genruntime.ToEnum(level, extensionStatus_Level_STATUS_Values)
+		status.Level = &levelTemp
 	} else {
 		status.Level = nil
 	}
@@ -2077,7 +2259,7 @@ func (status *ExtensionStatus_STATUS) AssignProperties_From_ExtensionStatus_STAT
 }
 
 // AssignProperties_To_ExtensionStatus_STATUS populates the provided destination ExtensionStatus_STATUS from our ExtensionStatus_STATUS
-func (status *ExtensionStatus_STATUS) AssignProperties_To_ExtensionStatus_STATUS(destination *v20230501s.ExtensionStatus_STATUS) error {
+func (status *ExtensionStatus_STATUS) AssignProperties_To_ExtensionStatus_STATUS(destination *storage.ExtensionStatus_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2158,12 +2340,13 @@ func (identity *Identity) PopulateFromARM(owner genruntime.ArbitraryOwnerReferen
 }
 
 // AssignProperties_From_Identity populates our Identity from the provided source Identity
-func (identity *Identity) AssignProperties_From_Identity(source *v20230501s.Identity) error {
+func (identity *Identity) AssignProperties_From_Identity(source *storage.Identity) error {
 
 	// Type
 	if source.Type != nil {
-		typeVar := Identity_Type(*source.Type)
-		identity.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, identity_Type_Values)
+		identity.Type = &typeTemp
 	} else {
 		identity.Type = nil
 	}
@@ -2173,7 +2356,7 @@ func (identity *Identity) AssignProperties_From_Identity(source *v20230501s.Iden
 }
 
 // AssignProperties_To_Identity populates the provided destination Identity from our Identity
-func (identity *Identity) AssignProperties_To_Identity(destination *v20230501s.Identity) error {
+func (identity *Identity) AssignProperties_To_Identity(destination *storage.Identity) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2201,7 +2384,7 @@ func (identity *Identity) Initialize_From_Identity_STATUS(source *Identity_STATU
 
 	// Type
 	if source.Type != nil {
-		typeVar := Identity_Type(*source.Type)
+		typeVar := genruntime.ToEnum(string(*source.Type), identity_Type_Values)
 		identity.Type = &typeVar
 	} else {
 		identity.Type = nil
@@ -2260,7 +2443,7 @@ func (identity *Identity_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 }
 
 // AssignProperties_From_Identity_STATUS populates our Identity_STATUS from the provided source Identity_STATUS
-func (identity *Identity_STATUS) AssignProperties_From_Identity_STATUS(source *v20230501s.Identity_STATUS) error {
+func (identity *Identity_STATUS) AssignProperties_From_Identity_STATUS(source *storage.Identity_STATUS) error {
 
 	// PrincipalId
 	identity.PrincipalId = genruntime.ClonePointerToString(source.PrincipalId)
@@ -2270,8 +2453,9 @@ func (identity *Identity_STATUS) AssignProperties_From_Identity_STATUS(source *v
 
 	// Type
 	if source.Type != nil {
-		typeVar := Identity_Type_STATUS(*source.Type)
-		identity.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, identity_Type_STATUS_Values)
+		identity.Type = &typeTemp
 	} else {
 		identity.Type = nil
 	}
@@ -2281,7 +2465,7 @@ func (identity *Identity_STATUS) AssignProperties_From_Identity_STATUS(source *v
 }
 
 // AssignProperties_To_Identity_STATUS populates the provided destination Identity_STATUS from our Identity_STATUS
-func (identity *Identity_STATUS) AssignProperties_To_Identity_STATUS(destination *v20230501s.Identity_STATUS) error {
+func (identity *Identity_STATUS) AssignProperties_To_Identity_STATUS(destination *storage.Identity_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2420,7 +2604,7 @@ func (plan *Plan) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armI
 }
 
 // AssignProperties_From_Plan populates our Plan from the provided source Plan
-func (plan *Plan) AssignProperties_From_Plan(source *v20230501s.Plan) error {
+func (plan *Plan) AssignProperties_From_Plan(source *storage.Plan) error {
 
 	// Name
 	plan.Name = genruntime.ClonePointerToString(source.Name)
@@ -2442,7 +2626,7 @@ func (plan *Plan) AssignProperties_From_Plan(source *v20230501s.Plan) error {
 }
 
 // AssignProperties_To_Plan populates the provided destination Plan from our Plan
-func (plan *Plan) AssignProperties_To_Plan(destination *v20230501s.Plan) error {
+func (plan *Plan) AssignProperties_To_Plan(destination *storage.Plan) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2562,7 +2746,7 @@ func (plan *Plan_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReferenc
 }
 
 // AssignProperties_From_Plan_STATUS populates our Plan_STATUS from the provided source Plan_STATUS
-func (plan *Plan_STATUS) AssignProperties_From_Plan_STATUS(source *v20230501s.Plan_STATUS) error {
+func (plan *Plan_STATUS) AssignProperties_From_Plan_STATUS(source *storage.Plan_STATUS) error {
 
 	// Name
 	plan.Name = genruntime.ClonePointerToString(source.Name)
@@ -2584,7 +2768,7 @@ func (plan *Plan_STATUS) AssignProperties_From_Plan_STATUS(source *v20230501s.Pl
 }
 
 // AssignProperties_To_Plan_STATUS populates the provided destination Plan_STATUS from our Plan_STATUS
-func (plan *Plan_STATUS) AssignProperties_To_Plan_STATUS(destination *v20230501s.Plan_STATUS) error {
+func (plan *Plan_STATUS) AssignProperties_To_Plan_STATUS(destination *storage.Plan_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2625,6 +2809,16 @@ const (
 	ProvisioningStateDefinition_STATUS_Succeeded = ProvisioningStateDefinition_STATUS("Succeeded")
 	ProvisioningStateDefinition_STATUS_Updating  = ProvisioningStateDefinition_STATUS("Updating")
 )
+
+// Mapping from string to ProvisioningStateDefinition_STATUS
+var provisioningStateDefinition_STATUS_Values = map[string]ProvisioningStateDefinition_STATUS{
+	"canceled":  ProvisioningStateDefinition_STATUS_Canceled,
+	"creating":  ProvisioningStateDefinition_STATUS_Creating,
+	"deleting":  ProvisioningStateDefinition_STATUS_Deleting,
+	"failed":    ProvisioningStateDefinition_STATUS_Failed,
+	"succeeded": ProvisioningStateDefinition_STATUS_Succeeded,
+	"updating":  ProvisioningStateDefinition_STATUS_Updating,
+}
 
 // Scope of the extension. It can be either Cluster or Namespace; but not both.
 type Scope struct {
@@ -2705,7 +2899,7 @@ func (scope *Scope) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, ar
 }
 
 // AssignProperties_From_Scope populates our Scope from the provided source Scope
-func (scope *Scope) AssignProperties_From_Scope(source *v20230501s.Scope) error {
+func (scope *Scope) AssignProperties_From_Scope(source *storage.Scope) error {
 
 	// Cluster
 	if source.Cluster != nil {
@@ -2736,13 +2930,13 @@ func (scope *Scope) AssignProperties_From_Scope(source *v20230501s.Scope) error 
 }
 
 // AssignProperties_To_Scope populates the provided destination Scope from our Scope
-func (scope *Scope) AssignProperties_To_Scope(destination *v20230501s.Scope) error {
+func (scope *Scope) AssignProperties_To_Scope(destination *storage.Scope) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Cluster
 	if scope.Cluster != nil {
-		var cluster v20230501s.ScopeCluster
+		var cluster storage.ScopeCluster
 		err := scope.Cluster.AssignProperties_To_ScopeCluster(&cluster)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ScopeCluster() to populate field Cluster")
@@ -2754,7 +2948,7 @@ func (scope *Scope) AssignProperties_To_Scope(destination *v20230501s.Scope) err
 
 	// Namespace
 	if scope.Namespace != nil {
-		var namespace v20230501s.ScopeNamespace
+		var namespace storage.ScopeNamespace
 		err := scope.Namespace.AssignProperties_To_ScopeNamespace(&namespace)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ScopeNamespace() to populate field Namespace")
@@ -2856,7 +3050,7 @@ func (scope *Scope_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 }
 
 // AssignProperties_From_Scope_STATUS populates our Scope_STATUS from the provided source Scope_STATUS
-func (scope *Scope_STATUS) AssignProperties_From_Scope_STATUS(source *v20230501s.Scope_STATUS) error {
+func (scope *Scope_STATUS) AssignProperties_From_Scope_STATUS(source *storage.Scope_STATUS) error {
 
 	// Cluster
 	if source.Cluster != nil {
@@ -2887,13 +3081,13 @@ func (scope *Scope_STATUS) AssignProperties_From_Scope_STATUS(source *v20230501s
 }
 
 // AssignProperties_To_Scope_STATUS populates the provided destination Scope_STATUS from our Scope_STATUS
-func (scope *Scope_STATUS) AssignProperties_To_Scope_STATUS(destination *v20230501s.Scope_STATUS) error {
+func (scope *Scope_STATUS) AssignProperties_To_Scope_STATUS(destination *storage.Scope_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Cluster
 	if scope.Cluster != nil {
-		var cluster v20230501s.ScopeCluster_STATUS
+		var cluster storage.ScopeCluster_STATUS
 		err := scope.Cluster.AssignProperties_To_ScopeCluster_STATUS(&cluster)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ScopeCluster_STATUS() to populate field Cluster")
@@ -2905,7 +3099,7 @@ func (scope *Scope_STATUS) AssignProperties_To_Scope_STATUS(destination *v202305
 
 	// Namespace
 	if scope.Namespace != nil {
-		var namespace v20230501s.ScopeNamespace_STATUS
+		var namespace storage.ScopeNamespace_STATUS
 		err := scope.Namespace.AssignProperties_To_ScopeNamespace_STATUS(&namespace)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ScopeNamespace_STATUS() to populate field Namespace")
@@ -3047,7 +3241,7 @@ func (data *SystemData) PopulateFromARM(owner genruntime.ArbitraryOwnerReference
 }
 
 // AssignProperties_From_SystemData populates our SystemData from the provided source SystemData
-func (data *SystemData) AssignProperties_From_SystemData(source *v20230501s.SystemData) error {
+func (data *SystemData) AssignProperties_From_SystemData(source *storage.SystemData) error {
 
 	// CreatedAt
 	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
@@ -3057,8 +3251,9 @@ func (data *SystemData) AssignProperties_From_SystemData(source *v20230501s.Syst
 
 	// CreatedByType
 	if source.CreatedByType != nil {
-		createdByType := SystemData_CreatedByType(*source.CreatedByType)
-		data.CreatedByType = &createdByType
+		createdByType := *source.CreatedByType
+		createdByTypeTemp := genruntime.ToEnum(createdByType, systemData_CreatedByType_Values)
+		data.CreatedByType = &createdByTypeTemp
 	} else {
 		data.CreatedByType = nil
 	}
@@ -3071,8 +3266,9 @@ func (data *SystemData) AssignProperties_From_SystemData(source *v20230501s.Syst
 
 	// LastModifiedByType
 	if source.LastModifiedByType != nil {
-		lastModifiedByType := SystemData_LastModifiedByType(*source.LastModifiedByType)
-		data.LastModifiedByType = &lastModifiedByType
+		lastModifiedByType := *source.LastModifiedByType
+		lastModifiedByTypeTemp := genruntime.ToEnum(lastModifiedByType, systemData_LastModifiedByType_Values)
+		data.LastModifiedByType = &lastModifiedByTypeTemp
 	} else {
 		data.LastModifiedByType = nil
 	}
@@ -3082,7 +3278,7 @@ func (data *SystemData) AssignProperties_From_SystemData(source *v20230501s.Syst
 }
 
 // AssignProperties_To_SystemData populates the provided destination SystemData from our SystemData
-func (data *SystemData) AssignProperties_To_SystemData(destination *v20230501s.SystemData) error {
+func (data *SystemData) AssignProperties_To_SystemData(destination *storage.SystemData) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3136,7 +3332,7 @@ func (data *SystemData) Initialize_From_SystemData_STATUS(source *SystemData_STA
 
 	// CreatedByType
 	if source.CreatedByType != nil {
-		createdByType := SystemData_CreatedByType(*source.CreatedByType)
+		createdByType := genruntime.ToEnum(string(*source.CreatedByType), systemData_CreatedByType_Values)
 		data.CreatedByType = &createdByType
 	} else {
 		data.CreatedByType = nil
@@ -3150,7 +3346,7 @@ func (data *SystemData) Initialize_From_SystemData_STATUS(source *SystemData_STA
 
 	// LastModifiedByType
 	if source.LastModifiedByType != nil {
-		lastModifiedByType := SystemData_LastModifiedByType(*source.LastModifiedByType)
+		lastModifiedByType := genruntime.ToEnum(string(*source.LastModifiedByType), systemData_LastModifiedByType_Values)
 		data.LastModifiedByType = &lastModifiedByType
 	} else {
 		data.LastModifiedByType = nil
@@ -3236,7 +3432,7 @@ func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v20230501s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
 
 	// CreatedAt
 	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
@@ -3246,8 +3442,9 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 
 	// CreatedByType
 	if source.CreatedByType != nil {
-		createdByType := SystemData_CreatedByType_STATUS(*source.CreatedByType)
-		data.CreatedByType = &createdByType
+		createdByType := *source.CreatedByType
+		createdByTypeTemp := genruntime.ToEnum(createdByType, systemData_CreatedByType_STATUS_Values)
+		data.CreatedByType = &createdByTypeTemp
 	} else {
 		data.CreatedByType = nil
 	}
@@ -3260,8 +3457,9 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 
 	// LastModifiedByType
 	if source.LastModifiedByType != nil {
-		lastModifiedByType := SystemData_LastModifiedByType_STATUS(*source.LastModifiedByType)
-		data.LastModifiedByType = &lastModifiedByType
+		lastModifiedByType := *source.LastModifiedByType
+		lastModifiedByTypeTemp := genruntime.ToEnum(lastModifiedByType, systemData_LastModifiedByType_STATUS_Values)
+		data.LastModifiedByType = &lastModifiedByTypeTemp
 	} else {
 		data.LastModifiedByType = nil
 	}
@@ -3271,7 +3469,7 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 }
 
 // AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *v20230501s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3356,7 +3554,7 @@ func (info *ErrorAdditionalInfo_STATUS) PopulateFromARM(owner genruntime.Arbitra
 }
 
 // AssignProperties_From_ErrorAdditionalInfo_STATUS populates our ErrorAdditionalInfo_STATUS from the provided source ErrorAdditionalInfo_STATUS
-func (info *ErrorAdditionalInfo_STATUS) AssignProperties_From_ErrorAdditionalInfo_STATUS(source *v20230501s.ErrorAdditionalInfo_STATUS) error {
+func (info *ErrorAdditionalInfo_STATUS) AssignProperties_From_ErrorAdditionalInfo_STATUS(source *storage.ErrorAdditionalInfo_STATUS) error {
 
 	// Info
 	if source.Info != nil {
@@ -3379,7 +3577,7 @@ func (info *ErrorAdditionalInfo_STATUS) AssignProperties_From_ErrorAdditionalInf
 }
 
 // AssignProperties_To_ErrorAdditionalInfo_STATUS populates the provided destination ErrorAdditionalInfo_STATUS from our ErrorAdditionalInfo_STATUS
-func (info *ErrorAdditionalInfo_STATUS) AssignProperties_To_ErrorAdditionalInfo_STATUS(destination *v20230501s.ErrorAdditionalInfo_STATUS) error {
+func (info *ErrorAdditionalInfo_STATUS) AssignProperties_To_ErrorAdditionalInfo_STATUS(destination *storage.ErrorAdditionalInfo_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3471,7 +3669,7 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) PopulateFromARM(owner genruntime.Ar
 }
 
 // AssignProperties_From_ErrorDetail_STATUS_Unrolled populates our ErrorDetail_STATUS_Unrolled from the provided source ErrorDetail_STATUS_Unrolled
-func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_From_ErrorDetail_STATUS_Unrolled(source *v20230501s.ErrorDetail_STATUS_Unrolled) error {
+func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_From_ErrorDetail_STATUS_Unrolled(source *storage.ErrorDetail_STATUS_Unrolled) error {
 
 	// AdditionalInfo
 	if source.AdditionalInfo != nil {
@@ -3505,17 +3703,17 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_From_ErrorDetail_S
 }
 
 // AssignProperties_To_ErrorDetail_STATUS_Unrolled populates the provided destination ErrorDetail_STATUS_Unrolled from our ErrorDetail_STATUS_Unrolled
-func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_To_ErrorDetail_STATUS_Unrolled(destination *v20230501s.ErrorDetail_STATUS_Unrolled) error {
+func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_To_ErrorDetail_STATUS_Unrolled(destination *storage.ErrorDetail_STATUS_Unrolled) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AdditionalInfo
 	if unrolled.AdditionalInfo != nil {
-		additionalInfoList := make([]v20230501s.ErrorAdditionalInfo_STATUS, len(unrolled.AdditionalInfo))
+		additionalInfoList := make([]storage.ErrorAdditionalInfo_STATUS, len(unrolled.AdditionalInfo))
 		for additionalInfoIndex, additionalInfoItem := range unrolled.AdditionalInfo {
 			// Shadow the loop variable to avoid aliasing
 			additionalInfoItem := additionalInfoItem
-			var additionalInfo v20230501s.ErrorAdditionalInfo_STATUS
+			var additionalInfo storage.ErrorAdditionalInfo_STATUS
 			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
@@ -3555,12 +3753,68 @@ const (
 	Extension_Properties_AksAssignedIdentity_Type_Spec_UserAssigned   = Extension_Properties_AksAssignedIdentity_Type_Spec("UserAssigned")
 )
 
+// Mapping from string to Extension_Properties_AksAssignedIdentity_Type_Spec
+var extension_Properties_AksAssignedIdentity_Type_Spec_Values = map[string]Extension_Properties_AksAssignedIdentity_Type_Spec{
+	"systemassigned": Extension_Properties_AksAssignedIdentity_Type_Spec_SystemAssigned,
+	"userassigned":   Extension_Properties_AksAssignedIdentity_Type_Spec_UserAssigned,
+}
+
 type Extension_Properties_AksAssignedIdentity_Type_STATUS string
 
 const (
 	Extension_Properties_AksAssignedIdentity_Type_STATUS_SystemAssigned = Extension_Properties_AksAssignedIdentity_Type_STATUS("SystemAssigned")
 	Extension_Properties_AksAssignedIdentity_Type_STATUS_UserAssigned   = Extension_Properties_AksAssignedIdentity_Type_STATUS("UserAssigned")
 )
+
+// Mapping from string to Extension_Properties_AksAssignedIdentity_Type_STATUS
+var extension_Properties_AksAssignedIdentity_Type_STATUS_Values = map[string]Extension_Properties_AksAssignedIdentity_Type_STATUS{
+	"systemassigned": Extension_Properties_AksAssignedIdentity_Type_STATUS_SystemAssigned,
+	"userassigned":   Extension_Properties_AksAssignedIdentity_Type_STATUS_UserAssigned,
+}
+
+type ExtensionOperatorConfigMaps struct {
+	// PrincipalId: indicates where the PrincipalId config map should be placed. If omitted, no config map will be created.
+	PrincipalId *genruntime.ConfigMapDestination `json:"principalId,omitempty"`
+}
+
+// AssignProperties_From_ExtensionOperatorConfigMaps populates our ExtensionOperatorConfigMaps from the provided source ExtensionOperatorConfigMaps
+func (maps *ExtensionOperatorConfigMaps) AssignProperties_From_ExtensionOperatorConfigMaps(source *storage.ExtensionOperatorConfigMaps) error {
+
+	// PrincipalId
+	if source.PrincipalId != nil {
+		principalId := source.PrincipalId.Copy()
+		maps.PrincipalId = &principalId
+	} else {
+		maps.PrincipalId = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ExtensionOperatorConfigMaps populates the provided destination ExtensionOperatorConfigMaps from our ExtensionOperatorConfigMaps
+func (maps *ExtensionOperatorConfigMaps) AssignProperties_To_ExtensionOperatorConfigMaps(destination *storage.ExtensionOperatorConfigMaps) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// PrincipalId
+	if maps.PrincipalId != nil {
+		principalId := maps.PrincipalId.Copy()
+		destination.PrincipalId = &principalId
+	} else {
+		destination.PrincipalId = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
 
 type ExtensionStatus_Level_STATUS string
 
@@ -3569,6 +3823,13 @@ const (
 	ExtensionStatus_Level_STATUS_Information = ExtensionStatus_Level_STATUS("Information")
 	ExtensionStatus_Level_STATUS_Warning     = ExtensionStatus_Level_STATUS("Warning")
 )
+
+// Mapping from string to ExtensionStatus_Level_STATUS
+var extensionStatus_Level_STATUS_Values = map[string]ExtensionStatus_Level_STATUS{
+	"error":       ExtensionStatus_Level_STATUS_Error,
+	"information": ExtensionStatus_Level_STATUS_Information,
+	"warning":     ExtensionStatus_Level_STATUS_Warning,
+}
 
 // Specifies that the scope of the extension is Cluster
 type ScopeCluster struct {
@@ -3617,7 +3878,7 @@ func (cluster *ScopeCluster) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 }
 
 // AssignProperties_From_ScopeCluster populates our ScopeCluster from the provided source ScopeCluster
-func (cluster *ScopeCluster) AssignProperties_From_ScopeCluster(source *v20230501s.ScopeCluster) error {
+func (cluster *ScopeCluster) AssignProperties_From_ScopeCluster(source *storage.ScopeCluster) error {
 
 	// ReleaseNamespace
 	cluster.ReleaseNamespace = genruntime.ClonePointerToString(source.ReleaseNamespace)
@@ -3627,7 +3888,7 @@ func (cluster *ScopeCluster) AssignProperties_From_ScopeCluster(source *v2023050
 }
 
 // AssignProperties_To_ScopeCluster populates the provided destination ScopeCluster from our ScopeCluster
-func (cluster *ScopeCluster) AssignProperties_To_ScopeCluster(destination *v20230501s.ScopeCluster) error {
+func (cluster *ScopeCluster) AssignProperties_To_ScopeCluster(destination *storage.ScopeCluster) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3687,7 +3948,7 @@ func (cluster *ScopeCluster_STATUS) PopulateFromARM(owner genruntime.ArbitraryOw
 }
 
 // AssignProperties_From_ScopeCluster_STATUS populates our ScopeCluster_STATUS from the provided source ScopeCluster_STATUS
-func (cluster *ScopeCluster_STATUS) AssignProperties_From_ScopeCluster_STATUS(source *v20230501s.ScopeCluster_STATUS) error {
+func (cluster *ScopeCluster_STATUS) AssignProperties_From_ScopeCluster_STATUS(source *storage.ScopeCluster_STATUS) error {
 
 	// ReleaseNamespace
 	cluster.ReleaseNamespace = genruntime.ClonePointerToString(source.ReleaseNamespace)
@@ -3697,7 +3958,7 @@ func (cluster *ScopeCluster_STATUS) AssignProperties_From_ScopeCluster_STATUS(so
 }
 
 // AssignProperties_To_ScopeCluster_STATUS populates the provided destination ScopeCluster_STATUS from our ScopeCluster_STATUS
-func (cluster *ScopeCluster_STATUS) AssignProperties_To_ScopeCluster_STATUS(destination *v20230501s.ScopeCluster_STATUS) error {
+func (cluster *ScopeCluster_STATUS) AssignProperties_To_ScopeCluster_STATUS(destination *storage.ScopeCluster_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3762,7 +4023,7 @@ func (namespace *ScopeNamespace) PopulateFromARM(owner genruntime.ArbitraryOwner
 }
 
 // AssignProperties_From_ScopeNamespace populates our ScopeNamespace from the provided source ScopeNamespace
-func (namespace *ScopeNamespace) AssignProperties_From_ScopeNamespace(source *v20230501s.ScopeNamespace) error {
+func (namespace *ScopeNamespace) AssignProperties_From_ScopeNamespace(source *storage.ScopeNamespace) error {
 
 	// TargetNamespace
 	namespace.TargetNamespace = genruntime.ClonePointerToString(source.TargetNamespace)
@@ -3772,7 +4033,7 @@ func (namespace *ScopeNamespace) AssignProperties_From_ScopeNamespace(source *v2
 }
 
 // AssignProperties_To_ScopeNamespace populates the provided destination ScopeNamespace from our ScopeNamespace
-func (namespace *ScopeNamespace) AssignProperties_To_ScopeNamespace(destination *v20230501s.ScopeNamespace) error {
+func (namespace *ScopeNamespace) AssignProperties_To_ScopeNamespace(destination *storage.ScopeNamespace) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3832,7 +4093,7 @@ func (namespace *ScopeNamespace_STATUS) PopulateFromARM(owner genruntime.Arbitra
 }
 
 // AssignProperties_From_ScopeNamespace_STATUS populates our ScopeNamespace_STATUS from the provided source ScopeNamespace_STATUS
-func (namespace *ScopeNamespace_STATUS) AssignProperties_From_ScopeNamespace_STATUS(source *v20230501s.ScopeNamespace_STATUS) error {
+func (namespace *ScopeNamespace_STATUS) AssignProperties_From_ScopeNamespace_STATUS(source *storage.ScopeNamespace_STATUS) error {
 
 	// TargetNamespace
 	namespace.TargetNamespace = genruntime.ClonePointerToString(source.TargetNamespace)
@@ -3842,7 +4103,7 @@ func (namespace *ScopeNamespace_STATUS) AssignProperties_From_ScopeNamespace_STA
 }
 
 // AssignProperties_To_ScopeNamespace_STATUS populates the provided destination ScopeNamespace_STATUS from our ScopeNamespace_STATUS
-func (namespace *ScopeNamespace_STATUS) AssignProperties_To_ScopeNamespace_STATUS(destination *v20230501s.ScopeNamespace_STATUS) error {
+func (namespace *ScopeNamespace_STATUS) AssignProperties_To_ScopeNamespace_STATUS(destination *storage.ScopeNamespace_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 

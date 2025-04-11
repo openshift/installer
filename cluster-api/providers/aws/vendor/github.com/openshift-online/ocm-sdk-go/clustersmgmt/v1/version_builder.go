@@ -36,6 +36,7 @@ type VersionBuilder struct {
 	imageOverrides            *ImageOverridesBuilder
 	rawID                     string
 	releaseImage              string
+	releaseImages             *ReleaseImagesBuilder
 	gcpMarketplaceEnabled     bool
 	rosaEnabled               bool
 	default_                  bool
@@ -165,6 +166,17 @@ func (b *VersionBuilder) ReleaseImage(value string) *VersionBuilder {
 	return b
 }
 
+// ReleaseImages sets the value of the 'release_images' attribute to the given value.
+func (b *VersionBuilder) ReleaseImages(value *ReleaseImagesBuilder) *VersionBuilder {
+	b.releaseImages = value
+	if value != nil {
+		b.bitmap_ |= 32768
+	} else {
+		b.bitmap_ &^= 32768
+	}
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *VersionBuilder) Copy(object *Version) *VersionBuilder {
 	if object == nil {
@@ -194,6 +206,11 @@ func (b *VersionBuilder) Copy(object *Version) *VersionBuilder {
 	}
 	b.rawID = object.rawID
 	b.releaseImage = object.releaseImage
+	if object.releaseImages != nil {
+		b.releaseImages = NewReleaseImages().Copy(object.releaseImages)
+	} else {
+		b.releaseImages = nil
+	}
 	return b
 }
 
@@ -223,5 +240,11 @@ func (b *VersionBuilder) Build() (object *Version, err error) {
 	}
 	object.rawID = b.rawID
 	object.releaseImage = b.releaseImage
+	if b.releaseImages != nil {
+		object.releaseImages, err = b.releaseImages.Build()
+		if err != nil {
+			return
+		}
+	}
 	return
 }

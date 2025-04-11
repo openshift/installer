@@ -34,11 +34,12 @@ const (
 
 func ResourceIBMObLogging() *schema.Resource {
 	return &schema.Resource{
-		Create:   resourceIBMLoggingCreate,
-		Read:     resourceIBMLoggingRead,
-		Update:   resourceIBMLoggingUpdate,
-		Delete:   resourceIBMLoggingDelete,
-		Importer: &schema.ResourceImporter{},
+		Create:             resourceIBMLoggingCreate,
+		Read:               resourceIBMLoggingRead,
+		Update:             resourceIBMLoggingUpdate,
+		Delete:             resourceIBMLoggingDelete,
+		Importer:           &schema.ResourceImporter{},
+		DeprecationMessage: "The observability plug-in (ob) is deprecated and support ends on 28 March 2025. You can now manage your observability instance and agents via the Cluster dashboard or the Observability agents module: https://github.com/terraform-ibm-modules/terraform-ibm-observability-agents.",
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(45 * time.Minute),
@@ -119,7 +120,7 @@ func ResourceIBMObLogging() *schema.Resource {
 	}
 }
 func waitForClusterIntegration(d *schema.ResourceData, meta interface{}, clusterID string) (interface{}, error) {
-	targetEnv, err := getVpcClusterTargetHeader(d, meta)
+	targetEnv, err := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +137,7 @@ func waitForClusterIntegration(d *schema.ResourceData, meta interface{}, cluster
 			if err != nil {
 				return nil, "", fmt.Errorf("[ERROR] Error retrieving cluster: %s", err)
 			}
-			if clusterFields.Lifecycle.MasterStatus == ready || clusterFields.MasterStatus == ready {
+			if (clusterFields.Lifecycle.MasterStatus == ready && clusterFields.Lifecycle.MasterHealth == normal) || (clusterFields.MasterStatus == ready && clusterFields.MasterHealth == normal) {
 				return clusterFields, ready, nil
 			}
 			return clusterFields, deployInProgress, nil

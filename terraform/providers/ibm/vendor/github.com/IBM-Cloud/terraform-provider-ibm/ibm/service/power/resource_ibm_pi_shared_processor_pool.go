@@ -10,13 +10,14 @@ import (
 	"strings"
 	"time"
 
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
-	models "github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/power-go-client/ibmpisession"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -33,133 +34,161 @@ func ResourceIBMPISharedProcessorPool() *schema.Resource {
 			Update: schema.DefaultTimeout(60 * time.Minute),
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
+		CustomizeDiff: customdiff.Sequence(
+			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+				return flex.ResourcePowerUserTagsCustomizeDiff(diff)
+			},
+		),
 
 		Schema: map[string]*schema.Schema{
-
-			// Required Arguments
-			Arg_SharedProcessorPoolName: {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Name of the shared processor pool",
-			},
-
-			Arg_SharedProcessorPoolHostGroup: {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Host group of the shared processor pool",
-			},
-
-			Arg_SharedProcessorPoolReservedCores: {
-				Type:        schema.TypeInt,
-				Required:    true,
-				Description: "The amount of reserved cores for the shared processor pool",
-			},
-
+			// Arguments
 			Arg_CloudInstanceID: {
-				Type:        schema.TypeString,
+				Description: "The GUID of the service instance associated with an account.",
+				ForceNew:    true,
 				Required:    true,
-				Description: "PI cloud instance ID",
-			},
-
-			// Optional Arguments
-			Arg_SharedProcessorPoolPlacementGroupID: {
 				Type:        schema.TypeString,
+			},
+			Arg_HostID: {
+				Description: "The host id of a host in a host group (only available for dedicated hosts).",
 				Optional:    true,
-				Description: "Placement group the shared processor pool is created in",
+				Type:        schema.TypeString,
+			},
+			Arg_SharedProcessorPoolHostGroup: {
+				Description: "Host group of the shared processor pool. Valid values are 's922', 'e980' and 's1022'.",
+				ForceNew:    true,
+				Required:    true,
+				Type:        schema.TypeString,
+			},
+			Arg_SharedProcessorPoolName: {
+				Description: "The name of the shared processor pool.",
+				Required:    true,
+				Type:        schema.TypeString,
+			},
+			Arg_SharedProcessorPoolPlacementGroupID: {
+				ConflictsWith: []string{Arg_SharedProcessorPoolPlacementGroups},
+				Deprecated:    "This field is deprecated, use pi_shared_processor_pool_placement_groups instead",
+				Description:   "The ID of the placement group the shared processor pool is created in.",
+				Optional:      true,
+				Type:          schema.TypeString,
+			},
+			Arg_SharedProcessorPoolPlacementGroups: {
+				ConflictsWith: []string{Arg_SharedProcessorPoolPlacementGroupID, Attr_SharedProcessorPoolPlacementGroups},
+				Description:   "The list of shared processor pool placement groups that the shared processor pool is in.",
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				Optional:      true,
+				Type:          schema.TypeList,
+			},
+			Arg_SharedProcessorPoolReservedCores: {
+				Description: "The amount of reserved cores for the shared processor pool.",
+				Required:    true,
+				Type:        schema.TypeInt,
+			},
+			Arg_UserTags: {
+				Computed:    true,
+				Description: "The user tags attached to this resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Optional:    true,
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
 			},
 
 			// Attributes
-			Attr_SharedProcessorPoolID: {
-				Type:        schema.TypeString,
+			Attr_AllocatedCores: {
 				Computed:    true,
-				Description: "Shared processor pool ID",
-			},
-
-			Attr_SharedProcessorPoolAvailableCores: {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "Shared processor pool available cores",
-			},
-
-			Attr_SharedProcessorPoolAllocatedCores: {
+				Description: "The allocated cores in the shared processor pool.",
 				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Shared processor pool allocated cores",
 			},
-
-			Attr_SharedProcessorPoolHostID: {
+			Attr_AvailableCores: {
+				Computed:    true,
+				Description: "The available cores in the shared processor pool.",
 				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "The host ID where the shared processor pool resides",
 			},
-
-			Attr_SharedProcessorPoolStatus: {
+			Attr_CRN: {
+				Computed:    true,
+				Description: "The CRN of this resource.",
 				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The status of the shared processor pool",
 			},
-
-			Attr_SharedProcessorPoolStatusDetail: {
+			Attr_DedicatedHostID: {
+				Computed:    true,
+				Description: "The dedicated host ID where the shared processor pool resides.",
 				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The status details of the shared processor pool",
 			},
-
-			Attr_SharedProcessorPoolPlacementGroups: {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "SPP placement groups the shared processor pool are in",
-			},
-
-			Attr_SharedProcessorPoolInstances: {
-				Type:        schema.TypeList,
+			Attr_HostID: {
 				Computed:    true,
-				Description: "List of server instances deployed in the shared processor pool",
+				Description: "The host ID where the shared processor pool resides.",
+				Type:        schema.TypeInt,
+			},
+			Attr_Instances: {
+				Computed:    true,
+				Description: "The list of server instances that are deployed in the shared processor pool.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						Attr_SharedProcessorPoolInstanceCpus: {
-							Type:        schema.TypeInt,
+						Attr_AvailabilityZone: {
 							Computed:    true,
-							Description: "The amount of cpus for the server instance",
+							Description: "Availability zone for the server instances.",
+							Type:        schema.TypeString,
 						},
-						Attr_SharedProcessorPoolInstanceUncapped: {
+						Attr_CPUs: {
+							Computed:    true,
+							Description: "The amount of cpus for the server instance.",
+							Type:        schema.TypeInt,
+						},
+						Attr_ID: {
+							Computed:    true,
+							Description: "The server instance ID.",
+							Type:        schema.TypeString,
+						},
+						Attr_Memory: {
+							Computed:    true,
+							Description: "The amount of memory for the server instance.",
+							Type:        schema.TypeInt,
+						},
+						Attr_Name: {
+							Computed:    true,
+							Description: "The server instance name.",
+							Type:        schema.TypeString,
+						},
+						Attr_Status: {
+							Computed:    true,
+							Description: "Status of the instance.",
+							Type:        schema.TypeString,
+						},
+						Attr_Uncapped: {
+							Computed:    true,
+							Description: "Identifies if uncapped or not.",
 							Type:        schema.TypeBool,
-							Computed:    true,
-							Description: "Identifies if uncapped or not",
 						},
-						Attr_SharedProcessorPoolInstanceAvailabilityZone: {
-							Type:        schema.TypeString,
+						Attr_VCPUs: {
 							Computed:    true,
-							Description: "Availability zone for the server instances",
-						},
-						Attr_SharedProcessorPoolInstanceId: {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The server instance ID",
-						},
-						Attr_SharedProcessorPoolInstanceMemory: {
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "The amount of memory for the server instance",
-						},
-						Attr_SharedProcessorPoolInstanceName: {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The server instance name",
-						},
-						Attr_SharedProcessorPoolInstanceStatus: {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "Status of the server",
-						},
-						Attr_SharedProcessorPoolInstanceVcpus: {
+							Description: "The amout of vcpus for the server instance.",
 							Type:        schema.TypeFloat,
-							Computed:    true,
-							Description: "The amout of vcpus for the server instance",
 						},
 					},
 				},
+				Type: schema.TypeList,
+			},
+			Attr_SharedProcessorPoolID: {
+				Computed:    true,
+				Description: "The shared processor pool's unique ID.",
+				Type:        schema.TypeString,
+			},
+			Attr_SharedProcessorPoolPlacementGroups: {
+				ConflictsWith: []string{Arg_SharedProcessorPoolPlacementGroups},
+				Deprecated:    "This field is deprecated, use pi_shared_processor_pool_placement_groups instead",
+				Description:   "The list of shared processor pool placement groups that the shared processor pool is in.",
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				Optional:      true,
+				Type:          schema.TypeList,
+			},
+			Attr_Status: {
+				Computed:    true,
+				Description: "The status of the shared processor pool.",
+				Type:        schema.TypeString,
+			},
+			Attr_StatusDetail: {
+				Computed:    true,
+				Description: "The status details of the shared processor pool.",
+				Type:        schema.TypeString,
 			},
 		},
 	}
@@ -171,20 +200,25 @@ func resourceIBMPISharedProcessorPoolCreate(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
-	name := d.Get(Arg_SharedProcessorPoolName).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 	hostGroup := d.Get(Arg_SharedProcessorPoolHostGroup).(string)
+	hostID := d.Get(Arg_HostID).(string)
+	name := d.Get(Arg_SharedProcessorPoolName).(string)
 	reservedCores := d.Get(Arg_SharedProcessorPoolReservedCores).(int)
 	cores := int64(reservedCores)
-	client := st.NewIBMPISharedProcessorPoolClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPISharedProcessorPoolClient(ctx, sess, cloudInstanceID)
 	body := &models.SharedProcessorPoolCreate{
-		Name:          &name,
 		HostGroup:     &hostGroup,
+		HostID:        hostID,
+		Name:          &name,
 		ReservedCores: &cores,
 	}
 
 	if pg, ok := d.GetOk(Arg_SharedProcessorPoolPlacementGroupID); ok {
 		body.PlacementGroupID = pg.(string)
+	}
+	if tags, ok := d.GetOk(Arg_UserTags); ok {
+		body.UserTags = flex.FlattenSet(tags.(*schema.Set))
 	}
 
 	spp, err := client.Create(body)
@@ -192,49 +226,59 @@ func resourceIBMPISharedProcessorPoolCreate(ctx context.Context, d *schema.Resou
 		return diag.Errorf("error creating the shared processor pool: %v", err)
 	}
 
-	var sharedProcessorPoolReadyStatus string
 	d.SetId(fmt.Sprintf("%s/%s", cloudInstanceID, *spp.ID))
-	_, err = isWaitForPISharedProcessorPoolAvailable(ctx, d, client, *spp.ID, sharedProcessorPoolReadyStatus)
+	_, err = isWaitForPISharedProcessorPoolAvailable(ctx, d, client, *spp.ID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	return resourceIBMPISharedProcessorPoolRead(ctx, d, meta)
+	diagErr := detectSPPPlacementGroupChange(ctx, sess, cloudInstanceID, d, *spp.ID)
+	if diagErr != nil {
+		return diagErr
+	}
 
+	if _, ok := d.GetOk(Arg_UserTags); ok {
+		if spp.Crn != "" {
+			oldList, newList := d.GetChange(Arg_UserTags)
+			err := flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, string(spp.Crn), "", UserTagType)
+			if err != nil {
+				log.Printf("Error on update of pi shared processor pool (%s) pi_user_tags during creation: %s", *spp.ID, err)
+			}
+		}
+	}
+
+	return resourceIBMPISharedProcessorPoolRead(ctx, d, meta)
 }
 
-func isWaitForPISharedProcessorPoolAvailable(ctx context.Context, d *schema.ResourceData, client *st.IBMPISharedProcessorPoolClient, id string, sharedProcessorPoolReadyStatus string) (interface{}, error) {
+func isWaitForPISharedProcessorPoolAvailable(ctx context.Context, d *schema.ResourceData, client *instance.IBMPISharedProcessorPoolClient, id string) (interface{}, error) {
 	log.Printf("Waiting for PISharedProcessorPool (%s) to be active ", id)
 
-	stateConf := &resource.StateChangeConf{
-		Pending:    []string{"configuring"},
-		Target:     []string{"active", "failed", ""},
-		Refresh:    isPISharedProcessorPoolRefreshFunc(client, id, sharedProcessorPoolReadyStatus),
+	stateConf := &retry.StateChangeConf{
+		Pending:    []string{State_Configuring},
+		Target:     []string{State_Active, State_Failed, ""},
+		Refresh:    isPISharedProcessorPoolRefreshFunc(client, id),
 		Delay:      20 * time.Second,
-		MinTimeout: activeTimeOut,
+		MinTimeout: Timeout_Active,
 		Timeout:    d.Timeout(schema.TimeoutCreate),
 	}
 
 	return stateConf.WaitForStateContext(ctx)
 }
 
-func isPISharedProcessorPoolRefreshFunc(client *st.IBMPISharedProcessorPoolClient, id, sharedProcessorPoolReadyStatus string) resource.StateRefreshFunc {
+func isPISharedProcessorPoolRefreshFunc(client *instance.IBMPISharedProcessorPoolClient, id string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-
 		pool, err := client.Get(id)
 		if err != nil {
 			return nil, "", err
 		}
-		// Check for `sharedProcessorPoolReadyStatus` status
-		if pool.SharedProcessorPool.Status == "active" {
-			return pool, "active", nil
+		if pool.SharedProcessorPool.Status == State_Active {
+			return pool, State_Active, nil
 		}
-		if pool.SharedProcessorPool.Status == "failed" {
+		if pool.SharedProcessorPool.Status == State_Failed {
 			err = fmt.Errorf("failed to create the shared processor pool")
 			return pool, pool.SharedProcessorPool.Status, err
 		}
-
-		return pool, "configuring", nil
+		return pool, State_Configuring, nil
 	}
 }
 
@@ -250,7 +294,7 @@ func resourceIBMPISharedProcessorPoolRead(ctx context.Context, d *schema.Resourc
 	}
 
 	cloudInstanceID := parts[0]
-	client := st.NewIBMPISharedProcessorPoolClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPISharedProcessorPoolClient(ctx, sess, cloudInstanceID)
 
 	response, err := client.Get(parts[1])
 	if err != nil || response == nil {
@@ -258,6 +302,14 @@ func resourceIBMPISharedProcessorPoolRead(ctx context.Context, d *schema.Resourc
 	}
 
 	d.Set(Arg_CloudInstanceID, cloudInstanceID)
+	if response.SharedProcessorPool.Crn != "" {
+		d.Set(Attr_CRN, response.SharedProcessorPool.Crn)
+		tags, err := flex.GetGlobalTagsUsingCRN(meta, string(response.SharedProcessorPool.Crn), "", UserTagType)
+		if err != nil {
+			log.Printf("Error on get of pi shared processor pool (%s) pi_user_tags: %s", *response.SharedProcessorPool.ID, err)
+		}
+		d.Set(Arg_UserTags, tags)
+	}
 	d.Set(Arg_SharedProcessorPoolHostGroup, response.SharedProcessorPool.HostGroup)
 
 	if response.SharedProcessorPool.Name != nil {
@@ -266,48 +318,50 @@ func resourceIBMPISharedProcessorPoolRead(ctx context.Context, d *schema.Resourc
 	if response.SharedProcessorPool.ID != nil {
 		d.Set(Attr_SharedProcessorPoolID, response.SharedProcessorPool.ID)
 	}
+	if response.SharedProcessorPool.AllocatedCores != nil {
+		d.Set(Attr_AllocatedCores, response.SharedProcessorPool.AllocatedCores)
+	}
+	if response.SharedProcessorPool.AvailableCores != nil {
+		d.Set(Attr_AvailableCores, response.SharedProcessorPool.AvailableCores)
+	}
 	if response.SharedProcessorPool.ReservedCores != nil {
 		d.Set(Arg_SharedProcessorPoolReservedCores, response.SharedProcessorPool.ReservedCores)
-	}
-	if response.SharedProcessorPool.AllocatedCores != nil {
-		d.Set(Attr_SharedProcessorPoolAllocatedCores, response.SharedProcessorPool.AllocatedCores)
-	}
-	if response.SharedProcessorPool.AvailableCores != nil {
-		d.Set(Attr_SharedProcessorPoolAvailableCores, response.SharedProcessorPool.AvailableCores)
-	}
-	if response.SharedProcessorPool.AvailableCores != nil {
-		d.Set(Attr_SharedProcessorPoolAvailableCores, response.SharedProcessorPool.AvailableCores)
 	}
 	if response.SharedProcessorPool.SharedProcessorPoolPlacementGroups != nil {
 		pgIDs := make([]string, len(response.SharedProcessorPool.SharedProcessorPoolPlacementGroups))
 		for i, pg := range response.SharedProcessorPool.SharedProcessorPoolPlacementGroups {
 			pgIDs[i] = *pg.ID
 		}
-		d.Set(Attr_SharedProcessorPoolPlacementGroups, pgIDs)
+		if _, ok := d.GetOk(Attr_SharedProcessorPoolPlacementGroups); ok {
+			d.Set(Attr_SharedProcessorPoolPlacementGroups, pgIDs)
+		} else {
+			d.Set(Arg_SharedProcessorPoolPlacementGroups, pgIDs)
+		}
 	}
-	d.Set(Attr_SharedProcessorPoolHostID, response.SharedProcessorPool.HostID)
-	d.Set(Attr_SharedProcessorPoolStatus, response.SharedProcessorPool.Status)
-	d.Set(Attr_SharedProcessorPoolStatusDetail, response.SharedProcessorPool.StatusDetail)
+	d.Set(Attr_DedicatedHostID, response.SharedProcessorPool.DedicatedHostID)
+	d.Set(Attr_HostID, response.SharedProcessorPool.HostID)
+	d.Set(Attr_Status, response.SharedProcessorPool.Status)
+	d.Set(Attr_StatusDetail, response.SharedProcessorPool.StatusDetail)
 
 	serversMap := []map[string]interface{}{}
 	if response.Servers != nil {
 		for _, s := range response.Servers {
 			if s != nil {
 				v := map[string]interface{}{
-					Attr_SharedProcessorPoolInstanceCpus:             s.Cpus,
-					Attr_SharedProcessorPoolInstanceUncapped:         s.Uncapped,
-					Attr_SharedProcessorPoolInstanceAvailabilityZone: s.AvailabilityZone,
-					Attr_SharedProcessorPoolInstanceId:               s.ID,
-					Attr_SharedProcessorPoolInstanceMemory:           s.Memory,
-					Attr_SharedProcessorPoolInstanceName:             s.Name,
-					Attr_SharedProcessorPoolInstanceStatus:           s.Status,
-					Attr_SharedProcessorPoolInstanceVcpus:            s.Vcpus,
+					Attr_AvailabilityZone: s.AvailabilityZone,
+					Attr_CPUs:             s.Cpus,
+					Attr_ID:               s.ID,
+					Attr_Memory:           s.Memory,
+					Attr_Name:             s.Name,
+					Attr_Status:           s.Status,
+					Attr_Uncapped:         s.Uncapped,
+					Attr_VCPUs:            s.Vcpus,
 				}
 				serversMap = append(serversMap, v)
 			}
 		}
 	}
-	d.Set(Attr_SharedProcessorPoolInstances, serversMap)
+	d.Set(Attr_Instances, serversMap)
 
 	return nil
 }
@@ -323,7 +377,7 @@ func resourceIBMPISharedProcessorPoolUpdate(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	client := st.NewIBMPISharedProcessorPoolClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPISharedProcessorPoolClient(ctx, sess, cloudInstanceID)
 	body := &models.SharedProcessorPoolUpdate{}
 
 	if d.HasChange(Arg_SharedProcessorPoolName) {
@@ -332,7 +386,7 @@ func resourceIBMPISharedProcessorPoolUpdate(ctx context.Context, d *schema.Resou
 	}
 	if d.HasChange(Arg_SharedProcessorPoolReservedCores) {
 		reservedCores := int64(d.Get(Arg_SharedProcessorPoolReservedCores).(int))
-		body.ReservedCores = reservedCores
+		body.ReservedCores = &reservedCores
 	}
 
 	_, err = client.Update(sppID, body)
@@ -340,11 +394,35 @@ func resourceIBMPISharedProcessorPoolUpdate(ctx context.Context, d *schema.Resou
 		return diag.Errorf("error updating the shared processor pool: %v", err)
 	}
 
-	if d.HasChange(Attr_SharedProcessorPoolPlacementGroups) {
+	diagErr := detectSPPPlacementGroupChange(ctx, sess, cloudInstanceID, d, sppID)
+	if diagErr != nil {
+		return diagErr
+	}
 
-		pgClient := st.NewIBMPISPPPlacementGroupClient(ctx, sess, cloudInstanceID)
+	if d.HasChange(Arg_UserTags) {
+		if crn, ok := d.GetOk(Attr_CRN); ok {
+			oldList, newList := d.GetChange(Arg_UserTags)
+			err := flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, crn.(string), "", UserTagType)
+			if err != nil {
+				log.Printf("Error on update of pi shared processor pool (%s) pi_user_tags: %s", sppID, err)
+			}
+		}
+	}
 
-		oldRaw, newRaw := d.GetChange(Attr_SharedProcessorPoolPlacementGroups)
+	return resourceIBMPISharedProcessorPoolRead(ctx, d, meta)
+}
+
+func detectSPPPlacementGroupChange(ctx context.Context, sess *ibmpisession.IBMPISession, cloudInstanceID string, d *schema.ResourceData, sppID string) diag.Diagnostics {
+	if d.HasChanges(Arg_SharedProcessorPoolPlacementGroups, Attr_SharedProcessorPoolPlacementGroups) {
+
+		pgClient := instance.NewIBMPISPPPlacementGroupClient(ctx, sess, cloudInstanceID)
+
+		var oldRaw, newRaw interface{}
+		if d.HasChange(Arg_SharedProcessorPoolPlacementGroups) {
+			oldRaw, newRaw = d.GetChange(Arg_SharedProcessorPoolPlacementGroups)
+		} else {
+			oldRaw, newRaw = d.GetChange(Attr_SharedProcessorPoolPlacementGroups)
+		}
 		old := oldRaw.([]interface{})
 		new := newRaw.([]interface{})
 
@@ -387,8 +465,7 @@ func resourceIBMPISharedProcessorPoolUpdate(ctx context.Context, d *schema.Resou
 			}
 		}
 	}
-
-	return resourceIBMPISharedProcessorPoolRead(ctx, d, meta)
+	return nil
 }
 
 // returns the elements in string array a that are not in array z
@@ -416,7 +493,7 @@ func resourceIBMPISharedProcessorPoolDelete(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 	cloudInstanceID := parts[0]
-	client := st.NewIBMPISharedProcessorPoolClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPISharedProcessorPoolClient(ctx, sess, cloudInstanceID)
 	err = client.Delete(parts[1])
 
 	if err != nil {

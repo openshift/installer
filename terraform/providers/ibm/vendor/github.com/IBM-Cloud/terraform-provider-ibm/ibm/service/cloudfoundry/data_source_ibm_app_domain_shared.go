@@ -23,6 +23,7 @@ func DataSourceIBMAppDomainShared() *schema.Resource {
 				ValidateFunc: validate.ValidateDomainName,
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 

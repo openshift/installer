@@ -37,6 +37,9 @@ type Host struct {
 	// Format: uuid
 	ClusterID *strfmt.UUID `json:"cluster_id,omitempty" gorm:"foreignkey:Cluster"`
 
+	// Indicate that connection to assisted service was timed out when soft timeout is enabled.
+	ConnectionTimedOut bool `json:"connection_timed_out,omitempty"`
+
 	// connectivity
 	Connectivity string `json:"connectivity,omitempty" gorm:"type:text"`
 

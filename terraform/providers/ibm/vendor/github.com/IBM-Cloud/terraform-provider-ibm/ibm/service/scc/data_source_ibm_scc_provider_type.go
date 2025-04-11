@@ -5,7 +5,6 @@ package scc
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -17,7 +16,7 @@ import (
 )
 
 func DataSourceIbmSccProviderType() *schema.Resource {
-	return &schema.Resource{
+	return AddSchemaData(&schema.Resource{
 		ReadContext: dataSourceIbmSccProviderTypeRead,
 
 		Schema: map[string]*schema.Schema{
@@ -109,7 +108,7 @@ func DataSourceIbmSccProviderType() *schema.Resource {
 				Description: "Time at which resource was updated.",
 			},
 		},
-	}
+	})
 }
 
 func dataSourceIbmSccProviderTypeRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -118,52 +117,53 @@ func dataSourceIbmSccProviderTypeRead(context context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 
-	getProviderTypeByIdOptions := &securityandcompliancecenterapiv3.GetProviderTypeByIdOptions{}
+	getProviderTypeByIdOptions := &securityandcompliancecenterapiv3.GetProviderTypeByIDOptions{}
 
+	getProviderTypeByIdOptions.SetInstanceID(d.Get("instance_id").(string))
 	getProviderTypeByIdOptions.SetProviderTypeID(d.Get("provider_type_id").(string))
 
 	providerTypeItem, response, err := securityAndComplianceCenterApIsClient.GetProviderTypeByIDWithContext(context, getProviderTypeByIdOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetProviderTypeByIDWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetProviderTypeByIDWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetProviderTypeByIDWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(*providerTypeItem.ID)
 
 	if err = d.Set("id", providerTypeItem.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting id: %s", err))
 	}
 
 	if err = d.Set("type", providerTypeItem.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting type: %s", err))
 	}
 
 	if err = d.Set("name", providerTypeItem.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting name: %s", err))
 	}
 
 	if err = d.Set("description", providerTypeItem.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting description: %s", err))
 	}
 
 	if err = d.Set("s2s_enabled", providerTypeItem.S2sEnabled); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting s2s_enabled: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting s2s_enabled: %s", err))
 	}
 
 	if err = d.Set("instance_limit", flex.IntValue(providerTypeItem.InstanceLimit)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_limit: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting instance_limit: %s", err))
 	}
 
 	if err = d.Set("mode", providerTypeItem.Mode); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting mode: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting mode: %s", err))
 	}
 
 	if err = d.Set("data_type", providerTypeItem.DataType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting data_type: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting data_type: %s", err))
 	}
 
 	if err = d.Set("icon", providerTypeItem.Icon); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting icon: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting icon: %s", err))
 	}
 
 	label := []map[string]interface{}{}
@@ -175,7 +175,7 @@ func dataSourceIbmSccProviderTypeRead(context context.Context, d *schema.Resourc
 		label = append(label, modelMap)
 	}
 	if err = d.Set("label", label); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting label %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting label %s", err))
 	}
 
 	if providerTypeItem.Attributes != nil {
@@ -185,19 +185,19 @@ func dataSourceIbmSccProviderTypeRead(context context.Context, d *schema.Resourc
 		}
 
 		if err = d.Set("attributes", flex.Flatten(convertedMap)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting attributes: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting attributes: %s", err))
 		}
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting attributes %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting attributes %s", err))
 		}
 	}
 
 	if err = d.Set("created_at", flex.DateTimeToString(providerTypeItem.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_at: %s", err))
 	}
 
 	if err = d.Set("updated_at", flex.DateTimeToString(providerTypeItem.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_at: %s", err))
 	}
 
 	return nil
@@ -211,12 +211,5 @@ func dataSourceIbmSccProviderTypeLabelTypeToMap(model *securityandcompliancecent
 	if model.Tip != nil {
 		modelMap["tip"] = model.Tip
 	}
-	return modelMap, nil
-}
-
-func dataSourceIbmSccProviderTypeAdditionalPropertyToMap(model *securityandcompliancecenterapiv3.AdditionalProperty) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	modelMap["type"] = model.Type
-	modelMap["display_name"] = model.DisplayName
 	return modelMap, nil
 }

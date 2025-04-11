@@ -7,17 +7,18 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/errors"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_service_d_h_c_p"
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func ResourceIBMPIDhcp() *schema.Resource {
@@ -32,91 +33,85 @@ func ResourceIBMPIDhcp() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 
-			// Required Arguments
-			Arg_CloudInstanceID: {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "PI cloud instance ID",
-				ForceNew:    true,
-			},
-
-			// Optional Arguments
-			Arg_DhcpCidr: {
-				Type:        schema.TypeString,
-				Optional:    true,
+			// Arguments
+			Arg_Cidr: {
 				Description: "Optional cidr for DHCP private network",
 				ForceNew:    true,
-			},
-			Arg_DhcpCloudConnectionID: {
-				Type:        schema.TypeString,
 				Optional:    true,
+				Type:        schema.TypeString,
+			},
+			Arg_CloudConnectionID: {
 				Description: "Optional cloud connection uuid to connect with DHCP private network",
 				ForceNew:    true,
-			},
-			Arg_DhcpDnsServer: {
-				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Optional DNS Server for DHCP service",
-				ForceNew:    true,
+				Type:        schema.TypeString,
+			},
+			Arg_CloudInstanceID: {
+				Description:  "PI cloud instance ID",
+				ForceNew:     true,
+				Required:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validation.NoZeroValues,
 			},
 			Arg_DhcpName: {
-				Type:        schema.TypeString,
-				Optional:    true,
 				Description: "Optional name of DHCP Service (will be prefixed by DHCP identifier)",
 				ForceNew:    true,
+				Optional:    true,
+				Type:        schema.TypeString,
 			},
 			Arg_DhcpSnatEnabled: {
-				Type:        schema.TypeBool,
-				Optional:    true,
 				Default:     true,
 				Description: "Indicates if SNAT will be enabled for the DHCP service",
 				ForceNew:    true,
+				Optional:    true,
+				Type:        schema.TypeBool,
+			},
+			Arg_DnsServer: {
+				Description: "Optional DNS Server for DHCP service",
+				ForceNew:    true,
+				Optional:    true,
+				Type:        schema.TypeString,
 			},
 
 			// Attributes
 			Attr_DhcpID: {
-				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The ID of the DHCP Server",
+				Type:        schema.TypeString,
 			},
-			Attr_DhcpLeases: {
-				Type:        schema.TypeList,
+			Attr_Leases: {
 				Computed:    true,
 				Description: "The list of DHCP Server PVM Instance leases",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						Attr_DhcpLeaseInstanceIP: {
-							Type:        schema.TypeString,
+						Attr_InstanceIP: {
 							Computed:    true,
 							Description: "The IP of the PVM Instance",
-						},
-						Attr_DhcpLeaseInstanceMac: {
 							Type:        schema.TypeString,
+						},
+						Attr_InstanceMac: {
 							Computed:    true,
 							Description: "The MAC Address of the PVM Instance",
+							Type:        schema.TypeString,
 						},
 					},
 				},
+				Type: schema.TypeList,
 			},
-			Attr_DhcpNetworkDeprecated: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The ID of the DHCP Server private network (deprecated - replaced by network_id)",
-			},
-			Attr_DhcpNetworkID: {
-				Type:        schema.TypeString,
+			Attr_NetworkID: {
 				Computed:    true,
 				Description: "The ID of the DHCP Server private network",
-			},
-			Attr_DhcpNetworkName: {
 				Type:        schema.TypeString,
+			},
+			Attr_NetworkName: {
 				Computed:    true,
 				Description: "The name of the DHCP Server private network",
-			},
-			Attr_DhcpStatus: {
 				Type:        schema.TypeString,
+			},
+			Attr_Status: {
 				Computed:    true,
 				Description: "The status of the DHCP Server",
+				Type:        schema.TypeString,
 			},
 		},
 	}
@@ -135,15 +130,15 @@ func resourceIBMPIDhcpCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	// arguments
 	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
-	if cidr, ok := d.GetOk(Arg_DhcpCidr); ok {
+	if cidr, ok := d.GetOk(Arg_Cidr); ok {
 		c := cidr.(string)
 		body.Cidr = &c
 	}
-	if cloudConnectionID, ok := d.GetOk(Arg_DhcpCloudConnectionID); ok {
+	if cloudConnectionID, ok := d.GetOk(Arg_CloudConnectionID); ok {
 		c := cloudConnectionID.(string)
 		body.CloudConnectionID = &c
 	}
-	if dnsServer, ok := d.GetOk(Arg_DhcpDnsServer); ok {
+	if dnsServer, ok := d.GetOk(Arg_DnsServer); ok {
 		d := dnsServer.(string)
 		body.DNSServer = &d
 	}
@@ -155,7 +150,7 @@ func resourceIBMPIDhcpCreate(ctx context.Context, d *schema.ResourceData, meta i
 	body.SnatEnabled = &snatEnabled
 
 	// create dhcp
-	client := st.NewIBMPIDhcpClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIDhcpClient(ctx, sess, cloudInstanceID)
 	dhcpServer, err := client.Create(body)
 	if err != nil {
 		log.Printf("[DEBUG] create DHCP failed %v", err)
@@ -174,7 +169,6 @@ func resourceIBMPIDhcpCreate(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func resourceIBMPIDhcpRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-
 	// session
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
@@ -188,7 +182,7 @@ func resourceIBMPIDhcpRead(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	// get dhcp
-	client := st.NewIBMPIDhcpClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIDhcpClient(ctx, sess, cloudInstanceID)
 	dhcpServer, err := client.Get(dhcpID)
 	if err != nil {
 		uErr := errors.Unwrap(err)
@@ -205,16 +199,15 @@ func resourceIBMPIDhcpRead(ctx context.Context, d *schema.ResourceData, meta int
 	// set attributes
 	d.SetId(fmt.Sprintf("%s/%s", cloudInstanceID, *dhcpServer.ID))
 	d.Set(Attr_DhcpID, *dhcpServer.ID)
-	d.Set(Attr_DhcpStatus, *dhcpServer.Status)
+	d.Set(Attr_Status, *dhcpServer.Status)
 
 	if dhcpServer.Network != nil {
 		dhcpNetwork := dhcpServer.Network
 		if dhcpNetwork.ID != nil {
-			d.Set(Attr_DhcpNetworkDeprecated, *dhcpNetwork.ID)
-			d.Set(Attr_DhcpNetworkID, *dhcpNetwork.ID)
+			d.Set(Attr_NetworkID, *dhcpNetwork.ID)
 		}
 		if dhcpNetwork.Name != nil {
-			d.Set(Attr_DhcpNetworkName, *dhcpNetwork.Name)
+			d.Set(Attr_NetworkName, *dhcpNetwork.Name)
 		}
 	}
 
@@ -222,17 +215,17 @@ func resourceIBMPIDhcpRead(ctx context.Context, d *schema.ResourceData, meta int
 		leaseList := make([]map[string]string, len(dhcpServer.Leases))
 		for i, lease := range dhcpServer.Leases {
 			leaseList[i] = map[string]string{
-				Attr_DhcpLeaseInstanceIP:  *lease.InstanceIP,
-				Attr_DhcpLeaseInstanceMac: *lease.InstanceMacAddress,
+				Attr_InstanceIP:  *lease.InstanceIP,
+				Attr_InstanceMac: *lease.InstanceMacAddress,
 			}
 		}
-		d.Set(Attr_DhcpLeases, leaseList)
+		d.Set(Attr_Leases, leaseList)
 	}
 
 	return nil
 }
-func resourceIBMPIDhcpDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
+func resourceIBMPIDhcpDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// session
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
@@ -246,7 +239,7 @@ func resourceIBMPIDhcpDelete(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	// delete dhcp
-	client := st.NewIBMPIDhcpClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIDhcpClient(ctx, sess, cloudInstanceID)
 	err = client.Delete(dhcpID)
 	if err != nil {
 		uErr := errors.Unwrap(err)
@@ -270,20 +263,20 @@ func resourceIBMPIDhcpDelete(ctx context.Context, d *schema.ResourceData, meta i
 	return nil
 }
 
-func waitForIBMPIDhcpStatus(ctx context.Context, client *st.IBMPIDhcpClient, dhcpID string, timeout time.Duration) (interface{}, error) {
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{"building"},
-		Target:  []string{"active"},
+func waitForIBMPIDhcpStatus(ctx context.Context, client *instance.IBMPIDhcpClient, dhcpID string, timeout time.Duration) (interface{}, error) {
+	stateConf := &retry.StateChangeConf{
+		Pending: []string{State_Building},
+		Target:  []string{State_Active},
 		Refresh: func() (interface{}, string, error) {
 			dhcpServer, err := client.Get(dhcpID)
 			if err != nil {
 				log.Printf("[DEBUG] get DHCP failed %v", err)
 				return nil, "", err
 			}
-			if *dhcpServer.Status != StatusActive {
-				return dhcpServer, "building", nil
+			if strings.ToLower(*dhcpServer.Status) != State_Active {
+				return dhcpServer, State_Building, nil
 			}
-			return dhcpServer, "active", nil
+			return dhcpServer, State_Active, nil
 		},
 		Timeout:    timeout,
 		Delay:      10 * time.Second,
@@ -292,17 +285,17 @@ func waitForIBMPIDhcpStatus(ctx context.Context, client *st.IBMPIDhcpClient, dhc
 	return stateConf.WaitForStateContext(ctx)
 }
 
-func waitForIBMPIDhcpDeleted(ctx context.Context, client *st.IBMPIDhcpClient, dhcpID string, timeout time.Duration) (interface{}, error) {
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{"deleting"},
-		Target:  []string{"deleted"},
+func waitForIBMPIDhcpDeleted(ctx context.Context, client *instance.IBMPIDhcpClient, dhcpID string, timeout time.Duration) (interface{}, error) {
+	stateConf := &retry.StateChangeConf{
+		Pending: []string{State_Deleting},
+		Target:  []string{State_Deleted},
 		Refresh: func() (interface{}, string, error) {
 			dhcpServer, err := client.Get(dhcpID)
 			if err != nil {
 				log.Printf("[DEBUG] dhcp does not exist %v", err)
-				return dhcpServer, "deleted", nil
+				return dhcpServer, State_Deleted, nil
 			}
-			return dhcpServer, "deleting", nil
+			return dhcpServer, State_Deleting, nil
 		},
 		Timeout:    timeout,
 		Delay:      10 * time.Second,

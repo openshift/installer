@@ -19,7 +19,6 @@ type ARMOwned interface {
 }
 
 type SupportedResourceOperations interface {
-
 	// GetSupportedOperations gets the set of supported resource operations
 	GetSupportedOperations() []ResourceOperation
 }

@@ -23,6 +23,7 @@ import (
 	"reflect"
 	"time"
 
+	openshiftfeatures "github.com/openshift/api/features"
 	machinev1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/machine-api-operator/pkg/metrics"
 	"github.com/openshift/machine-api-operator/pkg/util"
@@ -35,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/component-base/featuregate"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -73,12 +75,30 @@ const (
 	skipWaitForDeleteTimeoutSeconds = 1
 )
 
+// We export the PausedCondition and reasons as they're shared
+// across the Machine and MachineSet controllers.
+const (
+	PausedCondition machinev1.ConditionType = "Paused"
+
+	PausedConditionReason = "AuthoritativeAPINotMachineAPI"
+
+	NotPausedConditionReason = "AuthoritativeAPIMachineAPI"
+)
+
 var DefaultActuator Actuator
 
-func AddWithActuator(mgr manager.Manager, actuator Actuator) error {
-	if err := add(mgr, newReconciler(mgr, actuator), "machine-controller"); err != nil {
+func AddWithActuator(mgr manager.Manager, actuator Actuator, gate featuregate.MutableFeatureGate) error {
+	return AddWithActuatorOpts(mgr, actuator, controller.Options{}, gate)
+}
+
+func AddWithActuatorOpts(mgr manager.Manager, actuator Actuator, opts controller.Options, gate featuregate.MutableFeatureGate) error {
+	machineControllerOpts := opts
+	machineControllerOpts.Reconciler = newReconciler(mgr, actuator, gate)
+
+	if err := addWithOpts(mgr, machineControllerOpts, "machine-controller"); err != nil {
 		return err
 	}
+
 	if err := addWithOpts(mgr, controller.Options{
 		Reconciler:  newDrainController(mgr),
 		RateLimiter: newDrainRateLimiter(),
@@ -89,20 +109,16 @@ func AddWithActuator(mgr manager.Manager, actuator Actuator) error {
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, actuator Actuator) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager, actuator Actuator, gate featuregate.MutableFeatureGate) reconcile.Reconciler {
 	r := &ReconcileMachine{
 		Client:        mgr.GetClient(),
 		eventRecorder: mgr.GetEventRecorderFor("machine-controller"),
 		config:        mgr.GetConfig(),
 		scheme:        mgr.GetScheme(),
 		actuator:      actuator,
+		gate:          gate,
 	}
 	return r
-}
-
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler, controllerName string) error {
-	return addWithOpts(mgr, controller.Options{Reconciler: r}, controllerName)
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -115,9 +131,9 @@ func addWithOpts(mgr manager.Manager, opts controller.Options, controllerName st
 
 	// Watch for changes to Machine
 	return c.Watch(
-		source.Kind(mgr.GetCache(), &machinev1.Machine{}),
-		&handler.EnqueueRequestForObject{},
-	)
+		source.Kind(mgr.GetCache(), &machinev1.Machine{},
+			&handler.TypedEnqueueRequestForObject[*machinev1.Machine]{},
+		))
 }
 
 // ReconcileMachine reconciles a Machine object
@@ -129,6 +145,7 @@ type ReconcileMachine struct {
 	eventRecorder record.EventRecorder
 
 	actuator Actuator
+	gate     featuregate.MutableFeatureGate
 
 	// nowFunc is used to mock time in testing. It should be nil in production.
 	nowFunc func() time.Time
@@ -157,7 +174,47 @@ func (r *ReconcileMachine) Reconcile(ctx context.Context, request reconcile.Requ
 
 	// Get the original state of conditions now so that they can be used to calculate the patch later.
 	// This must be a copy otherwise the referenced slice will be modified by later machine conditions changes.
-	originalConditions := m.Status.Conditions.DeepCopy()
+	originalConditions := conditions.DeepCopyConditions(m.Status.Conditions)
+
+	if r.gate.Enabled(featuregate.Feature(openshiftfeatures.FeatureGateMachineAPIMigration)) {
+		// Check Status.AuthoritativeAPI
+		// If not MachineAPI. Set the paused condition true and return early.
+		//
+		// Once we have a webhook, we want to remove the check that the AuthoritativeAPI
+		// field is populated.
+		if m.Status.AuthoritativeAPI != "" &&
+			m.Status.AuthoritativeAPI != machinev1.MachineAuthorityMachineAPI {
+			conditions.Set(m, conditions.TrueConditionWithReason(
+				PausedCondition,
+				PausedConditionReason,
+				"The AuthoritativeAPI is set to %s", string(m.Status.AuthoritativeAPI),
+			))
+			if patchErr := r.updateStatus(ctx, m, ptr.Deref(m.Status.Phase, ""), nil, originalConditions); patchErr != nil {
+				klog.Errorf("%v: error patching status: %v", machineName, patchErr)
+			}
+
+			klog.Infof("%v: machine is paused, taking no further action", machineName)
+			return reconcile.Result{}, nil
+		}
+
+		var pausedFalseReason string
+		if m.Status.AuthoritativeAPI != "" {
+			pausedFalseReason = fmt.Sprintf("The AuthoritativeAPI is set to %s", string(m.Status.AuthoritativeAPI))
+		} else {
+			pausedFalseReason = "The AuthoritativeAPI is not set"
+		}
+
+		// Set the paused condition to false, continue reconciliation
+		conditions.Set(m, conditions.FalseCondition(
+			PausedCondition,
+			NotPausedConditionReason,
+			machinev1.ConditionSeverityInfo,
+			pausedFalseReason,
+		))
+		if patchErr := r.updateStatus(ctx, m, ptr.Deref(m.Status.Phase, ""), nil, originalConditions); patchErr != nil {
+			klog.Errorf("%v: error patching status: %v", machineName, patchErr)
+		}
+	}
 
 	if errList := validateMachine(m); len(errList) > 0 {
 		err := fmt.Errorf("%v: machine validation failed: %v", machineName, errList.ToAggregate().Error())
@@ -411,7 +468,7 @@ func (r *ReconcileMachine) updateStatus(ctx context.Context, machine *machinev1.
 
 	// Conditions need to be deep copied as they are set outside of this function.
 	// They will be restored after any updates to the base (done by patching annotations).
-	conditions := machine.Status.Conditions.DeepCopy()
+	conditions := conditions.DeepCopyConditions(machine.Status.Conditions)
 
 	// A call to Patch will mutate our local copy of the machine to match what is stored in the API.
 	// Before we make any changes to the status subresource on our local copy, we need to patch the object first,

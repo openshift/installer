@@ -21,9 +21,10 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/rules"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/attributestags"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/security/groups"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/security/rules"
+	"k8s.io/utils/net"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
@@ -56,9 +57,24 @@ func (s *Service) ReconcileSecurityGroups(openStackCluster *infrav1.OpenStackClu
 		workerSuffix:       secWorkerGroupName,
 	}
 
+	secBastionGroupName := getSecBastionGroupName(clusterResourceName)
 	if bastionEnabled {
-		secBastionGroupName := getSecBastionGroupName(clusterResourceName)
 		suffixToNameMap[bastionSuffix] = secBastionGroupName
+	} else {
+		// We reconcile the security groups before the bastion, because the bastion
+		// needs its security group to be created first when managed security groups are enabled.
+		// When the bastion is disabled, we will try to delete the security group if it exists.
+		// In the first attempt, the security group will still be in-use by the bastion instance
+		// but then the bastion instance will be deleted in the next reconcile loop.
+		// We do that here because we don't want to manage the bastion security group from
+		// elsewhere, that could cause infinite loops between ReconCileSecurityGroups and ReconcileBastion.
+		// Therefore we try to delete the bastion security group as a best effort here
+		// and also when the cluster is deleted so we're sure it will be deleted at some point.
+		// https://github.com/kubernetes-sigs/cluster-api-provider-openstack/issues/2113
+		if err := s.deleteSecurityGroup(openStackCluster, secBastionGroupName); err != nil {
+			s.scope.Logger().Info("Non-fatal error when deleting the bastion security group", "name", secBastionGroupName, "error", err)
+			return nil
+		}
 	}
 
 	// create security groups first, because desired rules use group ids.
@@ -185,7 +201,19 @@ func (s *Service) generateDesiredSecGroups(openStackCluster *infrav1.OpenStackCl
 	workerRules := append([]resolvedSecurityGroupRuleSpec{}, defaultRules...)
 
 	controlPlaneRules = append(controlPlaneRules, getSGControlPlaneHTTPS()...)
-	workerRules = append(workerRules, getSGWorkerNodePort()...)
+
+	// Fetch subnet to use for worker node port rules
+	// In the future IPv6 support need to be added here
+	if openStackCluster.Status.Network != nil {
+		for _, subnet := range openStackCluster.Status.Network.Subnets {
+			if net.IsIPv4CIDRString(subnet.CIDR) {
+				workerRules = append(workerRules, getSGWorkerNodePortCIDR(subnet.CIDR)...)
+			}
+		}
+	}
+
+	// Add rules allowing nodepors from all cluster nodes, this will take effect even if no subnetCIDR is found to ensure all nodes can commincate over nodeports at all time
+	workerRules = append(workerRules, getSGWorkerNodePort(secWorkerGroupID, secControlPlaneGroupID)...)
 
 	// If we set additional ports to LB, we need create secgroup rules those ports, this apply to controlPlaneRules only
 	if openStackCluster.Spec.APIServerLoadBalancer.IsEnabled() {
@@ -297,10 +325,6 @@ func getAllNodesRules(remoteManagedGroups map[string]string, allNodesSecurityGro
 
 // validateRemoteManagedGroups validates that the remoteManagedGroups target existing managed security groups.
 func validateRemoteManagedGroups(remoteManagedGroups map[string]string, ruleRemoteManagedGroups []infrav1.ManagedSecurityGroupName) error {
-	if len(ruleRemoteManagedGroups) == 0 {
-		return fmt.Errorf("remoteManagedGroups is required")
-	}
-
 	for _, group := range ruleRemoteManagedGroups {
 		if _, ok := remoteManagedGroups[group.String()]; !ok {
 			return fmt.Errorf("remoteManagedGroups: %s is not a valid remote managed security group", group)
@@ -355,10 +379,10 @@ func (s *Service) DeleteSecurityGroups(openStackCluster *infrav1.OpenStackCluste
 	secGroupNames := []string{
 		getSecControlPlaneGroupName(clusterResourceName),
 		getSecWorkerGroupName(clusterResourceName),
-	}
-
-	if openStackCluster.Spec.Bastion.IsEnabled() {
-		secGroupNames = append(secGroupNames, getSecBastionGroupName(clusterResourceName))
+		// Even if the bastion might be disabled, we still try to delete the security group in case
+		// we had a bastion before and for some reason we didn't delete its security group.
+		// https://github.com/kubernetes-sigs/cluster-api-provider-openstack/issues/2113
+		getSecBastionGroupName(clusterResourceName),
 	}
 
 	for _, secGroupName := range secGroupNames {
@@ -432,24 +456,28 @@ func (s *Service) reconcileGroupRules(desired *securityGroupSpec, observed *grou
 		}
 	}
 
-	s.scope.Logger().V(4).Info("Deleting rules not needed anymore for group", "name", observed.Name, "amount", len(rulesToDelete))
-	for _, rule := range rulesToDelete {
-		s.scope.Logger().V(6).Info("Deleting rule", "ID", rule, "name", observed.Name)
-		err := s.client.DeleteSecGroupRule(rule)
-		if err != nil {
-			return err
+	if len(rulesToDelete) > 0 {
+		s.scope.Logger().V(4).Info("Deleting rules not needed anymore for group", "name", observed.Name, "amount", len(rulesToDelete))
+		for _, rule := range rulesToDelete {
+			s.scope.Logger().V(6).Info("Deleting rule", "ID", rule, "name", observed.Name)
+			err := s.client.DeleteSecGroupRule(rule)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	s.scope.Logger().V(4).Info("Creating new rules needed for group", "name", observed.Name, "amount", len(rulesToCreate))
-	for _, rule := range rulesToCreate {
-		r := rule
-		if r.RemoteGroupID == remoteGroupIDSelf {
-			r.RemoteGroupID = observed.ID
-		}
-		err := s.createRule(observed.ID, r)
-		if err != nil {
-			return err
+	if len(rulesToCreate) > 0 {
+		s.scope.Logger().V(4).Info("Creating new rules needed for group", "name", observed.Name, "amount", len(rulesToCreate))
+		for _, rule := range rulesToCreate {
+			r := rule
+			if r.RemoteGroupID == remoteGroupIDSelf {
+				r.RemoteGroupID = observed.ID
+			}
+			err := s.createRule(observed.ID, r)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

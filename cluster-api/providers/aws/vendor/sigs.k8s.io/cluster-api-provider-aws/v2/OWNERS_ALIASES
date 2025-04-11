@@ -6,28 +6,17 @@ aliases:
     - justinsb
     - neolit123
     - vincepri
-  cluster-api-admins:
-    - CecileRobertMichon
-    - vincepri
-  cluster-api-maintainers:
-    - CecileRobertMichon
-    - enxebre
-    - fabriziopandini
-    - killianmuldoon
-    - sbueringer
-    - vincepri
   cluster-api-aws-admins:
     - richardcase
   cluster-api-aws-maintainers:
     - richardcase
     - Ankitasw
     - dlipovetsky
-    - vincepri
+    - nrb
+    - AndiDog
   cluster-api-aws-reviewers:
     - luthermonson
     - cnmcavoy
-    - nrb
     - faiq
     - fiunchinho
-    - AndiDog
     - damdo

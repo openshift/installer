@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.69.0-370d6400-20230329-174648
+ * IBM OpenAPI SDK Code Generator Version: 3.82.1-2082d402-20231115-195014
  */
 
 // Package directlinkv1 : Operations and models for the DirectLinkV1 service
@@ -347,12 +347,12 @@ func (directLink *DirectLinkV1) DeleteGatewayWithContext(ctx context.Context, de
 
 // GetGateway : Get gateway
 // Retrieve a Direct Link gateway.
-func (directLink *DirectLinkV1) GetGateway(getGatewayOptions *GetGatewayOptions) (result *Gateway, response *core.DetailedResponse, err error) {
+func (directLink *DirectLinkV1) GetGateway(getGatewayOptions *GetGatewayOptions) (result GetGatewayResponseIntf, response *core.DetailedResponse, err error) {
 	return directLink.GetGatewayWithContext(context.Background(), getGatewayOptions)
 }
 
 // GetGatewayWithContext is an alternate form of the GetGateway method which supports a Context parameter
-func (directLink *DirectLinkV1) GetGatewayWithContext(ctx context.Context, getGatewayOptions *GetGatewayOptions) (result *Gateway, response *core.DetailedResponse, err error) {
+func (directLink *DirectLinkV1) GetGatewayWithContext(ctx context.Context, getGatewayOptions *GetGatewayOptions) (result GetGatewayResponseIntf, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getGatewayOptions, "getGatewayOptions cannot be nil")
 	if err != nil {
 		return
@@ -397,7 +397,7 @@ func (directLink *DirectLinkV1) GetGatewayWithContext(ctx context.Context, getGa
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGateway)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGetGatewayResponse)
 		if err != nil {
 			return
 		}
@@ -445,60 +445,11 @@ func (directLink *DirectLinkV1) UpdateGatewayWithContext(ctx context.Context, up
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
-	builder.AddHeader("Content-Type", "application/json")
+	builder.AddHeader("Content-Type", "application/merge-patch+json")
 
 	builder.AddQuery("version", fmt.Sprint(*directLink.Version))
 
-	body := make(map[string]interface{})
-	if updateGatewayOptions.AuthenticationKey != nil {
-		body["authentication_key"] = updateGatewayOptions.AuthenticationKey
-	}
-	if updateGatewayOptions.BfdConfig != nil {
-		body["bfd_config"] = updateGatewayOptions.BfdConfig
-	}
-	if updateGatewayOptions.BgpAsn != nil {
-		body["bgp_asn"] = updateGatewayOptions.BgpAsn
-	}
-	if updateGatewayOptions.BgpCerCidr != nil {
-		body["bgp_cer_cidr"] = updateGatewayOptions.BgpCerCidr
-	}
-	if updateGatewayOptions.BgpIbmCidr != nil {
-		body["bgp_ibm_cidr"] = updateGatewayOptions.BgpIbmCidr
-	}
-	if updateGatewayOptions.ConnectionMode != nil {
-		body["connection_mode"] = updateGatewayOptions.ConnectionMode
-	}
-	if updateGatewayOptions.DefaultExportRouteFilter != nil {
-		body["default_export_route_filter"] = updateGatewayOptions.DefaultExportRouteFilter
-	}
-	if updateGatewayOptions.DefaultImportRouteFilter != nil {
-		body["default_import_route_filter"] = updateGatewayOptions.DefaultImportRouteFilter
-	}
-	if updateGatewayOptions.Global != nil {
-		body["global"] = updateGatewayOptions.Global
-	}
-	if updateGatewayOptions.LoaRejectReason != nil {
-		body["loa_reject_reason"] = updateGatewayOptions.LoaRejectReason
-	}
-	if updateGatewayOptions.MacsecConfig != nil {
-		body["macsec_config"] = updateGatewayOptions.MacsecConfig
-	}
-	if updateGatewayOptions.Metered != nil {
-		body["metered"] = updateGatewayOptions.Metered
-	}
-	if updateGatewayOptions.Name != nil {
-		body["name"] = updateGatewayOptions.Name
-	}
-	if updateGatewayOptions.OperationalStatus != nil {
-		body["operational_status"] = updateGatewayOptions.OperationalStatus
-	}
-	if updateGatewayOptions.PatchPanelCompletionNotice != nil {
-		body["patch_panel_completion_notice"] = updateGatewayOptions.PatchPanelCompletionNotice
-	}
-	if updateGatewayOptions.SpeedMbps != nil {
-		body["speed_mbps"] = updateGatewayOptions.SpeedMbps
-	}
-	_, err = builder.SetBodyContentJSON(body)
+	_, err = builder.SetBodyContentJSON(updateGatewayOptions.GatewayPatchTemplatePatch)
 	if err != nil {
 		return
 	}
@@ -702,7 +653,7 @@ func (directLink *DirectLinkV1) CreateGatewayCompletionNoticeWithContext(ctx con
 	if err != nil {
 		return
 	}
-	if (createGatewayCompletionNoticeOptions.Upload == nil) {
+	if createGatewayCompletionNoticeOptions.Upload == nil {
 		err = fmt.Errorf("upload must be supplied")
 		return
 	}
@@ -1186,7 +1137,7 @@ func (directLink *DirectLinkV1) DeleteGatewayExportRouteFilterWithContext(ctx co
 
 	pathParamsMap := map[string]string{
 		"gateway_id": *deleteGatewayExportRouteFilterOptions.GatewayID,
-		"id": *deleteGatewayExportRouteFilterOptions.ID,
+		"id":         *deleteGatewayExportRouteFilterOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -1237,7 +1188,7 @@ func (directLink *DirectLinkV1) GetGatewayExportRouteFilterWithContext(ctx conte
 
 	pathParamsMap := map[string]string{
 		"gateway_id": *getGatewayExportRouteFilterOptions.GatewayID,
-		"id": *getGatewayExportRouteFilterOptions.ID,
+		"id":         *getGatewayExportRouteFilterOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1308,7 +1259,7 @@ func (directLink *DirectLinkV1) UpdateGatewayExportRouteFilterWithContext(ctx co
 
 	pathParamsMap := map[string]string{
 		"gateway_id": *updateGatewayExportRouteFilterOptions.GatewayID,
-		"id": *updateGatewayExportRouteFilterOptions.ID,
+		"id":         *updateGatewayExportRouteFilterOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -1618,7 +1569,7 @@ func (directLink *DirectLinkV1) DeleteGatewayImportRouteFilterWithContext(ctx co
 
 	pathParamsMap := map[string]string{
 		"gateway_id": *deleteGatewayImportRouteFilterOptions.GatewayID,
-		"id": *deleteGatewayImportRouteFilterOptions.ID,
+		"id":         *deleteGatewayImportRouteFilterOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -1669,7 +1620,7 @@ func (directLink *DirectLinkV1) GetGatewayImportRouteFilterWithContext(ctx conte
 
 	pathParamsMap := map[string]string{
 		"gateway_id": *getGatewayImportRouteFilterOptions.GatewayID,
-		"id": *getGatewayImportRouteFilterOptions.ID,
+		"id":         *getGatewayImportRouteFilterOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1740,7 +1691,7 @@ func (directLink *DirectLinkV1) UpdateGatewayImportRouteFilterWithContext(ctx co
 
 	pathParamsMap := map[string]string{
 		"gateway_id": *updateGatewayImportRouteFilterOptions.GatewayID,
-		"id": *updateGatewayImportRouteFilterOptions.ID,
+		"id":         *updateGatewayImportRouteFilterOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -1937,7 +1888,7 @@ func (directLink *DirectLinkV1) DeleteGatewayRouteReportWithContext(ctx context.
 
 	pathParamsMap := map[string]string{
 		"gateway_id": *deleteGatewayRouteReportOptions.GatewayID,
-		"id": *deleteGatewayRouteReportOptions.ID,
+		"id":         *deleteGatewayRouteReportOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -1988,7 +1939,7 @@ func (directLink *DirectLinkV1) GetGatewayRouteReportWithContext(ctx context.Con
 
 	pathParamsMap := map[string]string{
 		"gateway_id": *getGatewayRouteReportOptions.GatewayID,
-		"id": *getGatewayRouteReportOptions.ID,
+		"id":         *getGatewayRouteReportOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -2192,7 +2143,7 @@ func (directLink *DirectLinkV1) DeleteGatewayVirtualConnectionWithContext(ctx co
 
 	pathParamsMap := map[string]string{
 		"gateway_id": *deleteGatewayVirtualConnectionOptions.GatewayID,
-		"id": *deleteGatewayVirtualConnectionOptions.ID,
+		"id":         *deleteGatewayVirtualConnectionOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -2243,7 +2194,7 @@ func (directLink *DirectLinkV1) GetGatewayVirtualConnectionWithContext(ctx conte
 
 	pathParamsMap := map[string]string{
 		"gateway_id": *getGatewayVirtualConnectionOptions.GatewayID,
-		"id": *getGatewayVirtualConnectionOptions.ID,
+		"id":         *getGatewayVirtualConnectionOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -2306,7 +2257,7 @@ func (directLink *DirectLinkV1) UpdateGatewayVirtualConnectionWithContext(ctx co
 
 	pathParamsMap := map[string]string{
 		"gateway_id": *updateGatewayVirtualConnectionOptions.GatewayID,
-		"id": *updateGatewayVirtualConnectionOptions.ID,
+		"id":         *updateGatewayVirtualConnectionOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -3132,12 +3083,12 @@ type CreateGatewayActionOptions struct {
 // Constants associated with the CreateGatewayActionOptions.Action property.
 // Action request.
 const (
-	CreateGatewayActionOptions_Action_CreateGatewayApprove = "create_gateway_approve"
-	CreateGatewayActionOptions_Action_CreateGatewayReject = "create_gateway_reject"
-	CreateGatewayActionOptions_Action_DeleteGatewayApprove = "delete_gateway_approve"
-	CreateGatewayActionOptions_Action_DeleteGatewayReject = "delete_gateway_reject"
+	CreateGatewayActionOptions_Action_CreateGatewayApprove    = "create_gateway_approve"
+	CreateGatewayActionOptions_Action_CreateGatewayReject     = "create_gateway_reject"
+	CreateGatewayActionOptions_Action_DeleteGatewayApprove    = "delete_gateway_approve"
+	CreateGatewayActionOptions_Action_DeleteGatewayReject     = "delete_gateway_reject"
 	CreateGatewayActionOptions_Action_UpdateAttributesApprove = "update_attributes_approve"
-	CreateGatewayActionOptions_Action_UpdateAttributesReject = "update_attributes_reject"
+	CreateGatewayActionOptions_Action_UpdateAttributesReject  = "update_attributes_reject"
 )
 
 // Constants associated with the CreateGatewayActionOptions.ConnectionMode property.
@@ -3147,21 +3098,21 @@ const (
 // list of enumerated values for this property may expand in the future. Code and processes using this field must
 // tolerate unexpected values.
 const (
-	CreateGatewayActionOptions_ConnectionMode_Direct = "direct"
+	CreateGatewayActionOptions_ConnectionMode_Direct  = "direct"
 	CreateGatewayActionOptions_ConnectionMode_Transit = "transit"
 )
 
 // Constants associated with the CreateGatewayActionOptions.DefaultExportRouteFilter property.
 // The default directional route filter action that applies to routes that do not match any directional route filters.
 const (
-	CreateGatewayActionOptions_DefaultExportRouteFilter_Deny = "deny"
+	CreateGatewayActionOptions_DefaultExportRouteFilter_Deny   = "deny"
 	CreateGatewayActionOptions_DefaultExportRouteFilter_Permit = "permit"
 )
 
 // Constants associated with the CreateGatewayActionOptions.DefaultImportRouteFilter property.
 // The default directional route filter action that applies to routes that do not match any directional route filters.
 const (
-	CreateGatewayActionOptions_DefaultImportRouteFilter_Deny = "deny"
+	CreateGatewayActionOptions_DefaultImportRouteFilter_Deny   = "deny"
 	CreateGatewayActionOptions_DefaultImportRouteFilter_Permit = "permit"
 )
 
@@ -3343,7 +3294,7 @@ type CreateGatewayExportRouteFilterOptions struct {
 // Constants associated with the CreateGatewayExportRouteFilterOptions.Action property.
 // Determines whether routes that match the prefix-set will be allowed (permit) or rejected (deny) through the filter.
 const (
-	CreateGatewayExportRouteFilterOptions_Action_Deny = "deny"
+	CreateGatewayExportRouteFilterOptions_Action_Deny   = "deny"
 	CreateGatewayExportRouteFilterOptions_Action_Permit = "permit"
 )
 
@@ -3351,8 +3302,8 @@ const (
 func (*DirectLinkV1) NewCreateGatewayExportRouteFilterOptions(gatewayID string, action string, prefix string) *CreateGatewayExportRouteFilterOptions {
 	return &CreateGatewayExportRouteFilterOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		Action: core.StringPtr(action),
-		Prefix: core.StringPtr(prefix),
+		Action:    core.StringPtr(action),
+		Prefix:    core.StringPtr(prefix),
 	}
 }
 
@@ -3433,7 +3384,7 @@ type CreateGatewayImportRouteFilterOptions struct {
 // Constants associated with the CreateGatewayImportRouteFilterOptions.Action property.
 // Determines whether routes that match the prefix-set will be allowed (permit) or rejected (deny) through the filter.
 const (
-	CreateGatewayImportRouteFilterOptions_Action_Deny = "deny"
+	CreateGatewayImportRouteFilterOptions_Action_Deny   = "deny"
 	CreateGatewayImportRouteFilterOptions_Action_Permit = "permit"
 )
 
@@ -3441,8 +3392,8 @@ const (
 func (*DirectLinkV1) NewCreateGatewayImportRouteFilterOptions(gatewayID string, action string, prefix string) *CreateGatewayImportRouteFilterOptions {
 	return &CreateGatewayImportRouteFilterOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		Action: core.StringPtr(action),
-		Prefix: core.StringPtr(prefix),
+		Action:    core.StringPtr(action),
+		Prefix:    core.StringPtr(prefix),
 	}
 }
 
@@ -3568,15 +3519,15 @@ type CreateGatewayVirtualConnectionOptions struct {
 // The type of virtual connection.
 const (
 	CreateGatewayVirtualConnectionOptions_Type_Classic = "classic"
-	CreateGatewayVirtualConnectionOptions_Type_Vpc = "vpc"
+	CreateGatewayVirtualConnectionOptions_Type_Vpc     = "vpc"
 )
 
 // NewCreateGatewayVirtualConnectionOptions : Instantiate CreateGatewayVirtualConnectionOptions
 func (*DirectLinkV1) NewCreateGatewayVirtualConnectionOptions(gatewayID string, name string, typeVar string) *CreateGatewayVirtualConnectionOptions {
 	return &CreateGatewayVirtualConnectionOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		Name: core.StringPtr(name),
-		Type: core.StringPtr(typeVar),
+		Name:      core.StringPtr(name),
+		Type:      core.StringPtr(typeVar),
 	}
 }
 
@@ -3608,6 +3559,23 @@ func (_options *CreateGatewayVirtualConnectionOptions) SetNetworkID(networkID st
 func (options *CreateGatewayVirtualConnectionOptions) SetHeaders(param map[string]string) *CreateGatewayVirtualConnectionOptions {
 	options.Headers = param
 	return options
+}
+
+// CrossAccountGatewayPort : gateway port for type=connect gateways.
+type CrossAccountGatewayPort struct {
+	// Port Identifier.
+	ID *string `json:"id" validate:"required"`
+}
+
+// UnmarshalCrossAccountGatewayPort unmarshals an instance of CrossAccountGatewayPort from the specified map of raw messages.
+func UnmarshalCrossAccountGatewayPort(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(CrossAccountGatewayPort)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // CrossConnectRouter : Cross Connect Router details.
@@ -3657,7 +3625,7 @@ type DeleteGatewayExportRouteFilterOptions struct {
 func (*DirectLinkV1) NewDeleteGatewayExportRouteFilterOptions(gatewayID string, id string) *DeleteGatewayExportRouteFilterOptions {
 	return &DeleteGatewayExportRouteFilterOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		ID: core.StringPtr(id),
+		ID:        core.StringPtr(id),
 	}
 }
 
@@ -3695,7 +3663,7 @@ type DeleteGatewayImportRouteFilterOptions struct {
 func (*DirectLinkV1) NewDeleteGatewayImportRouteFilterOptions(gatewayID string, id string) *DeleteGatewayImportRouteFilterOptions {
 	return &DeleteGatewayImportRouteFilterOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		ID: core.StringPtr(id),
+		ID:        core.StringPtr(id),
 	}
 }
 
@@ -3761,7 +3729,7 @@ type DeleteGatewayRouteReportOptions struct {
 func (*DirectLinkV1) NewDeleteGatewayRouteReportOptions(gatewayID string, id string) *DeleteGatewayRouteReportOptions {
 	return &DeleteGatewayRouteReportOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		ID: core.StringPtr(id),
+		ID:        core.StringPtr(id),
 	}
 }
 
@@ -3799,7 +3767,7 @@ type DeleteGatewayVirtualConnectionOptions struct {
 func (*DirectLinkV1) NewDeleteGatewayVirtualConnectionOptions(gatewayID string, id string) *DeleteGatewayVirtualConnectionOptions {
 	return &DeleteGatewayVirtualConnectionOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		ID: core.StringPtr(id),
+		ID:        core.StringPtr(id),
 	}
 }
 
@@ -3898,6 +3866,9 @@ type Gateway struct {
 	// The CRN (Cloud Resource Name) of this gateway.
 	Crn *string `json:"crn" validate:"required"`
 
+	// Indicates whether this gateway is cross account gateway.
+	CrossAccount *bool `json:"cross_account" validate:"required"`
+
 	// Cross connect router.  Only included on type=dedicated gateways.
 	CrossConnectRouter *string `json:"cross_connect_router,omitempty"`
 
@@ -3944,9 +3915,6 @@ type Gateway struct {
 	// processes using this field  must tolerate unexpected values.
 	OperationalStatus *string `json:"operational_status" validate:"required"`
 
-	// Gateway patch panel complete notification from implementation team.
-	PatchPanelCompletionNotice *string `json:"patch_panel_completion_notice,omitempty"`
-
 	// gateway port for type=connect gateways.
 	Port *GatewayPort `json:"port,omitempty"`
 
@@ -3959,11 +3927,15 @@ type Gateway struct {
 	// Gateway speed in megabits per second.
 	SpeedMbps *int64 `json:"speed_mbps" validate:"required"`
 
+	// Gateway patch panel complete notification from implementation team.
+	PatchPanelCompletionNotice *string `json:"patch_panel_completion_notice,omitempty"`
+
 	// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
 	// this field  must tolerate unexpected values.
 	Type *string `json:"type" validate:"required"`
 
-	// VLAN allocated for this gateway.  Only set for type=connect gateways.
+	// VLAN configured for this gateway. If there is no vlan configured for the gateway, the vlan will be absent. This
+	// property will also be absent if this gateway's `crn` is in another account.
 	Vlan *int64 `json:"vlan,omitempty"`
 }
 
@@ -3971,10 +3943,10 @@ type Gateway struct {
 // Gateway BGP status. The list of enumerated values for this property may expand in the future. Code and processes
 // using this field  must tolerate unexpected values.
 const (
-	Gateway_BgpStatus_Active = "active"
-	Gateway_BgpStatus_Connect = "connect"
+	Gateway_BgpStatus_Active      = "active"
+	Gateway_BgpStatus_Connect     = "connect"
 	Gateway_BgpStatus_Established = "established"
-	Gateway_BgpStatus_Idle = "idle"
+	Gateway_BgpStatus_Idle        = "idle"
 )
 
 // Constants associated with the Gateway.ConnectionMode property.
@@ -3982,21 +3954,21 @@ const (
 // Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
 // for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
 const (
-	Gateway_ConnectionMode_Direct = "direct"
+	Gateway_ConnectionMode_Direct  = "direct"
 	Gateway_ConnectionMode_Transit = "transit"
 )
 
 // Constants associated with the Gateway.DefaultExportRouteFilter property.
 // The default directional route filter action that applies to routes that do not match any directional route filters.
 const (
-	Gateway_DefaultExportRouteFilter_Deny = "deny"
+	Gateway_DefaultExportRouteFilter_Deny   = "deny"
 	Gateway_DefaultExportRouteFilter_Permit = "permit"
 )
 
 // Constants associated with the Gateway.DefaultImportRouteFilter property.
 // The default directional route filter action that applies to routes that do not match any directional route filters.
 const (
-	Gateway_DefaultImportRouteFilter_Deny = "deny"
+	Gateway_DefaultImportRouteFilter_Deny   = "deny"
 	Gateway_DefaultImportRouteFilter_Permit = "permit"
 )
 
@@ -4005,7 +3977,7 @@ const (
 // expand in the future. Code and processes using this field  must tolerate unexpected values.
 const (
 	Gateway_LinkStatus_Down = "down"
-	Gateway_LinkStatus_Up = "up"
+	Gateway_LinkStatus_Up   = "up"
 )
 
 // Constants associated with the Gateway.OperationalStatus property.
@@ -4013,25 +3985,25 @@ const (
 // processes using this field  must tolerate unexpected values.
 const (
 	Gateway_OperationalStatus_AwaitingCompletionNotice = "awaiting_completion_notice"
-	Gateway_OperationalStatus_AwaitingLoa = "awaiting_loa"
+	Gateway_OperationalStatus_AwaitingLoa              = "awaiting_loa"
 	Gateway_OperationalStatus_CompletionNoticeApproved = "completion_notice_approved"
 	Gateway_OperationalStatus_CompletionNoticeReceived = "completion_notice_received"
 	Gateway_OperationalStatus_CompletionNoticeRejected = "completion_notice_rejected"
-	Gateway_OperationalStatus_Configuring = "configuring"
-	Gateway_OperationalStatus_CreatePending = "create_pending"
-	Gateway_OperationalStatus_CreateRejected = "create_rejected"
-	Gateway_OperationalStatus_DeletePending = "delete_pending"
-	Gateway_OperationalStatus_LoaAccepted = "loa_accepted"
-	Gateway_OperationalStatus_LoaCreated = "loa_created"
-	Gateway_OperationalStatus_LoaRejected = "loa_rejected"
-	Gateway_OperationalStatus_Provisioned = "provisioned"
+	Gateway_OperationalStatus_Configuring              = "configuring"
+	Gateway_OperationalStatus_CreatePending            = "create_pending"
+	Gateway_OperationalStatus_CreateRejected           = "create_rejected"
+	Gateway_OperationalStatus_DeletePending            = "delete_pending"
+	Gateway_OperationalStatus_LoaAccepted              = "loa_accepted"
+	Gateway_OperationalStatus_LoaCreated               = "loa_created"
+	Gateway_OperationalStatus_LoaRejected              = "loa_rejected"
+	Gateway_OperationalStatus_Provisioned              = "provisioned"
 )
 
 // Constants associated with the Gateway.Type property.
 // Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
 // this field  must tolerate unexpected values.
 const (
-	Gateway_Type_Connect = "connect"
+	Gateway_Type_Connect   = "connect"
 	Gateway_Type_Dedicated = "dedicated"
 )
 
@@ -4102,6 +4074,10 @@ func UnmarshalGateway(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "cross_account", &obj.CrossAccount)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "cross_connect_router", &obj.CrossConnectRouter)
 	if err != nil {
 		return
@@ -4158,10 +4134,6 @@ func UnmarshalGateway(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "patch_panel_completion_notice", &obj.PatchPanelCompletionNotice)
-	if err != nil {
-		return
-	}
 	err = core.UnmarshalModel(m, "port", &obj.Port, UnmarshalGatewayPort)
 	if err != nil {
 		return
@@ -4175,6 +4147,10 @@ func UnmarshalGateway(m map[string]json.RawMessage, result interface{}) (err err
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "speed_mbps", &obj.SpeedMbps)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "patch_panel_completion_notice", &obj.PatchPanelCompletionNotice)
 	if err != nil {
 		return
 	}
@@ -4255,6 +4231,7 @@ type GatewayActionTemplateUpdatesItem struct {
 	// VLAN to be updated for this gateway.
 	Vlan *int64 `json:"vlan,omitempty"`
 }
+
 func (*GatewayActionTemplateUpdatesItem) isaGatewayActionTemplateUpdatesItem() bool {
 	return true
 }
@@ -4334,7 +4311,7 @@ type GatewayBfdConfig struct {
 const (
 	GatewayBfdConfig_BfdStatus_Down = "down"
 	GatewayBfdConfig_BfdStatus_Init = "init"
-	GatewayBfdConfig_BfdStatus_Up = "up"
+	GatewayBfdConfig_BfdStatus_Up   = "up"
 )
 
 // UnmarshalGatewayBfdConfig unmarshals an instance of GatewayBfdConfig from the specified map of raw messages.
@@ -4473,6 +4450,7 @@ type GatewayChangeRequest struct {
 const (
 	GatewayChangeRequest_Type_CreateGateway = "create_gateway"
 )
+
 func (*GatewayChangeRequest) isaGatewayChangeRequest() bool {
 	return true
 }
@@ -4531,6 +4509,7 @@ type GatewayChangeRequestGatewayClientGatewayUpdateAttributesUpdatesItem struct 
 	// VLAN to be updated for this gateway.
 	Vlan *int64 `json:"vlan,omitempty"`
 }
+
 func (*GatewayChangeRequestGatewayClientGatewayUpdateAttributesUpdatesItem) isaGatewayChangeRequestGatewayClientGatewayUpdateAttributesUpdatesItem() bool {
 	return true
 }
@@ -4601,6 +4580,7 @@ type GatewayChangeRequestUpdatesItem struct {
 	// VLAN to be updated for this gateway.
 	Vlan *int64 `json:"vlan,omitempty"`
 }
+
 func (*GatewayChangeRequestUpdatesItem) isaGatewayChangeRequestUpdatesItem() bool {
 	return true
 }
@@ -4639,13 +4619,384 @@ func UnmarshalGatewayChangeRequestUpdatesItem(m map[string]json.RawMessage, resu
 // GatewayCollection : List of gateways.
 type GatewayCollection struct {
 	// Collection of Direct Link gateways.
-	Gateways []Gateway `json:"gateways" validate:"required"`
+	Gateways []GatewayCollectionGatewaysItemIntf `json:"gateways" validate:"required"`
 }
 
 // UnmarshalGatewayCollection unmarshals an instance of GatewayCollection from the specified map of raw messages.
 func UnmarshalGatewayCollection(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(GatewayCollection)
-	err = core.UnmarshalModel(m, "gateways", &obj.Gateways, UnmarshalGateway)
+	err = core.UnmarshalModel(m, "gateways", &obj.Gateways, UnmarshalGatewayCollectionGatewaysItem)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// GatewayCollectionGatewaysItem : GatewayCollectionGatewaysItem struct
+// Models which "extend" this model:
+// - GatewayCollectionGatewaysItemGateway
+// - GatewayCollectionGatewaysItemCrossAccountGateway
+type GatewayCollectionGatewaysItem struct {
+	// array of AS Prepend information.
+	AsPrepends []AsPrepend `json:"as_prepends,omitempty"`
+
+	// The identity of the standard key to use for BGP MD5 authentication key.
+	// The key material that you provide must be base64 encoded and original string must be maximum 126 ASCII characters in
+	// length.
+	// To clear the optional `authentication_key` field patch its crn to `""`.
+	AuthenticationKey *GatewayAuthenticationKey `json:"authentication_key,omitempty"`
+
+	// BFD configuration information.
+	BfdConfig *GatewayBfdConfig `json:"bfd_config,omitempty"`
+
+	// Customer BGP ASN.
+	BgpAsn *int64 `json:"bgp_asn,omitempty"`
+
+	// (DEPRECATED) BGP base CIDR is deprecated and no longer recognized by the Direct Link APIs.
+	//
+	// See bgp_cer_cidr and bgp_ibm_cidr fields instead for IP related information.
+	//
+	// Deprecated field bgp_base_cidr will be removed from the API specificiation after 15-MAR-2021.
+	BgpBaseCidr *string `json:"bgp_base_cidr,omitempty"`
+
+	// BGP customer edge router CIDR.
+	BgpCerCidr *string `json:"bgp_cer_cidr,omitempty"`
+
+	// IBM BGP ASN.
+	BgpIbmAsn *int64 `json:"bgp_ibm_asn,omitempty"`
+
+	// BGP IBM CIDR.
+	BgpIbmCidr *string `json:"bgp_ibm_cidr,omitempty"`
+
+	// Gateway BGP status. The list of enumerated values for this property may expand in the future. Code and processes
+	// using this field  must tolerate unexpected values.
+	BgpStatus *string `json:"bgp_status,omitempty"`
+
+	// Date and time bgp status was updated.
+	BgpStatusUpdatedAt *strfmt.DateTime `json:"bgp_status_updated_at,omitempty"`
+
+	// Carrier name.  Only set for type=dedicated gateways.
+	CarrierName *string `json:"carrier_name,omitempty"`
+
+	// Changes pending approval for provider managed Direct Link Connect gateways.
+	ChangeRequest GatewayChangeRequestIntf `json:"change_request,omitempty"`
+
+	// Reason for completion notice rejection.  Only included on type=dedicated gateways with a rejected completion notice.
+	CompletionNoticeRejectReason *string `json:"completion_notice_reject_reason,omitempty"`
+
+	// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+	// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+	// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+	ConnectionMode *string `json:"connection_mode,omitempty"`
+
+	// The date and time resource was created.
+	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
+
+	// The CRN (Cloud Resource Name) of this gateway.
+	Crn *string `json:"crn,omitempty"`
+
+	// Indicates whether this gateway is cross account gateway.
+	CrossAccount *bool `json:"cross_account,omitempty"`
+
+	// Cross connect router.  Only included on type=dedicated gateways.
+	CrossConnectRouter *string `json:"cross_connect_router,omitempty"`
+
+	// Customer name.  Only set for type=dedicated gateways.
+	CustomerName *string `json:"customer_name,omitempty"`
+
+	// The default directional route filter action that applies to routes that do not match any directional route filters.
+	DefaultExportRouteFilter *string `json:"default_export_route_filter,omitempty"`
+
+	// The default directional route filter action that applies to routes that do not match any directional route filters.
+	DefaultImportRouteFilter *string `json:"default_import_route_filter,omitempty"`
+
+	// Gateways with global routing (`true`) can connect to networks outside their associated region.
+	Global *bool `json:"global,omitempty"`
+
+	// The unique identifier of this gateway.
+	ID *string `json:"id,omitempty"`
+
+	// Gateway link status.  Only included on type=dedicated gateways. The list of enumerated values for this property may
+	// expand in the future. Code and processes using this field  must tolerate unexpected values.
+	LinkStatus *string `json:"link_status,omitempty"`
+
+	// Date and time link status was updated.
+	LinkStatusUpdatedAt *strfmt.DateTime `json:"link_status_updated_at,omitempty"`
+
+	// Gateway location long name.
+	LocationDisplayName *string `json:"location_display_name,omitempty"`
+
+	// Gateway location.
+	LocationName *string `json:"location_name,omitempty"`
+
+	// MACsec configuration information.  For Dedicated Gateways with MACsec configured, return configuration information.
+	// Contact IBM support for access to MACsec.
+	MacsecConfig *GatewayMacsecConfig `json:"macsec_config,omitempty"`
+
+	// Metered billing option.  When `true` gateway usage is billed per gigabyte.  When `false` there is no per gigabyte
+	// usage charge, instead a flat rate is charged for the gateway.
+	Metered *bool `json:"metered,omitempty"`
+
+	// The unique user-defined name for this gateway.
+	Name *string `json:"name,omitempty"`
+
+	// Gateway operational status. The list of enumerated values for this property may expand in the future. Code and
+	// processes using this field  must tolerate unexpected values.
+	OperationalStatus *string `json:"operational_status,omitempty"`
+
+	// gateway port for type=connect gateways.
+	Port *GatewayPort `json:"port,omitempty"`
+
+	// Indicates whether gateway changes must be made via a provider portal.
+	ProviderApiManaged *bool `json:"provider_api_managed,omitempty"`
+
+	// Resource group reference.
+	ResourceGroup *ResourceGroupReference `json:"resource_group,omitempty"`
+
+	// Gateway speed in megabits per second.
+	SpeedMbps *int64 `json:"speed_mbps,omitempty"`
+
+	// Gateway patch panel complete notification from implementation team.
+	PatchPanelCompletionNotice *string `json:"patch_panel_completion_notice,omitempty"`
+
+	// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
+	// this field  must tolerate unexpected values.
+	Type *string `json:"type,omitempty"`
+
+	// VLAN configured for this gateway. If there is no vlan configured for the gateway, the vlan will be absent. This
+	// property will also be absent if this gateway's `crn` is in another account.
+	Vlan *int64 `json:"vlan,omitempty"`
+}
+
+// Constants associated with the GatewayCollectionGatewaysItem.BgpStatus property.
+// Gateway BGP status. The list of enumerated values for this property may expand in the future. Code and processes
+// using this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItem_BgpStatus_Active      = "active"
+	GatewayCollectionGatewaysItem_BgpStatus_Connect     = "connect"
+	GatewayCollectionGatewaysItem_BgpStatus_Established = "established"
+	GatewayCollectionGatewaysItem_BgpStatus_Idle        = "idle"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItem.ConnectionMode property.
+// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItem_ConnectionMode_Direct  = "direct"
+	GatewayCollectionGatewaysItem_ConnectionMode_Transit = "transit"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItem.DefaultExportRouteFilter property.
+// The default directional route filter action that applies to routes that do not match any directional route filters.
+const (
+	GatewayCollectionGatewaysItem_DefaultExportRouteFilter_Deny   = "deny"
+	GatewayCollectionGatewaysItem_DefaultExportRouteFilter_Permit = "permit"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItem.DefaultImportRouteFilter property.
+// The default directional route filter action that applies to routes that do not match any directional route filters.
+const (
+	GatewayCollectionGatewaysItem_DefaultImportRouteFilter_Deny   = "deny"
+	GatewayCollectionGatewaysItem_DefaultImportRouteFilter_Permit = "permit"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItem.LinkStatus property.
+// Gateway link status.  Only included on type=dedicated gateways. The list of enumerated values for this property may
+// expand in the future. Code and processes using this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItem_LinkStatus_Down = "down"
+	GatewayCollectionGatewaysItem_LinkStatus_Up   = "up"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItem.OperationalStatus property.
+// Gateway operational status. The list of enumerated values for this property may expand in the future. Code and
+// processes using this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItem_OperationalStatus_AwaitingCompletionNotice = "awaiting_completion_notice"
+	GatewayCollectionGatewaysItem_OperationalStatus_AwaitingLoa              = "awaiting_loa"
+	GatewayCollectionGatewaysItem_OperationalStatus_CompletionNoticeApproved = "completion_notice_approved"
+	GatewayCollectionGatewaysItem_OperationalStatus_CompletionNoticeReceived = "completion_notice_received"
+	GatewayCollectionGatewaysItem_OperationalStatus_CompletionNoticeRejected = "completion_notice_rejected"
+	GatewayCollectionGatewaysItem_OperationalStatus_Configuring              = "configuring"
+	GatewayCollectionGatewaysItem_OperationalStatus_CreatePending            = "create_pending"
+	GatewayCollectionGatewaysItem_OperationalStatus_CreateRejected           = "create_rejected"
+	GatewayCollectionGatewaysItem_OperationalStatus_DeletePending            = "delete_pending"
+	GatewayCollectionGatewaysItem_OperationalStatus_LoaAccepted              = "loa_accepted"
+	GatewayCollectionGatewaysItem_OperationalStatus_LoaCreated               = "loa_created"
+	GatewayCollectionGatewaysItem_OperationalStatus_LoaRejected              = "loa_rejected"
+	GatewayCollectionGatewaysItem_OperationalStatus_Provisioned              = "provisioned"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItem.Type property.
+// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
+// this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItem_Type_Connect   = "connect"
+	GatewayCollectionGatewaysItem_Type_Dedicated = "dedicated"
+)
+
+func (*GatewayCollectionGatewaysItem) isaGatewayCollectionGatewaysItem() bool {
+	return true
+}
+
+type GatewayCollectionGatewaysItemIntf interface {
+	isaGatewayCollectionGatewaysItem() bool
+}
+
+// UnmarshalGatewayCollectionGatewaysItem unmarshals an instance of GatewayCollectionGatewaysItem from the specified map of raw messages.
+func UnmarshalGatewayCollectionGatewaysItem(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GatewayCollectionGatewaysItem)
+	err = core.UnmarshalModel(m, "as_prepends", &obj.AsPrepends, UnmarshalAsPrepend)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "authentication_key", &obj.AuthenticationKey, UnmarshalGatewayAuthenticationKey)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "bfd_config", &obj.BfdConfig, UnmarshalGatewayBfdConfig)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_asn", &obj.BgpAsn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_base_cidr", &obj.BgpBaseCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_cer_cidr", &obj.BgpCerCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_ibm_asn", &obj.BgpIbmAsn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_ibm_cidr", &obj.BgpIbmCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_status", &obj.BgpStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_status_updated_at", &obj.BgpStatusUpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "carrier_name", &obj.CarrierName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "change_request", &obj.ChangeRequest, UnmarshalGatewayChangeRequest)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "completion_notice_reject_reason", &obj.CompletionNoticeRejectReason)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "connection_mode", &obj.ConnectionMode)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cross_account", &obj.CrossAccount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cross_connect_router", &obj.CrossConnectRouter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "customer_name", &obj.CustomerName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default_export_route_filter", &obj.DefaultExportRouteFilter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default_import_route_filter", &obj.DefaultImportRouteFilter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "global", &obj.Global)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "link_status", &obj.LinkStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "link_status_updated_at", &obj.LinkStatusUpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location_display_name", &obj.LocationDisplayName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location_name", &obj.LocationName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "macsec_config", &obj.MacsecConfig, UnmarshalGatewayMacsecConfig)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "metered", &obj.Metered)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operational_status", &obj.OperationalStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "port", &obj.Port, UnmarshalGatewayPort)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "provider_api_managed", &obj.ProviderApiManaged)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "speed_mbps", &obj.SpeedMbps)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "patch_panel_completion_notice", &obj.PatchPanelCompletionNotice)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "vlan", &obj.Vlan)
 	if err != nil {
 		return
 	}
@@ -4722,7 +5073,7 @@ const (
 //
 // Status 'offline' is returned during gateway creation and deletion.
 const (
-	GatewayMacsecConfig_Status_Init = "init"
+	GatewayMacsecConfig_Status_Init    = "init"
 	GatewayMacsecConfig_Status_Offline = "offline"
 	GatewayMacsecConfig_Status_Pending = "pending"
 	GatewayMacsecConfig_Status_Secured = "secured"
@@ -5004,7 +5355,7 @@ type GatewayMacsecConfigTemplate struct {
 // NewGatewayMacsecConfigTemplate : Instantiate GatewayMacsecConfigTemplate (Generic Model Constructor)
 func (*DirectLinkV1) NewGatewayMacsecConfigTemplate(active bool, primaryCak *GatewayMacsecConfigTemplatePrimaryCak) (_model *GatewayMacsecConfigTemplate, err error) {
 	_model = &GatewayMacsecConfigTemplate{
-		Active: core.BoolPtr(active),
+		Active:     core.BoolPtr(active),
 		PrimaryCak: primaryCak,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -5090,6 +5441,213 @@ func UnmarshalGatewayMacsecConfigTemplatePrimaryCak(m map[string]json.RawMessage
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// GatewayPatchTemplate : patch gateway template.
+type GatewayPatchTemplate struct {
+	// The identity of the standard key to use for BGP MD5 authentication key.
+	// The key material that you provide must be base64 encoded and original string must be maximum 126 ASCII characters in
+	// length.
+	// To clear the optional `authentication_key` field patch its crn to `""`.
+	AuthenticationKey *GatewayPatchTemplateAuthenticationKey `json:"authentication_key,omitempty"`
+
+	// BFD configuration information.
+	BfdConfig *GatewayBfdPatchTemplate `json:"bfd_config,omitempty"`
+
+	// The autonomous system number (ASN) of Border Gateway Protocol (BGP) configuration for the IBM side of the DL 2.0
+	// gateway.
+	BgpAsn *int64 `json:"bgp_asn,omitempty"`
+
+	// BGP customer edge router CIDR is the new CIDR (Classless Inter-Domain Routing) value to be updated on customer edge
+	// router for the DL 2.0 gateway.
+	//
+	// Customer edge IP and IBM IP should be in the same network. Updating customer edge router CIDR should be accompanied
+	// with IBM CIDR in the request. Update customer edge router IP to a valid bgp_cer_cidr and bgp_ibm_cidr CIDR, the
+	// value must reside in one of "10.254.0.0/16", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16" or an owned public
+	// CIDR.  bgp_cer_cidr and bgp_ibm_cidr must have matching network and subnet mask values.
+	BgpCerCidr *string `json:"bgp_cer_cidr,omitempty"`
+
+	// BGP IBM CIDR is the new CIDR (Classless Inter-Domain Routing) value to be updated on IBM edge router for the DL 2.0
+	// gateway.
+	//
+	// IBM IP and customer edge IP should be in the same network. Updating IBM CIDR should be accompanied with customer
+	// edge router CIDR in the request. Update IBM CIDR to a valid bgp_cer_cidr and bgp_ibm_cidr CIDR, the value must
+	// reside in one of "10.254.0.0/16", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16" or an owned public CIDR.
+	// bgp_cer_cidr and bgp_ibm_cidr must have matching network and subnet mask values.
+	BgpIbmCidr *string `json:"bgp_ibm_cidr,omitempty"`
+
+	// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+	// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+	// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+	ConnectionMode *string `json:"connection_mode,omitempty"`
+
+	// The default directional route filter action that applies to routes that do not match any directional route filters.
+	DefaultExportRouteFilter *string `json:"default_export_route_filter,omitempty"`
+
+	// The default directional route filter action that applies to routes that do not match any directional route filters.
+	DefaultImportRouteFilter *string `json:"default_import_route_filter,omitempty"`
+
+	// Gateways with global routing (`true`) can connect to networks outside of their associated region.
+	Global *bool `json:"global,omitempty"`
+
+	// Use this field during LOA rejection to provide the reason for the rejection.
+	//
+	// Only allowed for type=dedicated gateways.
+	LoaRejectReason *string `json:"loa_reject_reason,omitempty"`
+
+	// MACsec configuration information.  When patching any macsec_config fields, no other fields may be specified in the
+	// patch request.  Contact IBM support for access to MACsec.
+	//
+	// A MACsec config cannot be added to a gateway created without MACsec.
+	MacsecConfig *GatewayMacsecConfigPatchTemplate `json:"macsec_config,omitempty"`
+
+	// Metered billing option.  When `true` gateway usage is billed per gigabyte.  When `false` there is no per gigabyte
+	// usage charge, instead a flat rate is charged for the gateway.
+	Metered *bool `json:"metered,omitempty"`
+
+	// The unique user-defined name for this gateway.
+	Name *string `json:"name,omitempty"`
+
+	// Gateway operational status.
+	//
+	// For gateways pending LOA approval, patch operational_status to the appropriate value to approve or reject its LOA.
+	// When rejecting an LOA, provide reject reasoning in `loa_reject_reason`.
+	//
+	// Only allowed for type=dedicated gateways.
+	OperationalStatus *string `json:"operational_status,omitempty"`
+
+	// Gateway patch panel complete notification from implementation team.
+	PatchPanelCompletionNotice *string `json:"patch_panel_completion_notice,omitempty"`
+
+	// Gateway speed in megabits per second.
+	SpeedMbps *int64 `json:"speed_mbps,omitempty"`
+
+	// The VLAN to configure for this gateway.
+	//
+	// Specify `null` to remove an existing VLAN configuration.
+	//
+	// The gateway must have a `type` of `dedicated`.
+	Vlan *int64 `json:"vlan,omitempty"`
+}
+
+// Constants associated with the GatewayPatchTemplate.ConnectionMode property.
+// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+const (
+	GatewayPatchTemplate_ConnectionMode_Direct  = "direct"
+	GatewayPatchTemplate_ConnectionMode_Transit = "transit"
+)
+
+// Constants associated with the GatewayPatchTemplate.DefaultExportRouteFilter property.
+// The default directional route filter action that applies to routes that do not match any directional route filters.
+const (
+	GatewayPatchTemplate_DefaultExportRouteFilter_Deny   = "deny"
+	GatewayPatchTemplate_DefaultExportRouteFilter_Permit = "permit"
+)
+
+// Constants associated with the GatewayPatchTemplate.DefaultImportRouteFilter property.
+// The default directional route filter action that applies to routes that do not match any directional route filters.
+const (
+	GatewayPatchTemplate_DefaultImportRouteFilter_Deny   = "deny"
+	GatewayPatchTemplate_DefaultImportRouteFilter_Permit = "permit"
+)
+
+// Constants associated with the GatewayPatchTemplate.OperationalStatus property.
+// Gateway operational status.
+//
+// For gateways pending LOA approval, patch operational_status to the appropriate value to approve or reject its LOA.
+// When rejecting an LOA, provide reject reasoning in `loa_reject_reason`.
+//
+// Only allowed for type=dedicated gateways.
+const (
+	GatewayPatchTemplate_OperationalStatus_LoaAccepted = "loa_accepted"
+	GatewayPatchTemplate_OperationalStatus_LoaRejected = "loa_rejected"
+)
+
+// UnmarshalGatewayPatchTemplate unmarshals an instance of GatewayPatchTemplate from the specified map of raw messages.
+func UnmarshalGatewayPatchTemplate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GatewayPatchTemplate)
+	err = core.UnmarshalModel(m, "authentication_key", &obj.AuthenticationKey, UnmarshalGatewayPatchTemplateAuthenticationKey)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "bfd_config", &obj.BfdConfig, UnmarshalGatewayBfdPatchTemplate)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_asn", &obj.BgpAsn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_cer_cidr", &obj.BgpCerCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_ibm_cidr", &obj.BgpIbmCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "connection_mode", &obj.ConnectionMode)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default_export_route_filter", &obj.DefaultExportRouteFilter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default_import_route_filter", &obj.DefaultImportRouteFilter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "global", &obj.Global)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "loa_reject_reason", &obj.LoaRejectReason)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "macsec_config", &obj.MacsecConfig, UnmarshalGatewayMacsecConfigPatchTemplate)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "metered", &obj.Metered)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operational_status", &obj.OperationalStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "patch_panel_completion_notice", &obj.PatchPanelCompletionNotice)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "speed_mbps", &obj.SpeedMbps)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "vlan", &obj.Vlan)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AsPatch returns a generic map representation of the GatewayPatchTemplate
+func (gatewayPatchTemplate *GatewayPatchTemplate) AsPatch() (_patch map[string]interface{}, err error) {
+	var jsonData []byte
+	jsonData, err = json.Marshal(gatewayPatchTemplate)
+	if err == nil {
+		err = json.Unmarshal(jsonData, &_patch)
+	}
 	return
 }
 
@@ -5181,10 +5739,10 @@ type GatewayStatistic struct {
 // Constants associated with the GatewayStatistic.Type property.
 // statistic type.
 const (
-	GatewayStatistic_Type_BfdSession = "bfd_session"
-	GatewayStatistic_Type_MacsecMkaSession = "macsec_mka_session"
+	GatewayStatistic_Type_BfdSession          = "bfd_session"
+	GatewayStatistic_Type_MacsecMkaSession    = "macsec_mka_session"
 	GatewayStatistic_Type_MacsecMkaStatistics = "macsec_mka_statistics"
-	GatewayStatistic_Type_MacsecPolicy = "macsec_policy"
+	GatewayStatistic_Type_MacsecPolicy        = "macsec_policy"
 )
 
 // UnmarshalGatewayStatistic unmarshals an instance of GatewayStatistic from the specified map of raw messages.
@@ -5248,11 +5806,12 @@ const (
 // Constants associated with the GatewayStatus.Value property.
 // Status.
 const (
-	GatewayStatus_Value_Active = "active"
-	GatewayStatus_Value_Connect = "connect"
+	GatewayStatus_Value_Active      = "active"
+	GatewayStatus_Value_Connect     = "connect"
 	GatewayStatus_Value_Established = "established"
-	GatewayStatus_Value_Idle = "idle"
+	GatewayStatus_Value_Idle        = "idle"
 )
+
 func (*GatewayStatus) isaGatewayStatus() bool {
 	return true
 }
@@ -5402,6 +5961,9 @@ type GatewayTemplate struct {
 	// MACsec configuration information.  Contact IBM support for access to MACsec.
 	MacsecConfig *GatewayMacsecConfigTemplate `json:"macsec_config,omitempty"`
 
+	// The VLAN to configure for this gateway.
+	Vlan *int64 `json:"vlan,omitempty"`
+
 	// Select Port Label for new type=connect gateway.
 	Port *GatewayPortIdentity `json:"port,omitempty"`
 }
@@ -5411,30 +5973,31 @@ type GatewayTemplate struct {
 // Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
 // for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
 const (
-	GatewayTemplate_ConnectionMode_Direct = "direct"
+	GatewayTemplate_ConnectionMode_Direct  = "direct"
 	GatewayTemplate_ConnectionMode_Transit = "transit"
 )
 
 // Constants associated with the GatewayTemplate.DefaultExportRouteFilter property.
 // The default directional route filter action that applies to routes that do not match any directional route filters.
 const (
-	GatewayTemplate_DefaultExportRouteFilter_Deny = "deny"
+	GatewayTemplate_DefaultExportRouteFilter_Deny   = "deny"
 	GatewayTemplate_DefaultExportRouteFilter_Permit = "permit"
 )
 
 // Constants associated with the GatewayTemplate.DefaultImportRouteFilter property.
 // The default directional route filter action that applies to routes that do not match any directional route filters.
 const (
-	GatewayTemplate_DefaultImportRouteFilter_Deny = "deny"
+	GatewayTemplate_DefaultImportRouteFilter_Deny   = "deny"
 	GatewayTemplate_DefaultImportRouteFilter_Permit = "permit"
 )
 
 // Constants associated with the GatewayTemplate.Type property.
 // Offering type.
 const (
-	GatewayTemplate_Type_Connect = "connect"
+	GatewayTemplate_Type_Connect   = "connect"
 	GatewayTemplate_Type_Dedicated = "dedicated"
 )
+
 func (*GatewayTemplate) isaGatewayTemplate() bool {
 	return true
 }
@@ -5542,6 +6105,10 @@ func UnmarshalGatewayTemplate(m map[string]json.RawMessage, result interface{}) 
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "vlan", &obj.Vlan)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalModel(m, "port", &obj.Port, UnmarshalGatewayPortIdentity)
 	if err != nil {
 		return
@@ -5598,7 +6165,7 @@ type GatewayTemplateRouteFilter struct {
 // Constants associated with the GatewayTemplateRouteFilter.Action property.
 // Determines whether routes that match the prefix-set will be allowed (permit) or rejected (deny) through the filter.
 const (
-	GatewayTemplateRouteFilter_Action_Deny = "deny"
+	GatewayTemplateRouteFilter_Action_Deny   = "deny"
 	GatewayTemplateRouteFilter_Action_Permit = "permit"
 )
 
@@ -5674,14 +6241,14 @@ type GatewayVirtualConnection struct {
 // The list of enumerated values for this property may expand in the future. Code and processes using this field  must
 // tolerate unexpected values.
 const (
-	GatewayVirtualConnection_Status_ApprovalPending = "approval_pending"
-	GatewayVirtualConnection_Status_Attached = "attached"
-	GatewayVirtualConnection_Status_Deleting = "deleting"
-	GatewayVirtualConnection_Status_DetachedByNetwork = "detached_by_network"
+	GatewayVirtualConnection_Status_ApprovalPending          = "approval_pending"
+	GatewayVirtualConnection_Status_Attached                 = "attached"
+	GatewayVirtualConnection_Status_Deleting                 = "deleting"
+	GatewayVirtualConnection_Status_DetachedByNetwork        = "detached_by_network"
 	GatewayVirtualConnection_Status_DetachedByNetworkPending = "detached_by_network_pending"
-	GatewayVirtualConnection_Status_Expired = "expired"
-	GatewayVirtualConnection_Status_Pending = "pending"
-	GatewayVirtualConnection_Status_Rejected = "rejected"
+	GatewayVirtualConnection_Status_Expired                  = "expired"
+	GatewayVirtualConnection_Status_Pending                  = "pending"
+	GatewayVirtualConnection_Status_Rejected                 = "rejected"
 )
 
 // Constants associated with the GatewayVirtualConnection.Type property.
@@ -5692,7 +6259,7 @@ const (
 const (
 	GatewayVirtualConnection_Type_Classic = "classic"
 	GatewayVirtualConnection_Type_Transit = "transit"
-	GatewayVirtualConnection_Type_Vpc = "vpc"
+	GatewayVirtualConnection_Type_Vpc     = "vpc"
 )
 
 // UnmarshalGatewayVirtualConnection unmarshals an instance of GatewayVirtualConnection from the specified map of raw messages.
@@ -5763,7 +6330,7 @@ type GetGatewayExportRouteFilterOptions struct {
 func (*DirectLinkV1) NewGetGatewayExportRouteFilterOptions(gatewayID string, id string) *GetGatewayExportRouteFilterOptions {
 	return &GetGatewayExportRouteFilterOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		ID: core.StringPtr(id),
+		ID:        core.StringPtr(id),
 	}
 }
 
@@ -5801,7 +6368,7 @@ type GetGatewayImportRouteFilterOptions struct {
 func (*DirectLinkV1) NewGetGatewayImportRouteFilterOptions(gatewayID string, id string) *GetGatewayImportRouteFilterOptions {
 	return &GetGatewayImportRouteFilterOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		ID: core.StringPtr(id),
+		ID:        core.StringPtr(id),
 	}
 }
 
@@ -5851,6 +6418,377 @@ func (options *GetGatewayOptions) SetHeaders(param map[string]string) *GetGatewa
 	return options
 }
 
+// GetGatewayResponse : GetGatewayResponse struct
+// Models which "extend" this model:
+// - GetGatewayResponseGateway
+// - GetGatewayResponseCrossAccountGateway
+type GetGatewayResponse struct {
+	// array of AS Prepend information.
+	AsPrepends []AsPrepend `json:"as_prepends,omitempty"`
+
+	// The identity of the standard key to use for BGP MD5 authentication key.
+	// The key material that you provide must be base64 encoded and original string must be maximum 126 ASCII characters in
+	// length.
+	// To clear the optional `authentication_key` field patch its crn to `""`.
+	AuthenticationKey *GatewayAuthenticationKey `json:"authentication_key,omitempty"`
+
+	// BFD configuration information.
+	BfdConfig *GatewayBfdConfig `json:"bfd_config,omitempty"`
+
+	// Customer BGP ASN.
+	BgpAsn *int64 `json:"bgp_asn,omitempty"`
+
+	// (DEPRECATED) BGP base CIDR is deprecated and no longer recognized by the Direct Link APIs.
+	//
+	// See bgp_cer_cidr and bgp_ibm_cidr fields instead for IP related information.
+	//
+	// Deprecated field bgp_base_cidr will be removed from the API specificiation after 15-MAR-2021.
+	BgpBaseCidr *string `json:"bgp_base_cidr,omitempty"`
+
+	// BGP customer edge router CIDR.
+	BgpCerCidr *string `json:"bgp_cer_cidr,omitempty"`
+
+	// IBM BGP ASN.
+	BgpIbmAsn *int64 `json:"bgp_ibm_asn,omitempty"`
+
+	// BGP IBM CIDR.
+	BgpIbmCidr *string `json:"bgp_ibm_cidr,omitempty"`
+
+	// Gateway BGP status. The list of enumerated values for this property may expand in the future. Code and processes
+	// using this field  must tolerate unexpected values.
+	BgpStatus *string `json:"bgp_status,omitempty"`
+
+	// Date and time bgp status was updated.
+	BgpStatusUpdatedAt *strfmt.DateTime `json:"bgp_status_updated_at,omitempty"`
+
+	// Carrier name.  Only set for type=dedicated gateways.
+	CarrierName *string `json:"carrier_name,omitempty"`
+
+	// Changes pending approval for provider managed Direct Link Connect gateways.
+	ChangeRequest GatewayChangeRequestIntf `json:"change_request,omitempty"`
+
+	// Reason for completion notice rejection.  Only included on type=dedicated gateways with a rejected completion notice.
+	CompletionNoticeRejectReason *string `json:"completion_notice_reject_reason,omitempty"`
+
+	// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+	// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+	// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+	ConnectionMode *string `json:"connection_mode,omitempty"`
+
+	// The date and time resource was created.
+	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
+
+	// The CRN (Cloud Resource Name) of this gateway.
+	Crn *string `json:"crn,omitempty"`
+
+	// Indicates whether this gateway is cross account gateway.
+	CrossAccount *bool `json:"cross_account,omitempty"`
+
+	// Cross connect router.  Only included on type=dedicated gateways.
+	CrossConnectRouter *string `json:"cross_connect_router,omitempty"`
+
+	// Customer name.  Only set for type=dedicated gateways.
+	CustomerName *string `json:"customer_name,omitempty"`
+
+	// The default directional route filter action that applies to routes that do not match any directional route filters.
+	DefaultExportRouteFilter *string `json:"default_export_route_filter,omitempty"`
+
+	// The default directional route filter action that applies to routes that do not match any directional route filters.
+	DefaultImportRouteFilter *string `json:"default_import_route_filter,omitempty"`
+
+	// Gateways with global routing (`true`) can connect to networks outside their associated region.
+	Global *bool `json:"global,omitempty"`
+
+	// The unique identifier of this gateway.
+	ID *string `json:"id,omitempty"`
+
+	// Gateway link status.  Only included on type=dedicated gateways. The list of enumerated values for this property may
+	// expand in the future. Code and processes using this field  must tolerate unexpected values.
+	LinkStatus *string `json:"link_status,omitempty"`
+
+	// Date and time link status was updated.
+	LinkStatusUpdatedAt *strfmt.DateTime `json:"link_status_updated_at,omitempty"`
+
+	// Gateway location long name.
+	LocationDisplayName *string `json:"location_display_name,omitempty"`
+
+	// Gateway location.
+	LocationName *string `json:"location_name,omitempty"`
+
+	// MACsec configuration information.  For Dedicated Gateways with MACsec configured, return configuration information.
+	// Contact IBM support for access to MACsec.
+	MacsecConfig *GatewayMacsecConfig `json:"macsec_config,omitempty"`
+
+	// Metered billing option.  When `true` gateway usage is billed per gigabyte.  When `false` there is no per gigabyte
+	// usage charge, instead a flat rate is charged for the gateway.
+	Metered *bool `json:"metered,omitempty"`
+
+	// The unique user-defined name for this gateway.
+	Name *string `json:"name,omitempty"`
+
+	// Gateway operational status. The list of enumerated values for this property may expand in the future. Code and
+	// processes using this field  must tolerate unexpected values.
+	OperationalStatus *string `json:"operational_status,omitempty"`
+
+	// gateway port for type=connect gateways.
+	Port *GatewayPort `json:"port,omitempty"`
+
+	// Indicates whether gateway changes must be made via a provider portal.
+	ProviderApiManaged *bool `json:"provider_api_managed,omitempty"`
+
+	// Resource group reference.
+	ResourceGroup *ResourceGroupReference `json:"resource_group,omitempty"`
+
+	// Gateway speed in megabits per second.
+	SpeedMbps *int64 `json:"speed_mbps,omitempty"`
+
+	// Gateway patch panel complete notification from implementation team.
+	PatchPanelCompletionNotice *string `json:"patch_panel_completion_notice,omitempty"`
+
+	// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
+	// this field  must tolerate unexpected values.
+	Type *string `json:"type,omitempty"`
+
+	// VLAN configured for this gateway. If there is no vlan configured for the gateway, the vlan will be absent. This
+	// property will also be absent if this gateway's `crn` is in another account.
+	Vlan *int64 `json:"vlan,omitempty"`
+}
+
+// Constants associated with the GetGatewayResponse.BgpStatus property.
+// Gateway BGP status. The list of enumerated values for this property may expand in the future. Code and processes
+// using this field  must tolerate unexpected values.
+const (
+	GetGatewayResponse_BgpStatus_Active      = "active"
+	GetGatewayResponse_BgpStatus_Connect     = "connect"
+	GetGatewayResponse_BgpStatus_Established = "established"
+	GetGatewayResponse_BgpStatus_Idle        = "idle"
+)
+
+// Constants associated with the GetGatewayResponse.ConnectionMode property.
+// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+const (
+	GetGatewayResponse_ConnectionMode_Direct  = "direct"
+	GetGatewayResponse_ConnectionMode_Transit = "transit"
+)
+
+// Constants associated with the GetGatewayResponse.DefaultExportRouteFilter property.
+// The default directional route filter action that applies to routes that do not match any directional route filters.
+const (
+	GetGatewayResponse_DefaultExportRouteFilter_Deny   = "deny"
+	GetGatewayResponse_DefaultExportRouteFilter_Permit = "permit"
+)
+
+// Constants associated with the GetGatewayResponse.DefaultImportRouteFilter property.
+// The default directional route filter action that applies to routes that do not match any directional route filters.
+const (
+	GetGatewayResponse_DefaultImportRouteFilter_Deny   = "deny"
+	GetGatewayResponse_DefaultImportRouteFilter_Permit = "permit"
+)
+
+// Constants associated with the GetGatewayResponse.LinkStatus property.
+// Gateway link status.  Only included on type=dedicated gateways. The list of enumerated values for this property may
+// expand in the future. Code and processes using this field  must tolerate unexpected values.
+const (
+	GetGatewayResponse_LinkStatus_Down = "down"
+	GetGatewayResponse_LinkStatus_Up   = "up"
+)
+
+// Constants associated with the GetGatewayResponse.OperationalStatus property.
+// Gateway operational status. The list of enumerated values for this property may expand in the future. Code and
+// processes using this field  must tolerate unexpected values.
+const (
+	GetGatewayResponse_OperationalStatus_AwaitingCompletionNotice = "awaiting_completion_notice"
+	GetGatewayResponse_OperationalStatus_AwaitingLoa              = "awaiting_loa"
+	GetGatewayResponse_OperationalStatus_CompletionNoticeApproved = "completion_notice_approved"
+	GetGatewayResponse_OperationalStatus_CompletionNoticeReceived = "completion_notice_received"
+	GetGatewayResponse_OperationalStatus_CompletionNoticeRejected = "completion_notice_rejected"
+	GetGatewayResponse_OperationalStatus_Configuring              = "configuring"
+	GetGatewayResponse_OperationalStatus_CreatePending            = "create_pending"
+	GetGatewayResponse_OperationalStatus_CreateRejected           = "create_rejected"
+	GetGatewayResponse_OperationalStatus_DeletePending            = "delete_pending"
+	GetGatewayResponse_OperationalStatus_LoaAccepted              = "loa_accepted"
+	GetGatewayResponse_OperationalStatus_LoaCreated               = "loa_created"
+	GetGatewayResponse_OperationalStatus_LoaRejected              = "loa_rejected"
+	GetGatewayResponse_OperationalStatus_Provisioned              = "provisioned"
+)
+
+// Constants associated with the GetGatewayResponse.Type property.
+// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
+// this field  must tolerate unexpected values.
+const (
+	GetGatewayResponse_Type_Connect   = "connect"
+	GetGatewayResponse_Type_Dedicated = "dedicated"
+)
+
+func (*GetGatewayResponse) isaGetGatewayResponse() bool {
+	return true
+}
+
+type GetGatewayResponseIntf interface {
+	isaGetGatewayResponse() bool
+}
+
+// UnmarshalGetGatewayResponse unmarshals an instance of GetGatewayResponse from the specified map of raw messages.
+func UnmarshalGetGatewayResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GetGatewayResponse)
+	err = core.UnmarshalModel(m, "as_prepends", &obj.AsPrepends, UnmarshalAsPrepend)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "authentication_key", &obj.AuthenticationKey, UnmarshalGatewayAuthenticationKey)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "bfd_config", &obj.BfdConfig, UnmarshalGatewayBfdConfig)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_asn", &obj.BgpAsn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_base_cidr", &obj.BgpBaseCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_cer_cidr", &obj.BgpCerCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_ibm_asn", &obj.BgpIbmAsn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_ibm_cidr", &obj.BgpIbmCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_status", &obj.BgpStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_status_updated_at", &obj.BgpStatusUpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "carrier_name", &obj.CarrierName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "change_request", &obj.ChangeRequest, UnmarshalGatewayChangeRequest)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "completion_notice_reject_reason", &obj.CompletionNoticeRejectReason)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "connection_mode", &obj.ConnectionMode)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cross_account", &obj.CrossAccount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cross_connect_router", &obj.CrossConnectRouter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "customer_name", &obj.CustomerName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default_export_route_filter", &obj.DefaultExportRouteFilter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default_import_route_filter", &obj.DefaultImportRouteFilter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "global", &obj.Global)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "link_status", &obj.LinkStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "link_status_updated_at", &obj.LinkStatusUpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location_display_name", &obj.LocationDisplayName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location_name", &obj.LocationName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "macsec_config", &obj.MacsecConfig, UnmarshalGatewayMacsecConfig)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "metered", &obj.Metered)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operational_status", &obj.OperationalStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "port", &obj.Port, UnmarshalGatewayPort)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "provider_api_managed", &obj.ProviderApiManaged)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "speed_mbps", &obj.SpeedMbps)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "patch_panel_completion_notice", &obj.PatchPanelCompletionNotice)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "vlan", &obj.Vlan)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // GetGatewayRouteReportOptions : The GetGatewayRouteReport options.
 type GetGatewayRouteReportOptions struct {
 	// Direct Link gateway identifier.
@@ -5867,7 +6805,7 @@ type GetGatewayRouteReportOptions struct {
 func (*DirectLinkV1) NewGetGatewayRouteReportOptions(gatewayID string, id string) *GetGatewayRouteReportOptions {
 	return &GetGatewayRouteReportOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		ID: core.StringPtr(id),
+		ID:        core.StringPtr(id),
 	}
 }
 
@@ -5904,16 +6842,16 @@ type GetGatewayStatisticsOptions struct {
 // Constants associated with the GetGatewayStatisticsOptions.Type property.
 // Specify statistic to retrieve.
 const (
-	GetGatewayStatisticsOptions_Type_BfdSession = "bfd_session"
-	GetGatewayStatisticsOptions_Type_MacsecMkaSession = "macsec_mka_session"
+	GetGatewayStatisticsOptions_Type_BfdSession          = "bfd_session"
+	GetGatewayStatisticsOptions_Type_MacsecMkaSession    = "macsec_mka_session"
 	GetGatewayStatisticsOptions_Type_MacsecMkaStatistics = "macsec_mka_statistics"
-	GetGatewayStatisticsOptions_Type_MacsecPolicy = "macsec_policy"
+	GetGatewayStatisticsOptions_Type_MacsecPolicy        = "macsec_policy"
 )
 
 // NewGetGatewayStatisticsOptions : Instantiate GetGatewayStatisticsOptions
 func (*DirectLinkV1) NewGetGatewayStatisticsOptions(id string, typeVar string) *GetGatewayStatisticsOptions {
 	return &GetGatewayStatisticsOptions{
-		ID: core.StringPtr(id),
+		ID:   core.StringPtr(id),
 		Type: core.StringPtr(typeVar),
 	}
 }
@@ -5951,8 +6889,8 @@ type GetGatewayStatusOptions struct {
 // Constants associated with the GetGatewayStatusOptions.Type property.
 // Specify status to retrieve.
 const (
-	GetGatewayStatusOptions_Type_Bfd = "bfd"
-	GetGatewayStatusOptions_Type_Bgp = "bgp"
+	GetGatewayStatusOptions_Type_Bfd  = "bfd"
+	GetGatewayStatusOptions_Type_Bgp  = "bgp"
 	GetGatewayStatusOptions_Type_Link = "link"
 )
 
@@ -5997,7 +6935,7 @@ type GetGatewayVirtualConnectionOptions struct {
 func (*DirectLinkV1) NewGetGatewayVirtualConnectionOptions(gatewayID string, id string) *GetGatewayVirtualConnectionOptions {
 	return &GetGatewayVirtualConnectionOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		ID: core.StringPtr(id),
+		ID:        core.StringPtr(id),
 	}
 }
 
@@ -6293,7 +7231,7 @@ type ListOfferingTypeLocationCrossConnectRoutersOptions struct {
 // Constants associated with the ListOfferingTypeLocationCrossConnectRoutersOptions.OfferingType property.
 // The Direct Link offering type.  Current supported values are `"dedicated"` and `"connect"`.
 const (
-	ListOfferingTypeLocationCrossConnectRoutersOptions_OfferingType_Connect = "connect"
+	ListOfferingTypeLocationCrossConnectRoutersOptions_OfferingType_Connect   = "connect"
 	ListOfferingTypeLocationCrossConnectRoutersOptions_OfferingType_Dedicated = "dedicated"
 )
 
@@ -6335,7 +7273,7 @@ type ListOfferingTypeLocationsOptions struct {
 // Constants associated with the ListOfferingTypeLocationsOptions.OfferingType property.
 // The Direct Link offering type.  Current supported values are `"dedicated"` and `"connect"`.
 const (
-	ListOfferingTypeLocationsOptions_OfferingType_Connect = "connect"
+	ListOfferingTypeLocationsOptions_OfferingType_Connect   = "connect"
 	ListOfferingTypeLocationsOptions_OfferingType_Dedicated = "dedicated"
 )
 
@@ -6370,7 +7308,7 @@ type ListOfferingTypeSpeedsOptions struct {
 // Constants associated with the ListOfferingTypeSpeedsOptions.OfferingType property.
 // The Direct Link offering type.  Current supported values are `"dedicated"` and `"connect"`.
 const (
-	ListOfferingTypeSpeedsOptions_OfferingType_Connect = "connect"
+	ListOfferingTypeSpeedsOptions_OfferingType_Connect   = "connect"
 	ListOfferingTypeSpeedsOptions_OfferingType_Dedicated = "dedicated"
 )
 
@@ -6787,7 +7725,7 @@ type ReplaceGatewayAsPrependsOptions struct {
 func (*DirectLinkV1) NewReplaceGatewayAsPrependsOptions(gatewayID string, ifMatch string) *ReplaceGatewayAsPrependsOptions {
 	return &ReplaceGatewayAsPrependsOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		IfMatch: core.StringPtr(ifMatch),
+		IfMatch:   core.StringPtr(ifMatch),
 	}
 }
 
@@ -6835,7 +7773,7 @@ type ReplaceGatewayExportRouteFiltersOptions struct {
 func (*DirectLinkV1) NewReplaceGatewayExportRouteFiltersOptions(gatewayID string, ifMatch string) *ReplaceGatewayExportRouteFiltersOptions {
 	return &ReplaceGatewayExportRouteFiltersOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		IfMatch: core.StringPtr(ifMatch),
+		IfMatch:   core.StringPtr(ifMatch),
 	}
 }
 
@@ -6883,7 +7821,7 @@ type ReplaceGatewayImportRouteFiltersOptions struct {
 func (*DirectLinkV1) NewReplaceGatewayImportRouteFiltersOptions(gatewayID string, ifMatch string) *ReplaceGatewayImportRouteFiltersOptions {
 	return &ReplaceGatewayImportRouteFiltersOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		IfMatch: core.StringPtr(ifMatch),
+		IfMatch:   core.StringPtr(ifMatch),
 	}
 }
 
@@ -6993,7 +7931,7 @@ type RouteFilter struct {
 // Constants associated with the RouteFilter.Action property.
 // Determines whether routes that match the prefix-set will be allowed (permit) or rejected (deny) through the filter.
 const (
-	RouteFilter_Action_Deny = "deny"
+	RouteFilter_Action_Deny   = "deny"
 	RouteFilter_Action_Permit = "permit"
 )
 
@@ -7073,7 +8011,7 @@ type RouteReport struct {
 // using this field must tolerate unexpected values.
 const (
 	RouteReport_Status_Complete = "complete"
-	RouteReport_Status_Pending = "pending"
+	RouteReport_Status_Pending  = "pending"
 )
 
 // UnmarshalRouteReport unmarshals an instance of RouteReport from the specified map of raw messages.
@@ -7249,6 +8187,7 @@ type RouteReportOverlappingRoute struct {
 const (
 	RouteReportOverlappingRoute_Type_VirtualConnection = "virtual_connection"
 )
+
 func (*RouteReportOverlappingRoute) isaRouteReportOverlappingRoute() bool {
 	return true
 }
@@ -7359,8 +8298,8 @@ type UpdateGatewayExportRouteFilterOptions struct {
 // NewUpdateGatewayExportRouteFilterOptions : Instantiate UpdateGatewayExportRouteFilterOptions
 func (*DirectLinkV1) NewUpdateGatewayExportRouteFilterOptions(gatewayID string, id string, updateRouteFilterTemplatePatch map[string]interface{}) *UpdateGatewayExportRouteFilterOptions {
 	return &UpdateGatewayExportRouteFilterOptions{
-		GatewayID: core.StringPtr(gatewayID),
-		ID: core.StringPtr(id),
+		GatewayID:                      core.StringPtr(gatewayID),
+		ID:                             core.StringPtr(id),
 		UpdateRouteFilterTemplatePatch: updateRouteFilterTemplatePatch,
 	}
 }
@@ -7407,8 +8346,8 @@ type UpdateGatewayImportRouteFilterOptions struct {
 // NewUpdateGatewayImportRouteFilterOptions : Instantiate UpdateGatewayImportRouteFilterOptions
 func (*DirectLinkV1) NewUpdateGatewayImportRouteFilterOptions(gatewayID string, id string, updateRouteFilterTemplatePatch map[string]interface{}) *UpdateGatewayImportRouteFilterOptions {
 	return &UpdateGatewayImportRouteFilterOptions{
-		GatewayID: core.StringPtr(gatewayID),
-		ID: core.StringPtr(id),
+		GatewayID:                      core.StringPtr(gatewayID),
+		ID:                             core.StringPtr(id),
 		UpdateRouteFilterTemplatePatch: updateRouteFilterTemplatePatch,
 	}
 }
@@ -7442,126 +8381,18 @@ type UpdateGatewayOptions struct {
 	// Direct Link gateway identifier.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// The identity of the standard key to use for BGP MD5 authentication key.
-	// The key material that you provide must be base64 encoded and original string must be maximum 126 ASCII characters in
-	// length.
-	// To clear the optional `authentication_key` field patch its crn to `""`.
-	AuthenticationKey *GatewayPatchTemplateAuthenticationKey `json:"authentication_key,omitempty"`
-
-	// BFD configuration information.
-	BfdConfig *GatewayBfdPatchTemplate `json:"bfd_config,omitempty"`
-
-	// The autonomous system number (ASN) of Border Gateway Protocol (BGP) configuration for the IBM side of the DL 2.0
-	// gateway.
-	BgpAsn *int64 `json:"bgp_asn,omitempty"`
-
-	// BGP customer edge router CIDR is the new CIDR (Classless Inter-Domain Routing) value to be updated on customer edge
-	// router for the DL 2.0 gateway.
-	//
-	// Customer edge IP and IBM IP should be in the same network. Updating customer edge router CIDR should be accompanied
-	// with IBM CIDR in the request. Update customer edge router IP to a valid bgp_cer_cidr and bgp_ibm_cidr CIDR, the
-	// value must reside in one of "10.254.0.0/16", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16" or an owned public
-	// CIDR.  bgp_cer_cidr and bgp_ibm_cidr must have matching network and subnet mask values.
-	BgpCerCidr *string `json:"bgp_cer_cidr,omitempty"`
-
-	// BGP IBM CIDR is the new CIDR (Classless Inter-Domain Routing) value to be updated on IBM edge router for the DL 2.0
-	// gateway.
-	//
-	// IBM IP and customer edge IP should be in the same network. Updating IBM CIDR should be accompanied with customer
-	// edge router CIDR in the request. Update IBM CIDR to a valid bgp_cer_cidr and bgp_ibm_cidr CIDR, the value must
-	// reside in one of "10.254.0.0/16", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16" or an owned public CIDR.
-	// bgp_cer_cidr and bgp_ibm_cidr must have matching network and subnet mask values.
-	BgpIbmCidr *string `json:"bgp_ibm_cidr,omitempty"`
-
-	// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
-	// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
-	// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
-	ConnectionMode *string `json:"connection_mode,omitempty"`
-
-	// The default directional route filter action that applies to routes that do not match any directional route filters.
-	DefaultExportRouteFilter *string `json:"default_export_route_filter,omitempty"`
-
-	// The default directional route filter action that applies to routes that do not match any directional route filters.
-	DefaultImportRouteFilter *string `json:"default_import_route_filter,omitempty"`
-
-	// Gateways with global routing (`true`) can connect to networks outside of their associated region.
-	Global *bool `json:"global,omitempty"`
-
-	// Use this field during LOA rejection to provide the reason for the rejection.
-	//
-	// Only allowed for type=dedicated gateways.
-	LoaRejectReason *string `json:"loa_reject_reason,omitempty"`
-
-	// MACsec configuration information.  When patching any macsec_config fields, no other fields may be specified in the
-	// patch request.  Contact IBM support for access to MACsec.
-	//
-	// A MACsec config cannot be added to a gateway created without MACsec.
-	MacsecConfig *GatewayMacsecConfigPatchTemplate `json:"macsec_config,omitempty"`
-
-	// Metered billing option.  When `true` gateway usage is billed per gigabyte.  When `false` there is no per gigabyte
-	// usage charge, instead a flat rate is charged for the gateway.
-	Metered *bool `json:"metered,omitempty"`
-
-	// The unique user-defined name for this gateway.
-	Name *string `json:"name,omitempty"`
-
-	// Gateway operational status.
-	//
-	// For gateways pending LOA approval, patch operational_status to the appropriate value to approve or reject its LOA.
-	// When rejecting an LOA, provide reject reasoning in `loa_reject_reason`.
-	//
-	// Only allowed for type=dedicated gateways.
-	OperationalStatus *string `json:"operational_status,omitempty"`
-
-	// Gateway patch panel complete notification from implementation team.
-	PatchPanelCompletionNotice *string `json:"patch_panel_completion_notice,omitempty"`
-
-	// Gateway speed in megabits per second.
-	SpeedMbps *int64 `json:"speed_mbps,omitempty"`
+	// The Direct Link gateway patch.
+	GatewayPatchTemplatePatch map[string]interface{} `json:"GatewayPatchTemplate_patch" validate:"required"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
-// Constants associated with the UpdateGatewayOptions.ConnectionMode property.
-// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
-// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
-// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
-const (
-	UpdateGatewayOptions_ConnectionMode_Direct = "direct"
-	UpdateGatewayOptions_ConnectionMode_Transit = "transit"
-)
-
-// Constants associated with the UpdateGatewayOptions.DefaultExportRouteFilter property.
-// The default directional route filter action that applies to routes that do not match any directional route filters.
-const (
-	UpdateGatewayOptions_DefaultExportRouteFilter_Deny = "deny"
-	UpdateGatewayOptions_DefaultExportRouteFilter_Permit = "permit"
-)
-
-// Constants associated with the UpdateGatewayOptions.DefaultImportRouteFilter property.
-// The default directional route filter action that applies to routes that do not match any directional route filters.
-const (
-	UpdateGatewayOptions_DefaultImportRouteFilter_Deny = "deny"
-	UpdateGatewayOptions_DefaultImportRouteFilter_Permit = "permit"
-)
-
-// Constants associated with the UpdateGatewayOptions.OperationalStatus property.
-// Gateway operational status.
-//
-// For gateways pending LOA approval, patch operational_status to the appropriate value to approve or reject its LOA.
-// When rejecting an LOA, provide reject reasoning in `loa_reject_reason`.
-//
-// Only allowed for type=dedicated gateways.
-const (
-	UpdateGatewayOptions_OperationalStatus_LoaAccepted = "loa_accepted"
-	UpdateGatewayOptions_OperationalStatus_LoaRejected = "loa_rejected"
-)
-
 // NewUpdateGatewayOptions : Instantiate UpdateGatewayOptions
-func (*DirectLinkV1) NewUpdateGatewayOptions(id string) *UpdateGatewayOptions {
+func (*DirectLinkV1) NewUpdateGatewayOptions(id string, gatewayPatchTemplatePatch map[string]interface{}) *UpdateGatewayOptions {
 	return &UpdateGatewayOptions{
-		ID: core.StringPtr(id),
+		ID:                        core.StringPtr(id),
+		GatewayPatchTemplatePatch: gatewayPatchTemplatePatch,
 	}
 }
 
@@ -7571,99 +8402,9 @@ func (_options *UpdateGatewayOptions) SetID(id string) *UpdateGatewayOptions {
 	return _options
 }
 
-// SetAuthenticationKey : Allow user to set AuthenticationKey
-func (_options *UpdateGatewayOptions) SetAuthenticationKey(authenticationKey *GatewayPatchTemplateAuthenticationKey) *UpdateGatewayOptions {
-	_options.AuthenticationKey = authenticationKey
-	return _options
-}
-
-// SetBfdConfig : Allow user to set BfdConfig
-func (_options *UpdateGatewayOptions) SetBfdConfig(bfdConfig *GatewayBfdPatchTemplate) *UpdateGatewayOptions {
-	_options.BfdConfig = bfdConfig
-	return _options
-}
-
-// SetBgpAsn : Allow user to set BgpAsn
-func (_options *UpdateGatewayOptions) SetBgpAsn(bgpAsn int64) *UpdateGatewayOptions {
-	_options.BgpAsn = core.Int64Ptr(bgpAsn)
-	return _options
-}
-
-// SetBgpCerCidr : Allow user to set BgpCerCidr
-func (_options *UpdateGatewayOptions) SetBgpCerCidr(bgpCerCidr string) *UpdateGatewayOptions {
-	_options.BgpCerCidr = core.StringPtr(bgpCerCidr)
-	return _options
-}
-
-// SetBgpIbmCidr : Allow user to set BgpIbmCidr
-func (_options *UpdateGatewayOptions) SetBgpIbmCidr(bgpIbmCidr string) *UpdateGatewayOptions {
-	_options.BgpIbmCidr = core.StringPtr(bgpIbmCidr)
-	return _options
-}
-
-// SetConnectionMode : Allow user to set ConnectionMode
-func (_options *UpdateGatewayOptions) SetConnectionMode(connectionMode string) *UpdateGatewayOptions {
-	_options.ConnectionMode = core.StringPtr(connectionMode)
-	return _options
-}
-
-// SetDefaultExportRouteFilter : Allow user to set DefaultExportRouteFilter
-func (_options *UpdateGatewayOptions) SetDefaultExportRouteFilter(defaultExportRouteFilter string) *UpdateGatewayOptions {
-	_options.DefaultExportRouteFilter = core.StringPtr(defaultExportRouteFilter)
-	return _options
-}
-
-// SetDefaultImportRouteFilter : Allow user to set DefaultImportRouteFilter
-func (_options *UpdateGatewayOptions) SetDefaultImportRouteFilter(defaultImportRouteFilter string) *UpdateGatewayOptions {
-	_options.DefaultImportRouteFilter = core.StringPtr(defaultImportRouteFilter)
-	return _options
-}
-
-// SetGlobal : Allow user to set Global
-func (_options *UpdateGatewayOptions) SetGlobal(global bool) *UpdateGatewayOptions {
-	_options.Global = core.BoolPtr(global)
-	return _options
-}
-
-// SetLoaRejectReason : Allow user to set LoaRejectReason
-func (_options *UpdateGatewayOptions) SetLoaRejectReason(loaRejectReason string) *UpdateGatewayOptions {
-	_options.LoaRejectReason = core.StringPtr(loaRejectReason)
-	return _options
-}
-
-// SetMacsecConfig : Allow user to set MacsecConfig
-func (_options *UpdateGatewayOptions) SetMacsecConfig(macsecConfig *GatewayMacsecConfigPatchTemplate) *UpdateGatewayOptions {
-	_options.MacsecConfig = macsecConfig
-	return _options
-}
-
-// SetMetered : Allow user to set Metered
-func (_options *UpdateGatewayOptions) SetMetered(metered bool) *UpdateGatewayOptions {
-	_options.Metered = core.BoolPtr(metered)
-	return _options
-}
-
-// SetName : Allow user to set Name
-func (_options *UpdateGatewayOptions) SetName(name string) *UpdateGatewayOptions {
-	_options.Name = core.StringPtr(name)
-	return _options
-}
-
-// SetOperationalStatus : Allow user to set OperationalStatus
-func (_options *UpdateGatewayOptions) SetOperationalStatus(operationalStatus string) *UpdateGatewayOptions {
-	_options.OperationalStatus = core.StringPtr(operationalStatus)
-	return _options
-}
-
-// SetPatchPanelCompletionNotice : Allow user to set PatchPanelCompletionNotice
-func (_options *UpdateGatewayOptions) SetPatchPanelCompletionNotice(patchPanelCompletionNotice string) *UpdateGatewayOptions {
-	_options.PatchPanelCompletionNotice = core.StringPtr(patchPanelCompletionNotice)
-	return _options
-}
-
-// SetSpeedMbps : Allow user to set SpeedMbps
-func (_options *UpdateGatewayOptions) SetSpeedMbps(speedMbps int64) *UpdateGatewayOptions {
-	_options.SpeedMbps = core.Int64Ptr(speedMbps)
+// SetGatewayPatchTemplatePatch : Allow user to set GatewayPatchTemplatePatch
+func (_options *UpdateGatewayOptions) SetGatewayPatchTemplatePatch(gatewayPatchTemplatePatch map[string]interface{}) *UpdateGatewayOptions {
+	_options.GatewayPatchTemplatePatch = gatewayPatchTemplatePatch
 	return _options
 }
 
@@ -7707,7 +8448,7 @@ const (
 func (*DirectLinkV1) NewUpdateGatewayVirtualConnectionOptions(gatewayID string, id string) *UpdateGatewayVirtualConnectionOptions {
 	return &UpdateGatewayVirtualConnectionOptions{
 		GatewayID: core.StringPtr(gatewayID),
-		ID: core.StringPtr(id),
+		ID:        core.StringPtr(id),
 	}
 }
 
@@ -7774,7 +8515,7 @@ type UpdateRouteFilterTemplate struct {
 // Constants associated with the UpdateRouteFilterTemplate.Action property.
 // Determines whether routes that match the prefix-set will be allowed (permit) or rejected (deny) through the filter.
 const (
-	UpdateRouteFilterTemplate_Action_Deny = "deny"
+	UpdateRouteFilterTemplate_Action_Deny   = "deny"
 	UpdateRouteFilterTemplate_Action_Permit = "permit"
 )
 
@@ -7904,7 +8645,7 @@ func UnmarshalGatewayActionTemplateUpdatesItemGatewayClientSpeedUpdate(m map[str
 
 // GatewayActionTemplateUpdatesItemGatewayClientVLANUpdate : Update VLAN for this gateway
 //
-// VLAN provided should be in the range 1 to 4094.
+// VLAN provided should be in the range 2 to 3967.
 // This model "extends" GatewayActionTemplateUpdatesItem
 type GatewayActionTemplateUpdatesItemGatewayClientVLANUpdate struct {
 	// VLAN to be updated for this gateway.
@@ -8015,7 +8756,7 @@ func UnmarshalGatewayChangeRequestGatewayClientGatewayUpdateAttributesUpdatesIte
 
 // GatewayChangeRequestGatewayClientGatewayUpdateAttributesUpdatesItemGatewayClientVLANUpdate : Update VLAN for this gateway
 //
-// VLAN provided should be in the range 1 to 4094.
+// VLAN provided should be in the range 2 to 3967.
 // This model "extends" GatewayChangeRequestGatewayClientGatewayUpdateAttributesUpdatesItem
 type GatewayChangeRequestGatewayClientGatewayUpdateAttributesUpdatesItemGatewayClientVLANUpdate struct {
 	// VLAN to be updated for this gateway.
@@ -8126,7 +8867,7 @@ func UnmarshalGatewayChangeRequestUpdatesItemGatewayClientSpeedUpdate(m map[stri
 
 // GatewayChangeRequestUpdatesItemGatewayClientVLANUpdate : Update VLAN for this gateway
 //
-// VLAN provided should be in the range 1 to 4094.
+// VLAN provided should be in the range 2 to 3967.
 // This model "extends" GatewayChangeRequestUpdatesItem
 type GatewayChangeRequestUpdatesItemGatewayClientVLANUpdate struct {
 	// VLAN to be updated for this gateway.
@@ -8239,6 +8980,572 @@ func UnmarshalGatewayChangeRequestGatewayClientGatewayUpdateAttributes(m map[str
 	return
 }
 
+// GatewayCollectionGatewaysItemCrossAccountGateway : cross-account gateway read-only view.
+// This model "extends" GatewayCollectionGatewaysItem
+type GatewayCollectionGatewaysItemCrossAccountGateway struct {
+	// Gateway BGP status. The list of enumerated values for this property may expand in the future. Code and processes
+	// using this field  must tolerate unexpected values.
+	BgpStatus *string `json:"bgp_status,omitempty"`
+
+	// Date and time bgp status was updated.
+	BgpStatusUpdatedAt *strfmt.DateTime `json:"bgp_status_updated_at,omitempty"`
+
+	// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+	// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+	// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+	ConnectionMode *string `json:"connection_mode,omitempty"`
+
+	// The date and time resource was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// The CRN (Cloud Resource Name) of this gateway.
+	Crn *string `json:"crn" validate:"required"`
+
+	// Indicates whether this gateway is cross account gateway.
+	CrossAccount *bool `json:"cross_account" validate:"required"`
+
+	// Cross connect router.  Only included on type=dedicated gateways.
+	CrossConnectRouter *string `json:"cross_connect_router,omitempty"`
+
+	// Gateways with global routing (`true`) can connect to networks outside their associated region.
+	Global *bool `json:"global" validate:"required"`
+
+	// The unique identifier of this gateway.
+	ID *string `json:"id" validate:"required"`
+
+	// Gateway link status.  Only included on type=dedicated gateways. The list of enumerated values for this property may
+	// expand in the future. Code and processes using this field  must tolerate unexpected values.
+	LinkStatus *string `json:"link_status,omitempty"`
+
+	// Date and time link status was updated.
+	LinkStatusUpdatedAt *strfmt.DateTime `json:"link_status_updated_at,omitempty"`
+
+	// Gateway location long name.
+	LocationDisplayName *string `json:"location_display_name" validate:"required"`
+
+	// Gateway location.
+	LocationName *string `json:"location_name" validate:"required"`
+
+	// The unique user-defined name for this gateway.
+	Name *string `json:"name" validate:"required"`
+
+	// Gateway operational status. The list of enumerated values for this property may expand in the future. Code and
+	// processes using this field  must tolerate unexpected values.
+	OperationalStatus *string `json:"operational_status" validate:"required"`
+
+	// gateway port for type=connect gateways.
+	Port *CrossAccountGatewayPort `json:"port,omitempty"`
+
+	// Gateway speed in megabits per second.
+	SpeedMbps *int64 `json:"speed_mbps" validate:"required"`
+
+	// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
+	// this field  must tolerate unexpected values.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the GatewayCollectionGatewaysItemCrossAccountGateway.BgpStatus property.
+// Gateway BGP status. The list of enumerated values for this property may expand in the future. Code and processes
+// using this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItemCrossAccountGateway_BgpStatus_Active      = "active"
+	GatewayCollectionGatewaysItemCrossAccountGateway_BgpStatus_Connect     = "connect"
+	GatewayCollectionGatewaysItemCrossAccountGateway_BgpStatus_Established = "established"
+	GatewayCollectionGatewaysItemCrossAccountGateway_BgpStatus_Idle        = "idle"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItemCrossAccountGateway.ConnectionMode property.
+// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItemCrossAccountGateway_ConnectionMode_Direct  = "direct"
+	GatewayCollectionGatewaysItemCrossAccountGateway_ConnectionMode_Transit = "transit"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItemCrossAccountGateway.LinkStatus property.
+// Gateway link status.  Only included on type=dedicated gateways. The list of enumerated values for this property may
+// expand in the future. Code and processes using this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItemCrossAccountGateway_LinkStatus_Down = "down"
+	GatewayCollectionGatewaysItemCrossAccountGateway_LinkStatus_Up   = "up"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItemCrossAccountGateway.OperationalStatus property.
+// Gateway operational status. The list of enumerated values for this property may expand in the future. Code and
+// processes using this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItemCrossAccountGateway_OperationalStatus_AwaitingCompletionNotice = "awaiting_completion_notice"
+	GatewayCollectionGatewaysItemCrossAccountGateway_OperationalStatus_AwaitingLoa              = "awaiting_loa"
+	GatewayCollectionGatewaysItemCrossAccountGateway_OperationalStatus_CompletionNoticeApproved = "completion_notice_approved"
+	GatewayCollectionGatewaysItemCrossAccountGateway_OperationalStatus_CompletionNoticeReceived = "completion_notice_received"
+	GatewayCollectionGatewaysItemCrossAccountGateway_OperationalStatus_CompletionNoticeRejected = "completion_notice_rejected"
+	GatewayCollectionGatewaysItemCrossAccountGateway_OperationalStatus_Configuring              = "configuring"
+	GatewayCollectionGatewaysItemCrossAccountGateway_OperationalStatus_CreatePending            = "create_pending"
+	GatewayCollectionGatewaysItemCrossAccountGateway_OperationalStatus_CreateRejected           = "create_rejected"
+	GatewayCollectionGatewaysItemCrossAccountGateway_OperationalStatus_DeletePending            = "delete_pending"
+	GatewayCollectionGatewaysItemCrossAccountGateway_OperationalStatus_LoaAccepted              = "loa_accepted"
+	GatewayCollectionGatewaysItemCrossAccountGateway_OperationalStatus_LoaCreated               = "loa_created"
+	GatewayCollectionGatewaysItemCrossAccountGateway_OperationalStatus_LoaRejected              = "loa_rejected"
+	GatewayCollectionGatewaysItemCrossAccountGateway_OperationalStatus_Provisioned              = "provisioned"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItemCrossAccountGateway.Type property.
+// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
+// this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItemCrossAccountGateway_Type_Connect   = "connect"
+	GatewayCollectionGatewaysItemCrossAccountGateway_Type_Dedicated = "dedicated"
+)
+
+func (*GatewayCollectionGatewaysItemCrossAccountGateway) isaGatewayCollectionGatewaysItem() bool {
+	return true
+}
+
+// UnmarshalGatewayCollectionGatewaysItemCrossAccountGateway unmarshals an instance of GatewayCollectionGatewaysItemCrossAccountGateway from the specified map of raw messages.
+func UnmarshalGatewayCollectionGatewaysItemCrossAccountGateway(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GatewayCollectionGatewaysItemCrossAccountGateway)
+	err = core.UnmarshalPrimitive(m, "bgp_status", &obj.BgpStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_status_updated_at", &obj.BgpStatusUpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "connection_mode", &obj.ConnectionMode)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cross_account", &obj.CrossAccount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cross_connect_router", &obj.CrossConnectRouter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "global", &obj.Global)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "link_status", &obj.LinkStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "link_status_updated_at", &obj.LinkStatusUpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location_display_name", &obj.LocationDisplayName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location_name", &obj.LocationName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operational_status", &obj.OperationalStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "port", &obj.Port, UnmarshalCrossAccountGatewayPort)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "speed_mbps", &obj.SpeedMbps)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// GatewayCollectionGatewaysItemGateway : gateway.
+// This model "extends" GatewayCollectionGatewaysItem
+type GatewayCollectionGatewaysItemGateway struct {
+	// array of AS Prepend information.
+	AsPrepends []AsPrepend `json:"as_prepends,omitempty"`
+
+	// The identity of the standard key to use for BGP MD5 authentication key.
+	// The key material that you provide must be base64 encoded and original string must be maximum 126 ASCII characters in
+	// length.
+	// To clear the optional `authentication_key` field patch its crn to `""`.
+	AuthenticationKey *GatewayAuthenticationKey `json:"authentication_key,omitempty"`
+
+	// BFD configuration information.
+	BfdConfig *GatewayBfdConfig `json:"bfd_config,omitempty"`
+
+	// Customer BGP ASN.
+	BgpAsn *int64 `json:"bgp_asn" validate:"required"`
+
+	// (DEPRECATED) BGP base CIDR is deprecated and no longer recognized by the Direct Link APIs.
+	//
+	// See bgp_cer_cidr and bgp_ibm_cidr fields instead for IP related information.
+	//
+	// Deprecated field bgp_base_cidr will be removed from the API specificiation after 15-MAR-2021.
+	BgpBaseCidr *string `json:"bgp_base_cidr,omitempty"`
+
+	// BGP customer edge router CIDR.
+	BgpCerCidr *string `json:"bgp_cer_cidr,omitempty"`
+
+	// IBM BGP ASN.
+	BgpIbmAsn *int64 `json:"bgp_ibm_asn,omitempty"`
+
+	// BGP IBM CIDR.
+	BgpIbmCidr *string `json:"bgp_ibm_cidr,omitempty"`
+
+	// Gateway BGP status. The list of enumerated values for this property may expand in the future. Code and processes
+	// using this field  must tolerate unexpected values.
+	BgpStatus *string `json:"bgp_status,omitempty"`
+
+	// Date and time bgp status was updated.
+	BgpStatusUpdatedAt *strfmt.DateTime `json:"bgp_status_updated_at,omitempty"`
+
+	// Carrier name.  Only set for type=dedicated gateways.
+	CarrierName *string `json:"carrier_name,omitempty"`
+
+	// Changes pending approval for provider managed Direct Link Connect gateways.
+	ChangeRequest GatewayChangeRequestIntf `json:"change_request,omitempty"`
+
+	// Reason for completion notice rejection.  Only included on type=dedicated gateways with a rejected completion notice.
+	CompletionNoticeRejectReason *string `json:"completion_notice_reject_reason,omitempty"`
+
+	// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+	// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+	// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+	ConnectionMode *string `json:"connection_mode,omitempty"`
+
+	// The date and time resource was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// The CRN (Cloud Resource Name) of this gateway.
+	Crn *string `json:"crn" validate:"required"`
+
+	// Indicates whether this gateway is cross account gateway.
+	CrossAccount *bool `json:"cross_account" validate:"required"`
+
+	// Cross connect router.  Only included on type=dedicated gateways.
+	CrossConnectRouter *string `json:"cross_connect_router,omitempty"`
+
+	// Customer name.  Only set for type=dedicated gateways.
+	CustomerName *string `json:"customer_name,omitempty"`
+
+	// The default directional route filter action that applies to routes that do not match any directional route filters.
+	DefaultExportRouteFilter *string `json:"default_export_route_filter" validate:"required"`
+
+	// The default directional route filter action that applies to routes that do not match any directional route filters.
+	DefaultImportRouteFilter *string `json:"default_import_route_filter" validate:"required"`
+
+	// Gateways with global routing (`true`) can connect to networks outside their associated region.
+	Global *bool `json:"global" validate:"required"`
+
+	// The unique identifier of this gateway.
+	ID *string `json:"id" validate:"required"`
+
+	// Gateway link status.  Only included on type=dedicated gateways. The list of enumerated values for this property may
+	// expand in the future. Code and processes using this field  must tolerate unexpected values.
+	LinkStatus *string `json:"link_status,omitempty"`
+
+	// Date and time link status was updated.
+	LinkStatusUpdatedAt *strfmt.DateTime `json:"link_status_updated_at,omitempty"`
+
+	// Gateway location long name.
+	LocationDisplayName *string `json:"location_display_name" validate:"required"`
+
+	// Gateway location.
+	LocationName *string `json:"location_name" validate:"required"`
+
+	// MACsec configuration information.  For Dedicated Gateways with MACsec configured, return configuration information.
+	// Contact IBM support for access to MACsec.
+	MacsecConfig *GatewayMacsecConfig `json:"macsec_config,omitempty"`
+
+	// Metered billing option.  When `true` gateway usage is billed per gigabyte.  When `false` there is no per gigabyte
+	// usage charge, instead a flat rate is charged for the gateway.
+	Metered *bool `json:"metered" validate:"required"`
+
+	// The unique user-defined name for this gateway.
+	Name *string `json:"name" validate:"required"`
+
+	// Gateway operational status. The list of enumerated values for this property may expand in the future. Code and
+	// processes using this field  must tolerate unexpected values.
+	OperationalStatus *string `json:"operational_status" validate:"required"`
+
+	// gateway port for type=connect gateways.
+	Port *GatewayPort `json:"port,omitempty"`
+
+	// Indicates whether gateway changes must be made via a provider portal.
+	ProviderApiManaged *bool `json:"provider_api_managed,omitempty"`
+
+	// Resource group reference.
+	ResourceGroup *ResourceGroupReference `json:"resource_group,omitempty"`
+
+	// Gateway speed in megabits per second.
+	SpeedMbps *int64 `json:"speed_mbps" validate:"required"`
+
+	// Gateway patch panel complete notification from implementation team.
+	PatchPanelCompletionNotice *string `json:"patch_panel_completion_notice,omitempty"`
+
+	// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
+	// this field  must tolerate unexpected values.
+	Type *string `json:"type" validate:"required"`
+
+	// VLAN configured for this gateway. If there is no vlan configured for the gateway, the vlan will be absent. This
+	// property will also be absent if this gateway's `crn` is in another account.
+	Vlan *int64 `json:"vlan,omitempty"`
+}
+
+// Constants associated with the GatewayCollectionGatewaysItemGateway.BgpStatus property.
+// Gateway BGP status. The list of enumerated values for this property may expand in the future. Code and processes
+// using this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItemGateway_BgpStatus_Active      = "active"
+	GatewayCollectionGatewaysItemGateway_BgpStatus_Connect     = "connect"
+	GatewayCollectionGatewaysItemGateway_BgpStatus_Established = "established"
+	GatewayCollectionGatewaysItemGateway_BgpStatus_Idle        = "idle"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItemGateway.ConnectionMode property.
+// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItemGateway_ConnectionMode_Direct  = "direct"
+	GatewayCollectionGatewaysItemGateway_ConnectionMode_Transit = "transit"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItemGateway.DefaultExportRouteFilter property.
+// The default directional route filter action that applies to routes that do not match any directional route filters.
+const (
+	GatewayCollectionGatewaysItemGateway_DefaultExportRouteFilter_Deny   = "deny"
+	GatewayCollectionGatewaysItemGateway_DefaultExportRouteFilter_Permit = "permit"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItemGateway.DefaultImportRouteFilter property.
+// The default directional route filter action that applies to routes that do not match any directional route filters.
+const (
+	GatewayCollectionGatewaysItemGateway_DefaultImportRouteFilter_Deny   = "deny"
+	GatewayCollectionGatewaysItemGateway_DefaultImportRouteFilter_Permit = "permit"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItemGateway.LinkStatus property.
+// Gateway link status.  Only included on type=dedicated gateways. The list of enumerated values for this property may
+// expand in the future. Code and processes using this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItemGateway_LinkStatus_Down = "down"
+	GatewayCollectionGatewaysItemGateway_LinkStatus_Up   = "up"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItemGateway.OperationalStatus property.
+// Gateway operational status. The list of enumerated values for this property may expand in the future. Code and
+// processes using this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItemGateway_OperationalStatus_AwaitingCompletionNotice = "awaiting_completion_notice"
+	GatewayCollectionGatewaysItemGateway_OperationalStatus_AwaitingLoa              = "awaiting_loa"
+	GatewayCollectionGatewaysItemGateway_OperationalStatus_CompletionNoticeApproved = "completion_notice_approved"
+	GatewayCollectionGatewaysItemGateway_OperationalStatus_CompletionNoticeReceived = "completion_notice_received"
+	GatewayCollectionGatewaysItemGateway_OperationalStatus_CompletionNoticeRejected = "completion_notice_rejected"
+	GatewayCollectionGatewaysItemGateway_OperationalStatus_Configuring              = "configuring"
+	GatewayCollectionGatewaysItemGateway_OperationalStatus_CreatePending            = "create_pending"
+	GatewayCollectionGatewaysItemGateway_OperationalStatus_CreateRejected           = "create_rejected"
+	GatewayCollectionGatewaysItemGateway_OperationalStatus_DeletePending            = "delete_pending"
+	GatewayCollectionGatewaysItemGateway_OperationalStatus_LoaAccepted              = "loa_accepted"
+	GatewayCollectionGatewaysItemGateway_OperationalStatus_LoaCreated               = "loa_created"
+	GatewayCollectionGatewaysItemGateway_OperationalStatus_LoaRejected              = "loa_rejected"
+	GatewayCollectionGatewaysItemGateway_OperationalStatus_Provisioned              = "provisioned"
+)
+
+// Constants associated with the GatewayCollectionGatewaysItemGateway.Type property.
+// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
+// this field  must tolerate unexpected values.
+const (
+	GatewayCollectionGatewaysItemGateway_Type_Connect   = "connect"
+	GatewayCollectionGatewaysItemGateway_Type_Dedicated = "dedicated"
+)
+
+func (*GatewayCollectionGatewaysItemGateway) isaGatewayCollectionGatewaysItem() bool {
+	return true
+}
+
+// UnmarshalGatewayCollectionGatewaysItemGateway unmarshals an instance of GatewayCollectionGatewaysItemGateway from the specified map of raw messages.
+func UnmarshalGatewayCollectionGatewaysItemGateway(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GatewayCollectionGatewaysItemGateway)
+	err = core.UnmarshalModel(m, "as_prepends", &obj.AsPrepends, UnmarshalAsPrepend)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "authentication_key", &obj.AuthenticationKey, UnmarshalGatewayAuthenticationKey)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "bfd_config", &obj.BfdConfig, UnmarshalGatewayBfdConfig)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_asn", &obj.BgpAsn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_base_cidr", &obj.BgpBaseCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_cer_cidr", &obj.BgpCerCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_ibm_asn", &obj.BgpIbmAsn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_ibm_cidr", &obj.BgpIbmCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_status", &obj.BgpStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_status_updated_at", &obj.BgpStatusUpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "carrier_name", &obj.CarrierName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "change_request", &obj.ChangeRequest, UnmarshalGatewayChangeRequest)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "completion_notice_reject_reason", &obj.CompletionNoticeRejectReason)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "connection_mode", &obj.ConnectionMode)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cross_account", &obj.CrossAccount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cross_connect_router", &obj.CrossConnectRouter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "customer_name", &obj.CustomerName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default_export_route_filter", &obj.DefaultExportRouteFilter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default_import_route_filter", &obj.DefaultImportRouteFilter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "global", &obj.Global)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "link_status", &obj.LinkStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "link_status_updated_at", &obj.LinkStatusUpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location_display_name", &obj.LocationDisplayName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location_name", &obj.LocationName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "macsec_config", &obj.MacsecConfig, UnmarshalGatewayMacsecConfig)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "metered", &obj.Metered)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operational_status", &obj.OperationalStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "port", &obj.Port, UnmarshalGatewayPort)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "provider_api_managed", &obj.ProviderApiManaged)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "speed_mbps", &obj.SpeedMbps)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "patch_panel_completion_notice", &obj.PatchPanelCompletionNotice)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "vlan", &obj.Vlan)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // GatewayStatusGatewayBFDStatus : Gateway bfd status.
 // This model "extends" GatewayStatus
 type GatewayStatusGatewayBFDStatus struct {
@@ -8261,10 +9568,10 @@ const (
 // Constants associated with the GatewayStatusGatewayBFDStatus.Value property.
 // Status.
 const (
-	GatewayStatusGatewayBFDStatus_Value_Down = "down"
-	GatewayStatusGatewayBFDStatus_Value_Init = "init"
+	GatewayStatusGatewayBFDStatus_Value_Down         = "down"
+	GatewayStatusGatewayBFDStatus_Value_Init         = "init"
 	GatewayStatusGatewayBFDStatus_Value_NotAvailable = "not_available"
-	GatewayStatusGatewayBFDStatus_Value_Up = "up"
+	GatewayStatusGatewayBFDStatus_Value_Up           = "up"
 )
 
 func (*GatewayStatusGatewayBFDStatus) isaGatewayStatus() bool {
@@ -8312,10 +9619,10 @@ const (
 // Constants associated with the GatewayStatusGatewayBGPStatus.Value property.
 // Status.
 const (
-	GatewayStatusGatewayBGPStatus_Value_Active = "active"
-	GatewayStatusGatewayBGPStatus_Value_Connect = "connect"
+	GatewayStatusGatewayBGPStatus_Value_Active      = "active"
+	GatewayStatusGatewayBGPStatus_Value_Connect     = "connect"
 	GatewayStatusGatewayBGPStatus_Value_Established = "established"
-	GatewayStatusGatewayBGPStatus_Value_Idle = "idle"
+	GatewayStatusGatewayBGPStatus_Value_Idle        = "idle"
 )
 
 func (*GatewayStatusGatewayBGPStatus) isaGatewayStatus() bool {
@@ -8364,7 +9671,7 @@ const (
 // Status.
 const (
 	GatewayStatusGatewayLinkStatus_Value_Down = "down"
-	GatewayStatusGatewayLinkStatus_Value_Up = "up"
+	GatewayStatusGatewayLinkStatus_Value_Up   = "up"
 )
 
 func (*GatewayStatusGatewayLinkStatus) isaGatewayStatus() bool {
@@ -8480,41 +9787,41 @@ type GatewayTemplateGatewayTypeConnectTemplate struct {
 // Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
 // for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
 const (
-	GatewayTemplateGatewayTypeConnectTemplate_ConnectionMode_Direct = "direct"
+	GatewayTemplateGatewayTypeConnectTemplate_ConnectionMode_Direct  = "direct"
 	GatewayTemplateGatewayTypeConnectTemplate_ConnectionMode_Transit = "transit"
 )
 
 // Constants associated with the GatewayTemplateGatewayTypeConnectTemplate.DefaultExportRouteFilter property.
 // The default directional route filter action that applies to routes that do not match any directional route filters.
 const (
-	GatewayTemplateGatewayTypeConnectTemplate_DefaultExportRouteFilter_Deny = "deny"
+	GatewayTemplateGatewayTypeConnectTemplate_DefaultExportRouteFilter_Deny   = "deny"
 	GatewayTemplateGatewayTypeConnectTemplate_DefaultExportRouteFilter_Permit = "permit"
 )
 
 // Constants associated with the GatewayTemplateGatewayTypeConnectTemplate.DefaultImportRouteFilter property.
 // The default directional route filter action that applies to routes that do not match any directional route filters.
 const (
-	GatewayTemplateGatewayTypeConnectTemplate_DefaultImportRouteFilter_Deny = "deny"
+	GatewayTemplateGatewayTypeConnectTemplate_DefaultImportRouteFilter_Deny   = "deny"
 	GatewayTemplateGatewayTypeConnectTemplate_DefaultImportRouteFilter_Permit = "permit"
 )
 
 // Constants associated with the GatewayTemplateGatewayTypeConnectTemplate.Type property.
 // Offering type.
 const (
-	GatewayTemplateGatewayTypeConnectTemplate_Type_Connect = "connect"
+	GatewayTemplateGatewayTypeConnectTemplate_Type_Connect   = "connect"
 	GatewayTemplateGatewayTypeConnectTemplate_Type_Dedicated = "dedicated"
 )
 
 // NewGatewayTemplateGatewayTypeConnectTemplate : Instantiate GatewayTemplateGatewayTypeConnectTemplate (Generic Model Constructor)
 func (*DirectLinkV1) NewGatewayTemplateGatewayTypeConnectTemplate(bgpAsn int64, global bool, metered bool, name string, speedMbps int64, typeVar string, port *GatewayPortIdentity) (_model *GatewayTemplateGatewayTypeConnectTemplate, err error) {
 	_model = &GatewayTemplateGatewayTypeConnectTemplate{
-		BgpAsn: core.Int64Ptr(bgpAsn),
-		Global: core.BoolPtr(global),
-		Metered: core.BoolPtr(metered),
-		Name: core.StringPtr(name),
+		BgpAsn:    core.Int64Ptr(bgpAsn),
+		Global:    core.BoolPtr(global),
+		Metered:   core.BoolPtr(metered),
+		Name:      core.StringPtr(name),
 		SpeedMbps: core.Int64Ptr(speedMbps),
-		Type: core.StringPtr(typeVar),
-		Port: port,
+		Type:      core.StringPtr(typeVar),
+		Port:      port,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
@@ -8706,6 +10013,9 @@ type GatewayTemplateGatewayTypeDedicatedTemplate struct {
 
 	// MACsec configuration information.  Contact IBM support for access to MACsec.
 	MacsecConfig *GatewayMacsecConfigTemplate `json:"macsec_config,omitempty"`
+
+	// The VLAN to configure for this gateway.
+	Vlan *int64 `json:"vlan,omitempty"`
 }
 
 // Constants associated with the GatewayTemplateGatewayTypeDedicatedTemplate.ConnectionMode property.
@@ -8713,44 +10023,44 @@ type GatewayTemplateGatewayTypeDedicatedTemplate struct {
 // Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
 // for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
 const (
-	GatewayTemplateGatewayTypeDedicatedTemplate_ConnectionMode_Direct = "direct"
+	GatewayTemplateGatewayTypeDedicatedTemplate_ConnectionMode_Direct  = "direct"
 	GatewayTemplateGatewayTypeDedicatedTemplate_ConnectionMode_Transit = "transit"
 )
 
 // Constants associated with the GatewayTemplateGatewayTypeDedicatedTemplate.DefaultExportRouteFilter property.
 // The default directional route filter action that applies to routes that do not match any directional route filters.
 const (
-	GatewayTemplateGatewayTypeDedicatedTemplate_DefaultExportRouteFilter_Deny = "deny"
+	GatewayTemplateGatewayTypeDedicatedTemplate_DefaultExportRouteFilter_Deny   = "deny"
 	GatewayTemplateGatewayTypeDedicatedTemplate_DefaultExportRouteFilter_Permit = "permit"
 )
 
 // Constants associated with the GatewayTemplateGatewayTypeDedicatedTemplate.DefaultImportRouteFilter property.
 // The default directional route filter action that applies to routes that do not match any directional route filters.
 const (
-	GatewayTemplateGatewayTypeDedicatedTemplate_DefaultImportRouteFilter_Deny = "deny"
+	GatewayTemplateGatewayTypeDedicatedTemplate_DefaultImportRouteFilter_Deny   = "deny"
 	GatewayTemplateGatewayTypeDedicatedTemplate_DefaultImportRouteFilter_Permit = "permit"
 )
 
 // Constants associated with the GatewayTemplateGatewayTypeDedicatedTemplate.Type property.
 // Offering type.
 const (
-	GatewayTemplateGatewayTypeDedicatedTemplate_Type_Connect = "connect"
+	GatewayTemplateGatewayTypeDedicatedTemplate_Type_Connect   = "connect"
 	GatewayTemplateGatewayTypeDedicatedTemplate_Type_Dedicated = "dedicated"
 )
 
 // NewGatewayTemplateGatewayTypeDedicatedTemplate : Instantiate GatewayTemplateGatewayTypeDedicatedTemplate (Generic Model Constructor)
 func (*DirectLinkV1) NewGatewayTemplateGatewayTypeDedicatedTemplate(bgpAsn int64, global bool, metered bool, name string, speedMbps int64, typeVar string, carrierName string, crossConnectRouter string, customerName string, locationName string) (_model *GatewayTemplateGatewayTypeDedicatedTemplate, err error) {
 	_model = &GatewayTemplateGatewayTypeDedicatedTemplate{
-		BgpAsn: core.Int64Ptr(bgpAsn),
-		Global: core.BoolPtr(global),
-		Metered: core.BoolPtr(metered),
-		Name: core.StringPtr(name),
-		SpeedMbps: core.Int64Ptr(speedMbps),
-		Type: core.StringPtr(typeVar),
-		CarrierName: core.StringPtr(carrierName),
+		BgpAsn:             core.Int64Ptr(bgpAsn),
+		Global:             core.BoolPtr(global),
+		Metered:            core.BoolPtr(metered),
+		Name:               core.StringPtr(name),
+		SpeedMbps:          core.Int64Ptr(speedMbps),
+		Type:               core.StringPtr(typeVar),
+		CarrierName:        core.StringPtr(carrierName),
 		CrossConnectRouter: core.StringPtr(crossConnectRouter),
-		CustomerName: core.StringPtr(customerName),
-		LocationName: core.StringPtr(locationName),
+		CustomerName:       core.StringPtr(customerName),
+		LocationName:       core.StringPtr(locationName),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
@@ -8859,6 +10169,576 @@ func UnmarshalGatewayTemplateGatewayTypeDedicatedTemplate(m map[string]json.RawM
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "vlan", &obj.Vlan)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// GetGatewayResponseCrossAccountGateway : cross-account gateway read-only view.
+// This model "extends" GetGatewayResponse
+type GetGatewayResponseCrossAccountGateway struct {
+	// Gateway BGP status. The list of enumerated values for this property may expand in the future. Code and processes
+	// using this field  must tolerate unexpected values.
+	BgpStatus *string `json:"bgp_status,omitempty"`
+
+	// Date and time bgp status was updated.
+	BgpStatusUpdatedAt *strfmt.DateTime `json:"bgp_status_updated_at,omitempty"`
+
+	// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+	// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+	// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+	ConnectionMode *string `json:"connection_mode,omitempty"`
+
+	// The date and time resource was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// The CRN (Cloud Resource Name) of this gateway.
+	Crn *string `json:"crn" validate:"required"`
+
+	// Indicates whether this gateway is cross account gateway.
+	CrossAccount *bool `json:"cross_account" validate:"required"`
+
+	// Cross connect router.  Only included on type=dedicated gateways.
+	CrossConnectRouter *string `json:"cross_connect_router,omitempty"`
+
+	// Gateways with global routing (`true`) can connect to networks outside their associated region.
+	Global *bool `json:"global" validate:"required"`
+
+	// The unique identifier of this gateway.
+	ID *string `json:"id" validate:"required"`
+
+	// Gateway link status.  Only included on type=dedicated gateways. The list of enumerated values for this property may
+	// expand in the future. Code and processes using this field  must tolerate unexpected values.
+	LinkStatus *string `json:"link_status,omitempty"`
+
+	// Date and time link status was updated.
+	LinkStatusUpdatedAt *strfmt.DateTime `json:"link_status_updated_at,omitempty"`
+
+	// Gateway location long name.
+	LocationDisplayName *string `json:"location_display_name" validate:"required"`
+
+	// Gateway location.
+	LocationName *string `json:"location_name" validate:"required"`
+
+	// The unique user-defined name for this gateway.
+	Name *string `json:"name" validate:"required"`
+
+	// Gateway operational status. The list of enumerated values for this property may expand in the future. Code and
+	// processes using this field  must tolerate unexpected values.
+	OperationalStatus *string `json:"operational_status" validate:"required"`
+
+	// gateway port for type=connect gateways.
+	Port *CrossAccountGatewayPort `json:"port,omitempty"`
+
+	// Gateway speed in megabits per second.
+	SpeedMbps *int64 `json:"speed_mbps" validate:"required"`
+
+	// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
+	// this field  must tolerate unexpected values.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the GetGatewayResponseCrossAccountGateway.BgpStatus property.
+// Gateway BGP status. The list of enumerated values for this property may expand in the future. Code and processes
+// using this field  must tolerate unexpected values.
+const (
+	GetGatewayResponseCrossAccountGateway_BgpStatus_Active      = "active"
+	GetGatewayResponseCrossAccountGateway_BgpStatus_Connect     = "connect"
+	GetGatewayResponseCrossAccountGateway_BgpStatus_Established = "established"
+	GetGatewayResponseCrossAccountGateway_BgpStatus_Idle        = "idle"
+)
+
+// Constants associated with the GetGatewayResponseCrossAccountGateway.ConnectionMode property.
+// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+const (
+	GetGatewayResponseCrossAccountGateway_ConnectionMode_Direct  = "direct"
+	GetGatewayResponseCrossAccountGateway_ConnectionMode_Transit = "transit"
+)
+
+// Constants associated with the GetGatewayResponseCrossAccountGateway.LinkStatus property.
+// Gateway link status.  Only included on type=dedicated gateways. The list of enumerated values for this property may
+// expand in the future. Code and processes using this field  must tolerate unexpected values.
+const (
+	GetGatewayResponseCrossAccountGateway_LinkStatus_Down = "down"
+	GetGatewayResponseCrossAccountGateway_LinkStatus_Up   = "up"
+)
+
+// Constants associated with the GetGatewayResponseCrossAccountGateway.OperationalStatus property.
+// Gateway operational status. The list of enumerated values for this property may expand in the future. Code and
+// processes using this field  must tolerate unexpected values.
+const (
+	GetGatewayResponseCrossAccountGateway_OperationalStatus_AwaitingCompletionNotice = "awaiting_completion_notice"
+	GetGatewayResponseCrossAccountGateway_OperationalStatus_AwaitingLoa              = "awaiting_loa"
+	GetGatewayResponseCrossAccountGateway_OperationalStatus_CompletionNoticeApproved = "completion_notice_approved"
+	GetGatewayResponseCrossAccountGateway_OperationalStatus_CompletionNoticeReceived = "completion_notice_received"
+	GetGatewayResponseCrossAccountGateway_OperationalStatus_CompletionNoticeRejected = "completion_notice_rejected"
+	GetGatewayResponseCrossAccountGateway_OperationalStatus_Configuring              = "configuring"
+	GetGatewayResponseCrossAccountGateway_OperationalStatus_CreatePending            = "create_pending"
+	GetGatewayResponseCrossAccountGateway_OperationalStatus_CreateRejected           = "create_rejected"
+	GetGatewayResponseCrossAccountGateway_OperationalStatus_DeletePending            = "delete_pending"
+	GetGatewayResponseCrossAccountGateway_OperationalStatus_LoaAccepted              = "loa_accepted"
+	GetGatewayResponseCrossAccountGateway_OperationalStatus_LoaCreated               = "loa_created"
+	GetGatewayResponseCrossAccountGateway_OperationalStatus_LoaRejected              = "loa_rejected"
+	GetGatewayResponseCrossAccountGateway_OperationalStatus_Provisioned              = "provisioned"
+)
+
+// Constants associated with the GetGatewayResponseCrossAccountGateway.Type property.
+// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
+// this field  must tolerate unexpected values.
+const (
+	GetGatewayResponseCrossAccountGateway_Type_Connect   = "connect"
+	GetGatewayResponseCrossAccountGateway_Type_Dedicated = "dedicated"
+)
+
+func (*GetGatewayResponseCrossAccountGateway) isaGetGatewayResponse() bool {
+	return true
+}
+
+// UnmarshalGetGatewayResponseCrossAccountGateway unmarshals an instance of GetGatewayResponseCrossAccountGateway from the specified map of raw messages.
+func UnmarshalGetGatewayResponseCrossAccountGateway(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GetGatewayResponseCrossAccountGateway)
+	err = core.UnmarshalPrimitive(m, "bgp_status", &obj.BgpStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_status_updated_at", &obj.BgpStatusUpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "connection_mode", &obj.ConnectionMode)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cross_account", &obj.CrossAccount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cross_connect_router", &obj.CrossConnectRouter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "global", &obj.Global)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "link_status", &obj.LinkStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "link_status_updated_at", &obj.LinkStatusUpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location_display_name", &obj.LocationDisplayName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location_name", &obj.LocationName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operational_status", &obj.OperationalStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "port", &obj.Port, UnmarshalCrossAccountGatewayPort)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "speed_mbps", &obj.SpeedMbps)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// GetGatewayResponseGateway : gateway.
+// This model "extends" GetGatewayResponse
+type GetGatewayResponseGateway struct {
+	// array of AS Prepend information.
+	AsPrepends []AsPrepend `json:"as_prepends,omitempty"`
+
+	// The identity of the standard key to use for BGP MD5 authentication key.
+	// The key material that you provide must be base64 encoded and original string must be maximum 126 ASCII characters in
+	// length.
+	// To clear the optional `authentication_key` field patch its crn to `""`.
+	AuthenticationKey *GatewayAuthenticationKey `json:"authentication_key,omitempty"`
+
+	// BFD configuration information.
+	BfdConfig *GatewayBfdConfig `json:"bfd_config,omitempty"`
+
+	// Customer BGP ASN.
+	BgpAsn *int64 `json:"bgp_asn" validate:"required"`
+
+	// (DEPRECATED) BGP base CIDR is deprecated and no longer recognized by the Direct Link APIs.
+	//
+	// See bgp_cer_cidr and bgp_ibm_cidr fields instead for IP related information.
+	//
+	// Deprecated field bgp_base_cidr will be removed from the API specificiation after 15-MAR-2021.
+	BgpBaseCidr *string `json:"bgp_base_cidr,omitempty"`
+
+	// BGP customer edge router CIDR.
+	BgpCerCidr *string `json:"bgp_cer_cidr,omitempty"`
+
+	// IBM BGP ASN.
+	BgpIbmAsn *int64 `json:"bgp_ibm_asn,omitempty"`
+
+	// BGP IBM CIDR.
+	BgpIbmCidr *string `json:"bgp_ibm_cidr,omitempty"`
+
+	// Gateway BGP status. The list of enumerated values for this property may expand in the future. Code and processes
+	// using this field  must tolerate unexpected values.
+	BgpStatus *string `json:"bgp_status,omitempty"`
+
+	// Date and time bgp status was updated.
+	BgpStatusUpdatedAt *strfmt.DateTime `json:"bgp_status_updated_at,omitempty"`
+
+	// Carrier name.  Only set for type=dedicated gateways.
+	CarrierName *string `json:"carrier_name,omitempty"`
+
+	// Changes pending approval for provider managed Direct Link Connect gateways.
+	ChangeRequest GatewayChangeRequestIntf `json:"change_request,omitempty"`
+
+	// Reason for completion notice rejection.  Only included on type=dedicated gateways with a rejected completion notice.
+	CompletionNoticeRejectReason *string `json:"completion_notice_reject_reason,omitempty"`
+
+	// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+	// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+	// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+	ConnectionMode *string `json:"connection_mode,omitempty"`
+
+	// The date and time resource was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// The CRN (Cloud Resource Name) of this gateway.
+	Crn *string `json:"crn" validate:"required"`
+
+	// Indicates whether this gateway is cross account gateway.
+	CrossAccount *bool `json:"cross_account" validate:"required"`
+
+	// Cross connect router.  Only included on type=dedicated gateways.
+	CrossConnectRouter *string `json:"cross_connect_router,omitempty"`
+
+	// Customer name.  Only set for type=dedicated gateways.
+	CustomerName *string `json:"customer_name,omitempty"`
+
+	// The default directional route filter action that applies to routes that do not match any directional route filters.
+	DefaultExportRouteFilter *string `json:"default_export_route_filter" validate:"required"`
+
+	// The default directional route filter action that applies to routes that do not match any directional route filters.
+	DefaultImportRouteFilter *string `json:"default_import_route_filter" validate:"required"`
+
+	// Gateways with global routing (`true`) can connect to networks outside their associated region.
+	Global *bool `json:"global" validate:"required"`
+
+	// The unique identifier of this gateway.
+	ID *string `json:"id" validate:"required"`
+
+	// Gateway link status.  Only included on type=dedicated gateways. The list of enumerated values for this property may
+	// expand in the future. Code and processes using this field  must tolerate unexpected values.
+	LinkStatus *string `json:"link_status,omitempty"`
+
+	// Date and time link status was updated.
+	LinkStatusUpdatedAt *strfmt.DateTime `json:"link_status_updated_at,omitempty"`
+
+	// Gateway location long name.
+	LocationDisplayName *string `json:"location_display_name" validate:"required"`
+
+	// Gateway location.
+	LocationName *string `json:"location_name" validate:"required"`
+
+	// MACsec configuration information.  For Dedicated Gateways with MACsec configured, return configuration information.
+	// Contact IBM support for access to MACsec.
+	MacsecConfig *GatewayMacsecConfig `json:"macsec_config,omitempty"`
+
+	// Metered billing option.  When `true` gateway usage is billed per gigabyte.  When `false` there is no per gigabyte
+	// usage charge, instead a flat rate is charged for the gateway.
+	Metered *bool `json:"metered" validate:"required"`
+
+	// The unique user-defined name for this gateway.
+	Name *string `json:"name" validate:"required"`
+
+	// Gateway operational status. The list of enumerated values for this property may expand in the future. Code and
+	// processes using this field  must tolerate unexpected values.
+	OperationalStatus *string `json:"operational_status" validate:"required"`
+
+	// gateway port for type=connect gateways.
+	Port *GatewayPort `json:"port,omitempty"`
+
+	// Indicates whether gateway changes must be made via a provider portal.
+	ProviderApiManaged *bool `json:"provider_api_managed,omitempty"`
+
+	// Resource group reference.
+	ResourceGroup *ResourceGroupReference `json:"resource_group,omitempty"`
+
+	// Gateway speed in megabits per second.
+	SpeedMbps *int64 `json:"speed_mbps" validate:"required"`
+
+	// Gateway patch panel complete notification from implementation team.
+	PatchPanelCompletionNotice *string `json:"patch_panel_completion_notice,omitempty"`
+
+	// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
+	// this field  must tolerate unexpected values.
+	Type *string `json:"type" validate:"required"`
+
+	// VLAN configured for this gateway. If there is no vlan configured for the gateway, the vlan will be absent. This
+	// property will also be absent if this gateway's `crn` is in another account.
+	Vlan *int64 `json:"vlan,omitempty"`
+}
+
+// Constants associated with the GetGatewayResponseGateway.BgpStatus property.
+// Gateway BGP status. The list of enumerated values for this property may expand in the future. Code and processes
+// using this field  must tolerate unexpected values.
+const (
+	GetGatewayResponseGateway_BgpStatus_Active      = "active"
+	GetGatewayResponseGateway_BgpStatus_Connect     = "connect"
+	GetGatewayResponseGateway_BgpStatus_Established = "established"
+	GetGatewayResponseGateway_BgpStatus_Idle        = "idle"
+)
+
+// Constants associated with the GetGatewayResponseGateway.ConnectionMode property.
+// Type of services this Gateway is attached to. Mode transit means this Gateway will be attached to Transit Gateway
+// Service and direct means this Gateway will be attached to vpc or classic connection. The list of enumerated values
+// for this property may expand in the future. Code and processes using this field  must tolerate unexpected values.
+const (
+	GetGatewayResponseGateway_ConnectionMode_Direct  = "direct"
+	GetGatewayResponseGateway_ConnectionMode_Transit = "transit"
+)
+
+// Constants associated with the GetGatewayResponseGateway.DefaultExportRouteFilter property.
+// The default directional route filter action that applies to routes that do not match any directional route filters.
+const (
+	GetGatewayResponseGateway_DefaultExportRouteFilter_Deny   = "deny"
+	GetGatewayResponseGateway_DefaultExportRouteFilter_Permit = "permit"
+)
+
+// Constants associated with the GetGatewayResponseGateway.DefaultImportRouteFilter property.
+// The default directional route filter action that applies to routes that do not match any directional route filters.
+const (
+	GetGatewayResponseGateway_DefaultImportRouteFilter_Deny   = "deny"
+	GetGatewayResponseGateway_DefaultImportRouteFilter_Permit = "permit"
+)
+
+// Constants associated with the GetGatewayResponseGateway.LinkStatus property.
+// Gateway link status.  Only included on type=dedicated gateways. The list of enumerated values for this property may
+// expand in the future. Code and processes using this field  must tolerate unexpected values.
+const (
+	GetGatewayResponseGateway_LinkStatus_Down = "down"
+	GetGatewayResponseGateway_LinkStatus_Up   = "up"
+)
+
+// Constants associated with the GetGatewayResponseGateway.OperationalStatus property.
+// Gateway operational status. The list of enumerated values for this property may expand in the future. Code and
+// processes using this field  must tolerate unexpected values.
+const (
+	GetGatewayResponseGateway_OperationalStatus_AwaitingCompletionNotice = "awaiting_completion_notice"
+	GetGatewayResponseGateway_OperationalStatus_AwaitingLoa              = "awaiting_loa"
+	GetGatewayResponseGateway_OperationalStatus_CompletionNoticeApproved = "completion_notice_approved"
+	GetGatewayResponseGateway_OperationalStatus_CompletionNoticeReceived = "completion_notice_received"
+	GetGatewayResponseGateway_OperationalStatus_CompletionNoticeRejected = "completion_notice_rejected"
+	GetGatewayResponseGateway_OperationalStatus_Configuring              = "configuring"
+	GetGatewayResponseGateway_OperationalStatus_CreatePending            = "create_pending"
+	GetGatewayResponseGateway_OperationalStatus_CreateRejected           = "create_rejected"
+	GetGatewayResponseGateway_OperationalStatus_DeletePending            = "delete_pending"
+	GetGatewayResponseGateway_OperationalStatus_LoaAccepted              = "loa_accepted"
+	GetGatewayResponseGateway_OperationalStatus_LoaCreated               = "loa_created"
+	GetGatewayResponseGateway_OperationalStatus_LoaRejected              = "loa_rejected"
+	GetGatewayResponseGateway_OperationalStatus_Provisioned              = "provisioned"
+)
+
+// Constants associated with the GetGatewayResponseGateway.Type property.
+// Offering type. The list of enumerated values for this property may expand in the future. Code and processes using
+// this field  must tolerate unexpected values.
+const (
+	GetGatewayResponseGateway_Type_Connect   = "connect"
+	GetGatewayResponseGateway_Type_Dedicated = "dedicated"
+)
+
+func (*GetGatewayResponseGateway) isaGetGatewayResponse() bool {
+	return true
+}
+
+// UnmarshalGetGatewayResponseGateway unmarshals an instance of GetGatewayResponseGateway from the specified map of raw messages.
+func UnmarshalGetGatewayResponseGateway(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GetGatewayResponseGateway)
+	err = core.UnmarshalModel(m, "as_prepends", &obj.AsPrepends, UnmarshalAsPrepend)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "authentication_key", &obj.AuthenticationKey, UnmarshalGatewayAuthenticationKey)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "bfd_config", &obj.BfdConfig, UnmarshalGatewayBfdConfig)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_asn", &obj.BgpAsn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_base_cidr", &obj.BgpBaseCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_cer_cidr", &obj.BgpCerCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_ibm_asn", &obj.BgpIbmAsn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_ibm_cidr", &obj.BgpIbmCidr)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_status", &obj.BgpStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bgp_status_updated_at", &obj.BgpStatusUpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "carrier_name", &obj.CarrierName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "change_request", &obj.ChangeRequest, UnmarshalGatewayChangeRequest)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "completion_notice_reject_reason", &obj.CompletionNoticeRejectReason)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "connection_mode", &obj.ConnectionMode)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cross_account", &obj.CrossAccount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cross_connect_router", &obj.CrossConnectRouter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "customer_name", &obj.CustomerName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default_export_route_filter", &obj.DefaultExportRouteFilter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default_import_route_filter", &obj.DefaultImportRouteFilter)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "global", &obj.Global)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "link_status", &obj.LinkStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "link_status_updated_at", &obj.LinkStatusUpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location_display_name", &obj.LocationDisplayName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location_name", &obj.LocationName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "macsec_config", &obj.MacsecConfig, UnmarshalGatewayMacsecConfig)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "metered", &obj.Metered)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operational_status", &obj.OperationalStatus)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "port", &obj.Port, UnmarshalGatewayPort)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "provider_api_managed", &obj.ProviderApiManaged)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "speed_mbps", &obj.SpeedMbps)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "patch_panel_completion_notice", &obj.PatchPanelCompletionNotice)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "vlan", &obj.Vlan)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -8919,7 +10799,7 @@ type RouteReportOverlappingRouteForOthers struct {
 // type of the route.
 const (
 	RouteReportOverlappingRouteForOthers_Type_Gateway = "gateway"
-	RouteReportOverlappingRouteForOthers_Type_OnPrem = "on_prem"
+	RouteReportOverlappingRouteForOthers_Type_OnPrem  = "on_prem"
 )
 
 func (*RouteReportOverlappingRouteForOthers) isaRouteReportOverlappingRoute() bool {
@@ -8941,13 +10821,11 @@ func UnmarshalRouteReportOverlappingRouteForOthers(m map[string]json.RawMessage,
 	return
 }
 
-//
 // PortsPager can be used to simplify the use of the "ListPorts" method.
-//
 type PortsPager struct {
-	hasNext bool
-	options *ListPortsOptions
-	client  *DirectLinkV1
+	hasNext     bool
+	options     *ListPortsOptions
+	client      *DirectLinkV1
 	pageContext struct {
 		next *string
 	}

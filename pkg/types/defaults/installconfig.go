@@ -10,7 +10,6 @@ import (
 	baremetaldefaults "github.com/openshift/installer/pkg/types/baremetal/defaults"
 	gcpdefaults "github.com/openshift/installer/pkg/types/gcp/defaults"
 	ibmclouddefaults "github.com/openshift/installer/pkg/types/ibmcloud/defaults"
-	libvirtdefaults "github.com/openshift/installer/pkg/types/libvirt/defaults"
 	nonedefaults "github.com/openshift/installer/pkg/types/none/defaults"
 	nutanixdefaults "github.com/openshift/installer/pkg/types/nutanix/defaults"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
@@ -34,12 +33,13 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		c.Networking = &types.Networking{}
 	}
 	if len(c.Networking.MachineNetwork) == 0 {
-		c.Networking.MachineNetwork = []types.MachineNetworkEntry{
-			{CIDR: *DefaultMachineCIDR},
-		}
-		if c.Platform.Libvirt != nil {
+		if c.Platform.PowerVS != nil {
 			c.Networking.MachineNetwork = []types.MachineNetworkEntry{
-				{CIDR: *libvirtdefaults.DefaultMachineCIDR},
+				{CIDR: *powervsdefaults.DefaultMachineCIDR},
+			}
+		} else {
+			c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+				{CIDR: *DefaultMachineCIDR},
 			}
 		}
 	}
@@ -67,6 +67,11 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	}
 	c.ControlPlane.Name = "master"
 	SetMachinePoolDefaults(c.ControlPlane, c.Platform.Name())
+
+	if c.Arbiter != nil {
+		c.Arbiter.Name = "arbiter"
+		SetMachinePoolDefaults(c.Arbiter, c.Platform.Name())
+	}
 
 	defaultComputePoolUndefined := true
 	for _, compute := range c.Compute {
@@ -101,8 +106,6 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		gcpdefaults.SetPlatformDefaults(c.Platform.GCP)
 	case c.Platform.IBMCloud != nil:
 		ibmclouddefaults.SetPlatformDefaults(c.Platform.IBMCloud)
-	case c.Platform.Libvirt != nil:
-		libvirtdefaults.SetPlatformDefaults(c.Platform.Libvirt)
 	case c.Platform.OpenStack != nil:
 		openstackdefaults.SetPlatformDefaults(c.Platform.OpenStack, c.Networking)
 	case c.Platform.VSphere != nil:
@@ -117,9 +120,6 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		}
 	case c.Platform.PowerVS != nil:
 		powervsdefaults.SetPlatformDefaults(c.Platform.PowerVS)
-		c.Networking.MachineNetwork = []types.MachineNetworkEntry{
-			{CIDR: *powervsdefaults.DefaultMachineCIDR},
-		}
 	case c.Platform.None != nil:
 		nonedefaults.SetPlatformDefaults(c.Platform.None)
 	case c.Platform.Nutanix != nil:

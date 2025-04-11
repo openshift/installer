@@ -367,7 +367,7 @@
         security_group: "{{ os_sg_master }}"
         ethertype: IPv6
         protocol: tcp
-        remote_ip_prefix: "{{ os_subnet_range }}"
+        remote_ip_prefix: "{{ os_subnet6_range }}"
         port_range_min: 1936
         port_range_max: 1936
       when: os_master_schedulable is defined and os_master_schedulable
@@ -408,4 +408,4 @@
         port_range_min: 30000
         port_range_max: 32767
 
-    when: os_subnet6 is defined
+    when: os_subnet6_range is defined

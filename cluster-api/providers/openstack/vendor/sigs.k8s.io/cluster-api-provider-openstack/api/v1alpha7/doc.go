@@ -18,4 +18,5 @@ limitations under the License.
 // +kubebuilder:object:generate=true
 // +groupName=infrastructure.cluster.x-k8s.io
 // +k8s:conversion-gen=sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1
+// +k8s:openapi-gen=true
 package v1alpha7

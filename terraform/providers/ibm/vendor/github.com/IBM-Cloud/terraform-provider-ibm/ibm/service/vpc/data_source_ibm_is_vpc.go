@@ -26,14 +26,24 @@ func DataSourceIBMISVPC() *schema.Resource {
 			},
 
 			isVPCClassicAccess: {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:       schema.TypeBool,
+				Computed:   true,
+				Deprecated: "Classic access is deprecated",
 			},
 
 			isVPCDefaultRoutingTable: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Default routing table associated with VPC",
+			},
+			// address prefixes
+			"default_address_prefixes": {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Computed:    true,
+				Description: "Default address prefixes for each zone.",
 			},
 
 			isVPCName: {
@@ -617,6 +627,52 @@ func setVpcDetails(d *schema.ResourceData, vpc *vpcv1.VPC, meta interface{}, ses
 		if err != nil {
 			return err
 		}
+
+		// address prefixes
+		vpcID := d.Id() // Assuming the VPC ID is stored in the resource ID
+
+		// Fetch all address prefixes for the VPC
+		startAdd := ""
+		allRecs := []vpcv1.AddressPrefix{}
+		for {
+			listVpcAddressPrefixesOptions := &vpcv1.ListVPCAddressPrefixesOptions{
+				VPCID: &vpcID,
+			}
+
+			if startAdd != "" {
+				listVpcAddressPrefixesOptions.Start = &startAdd
+			}
+
+			addressPrefixCollection, response, err := sess.ListVPCAddressPrefixes(listVpcAddressPrefixesOptions)
+			if err != nil {
+				log.Printf("[DEBUG] ListVpcAddressPrefixesWithContext failed %s\n%s", err, response)
+				return fmt.Errorf("ListVpcAddressPrefixesWithContext failed %s\n%s", err, response)
+			}
+
+			allRecs = append(allRecs, addressPrefixCollection.AddressPrefixes...)
+			startAdd = flex.GetNext(addressPrefixCollection.Next)
+			if startAdd == "" {
+				break
+			}
+		}
+
+		// Process address prefixes
+		defaultAddressPrefixes := map[string]string{}
+
+		for _, prefix := range allRecs {
+			zoneName := *prefix.Zone.Name
+			cidr := *prefix.CIDR
+			// Populate default_address_prefixes
+			if *prefix.IsDefault {
+				defaultAddressPrefixes[zoneName] = cidr
+			}
+		}
+
+		// Set the default_address_prefixes attribute in the Terraform state
+		if err := d.Set("default_address_prefixes", defaultAddressPrefixes); err != nil {
+			return fmt.Errorf("error setting default_address_prefixes: %w", err)
+		}
+
 		d.Set(flex.ResourceControllerURL, controller+"/vpc-ext/network/vpcs")
 		d.Set(flex.ResourceName, *vpc.Name)
 		d.Set(flex.ResourceCRN, *vpc.CRN)
@@ -978,7 +1034,7 @@ func dataSourceIBMIsVPCVPCReferenceDnsResolverContextToMap(model *vpcv1.VPCRefer
 	return modelMap, nil
 }
 
-func dataSourceIBMIsVPCVPCReferenceDnsResolverContextDeletedToMap(model *vpcv1.VPCReferenceDnsResolverContextDeleted) (map[string]interface{}, error) {
+func dataSourceIBMIsVPCVPCReferenceDnsResolverContextDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["more_info"] = model.MoreInfo
 	return modelMap, nil

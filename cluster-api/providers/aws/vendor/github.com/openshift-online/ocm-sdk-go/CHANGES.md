@@ -3,6 +3,128 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+## 0.1.440
+- Update model version v0.0.393
+  - Include missing field to hypershift model
+  - Include new fields to manifest model
+  - Remove v2alpha1 resources
+
+## 0.1.439
+- Update model version v0.0.392
+  - Add `vm` WIF access type
+  - Add `support` field to WifConfig resource
+
+## 0.1.438
+- Update model version v0.0.391
+  - Add `RegistryConfig` attribute to `Cluster` model
+  - Add `RegistryAllowlist` resource and endpoints
+
+## 0.1.437
+- Update model version v0.0.390
+  - Add `RolePrefix` field to `WifGcp` model
+
+## 0.1.436
+- Update model version v0.0.389
+  - Add state struct to node pool
+  - Add limited support reason override
+
+## 0.1.435
+- Add 'OidcThumbprint' type model to v1 and v2alpha1
+- Add 'OidcThumbprintInput' type model to v1 and v2alpha1
+- Add 'OidcThumbprint' resource model to v1 and v2alpha1
+
+## 0.1.434
+- Update model version v0.0.386
+  - Add `RootVolume` attribute to `AWSNodePool` model
+- Update model version v0.0.387
+  - Add `ProjectNumber` field to `WifConfig` model
+
+## 0.1.433
+- Update model version v0.0.384
+  - Add clusters_mgmt API model for v2alpha1
+- Update model version v0.0.385
+  - Update WIF endpoint path
+  - Remove WIF templates endpoints
+
+## 0.1.432
+- Update model version v0.0.383
+  - Add `Kind` and `Id` field to GCP `Authentication` structure
+
+## 0.1.431
+- Update model version v0.0.382
+  - Add `Authentication` field to GCP model
+
+## 0.1.430
+- Added WIF endpoints and resources
+
+## 0.1.429
+- Update model version v0.0.380
+  - Add `Architecture` attribute to `MachineType` model
+  - Add `ReleaseImages` attribute to `Version` model
+
+## 0.1.428
+- Update model version v0.0.379
+  - Add `Ec2MetadataHttpTokens` to `AWSNodePool` resource
+
+## 0.1.427
+- Update model version v0.0.378
+  - Add `MultiArchEnabled` attribute to `Cluster` model
+
+## 0.1.426
+- Update for Windows support including systemcertpool
+
+## 0.1.425
+- Update Windows certificates
+
+## 0.1.424
+- Update model version v0.0.377
+  - Change type of the `OSDiskSizeGibibytes` attribute in the `AzureNodePool` resource from String to Integer.
+
+## 0.1.423
+- Update model version v0.0.376
+  - Add `AzureNodePool` to `NodePool` type
+
+## 0.1.422
+- Update model version v0.0.375
+  - Add `ManagementUpgrade` parameters to the `NodePool` model to support additional upgrade configuration.
+  - Support server name inference for regionalized OCM redirects
+  - Add `AdditionalAllowedPrincipals` to `AWS` type to support additional allowed principal ARNs to be added to the hosted control plane's VPC Endpoint Service.
+
+## 0.1.421
+- Update model version v0.0.374
+  - Add `CreationTimestamp` and `LastUpdateTimestamp` to `RolePolicyBinding` type
+  - Add `access_transparency` service
+
+## 0.1.420
+- Update model version v0.0.373
+  - Add `subnet_resource_id` to `Azure` resource
+  - Add `network_security_group_resource_id to `Azure` resource
+
+## 0.1.419
+- Update model version v0.0.372
+  - Exposed the `/api/clusters_mgmt/v1/clusters/{id}/kubelet_configs` endpoint
+  - Added `name` field to `KubeletConfig`
+  - Added `kubelet_configs` field to `NodePool`
+
+## 0.1.418
+- Update model version v0.0.371
+  - Add Tags to the AWSMachinePool model to support custom AWS tags for day 2 creation of machine pools
+
+## 0.1.417
+- Add RolePolicyBindings to the AWS resource model to support STS Arbitrary Policies feature.
+
+## 0.1.416
+- Update windows api.openshift certs 
+
+## 0.1.415
+- Update model version v0.0.369
+  - Update metamodel version to 0.0.60
+  - [OCM-6294] add /load_balancer_quota_values endpoint
+  - [OCM-7027] feat: document pagination and ordering support for break glass
+  - [OCM-7144] Add /storage_quota_values endpoint
+  - Add Azure resource to Cluster resource.
+  - Fix spacing in description of Azure's ManagedResourceGroupName
+
 ## 0.1.414
 - Update metamodel version v0.0.60
 

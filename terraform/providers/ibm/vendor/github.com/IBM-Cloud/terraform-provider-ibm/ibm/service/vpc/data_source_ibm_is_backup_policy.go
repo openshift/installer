@@ -422,7 +422,7 @@ func dataSourceBackupPolicyPlansToMap(plansItem vpcv1.BackupPolicyPlanReference)
 	return plansMap
 }
 
-func dataSourceBackupPolicyPlansDeletedToMap(deletedItem vpcv1.BackupPolicyPlanReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceBackupPolicyPlansDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

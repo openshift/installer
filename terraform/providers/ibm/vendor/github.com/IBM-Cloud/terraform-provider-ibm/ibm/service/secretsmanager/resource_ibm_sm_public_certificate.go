@@ -58,7 +58,7 @@ func ResourceIbmSmPublicCertificate() *schema.Resource {
 				ForceNew:    true,
 				Optional:    true,
 				Computed:    true,
-				Description: "A v4 UUID identifier, or `default` secret group.",
+				Description: "A UUID identifier, or `default` secret group.",
 			},
 			"labels": &schema.Schema{
 				Type:        schema.TypeList,
@@ -70,7 +70,8 @@ func ResourceIbmSmPublicCertificate() *schema.Resource {
 			"common_name": &schema.Schema{
 				Type:        schema.TypeString,
 				ForceNew:    true,
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
 				Description: "The Common Name (AKA CN) represents the server name that is protected by the SSL certificate.",
 			},
 			"alt_names": &schema.Schema{
@@ -140,7 +141,6 @@ func ResourceIbmSmPublicCertificate() *schema.Resource {
 			},
 			"version_custom_metadata": &schema.Schema{
 				Type:        schema.TypeMap,
-				ForceNew:    true,
 				Optional:    true,
 				Description: "The secret version metadata that a user can customize.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -238,7 +238,7 @@ func ResourceIbmSmPublicCertificate() *schema.Resource {
 			"secret_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "A v4 UUID identifier.",
+				Description: "A UUID identifier.",
 			},
 			"locks_total": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -410,7 +410,8 @@ func ResourceIbmSmPublicCertificate() *schema.Resource {
 func resourceIbmSmPublicCertificateCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", PublicCertSecretResourceName, "create")
+		return tfErr.GetDiag()
 	}
 
 	region := getRegion(secretsManagerClient, d)
@@ -421,14 +422,16 @@ func resourceIbmSmPublicCertificateCreate(context context.Context, d *schema.Res
 
 	secretPrototypeModel, err := resourceIbmSmPublicCertificateMapToSecretPrototype(d)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", PublicCertSecretResourceName, "create")
+		return tfErr.GetDiag()
 	}
 	createSecretOptions.SetSecretPrototype(secretPrototypeModel)
 
 	secretIntf, response, err := secretsManagerClient.CreateSecretWithContext(context, createSecretOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateSecretWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateSecretWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateSecretWithContext failed: %s\n%s", err.Error(), response), PublicCertSecretResourceName, "create")
+		return tfErr.GetDiag()
 	}
 
 	secret := secretIntf.(*secretsmanagerv2.PublicCertificate)
@@ -442,8 +445,8 @@ func resourceIbmSmPublicCertificateCreate(context context.Context, d *schema.Res
 	}
 
 	if err != nil {
-		return diag.FromErr(fmt.Errorf(
-			"error waiting for resource IbmSmPublicCertificate (%s) to be created: %s", d.Id(), err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error waiting for resource IbmSmPublicCertificate (%s) to be created: %s", d.Id(), err.Error()), PublicCertSecretResourceName, "create")
+		return tfErr.GetDiag()
 	}
 
 	return resourceIbmSmPublicCertificateRead(context, d, meta)
@@ -485,12 +488,14 @@ func waitForIbmSmPublicCertificateCreate(secretsManagerClient *secretsmanagerv2.
 func resourceIbmSmPublicCertificateRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
 	if len(id) != 3 {
-		return diag.Errorf("Wrong format of resource ID. To import a secret use the format `<region>/<instance_id>/<secret_id>`")
+		tfErr := flex.TerraformErrorf(nil, "Wrong format of resource ID. To import a secret use the format `<region>/<instance_id>/<secret_id>`", PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	region := id[0]
 	instanceId := id[1]
@@ -508,134 +513,194 @@ func resourceIbmSmPublicCertificateRead(context context.Context, d *schema.Resou
 			return nil
 		}
 		log.Printf("[DEBUG] GetSecretWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetSecretWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetSecretWithContext failed %s\n%s", err, response), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 
 	secret := secretIntf.(*secretsmanagerv2.PublicCertificate)
 
 	if err = d.Set("secret_id", secretId); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_id"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("instance_id", instanceId); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting instance_id"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("region", region); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting region: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_by", secret.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_by"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_at", DateTimeToRFC3339(secret.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_at"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("crn", secret.Crn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting crn"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("downloaded", secret.Downloaded); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting downloaded: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting downloaded"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("locks_total", flex.IntValue(secret.LocksTotal)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting locks_total: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting locks_total"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("name", secret.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("secret_group_id", secret.SecretGroupID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_group_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_group_id"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("secret_type", secret.SecretType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_type"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("state", flex.IntValue(secret.State)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting state"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("state_description", secret.StateDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting state_description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting state_description"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated_at", DateTimeToRFC3339(secret.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("versions_total", flex.IntValue(secret.VersionsTotal)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting versions_total: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting versions_total"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("common_name", secret.CommonName); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting common_name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting common_name"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if secret.IssuanceInfo != nil {
 		issuanceInfoMap, err := resourceIbmSmPublicCertificateCertificateIssuanceInfoToMap(secret.IssuanceInfo, d)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, "", PublicCertSecretResourceName, "read")
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("issuance_info", []map[string]interface{}{issuanceInfoMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting issuance_info: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting issuance_info"), PublicCertSecretResourceName, "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("key_algorithm", secret.KeyAlgorithm); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting key_algorithm: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting key_algorithm"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("ca", secret.Ca); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting ca: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting ca"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if d.Get("dns").(string) != "akamai" {
 		if err = d.Set("dns", secret.Dns); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting dns: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting dns"), PublicCertSecretResourceName, "read")
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("bundle_certs", secret.BundleCerts); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting bundle_certs: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting bundle_certs"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	rotationMap, err := resourceIbmSmPublicCertificateRotationPolicyToMap(secret.Rotation)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("rotation", []map[string]interface{}{rotationMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rotation: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting rotation"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if secret.CustomMetadata != nil {
 		d.Set("custom_metadata", secret.CustomMetadata)
 	}
 	if err = d.Set("description", secret.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting description"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if secret.Labels != nil {
 		if err = d.Set("labels", secret.Labels); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting labels: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting labels"), PublicCertSecretResourceName, "read")
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("signing_algorithm", secret.SigningAlgorithm); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting signing_algorithm: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting signing_algorithm"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if secret.AltNames != nil {
 		if err = d.Set("alt_names", secret.AltNames); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting alt_names: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting alt_names"), PublicCertSecretResourceName, "read")
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("expiration_date", DateTimeToRFC3339(secret.ExpirationDate)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting expiration_date: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting expiration_date"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("issuer", secret.Issuer); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting issuer: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting issuer"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("serial_number", secret.SerialNumber); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting serial_number: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting serial_number"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	validityMap, err := resourceIbmSmPublicCertificateCertificateValidityToMap(secret.Validity)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("validity", []map[string]interface{}{validityMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting validity: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting validity"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("certificate", secret.Certificate); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting certificate: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting certificate"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("intermediate", secret.Intermediate); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting intermediate: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting intermediate"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("private_key", secret.PrivateKey); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting private_key: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting private_key"), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
+
+	if *secret.StateDescription == "active" {
+		// Call get version metadata API to get the current version_custom_metadata
+		getVersionMetdataOptions := &secretsmanagerv2.GetSecretVersionMetadataOptions{}
+		getVersionMetdataOptions.SetSecretID(secretId)
+		getVersionMetdataOptions.SetID("current")
+
+		versionMetadataIntf, response, err := secretsManagerClient.GetSecretVersionMetadataWithContext(context, getVersionMetdataOptions)
+		if err != nil {
+			log.Printf("[DEBUG] GetSecretVersionMetadataWithContext failed %s\n%s", err, response)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetSecretVersionMetadataWithContext failed %s\n%s", err, response), PublicCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
+
+		versionMetadata := versionMetadataIntf.(*secretsmanagerv2.PublicCertificateVersionMetadata)
+		if versionMetadata.VersionCustomMetadata != nil {
+			if err = d.Set("version_custom_metadata", versionMetadata.VersionCustomMetadata); err != nil {
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting version_custom_metadata"), PublicCertSecretResourceName, "read")
+				return tfErr.GetDiag()
+			}
+		}
+	}
+
 	if d.Get("dns").(string) == "akamai" && d.Get("state_description").(string) == "pre_activation" {
 		err := setChallengesWithAkamaiAndValidateManualDns(context, d, meta, secret, secretsManagerClient)
 		if err != nil {
@@ -649,7 +714,8 @@ func resourceIbmSmPublicCertificateRead(context context.Context, d *schema.Resou
 func resourceIbmSmPublicCertificateUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", PublicCertSecretResourceName, "update")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
@@ -691,7 +757,8 @@ func resourceIbmSmPublicCertificateUpdate(context context.Context, d *schema.Res
 		RotationModel, err := resourceIbmSmPublicCertificateMapToRotationPolicy(d.Get("rotation").([]interface{})[0].(map[string]interface{}))
 		if err != nil {
 			log.Printf("[DEBUG] UpdateSecretMetadataWithContext failed: Reading Rotation parameter failed: %s", err)
-			return diag.FromErr(fmt.Errorf("UpdateSecretMetadataWithContext failed: Reading Rotation parameter failed: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateSecretMetadataWithContext failed: Reading Rotation parameter failed: %s", err), PublicCertSecretResourceName, "update")
+			return tfErr.GetDiag()
 		}
 		patchVals.Rotation = RotationModel
 		hasChange = true
@@ -702,7 +769,30 @@ func resourceIbmSmPublicCertificateUpdate(context context.Context, d *schema.Res
 		_, response, err := secretsManagerClient.UpdateSecretMetadataWithContext(context, updateSecretMetadataOptions)
 		if err != nil {
 			log.Printf("[DEBUG] UpdateSecretMetadataWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateSecretMetadataWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateSecretMetadataWithContext failed %s\n%s", err, response), PublicCertSecretResourceName, "update")
+			return tfErr.GetDiag()
+		}
+	}
+
+	if d.HasChange("version_custom_metadata") {
+		// Apply change to version_custom_metadata in current version
+		secretVersionMetadataPatchModel := new(secretsmanagerv2.SecretVersionMetadataPatch)
+		secretVersionMetadataPatchModel.VersionCustomMetadata = d.Get("version_custom_metadata").(map[string]interface{})
+		secretVersionMetadataPatchModelAsPatch, _ := secretVersionMetadataAsPatchFunction(secretVersionMetadataPatchModel)
+
+		updateSecretVersionOptions := &secretsmanagerv2.UpdateSecretVersionMetadataOptions{}
+		updateSecretVersionOptions.SetSecretID(secretId)
+		updateSecretVersionOptions.SetID("current")
+		updateSecretVersionOptions.SetSecretVersionMetadataPatch(secretVersionMetadataPatchModelAsPatch)
+		_, response, err := secretsManagerClient.UpdateSecretVersionMetadataWithContext(context, updateSecretVersionOptions)
+		if err != nil {
+			if hasChange {
+				// Call the read function to update the Terraform state with the change already applied to the metadata
+				resourceIbmSmPublicCertificateRead(context, d, meta)
+			}
+			log.Printf("[DEBUG] UpdateSecretVersionMetadataWithContext failed %s\n%s", err, response)
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateSecretVersionMetadataWithContext failed %s\n%s", err, response), PublicCertSecretResourceName, "update")
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -712,7 +802,8 @@ func resourceIbmSmPublicCertificateUpdate(context context.Context, d *schema.Res
 func resourceIbmSmPublicCertificateDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", PublicCertSecretResourceName, "delete")
+		return tfErr.GetDiag()
 	}
 
 	id := strings.Split(d.Id(), "/")
@@ -728,7 +819,8 @@ func resourceIbmSmPublicCertificateDelete(context context.Context, d *schema.Res
 	response, err := secretsManagerClient.DeleteSecretWithContext(context, deleteSecretOptions)
 	if err != nil {
 		log.Printf("[DEBUG] DeleteSecretWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteSecretWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteSecretWithContext failed %s\n%s", err, response), PublicCertSecretResourceName, "delete")
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -1054,7 +1146,8 @@ func setChallengesWithAkamaiAndValidateManualDns(context context.Context, d *sch
 	for _, challengeItem := range secret.IssuanceInfo.Challenges {
 		if _, exists := successfullySetChallengeDomains[*challengeItem.TxtRecordValue]; !exists {
 			resourceIbmSmPublicCertificateDelete(context, d, meta)
-			return diag.FromErr(fmt.Errorf("error: a dns record set in Akamai was not created for domain: %s", *challengeItem.Domain))
+			tfErr := flex.TerraformErrorf(nil, fmt.Sprintf("error: a dns record set in Akamai was not created for domain: %s", *challengeItem.Domain), PublicCertSecretResourceName, "read")
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -1065,9 +1158,10 @@ func configureAkamai(d *schema.ResourceData) (edgegrid.Config, diag.Diagnostics)
 	var config edgegrid.Config
 	var err error
 	defaultErrMsg := "error configuring Akamai: One or more arguments are missing. Please verify that you provided either a path to your 'edgerc' file or all the config parameters ('host', 'client_secret', 'access_token' and 'client_token')"
+	defaultTfErr := flex.TerraformErrorf(nil, defaultErrMsg, PublicCertSecretResourceName, "read")
 
 	if len(d.Get("akamai").([]interface{})) == 0 || d.Get("akamai").([]interface{})[0] == nil {
-		return config, diag.FromErr(fmt.Errorf(defaultErrMsg))
+		return config, defaultTfErr.GetDiag()
 	}
 	akamaiData := d.Get("akamai").([]interface{})[0].(map[string]interface{})
 
@@ -1075,12 +1169,13 @@ func configureAkamai(d *schema.ResourceData) (edgegrid.Config, diag.Diagnostics)
 		edgercData := akamaiData["edgerc"].([]interface{})[0].(map[string]interface{})
 		edgerc := edgercData["path_to_edgerc"].(string)
 		if edgerc == "" {
-			return config, diag.FromErr(fmt.Errorf(defaultErrMsg))
+			return config, defaultTfErr.GetDiag()
 		}
 		configSection := edgercData["config_section"].(string)
 		config, err = edgegrid.InitEdgeRc(edgerc, configSection)
 		if err != nil {
-			return config, diag.FromErr(fmt.Errorf("error initiating edgerc: %s", err))
+			tfErr := flex.TerraformErrorf(nil, fmt.Sprintf("error initiating edgerc: %s", err), PublicCertSecretResourceName, "read")
+			return config, tfErr.GetDiag()
 		}
 	} else if len(akamaiData["config"].([]interface{})) > 0 && akamaiData["config"].([]interface{})[0] != nil {
 		akamaiDataConfig := akamaiData["config"].([]interface{})[0].(map[string]interface{})
@@ -1093,10 +1188,10 @@ func configureAkamai(d *schema.ResourceData) (edgegrid.Config, diag.Diagnostics)
 				config.MaxBody = 131072
 			}
 		} else {
-			return config, diag.FromErr(fmt.Errorf(defaultErrMsg))
+			return config, defaultTfErr.GetDiag()
 		}
 	} else {
-		return config, diag.FromErr(fmt.Errorf(defaultErrMsg))
+		return config, defaultTfErr.GetDiag()
 	}
 
 	return config, nil
@@ -1106,11 +1201,13 @@ func configureAkamai(d *schema.ResourceData) (edgegrid.Config, diag.Diagnostics)
 func checkIfRecordExistsInAkamai(config edgegrid.Config, zone string, txtRecordName string) ([]string, diag.Diagnostics) {
 	req, err := client.NewRequest(config, "GET", fmt.Sprintf("/config-dns/v2/zones/%s/names/%s/types/TXT", zone, txtRecordName), nil)
 	if err != nil {
-		return nil, diag.FromErr(fmt.Errorf("error creating akamai 'GET' request: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error creating akamai 'GET' request: %s", err), PublicCertSecretResourceName, "read")
+		return nil, tfErr.GetDiag()
 	}
 	res, err := client.Do(config, req)
 	if err != nil {
-		return nil, diag.FromErr(fmt.Errorf("error in performing akamai 'GET' request: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error in performing akamai 'GET' request: %s", err), PublicCertSecretResourceName, "read")
+		return nil, tfErr.GetDiag()
 	}
 	if res.StatusCode == 404 { // there is no record set, we need to create one
 		return nil, nil
@@ -1119,7 +1216,8 @@ func checkIfRecordExistsInAkamai(config edgegrid.Config, zone string, txtRecordN
 
 		err := json.NewDecoder(res.Body).Decode(&recordData)
 		if err != nil {
-			diag.FromErr(fmt.Errorf("error in performing akamai 'GET' request: error in decoding JSON: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error in performing akamai 'GET' request: error in decoding JSON: %s", err), PublicCertSecretResourceName, "read")
+			return nil, tfErr.GetDiag()
 		}
 
 		return recordData.Target, nil
@@ -1127,9 +1225,11 @@ func checkIfRecordExistsInAkamai(config edgegrid.Config, zone string, txtRecordN
 		body, err := ioutil.ReadAll(res.Body)
 		if err != nil {
 			fmt.Printf("Error reading response: %s\n", err.Error())
-			return nil, diag.FromErr(fmt.Errorf("error in performing akamai 'GET' request: error reading error: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error in performing akamai 'GET' request: error reading error: %s", err), PublicCertSecretResourceName, "read")
+			return nil, tfErr.GetDiag()
 		}
-		return nil, diag.FromErr(fmt.Errorf("error in performing akamai 'GET' request: %s", string(body)))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error in performing akamai 'GET' request: %s", string(body)), PublicCertSecretResourceName, "read")
+		return nil, tfErr.GetDiag()
 	}
 }
 
@@ -1150,15 +1250,18 @@ func createOrUpdateAkamaiChallengeRecordSet(config edgegrid.Config, zone string,
 
 	jsonBody, err := json.Marshal(recordSetBody)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error setting body for akamai request: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error setting body for akamai request: %s", err), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	req, err := client.NewRequest(config, method, fmt.Sprintf("/config-dns/v2/zones/%s/names/%s/types/TXT", zone, txtRecordName), bytes.NewReader(jsonBody))
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error creating akamai request: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error creating akamai request: %s", err), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	res, err := client.Do(config, req)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error in akamai request: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error in akamai request: %s", err), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	if res.StatusCode != 201 && res.StatusCode != 200 {
 		body, err := ioutil.ReadAll(res.Body)
@@ -1166,7 +1269,8 @@ func createOrUpdateAkamaiChallengeRecordSet(config edgegrid.Config, zone string,
 			fmt.Printf("Error reading response: %s\n", err.Error())
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("error from akamai in '%s' request: %s", method, string(body)))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error from akamai in '%s' request: %s", method, string(body)), PublicCertSecretResourceName, "read")
+		return tfErr.GetDiag()
 	}
 	return nil
 }
@@ -1189,7 +1293,8 @@ func findAllTxtRecordValuesForDomain(domainItem string, txtRecordName string, se
 	if len(txtRecordValues) > 0 {
 		return txtRecordValues, nil
 	}
-	return nil, diag.FromErr(fmt.Errorf("failed to find a challenge for the domain: %s", domainItem))
+	tfErr := flex.TerraformErrorf(nil, fmt.Sprintf("failed to find a challenge for the domain: %s", domainItem), PublicCertSecretResourceName, "read")
+	return nil, tfErr.GetDiag()
 }
 
 func findTxtRecordValuesDifferences(akamaiValues, challengesValues []string) []string {
@@ -1215,16 +1320,19 @@ func findTxtRecordValuesDifferences(akamaiValues, challengesValues []string) []s
 func getZone(currentZone string, originalDomain string, config edgegrid.Config) (string, diag.Diagnostics) {
 	req, err := client.NewRequest(config, "GET", fmt.Sprintf("/config-dns/v2/zones/%s", currentZone), nil)
 	if err != nil {
-		return "", diag.FromErr(fmt.Errorf("error creating akamai 'GET' zone request: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error creating akamai 'GET' zone request: %s", err), PublicCertSecretResourceName, "read")
+		return "", tfErr.GetDiag()
 	}
 	res, err := client.Do(config, req)
 	if err != nil {
-		return "", diag.FromErr(fmt.Errorf("error in performing akamai 'GET' zone request: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error in performing akamai 'GET' zone request: %s", err), PublicCertSecretResourceName, "read")
+		return "", tfErr.GetDiag()
 	}
 	if res.StatusCode == 404 {
 		zoneSplit := strings.Split(currentZone, ".")
 		if len(zoneSplit) == 2 {
-			return "", diag.FromErr(fmt.Errorf("could not find a zone in Akamai for the domain: %s", originalDomain))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("could not find a zone in Akamai for the domain: %s", originalDomain), PublicCertSecretResourceName, "read")
+			return "", tfErr.GetDiag()
 		}
 
 		newZone := strings.Join(zoneSplit[1:], ".")
@@ -1236,8 +1344,10 @@ func getZone(currentZone string, originalDomain string, config edgegrid.Config) 
 		body, err := ioutil.ReadAll(res.Body)
 		if err != nil {
 			fmt.Printf("Error reading response: %s\n", err.Error())
-			return "", diag.FromErr(fmt.Errorf("error in performing akamai 'GET' zone request for zone: %s: error reading error: %s", currentZone, err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error in performing akamai 'GET' zone request for zone: %s: error reading error: %s", currentZone, err), PublicCertSecretResourceName, "read")
+			return "", tfErr.GetDiag()
 		}
-		return "", diag.FromErr(fmt.Errorf("error in performing akamai 'GET' zone request for zone: %s:: %s", currentZone, string(body)))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("error in performing akamai 'GET' zone request for zone: %s:: %s", currentZone, string(body)), PublicCertSecretResourceName, "read")
+		return "", tfErr.GetDiag()
 	}
 }

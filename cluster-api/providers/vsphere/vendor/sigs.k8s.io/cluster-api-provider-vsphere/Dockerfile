@@ -15,13 +15,22 @@
 # limitations under the License.
 
 # Build the manager binary
-ARG GOLANG_VERSION=golang:1.20.12
-FROM --platform=${BUILDPLATFORM} ${GOLANG_VERSION} as builder
+# Run this with docker build --build-arg builder_image=<golang:x.y.z>
+ARG builder_image
+
+# Build architecture
+ARG ARCH
+
+# Ignore Hadolint rule "Always tag the version of an image explicitly."
+# It's an invalid finding since the image is explicitly set in the Makefile.
+# https://github.com/hadolint/hadolint/wiki/DL3006
+# hadolint ignore=DL3006
+FROM ${builder_image} as builder
 WORKDIR /workspace
 
-# Run this with docker build --build_arg $(go env GOPROXY) to override the goproxy
+# Run this with docker build --build-arg goproxy=$(go env GOPROXY) to override the goproxy
 ARG goproxy=https://proxy.golang.org
-ENV GOPROXY=${goproxy}
+ENV GOPROXY=$goproxy
 
 # Copy the Go Modules manifests
 COPY go.mod go.mod
@@ -32,22 +41,30 @@ COPY go.sum go.sum
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 
-# Build
-ARG TARGETOS
-ARG TARGETARCH
-ARG ldflags
-RUN --mount=type=bind,target=. \
-    --mount=type=cache,target=/root/.cache/go-build \
-    --mount=type=cache,target=/go/pkg/mod \
-    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
-    go build -a -ldflags "${ldflags} -extldflags '-static'" \
-    -o /out/manager .
+# Copy the sources
+COPY ./ ./
 
-# Copy the controller-manager into a thin image
-ARG TARGETPLATFORM
-FROM --platform=${TARGETPLATFORM} gcr.io/distroless/static:nonroot
+# Cache the go build into the Go’s compiler cache folder so we take benefits of compiler caching across docker build calls
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    go build .
+
+# Build
+ARG package=.
+ARG ARCH
+ARG ldflags
+
+# Do not force rebuild of up-to-date packages (do not use -a) and use the compiler cache folder
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} \
+    go build -trimpath -ldflags "${ldflags} -extldflags '-static'" \
+    -o manager ${package}
+
+
+FROM gcr.io/distroless/static:nonroot-${ARCH}
 WORKDIR /
-COPY --from=builder /out/manager .
-# Use uid of nonroot user (65532) because kubernetes expects numeric user when applying PSPs
+COPY --from=builder /workspace/manager .
+# Use uid of nonroot user (65532) because kubernetes expects numeric user when applying pod security policies
 USER 65532
 ENTRYPOINT ["/manager"]

@@ -93,7 +93,16 @@ func writeLimitedSupportReason(object *LimitedSupportReason, stream *jsoniter.St
 		stream.WriteString(string(object.detectionType))
 		count++
 	}
-	present_ = object.bitmap_&64 != 0
+	present_ = object.bitmap_&64 != 0 && object.override != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("override")
+		writeLimitedSupportReasonOverride(object.override, stream)
+		count++
+	}
+	present_ = object.bitmap_&128 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -102,7 +111,7 @@ func writeLimitedSupportReason(object *LimitedSupportReason, stream *jsoniter.St
 		stream.WriteString(object.summary)
 		count++
 	}
-	present_ = object.bitmap_&128 != 0 && object.template != nil
+	present_ = object.bitmap_&256 != 0 && object.template != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -162,14 +171,18 @@ func readLimitedSupportReason(iterator *jsoniter.Iterator) *LimitedSupportReason
 			value := DetectionType(text)
 			object.detectionType = value
 			object.bitmap_ |= 32
+		case "override":
+			value := readLimitedSupportReasonOverride(iterator)
+			object.override = value
+			object.bitmap_ |= 64
 		case "summary":
 			value := iterator.ReadString()
 			object.summary = value
-			object.bitmap_ |= 64
+			object.bitmap_ |= 128
 		case "template":
 			value := readLimitedSupportReasonTemplate(iterator)
 			object.template = value
-			object.bitmap_ |= 128
+			object.bitmap_ |= 256
 		default:
 			iterator.ReadAny()
 		}

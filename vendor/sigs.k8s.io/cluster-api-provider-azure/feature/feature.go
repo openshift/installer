@@ -47,6 +47,11 @@ const (
 	// owner: @upxinxin
 	// alpha: v1.8
 	EdgeZone featuregate.Feature = "EdgeZone"
+
+	// ASOAPI is the feature gate for enabling the AzureASO... APIs.
+	// owner: @nojnhuh
+	// alpha: v1.15
+	ASOAPI featuregate.Feature = "ASOAPI"
 )
 
 func init() {
@@ -60,4 +65,5 @@ var defaultCAPZFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	AKS:               {Default: true, PreRelease: featuregate.GA, LockToDefault: true}, // Remove in 1.12
 	AKSResourceHealth: {Default: false, PreRelease: featuregate.Alpha},
 	EdgeZone:          {Default: false, PreRelease: featuregate.Alpha},
+	ASOAPI:            {Default: true, PreRelease: featuregate.Alpha},
 }

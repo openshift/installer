@@ -1,6 +1,10 @@
 package tls
 
-import "github.com/openshift/installer/pkg/asset"
+import (
+	"context"
+
+	"github.com/openshift/installer/pkg/asset"
+)
 
 // ServiceAccountKeyPair is the asset that generates the service-account public/private key pair.
 type ServiceAccountKeyPair struct {
@@ -17,8 +21,8 @@ func (a *ServiceAccountKeyPair) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (a *ServiceAccountKeyPair) Generate(dependencies asset.Parents) error {
-	return a.KeyPair.Generate("service-account")
+func (a *ServiceAccountKeyPair) Generate(ctx context.Context, dependencies asset.Parents) error {
+	return a.KeyPair.Generate(ctx, "service-account")
 }
 
 // Name returns the human-friendly name of the asset.

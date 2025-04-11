@@ -5,7 +5,7 @@ set -ex
 # shellcheck disable=SC2068
 version() { IFS="."; printf "%03d%03d%03d\\n" $@; unset IFS;}
 
-minimum_go_version=1.21
+minimum_go_version=1.23
 current_go_version=$(go version | cut -d " " -f 3)
 
 if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version")" ]; then
@@ -42,6 +42,11 @@ if test "${SKIP_GENERATION}" != y
 then
 	# this step has to be run natively, even when cross-compiling
 	GOOS='' GOARCH='' go generate ./data
+fi
+
+if (echo "${TAGS}" | grep -q '\bfipscapable\b')
+then
+	export CGO_ENABLED=1
 fi
 
 echo "building node-joiner"

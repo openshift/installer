@@ -6,7 +6,6 @@ package scc
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"time"
 
@@ -130,7 +129,7 @@ func dataSourceIbmSccProviderTypeCollectionRead(context context.Context, d *sche
 	providerTypesCollection, response, err := securityAndComplianceCenterApIsClient.ListProviderTypesWithContext(context, listProviderTypesOptions)
 	if err != nil {
 		log.Printf("[DEBUG] ListProviderTypesWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("ListProviderTypesWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("ListProviderTypesWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(dataSourceIbmSccProviderTypeCollectionID(d))
@@ -146,7 +145,7 @@ func dataSourceIbmSccProviderTypeCollectionRead(context context.Context, d *sche
 		}
 	}
 	if err = d.Set("provider_types", providerTypes); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting provider_types %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting provider_types %s", err))
 	}
 
 	return nil
@@ -157,7 +156,7 @@ func dataSourceIbmSccProviderTypeCollectionID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceIbmSccProviderTypeCollectionProviderTypeItemToMap(model *securityandcompliancecenterapiv3.ProviderTypeItem) (map[string]interface{}, error) {
+func dataSourceIbmSccProviderTypeCollectionProviderTypeItemToMap(model *securityandcompliancecenterapiv3.ProviderType) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["id"] = model.ID
 	modelMap["type"] = model.Type

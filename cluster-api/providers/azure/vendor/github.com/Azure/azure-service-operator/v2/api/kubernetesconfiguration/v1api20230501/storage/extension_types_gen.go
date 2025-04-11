@@ -4,12 +4,17 @@
 package storage
 
 import (
+	"context"
+	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // +kubebuilder:rbac:groups=kubernetesconfiguration.azure.com,resources=extensions,verbs=get;list;watch;create;update;patch;delete
@@ -43,6 +48,25 @@ func (extension *Extension) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (extension *Extension) SetConditions(conditions conditions.Conditions) {
 	extension.Status.Conditions = conditions
+}
+
+var _ genruntime.KubernetesExporter = &Extension{}
+
+// ExportKubernetesResources defines a resource which can create other resources in Kubernetes.
+func (extension *Extension) ExportKubernetesResources(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
+	collector := configmaps.NewCollector(extension.Namespace)
+	if extension.Spec.OperatorSpec != nil && extension.Spec.OperatorSpec.ConfigMaps != nil {
+		if extension.Status.AksAssignedIdentity != nil {
+			if extension.Status.AksAssignedIdentity.PrincipalId != nil {
+				collector.AddValue(extension.Spec.OperatorSpec.ConfigMaps.PrincipalId, *extension.Status.AksAssignedIdentity.PrincipalId)
+			}
+		}
+	}
+	result, err := collector.Values()
+	if err != nil {
+		return nil, err
+	}
+	return configmaps.SliceToClientObjectSlice(result), nil
 }
 
 var _ genruntime.KubernetesResource = &Extension{}
@@ -151,11 +175,13 @@ type Extension_Spec struct {
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName             string            `json:"azureName,omitempty"`
-	ConfigurationSettings map[string]string `json:"configurationSettings,omitempty"`
-	ExtensionType         *string           `json:"extensionType,omitempty"`
-	Identity              *Identity         `json:"identity,omitempty"`
-	OriginalVersion       string            `json:"originalVersion,omitempty"`
+	AzureName                      string                         `json:"azureName,omitempty"`
+	ConfigurationProtectedSettings *genruntime.SecretMapReference `json:"configurationProtectedSettings,omitempty"`
+	ConfigurationSettings          map[string]string              `json:"configurationSettings,omitempty"`
+	ExtensionType                  *string                        `json:"extensionType,omitempty"`
+	Identity                       *Identity                      `json:"identity,omitempty"`
+	OperatorSpec                   *ExtensionOperatorSpec         `json:"operatorSpec,omitempty"`
+	OriginalVersion                string                         `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -193,28 +219,29 @@ func (extension *Extension_Spec) ConvertSpecTo(destination genruntime.Convertibl
 // Storage version of v1api20230501.Extension_STATUS
 // The Extension object.
 type Extension_STATUS struct {
-	AksAssignedIdentity     *Extension_Properties_AksAssignedIdentity_STATUS `json:"aksAssignedIdentity,omitempty"`
-	AutoUpgradeMinorVersion *bool                                            `json:"autoUpgradeMinorVersion,omitempty"`
-	Conditions              []conditions.Condition                           `json:"conditions,omitempty"`
-	ConfigurationSettings   map[string]string                                `json:"configurationSettings,omitempty"`
-	CurrentVersion          *string                                          `json:"currentVersion,omitempty"`
-	CustomLocationSettings  map[string]string                                `json:"customLocationSettings,omitempty"`
-	ErrorInfo               *ErrorDetail_STATUS                              `json:"errorInfo,omitempty"`
-	ExtensionType           *string                                          `json:"extensionType,omitempty"`
-	Id                      *string                                          `json:"id,omitempty"`
-	Identity                *Identity_STATUS                                 `json:"identity,omitempty"`
-	IsSystemExtension       *bool                                            `json:"isSystemExtension,omitempty"`
-	Name                    *string                                          `json:"name,omitempty"`
-	PackageUri              *string                                          `json:"packageUri,omitempty"`
-	Plan                    *Plan_STATUS                                     `json:"plan,omitempty"`
-	PropertyBag             genruntime.PropertyBag                           `json:"$propertyBag,omitempty"`
-	ProvisioningState       *string                                          `json:"provisioningState,omitempty"`
-	ReleaseTrain            *string                                          `json:"releaseTrain,omitempty"`
-	Scope                   *Scope_STATUS                                    `json:"scope,omitempty"`
-	Statuses                []ExtensionStatus_STATUS                         `json:"statuses,omitempty"`
-	SystemData              *SystemData_STATUS                               `json:"systemData,omitempty"`
-	Type                    *string                                          `json:"type,omitempty"`
-	Version                 *string                                          `json:"version,omitempty"`
+	AksAssignedIdentity            *Extension_Properties_AksAssignedIdentity_STATUS `json:"aksAssignedIdentity,omitempty"`
+	AutoUpgradeMinorVersion        *bool                                            `json:"autoUpgradeMinorVersion,omitempty"`
+	Conditions                     []conditions.Condition                           `json:"conditions,omitempty"`
+	ConfigurationProtectedSettings map[string]string                                `json:"configurationProtectedSettings,omitempty"`
+	ConfigurationSettings          map[string]string                                `json:"configurationSettings,omitempty"`
+	CurrentVersion                 *string                                          `json:"currentVersion,omitempty"`
+	CustomLocationSettings         map[string]string                                `json:"customLocationSettings,omitempty"`
+	ErrorInfo                      *ErrorDetail_STATUS                              `json:"errorInfo,omitempty"`
+	ExtensionType                  *string                                          `json:"extensionType,omitempty"`
+	Id                             *string                                          `json:"id,omitempty"`
+	Identity                       *Identity_STATUS                                 `json:"identity,omitempty"`
+	IsSystemExtension              *bool                                            `json:"isSystemExtension,omitempty"`
+	Name                           *string                                          `json:"name,omitempty"`
+	PackageUri                     *string                                          `json:"packageUri,omitempty"`
+	Plan                           *Plan_STATUS                                     `json:"plan,omitempty"`
+	PropertyBag                    genruntime.PropertyBag                           `json:"$propertyBag,omitempty"`
+	ProvisioningState              *string                                          `json:"provisioningState,omitempty"`
+	ReleaseTrain                   *string                                          `json:"releaseTrain,omitempty"`
+	Scope                          *Scope_STATUS                                    `json:"scope,omitempty"`
+	Statuses                       []ExtensionStatus_STATUS                         `json:"statuses,omitempty"`
+	SystemData                     *SystemData_STATUS                               `json:"systemData,omitempty"`
+	Type                           *string                                          `json:"type,omitempty"`
+	Version                        *string                                          `json:"version,omitempty"`
 }
 
 var _ genruntime.ConvertibleStatus = &Extension_STATUS{}
@@ -260,6 +287,13 @@ type Extension_Properties_AksAssignedIdentity_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	TenantId    *string                `json:"tenantId,omitempty"`
 	Type        *string                `json:"type,omitempty"`
+}
+
+// Storage version of v1api20230501.ExtensionOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ExtensionOperatorSpec struct {
+	ConfigMaps  *ExtensionOperatorConfigMaps `json:"configMaps,omitempty"`
+	PropertyBag genruntime.PropertyBag       `json:"$propertyBag,omitempty"`
 }
 
 // Storage version of v1api20230501.ExtensionStatus_STATUS
@@ -366,6 +400,12 @@ type ErrorDetail_STATUS_Unrolled struct {
 	Message        *string                      `json:"message,omitempty"`
 	PropertyBag    genruntime.PropertyBag       `json:"$propertyBag,omitempty"`
 	Target         *string                      `json:"target,omitempty"`
+}
+
+// Storage version of v1api20230501.ExtensionOperatorConfigMaps
+type ExtensionOperatorConfigMaps struct {
+	PrincipalId *genruntime.ConfigMapDestination `json:"principalId,omitempty"`
+	PropertyBag genruntime.PropertyBag           `json:"$propertyBag,omitempty"`
 }
 
 // Storage version of v1api20230501.ScopeCluster

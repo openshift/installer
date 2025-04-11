@@ -59,7 +59,8 @@ type Broker struct {
 	kerberosAuthenticator               GSSAPIKerberosAuth
 	clientSessionReauthenticationTimeMs int64
 
-	throttleTimer *time.Timer
+	throttleTimer     *time.Timer
+	throttleTimerLock sync.Mutex
 }
 
 // SASLMechanism specifies the SASL mechanism the client uses to authenticate with the broker
@@ -242,9 +243,9 @@ func (b *Broker) Open(conf *Config) error {
 			if b.connErr != nil {
 				err = b.conn.Close()
 				if err == nil {
-					DebugLogger.Printf("Closed connection to broker %s\n", b.addr)
+					DebugLogger.Printf("Closed connection to broker %s due to SASL v0 auth error: %s\n", b.addr, b.connErr)
 				} else {
-					Logger.Printf("Error while closing connection to broker %s: %s\n", b.addr, err)
+					Logger.Printf("Error while closing connection to broker %s (due to SASL v0 auth error: %s): %s\n", b.addr, b.connErr, err)
 				}
 				b.conn = nil
 				atomic.StoreInt32(&b.opened, 0)
@@ -260,11 +261,12 @@ func (b *Broker) Open(conf *Config) error {
 			b.connErr = b.authenticateViaSASLv1()
 			if b.connErr != nil {
 				close(b.responses)
+				<-b.done
 				err = b.conn.Close()
 				if err == nil {
-					DebugLogger.Printf("Closed connection to broker %s\n", b.addr)
+					DebugLogger.Printf("Closed connection to broker %s due to SASL v1 auth error: %s\n", b.addr, b.connErr)
 				} else {
-					Logger.Printf("Error while closing connection to broker %s: %s\n", b.addr, err)
+					Logger.Printf("Error while closing connection to broker %s (due to SASL v1 auth error: %s): %s\n", b.addr, b.connErr, err)
 				}
 				b.conn = nil
 				atomic.StoreInt32(&b.opened, 0)
@@ -434,12 +436,16 @@ type ProduceCallback func(*ProduceResponse, error)
 //
 // Make sure not to Close the broker in the callback as it will lead to a deadlock.
 func (b *Broker) AsyncProduce(request *ProduceRequest, cb ProduceCallback) error {
-	metricRegistry := b.metricRegistry
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
 	needAcks := request.RequiredAcks != NoResponse
 	// Use a nil promise when no acks is required
 	var promise *responsePromise
 
 	if needAcks {
+		metricRegistry := b.metricRegistry
+
 		// Create ProduceResponse early to provide the header version
 		res := new(ProduceResponse)
 		promise = &responsePromise{
@@ -465,8 +471,6 @@ func (b *Broker) AsyncProduce(request *ProduceRequest, cb ProduceCallback) error
 		}
 	}
 
-	b.lock.Lock()
-	defer b.lock.Unlock()
 	return b.sendWithPromise(request, promise)
 }
 
@@ -676,6 +680,18 @@ func (b *Broker) AlterPartitionReassignments(request *AlterPartitionReassignment
 // returns list partition reassignments response
 func (b *Broker) ListPartitionReassignments(request *ListPartitionReassignmentsRequest) (*ListPartitionReassignmentsResponse, error) {
 	response := new(ListPartitionReassignmentsResponse)
+
+	err := b.sendAndReceive(request, response)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// ElectLeaders sends aa elect leaders request and returns list partitions elect result
+func (b *Broker) ElectLeaders(request *ElectLeadersRequest) (*ElectLeadersResponse, error) {
+	response := new(ElectLeadersResponse)
 
 	err := b.sendAndReceive(request, response)
 	if err != nil {
@@ -1238,12 +1254,12 @@ func (b *Broker) authenticateViaSASLv1() error {
 
 		handshakeErr := b.sendInternal(handshakeRequest, prom)
 		if handshakeErr != nil {
-			Logger.Printf("Error while performing SASL handshake %s\n", b.addr)
+			Logger.Printf("Error while performing SASL handshake %s: %s\n", b.addr, handshakeErr)
 			return handshakeErr
 		}
 		handshakeErr = handleResponsePromise(handshakeRequest, handshakeResponse, prom, metricRegistry)
 		if handshakeErr != nil {
-			Logger.Printf("Error while performing SASL handshake %s\n", b.addr)
+			Logger.Printf("Error while handling SASL handshake response %s: %s\n", b.addr, handshakeErr)
 			return handshakeErr
 		}
 
@@ -1263,7 +1279,7 @@ func (b *Broker) authenticateViaSASLv1() error {
 		}
 		authErr = handleResponsePromise(authenticateRequest, authenticateResponse, prom, metricRegistry)
 		if authErr != nil {
-			Logger.Printf("Error while performing SASL Auth %s\n", b.addr)
+			Logger.Printf("Error while performing SASL Auth %s: %s\n", b.addr, authErr)
 			return nil, authErr
 		}
 
@@ -1381,7 +1397,7 @@ func (b *Broker) sendAndReceiveSASLPlainAuthV0() error {
 	if b.conf.Net.SASL.Handshake {
 		handshakeErr := b.sendAndReceiveSASLHandshake(SASLTypePlaintext, b.conf.Net.SASL.Version)
 		if handshakeErr != nil {
-			Logger.Printf("Error while performing SASL handshake %s\n", b.addr)
+			Logger.Printf("Error while performing SASL handshake %s: %s\n", b.addr, handshakeErr)
 			return handshakeErr
 		}
 	}
@@ -1422,9 +1438,6 @@ func (b *Broker) sendAndReceiveSASLPlainAuthV0() error {
 func (b *Broker) sendAndReceiveSASLPlainAuthV1(authSendReceiver func(authBytes []byte) (*SaslAuthenticateResponse, error)) error {
 	authBytes := []byte(b.conf.Net.SASL.AuthIdentity + "\x00" + b.conf.Net.SASL.User + "\x00" + b.conf.Net.SASL.Password)
 	_, err := authSendReceiver(authBytes)
-	if err != nil {
-		return err
-	}
 	return err
 }
 
@@ -1694,6 +1707,8 @@ func (b *Broker) handleThrottledResponse(resp protocolBody) {
 }
 
 func (b *Broker) setThrottle(throttleTime time.Duration) {
+	b.throttleTimerLock.Lock()
+	defer b.throttleTimerLock.Unlock()
 	if b.throttleTimer != nil {
 		// if there is an existing timer stop/clear it
 		if !b.throttleTimer.Stop() {
@@ -1704,6 +1719,8 @@ func (b *Broker) setThrottle(throttleTime time.Duration) {
 }
 
 func (b *Broker) waitIfThrottled() {
+	b.throttleTimerLock.Lock()
+	defer b.throttleTimerLock.Unlock()
 	if b.throttleTimer != nil {
 		DebugLogger.Printf("broker/%d waiting for throttle timer\n", b.ID())
 		<-b.throttleTimer.C

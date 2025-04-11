@@ -1,7 +1,9 @@
 package cluster
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -12,7 +14,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/baremetal"
 	"github.com/openshift/installer/pkg/asset/cluster/gcp"
 	"github.com/openshift/installer/pkg/asset/cluster/ibmcloud"
-	"github.com/openshift/installer/pkg/asset/cluster/libvirt"
 	clustermetadata "github.com/openshift/installer/pkg/asset/cluster/metadata"
 	"github.com/openshift/installer/pkg/asset/cluster/nutanix"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
@@ -29,7 +30,6 @@ import (
 	"github.com/openshift/installer/pkg/types/featuregates"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
-	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -61,7 +61,7 @@ func (m *Metadata) Dependencies() []asset.Asset {
 }
 
 // Generate generates the metadata asset.
-func (m *Metadata) Generate(parents asset.Parents) (err error) {
+func (m *Metadata) Generate(_ context.Context, parents asset.Parents) (err error) {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(clusterID, installConfig)
@@ -83,8 +83,6 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
 		metadata.ClusterPlatformMetadata.AWS = aws.Metadata(clusterID.UUID, clusterID.InfraID, installConfig.Config)
-	case libvirttypes.Name:
-		metadata.ClusterPlatformMetadata.Libvirt = libvirt.Metadata(installConfig.Config)
 	case openstacktypes.Name:
 		metadata.ClusterPlatformMetadata.OpenStack = openstack.Metadata(clusterID.InfraID, installConfig.Config)
 	case azuretypes.Name:
@@ -100,7 +98,10 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 	case vspheretypes.Name:
 		metadata.ClusterPlatformMetadata.VSphere = vsphere.Metadata(installConfig.Config)
 	case powervstypes.Name:
-		metadata.ClusterPlatformMetadata.PowerVS = powervs.Metadata(installConfig.Config, installConfig.PowerVS)
+		metadata.ClusterPlatformMetadata.PowerVS, err = powervs.Metadata(installConfig.Config, installConfig.PowerVS)
+		if err != nil {
+			return fmt.Errorf("failed to initialize PowerVS: %w", err)
+		}
 	case externaltypes.Name, nonetypes.Name:
 	case nutanixtypes.Name:
 		metadata.ClusterPlatformMetadata.Nutanix = nutanix.Metadata(installConfig.Config)

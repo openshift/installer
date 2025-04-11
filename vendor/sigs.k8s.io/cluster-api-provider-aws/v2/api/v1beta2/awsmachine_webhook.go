@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -64,6 +65,7 @@ func (r *AWSMachine) ValidateCreate() (admission.Warnings, error) {
 	allErrs = append(allErrs, r.validateSSHKeyName()...)
 	allErrs = append(allErrs, r.validateAdditionalSecurityGroups()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
+	allErrs = append(allErrs, r.validateNetworkElasticIPPool()...)
 
 	return nil, aggregateObjErrors(r.GroupVersionKind().GroupKind(), r.Name, allErrs)
 }
@@ -329,6 +331,31 @@ func (r *AWSMachine) validateRootVolume() field.ErrorList {
 
 	if r.Spec.RootVolume.DeviceName != "" {
 		log.Info("root volume shouldn't have a device name (this can be ignored if performing a `clusterctl move`)")
+	}
+
+	return allErrs
+}
+
+func (r *AWSMachine) validateNetworkElasticIPPool() field.ErrorList {
+	var allErrs field.ErrorList
+
+	if r.Spec.ElasticIPPool == nil {
+		return allErrs
+	}
+	if !ptr.Deref(r.Spec.PublicIP, false) {
+		allErrs = append(allErrs, field.Required(field.NewPath("spec.elasticIpPool"), "publicIp must be set to 'true' to assign custom public IPv4 pools with elasticIpPool"))
+	}
+	eipp := r.Spec.ElasticIPPool
+	if eipp.PublicIpv4Pool != nil {
+		if eipp.PublicIpv4PoolFallBackOrder == nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec.elasticIpPool.publicIpv4PoolFallbackOrder"), r.Spec.ElasticIPPool, "publicIpv4PoolFallbackOrder must be set when publicIpv4Pool is defined."))
+		}
+		awsPublicIpv4PoolPrefix := "ipv4pool-ec2-"
+		if !strings.HasPrefix(*eipp.PublicIpv4Pool, awsPublicIpv4PoolPrefix) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec.elasticIpPool.publicIpv4Pool"), r.Spec.ElasticIPPool, fmt.Sprintf("publicIpv4Pool must start with %s.", awsPublicIpv4PoolPrefix)))
+		}
+	} else if eipp.PublicIpv4PoolFallBackOrder != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.elasticIpPool.publicIpv4PoolFallbackOrder"), r.Spec.ElasticIPPool, "publicIpv4Pool must be set when publicIpv4PoolFallbackOrder is defined."))
 	}
 
 	return allErrs

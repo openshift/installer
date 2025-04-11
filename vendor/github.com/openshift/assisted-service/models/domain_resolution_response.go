@@ -123,6 +123,9 @@ func (m *DomainResolutionResponse) UnmarshalBinary(b []byte) error {
 // swagger:model DomainResolutionResponseDomain
 type DomainResolutionResponseDomain struct {
 
+	// The cnames that were resolved for the domain, empty if none
+	Cnames []string `json:"cnames"`
+
 	// The domain that was resolved
 	// Required: true
 	DomainName *string `json:"domain_name"`

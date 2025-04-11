@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2025.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.80.0-29334a73-20230925-151553
+ * IBM OpenAPI SDK Code Generator Version: 3.98.0-8be2046a-20241205-162752
  */
 
 // Package iamidentityv1 : Operations and models for the IamIdentityV1 service
@@ -64,22 +64,26 @@ func NewIamIdentityV1UsingExternalConfig(options *IamIdentityV1Options) (iamIden
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	iamIdentity, err = NewIamIdentityV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = iamIdentity.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = iamIdentity.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -93,12 +97,14 @@ func NewIamIdentityV1(options *IamIdentityV1Options) (service *IamIdentityV1, er
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -112,7 +118,7 @@ func NewIamIdentityV1(options *IamIdentityV1Options) (service *IamIdentityV1, er
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "iamIdentity" suitable for processing requests.
@@ -127,7 +133,11 @@ func (iamIdentity *IamIdentityV1) Clone() *IamIdentityV1 {
 
 // SetServiceURL sets the service URL
 func (iamIdentity *IamIdentityV1) SetServiceURL(url string) error {
-	return iamIdentity.Service.SetServiceURL(url)
+	err := iamIdentity.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -163,17 +173,18 @@ func (iamIdentity *IamIdentityV1) DisableRetries() {
 
 // ListAPIKeys : Get API keys for a given service or user IAM ID and account ID
 // Returns the list of API key details for a given service or user IAM ID and account ID. Users can manage user API keys
-// for themself, or service ID API keys for service IDs that are bound to an entity they have access to. In case of
-// service IDs and their API keys, a user must be either an account owner, a IBM Cloud org manager or IBM Cloud space
-// developer in order to manage service IDs of the entity.
+// for themself, or service ID API keys for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) ListAPIKeys(listAPIKeysOptions *ListAPIKeysOptions) (result *APIKeyList, response *core.DetailedResponse, err error) {
-	return iamIdentity.ListAPIKeysWithContext(context.Background(), listAPIKeysOptions)
+	result, response, err = iamIdentity.ListAPIKeysWithContext(context.Background(), listAPIKeysOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListAPIKeysWithContext is an alternate form of the ListAPIKeys method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) ListAPIKeysWithContext(ctx context.Context, listAPIKeysOptions *ListAPIKeysOptions) (result *APIKeyList, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listAPIKeysOptions, "listAPIKeysOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -182,6 +193,7 @@ func (iamIdentity *IamIdentityV1) ListAPIKeysWithContext(ctx context.Context, li
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/apikeys`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -225,17 +237,21 @@ func (iamIdentity *IamIdentityV1) ListAPIKeysWithContext(ctx context.Context, li
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_api_keys", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAPIKeyList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -246,19 +262,23 @@ func (iamIdentity *IamIdentityV1) ListAPIKeysWithContext(ctx context.Context, li
 
 // CreateAPIKey : Create an API key
 // Creates an API key for a UserID or service ID. Users can manage user API keys for themself, or service ID API keys
-// for service IDs that are bound to an entity they have access to.
+// for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) CreateAPIKey(createAPIKeyOptions *CreateAPIKeyOptions) (result *APIKey, response *core.DetailedResponse, err error) {
-	return iamIdentity.CreateAPIKeyWithContext(context.Background(), createAPIKeyOptions)
+	result, response, err = iamIdentity.CreateAPIKeyWithContext(context.Background(), createAPIKeyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateAPIKeyWithContext is an alternate form of the CreateAPIKey method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CreateAPIKeyWithContext(ctx context.Context, createAPIKeyOptions *CreateAPIKeyOptions) (result *APIKey, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createAPIKeyOptions, "createAPIKeyOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createAPIKeyOptions, "createAPIKeyOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -267,6 +287,7 @@ func (iamIdentity *IamIdentityV1) CreateAPIKeyWithContext(ctx context.Context, c
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/apikeys`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -282,6 +303,9 @@ func (iamIdentity *IamIdentityV1) CreateAPIKeyWithContext(ctx context.Context, c
 	builder.AddHeader("Content-Type", "application/json")
 	if createAPIKeyOptions.EntityLock != nil {
 		builder.AddHeader("Entity-Lock", fmt.Sprint(*createAPIKeyOptions.EntityLock))
+	}
+	if createAPIKeyOptions.EntityDisable != nil {
+		builder.AddHeader("Entity-Disable", fmt.Sprint(*createAPIKeyOptions.EntityDisable))
 	}
 
 	body := make(map[string]interface{})
@@ -303,24 +327,35 @@ func (iamIdentity *IamIdentityV1) CreateAPIKeyWithContext(ctx context.Context, c
 	if createAPIKeyOptions.StoreValue != nil {
 		body["store_value"] = createAPIKeyOptions.StoreValue
 	}
+	if createAPIKeyOptions.SupportSessions != nil {
+		body["support_sessions"] = createAPIKeyOptions.SupportSessions
+	}
+	if createAPIKeyOptions.ActionWhenLeaked != nil {
+		body["action_when_leaked"] = createAPIKeyOptions.ActionWhenLeaked
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_api_key", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAPIKey)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -331,15 +366,18 @@ func (iamIdentity *IamIdentityV1) CreateAPIKeyWithContext(ctx context.Context, c
 
 // GetAPIKeysDetails : Get details of an API key by its value
 // Returns the details of an API key by its value. Users can manage user API keys for themself, or service ID API keys
-// for service IDs that are bound to an entity they have access to.
+// for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) GetAPIKeysDetails(getAPIKeysDetailsOptions *GetAPIKeysDetailsOptions) (result *APIKey, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetAPIKeysDetailsWithContext(context.Background(), getAPIKeysDetailsOptions)
+	result, response, err = iamIdentity.GetAPIKeysDetailsWithContext(context.Background(), getAPIKeysDetailsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAPIKeysDetailsWithContext is an alternate form of the GetAPIKeysDetails method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetAPIKeysDetailsWithContext(ctx context.Context, getAPIKeysDetailsOptions *GetAPIKeysDetailsOptions) (result *APIKey, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getAPIKeysDetailsOptions, "getAPIKeysDetailsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -348,6 +386,7 @@ func (iamIdentity *IamIdentityV1) GetAPIKeysDetailsWithContext(ctx context.Conte
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/apikeys/details`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -370,17 +409,21 @@ func (iamIdentity *IamIdentityV1) GetAPIKeysDetailsWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_api_keys_details", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAPIKey)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -391,20 +434,23 @@ func (iamIdentity *IamIdentityV1) GetAPIKeysDetailsWithContext(ctx context.Conte
 
 // GetAPIKey : Get details of an API key
 // Returns the details of an API key. Users can manage user API keys for themself, or service ID API keys for service
-// IDs that are bound to an entity they have access to. In case of service IDs and their API keys, a user must be either
-// an account owner, a IBM Cloud org manager or IBM Cloud space developer in order to manage service IDs of the entity.
+// IDs they have access to.
 func (iamIdentity *IamIdentityV1) GetAPIKey(getAPIKeyOptions *GetAPIKeyOptions) (result *APIKey, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetAPIKeyWithContext(context.Background(), getAPIKeyOptions)
+	result, response, err = iamIdentity.GetAPIKeyWithContext(context.Background(), getAPIKeyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAPIKeyWithContext is an alternate form of the GetAPIKey method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetAPIKeyWithContext(ctx context.Context, getAPIKeyOptions *GetAPIKeyOptions) (result *APIKey, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAPIKeyOptions, "getAPIKeyOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAPIKeyOptions, "getAPIKeyOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -417,6 +463,7 @@ func (iamIdentity *IamIdentityV1) GetAPIKeyWithContext(ctx context.Context, getA
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/apikeys/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -439,17 +486,21 @@ func (iamIdentity *IamIdentityV1) GetAPIKeyWithContext(ctx context.Context, getA
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_api_key", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAPIKey)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -461,20 +512,24 @@ func (iamIdentity *IamIdentityV1) GetAPIKeyWithContext(ctx context.Context, getA
 // UpdateAPIKey : Updates an API key
 // Updates properties of an API key. This does NOT affect existing access tokens. Their token content will stay
 // unchanged until the access token is refreshed. To update an API key, pass the property to be modified. To delete one
-// property's value, pass the property with an empty value "".Users can manage user API keys for themself, or service ID
-// API keys for service IDs that are bound to an entity they have access to.
+// property's value, pass the property with an empty value "". Users can manage user API keys for themself, or service
+// ID API keys for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) UpdateAPIKey(updateAPIKeyOptions *UpdateAPIKeyOptions) (result *APIKey, response *core.DetailedResponse, err error) {
-	return iamIdentity.UpdateAPIKeyWithContext(context.Background(), updateAPIKeyOptions)
+	result, response, err = iamIdentity.UpdateAPIKeyWithContext(context.Background(), updateAPIKeyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateAPIKeyWithContext is an alternate form of the UpdateAPIKey method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) UpdateAPIKeyWithContext(ctx context.Context, updateAPIKeyOptions *UpdateAPIKeyOptions) (result *APIKey, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateAPIKeyOptions, "updateAPIKeyOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateAPIKeyOptions, "updateAPIKeyOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -487,6 +542,7 @@ func (iamIdentity *IamIdentityV1) UpdateAPIKeyWithContext(ctx context.Context, u
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/apikeys/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -511,24 +567,35 @@ func (iamIdentity *IamIdentityV1) UpdateAPIKeyWithContext(ctx context.Context, u
 	if updateAPIKeyOptions.Description != nil {
 		body["description"] = updateAPIKeyOptions.Description
 	}
+	if updateAPIKeyOptions.SupportSessions != nil {
+		body["support_sessions"] = updateAPIKeyOptions.SupportSessions
+	}
+	if updateAPIKeyOptions.ActionWhenLeaked != nil {
+		body["action_when_leaked"] = updateAPIKeyOptions.ActionWhenLeaked
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_api_key", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAPIKey)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -539,19 +606,23 @@ func (iamIdentity *IamIdentityV1) UpdateAPIKeyWithContext(ctx context.Context, u
 
 // DeleteAPIKey : Deletes an API key
 // Deletes an API key. Existing tokens will remain valid until expired. Users can manage user API keys for themself, or
-// service ID API keys for service IDs that are bound to an entity they have access to.
+// service ID API keys for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) DeleteAPIKey(deleteAPIKeyOptions *DeleteAPIKeyOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.DeleteAPIKeyWithContext(context.Background(), deleteAPIKeyOptions)
+	response, err = iamIdentity.DeleteAPIKeyWithContext(context.Background(), deleteAPIKeyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteAPIKeyWithContext is an alternate form of the DeleteAPIKey method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) DeleteAPIKeyWithContext(ctx context.Context, deleteAPIKeyOptions *DeleteAPIKeyOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteAPIKeyOptions, "deleteAPIKeyOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteAPIKeyOptions, "deleteAPIKeyOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -564,6 +635,7 @@ func (iamIdentity *IamIdentityV1) DeleteAPIKeyWithContext(ctx context.Context, d
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/apikeys/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -578,30 +650,39 @@ func (iamIdentity *IamIdentityV1) DeleteAPIKeyWithContext(ctx context.Context, d
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_api_key", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
 // LockAPIKey : Lock the API key
-// Locks an API key by ID. Users can manage user API keys for themself, or service ID API keys for service IDs that are
-// bound to an entity they have access to. In case of service IDs and their API keys, a user must be either an account
-// owner, a IBM Cloud org manager or IBM Cloud space developer in order to manage service IDs of the entity.
+// Locks an API key by ID. Users can manage user API keys for themself, or service ID API keys for service IDs they have
+// access to.
 func (iamIdentity *IamIdentityV1) LockAPIKey(lockAPIKeyOptions *LockAPIKeyOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.LockAPIKeyWithContext(context.Background(), lockAPIKeyOptions)
+	response, err = iamIdentity.LockAPIKeyWithContext(context.Background(), lockAPIKeyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // LockAPIKeyWithContext is an alternate form of the LockAPIKey method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) LockAPIKeyWithContext(ctx context.Context, lockAPIKeyOptions *LockAPIKeyOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(lockAPIKeyOptions, "lockAPIKeyOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(lockAPIKeyOptions, "lockAPIKeyOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -614,6 +695,7 @@ func (iamIdentity *IamIdentityV1) LockAPIKeyWithContext(ctx context.Context, loc
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/apikeys/{id}/lock`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -628,30 +710,39 @@ func (iamIdentity *IamIdentityV1) LockAPIKeyWithContext(ctx context.Context, loc
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "lock_api_key", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
 // UnlockAPIKey : Unlock the API key
-// Unlocks an API key by ID. Users can manage user API keys for themself, or service ID API keys for service IDs that
-// are bound to an entity they have access to. In case of service IDs and their API keys, a user must be either an
-// account owner, a IBM Cloud org manager or IBM Cloud space developer in order to manage service IDs of the entity.
+// Unlocks an API key by ID. Users can manage user API keys for themself, or service ID API keys for service IDs they
+// have access to.
 func (iamIdentity *IamIdentityV1) UnlockAPIKey(unlockAPIKeyOptions *UnlockAPIKeyOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.UnlockAPIKeyWithContext(context.Background(), unlockAPIKeyOptions)
+	response, err = iamIdentity.UnlockAPIKeyWithContext(context.Background(), unlockAPIKeyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UnlockAPIKeyWithContext is an alternate form of the UnlockAPIKey method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) UnlockAPIKeyWithContext(ctx context.Context, unlockAPIKeyOptions *UnlockAPIKeyOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(unlockAPIKeyOptions, "unlockAPIKeyOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(unlockAPIKeyOptions, "unlockAPIKeyOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -664,6 +755,7 @@ func (iamIdentity *IamIdentityV1) UnlockAPIKeyWithContext(ctx context.Context, u
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/apikeys/{id}/lock`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -678,26 +770,155 @@ func (iamIdentity *IamIdentityV1) UnlockAPIKeyWithContext(ctx context.Context, u
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "unlock_api_key", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// DisableAPIKey : Disable the API key
+// Disable an API key. Users can manage user API keys for themself, or service ID API keys for service IDs they have
+// access to.
+func (iamIdentity *IamIdentityV1) DisableAPIKey(disableAPIKeyOptions *DisableAPIKeyOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.DisableAPIKeyWithContext(context.Background(), disableAPIKeyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DisableAPIKeyWithContext is an alternate form of the DisableAPIKey method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) DisableAPIKeyWithContext(ctx context.Context, disableAPIKeyOptions *DisableAPIKeyOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(disableAPIKeyOptions, "disableAPIKeyOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(disableAPIKeyOptions, "disableAPIKeyOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *disableAPIKeyOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/apikeys/{id}/disable`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range disableAPIKeyOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DisableAPIKey")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "disable_api_key", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// EnableAPIKey : Enable the API key
+// Enable an API key. Users can manage user API keys for themself, or service ID API keys for service IDs they have
+// access to.
+func (iamIdentity *IamIdentityV1) EnableAPIKey(enableAPIKeyOptions *EnableAPIKeyOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.EnableAPIKeyWithContext(context.Background(), enableAPIKeyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// EnableAPIKeyWithContext is an alternate form of the EnableAPIKey method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) EnableAPIKeyWithContext(ctx context.Context, enableAPIKeyOptions *EnableAPIKeyOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(enableAPIKeyOptions, "enableAPIKeyOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(enableAPIKeyOptions, "enableAPIKeyOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *enableAPIKeyOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/apikeys/{id}/disable`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range enableAPIKeyOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "EnableAPIKey")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "enable_api_key", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
 // ListServiceIds : List service IDs
 // Returns a list of service IDs. Users can manage user API keys for themself, or service ID API keys for service IDs
-// that are bound to an entity they have access to. Note: apikey details are only included in the response when creating
-// a Service ID with an api key.
+// they have access to. Note: apikey details are only included in the response when creating a Service ID with an api
+// key.
 func (iamIdentity *IamIdentityV1) ListServiceIds(listServiceIdsOptions *ListServiceIdsOptions) (result *ServiceIDList, response *core.DetailedResponse, err error) {
-	return iamIdentity.ListServiceIdsWithContext(context.Background(), listServiceIdsOptions)
+	result, response, err = iamIdentity.ListServiceIdsWithContext(context.Background(), listServiceIdsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListServiceIdsWithContext is an alternate form of the ListServiceIds method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) ListServiceIdsWithContext(ctx context.Context, listServiceIdsOptions *ListServiceIdsOptions) (result *ServiceIDList, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listServiceIdsOptions, "listServiceIdsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -706,6 +927,7 @@ func (iamIdentity *IamIdentityV1) ListServiceIdsWithContext(ctx context.Context,
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -743,17 +965,21 @@ func (iamIdentity *IamIdentityV1) ListServiceIdsWithContext(ctx context.Context,
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_service_ids", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceIDList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -764,19 +990,23 @@ func (iamIdentity *IamIdentityV1) ListServiceIdsWithContext(ctx context.Context,
 
 // CreateServiceID : Create a service ID
 // Creates a service ID for an IBM Cloud account. Users can manage user API keys for themself, or service ID API keys
-// for service IDs that are bound to an entity they have access to.
+// for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) CreateServiceID(createServiceIDOptions *CreateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
-	return iamIdentity.CreateServiceIDWithContext(context.Background(), createServiceIDOptions)
+	result, response, err = iamIdentity.CreateServiceIDWithContext(context.Background(), createServiceIDOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateServiceIDWithContext is an alternate form of the CreateServiceID method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CreateServiceIDWithContext(ctx context.Context, createServiceIDOptions *CreateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createServiceIDOptions, "createServiceIDOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createServiceIDOptions, "createServiceIDOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -785,6 +1015,7 @@ func (iamIdentity *IamIdentityV1) CreateServiceIDWithContext(ctx context.Context
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -820,22 +1051,27 @@ func (iamIdentity *IamIdentityV1) CreateServiceIDWithContext(ctx context.Context
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_service_id", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceID)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -846,20 +1082,24 @@ func (iamIdentity *IamIdentityV1) CreateServiceIDWithContext(ctx context.Context
 
 // GetServiceID : Get details of a service ID
 // Returns the details of a service ID. Users can manage user API keys for themself, or service ID API keys for service
-// IDs that are bound to an entity they have access to. Note: apikey details are only included in the response when
-// creating a Service ID with an api key.
+// IDs they have access to. Note: apikey details are only included in the response when creating a Service ID with an
+// api key.
 func (iamIdentity *IamIdentityV1) GetServiceID(getServiceIDOptions *GetServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetServiceIDWithContext(context.Background(), getServiceIDOptions)
+	result, response, err = iamIdentity.GetServiceIDWithContext(context.Background(), getServiceIDOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetServiceIDWithContext is an alternate form of the GetServiceID method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetServiceIDWithContext(ctx context.Context, getServiceIDOptions *GetServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getServiceIDOptions, "getServiceIDOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getServiceIDOptions, "getServiceIDOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -872,6 +1112,7 @@ func (iamIdentity *IamIdentityV1) GetServiceIDWithContext(ctx context.Context, g
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -894,17 +1135,21 @@ func (iamIdentity *IamIdentityV1) GetServiceIDWithContext(ctx context.Context, g
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_service_id", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceID)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -917,20 +1162,24 @@ func (iamIdentity *IamIdentityV1) GetServiceIDWithContext(ctx context.Context, g
 // Updates properties of a service ID. This does NOT affect existing access tokens. Their token content will stay
 // unchanged until the access token is refreshed. To update a service ID, pass the property to be modified. To delete
 // one property's value, pass the property with an empty value "".Users can manage user API keys for themself, or
-// service ID API keys for service IDs that are bound to an entity they have access to. Note: apikey details are only
-// included in the response when creating a Service ID with an apikey.
+// service ID API keys for service IDs they have access to. Note: apikey details are only included in the response when
+// creating a Service ID with an apikey.
 func (iamIdentity *IamIdentityV1) UpdateServiceID(updateServiceIDOptions *UpdateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
-	return iamIdentity.UpdateServiceIDWithContext(context.Background(), updateServiceIDOptions)
+	result, response, err = iamIdentity.UpdateServiceIDWithContext(context.Background(), updateServiceIDOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateServiceIDWithContext is an alternate form of the UpdateServiceID method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) UpdateServiceIDWithContext(ctx context.Context, updateServiceIDOptions *UpdateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateServiceIDOptions, "updateServiceIDOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateServiceIDOptions, "updateServiceIDOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -943,6 +1192,7 @@ func (iamIdentity *IamIdentityV1) UpdateServiceIDWithContext(ctx context.Context
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -972,22 +1222,27 @@ func (iamIdentity *IamIdentityV1) UpdateServiceIDWithContext(ctx context.Context
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_service_id", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceID)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1000,19 +1255,23 @@ func (iamIdentity *IamIdentityV1) UpdateServiceIDWithContext(ctx context.Context
 // Deletes a service ID and all API keys associated to it. Before deleting the service ID, all associated API keys are
 // deleted. In case a Delete Conflict (status code 409) a retry of the request may help as the service ID is only
 // deleted if the associated API keys were successfully deleted before. Users can manage user API keys for themself, or
-// service ID API keys for service IDs that are bound to an entity they have access to.
+// service ID API keys for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) DeleteServiceID(deleteServiceIDOptions *DeleteServiceIDOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.DeleteServiceIDWithContext(context.Background(), deleteServiceIDOptions)
+	response, err = iamIdentity.DeleteServiceIDWithContext(context.Background(), deleteServiceIDOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteServiceIDWithContext is an alternate form of the DeleteServiceID method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) DeleteServiceIDWithContext(ctx context.Context, deleteServiceIDOptions *DeleteServiceIDOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteServiceIDOptions, "deleteServiceIDOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteServiceIDOptions, "deleteServiceIDOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1025,6 +1284,7 @@ func (iamIdentity *IamIdentityV1) DeleteServiceIDWithContext(ctx context.Context
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1039,30 +1299,39 @@ func (iamIdentity *IamIdentityV1) DeleteServiceIDWithContext(ctx context.Context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_service_id", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
 // LockServiceID : Lock the service ID
-// Locks a service ID by ID. Users can manage user API keys for themself, or service ID API keys for service IDs that
-// are bound to an entity they have access to. In case of service IDs and their API keys, a user must be either an
-// account owner, a IBM Cloud org manager or IBM Cloud space developer in order to manage service IDs of the entity.
+// Locks a service ID by ID. Users can manage user API keys for themself, or service ID API keys for service IDs they
+// have access to.
 func (iamIdentity *IamIdentityV1) LockServiceID(lockServiceIDOptions *LockServiceIDOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.LockServiceIDWithContext(context.Background(), lockServiceIDOptions)
+	response, err = iamIdentity.LockServiceIDWithContext(context.Background(), lockServiceIDOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // LockServiceIDWithContext is an alternate form of the LockServiceID method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) LockServiceIDWithContext(ctx context.Context, lockServiceIDOptions *LockServiceIDOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(lockServiceIDOptions, "lockServiceIDOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(lockServiceIDOptions, "lockServiceIDOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1075,6 +1344,7 @@ func (iamIdentity *IamIdentityV1) LockServiceIDWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}/lock`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1089,30 +1359,39 @@ func (iamIdentity *IamIdentityV1) LockServiceIDWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "lock_service_id", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
 // UnlockServiceID : Unlock the service ID
-// Unlocks a service ID by ID. Users can manage user API keys for themself, or service ID API keys for service IDs that
-// are bound to an entity they have access to. In case of service IDs and their API keys, a user must be either an
-// account owner, a IBM Cloud org manager or IBM Cloud space developer in order to manage service IDs of the entity.
+// Unlocks a service ID by ID. Users can manage user API keys for themself, or service ID API keys for service IDs they
+// have access to.
 func (iamIdentity *IamIdentityV1) UnlockServiceID(unlockServiceIDOptions *UnlockServiceIDOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.UnlockServiceIDWithContext(context.Background(), unlockServiceIDOptions)
+	response, err = iamIdentity.UnlockServiceIDWithContext(context.Background(), unlockServiceIDOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UnlockServiceIDWithContext is an alternate form of the UnlockServiceID method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) UnlockServiceIDWithContext(ctx context.Context, unlockServiceIDOptions *UnlockServiceIDOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(unlockServiceIDOptions, "unlockServiceIDOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(unlockServiceIDOptions, "unlockServiceIDOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1125,6 +1404,7 @@ func (iamIdentity *IamIdentityV1) UnlockServiceIDWithContext(ctx context.Context
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}/lock`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1139,10 +1419,16 @@ func (iamIdentity *IamIdentityV1) UnlockServiceIDWithContext(ctx context.Context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "unlock_service_id", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1150,17 +1436,21 @@ func (iamIdentity *IamIdentityV1) UnlockServiceIDWithContext(ctx context.Context
 // CreateProfile : Create a trusted profile
 // Create a trusted profile for a given account ID.
 func (iamIdentity *IamIdentityV1) CreateProfile(createProfileOptions *CreateProfileOptions) (result *TrustedProfile, response *core.DetailedResponse, err error) {
-	return iamIdentity.CreateProfileWithContext(context.Background(), createProfileOptions)
+	result, response, err = iamIdentity.CreateProfileWithContext(context.Background(), createProfileOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateProfileWithContext is an alternate form of the CreateProfile method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CreateProfileWithContext(ctx context.Context, createProfileOptions *CreateProfileOptions) (result *TrustedProfile, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createProfileOptions, "createProfileOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createProfileOptions, "createProfileOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1169,6 +1459,7 @@ func (iamIdentity *IamIdentityV1) CreateProfileWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1195,22 +1486,27 @@ func (iamIdentity *IamIdentityV1) CreateProfileWithContext(ctx context.Context, 
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_profile", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfile)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1223,17 +1519,21 @@ func (iamIdentity *IamIdentityV1) CreateProfileWithContext(ctx context.Context, 
 // List the trusted profiles in an account. The `account_id` query parameter determines the account from which to
 // retrieve the list of trusted profiles.
 func (iamIdentity *IamIdentityV1) ListProfiles(listProfilesOptions *ListProfilesOptions) (result *TrustedProfilesList, response *core.DetailedResponse, err error) {
-	return iamIdentity.ListProfilesWithContext(context.Background(), listProfilesOptions)
+	result, response, err = iamIdentity.ListProfilesWithContext(context.Background(), listProfilesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListProfilesWithContext is an alternate form of the ListProfiles method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) ListProfilesWithContext(ctx context.Context, listProfilesOptions *ListProfilesOptions) (result *TrustedProfilesList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listProfilesOptions, "listProfilesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listProfilesOptions, "listProfilesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1242,6 +1542,7 @@ func (iamIdentity *IamIdentityV1) ListProfilesWithContext(ctx context.Context, l
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1277,17 +1578,21 @@ func (iamIdentity *IamIdentityV1) ListProfilesWithContext(ctx context.Context, l
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_profiles", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfilesList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1300,17 +1605,21 @@ func (iamIdentity *IamIdentityV1) ListProfilesWithContext(ctx context.Context, l
 // Retrieve a trusted profile by its `profile-id`. Only the trusted profile's data is returned (`name`, `description`,
 // `iam_id`, etc.), not the federated users or compute resources that qualify to apply the trusted profile.
 func (iamIdentity *IamIdentityV1) GetProfile(getProfileOptions *GetProfileOptions) (result *TrustedProfile, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetProfileWithContext(context.Background(), getProfileOptions)
+	result, response, err = iamIdentity.GetProfileWithContext(context.Background(), getProfileOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetProfileWithContext is an alternate form of the GetProfile method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetProfileWithContext(ctx context.Context, getProfileOptions *GetProfileOptions) (result *TrustedProfile, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getProfileOptions, "getProfileOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getProfileOptions, "getProfileOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1323,6 +1632,7 @@ func (iamIdentity *IamIdentityV1) GetProfileWithContext(ctx context.Context, get
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1342,17 +1652,21 @@ func (iamIdentity *IamIdentityV1) GetProfileWithContext(ctx context.Context, get
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_profile", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfile)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1364,17 +1678,21 @@ func (iamIdentity *IamIdentityV1) GetProfileWithContext(ctx context.Context, get
 // UpdateProfile : Update a trusted profile
 // Update the name or description of an existing trusted profile.
 func (iamIdentity *IamIdentityV1) UpdateProfile(updateProfileOptions *UpdateProfileOptions) (result *TrustedProfile, response *core.DetailedResponse, err error) {
-	return iamIdentity.UpdateProfileWithContext(context.Background(), updateProfileOptions)
+	result, response, err = iamIdentity.UpdateProfileWithContext(context.Background(), updateProfileOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateProfileWithContext is an alternate form of the UpdateProfile method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) UpdateProfileWithContext(ctx context.Context, updateProfileOptions *UpdateProfileOptions) (result *TrustedProfile, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateProfileOptions, "updateProfileOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateProfileOptions, "updateProfileOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1387,6 +1705,7 @@ func (iamIdentity *IamIdentityV1) UpdateProfileWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1413,22 +1732,27 @@ func (iamIdentity *IamIdentityV1) UpdateProfileWithContext(ctx context.Context, 
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_profile", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfile)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1441,17 +1765,21 @@ func (iamIdentity *IamIdentityV1) UpdateProfileWithContext(ctx context.Context, 
 // Delete a trusted profile. When you delete trusted profile, compute resources and federated users are unlinked from
 // the profile and can no longer apply the trusted profile identity.
 func (iamIdentity *IamIdentityV1) DeleteProfile(deleteProfileOptions *DeleteProfileOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.DeleteProfileWithContext(context.Background(), deleteProfileOptions)
+	response, err = iamIdentity.DeleteProfileWithContext(context.Background(), deleteProfileOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteProfileWithContext is an alternate form of the DeleteProfile method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) DeleteProfileWithContext(ctx context.Context, deleteProfileOptions *DeleteProfileOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteProfileOptions, "deleteProfileOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteProfileOptions, "deleteProfileOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1464,6 +1792,7 @@ func (iamIdentity *IamIdentityV1) DeleteProfileWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1478,10 +1807,16 @@ func (iamIdentity *IamIdentityV1) DeleteProfileWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_profile", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1489,17 +1824,21 @@ func (iamIdentity *IamIdentityV1) DeleteProfileWithContext(ctx context.Context, 
 // CreateClaimRule : Create claim rule for a trusted profile
 // Create a claim rule for a trusted profile. There is a limit of 20 rules per trusted profile.
 func (iamIdentity *IamIdentityV1) CreateClaimRule(createClaimRuleOptions *CreateClaimRuleOptions) (result *ProfileClaimRule, response *core.DetailedResponse, err error) {
-	return iamIdentity.CreateClaimRuleWithContext(context.Background(), createClaimRuleOptions)
+	result, response, err = iamIdentity.CreateClaimRuleWithContext(context.Background(), createClaimRuleOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateClaimRuleWithContext is an alternate form of the CreateClaimRule method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CreateClaimRuleWithContext(ctx context.Context, createClaimRuleOptions *CreateClaimRuleOptions) (result *ProfileClaimRule, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createClaimRuleOptions, "createClaimRuleOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createClaimRuleOptions, "createClaimRuleOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1512,6 +1851,7 @@ func (iamIdentity *IamIdentityV1) CreateClaimRuleWithContext(ctx context.Context
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/rules`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1550,22 +1890,27 @@ func (iamIdentity *IamIdentityV1) CreateClaimRuleWithContext(ctx context.Context
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_claim_rule", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProfileClaimRule)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1578,17 +1923,21 @@ func (iamIdentity *IamIdentityV1) CreateClaimRuleWithContext(ctx context.Context
 // Get a list of all claim rules for a trusted profile. The `profile-id` query parameter determines the profile from
 // which to retrieve the list of claim rules.
 func (iamIdentity *IamIdentityV1) ListClaimRules(listClaimRulesOptions *ListClaimRulesOptions) (result *ProfileClaimRuleList, response *core.DetailedResponse, err error) {
-	return iamIdentity.ListClaimRulesWithContext(context.Background(), listClaimRulesOptions)
+	result, response, err = iamIdentity.ListClaimRulesWithContext(context.Background(), listClaimRulesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListClaimRulesWithContext is an alternate form of the ListClaimRules method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) ListClaimRulesWithContext(ctx context.Context, listClaimRulesOptions *ListClaimRulesOptions) (result *ProfileClaimRuleList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listClaimRulesOptions, "listClaimRulesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listClaimRulesOptions, "listClaimRulesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1601,6 +1950,7 @@ func (iamIdentity *IamIdentityV1) ListClaimRulesWithContext(ctx context.Context,
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/rules`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1616,17 +1966,21 @@ func (iamIdentity *IamIdentityV1) ListClaimRulesWithContext(ctx context.Context,
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_claim_rules", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProfileClaimRuleList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1638,23 +1992,27 @@ func (iamIdentity *IamIdentityV1) ListClaimRulesWithContext(ctx context.Context,
 // GetClaimRule : Get a claim rule for a trusted profile
 // A specific claim rule can be fetched for a given trusted profile ID and rule ID.
 func (iamIdentity *IamIdentityV1) GetClaimRule(getClaimRuleOptions *GetClaimRuleOptions) (result *ProfileClaimRule, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetClaimRuleWithContext(context.Background(), getClaimRuleOptions)
+	result, response, err = iamIdentity.GetClaimRuleWithContext(context.Background(), getClaimRuleOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetClaimRuleWithContext is an alternate form of the GetClaimRule method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetClaimRuleWithContext(ctx context.Context, getClaimRuleOptions *GetClaimRuleOptions) (result *ProfileClaimRule, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getClaimRuleOptions, "getClaimRuleOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getClaimRuleOptions, "getClaimRuleOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"profile-id": *getClaimRuleOptions.ProfileID,
-		"rule-id": *getClaimRuleOptions.RuleID,
+		"rule-id":    *getClaimRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1662,6 +2020,7 @@ func (iamIdentity *IamIdentityV1) GetClaimRuleWithContext(ctx context.Context, g
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/rules/{rule-id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1677,17 +2036,21 @@ func (iamIdentity *IamIdentityV1) GetClaimRuleWithContext(ctx context.Context, g
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_claim_rule", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProfileClaimRule)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1699,23 +2062,27 @@ func (iamIdentity *IamIdentityV1) GetClaimRuleWithContext(ctx context.Context, g
 // UpdateClaimRule : Update claim rule for a trusted profile
 // Update a specific claim rule for a given trusted profile ID and rule ID.
 func (iamIdentity *IamIdentityV1) UpdateClaimRule(updateClaimRuleOptions *UpdateClaimRuleOptions) (result *ProfileClaimRule, response *core.DetailedResponse, err error) {
-	return iamIdentity.UpdateClaimRuleWithContext(context.Background(), updateClaimRuleOptions)
+	result, response, err = iamIdentity.UpdateClaimRuleWithContext(context.Background(), updateClaimRuleOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateClaimRuleWithContext is an alternate form of the UpdateClaimRule method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) UpdateClaimRuleWithContext(ctx context.Context, updateClaimRuleOptions *UpdateClaimRuleOptions) (result *ProfileClaimRule, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateClaimRuleOptions, "updateClaimRuleOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateClaimRuleOptions, "updateClaimRuleOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"profile-id": *updateClaimRuleOptions.ProfileID,
-		"rule-id": *updateClaimRuleOptions.RuleID,
+		"rule-id":    *updateClaimRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -1723,6 +2090,7 @@ func (iamIdentity *IamIdentityV1) UpdateClaimRuleWithContext(ctx context.Context
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/rules/{rule-id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1764,22 +2132,27 @@ func (iamIdentity *IamIdentityV1) UpdateClaimRuleWithContext(ctx context.Context
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_claim_rule", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProfileClaimRule)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1792,23 +2165,27 @@ func (iamIdentity *IamIdentityV1) UpdateClaimRuleWithContext(ctx context.Context
 // Delete a claim rule. When you delete a claim rule, federated user or compute resources are no longer required to meet
 // the conditions of the claim rule in order to apply the trusted profile.
 func (iamIdentity *IamIdentityV1) DeleteClaimRule(deleteClaimRuleOptions *DeleteClaimRuleOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.DeleteClaimRuleWithContext(context.Background(), deleteClaimRuleOptions)
+	response, err = iamIdentity.DeleteClaimRuleWithContext(context.Background(), deleteClaimRuleOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteClaimRuleWithContext is an alternate form of the DeleteClaimRule method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) DeleteClaimRuleWithContext(ctx context.Context, deleteClaimRuleOptions *DeleteClaimRuleOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteClaimRuleOptions, "deleteClaimRuleOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteClaimRuleOptions, "deleteClaimRuleOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"profile-id": *deleteClaimRuleOptions.ProfileID,
-		"rule-id": *deleteClaimRuleOptions.RuleID,
+		"rule-id":    *deleteClaimRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -1816,6 +2193,7 @@ func (iamIdentity *IamIdentityV1) DeleteClaimRuleWithContext(ctx context.Context
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/rules/{rule-id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1830,10 +2208,16 @@ func (iamIdentity *IamIdentityV1) DeleteClaimRuleWithContext(ctx context.Context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_claim_rule", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1842,17 +2226,21 @@ func (iamIdentity *IamIdentityV1) DeleteClaimRuleWithContext(ctx context.Context
 // Create a direct link between a specific compute resource and a trusted profile, rather than creating conditions that
 // a compute resource must fulfill to apply a trusted profile.
 func (iamIdentity *IamIdentityV1) CreateLink(createLinkOptions *CreateLinkOptions) (result *ProfileLink, response *core.DetailedResponse, err error) {
-	return iamIdentity.CreateLinkWithContext(context.Background(), createLinkOptions)
+	result, response, err = iamIdentity.CreateLinkWithContext(context.Background(), createLinkOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateLinkWithContext is an alternate form of the CreateLink method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CreateLinkWithContext(ctx context.Context, createLinkOptions *CreateLinkOptions) (result *ProfileLink, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createLinkOptions, "createLinkOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createLinkOptions, "createLinkOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1865,6 +2253,7 @@ func (iamIdentity *IamIdentityV1) CreateLinkWithContext(ctx context.Context, cre
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/links`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1891,22 +2280,27 @@ func (iamIdentity *IamIdentityV1) CreateLinkWithContext(ctx context.Context, cre
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_link", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProfileLink)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1918,17 +2312,21 @@ func (iamIdentity *IamIdentityV1) CreateLinkWithContext(ctx context.Context, cre
 // ListLinks : List links to a trusted profile
 // Get a list of links to a trusted profile.
 func (iamIdentity *IamIdentityV1) ListLinks(listLinksOptions *ListLinksOptions) (result *ProfileLinkList, response *core.DetailedResponse, err error) {
-	return iamIdentity.ListLinksWithContext(context.Background(), listLinksOptions)
+	result, response, err = iamIdentity.ListLinksWithContext(context.Background(), listLinksOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListLinksWithContext is an alternate form of the ListLinks method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) ListLinksWithContext(ctx context.Context, listLinksOptions *ListLinksOptions) (result *ProfileLinkList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listLinksOptions, "listLinksOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listLinksOptions, "listLinksOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1941,6 +2339,7 @@ func (iamIdentity *IamIdentityV1) ListLinksWithContext(ctx context.Context, list
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/links`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1956,17 +2355,21 @@ func (iamIdentity *IamIdentityV1) ListLinksWithContext(ctx context.Context, list
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_links", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProfileLinkList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1978,23 +2381,27 @@ func (iamIdentity *IamIdentityV1) ListLinksWithContext(ctx context.Context, list
 // GetLink : Get link to a trusted profile
 // Get a specific link to a trusted profile by `link_id`.
 func (iamIdentity *IamIdentityV1) GetLink(getLinkOptions *GetLinkOptions) (result *ProfileLink, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetLinkWithContext(context.Background(), getLinkOptions)
+	result, response, err = iamIdentity.GetLinkWithContext(context.Background(), getLinkOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetLinkWithContext is an alternate form of the GetLink method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetLinkWithContext(ctx context.Context, getLinkOptions *GetLinkOptions) (result *ProfileLink, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getLinkOptions, "getLinkOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getLinkOptions, "getLinkOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"profile-id": *getLinkOptions.ProfileID,
-		"link-id": *getLinkOptions.LinkID,
+		"link-id":    *getLinkOptions.LinkID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -2002,6 +2409,7 @@ func (iamIdentity *IamIdentityV1) GetLinkWithContext(ctx context.Context, getLin
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/links/{link-id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2017,17 +2425,21 @@ func (iamIdentity *IamIdentityV1) GetLinkWithContext(ctx context.Context, getLin
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_link", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProfileLink)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2039,23 +2451,27 @@ func (iamIdentity *IamIdentityV1) GetLinkWithContext(ctx context.Context, getLin
 // DeleteLink : Delete link to a trusted profile
 // Delete a link between a compute resource and a trusted profile.
 func (iamIdentity *IamIdentityV1) DeleteLink(deleteLinkOptions *DeleteLinkOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.DeleteLinkWithContext(context.Background(), deleteLinkOptions)
+	response, err = iamIdentity.DeleteLinkWithContext(context.Background(), deleteLinkOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteLinkWithContext is an alternate form of the DeleteLink method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) DeleteLinkWithContext(ctx context.Context, deleteLinkOptions *DeleteLinkOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteLinkOptions, "deleteLinkOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteLinkOptions, "deleteLinkOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"profile-id": *deleteLinkOptions.ProfileID,
-		"link-id": *deleteLinkOptions.LinkID,
+		"link-id":    *deleteLinkOptions.LinkID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -2063,6 +2479,7 @@ func (iamIdentity *IamIdentityV1) DeleteLinkWithContext(ctx context.Context, del
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/links/{link-id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2077,10 +2494,16 @@ func (iamIdentity *IamIdentityV1) DeleteLinkWithContext(ctx context.Context, del
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_link", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2088,17 +2511,21 @@ func (iamIdentity *IamIdentityV1) DeleteLinkWithContext(ctx context.Context, del
 // GetProfileIdentities : Get a list of identities that can assume the trusted profile
 // Get a list of identities that can assume the trusted profile.
 func (iamIdentity *IamIdentityV1) GetProfileIdentities(getProfileIdentitiesOptions *GetProfileIdentitiesOptions) (result *ProfileIdentitiesResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetProfileIdentitiesWithContext(context.Background(), getProfileIdentitiesOptions)
+	result, response, err = iamIdentity.GetProfileIdentitiesWithContext(context.Background(), getProfileIdentitiesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetProfileIdentitiesWithContext is an alternate form of the GetProfileIdentities method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetProfileIdentitiesWithContext(ctx context.Context, getProfileIdentitiesOptions *GetProfileIdentitiesOptions) (result *ProfileIdentitiesResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getProfileIdentitiesOptions, "getProfileIdentitiesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getProfileIdentitiesOptions, "getProfileIdentitiesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2111,6 +2538,7 @@ func (iamIdentity *IamIdentityV1) GetProfileIdentitiesWithContext(ctx context.Co
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/identities`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2126,17 +2554,21 @@ func (iamIdentity *IamIdentityV1) GetProfileIdentitiesWithContext(ctx context.Co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_profile_identities", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProfileIdentitiesResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2148,17 +2580,21 @@ func (iamIdentity *IamIdentityV1) GetProfileIdentitiesWithContext(ctx context.Co
 // SetProfileIdentities : Update the list of identities that can assume the trusted profile
 // Update the list of identities that can assume the trusted profile.
 func (iamIdentity *IamIdentityV1) SetProfileIdentities(setProfileIdentitiesOptions *SetProfileIdentitiesOptions) (result *ProfileIdentitiesResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.SetProfileIdentitiesWithContext(context.Background(), setProfileIdentitiesOptions)
+	result, response, err = iamIdentity.SetProfileIdentitiesWithContext(context.Background(), setProfileIdentitiesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SetProfileIdentitiesWithContext is an alternate form of the SetProfileIdentities method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) SetProfileIdentitiesWithContext(ctx context.Context, setProfileIdentitiesOptions *SetProfileIdentitiesOptions) (result *ProfileIdentitiesResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(setProfileIdentitiesOptions, "setProfileIdentitiesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(setProfileIdentitiesOptions, "setProfileIdentitiesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2171,6 +2607,7 @@ func (iamIdentity *IamIdentityV1) SetProfileIdentitiesWithContext(ctx context.Co
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/identities`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2194,22 +2631,27 @@ func (iamIdentity *IamIdentityV1) SetProfileIdentitiesWithContext(ctx context.Co
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "set_profile_identities", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProfileIdentitiesResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2221,22 +2663,26 @@ func (iamIdentity *IamIdentityV1) SetProfileIdentitiesWithContext(ctx context.Co
 // SetProfileIdentity : Add a specific identity that can assume the trusted profile
 // Add a specific identity that can assume the trusted profile.
 func (iamIdentity *IamIdentityV1) SetProfileIdentity(setProfileIdentityOptions *SetProfileIdentityOptions) (result *ProfileIdentityResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.SetProfileIdentityWithContext(context.Background(), setProfileIdentityOptions)
+	result, response, err = iamIdentity.SetProfileIdentityWithContext(context.Background(), setProfileIdentityOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SetProfileIdentityWithContext is an alternate form of the SetProfileIdentity method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) SetProfileIdentityWithContext(ctx context.Context, setProfileIdentityOptions *SetProfileIdentityOptions) (result *ProfileIdentityResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(setProfileIdentityOptions, "setProfileIdentityOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(setProfileIdentityOptions, "setProfileIdentityOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"profile-id": *setProfileIdentityOptions.ProfileID,
+		"profile-id":    *setProfileIdentityOptions.ProfileID,
 		"identity-type": *setProfileIdentityOptions.IdentityType,
 	}
 
@@ -2245,6 +2691,7 @@ func (iamIdentity *IamIdentityV1) SetProfileIdentityWithContext(ctx context.Cont
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/identities/{identity-type}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2274,22 +2721,27 @@ func (iamIdentity *IamIdentityV1) SetProfileIdentityWithContext(ctx context.Cont
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "set_profile_identity", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProfileIdentityResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2301,22 +2753,26 @@ func (iamIdentity *IamIdentityV1) SetProfileIdentityWithContext(ctx context.Cont
 // GetProfileIdentity : Get the identity that can assume the trusted profile
 // Get the identity that can assume the trusted profile.
 func (iamIdentity *IamIdentityV1) GetProfileIdentity(getProfileIdentityOptions *GetProfileIdentityOptions) (result *ProfileIdentityResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetProfileIdentityWithContext(context.Background(), getProfileIdentityOptions)
+	result, response, err = iamIdentity.GetProfileIdentityWithContext(context.Background(), getProfileIdentityOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetProfileIdentityWithContext is an alternate form of the GetProfileIdentity method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetProfileIdentityWithContext(ctx context.Context, getProfileIdentityOptions *GetProfileIdentityOptions) (result *ProfileIdentityResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getProfileIdentityOptions, "getProfileIdentityOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getProfileIdentityOptions, "getProfileIdentityOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"profile-id": *getProfileIdentityOptions.ProfileID,
+		"profile-id":    *getProfileIdentityOptions.ProfileID,
 		"identity-type": *getProfileIdentityOptions.IdentityType,
 		"identifier-id": *getProfileIdentityOptions.IdentifierID,
 	}
@@ -2326,6 +2782,7 @@ func (iamIdentity *IamIdentityV1) GetProfileIdentityWithContext(ctx context.Cont
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/identities/{identity-type}/{identifier-id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2341,17 +2798,21 @@ func (iamIdentity *IamIdentityV1) GetProfileIdentityWithContext(ctx context.Cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_profile_identity", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProfileIdentityResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2363,22 +2824,26 @@ func (iamIdentity *IamIdentityV1) GetProfileIdentityWithContext(ctx context.Cont
 // DeleteProfileIdentity : Delete the identity that can assume the trusted profile
 // Delete the identity that can assume the trusted profile.
 func (iamIdentity *IamIdentityV1) DeleteProfileIdentity(deleteProfileIdentityOptions *DeleteProfileIdentityOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.DeleteProfileIdentityWithContext(context.Background(), deleteProfileIdentityOptions)
+	response, err = iamIdentity.DeleteProfileIdentityWithContext(context.Background(), deleteProfileIdentityOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteProfileIdentityWithContext is an alternate form of the DeleteProfileIdentity method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) DeleteProfileIdentityWithContext(ctx context.Context, deleteProfileIdentityOptions *DeleteProfileIdentityOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteProfileIdentityOptions, "deleteProfileIdentityOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteProfileIdentityOptions, "deleteProfileIdentityOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"profile-id": *deleteProfileIdentityOptions.ProfileID,
+		"profile-id":    *deleteProfileIdentityOptions.ProfileID,
 		"identity-type": *deleteProfileIdentityOptions.IdentityType,
 		"identifier-id": *deleteProfileIdentityOptions.IdentifierID,
 	}
@@ -2388,6 +2853,7 @@ func (iamIdentity *IamIdentityV1) DeleteProfileIdentityWithContext(ctx context.C
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/identities/{identity-type}/{identifier-id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2402,10 +2868,16 @@ func (iamIdentity *IamIdentityV1) DeleteProfileIdentityWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_profile_identity", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2413,17 +2885,21 @@ func (iamIdentity *IamIdentityV1) DeleteProfileIdentityWithContext(ctx context.C
 // GetAccountSettings : Get account configurations
 // Returns the details of an account's configuration.
 func (iamIdentity *IamIdentityV1) GetAccountSettings(getAccountSettingsOptions *GetAccountSettingsOptions) (result *AccountSettingsResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetAccountSettingsWithContext(context.Background(), getAccountSettingsOptions)
+	result, response, err = iamIdentity.GetAccountSettingsWithContext(context.Background(), getAccountSettingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAccountSettingsWithContext is an alternate form of the GetAccountSettings method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetAccountSettingsWithContext(ctx context.Context, getAccountSettingsOptions *GetAccountSettingsOptions) (result *AccountSettingsResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAccountSettingsOptions, "getAccountSettingsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAccountSettingsOptions, "getAccountSettingsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2436,6 +2912,7 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsWithContext(ctx context.Cont
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/accounts/{account_id}/settings/identity`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2455,17 +2932,21 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsWithContext(ctx context.Cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getAccountSettings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2478,17 +2959,21 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsWithContext(ctx context.Cont
 // Allows a user to configure settings on their account with regards to MFA, MFA excemption list, session lifetimes,
 // access control for creating new identities, and enforcing IP restrictions on token creation.
 func (iamIdentity *IamIdentityV1) UpdateAccountSettings(updateAccountSettingsOptions *UpdateAccountSettingsOptions) (result *AccountSettingsResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.UpdateAccountSettingsWithContext(context.Background(), updateAccountSettingsOptions)
+	result, response, err = iamIdentity.UpdateAccountSettingsWithContext(context.Background(), updateAccountSettingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateAccountSettingsWithContext is an alternate form of the UpdateAccountSettings method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) UpdateAccountSettingsWithContext(ctx context.Context, updateAccountSettingsOptions *UpdateAccountSettingsOptions) (result *AccountSettingsResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateAccountSettingsOptions, "updateAccountSettingsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateAccountSettingsOptions, "updateAccountSettingsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2501,6 +2986,7 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsWithContext(ctx context.C
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/accounts/{account_id}/settings/identity`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2551,22 +3037,27 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsWithContext(ctx context.C
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "updateAccountSettings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2578,17 +3069,21 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsWithContext(ctx context.C
 // GetMfaStatus : Get MFA enrollment status for a single user in the account
 // Get MFA enrollment status for a single user in the account.
 func (iamIdentity *IamIdentityV1) GetMfaStatus(getMfaStatusOptions *GetMfaStatusOptions) (result *UserMfaEnrollments, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetMfaStatusWithContext(context.Background(), getMfaStatusOptions)
+	result, response, err = iamIdentity.GetMfaStatusWithContext(context.Background(), getMfaStatusOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetMfaStatusWithContext is an alternate form of the GetMfaStatus method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetMfaStatusWithContext(ctx context.Context, getMfaStatusOptions *GetMfaStatusOptions) (result *UserMfaEnrollments, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getMfaStatusOptions, "getMfaStatusOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getMfaStatusOptions, "getMfaStatusOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2601,6 +3096,7 @@ func (iamIdentity *IamIdentityV1) GetMfaStatusWithContext(ctx context.Context, g
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/mfa/accounts/{account_id}/status`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2618,17 +3114,21 @@ func (iamIdentity *IamIdentityV1) GetMfaStatusWithContext(ctx context.Context, g
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_mfa_status", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUserMfaEnrollments)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2641,17 +3141,21 @@ func (iamIdentity *IamIdentityV1) GetMfaStatusWithContext(ctx context.Context, g
 // Trigger MFA enrollment status report for the account by specifying the account ID. It can take a few minutes to
 // generate the report for retrieval.
 func (iamIdentity *IamIdentityV1) CreateMfaReport(createMfaReportOptions *CreateMfaReportOptions) (result *ReportReference, response *core.DetailedResponse, err error) {
-	return iamIdentity.CreateMfaReportWithContext(context.Background(), createMfaReportOptions)
+	result, response, err = iamIdentity.CreateMfaReportWithContext(context.Background(), createMfaReportOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateMfaReportWithContext is an alternate form of the CreateMfaReport method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CreateMfaReportWithContext(ctx context.Context, createMfaReportOptions *CreateMfaReportOptions) (result *ReportReference, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createMfaReportOptions, "createMfaReportOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createMfaReportOptions, "createMfaReportOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2664,6 +3168,7 @@ func (iamIdentity *IamIdentityV1) CreateMfaReportWithContext(ctx context.Context
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/mfa/accounts/{account_id}/report`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2683,17 +3188,21 @@ func (iamIdentity *IamIdentityV1) CreateMfaReportWithContext(ctx context.Context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_mfa_report", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalReportReference)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2706,23 +3215,27 @@ func (iamIdentity *IamIdentityV1) CreateMfaReportWithContext(ctx context.Context
 // Get MFA enrollment status report for the account by specifying the account ID and the reference that is generated by
 // triggering the report. Reports older than a day are deleted when generating a new report.
 func (iamIdentity *IamIdentityV1) GetMfaReport(getMfaReportOptions *GetMfaReportOptions) (result *ReportMfaEnrollmentStatus, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetMfaReportWithContext(context.Background(), getMfaReportOptions)
+	result, response, err = iamIdentity.GetMfaReportWithContext(context.Background(), getMfaReportOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetMfaReportWithContext is an alternate form of the GetMfaReport method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetMfaReportWithContext(ctx context.Context, getMfaReportOptions *GetMfaReportOptions) (result *ReportMfaEnrollmentStatus, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getMfaReportOptions, "getMfaReportOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getMfaReportOptions, "getMfaReportOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"account_id": *getMfaReportOptions.AccountID,
-		"reference": *getMfaReportOptions.Reference,
+		"reference":  *getMfaReportOptions.Reference,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -2730,6 +3243,7 @@ func (iamIdentity *IamIdentityV1) GetMfaReportWithContext(ctx context.Context, g
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/mfa/accounts/{account_id}/report/{reference}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2745,17 +3259,21 @@ func (iamIdentity *IamIdentityV1) GetMfaReportWithContext(ctx context.Context, g
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_mfa_report", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalReportMfaEnrollmentStatus)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2767,13 +3285,16 @@ func (iamIdentity *IamIdentityV1) GetMfaReportWithContext(ctx context.Context, g
 // ListAccountSettingsAssignments : List assignments
 // List account settings assignments.
 func (iamIdentity *IamIdentityV1) ListAccountSettingsAssignments(listAccountSettingsAssignmentsOptions *ListAccountSettingsAssignmentsOptions) (result *TemplateAssignmentListResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.ListAccountSettingsAssignmentsWithContext(context.Background(), listAccountSettingsAssignmentsOptions)
+	result, response, err = iamIdentity.ListAccountSettingsAssignmentsWithContext(context.Background(), listAccountSettingsAssignmentsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListAccountSettingsAssignmentsWithContext is an alternate form of the ListAccountSettingsAssignments method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) ListAccountSettingsAssignmentsWithContext(ctx context.Context, listAccountSettingsAssignmentsOptions *ListAccountSettingsAssignmentsOptions) (result *TemplateAssignmentListResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listAccountSettingsAssignmentsOptions, "listAccountSettingsAssignmentsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2782,6 +3303,7 @@ func (iamIdentity *IamIdentityV1) ListAccountSettingsAssignmentsWithContext(ctx 
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2828,17 +3350,21 @@ func (iamIdentity *IamIdentityV1) ListAccountSettingsAssignmentsWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_account_settings_assignments", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentListResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2850,17 +3376,21 @@ func (iamIdentity *IamIdentityV1) ListAccountSettingsAssignmentsWithContext(ctx 
 // CreateAccountSettingsAssignment : Create assignment
 // Create an assigment for an account settings template.
 func (iamIdentity *IamIdentityV1) CreateAccountSettingsAssignment(createAccountSettingsAssignmentOptions *CreateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.CreateAccountSettingsAssignmentWithContext(context.Background(), createAccountSettingsAssignmentOptions)
+	result, response, err = iamIdentity.CreateAccountSettingsAssignmentWithContext(context.Background(), createAccountSettingsAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateAccountSettingsAssignmentWithContext is an alternate form of the CreateAccountSettingsAssignment method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CreateAccountSettingsAssignmentWithContext(ctx context.Context, createAccountSettingsAssignmentOptions *CreateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createAccountSettingsAssignmentOptions, "createAccountSettingsAssignmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createAccountSettingsAssignmentOptions, "createAccountSettingsAssignmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2869,6 +3399,7 @@ func (iamIdentity *IamIdentityV1) CreateAccountSettingsAssignmentWithContext(ctx
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2898,22 +3429,27 @@ func (iamIdentity *IamIdentityV1) CreateAccountSettingsAssignmentWithContext(ctx
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_account_settings_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2925,17 +3461,21 @@ func (iamIdentity *IamIdentityV1) CreateAccountSettingsAssignmentWithContext(ctx
 // GetAccountSettingsAssignment : Get assignment
 // Get an assigment for an account settings template.
 func (iamIdentity *IamIdentityV1) GetAccountSettingsAssignment(getAccountSettingsAssignmentOptions *GetAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetAccountSettingsAssignmentWithContext(context.Background(), getAccountSettingsAssignmentOptions)
+	result, response, err = iamIdentity.GetAccountSettingsAssignmentWithContext(context.Background(), getAccountSettingsAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAccountSettingsAssignmentWithContext is an alternate form of the GetAccountSettingsAssignment method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetAccountSettingsAssignmentWithContext(ctx context.Context, getAccountSettingsAssignmentOptions *GetAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAccountSettingsAssignmentOptions, "getAccountSettingsAssignmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAccountSettingsAssignmentOptions, "getAccountSettingsAssignmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2948,6 +3488,7 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsAssignmentWithContext(ctx co
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/{assignment_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2967,17 +3508,21 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsAssignmentWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_account_settings_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2990,17 +3535,21 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsAssignmentWithContext(ctx co
 // Delete an account settings template assignment. This removes any IAM resources created by this assignment in child
 // accounts.
 func (iamIdentity *IamIdentityV1) DeleteAccountSettingsAssignment(deleteAccountSettingsAssignmentOptions *DeleteAccountSettingsAssignmentOptions) (result *ExceptionResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.DeleteAccountSettingsAssignmentWithContext(context.Background(), deleteAccountSettingsAssignmentOptions)
+	result, response, err = iamIdentity.DeleteAccountSettingsAssignmentWithContext(context.Background(), deleteAccountSettingsAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteAccountSettingsAssignmentWithContext is an alternate form of the DeleteAccountSettingsAssignment method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) DeleteAccountSettingsAssignmentWithContext(ctx context.Context, deleteAccountSettingsAssignmentOptions *DeleteAccountSettingsAssignmentOptions) (result *ExceptionResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteAccountSettingsAssignmentOptions, "deleteAccountSettingsAssignmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteAccountSettingsAssignmentOptions, "deleteAccountSettingsAssignmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3013,6 +3562,7 @@ func (iamIdentity *IamIdentityV1) DeleteAccountSettingsAssignmentWithContext(ctx
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/{assignment_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3028,17 +3578,21 @@ func (iamIdentity *IamIdentityV1) DeleteAccountSettingsAssignmentWithContext(ctx
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_account_settings_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalExceptionResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3051,17 +3605,21 @@ func (iamIdentity *IamIdentityV1) DeleteAccountSettingsAssignmentWithContext(ctx
 // Update an account settings assignment. Call this method to retry failed assignments or migrate the settings in child
 // accounts to a new version.
 func (iamIdentity *IamIdentityV1) UpdateAccountSettingsAssignment(updateAccountSettingsAssignmentOptions *UpdateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.UpdateAccountSettingsAssignmentWithContext(context.Background(), updateAccountSettingsAssignmentOptions)
+	result, response, err = iamIdentity.UpdateAccountSettingsAssignmentWithContext(context.Background(), updateAccountSettingsAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateAccountSettingsAssignmentWithContext is an alternate form of the UpdateAccountSettingsAssignment method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) UpdateAccountSettingsAssignmentWithContext(ctx context.Context, updateAccountSettingsAssignmentOptions *UpdateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateAccountSettingsAssignmentOptions, "updateAccountSettingsAssignmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateAccountSettingsAssignmentOptions, "updateAccountSettingsAssignmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3074,6 +3632,7 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsAssignmentWithContext(ctx
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/{assignment_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3097,22 +3656,27 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsAssignmentWithContext(ctx
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_account_settings_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3124,13 +3688,16 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsAssignmentWithContext(ctx
 // ListAccountSettingsTemplates : List account settings templates
 // List account settings templates in an enterprise account.
 func (iamIdentity *IamIdentityV1) ListAccountSettingsTemplates(listAccountSettingsTemplatesOptions *ListAccountSettingsTemplatesOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
-	return iamIdentity.ListAccountSettingsTemplatesWithContext(context.Background(), listAccountSettingsTemplatesOptions)
+	result, response, err = iamIdentity.ListAccountSettingsTemplatesWithContext(context.Background(), listAccountSettingsTemplatesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListAccountSettingsTemplatesWithContext is an alternate form of the ListAccountSettingsTemplates method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) ListAccountSettingsTemplatesWithContext(ctx context.Context, listAccountSettingsTemplatesOptions *ListAccountSettingsTemplatesOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listAccountSettingsTemplatesOptions, "listAccountSettingsTemplatesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3139,6 +3706,7 @@ func (iamIdentity *IamIdentityV1) ListAccountSettingsTemplatesWithContext(ctx co
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3173,17 +3741,21 @@ func (iamIdentity *IamIdentityV1) ListAccountSettingsTemplatesWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_account_settings_templates", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3195,17 +3767,21 @@ func (iamIdentity *IamIdentityV1) ListAccountSettingsTemplatesWithContext(ctx co
 // CreateAccountSettingsTemplate : Create an account settings template
 // Create a new account settings template in an enterprise account.
 func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplate(createAccountSettingsTemplateOptions *CreateAccountSettingsTemplateOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.CreateAccountSettingsTemplateWithContext(context.Background(), createAccountSettingsTemplateOptions)
+	result, response, err = iamIdentity.CreateAccountSettingsTemplateWithContext(context.Background(), createAccountSettingsTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateAccountSettingsTemplateWithContext is an alternate form of the CreateAccountSettingsTemplate method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateWithContext(ctx context.Context, createAccountSettingsTemplateOptions *CreateAccountSettingsTemplateOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createAccountSettingsTemplateOptions, "createAccountSettingsTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createAccountSettingsTemplateOptions, "createAccountSettingsTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3214,6 +3790,7 @@ func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateWithContext(ctx c
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3243,22 +3820,27 @@ func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateWithContext(ctx c
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_account_settings_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3270,17 +3852,21 @@ func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateWithContext(ctx c
 // GetLatestAccountSettingsTemplateVersion : Get latest version of an account settings template
 // Get the latest version of a specific account settings template in an enterprise account.
 func (iamIdentity *IamIdentityV1) GetLatestAccountSettingsTemplateVersion(getLatestAccountSettingsTemplateVersionOptions *GetLatestAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetLatestAccountSettingsTemplateVersionWithContext(context.Background(), getLatestAccountSettingsTemplateVersionOptions)
+	result, response, err = iamIdentity.GetLatestAccountSettingsTemplateVersionWithContext(context.Background(), getLatestAccountSettingsTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetLatestAccountSettingsTemplateVersionWithContext is an alternate form of the GetLatestAccountSettingsTemplateVersion method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetLatestAccountSettingsTemplateVersionWithContext(ctx context.Context, getLatestAccountSettingsTemplateVersionOptions *GetLatestAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getLatestAccountSettingsTemplateVersionOptions, "getLatestAccountSettingsTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getLatestAccountSettingsTemplateVersionOptions, "getLatestAccountSettingsTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3293,6 +3879,7 @@ func (iamIdentity *IamIdentityV1) GetLatestAccountSettingsTemplateVersionWithCon
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3312,17 +3899,21 @@ func (iamIdentity *IamIdentityV1) GetLatestAccountSettingsTemplateVersionWithCon
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_latest_account_settings_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3335,17 +3926,21 @@ func (iamIdentity *IamIdentityV1) GetLatestAccountSettingsTemplateVersionWithCon
 // Delete all versions of an account settings template in an enterprise account. If any version is assigned to child
 // accounts, you must first delete the assignment.
 func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfAccountSettingsTemplate(deleteAllVersionsOfAccountSettingsTemplateOptions *DeleteAllVersionsOfAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.DeleteAllVersionsOfAccountSettingsTemplateWithContext(context.Background(), deleteAllVersionsOfAccountSettingsTemplateOptions)
+	response, err = iamIdentity.DeleteAllVersionsOfAccountSettingsTemplateWithContext(context.Background(), deleteAllVersionsOfAccountSettingsTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteAllVersionsOfAccountSettingsTemplateWithContext is an alternate form of the DeleteAllVersionsOfAccountSettingsTemplate method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfAccountSettingsTemplateWithContext(ctx context.Context, deleteAllVersionsOfAccountSettingsTemplateOptions *DeleteAllVersionsOfAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteAllVersionsOfAccountSettingsTemplateOptions, "deleteAllVersionsOfAccountSettingsTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteAllVersionsOfAccountSettingsTemplateOptions, "deleteAllVersionsOfAccountSettingsTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3358,6 +3953,7 @@ func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfAccountSettingsTemplateWith
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3372,10 +3968,16 @@ func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfAccountSettingsTemplateWith
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_all_versions_of_account_settings_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3383,17 +3985,21 @@ func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfAccountSettingsTemplateWith
 // ListVersionsOfAccountSettingsTemplate : List account settings template versions
 // List the versions of a specific account settings template in an enterprise account.
 func (iamIdentity *IamIdentityV1) ListVersionsOfAccountSettingsTemplate(listVersionsOfAccountSettingsTemplateOptions *ListVersionsOfAccountSettingsTemplateOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
-	return iamIdentity.ListVersionsOfAccountSettingsTemplateWithContext(context.Background(), listVersionsOfAccountSettingsTemplateOptions)
+	result, response, err = iamIdentity.ListVersionsOfAccountSettingsTemplateWithContext(context.Background(), listVersionsOfAccountSettingsTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListVersionsOfAccountSettingsTemplateWithContext is an alternate form of the ListVersionsOfAccountSettingsTemplate method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) ListVersionsOfAccountSettingsTemplateWithContext(ctx context.Context, listVersionsOfAccountSettingsTemplateOptions *ListVersionsOfAccountSettingsTemplateOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listVersionsOfAccountSettingsTemplateOptions, "listVersionsOfAccountSettingsTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listVersionsOfAccountSettingsTemplateOptions, "listVersionsOfAccountSettingsTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3406,6 +4012,7 @@ func (iamIdentity *IamIdentityV1) ListVersionsOfAccountSettingsTemplateWithConte
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3437,17 +4044,21 @@ func (iamIdentity *IamIdentityV1) ListVersionsOfAccountSettingsTemplateWithConte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_versions_of_account_settings_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3459,17 +4070,21 @@ func (iamIdentity *IamIdentityV1) ListVersionsOfAccountSettingsTemplateWithConte
 // CreateAccountSettingsTemplateVersion : Create a new version of an account settings template
 // Create a new version of an account settings template in an Enterprise Account.
 func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateVersion(createAccountSettingsTemplateVersionOptions *CreateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.CreateAccountSettingsTemplateVersionWithContext(context.Background(), createAccountSettingsTemplateVersionOptions)
+	result, response, err = iamIdentity.CreateAccountSettingsTemplateVersionWithContext(context.Background(), createAccountSettingsTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateAccountSettingsTemplateVersionWithContext is an alternate form of the CreateAccountSettingsTemplateVersion method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateVersionWithContext(ctx context.Context, createAccountSettingsTemplateVersionOptions *CreateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createAccountSettingsTemplateVersionOptions, "createAccountSettingsTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createAccountSettingsTemplateVersionOptions, "createAccountSettingsTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3482,6 +4097,7 @@ func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateVersionWithContex
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3511,22 +4127,27 @@ func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateVersionWithContex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_account_settings_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3538,23 +4159,27 @@ func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateVersionWithContex
 // GetAccountSettingsTemplateVersion : Get version of an account settings template
 // Get a specific version of an account settings template in an Enterprise Account.
 func (iamIdentity *IamIdentityV1) GetAccountSettingsTemplateVersion(getAccountSettingsTemplateVersionOptions *GetAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetAccountSettingsTemplateVersionWithContext(context.Background(), getAccountSettingsTemplateVersionOptions)
+	result, response, err = iamIdentity.GetAccountSettingsTemplateVersionWithContext(context.Background(), getAccountSettingsTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAccountSettingsTemplateVersionWithContext is an alternate form of the GetAccountSettingsTemplateVersion method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetAccountSettingsTemplateVersionWithContext(ctx context.Context, getAccountSettingsTemplateVersionOptions *GetAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAccountSettingsTemplateVersionOptions, "getAccountSettingsTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAccountSettingsTemplateVersionOptions, "getAccountSettingsTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"template_id": *getAccountSettingsTemplateVersionOptions.TemplateID,
-		"version": *getAccountSettingsTemplateVersionOptions.Version,
+		"version":     *getAccountSettingsTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -3562,6 +4187,7 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsTemplateVersionWithContext(c
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions/{version}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3581,17 +4207,21 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsTemplateVersionWithContext(c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_account_settings_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3603,23 +4233,27 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsTemplateVersionWithContext(c
 // UpdateAccountSettingsTemplateVersion : Update version of an account settings template
 // Update a specific version of an account settings template in an Enterprise Account.
 func (iamIdentity *IamIdentityV1) UpdateAccountSettingsTemplateVersion(updateAccountSettingsTemplateVersionOptions *UpdateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.UpdateAccountSettingsTemplateVersionWithContext(context.Background(), updateAccountSettingsTemplateVersionOptions)
+	result, response, err = iamIdentity.UpdateAccountSettingsTemplateVersionWithContext(context.Background(), updateAccountSettingsTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateAccountSettingsTemplateVersionWithContext is an alternate form of the UpdateAccountSettingsTemplateVersion method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) UpdateAccountSettingsTemplateVersionWithContext(ctx context.Context, updateAccountSettingsTemplateVersionOptions *UpdateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateAccountSettingsTemplateVersionOptions, "updateAccountSettingsTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateAccountSettingsTemplateVersionOptions, "updateAccountSettingsTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"template_id": *updateAccountSettingsTemplateVersionOptions.TemplateID,
-		"version": *updateAccountSettingsTemplateVersionOptions.Version,
+		"version":     *updateAccountSettingsTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -3627,6 +4261,7 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsTemplateVersionWithContex
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions/{version}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3659,22 +4294,27 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsTemplateVersionWithContex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_account_settings_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3686,23 +4326,27 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsTemplateVersionWithContex
 // DeleteAccountSettingsTemplateVersion : Delete version of an account settings template
 // Delete a specific version of an account settings template in an Enterprise Account.
 func (iamIdentity *IamIdentityV1) DeleteAccountSettingsTemplateVersion(deleteAccountSettingsTemplateVersionOptions *DeleteAccountSettingsTemplateVersionOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.DeleteAccountSettingsTemplateVersionWithContext(context.Background(), deleteAccountSettingsTemplateVersionOptions)
+	response, err = iamIdentity.DeleteAccountSettingsTemplateVersionWithContext(context.Background(), deleteAccountSettingsTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteAccountSettingsTemplateVersionWithContext is an alternate form of the DeleteAccountSettingsTemplateVersion method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) DeleteAccountSettingsTemplateVersionWithContext(ctx context.Context, deleteAccountSettingsTemplateVersionOptions *DeleteAccountSettingsTemplateVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteAccountSettingsTemplateVersionOptions, "deleteAccountSettingsTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteAccountSettingsTemplateVersionOptions, "deleteAccountSettingsTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"template_id": *deleteAccountSettingsTemplateVersionOptions.TemplateID,
-		"version": *deleteAccountSettingsTemplateVersionOptions.Version,
+		"version":     *deleteAccountSettingsTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -3710,6 +4354,7 @@ func (iamIdentity *IamIdentityV1) DeleteAccountSettingsTemplateVersionWithContex
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions/{version}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3724,10 +4369,16 @@ func (iamIdentity *IamIdentityV1) DeleteAccountSettingsTemplateVersionWithContex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_account_settings_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3736,23 +4387,27 @@ func (iamIdentity *IamIdentityV1) DeleteAccountSettingsTemplateVersionWithContex
 // Commit a specific version of an account settings template in an Enterprise Account. A Template must be committed
 // before being assigned, and once committed, can no longer be modified.
 func (iamIdentity *IamIdentityV1) CommitAccountSettingsTemplate(commitAccountSettingsTemplateOptions *CommitAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.CommitAccountSettingsTemplateWithContext(context.Background(), commitAccountSettingsTemplateOptions)
+	response, err = iamIdentity.CommitAccountSettingsTemplateWithContext(context.Background(), commitAccountSettingsTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CommitAccountSettingsTemplateWithContext is an alternate form of the CommitAccountSettingsTemplate method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CommitAccountSettingsTemplateWithContext(ctx context.Context, commitAccountSettingsTemplateOptions *CommitAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(commitAccountSettingsTemplateOptions, "commitAccountSettingsTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(commitAccountSettingsTemplateOptions, "commitAccountSettingsTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"template_id": *commitAccountSettingsTemplateOptions.TemplateID,
-		"version": *commitAccountSettingsTemplateOptions.Version,
+		"version":     *commitAccountSettingsTemplateOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -3760,6 +4415,7 @@ func (iamIdentity *IamIdentityV1) CommitAccountSettingsTemplateWithContext(ctx c
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions/{version}/commit`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3774,10 +4430,16 @@ func (iamIdentity *IamIdentityV1) CommitAccountSettingsTemplateWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "commit_account_settings_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3786,17 +4448,21 @@ func (iamIdentity *IamIdentityV1) CommitAccountSettingsTemplateWithContext(ctx c
 // Trigger activity report for the account by specifying the account ID. It can take a few minutes to generate the
 // report for retrieval.
 func (iamIdentity *IamIdentityV1) CreateReport(createReportOptions *CreateReportOptions) (result *ReportReference, response *core.DetailedResponse, err error) {
-	return iamIdentity.CreateReportWithContext(context.Background(), createReportOptions)
+	result, response, err = iamIdentity.CreateReportWithContext(context.Background(), createReportOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateReportWithContext is an alternate form of the CreateReport method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CreateReportWithContext(ctx context.Context, createReportOptions *CreateReportOptions) (result *ReportReference, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createReportOptions, "createReportOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createReportOptions, "createReportOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3809,6 +4475,7 @@ func (iamIdentity *IamIdentityV1) CreateReportWithContext(ctx context.Context, c
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/activity/accounts/{account_id}/report`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3831,17 +4498,21 @@ func (iamIdentity *IamIdentityV1) CreateReportWithContext(ctx context.Context, c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_report", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalReportReference)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3854,23 +4525,27 @@ func (iamIdentity *IamIdentityV1) CreateReportWithContext(ctx context.Context, c
 // Get activity report for the account by specifying the account ID and the reference that is generated by triggering
 // the report. Reports older than a day are deleted when generating a new report.
 func (iamIdentity *IamIdentityV1) GetReport(getReportOptions *GetReportOptions) (result *Report, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetReportWithContext(context.Background(), getReportOptions)
+	result, response, err = iamIdentity.GetReportWithContext(context.Background(), getReportOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetReportWithContext is an alternate form of the GetReport method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetReportWithContext(ctx context.Context, getReportOptions *GetReportOptions) (result *Report, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getReportOptions, "getReportOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getReportOptions, "getReportOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"account_id": *getReportOptions.AccountID,
-		"reference": *getReportOptions.Reference,
+		"reference":  *getReportOptions.Reference,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -3878,6 +4553,7 @@ func (iamIdentity *IamIdentityV1) GetReportWithContext(ctx context.Context, getR
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/activity/accounts/{account_id}/report/{reference}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3893,17 +4569,405 @@ func (iamIdentity *IamIdentityV1) GetReportWithContext(ctx context.Context, getR
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_report", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalReport)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetEffectiveAccountSettings : Get effective account settings configuration
+// Returns effective account settings for given account ID.
+func (iamIdentity *IamIdentityV1) GetEffectiveAccountSettings(getEffectiveAccountSettingsOptions *GetEffectiveAccountSettingsOptions) (result *EffectiveAccountSettingsResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetEffectiveAccountSettingsWithContext(context.Background(), getEffectiveAccountSettingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetEffectiveAccountSettingsWithContext is an alternate form of the GetEffectiveAccountSettings method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetEffectiveAccountSettingsWithContext(ctx context.Context, getEffectiveAccountSettingsOptions *GetEffectiveAccountSettingsOptions) (result *EffectiveAccountSettingsResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getEffectiveAccountSettingsOptions, "getEffectiveAccountSettingsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getEffectiveAccountSettingsOptions, "getEffectiveAccountSettingsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id": *getEffectiveAccountSettingsOptions.AccountID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/accounts/{account_id}/effective_settings/identity`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getEffectiveAccountSettingsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetEffectiveAccountSettings")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getEffectiveAccountSettingsOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*getEffectiveAccountSettingsOptions.IncludeHistory))
+	}
+	if getEffectiveAccountSettingsOptions.ResolveUserMfa != nil {
+		builder.AddQuery("resolve_user_mfa", fmt.Sprint(*getEffectiveAccountSettingsOptions.ResolveUserMfa))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_effective_account_settings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEffectiveAccountSettingsResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdatePreferenceOnScopeAccount : Update Identity Preference on scope account
+// Update one Identity Preference on scope 'account'. supported preferences:
+//
+//	The following preferences are storing values for identities inside an account,
+//	i.e. for each account that an identity is member of, the value stored might be different.
+//	This means, users who might be member of multiple accounts can have multiple preferences, one per account.
+//	Identities like Service Ids or Trusted Profiles can only exist in one account,
+//	therefore they can only have one preference inside their related account.
+//	preference: console/landing_page
+//	  service: console
+//	  preferenceId: landing_page
+//	  supportedIdentityType: Trusted Profiles, Users
+//	  type: string
+//	  validation: valid URL (without host part), e.g. /billing or /iam
+//	preference: console/global_left_navigation
+//	  service: console
+//	  preferenceId: global_left_navigation
+//	  supportedIdentityType: Trusted Profiles, Users
+//	  type: list of strings
+//	  validation: each entry in the list of strings must match the identifier of one navigation entry in the console.
+func (iamIdentity *IamIdentityV1) UpdatePreferenceOnScopeAccount(updatePreferenceOnScopeAccountOptions *UpdatePreferenceOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.UpdatePreferenceOnScopeAccountWithContext(context.Background(), updatePreferenceOnScopeAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdatePreferenceOnScopeAccountWithContext is an alternate form of the UpdatePreferenceOnScopeAccount method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) UpdatePreferenceOnScopeAccountWithContext(ctx context.Context, updatePreferenceOnScopeAccountOptions *UpdatePreferenceOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updatePreferenceOnScopeAccountOptions, "updatePreferenceOnScopeAccountOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updatePreferenceOnScopeAccountOptions, "updatePreferenceOnScopeAccountOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id":    *updatePreferenceOnScopeAccountOptions.AccountID,
+		"iam_id":        *updatePreferenceOnScopeAccountOptions.IamID,
+		"service":       *updatePreferenceOnScopeAccountOptions.Service,
+		"preference_id": *updatePreferenceOnScopeAccountOptions.PreferenceID,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/preferences/accounts/{account_id}/identities/{iam_id}/{service}/{preference_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updatePreferenceOnScopeAccountOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdatePreferenceOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if updatePreferenceOnScopeAccountOptions.ValueString != nil {
+		body["value_string"] = updatePreferenceOnScopeAccountOptions.ValueString
+	}
+	if updatePreferenceOnScopeAccountOptions.ValueListOfStrings != nil {
+		body["value_list_of_strings"] = updatePreferenceOnScopeAccountOptions.ValueListOfStrings
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_preference_on_scope_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIdentityPreferenceResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeletePreferencesOnScopeAccount : Delete Identity Preference on scope account
+// Delete one Identity Preference on scope 'account'.
+func (iamIdentity *IamIdentityV1) DeletePreferencesOnScopeAccount(deletePreferencesOnScopeAccountOptions *DeletePreferencesOnScopeAccountOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.DeletePreferencesOnScopeAccountWithContext(context.Background(), deletePreferencesOnScopeAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeletePreferencesOnScopeAccountWithContext is an alternate form of the DeletePreferencesOnScopeAccount method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) DeletePreferencesOnScopeAccountWithContext(ctx context.Context, deletePreferencesOnScopeAccountOptions *DeletePreferencesOnScopeAccountOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deletePreferencesOnScopeAccountOptions, "deletePreferencesOnScopeAccountOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deletePreferencesOnScopeAccountOptions, "deletePreferencesOnScopeAccountOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id":    *deletePreferencesOnScopeAccountOptions.AccountID,
+		"iam_id":        *deletePreferencesOnScopeAccountOptions.IamID,
+		"service":       *deletePreferencesOnScopeAccountOptions.Service,
+		"preference_id": *deletePreferencesOnScopeAccountOptions.PreferenceID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/preferences/accounts/{account_id}/identities/{iam_id}/{service}/{preference_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deletePreferencesOnScopeAccountOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeletePreferencesOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_preferences_on_scope_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetPreferencesOnScopeAccount : Get Identity Preference on scope account
+// Get one Identity Preference on scope 'account'.
+func (iamIdentity *IamIdentityV1) GetPreferencesOnScopeAccount(getPreferencesOnScopeAccountOptions *GetPreferencesOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetPreferencesOnScopeAccountWithContext(context.Background(), getPreferencesOnScopeAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetPreferencesOnScopeAccountWithContext is an alternate form of the GetPreferencesOnScopeAccount method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetPreferencesOnScopeAccountWithContext(ctx context.Context, getPreferencesOnScopeAccountOptions *GetPreferencesOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getPreferencesOnScopeAccountOptions, "getPreferencesOnScopeAccountOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getPreferencesOnScopeAccountOptions, "getPreferencesOnScopeAccountOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id":    *getPreferencesOnScopeAccountOptions.AccountID,
+		"iam_id":        *getPreferencesOnScopeAccountOptions.IamID,
+		"service":       *getPreferencesOnScopeAccountOptions.Service,
+		"preference_id": *getPreferencesOnScopeAccountOptions.PreferenceID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/preferences/accounts/{account_id}/identities/{iam_id}/{service}/{preference_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getPreferencesOnScopeAccountOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetPreferencesOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_preferences_on_scope_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIdentityPreferenceResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetAllPreferencesOnScopeAccount : Get all Identity Preferences for one account
+// Get all Identity Preferences for one account / user combination.
+func (iamIdentity *IamIdentityV1) GetAllPreferencesOnScopeAccount(getAllPreferencesOnScopeAccountOptions *GetAllPreferencesOnScopeAccountOptions) (result *IdentityPreferencesResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetAllPreferencesOnScopeAccountWithContext(context.Background(), getAllPreferencesOnScopeAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAllPreferencesOnScopeAccountWithContext is an alternate form of the GetAllPreferencesOnScopeAccount method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetAllPreferencesOnScopeAccountWithContext(ctx context.Context, getAllPreferencesOnScopeAccountOptions *GetAllPreferencesOnScopeAccountOptions) (result *IdentityPreferencesResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getAllPreferencesOnScopeAccountOptions, "getAllPreferencesOnScopeAccountOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getAllPreferencesOnScopeAccountOptions, "getAllPreferencesOnScopeAccountOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id": *getAllPreferencesOnScopeAccountOptions.AccountID,
+		"iam_id":     *getAllPreferencesOnScopeAccountOptions.IamID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/preferences/accounts/{account_id}/identities/{iam_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getAllPreferencesOnScopeAccountOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAllPreferencesOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_all_preferences_on_scope_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIdentityPreferencesResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3915,13 +4979,16 @@ func (iamIdentity *IamIdentityV1) GetReportWithContext(ctx context.Context, getR
 // ListTrustedProfileAssignments : List assignments
 // List trusted profile template assignments.
 func (iamIdentity *IamIdentityV1) ListTrustedProfileAssignments(listTrustedProfileAssignmentsOptions *ListTrustedProfileAssignmentsOptions) (result *TemplateAssignmentListResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.ListTrustedProfileAssignmentsWithContext(context.Background(), listTrustedProfileAssignmentsOptions)
+	result, response, err = iamIdentity.ListTrustedProfileAssignmentsWithContext(context.Background(), listTrustedProfileAssignmentsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListTrustedProfileAssignmentsWithContext is an alternate form of the ListTrustedProfileAssignments method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) ListTrustedProfileAssignmentsWithContext(ctx context.Context, listTrustedProfileAssignmentsOptions *ListTrustedProfileAssignmentsOptions) (result *TemplateAssignmentListResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listTrustedProfileAssignmentsOptions, "listTrustedProfileAssignmentsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3930,6 +4997,7 @@ func (iamIdentity *IamIdentityV1) ListTrustedProfileAssignmentsWithContext(ctx c
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_assignments/`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3976,17 +5044,21 @@ func (iamIdentity *IamIdentityV1) ListTrustedProfileAssignmentsWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_trusted_profile_assignments", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentListResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3998,17 +5070,21 @@ func (iamIdentity *IamIdentityV1) ListTrustedProfileAssignmentsWithContext(ctx c
 // CreateTrustedProfileAssignment : Create assignment
 // Create an assigment for a trusted profile template.
 func (iamIdentity *IamIdentityV1) CreateTrustedProfileAssignment(createTrustedProfileAssignmentOptions *CreateTrustedProfileAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.CreateTrustedProfileAssignmentWithContext(context.Background(), createTrustedProfileAssignmentOptions)
+	result, response, err = iamIdentity.CreateTrustedProfileAssignmentWithContext(context.Background(), createTrustedProfileAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateTrustedProfileAssignmentWithContext is an alternate form of the CreateTrustedProfileAssignment method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CreateTrustedProfileAssignmentWithContext(ctx context.Context, createTrustedProfileAssignmentOptions *CreateTrustedProfileAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createTrustedProfileAssignmentOptions, "createTrustedProfileAssignmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createTrustedProfileAssignmentOptions, "createTrustedProfileAssignmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4017,6 +5093,7 @@ func (iamIdentity *IamIdentityV1) CreateTrustedProfileAssignmentWithContext(ctx 
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_assignments/`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4046,22 +5123,27 @@ func (iamIdentity *IamIdentityV1) CreateTrustedProfileAssignmentWithContext(ctx 
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_trusted_profile_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4073,17 +5155,21 @@ func (iamIdentity *IamIdentityV1) CreateTrustedProfileAssignmentWithContext(ctx 
 // GetTrustedProfileAssignment : Get assignment
 // Get an assigment for a trusted profile template.
 func (iamIdentity *IamIdentityV1) GetTrustedProfileAssignment(getTrustedProfileAssignmentOptions *GetTrustedProfileAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetTrustedProfileAssignmentWithContext(context.Background(), getTrustedProfileAssignmentOptions)
+	result, response, err = iamIdentity.GetTrustedProfileAssignmentWithContext(context.Background(), getTrustedProfileAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetTrustedProfileAssignmentWithContext is an alternate form of the GetTrustedProfileAssignment method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetTrustedProfileAssignmentWithContext(ctx context.Context, getTrustedProfileAssignmentOptions *GetTrustedProfileAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getTrustedProfileAssignmentOptions, "getTrustedProfileAssignmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getTrustedProfileAssignmentOptions, "getTrustedProfileAssignmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4096,6 +5182,7 @@ func (iamIdentity *IamIdentityV1) GetTrustedProfileAssignmentWithContext(ctx con
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_assignments/{assignment_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4115,17 +5202,21 @@ func (iamIdentity *IamIdentityV1) GetTrustedProfileAssignmentWithContext(ctx con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_trusted_profile_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4137,17 +5228,21 @@ func (iamIdentity *IamIdentityV1) GetTrustedProfileAssignmentWithContext(ctx con
 // DeleteTrustedProfileAssignment : Delete assignment
 // Delete a trusted profile assignment. This removes any IAM resources created by this assignment in child accounts.
 func (iamIdentity *IamIdentityV1) DeleteTrustedProfileAssignment(deleteTrustedProfileAssignmentOptions *DeleteTrustedProfileAssignmentOptions) (result *ExceptionResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.DeleteTrustedProfileAssignmentWithContext(context.Background(), deleteTrustedProfileAssignmentOptions)
+	result, response, err = iamIdentity.DeleteTrustedProfileAssignmentWithContext(context.Background(), deleteTrustedProfileAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteTrustedProfileAssignmentWithContext is an alternate form of the DeleteTrustedProfileAssignment method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) DeleteTrustedProfileAssignmentWithContext(ctx context.Context, deleteTrustedProfileAssignmentOptions *DeleteTrustedProfileAssignmentOptions) (result *ExceptionResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteTrustedProfileAssignmentOptions, "deleteTrustedProfileAssignmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteTrustedProfileAssignmentOptions, "deleteTrustedProfileAssignmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4160,6 +5255,7 @@ func (iamIdentity *IamIdentityV1) DeleteTrustedProfileAssignmentWithContext(ctx 
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_assignments/{assignment_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4175,17 +5271,21 @@ func (iamIdentity *IamIdentityV1) DeleteTrustedProfileAssignmentWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_trusted_profile_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalExceptionResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4198,17 +5298,21 @@ func (iamIdentity *IamIdentityV1) DeleteTrustedProfileAssignmentWithContext(ctx 
 // Update a trusted profile assignment. Call this method to retry failed assignments or migrate the trusted profile in
 // child accounts to a new version.
 func (iamIdentity *IamIdentityV1) UpdateTrustedProfileAssignment(updateTrustedProfileAssignmentOptions *UpdateTrustedProfileAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.UpdateTrustedProfileAssignmentWithContext(context.Background(), updateTrustedProfileAssignmentOptions)
+	result, response, err = iamIdentity.UpdateTrustedProfileAssignmentWithContext(context.Background(), updateTrustedProfileAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateTrustedProfileAssignmentWithContext is an alternate form of the UpdateTrustedProfileAssignment method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) UpdateTrustedProfileAssignmentWithContext(ctx context.Context, updateTrustedProfileAssignmentOptions *UpdateTrustedProfileAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateTrustedProfileAssignmentOptions, "updateTrustedProfileAssignmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateTrustedProfileAssignmentOptions, "updateTrustedProfileAssignmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4221,6 +5325,7 @@ func (iamIdentity *IamIdentityV1) UpdateTrustedProfileAssignmentWithContext(ctx 
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_assignments/{assignment_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4244,22 +5349,27 @@ func (iamIdentity *IamIdentityV1) UpdateTrustedProfileAssignmentWithContext(ctx 
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_trusted_profile_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4271,13 +5381,16 @@ func (iamIdentity *IamIdentityV1) UpdateTrustedProfileAssignmentWithContext(ctx 
 // ListProfileTemplates : List trusted profile templates
 // List the trusted profile templates in an enterprise account.
 func (iamIdentity *IamIdentityV1) ListProfileTemplates(listProfileTemplatesOptions *ListProfileTemplatesOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
-	return iamIdentity.ListProfileTemplatesWithContext(context.Background(), listProfileTemplatesOptions)
+	result, response, err = iamIdentity.ListProfileTemplatesWithContext(context.Background(), listProfileTemplatesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListProfileTemplatesWithContext is an alternate form of the ListProfileTemplates method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) ListProfileTemplatesWithContext(ctx context.Context, listProfileTemplatesOptions *ListProfileTemplatesOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listProfileTemplatesOptions, "listProfileTemplatesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4286,6 +5399,7 @@ func (iamIdentity *IamIdentityV1) ListProfileTemplatesWithContext(ctx context.Co
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4320,17 +5434,21 @@ func (iamIdentity *IamIdentityV1) ListProfileTemplatesWithContext(ctx context.Co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_profile_templates", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4342,17 +5460,21 @@ func (iamIdentity *IamIdentityV1) ListProfileTemplatesWithContext(ctx context.Co
 // CreateProfileTemplate : Create a trusted profile template
 // Create a new trusted profile template in an enterprise account.
 func (iamIdentity *IamIdentityV1) CreateProfileTemplate(createProfileTemplateOptions *CreateProfileTemplateOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.CreateProfileTemplateWithContext(context.Background(), createProfileTemplateOptions)
+	result, response, err = iamIdentity.CreateProfileTemplateWithContext(context.Background(), createProfileTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateProfileTemplateWithContext is an alternate form of the CreateProfileTemplate method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CreateProfileTemplateWithContext(ctx context.Context, createProfileTemplateOptions *CreateProfileTemplateOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createProfileTemplateOptions, "createProfileTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createProfileTemplateOptions, "createProfileTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4361,6 +5483,7 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateWithContext(ctx context.C
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4391,24 +5514,32 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateWithContext(ctx context.C
 	if createProfileTemplateOptions.PolicyTemplateReferences != nil {
 		body["policy_template_references"] = createProfileTemplateOptions.PolicyTemplateReferences
 	}
+	if createProfileTemplateOptions.ActionControls != nil {
+		body["action_controls"] = createProfileTemplateOptions.ActionControls
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_profile_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4420,17 +5551,21 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateWithContext(ctx context.C
 // GetLatestProfileTemplateVersion : Get latest version of a trusted profile template
 // Get the latest version of a trusted profile template in an enterprise account.
 func (iamIdentity *IamIdentityV1) GetLatestProfileTemplateVersion(getLatestProfileTemplateVersionOptions *GetLatestProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetLatestProfileTemplateVersionWithContext(context.Background(), getLatestProfileTemplateVersionOptions)
+	result, response, err = iamIdentity.GetLatestProfileTemplateVersionWithContext(context.Background(), getLatestProfileTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetLatestProfileTemplateVersionWithContext is an alternate form of the GetLatestProfileTemplateVersion method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetLatestProfileTemplateVersionWithContext(ctx context.Context, getLatestProfileTemplateVersionOptions *GetLatestProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getLatestProfileTemplateVersionOptions, "getLatestProfileTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getLatestProfileTemplateVersionOptions, "getLatestProfileTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4443,6 +5578,7 @@ func (iamIdentity *IamIdentityV1) GetLatestProfileTemplateVersionWithContext(ctx
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4462,17 +5598,21 @@ func (iamIdentity *IamIdentityV1) GetLatestProfileTemplateVersionWithContext(ctx
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_latest_profile_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4485,17 +5625,21 @@ func (iamIdentity *IamIdentityV1) GetLatestProfileTemplateVersionWithContext(ctx
 // Delete all versions of a trusted profile template in an enterprise account. If any version is assigned to child
 // accounts, you must first delete the assignment.
 func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfProfileTemplate(deleteAllVersionsOfProfileTemplateOptions *DeleteAllVersionsOfProfileTemplateOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.DeleteAllVersionsOfProfileTemplateWithContext(context.Background(), deleteAllVersionsOfProfileTemplateOptions)
+	response, err = iamIdentity.DeleteAllVersionsOfProfileTemplateWithContext(context.Background(), deleteAllVersionsOfProfileTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteAllVersionsOfProfileTemplateWithContext is an alternate form of the DeleteAllVersionsOfProfileTemplate method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfProfileTemplateWithContext(ctx context.Context, deleteAllVersionsOfProfileTemplateOptions *DeleteAllVersionsOfProfileTemplateOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteAllVersionsOfProfileTemplateOptions, "deleteAllVersionsOfProfileTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteAllVersionsOfProfileTemplateOptions, "deleteAllVersionsOfProfileTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4508,6 +5652,7 @@ func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfProfileTemplateWithContext(
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4522,10 +5667,16 @@ func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfProfileTemplateWithContext(
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_all_versions_of_profile_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -4533,17 +5684,21 @@ func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfProfileTemplateWithContext(
 // ListVersionsOfProfileTemplate : List trusted profile template versions
 // List the versions of a trusted profile template in an enterprise account.
 func (iamIdentity *IamIdentityV1) ListVersionsOfProfileTemplate(listVersionsOfProfileTemplateOptions *ListVersionsOfProfileTemplateOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
-	return iamIdentity.ListVersionsOfProfileTemplateWithContext(context.Background(), listVersionsOfProfileTemplateOptions)
+	result, response, err = iamIdentity.ListVersionsOfProfileTemplateWithContext(context.Background(), listVersionsOfProfileTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListVersionsOfProfileTemplateWithContext is an alternate form of the ListVersionsOfProfileTemplate method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) ListVersionsOfProfileTemplateWithContext(ctx context.Context, listVersionsOfProfileTemplateOptions *ListVersionsOfProfileTemplateOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listVersionsOfProfileTemplateOptions, "listVersionsOfProfileTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listVersionsOfProfileTemplateOptions, "listVersionsOfProfileTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4556,6 +5711,7 @@ func (iamIdentity *IamIdentityV1) ListVersionsOfProfileTemplateWithContext(ctx c
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4587,17 +5743,21 @@ func (iamIdentity *IamIdentityV1) ListVersionsOfProfileTemplateWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_versions_of_profile_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4609,17 +5769,21 @@ func (iamIdentity *IamIdentityV1) ListVersionsOfProfileTemplateWithContext(ctx c
 // CreateProfileTemplateVersion : Create new version of a trusted profile template
 // Create a new version of a trusted profile template in an enterprise account.
 func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersion(createProfileTemplateVersionOptions *CreateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.CreateProfileTemplateVersionWithContext(context.Background(), createProfileTemplateVersionOptions)
+	result, response, err = iamIdentity.CreateProfileTemplateVersionWithContext(context.Background(), createProfileTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateProfileTemplateVersionWithContext is an alternate form of the CreateProfileTemplateVersion method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersionWithContext(ctx context.Context, createProfileTemplateVersionOptions *CreateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createProfileTemplateVersionOptions, "createProfileTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createProfileTemplateVersionOptions, "createProfileTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4632,6 +5796,7 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersionWithContext(ctx co
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4662,24 +5827,32 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersionWithContext(ctx co
 	if createProfileTemplateVersionOptions.PolicyTemplateReferences != nil {
 		body["policy_template_references"] = createProfileTemplateVersionOptions.PolicyTemplateReferences
 	}
+	if createProfileTemplateVersionOptions.ActionControls != nil {
+		body["action_controls"] = createProfileTemplateVersionOptions.ActionControls
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_profile_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4691,23 +5864,27 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersionWithContext(ctx co
 // GetProfileTemplateVersion : Get version of trusted profile template
 // Get a specific version of a trusted profile template in an enterprise account.
 func (iamIdentity *IamIdentityV1) GetProfileTemplateVersion(getProfileTemplateVersionOptions *GetProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.GetProfileTemplateVersionWithContext(context.Background(), getProfileTemplateVersionOptions)
+	result, response, err = iamIdentity.GetProfileTemplateVersionWithContext(context.Background(), getProfileTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetProfileTemplateVersionWithContext is an alternate form of the GetProfileTemplateVersion method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) GetProfileTemplateVersionWithContext(ctx context.Context, getProfileTemplateVersionOptions *GetProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getProfileTemplateVersionOptions, "getProfileTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getProfileTemplateVersionOptions, "getProfileTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"template_id": *getProfileTemplateVersionOptions.TemplateID,
-		"version": *getProfileTemplateVersionOptions.Version,
+		"version":     *getProfileTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -4715,6 +5892,7 @@ func (iamIdentity *IamIdentityV1) GetProfileTemplateVersionWithContext(ctx conte
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions/{version}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4734,17 +5912,21 @@ func (iamIdentity *IamIdentityV1) GetProfileTemplateVersionWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_profile_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4756,23 +5938,27 @@ func (iamIdentity *IamIdentityV1) GetProfileTemplateVersionWithContext(ctx conte
 // UpdateProfileTemplateVersion : Update version of trusted profile template
 // Update a specific version of a trusted profile template in an enterprise account.
 func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersion(updateProfileTemplateVersionOptions *UpdateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	return iamIdentity.UpdateProfileTemplateVersionWithContext(context.Background(), updateProfileTemplateVersionOptions)
+	result, response, err = iamIdentity.UpdateProfileTemplateVersionWithContext(context.Background(), updateProfileTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateProfileTemplateVersionWithContext is an alternate form of the UpdateProfileTemplateVersion method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersionWithContext(ctx context.Context, updateProfileTemplateVersionOptions *UpdateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateProfileTemplateVersionOptions, "updateProfileTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateProfileTemplateVersionOptions, "updateProfileTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"template_id": *updateProfileTemplateVersionOptions.TemplateID,
-		"version": *updateProfileTemplateVersionOptions.Version,
+		"version":     *updateProfileTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -4780,6 +5966,7 @@ func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersionWithContext(ctx co
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions/{version}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4813,24 +6000,32 @@ func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersionWithContext(ctx co
 	if updateProfileTemplateVersionOptions.PolicyTemplateReferences != nil {
 		body["policy_template_references"] = updateProfileTemplateVersionOptions.PolicyTemplateReferences
 	}
+	if updateProfileTemplateVersionOptions.ActionControls != nil {
+		body["action_controls"] = updateProfileTemplateVersionOptions.ActionControls
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_profile_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4843,23 +6038,27 @@ func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersionWithContext(ctx co
 // Delete a specific version of a trusted profile template in an enterprise account. If the version is assigned to child
 // accounts, you must first delete the assignment.
 func (iamIdentity *IamIdentityV1) DeleteProfileTemplateVersion(deleteProfileTemplateVersionOptions *DeleteProfileTemplateVersionOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.DeleteProfileTemplateVersionWithContext(context.Background(), deleteProfileTemplateVersionOptions)
+	response, err = iamIdentity.DeleteProfileTemplateVersionWithContext(context.Background(), deleteProfileTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteProfileTemplateVersionWithContext is an alternate form of the DeleteProfileTemplateVersion method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) DeleteProfileTemplateVersionWithContext(ctx context.Context, deleteProfileTemplateVersionOptions *DeleteProfileTemplateVersionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteProfileTemplateVersionOptions, "deleteProfileTemplateVersionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteProfileTemplateVersionOptions, "deleteProfileTemplateVersionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"template_id": *deleteProfileTemplateVersionOptions.TemplateID,
-		"version": *deleteProfileTemplateVersionOptions.Version,
+		"version":     *deleteProfileTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -4867,6 +6066,7 @@ func (iamIdentity *IamIdentityV1) DeleteProfileTemplateVersionWithContext(ctx co
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions/{version}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4881,10 +6081,16 @@ func (iamIdentity *IamIdentityV1) DeleteProfileTemplateVersionWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_profile_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -4893,23 +6099,27 @@ func (iamIdentity *IamIdentityV1) DeleteProfileTemplateVersionWithContext(ctx co
 // Commit a specific version of a trusted profile template in an enterprise account. You must commit a template before
 // you can assign it to child accounts. Once a template is committed, you can no longer modify the template.
 func (iamIdentity *IamIdentityV1) CommitProfileTemplate(commitProfileTemplateOptions *CommitProfileTemplateOptions) (response *core.DetailedResponse, err error) {
-	return iamIdentity.CommitProfileTemplateWithContext(context.Background(), commitProfileTemplateOptions)
+	response, err = iamIdentity.CommitProfileTemplateWithContext(context.Background(), commitProfileTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CommitProfileTemplateWithContext is an alternate form of the CommitProfileTemplate method which supports a Context parameter
 func (iamIdentity *IamIdentityV1) CommitProfileTemplateWithContext(ctx context.Context, commitProfileTemplateOptions *CommitProfileTemplateOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(commitProfileTemplateOptions, "commitProfileTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(commitProfileTemplateOptions, "commitProfileTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"template_id": *commitProfileTemplateOptions.TemplateID,
-		"version": *commitProfileTemplateOptions.Version,
+		"version":     *commitProfileTemplateOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -4917,6 +6127,7 @@ func (iamIdentity *IamIdentityV1) CommitProfileTemplateWithContext(ctx context.C
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions/{version}/commit`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4931,12 +6142,21 @@ func (iamIdentity *IamIdentityV1) CommitProfileTemplateWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "commit_profile_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.0.0")
 }
 
 // AccountBasedMfaEnrollment : AccountBasedMfaEnrollment struct
@@ -4956,18 +6176,376 @@ func UnmarshalAccountBasedMfaEnrollment(m map[string]json.RawMessage, result int
 	obj := new(AccountBasedMfaEnrollment)
 	err = core.UnmarshalModel(m, "security_questions", &obj.SecurityQuestions, UnmarshalMfaEnrollmentTypeStatus)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "security_questions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "totp", &obj.Totp, UnmarshalMfaEnrollmentTypeStatus)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "totp-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "verisign", &obj.Verisign, UnmarshalMfaEnrollmentTypeStatus)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "verisign-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "complies", &obj.Complies)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "complies-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AccountSettingsAccountSection : AccountSettingsAccountSection struct
+type AccountSettingsAccountSection struct {
+	// Unique ID of the account.
+	AccountID *string `json:"account_id,omitempty"`
+
+	// Defines whether or not creating a service ID is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
+
+	// Defines whether or not creating platform API keys is access controlled. Valid values:
+	//   * RESTRICTED - to apply access control
+	//   * NOT_RESTRICTED - to remove access control
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey,omitempty"`
+
+	// Defines the IP addresses and subnets from which IAM tokens can be created for the account.
+	AllowedIPAddresses *string `json:"allowed_ip_addresses,omitempty"`
+
+	// Defines the MFA requirement for the user. Valid values:
+	//   * NONE - No MFA trait set
+	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+	//   * TOTP - For all non-federated IBMId users
+	//   * TOTP4ALL - For all users
+	//   * LEVEL1 - Email-based MFA for all users
+	//   * LEVEL2 - TOTP-based MFA for all users
+	//   * LEVEL3 - U2F MFA for all users.
+	Mfa *string `json:"mfa,omitempty"`
+
+	// List of users that are exempted from the MFA requirement of the account.
+	UserMfa []EffectiveAccountSettingsUserMfa `json:"user_mfa,omitempty"`
+
+	// History of the Account Settings.
+	History []EnityHistoryRecord `json:"history,omitempty"`
+
+	// Defines the session expiration in seconds for the account. Valid values:
+	//   * Any whole number between between '900' and '86400'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionExpirationInSeconds *string `json:"session_expiration_in_seconds,omitempty"`
+
+	// Defines the period of time in seconds in which a session will be invalidated due to inactivity. Valid values:
+	//   * Any whole number between '900' and '7200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionInvalidationInSeconds *string `json:"session_invalidation_in_seconds,omitempty"`
+
+	// Defines the max allowed sessions per identity required by the account. Valid values:
+	//   * Any whole number greater than 0
+	//   * NOT_SET - To unset account setting and use service default.
+	MaxSessionsPerIdentity *string `json:"max_sessions_per_identity,omitempty"`
+
+	// Defines the access token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '3600'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemAccessTokenExpirationInSeconds *string `json:"system_access_token_expiration_in_seconds,omitempty"`
+
+	// Defines the refresh token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '259200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds,omitempty"`
+}
+
+// Constants associated with the AccountSettingsAccountSection.RestrictCreateServiceID property.
+// Defines whether or not creating a service ID is access controlled. Valid values:
+//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+//
+// IDs, including the account owner
+//   - NOT_RESTRICTED - all members of an account can create service IDs
+//   - NOT_SET - to 'unset' a previous set value.
+const (
+	AccountSettingsAccountSectionRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsAccountSectionRestrictCreateServiceIDNotSetConst        = "NOT_SET"
+	AccountSettingsAccountSectionRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
+)
+
+// Constants associated with the AccountSettingsAccountSection.RestrictCreatePlatformApikey property.
+// Defines whether or not creating platform API keys is access controlled. Valid values:
+//   - RESTRICTED - to apply access control
+//   - NOT_RESTRICTED - to remove access control
+//   - NOT_SET - to 'unset' a previous set value.
+const (
+	AccountSettingsAccountSectionRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsAccountSectionRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
+	AccountSettingsAccountSectionRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
+)
+
+// Constants associated with the AccountSettingsAccountSection.Mfa property.
+// Defines the MFA requirement for the user. Valid values:
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
+const (
+	AccountSettingsAccountSectionMfaLevel1Const     = "LEVEL1"
+	AccountSettingsAccountSectionMfaLevel2Const     = "LEVEL2"
+	AccountSettingsAccountSectionMfaLevel3Const     = "LEVEL3"
+	AccountSettingsAccountSectionMfaNoneConst       = "NONE"
+	AccountSettingsAccountSectionMfaNoneNoRopcConst = "NONE_NO_ROPC"
+	AccountSettingsAccountSectionMfaTotpConst       = "TOTP"
+	AccountSettingsAccountSectionMfaTotp4allConst   = "TOTP4ALL"
+)
+
+// UnmarshalAccountSettingsAccountSection unmarshals an instance of AccountSettingsAccountSection from the specified map of raw messages.
+func UnmarshalAccountSettingsAccountSection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AccountSettingsAccountSection)
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_create_service_id", &obj.RestrictCreateServiceID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_service_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_create_platform_apikey", &obj.RestrictCreatePlatformApikey)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_platform_apikey-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "allowed_ip_addresses", &obj.AllowedIPAddresses)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_ip_addresses-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalEffectiveAccountSettingsUserMfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalEnityHistoryRecord)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_expiration_in_seconds", &obj.SessionExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_invalidation_in_seconds", &obj.SessionInvalidationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_invalidation_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max_sessions_per_identity", &obj.MaxSessionsPerIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max_sessions_per_identity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_access_token_expiration_in_seconds", &obj.SystemAccessTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_access_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_refresh_token_expiration_in_seconds", &obj.SystemRefreshTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_refresh_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AccountSettingsAssignedTemplatesSection : AccountSettingsAssignedTemplatesSection struct
+type AccountSettingsAssignedTemplatesSection struct {
+	// Template Id.
+	TemplateID *string `json:"template_id,omitempty"`
+
+	// Template version.
+	TemplateVersion *int64 `json:"template_version,omitempty"`
+
+	// Template name.
+	TemplateName *string `json:"template_name,omitempty"`
+
+	// Defines whether or not creating a service ID is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
+
+	// Defines whether or not creating platform API keys is access controlled. Valid values:
+	//   * RESTRICTED - to apply access control
+	//   * NOT_RESTRICTED - to remove access control
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey,omitempty"`
+
+	// Defines the IP addresses and subnets from which IAM tokens can be created for the account.
+	AllowedIPAddresses *string `json:"allowed_ip_addresses,omitempty"`
+
+	// Defines the MFA requirement for the user. Valid values:
+	//   * NONE - No MFA trait set
+	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+	//   * TOTP - For all non-federated IBMId users
+	//   * TOTP4ALL - For all users
+	//   * LEVEL1 - Email-based MFA for all users
+	//   * LEVEL2 - TOTP-based MFA for all users
+	//   * LEVEL3 - U2F MFA for all users.
+	Mfa *string `json:"mfa,omitempty"`
+
+	// List of users that are exempted from the MFA requirement of the account.
+	UserMfa []EffectiveAccountSettingsUserMfa `json:"user_mfa,omitempty"`
+
+	// Defines the session expiration in seconds for the account. Valid values:
+	//   * Any whole number between between '900' and '86400'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionExpirationInSeconds *string `json:"session_expiration_in_seconds,omitempty"`
+
+	// Defines the period of time in seconds in which a session will be invalidated due to inactivity. Valid values:
+	//   * Any whole number between '900' and '7200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionInvalidationInSeconds *string `json:"session_invalidation_in_seconds,omitempty"`
+
+	// Defines the max allowed sessions per identity required by the account. Valid values:
+	//   * Any whole number greater than 0
+	//   * NOT_SET - To unset account setting and use service default.
+	MaxSessionsPerIdentity *string `json:"max_sessions_per_identity,omitempty"`
+
+	// Defines the access token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '3600'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemAccessTokenExpirationInSeconds *string `json:"system_access_token_expiration_in_seconds,omitempty"`
+
+	// Defines the refresh token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '259200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds,omitempty"`
+}
+
+// Constants associated with the AccountSettingsAssignedTemplatesSection.RestrictCreateServiceID property.
+// Defines whether or not creating a service ID is access controlled. Valid values:
+//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+//
+// IDs, including the account owner
+//   - NOT_RESTRICTED - all members of an account can create service IDs
+//   - NOT_SET - to 'unset' a previous set value.
+const (
+	AccountSettingsAssignedTemplatesSectionRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsAssignedTemplatesSectionRestrictCreateServiceIDNotSetConst        = "NOT_SET"
+	AccountSettingsAssignedTemplatesSectionRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
+)
+
+// Constants associated with the AccountSettingsAssignedTemplatesSection.RestrictCreatePlatformApikey property.
+// Defines whether or not creating platform API keys is access controlled. Valid values:
+//   - RESTRICTED - to apply access control
+//   - NOT_RESTRICTED - to remove access control
+//   - NOT_SET - to 'unset' a previous set value.
+const (
+	AccountSettingsAssignedTemplatesSectionRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsAssignedTemplatesSectionRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
+	AccountSettingsAssignedTemplatesSectionRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
+)
+
+// Constants associated with the AccountSettingsAssignedTemplatesSection.Mfa property.
+// Defines the MFA requirement for the user. Valid values:
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
+const (
+	AccountSettingsAssignedTemplatesSectionMfaLevel1Const     = "LEVEL1"
+	AccountSettingsAssignedTemplatesSectionMfaLevel2Const     = "LEVEL2"
+	AccountSettingsAssignedTemplatesSectionMfaLevel3Const     = "LEVEL3"
+	AccountSettingsAssignedTemplatesSectionMfaNoneConst       = "NONE"
+	AccountSettingsAssignedTemplatesSectionMfaNoneNoRopcConst = "NONE_NO_ROPC"
+	AccountSettingsAssignedTemplatesSectionMfaTotpConst       = "TOTP"
+	AccountSettingsAssignedTemplatesSectionMfaTotp4allConst   = "TOTP4ALL"
+)
+
+// UnmarshalAccountSettingsAssignedTemplatesSection unmarshals an instance of AccountSettingsAssignedTemplatesSection from the specified map of raw messages.
+func UnmarshalAccountSettingsAssignedTemplatesSection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AccountSettingsAssignedTemplatesSection)
+	err = core.UnmarshalPrimitive(m, "template_id", &obj.TemplateID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_version", &obj.TemplateVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_name", &obj.TemplateName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_create_service_id", &obj.RestrictCreateServiceID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_service_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_create_platform_apikey", &obj.RestrictCreatePlatformApikey)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_platform_apikey-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "allowed_ip_addresses", &obj.AllowedIPAddresses)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_ip_addresses-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalEffectiveAccountSettingsUserMfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_expiration_in_seconds", &obj.SessionExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_invalidation_in_seconds", &obj.SessionInvalidationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_invalidation_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max_sessions_per_identity", &obj.MaxSessionsPerIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max_sessions_per_identity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_access_token_expiration_in_seconds", &obj.SystemAccessTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_access_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_refresh_token_expiration_in_seconds", &obj.SystemRefreshTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_refresh_token_expiration_in_seconds-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5033,44 +6611,45 @@ type AccountSettingsComponent struct {
 
 // Constants associated with the AccountSettingsComponent.RestrictCreateServiceID property.
 // Defines whether or not creating a service ID is access controlled. Valid values:
-//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+//
 // IDs, including the account owner
-//   * NOT_RESTRICTED - all members of an account can create service IDs
-//   * NOT_SET - to 'unset' a previous set value.
+//   - NOT_RESTRICTED - all members of an account can create service IDs
+//   - NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsComponentRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsComponentRestrictCreateServiceIDNotSetConst = "NOT_SET"
-	AccountSettingsComponentRestrictCreateServiceIDRestrictedConst = "RESTRICTED"
+	AccountSettingsComponentRestrictCreateServiceIDNotSetConst        = "NOT_SET"
+	AccountSettingsComponentRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsComponent.RestrictCreatePlatformApikey property.
 // Defines whether or not creating platform API keys is access controlled. Valid values:
-//   * RESTRICTED - to apply access control
-//   * NOT_RESTRICTED - to remove access control
-//   * NOT_SET - to 'unset' a previous set value.
+//   - RESTRICTED - to apply access control
+//   - NOT_RESTRICTED - to remove access control
+//   - NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsComponentRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsComponentRestrictCreatePlatformApikeyNotSetConst = "NOT_SET"
-	AccountSettingsComponentRestrictCreatePlatformApikeyRestrictedConst = "RESTRICTED"
+	AccountSettingsComponentRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
+	AccountSettingsComponentRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsComponent.Mfa property.
 // Defines the MFA trait for the account. Valid values:
-//   * NONE - No MFA trait set
-//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   * TOTP - For all non-federated IBMId users
-//   * TOTP4ALL - For all users
-//   * LEVEL1 - Email-based MFA for all users
-//   * LEVEL2 - TOTP-based MFA for all users
-//   * LEVEL3 - U2F MFA for all users.
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
 const (
-	AccountSettingsComponentMfaLevel1Const = "LEVEL1"
-	AccountSettingsComponentMfaLevel2Const = "LEVEL2"
-	AccountSettingsComponentMfaLevel3Const = "LEVEL3"
-	AccountSettingsComponentMfaNoneConst = "NONE"
+	AccountSettingsComponentMfaLevel1Const     = "LEVEL1"
+	AccountSettingsComponentMfaLevel2Const     = "LEVEL2"
+	AccountSettingsComponentMfaLevel3Const     = "LEVEL3"
+	AccountSettingsComponentMfaNoneConst       = "NONE"
 	AccountSettingsComponentMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	AccountSettingsComponentMfaTotpConst = "TOTP"
-	AccountSettingsComponentMfaTotp4allConst = "TOTP4ALL"
+	AccountSettingsComponentMfaTotpConst       = "TOTP"
+	AccountSettingsComponentMfaTotp4allConst   = "TOTP4ALL"
 )
 
 // UnmarshalAccountSettingsComponent unmarshals an instance of AccountSettingsComponent from the specified map of raw messages.
@@ -5078,42 +6657,209 @@ func UnmarshalAccountSettingsComponent(m map[string]json.RawMessage, result inte
 	obj := new(AccountSettingsComponent)
 	err = core.UnmarshalPrimitive(m, "restrict_create_service_id", &obj.RestrictCreateServiceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_service_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "restrict_create_platform_apikey", &obj.RestrictCreatePlatformApikey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_platform_apikey-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "allowed_ip_addresses", &obj.AllowedIPAddresses)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_ip_addresses-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalAccountSettingsUserMfa)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "session_expiration_in_seconds", &obj.SessionExpirationInSeconds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "session_expiration_in_seconds-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "session_invalidation_in_seconds", &obj.SessionInvalidationInSeconds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "session_invalidation_in_seconds-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_sessions_per_identity", &obj.MaxSessionsPerIdentity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_sessions_per_identity-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "system_access_token_expiration_in_seconds", &obj.SystemAccessTokenExpirationInSeconds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "system_access_token_expiration_in_seconds-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "system_refresh_token_expiration_in_seconds", &obj.SystemRefreshTokenExpirationInSeconds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "system_refresh_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AccountSettingsEffectiveSection : AccountSettingsEffectiveSection struct
+type AccountSettingsEffectiveSection struct {
+	// Defines whether or not creating a service ID is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
+
+	// Defines whether or not creating platform API keys is access controlled. Valid values:
+	//   * RESTRICTED - to apply access control
+	//   * NOT_RESTRICTED - to remove access control
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey,omitempty"`
+
+	// Defines the IP addresses and subnets from which IAM tokens can be created for the account.
+	AllowedIPAddresses *string `json:"allowed_ip_addresses,omitempty"`
+
+	// Defines the MFA requirement for the user. Valid values:
+	//   * NONE - No MFA trait set
+	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+	//   * TOTP - For all non-federated IBMId users
+	//   * TOTP4ALL - For all users
+	//   * LEVEL1 - Email-based MFA for all users
+	//   * LEVEL2 - TOTP-based MFA for all users
+	//   * LEVEL3 - U2F MFA for all users.
+	Mfa *string `json:"mfa,omitempty"`
+
+	// List of users that are exempted from the MFA requirement of the account.
+	UserMfa []EffectiveAccountSettingsUserMfa `json:"user_mfa,omitempty"`
+
+	// Defines the session expiration in seconds for the account. Valid values:
+	//   * Any whole number between between '900' and '86400'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionExpirationInSeconds *string `json:"session_expiration_in_seconds,omitempty"`
+
+	// Defines the period of time in seconds in which a session will be invalidated due to inactivity. Valid values:
+	//   * Any whole number between '900' and '7200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionInvalidationInSeconds *string `json:"session_invalidation_in_seconds,omitempty"`
+
+	// Defines the max allowed sessions per identity required by the account. Valid values:
+	//   * Any whole number greater than 0
+	//   * NOT_SET - To unset account setting and use service default.
+	MaxSessionsPerIdentity *string `json:"max_sessions_per_identity,omitempty"`
+
+	// Defines the access token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '3600'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemAccessTokenExpirationInSeconds *string `json:"system_access_token_expiration_in_seconds,omitempty"`
+
+	// Defines the refresh token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '259200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds,omitempty"`
+}
+
+// Constants associated with the AccountSettingsEffectiveSection.RestrictCreateServiceID property.
+// Defines whether or not creating a service ID is access controlled. Valid values:
+//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+//
+// IDs, including the account owner
+//   - NOT_RESTRICTED - all members of an account can create service IDs
+//   - NOT_SET - to 'unset' a previous set value.
+const (
+	AccountSettingsEffectiveSectionRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsEffectiveSectionRestrictCreateServiceIDNotSetConst        = "NOT_SET"
+	AccountSettingsEffectiveSectionRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
+)
+
+// Constants associated with the AccountSettingsEffectiveSection.RestrictCreatePlatformApikey property.
+// Defines whether or not creating platform API keys is access controlled. Valid values:
+//   - RESTRICTED - to apply access control
+//   - NOT_RESTRICTED - to remove access control
+//   - NOT_SET - to 'unset' a previous set value.
+const (
+	AccountSettingsEffectiveSectionRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsEffectiveSectionRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
+	AccountSettingsEffectiveSectionRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
+)
+
+// Constants associated with the AccountSettingsEffectiveSection.Mfa property.
+// Defines the MFA requirement for the user. Valid values:
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
+const (
+	AccountSettingsEffectiveSectionMfaLevel1Const     = "LEVEL1"
+	AccountSettingsEffectiveSectionMfaLevel2Const     = "LEVEL2"
+	AccountSettingsEffectiveSectionMfaLevel3Const     = "LEVEL3"
+	AccountSettingsEffectiveSectionMfaNoneConst       = "NONE"
+	AccountSettingsEffectiveSectionMfaNoneNoRopcConst = "NONE_NO_ROPC"
+	AccountSettingsEffectiveSectionMfaTotpConst       = "TOTP"
+	AccountSettingsEffectiveSectionMfaTotp4allConst   = "TOTP4ALL"
+)
+
+// UnmarshalAccountSettingsEffectiveSection unmarshals an instance of AccountSettingsEffectiveSection from the specified map of raw messages.
+func UnmarshalAccountSettingsEffectiveSection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AccountSettingsEffectiveSection)
+	err = core.UnmarshalPrimitive(m, "restrict_create_service_id", &obj.RestrictCreateServiceID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_service_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_create_platform_apikey", &obj.RestrictCreatePlatformApikey)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_platform_apikey-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "allowed_ip_addresses", &obj.AllowedIPAddresses)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_ip_addresses-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalEffectiveAccountSettingsUserMfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_expiration_in_seconds", &obj.SessionExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_invalidation_in_seconds", &obj.SessionInvalidationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_invalidation_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max_sessions_per_identity", &obj.MaxSessionsPerIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max_sessions_per_identity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_access_token_expiration_in_seconds", &obj.SystemAccessTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_access_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_refresh_token_expiration_in_seconds", &obj.SystemRefreshTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_refresh_token_expiration_in_seconds-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5191,44 +6937,45 @@ type AccountSettingsResponse struct {
 
 // Constants associated with the AccountSettingsResponse.RestrictCreateServiceID property.
 // Defines whether or not creating a service ID is access controlled. Valid values:
-//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+//
 // IDs, including the account owner
-//   * NOT_RESTRICTED - all members of an account can create service IDs
-//   * NOT_SET - to 'unset' a previous set value.
+//   - NOT_RESTRICTED - all members of an account can create service IDs
+//   - NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsResponseRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsResponseRestrictCreateServiceIDNotSetConst = "NOT_SET"
-	AccountSettingsResponseRestrictCreateServiceIDRestrictedConst = "RESTRICTED"
+	AccountSettingsResponseRestrictCreateServiceIDNotSetConst        = "NOT_SET"
+	AccountSettingsResponseRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsResponse.RestrictCreatePlatformApikey property.
 // Defines whether or not creating platform API keys is access controlled. Valid values:
-//   * RESTRICTED - to apply access control
-//   * NOT_RESTRICTED - to remove access control
-//   * NOT_SET - to 'unset' a previous set value.
+//   - RESTRICTED - to apply access control
+//   - NOT_RESTRICTED - to remove access control
+//   - NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsResponseRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsResponseRestrictCreatePlatformApikeyNotSetConst = "NOT_SET"
-	AccountSettingsResponseRestrictCreatePlatformApikeyRestrictedConst = "RESTRICTED"
+	AccountSettingsResponseRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
+	AccountSettingsResponseRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsResponse.Mfa property.
 // Defines the MFA trait for the account. Valid values:
-//   * NONE - No MFA trait set
-//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   * TOTP - For all non-federated IBMId users
-//   * TOTP4ALL - For all users
-//   * LEVEL1 - Email-based MFA for all users
-//   * LEVEL2 - TOTP-based MFA for all users
-//   * LEVEL3 - U2F MFA for all users.
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
 const (
-	AccountSettingsResponseMfaLevel1Const = "LEVEL1"
-	AccountSettingsResponseMfaLevel2Const = "LEVEL2"
-	AccountSettingsResponseMfaLevel3Const = "LEVEL3"
-	AccountSettingsResponseMfaNoneConst = "NONE"
+	AccountSettingsResponseMfaLevel1Const     = "LEVEL1"
+	AccountSettingsResponseMfaLevel2Const     = "LEVEL2"
+	AccountSettingsResponseMfaLevel3Const     = "LEVEL3"
+	AccountSettingsResponseMfaNoneConst       = "NONE"
 	AccountSettingsResponseMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	AccountSettingsResponseMfaTotpConst = "TOTP"
-	AccountSettingsResponseMfaTotp4allConst = "TOTP4ALL"
+	AccountSettingsResponseMfaTotpConst       = "TOTP"
+	AccountSettingsResponseMfaTotp4allConst   = "TOTP4ALL"
 )
 
 // UnmarshalAccountSettingsResponse unmarshals an instance of AccountSettingsResponse from the specified map of raw messages.
@@ -5236,58 +6983,72 @@ func UnmarshalAccountSettingsResponse(m map[string]json.RawMessage, result inter
 	obj := new(AccountSettingsResponse)
 	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "restrict_create_service_id", &obj.RestrictCreateServiceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_service_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "restrict_create_platform_apikey", &obj.RestrictCreatePlatformApikey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_platform_apikey-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "allowed_ip_addresses", &obj.AllowedIPAddresses)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_ip_addresses-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalAccountSettingsUserMfa)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalEnityHistoryRecord)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "session_expiration_in_seconds", &obj.SessionExpirationInSeconds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "session_expiration_in_seconds-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "session_invalidation_in_seconds", &obj.SessionInvalidationInSeconds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "session_invalidation_in_seconds-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_sessions_per_identity", &obj.MaxSessionsPerIdentity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_sessions_per_identity-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "system_access_token_expiration_in_seconds", &obj.SystemAccessTokenExpirationInSeconds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "system_access_token_expiration_in_seconds-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "system_refresh_token_expiration_in_seconds", &obj.SystemRefreshTokenExpirationInSeconds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "system_refresh_token_expiration_in_seconds-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5325,30 +7086,37 @@ func UnmarshalAccountSettingsTemplateList(m map[string]json.RawMessage, result i
 	obj := new(AccountSettingsTemplateList)
 	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "previous", &obj.Previous)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "account_settings_templates", &obj.AccountSettingsTemplates, UnmarshalAccountSettingsTemplateResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_settings_templates-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5404,58 +7172,72 @@ func UnmarshalAccountSettingsTemplateResponse(m map[string]json.RawMessage, resu
 	obj := new(AccountSettingsTemplateResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "committed", &obj.Committed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "committed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "account_settings", &obj.AccountSettings, UnmarshalAccountSettingsComponent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_settings-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalEnityHistoryRecord)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5480,30 +7262,33 @@ type AccountSettingsUserMfa struct {
 
 // Constants associated with the AccountSettingsUserMfa.Mfa property.
 // Defines the MFA requirement for the user. Valid values:
-//   * NONE - No MFA trait set
-//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   * TOTP - For all non-federated IBMId users
-//   * TOTP4ALL - For all users
-//   * LEVEL1 - Email-based MFA for all users
-//   * LEVEL2 - TOTP-based MFA for all users
-//   * LEVEL3 - U2F MFA for all users.
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
 const (
-	AccountSettingsUserMfaMfaLevel1Const = "LEVEL1"
-	AccountSettingsUserMfaMfaLevel2Const = "LEVEL2"
-	AccountSettingsUserMfaMfaLevel3Const = "LEVEL3"
-	AccountSettingsUserMfaMfaNoneConst = "NONE"
+	AccountSettingsUserMfaMfaLevel1Const     = "LEVEL1"
+	AccountSettingsUserMfaMfaLevel2Const     = "LEVEL2"
+	AccountSettingsUserMfaMfaLevel3Const     = "LEVEL3"
+	AccountSettingsUserMfaMfaNoneConst       = "NONE"
 	AccountSettingsUserMfaMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	AccountSettingsUserMfaMfaTotpConst = "TOTP"
-	AccountSettingsUserMfaMfaTotp4allConst = "TOTP4ALL"
+	AccountSettingsUserMfaMfaTotpConst       = "TOTP"
+	AccountSettingsUserMfaMfaTotp4allConst   = "TOTP4ALL"
 )
 
 // NewAccountSettingsUserMfa : Instantiate AccountSettingsUserMfa (Generic Model Constructor)
 func (*IamIdentityV1) NewAccountSettingsUserMfa(iamID string, mfa string) (_model *AccountSettingsUserMfa, err error) {
 	_model = &AccountSettingsUserMfa{
 		IamID: core.StringPtr(iamID),
-		Mfa: core.StringPtr(mfa),
+		Mfa:   core.StringPtr(mfa),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -5512,10 +7297,167 @@ func UnmarshalAccountSettingsUserMfa(m map[string]json.RawMessage, result interf
 	obj := new(AccountSettingsUserMfa)
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ActionControls : ActionControls struct
+type ActionControls struct {
+	Identities *ActionControlsIdentities `json:"identities,omitempty"`
+
+	Rules *ActionControlsRules `json:"rules" validate:"required"`
+
+	Policies *ActionControlsPolicies `json:"policies" validate:"required"`
+}
+
+// NewActionControls : Instantiate ActionControls (Generic Model Constructor)
+func (*IamIdentityV1) NewActionControls(rules *ActionControlsRules, policies *ActionControlsPolicies) (_model *ActionControls, err error) {
+	_model = &ActionControls{
+		Rules:    rules,
+		Policies: policies,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalActionControls unmarshals an instance of ActionControls from the specified map of raw messages.
+func UnmarshalActionControls(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControls)
+	err = core.UnmarshalModel(m, "identities", &obj.Identities, UnmarshalActionControlsIdentities)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "identities-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalActionControlsRules)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "rules-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "policies", &obj.Policies, UnmarshalActionControlsPolicies)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "policies-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ActionControlsIdentities : ActionControlsIdentities struct
+type ActionControlsIdentities struct {
+	Add *bool `json:"add" validate:"required"`
+
+	Remove *bool `json:"remove" validate:"required"`
+}
+
+// NewActionControlsIdentities : Instantiate ActionControlsIdentities (Generic Model Constructor)
+func (*IamIdentityV1) NewActionControlsIdentities(add bool, remove bool) (_model *ActionControlsIdentities, err error) {
+	_model = &ActionControlsIdentities{
+		Add:    core.BoolPtr(add),
+		Remove: core.BoolPtr(remove),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalActionControlsIdentities unmarshals an instance of ActionControlsIdentities from the specified map of raw messages.
+func UnmarshalActionControlsIdentities(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlsIdentities)
+	err = core.UnmarshalPrimitive(m, "add", &obj.Add)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "add-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remove-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ActionControlsPolicies : ActionControlsPolicies struct
+type ActionControlsPolicies struct {
+	Add *bool `json:"add" validate:"required"`
+
+	Remove *bool `json:"remove" validate:"required"`
+}
+
+// NewActionControlsPolicies : Instantiate ActionControlsPolicies (Generic Model Constructor)
+func (*IamIdentityV1) NewActionControlsPolicies(add bool, remove bool) (_model *ActionControlsPolicies, err error) {
+	_model = &ActionControlsPolicies{
+		Add:    core.BoolPtr(add),
+		Remove: core.BoolPtr(remove),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalActionControlsPolicies unmarshals an instance of ActionControlsPolicies from the specified map of raw messages.
+func UnmarshalActionControlsPolicies(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlsPolicies)
+	err = core.UnmarshalPrimitive(m, "add", &obj.Add)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "add-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remove-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ActionControlsRules : ActionControlsRules struct
+type ActionControlsRules struct {
+	Add *bool `json:"add" validate:"required"`
+
+	Remove *bool `json:"remove" validate:"required"`
+}
+
+// NewActionControlsRules : Instantiate ActionControlsRules (Generic Model Constructor)
+func (*IamIdentityV1) NewActionControlsRules(add bool, remove bool) (_model *ActionControlsRules, err error) {
+	_model = &ActionControlsRules{
+		Add:    core.BoolPtr(add),
+		Remove: core.BoolPtr(remove),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalActionControlsRules unmarshals an instance of ActionControlsRules from the specified map of raw messages.
+func UnmarshalActionControlsRules(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlsRules)
+	err = core.UnmarshalPrimitive(m, "add", &obj.Add)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "add-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remove-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5536,10 +7478,12 @@ func UnmarshalActivity(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Activity)
 	err = core.UnmarshalPrimitive(m, "last_authn", &obj.LastAuthn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_authn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "authn_count", &obj.AuthnCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authn_count-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5565,6 +7509,9 @@ type APIKey struct {
 	// The API key cannot be changed if set to true.
 	Locked *bool `json:"locked" validate:"required"`
 
+	// Defines if API key is disabled, API key cannot be used if 'disabled' is set to true.
+	Disabled *bool `json:"disabled,omitempty"`
+
 	// If set contains a date time string of the creation date in ISO format.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
 
@@ -5577,6 +7524,14 @@ type APIKey struct {
 	// Name of the API key. The name is not checked for uniqueness. Therefore multiple names with the same value can exist.
 	// Access is done via the UUID of the API key.
 	Name *string `json:"name" validate:"required"`
+
+	// Defines whether you can manage CLI login sessions for the API key. When `true`, sessions are created and can be
+	// reviewed or revoked. When `false`, no sessions are tracked. To block access, delete or rotate the API key. Available
+	// only for user API keys.
+	SupportSessions *bool `json:"support_sessions,omitempty"`
+
+	// Defines the action to take when API key is leaked, valid values are 'none', 'disable' and 'delete'.
+	ActionWhenLeaked *string `json:"action_when_leaked,omitempty"`
 
 	// The optional description of the API key. The 'description' property is only available if a description was provided
 	// during a create of an API key.
@@ -5605,62 +7560,92 @@ func UnmarshalAPIKey(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(APIKey)
 	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "locked", &obj.Locked)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "locked-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "disabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by", &obj.CreatedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_at", &obj.ModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "support_sessions", &obj.SupportSessions)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "support_sessions-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "action_when_leaked", &obj.ActionWhenLeaked)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "action_when_leaked-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "apikey", &obj.Apikey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "apikey-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalEnityHistoryRecord)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "activity", &obj.Activity, UnmarshalActivity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "activity-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5677,9 +7662,10 @@ type APIKeyInsideCreateServiceIDRequest struct {
 	// during a create of an API key.
 	Description *string `json:"description,omitempty"`
 
-	// You can optionally passthrough the API key value for this API key. If passed, NO validation of that apiKey value is
-	// done, i.e. the value can be non-URL safe. If omitted, the API key management will create an URL safe opaque API key
-	// value. The value of the API key is checked for uniqueness. Please ensure enough variations when passing in this
+	// You can optionally passthrough the API key value for this API key. If passed, a minimum length validation of 32
+	// characters for that apiKey value is done, i.e. the value can contain any characters and can even be non-URL safe,
+	// but the minimum length requirement must be met. If omitted, the API key management will create an URL safe opaque
+	// API key value. The value of the API key is checked for uniqueness. Ensure enough variations when passing in this
 	// value.
 	Apikey *string `json:"apikey,omitempty"`
 
@@ -5695,6 +7681,9 @@ func (*IamIdentityV1) NewAPIKeyInsideCreateServiceIDRequest(name string) (_model
 		Name: core.StringPtr(name),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -5703,18 +7692,22 @@ func UnmarshalAPIKeyInsideCreateServiceIDRequest(m map[string]json.RawMessage, r
 	obj := new(APIKeyInsideCreateServiceIDRequest)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "apikey", &obj.Apikey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "apikey-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "store_value", &obj.StoreValue)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "store_value-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5752,30 +7745,37 @@ func UnmarshalAPIKeyList(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(APIKeyList)
 	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "previous", &obj.Previous)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "apikeys", &obj.Apikeys, UnmarshalAPIKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "apikeys-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5808,26 +7808,32 @@ func UnmarshalApikeyActivity(m map[string]json.RawMessage, result interface{}) (
 	obj := new(ApikeyActivity)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "serviceid", &obj.Serviceid, UnmarshalApikeyActivityServiceid)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "serviceid-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "user", &obj.User, UnmarshalApikeyActivityUser)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "user-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_authn", &obj.LastAuthn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_authn-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5848,10 +7854,12 @@ func UnmarshalApikeyActivityServiceid(m map[string]json.RawMessage, result inter
 	obj := new(ApikeyActivityServiceid)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5878,18 +7886,22 @@ func UnmarshalApikeyActivityUser(m map[string]json.RawMessage, result interface{
 	obj := new(ApikeyActivityUser)
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "username-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5904,7 +7916,7 @@ type CommitAccountSettingsTemplateOptions struct {
 	// Version of the account settings template.
 	Version *string `json:"version" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5912,7 +7924,7 @@ type CommitAccountSettingsTemplateOptions struct {
 func (*IamIdentityV1) NewCommitAccountSettingsTemplateOptions(templateID string, version string) *CommitAccountSettingsTemplateOptions {
 	return &CommitAccountSettingsTemplateOptions{
 		TemplateID: core.StringPtr(templateID),
-		Version: core.StringPtr(version),
+		Version:    core.StringPtr(version),
 	}
 }
 
@@ -5942,7 +7954,7 @@ type CommitProfileTemplateOptions struct {
 	// Version of the Profile Template.
 	Version *string `json:"version" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -5950,7 +7962,7 @@ type CommitProfileTemplateOptions struct {
 func (*IamIdentityV1) NewCommitProfileTemplateOptions(templateID string, version string) *CommitProfileTemplateOptions {
 	return &CommitProfileTemplateOptions{
 		TemplateID: core.StringPtr(templateID),
-		Version: core.StringPtr(version),
+		Version:    core.StringPtr(version),
 	}
 }
 
@@ -5986,24 +7998,24 @@ type CreateAccountSettingsAssignmentOptions struct {
 	// Identifier of target to deploy to.
 	Target *string `json:"target" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the CreateAccountSettingsAssignmentOptions.TargetType property.
 // Type of target to deploy to.
 const (
-	CreateAccountSettingsAssignmentOptionsTargetTypeAccountConst = "Account"
+	CreateAccountSettingsAssignmentOptionsTargetTypeAccountConst      = "Account"
 	CreateAccountSettingsAssignmentOptionsTargetTypeAccountgroupConst = "AccountGroup"
 )
 
 // NewCreateAccountSettingsAssignmentOptions : Instantiate CreateAccountSettingsAssignmentOptions
 func (*IamIdentityV1) NewCreateAccountSettingsAssignmentOptions(templateID string, templateVersion int64, targetType string, target string) *CreateAccountSettingsAssignmentOptions {
 	return &CreateAccountSettingsAssignmentOptions{
-		TemplateID: core.StringPtr(templateID),
+		TemplateID:      core.StringPtr(templateID),
 		TemplateVersion: core.Int64Ptr(templateVersion),
-		TargetType: core.StringPtr(targetType),
-		Target: core.StringPtr(target),
+		TargetType:      core.StringPtr(targetType),
+		Target:          core.StringPtr(target),
 	}
 }
 
@@ -6050,7 +8062,7 @@ type CreateAccountSettingsTemplateOptions struct {
 
 	AccountSettings *AccountSettingsComponent `json:"account_settings,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6105,7 +8117,7 @@ type CreateAccountSettingsTemplateVersionOptions struct {
 
 	AccountSettings *AccountSettingsComponent `json:"account_settings,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6168,9 +8180,11 @@ type CreateAPIKeyOptions struct {
 	// The account ID of the API key.
 	AccountID *string `json:"account_id,omitempty"`
 
-	// You can optionally passthrough the API key value for this API key. If passed, NO validation of that apiKey value is
-	// done, i.e. the value can be non-URL safe. If omitted, the API key management will create an URL safe opaque API key
-	// value. The value of the API key is checked for uniqueness. Ensure enough variations when passing in this value.
+	// You can optionally passthrough the API key value for this API key. If passed, a minimum length validation of 32
+	// characters for that apiKey value is done, i.e. the value can contain any characters and can even be non-URL safe,
+	// but the minimum length requirement must be met. If omitted, the API key management will create an URL safe opaque
+	// API key value. The value of the API key is checked for uniqueness. Ensure enough variations when passing in this
+	// value.
 	Apikey *string `json:"apikey,omitempty"`
 
 	// Send true or false to set whether the API key value is retrievable in the future by using the Get details of an API
@@ -6178,17 +8192,28 @@ type CreateAPIKeyOptions struct {
 	// of API keys for users.
 	StoreValue *bool `json:"store_value,omitempty"`
 
+	// Defines whether you can manage CLI login sessions for the API key. When `true`, sessions are created and can be
+	// reviewed or revoked. When `false`, no sessions are tracked. To block access, delete or rotate the API key. Available
+	// only for user API keys.
+	SupportSessions *bool `json:"support_sessions,omitempty"`
+
+	// Defines the action to take when API key is leaked, valid values are 'none', 'disable' and 'delete'.
+	ActionWhenLeaked *string `json:"action_when_leaked,omitempty"`
+
 	// Indicates if the API key is locked for further write operations. False by default.
 	EntityLock *string `json:"Entity-Lock,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Indicates if the API key is disabled. False by default.
+	EntityDisable *string `json:"Entity-Disable,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewCreateAPIKeyOptions : Instantiate CreateAPIKeyOptions
 func (*IamIdentityV1) NewCreateAPIKeyOptions(name string, iamID string) *CreateAPIKeyOptions {
 	return &CreateAPIKeyOptions{
-		Name: core.StringPtr(name),
+		Name:  core.StringPtr(name),
 		IamID: core.StringPtr(iamID),
 	}
 }
@@ -6229,9 +8254,27 @@ func (_options *CreateAPIKeyOptions) SetStoreValue(storeValue bool) *CreateAPIKe
 	return _options
 }
 
+// SetSupportSessions : Allow user to set SupportSessions
+func (_options *CreateAPIKeyOptions) SetSupportSessions(supportSessions bool) *CreateAPIKeyOptions {
+	_options.SupportSessions = core.BoolPtr(supportSessions)
+	return _options
+}
+
+// SetActionWhenLeaked : Allow user to set ActionWhenLeaked
+func (_options *CreateAPIKeyOptions) SetActionWhenLeaked(actionWhenLeaked string) *CreateAPIKeyOptions {
+	_options.ActionWhenLeaked = core.StringPtr(actionWhenLeaked)
+	return _options
+}
+
 // SetEntityLock : Allow user to set EntityLock
 func (_options *CreateAPIKeyOptions) SetEntityLock(entityLock string) *CreateAPIKeyOptions {
 	_options.EntityLock = core.StringPtr(entityLock)
+	return _options
+}
+
+// SetEntityDisable : Allow user to set EntityDisable
+func (_options *CreateAPIKeyOptions) SetEntityDisable(entityDisable string) *CreateAPIKeyOptions {
+	_options.EntityDisable = core.StringPtr(entityDisable)
 	return _options
 }
 
@@ -6269,15 +8312,15 @@ type CreateClaimRuleOptions struct {
 	// Session expiration in seconds, only required if type is 'Profile-SAML'.
 	Expiration *int64 `json:"expiration,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewCreateClaimRuleOptions : Instantiate CreateClaimRuleOptions
 func (*IamIdentityV1) NewCreateClaimRuleOptions(profileID string, typeVar string, conditions []ProfileClaimRuleConditions) *CreateClaimRuleOptions {
 	return &CreateClaimRuleOptions{
-		ProfileID: core.StringPtr(profileID),
-		Type: core.StringPtr(typeVar),
+		ProfileID:  core.StringPtr(profileID),
+		Type:       core.StringPtr(typeVar),
 		Conditions: conditions,
 	}
 }
@@ -6350,7 +8393,7 @@ type CreateLinkOptions struct {
 	// Optional name of the Link.
 	Name *string `json:"name,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6358,8 +8401,8 @@ type CreateLinkOptions struct {
 func (*IamIdentityV1) NewCreateLinkOptions(profileID string, crType string, link *CreateProfileLinkRequestLink) *CreateLinkOptions {
 	return &CreateLinkOptions{
 		ProfileID: core.StringPtr(profileID),
-		CrType: core.StringPtr(crType),
-		Link: link,
+		CrType:    core.StringPtr(crType),
+		Link:      link,
 	}
 }
 
@@ -6401,7 +8444,7 @@ type CreateMfaReportOptions struct {
 	// Optional report type. The supported value is 'mfa_status'. List MFA enrollment status for all the identities.
 	Type *string `json:"type,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6445,10 +8488,13 @@ type CreateProfileLinkRequestLink struct {
 // NewCreateProfileLinkRequestLink : Instantiate CreateProfileLinkRequestLink (Generic Model Constructor)
 func (*IamIdentityV1) NewCreateProfileLinkRequestLink(crn string, namespace string) (_model *CreateProfileLinkRequestLink, err error) {
 	_model = &CreateProfileLinkRequestLink{
-		CRN: core.StringPtr(crn),
+		CRN:       core.StringPtr(crn),
 		Namespace: core.StringPtr(namespace),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -6457,14 +8503,17 @@ func UnmarshalCreateProfileLinkRequestLink(m map[string]json.RawMessage, result 
 	obj := new(CreateProfileLinkRequestLink)
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "namespace", &obj.Namespace)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "namespace-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6484,14 +8533,14 @@ type CreateProfileOptions struct {
 	// provided during creation of trusted profile.
 	Description *string `json:"description,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewCreateProfileOptions : Instantiate CreateProfileOptions
 func (*IamIdentityV1) NewCreateProfileOptions(name string, accountID string) *CreateProfileOptions {
 	return &CreateProfileOptions{
-		Name: core.StringPtr(name),
+		Name:      core.StringPtr(name),
 		AccountID: core.StringPtr(accountID),
 	}
 }
@@ -6539,7 +8588,9 @@ type CreateProfileTemplateOptions struct {
 	// Existing policy templates that you can reference to assign access in the trusted profile component.
 	PolicyTemplateReferences []PolicyTemplateReference `json:"policy_template_references,omitempty"`
 
-	// Allows users to set headers on API requests
+	ActionControls *ActionControls `json:"action_controls,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6578,6 +8629,12 @@ func (_options *CreateProfileTemplateOptions) SetPolicyTemplateReferences(policy
 	return _options
 }
 
+// SetActionControls : Allow user to set ActionControls
+func (_options *CreateProfileTemplateOptions) SetActionControls(actionControls *ActionControls) *CreateProfileTemplateOptions {
+	_options.ActionControls = actionControls
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *CreateProfileTemplateOptions) SetHeaders(param map[string]string) *CreateProfileTemplateOptions {
 	options.Headers = param
@@ -6606,7 +8663,9 @@ type CreateProfileTemplateVersionOptions struct {
 	// Existing policy templates that you can reference to assign access in the trusted profile component.
 	PolicyTemplateReferences []PolicyTemplateReference `json:"policy_template_references,omitempty"`
 
-	// Allows users to set headers on API requests
+	ActionControls *ActionControls `json:"action_controls,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6653,6 +8712,12 @@ func (_options *CreateProfileTemplateVersionOptions) SetPolicyTemplateReferences
 	return _options
 }
 
+// SetActionControls : Allow user to set ActionControls
+func (_options *CreateProfileTemplateVersionOptions) SetActionControls(actionControls *ActionControls) *CreateProfileTemplateVersionOptions {
+	_options.ActionControls = actionControls
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *CreateProfileTemplateVersionOptions) SetHeaders(param map[string]string) *CreateProfileTemplateVersionOptions {
 	options.Headers = param
@@ -6671,7 +8736,7 @@ type CreateReportOptions struct {
 	// Optional duration of the report. The supported unit of duration is hours.
 	Duration *string `json:"duration,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6728,7 +8793,7 @@ type CreateServiceIDOptions struct {
 	// Indicates if the service ID is locked for further write operations. False by default.
 	EntityLock *string `json:"Entity-Lock,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6736,7 +8801,7 @@ type CreateServiceIDOptions struct {
 func (*IamIdentityV1) NewCreateServiceIDOptions(accountID string, name string) *CreateServiceIDOptions {
 	return &CreateServiceIDOptions{
 		AccountID: core.StringPtr(accountID),
-		Name: core.StringPtr(name),
+		Name:      core.StringPtr(name),
 	}
 }
 
@@ -6796,24 +8861,24 @@ type CreateTrustedProfileAssignmentOptions struct {
 	// Identifier of target to deploy to.
 	Target *string `json:"target" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the CreateTrustedProfileAssignmentOptions.TargetType property.
 // Type of target to deploy to.
 const (
-	CreateTrustedProfileAssignmentOptionsTargetTypeAccountConst = "Account"
+	CreateTrustedProfileAssignmentOptionsTargetTypeAccountConst      = "Account"
 	CreateTrustedProfileAssignmentOptionsTargetTypeAccountgroupConst = "AccountGroup"
 )
 
 // NewCreateTrustedProfileAssignmentOptions : Instantiate CreateTrustedProfileAssignmentOptions
 func (*IamIdentityV1) NewCreateTrustedProfileAssignmentOptions(templateID string, templateVersion int64, targetType string, target string) *CreateTrustedProfileAssignmentOptions {
 	return &CreateTrustedProfileAssignmentOptions{
-		TemplateID: core.StringPtr(templateID),
+		TemplateID:      core.StringPtr(templateID),
 		TemplateVersion: core.Int64Ptr(templateVersion),
-		TargetType: core.StringPtr(targetType),
-		Target: core.StringPtr(target),
+		TargetType:      core.StringPtr(targetType),
+		Target:          core.StringPtr(target),
 	}
 }
 
@@ -6852,7 +8917,7 @@ type DeleteAccountSettingsAssignmentOptions struct {
 	// ID of the Assignment Record.
 	AssignmentID *string `json:"assignment_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6883,7 +8948,7 @@ type DeleteAccountSettingsTemplateVersionOptions struct {
 	// Version of the account settings template.
 	Version *string `json:"version" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6891,7 +8956,7 @@ type DeleteAccountSettingsTemplateVersionOptions struct {
 func (*IamIdentityV1) NewDeleteAccountSettingsTemplateVersionOptions(templateID string, version string) *DeleteAccountSettingsTemplateVersionOptions {
 	return &DeleteAccountSettingsTemplateVersionOptions{
 		TemplateID: core.StringPtr(templateID),
-		Version: core.StringPtr(version),
+		Version:    core.StringPtr(version),
 	}
 }
 
@@ -6918,7 +8983,7 @@ type DeleteAllVersionsOfAccountSettingsTemplateOptions struct {
 	// ID of the account settings template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6946,7 +9011,7 @@ type DeleteAllVersionsOfProfileTemplateOptions struct {
 	// ID of the trusted profile template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6974,7 +9039,7 @@ type DeleteAPIKeyOptions struct {
 	// Unique ID of the API key.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7005,7 +9070,7 @@ type DeleteClaimRuleOptions struct {
 	// ID of the claim rule to delete.
 	RuleID *string `json:"rule-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7013,7 +9078,7 @@ type DeleteClaimRuleOptions struct {
 func (*IamIdentityV1) NewDeleteClaimRuleOptions(profileID string, ruleID string) *DeleteClaimRuleOptions {
 	return &DeleteClaimRuleOptions{
 		ProfileID: core.StringPtr(profileID),
-		RuleID: core.StringPtr(ruleID),
+		RuleID:    core.StringPtr(ruleID),
 	}
 }
 
@@ -7043,7 +9108,7 @@ type DeleteLinkOptions struct {
 	// ID of the link.
 	LinkID *string `json:"link-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7051,7 +9116,7 @@ type DeleteLinkOptions struct {
 func (*IamIdentityV1) NewDeleteLinkOptions(profileID string, linkID string) *DeleteLinkOptions {
 	return &DeleteLinkOptions{
 		ProfileID: core.StringPtr(profileID),
-		LinkID: core.StringPtr(linkID),
+		LinkID:    core.StringPtr(linkID),
 	}
 }
 
@@ -7073,6 +9138,64 @@ func (options *DeleteLinkOptions) SetHeaders(param map[string]string) *DeleteLin
 	return options
 }
 
+// DeletePreferencesOnScopeAccountOptions : The DeletePreferencesOnScopeAccount options.
+type DeletePreferencesOnScopeAccountOptions struct {
+	// Account id to delete preference for.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// IAM id to delete the preference for.
+	IamID *string `json:"iam_id" validate:"required,ne="`
+
+	// Service of the preference to be deleted.
+	Service *string `json:"service" validate:"required,ne="`
+
+	// Identifier of preference to be deleted.
+	PreferenceID *string `json:"preference_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeletePreferencesOnScopeAccountOptions : Instantiate DeletePreferencesOnScopeAccountOptions
+func (*IamIdentityV1) NewDeletePreferencesOnScopeAccountOptions(accountID string, iamID string, service string, preferenceID string) *DeletePreferencesOnScopeAccountOptions {
+	return &DeletePreferencesOnScopeAccountOptions{
+		AccountID:    core.StringPtr(accountID),
+		IamID:        core.StringPtr(iamID),
+		Service:      core.StringPtr(service),
+		PreferenceID: core.StringPtr(preferenceID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *DeletePreferencesOnScopeAccountOptions) SetAccountID(accountID string) *DeletePreferencesOnScopeAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIamID : Allow user to set IamID
+func (_options *DeletePreferencesOnScopeAccountOptions) SetIamID(iamID string) *DeletePreferencesOnScopeAccountOptions {
+	_options.IamID = core.StringPtr(iamID)
+	return _options
+}
+
+// SetService : Allow user to set Service
+func (_options *DeletePreferencesOnScopeAccountOptions) SetService(service string) *DeletePreferencesOnScopeAccountOptions {
+	_options.Service = core.StringPtr(service)
+	return _options
+}
+
+// SetPreferenceID : Allow user to set PreferenceID
+func (_options *DeletePreferencesOnScopeAccountOptions) SetPreferenceID(preferenceID string) *DeletePreferencesOnScopeAccountOptions {
+	_options.PreferenceID = core.StringPtr(preferenceID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeletePreferencesOnScopeAccountOptions) SetHeaders(param map[string]string) *DeletePreferencesOnScopeAccountOptions {
+	options.Headers = param
+	return options
+}
+
 // DeleteProfileIdentityOptions : The DeleteProfileIdentity options.
 type DeleteProfileIdentityOptions struct {
 	// ID of the trusted profile.
@@ -7084,22 +9207,22 @@ type DeleteProfileIdentityOptions struct {
 	// Identifier of the identity that can assume the trusted profiles.
 	IdentifierID *string `json:"identifier-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the DeleteProfileIdentityOptions.IdentityType property.
 // Type of the identity.
 const (
-	DeleteProfileIdentityOptionsIdentityTypeCRNConst = "crn"
+	DeleteProfileIdentityOptionsIdentityTypeCRNConst       = "crn"
 	DeleteProfileIdentityOptionsIdentityTypeServiceidConst = "serviceid"
-	DeleteProfileIdentityOptionsIdentityTypeUserConst = "user"
+	DeleteProfileIdentityOptionsIdentityTypeUserConst      = "user"
 )
 
 // NewDeleteProfileIdentityOptions : Instantiate DeleteProfileIdentityOptions
 func (*IamIdentityV1) NewDeleteProfileIdentityOptions(profileID string, identityType string, identifierID string) *DeleteProfileIdentityOptions {
 	return &DeleteProfileIdentityOptions{
-		ProfileID: core.StringPtr(profileID),
+		ProfileID:    core.StringPtr(profileID),
 		IdentityType: core.StringPtr(identityType),
 		IdentifierID: core.StringPtr(identifierID),
 	}
@@ -7134,7 +9257,7 @@ type DeleteProfileOptions struct {
 	// ID of the trusted profile.
 	ProfileID *string `json:"profile-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7165,7 +9288,7 @@ type DeleteProfileTemplateVersionOptions struct {
 	// Version of the Profile Template.
 	Version *string `json:"version" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7173,7 +9296,7 @@ type DeleteProfileTemplateVersionOptions struct {
 func (*IamIdentityV1) NewDeleteProfileTemplateVersionOptions(templateID string, version string) *DeleteProfileTemplateVersionOptions {
 	return &DeleteProfileTemplateVersionOptions{
 		TemplateID: core.StringPtr(templateID),
-		Version: core.StringPtr(version),
+		Version:    core.StringPtr(version),
 	}
 }
 
@@ -7200,7 +9323,7 @@ type DeleteServiceIDOptions struct {
 	// Unique ID of the service ID.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7228,7 +9351,7 @@ type DeleteTrustedProfileAssignmentOptions struct {
 	// ID of the Assignment Record.
 	AssignmentID *string `json:"assignment_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7247,6 +9370,194 @@ func (_options *DeleteTrustedProfileAssignmentOptions) SetAssignmentID(assignmen
 
 // SetHeaders : Allow user to set Headers
 func (options *DeleteTrustedProfileAssignmentOptions) SetHeaders(param map[string]string) *DeleteTrustedProfileAssignmentOptions {
+	options.Headers = param
+	return options
+}
+
+// DisableAPIKeyOptions : The DisableAPIKey options.
+type DisableAPIKeyOptions struct {
+	// Unique ID of the API key.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDisableAPIKeyOptions : Instantiate DisableAPIKeyOptions
+func (*IamIdentityV1) NewDisableAPIKeyOptions(id string) *DisableAPIKeyOptions {
+	return &DisableAPIKeyOptions{
+		ID: core.StringPtr(id),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *DisableAPIKeyOptions) SetID(id string) *DisableAPIKeyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DisableAPIKeyOptions) SetHeaders(param map[string]string) *DisableAPIKeyOptions {
+	options.Headers = param
+	return options
+}
+
+// EffectiveAccountSettingsResponse : Response body format for Account Settings REST requests.
+type EffectiveAccountSettingsResponse struct {
+	// Context with key properties for problem determination.
+	Context *ResponseContext `json:"context,omitempty"`
+
+	// Unique ID of the account.
+	AccountID *string `json:"account_id" validate:"required"`
+
+	Effective *AccountSettingsEffectiveSection `json:"effective" validate:"required"`
+
+	Account *AccountSettingsAccountSection `json:"account" validate:"required"`
+
+	// assigned template section.
+	AssignedTemplates []AccountSettingsAssignedTemplatesSection `json:"assigned_templates,omitempty"`
+}
+
+// UnmarshalEffectiveAccountSettingsResponse unmarshals an instance of EffectiveAccountSettingsResponse from the specified map of raw messages.
+func UnmarshalEffectiveAccountSettingsResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EffectiveAccountSettingsResponse)
+	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "effective", &obj.Effective, UnmarshalAccountSettingsEffectiveSection)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "effective-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "account", &obj.Account, UnmarshalAccountSettingsAccountSection)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "assigned_templates", &obj.AssignedTemplates, UnmarshalAccountSettingsAssignedTemplatesSection)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "assigned_templates-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EffectiveAccountSettingsUserMfa : EffectiveAccountSettingsUserMfa struct
+type EffectiveAccountSettingsUserMfa struct {
+	// The iam_id of the user.
+	IamID *string `json:"iam_id" validate:"required"`
+
+	// Defines the MFA requirement for the user. Valid values:
+	//   * NONE - No MFA trait set
+	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+	//   * TOTP - For all non-federated IBMId users
+	//   * TOTP4ALL - For all users
+	//   * LEVEL1 - Email-based MFA for all users
+	//   * LEVEL2 - TOTP-based MFA for all users
+	//   * LEVEL3 - U2F MFA for all users.
+	Mfa *string `json:"mfa" validate:"required"`
+
+	// name of the user account.
+	Name *string `json:"name,omitempty"`
+
+	// userName of the user.
+	UserName *string `json:"userName,omitempty"`
+
+	// email of the user.
+	Email *string `json:"email,omitempty"`
+
+	// optional description.
+	Description *string `json:"description,omitempty"`
+}
+
+// Constants associated with the EffectiveAccountSettingsUserMfa.Mfa property.
+// Defines the MFA requirement for the user. Valid values:
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
+const (
+	EffectiveAccountSettingsUserMfaMfaLevel1Const     = "LEVEL1"
+	EffectiveAccountSettingsUserMfaMfaLevel2Const     = "LEVEL2"
+	EffectiveAccountSettingsUserMfaMfaLevel3Const     = "LEVEL3"
+	EffectiveAccountSettingsUserMfaMfaNoneConst       = "NONE"
+	EffectiveAccountSettingsUserMfaMfaNoneNoRopcConst = "NONE_NO_ROPC"
+	EffectiveAccountSettingsUserMfaMfaTotpConst       = "TOTP"
+	EffectiveAccountSettingsUserMfaMfaTotp4allConst   = "TOTP4ALL"
+)
+
+// UnmarshalEffectiveAccountSettingsUserMfa unmarshals an instance of EffectiveAccountSettingsUserMfa from the specified map of raw messages.
+func UnmarshalEffectiveAccountSettingsUserMfa(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EffectiveAccountSettingsUserMfa)
+	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "userName", &obj.UserName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "userName-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EnableAPIKeyOptions : The EnableAPIKey options.
+type EnableAPIKeyOptions struct {
+	// Unique ID of the API key.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewEnableAPIKeyOptions : Instantiate EnableAPIKeyOptions
+func (*IamIdentityV1) NewEnableAPIKeyOptions(id string) *EnableAPIKeyOptions {
+	return &EnableAPIKeyOptions{
+		ID: core.StringPtr(id),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *EnableAPIKeyOptions) SetID(id string) *EnableAPIKeyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *EnableAPIKeyOptions) SetHeaders(param map[string]string) *EnableAPIKeyOptions {
 	options.Headers = param
 	return options
 }
@@ -7277,26 +9588,32 @@ func UnmarshalEnityHistoryRecord(m map[string]json.RawMessage, result interface{
 	obj := new(EnityHistoryRecord)
 	err = core.UnmarshalPrimitive(m, "timestamp", &obj.Timestamp)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "timestamp-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "iam_id_account", &obj.IamIDAccount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id_account-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "action", &obj.Action)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "action-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "params", &obj.Params)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "params-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7320,14 +9637,17 @@ func UnmarshalEntityActivity(m map[string]json.RawMessage, result interface{}) (
 	obj := new(EntityActivity)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_authn", &obj.LastAuthn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_authn-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7356,18 +9676,22 @@ func UnmarshalError(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(Error)
 	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message_code", &obj.MessageCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "details", &obj.Details)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "details-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7394,18 +9718,22 @@ func UnmarshalExceptionResponse(m map[string]json.RawMessage, result interface{}
 	obj := new(ExceptionResponse)
 	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status_code", &obj.StatusCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status_code-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "errors", &obj.Errors, UnmarshalError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "trace", &obj.Trace)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "trace-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7420,7 +9748,7 @@ type GetAccountSettingsAssignmentOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7457,7 +9785,7 @@ type GetAccountSettingsOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7497,7 +9825,7 @@ type GetAccountSettingsTemplateVersionOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7505,7 +9833,7 @@ type GetAccountSettingsTemplateVersionOptions struct {
 func (*IamIdentityV1) NewGetAccountSettingsTemplateVersionOptions(templateID string, version string) *GetAccountSettingsTemplateVersionOptions {
 	return &GetAccountSettingsTemplateVersionOptions{
 		TemplateID: core.StringPtr(templateID),
-		Version: core.StringPtr(version),
+		Version:    core.StringPtr(version),
 	}
 }
 
@@ -7533,6 +9861,44 @@ func (options *GetAccountSettingsTemplateVersionOptions) SetHeaders(param map[st
 	return options
 }
 
+// GetAllPreferencesOnScopeAccountOptions : The GetAllPreferencesOnScopeAccount options.
+type GetAllPreferencesOnScopeAccountOptions struct {
+	// Account id to get preferences for.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// IAM id to get the preferences for.
+	IamID *string `json:"iam_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetAllPreferencesOnScopeAccountOptions : Instantiate GetAllPreferencesOnScopeAccountOptions
+func (*IamIdentityV1) NewGetAllPreferencesOnScopeAccountOptions(accountID string, iamID string) *GetAllPreferencesOnScopeAccountOptions {
+	return &GetAllPreferencesOnScopeAccountOptions{
+		AccountID: core.StringPtr(accountID),
+		IamID:     core.StringPtr(iamID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *GetAllPreferencesOnScopeAccountOptions) SetAccountID(accountID string) *GetAllPreferencesOnScopeAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIamID : Allow user to set IamID
+func (_options *GetAllPreferencesOnScopeAccountOptions) SetIamID(iamID string) *GetAllPreferencesOnScopeAccountOptions {
+	_options.IamID = core.StringPtr(iamID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetAllPreferencesOnScopeAccountOptions) SetHeaders(param map[string]string) *GetAllPreferencesOnScopeAccountOptions {
+	options.Headers = param
+	return options
+}
+
 // GetAPIKeyOptions : The GetAPIKey options.
 type GetAPIKeyOptions struct {
 	// Unique ID of the API key.
@@ -7545,7 +9911,7 @@ type GetAPIKeyOptions struct {
 	// only request this when needed.
 	IncludeActivity *bool `json:"include_activity,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7588,7 +9954,7 @@ type GetAPIKeysDetailsOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7623,7 +9989,7 @@ type GetClaimRuleOptions struct {
 	// ID of the claim rule to get.
 	RuleID *string `json:"rule-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7631,7 +9997,7 @@ type GetClaimRuleOptions struct {
 func (*IamIdentityV1) NewGetClaimRuleOptions(profileID string, ruleID string) *GetClaimRuleOptions {
 	return &GetClaimRuleOptions{
 		ProfileID: core.StringPtr(profileID),
-		RuleID: core.StringPtr(ruleID),
+		RuleID:    core.StringPtr(ruleID),
 	}
 }
 
@@ -7653,6 +10019,52 @@ func (options *GetClaimRuleOptions) SetHeaders(param map[string]string) *GetClai
 	return options
 }
 
+// GetEffectiveAccountSettingsOptions : The GetEffectiveAccountSettings options.
+type GetEffectiveAccountSettingsOptions struct {
+	// Unique ID of the account.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// Defines if the entity history is included in the response.
+	IncludeHistory *bool `json:"include_history,omitempty"`
+
+	// Enrich MFA exemptions with user information.
+	ResolveUserMfa *bool `json:"resolve_user_mfa,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetEffectiveAccountSettingsOptions : Instantiate GetEffectiveAccountSettingsOptions
+func (*IamIdentityV1) NewGetEffectiveAccountSettingsOptions(accountID string) *GetEffectiveAccountSettingsOptions {
+	return &GetEffectiveAccountSettingsOptions{
+		AccountID: core.StringPtr(accountID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *GetEffectiveAccountSettingsOptions) SetAccountID(accountID string) *GetEffectiveAccountSettingsOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIncludeHistory : Allow user to set IncludeHistory
+func (_options *GetEffectiveAccountSettingsOptions) SetIncludeHistory(includeHistory bool) *GetEffectiveAccountSettingsOptions {
+	_options.IncludeHistory = core.BoolPtr(includeHistory)
+	return _options
+}
+
+// SetResolveUserMfa : Allow user to set ResolveUserMfa
+func (_options *GetEffectiveAccountSettingsOptions) SetResolveUserMfa(resolveUserMfa bool) *GetEffectiveAccountSettingsOptions {
+	_options.ResolveUserMfa = core.BoolPtr(resolveUserMfa)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetEffectiveAccountSettingsOptions) SetHeaders(param map[string]string) *GetEffectiveAccountSettingsOptions {
+	options.Headers = param
+	return options
+}
+
 // GetLatestAccountSettingsTemplateVersionOptions : The GetLatestAccountSettingsTemplateVersion options.
 type GetLatestAccountSettingsTemplateVersionOptions struct {
 	// ID of the account settings template.
@@ -7661,7 +10073,7 @@ type GetLatestAccountSettingsTemplateVersionOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7698,7 +10110,7 @@ type GetLatestProfileTemplateVersionOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7735,7 +10147,7 @@ type GetLinkOptions struct {
 	// ID of the link.
 	LinkID *string `json:"link-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7743,7 +10155,7 @@ type GetLinkOptions struct {
 func (*IamIdentityV1) NewGetLinkOptions(profileID string, linkID string) *GetLinkOptions {
 	return &GetLinkOptions{
 		ProfileID: core.StringPtr(profileID),
-		LinkID: core.StringPtr(linkID),
+		LinkID:    core.StringPtr(linkID),
 	}
 }
 
@@ -7773,7 +10185,7 @@ type GetMfaReportOptions struct {
 	// Reference for the report to be generated, You can use 'latest' to get the latest report for the given account.
 	Reference *string `json:"reference" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7811,7 +10223,7 @@ type GetMfaStatusOptions struct {
 	// iam_id of the user. This user must be the member of the account.
 	IamID *string `json:"iam_id" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7819,7 +10231,7 @@ type GetMfaStatusOptions struct {
 func (*IamIdentityV1) NewGetMfaStatusOptions(accountID string, iamID string) *GetMfaStatusOptions {
 	return &GetMfaStatusOptions{
 		AccountID: core.StringPtr(accountID),
-		IamID: core.StringPtr(iamID),
+		IamID:     core.StringPtr(iamID),
 	}
 }
 
@@ -7841,12 +10253,70 @@ func (options *GetMfaStatusOptions) SetHeaders(param map[string]string) *GetMfaS
 	return options
 }
 
+// GetPreferencesOnScopeAccountOptions : The GetPreferencesOnScopeAccount options.
+type GetPreferencesOnScopeAccountOptions struct {
+	// Account id to get preference for.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// IAM id to get the preference for.
+	IamID *string `json:"iam_id" validate:"required,ne="`
+
+	// Service of the preference to be fetched.
+	Service *string `json:"service" validate:"required,ne="`
+
+	// Identifier of preference to be fetched.
+	PreferenceID *string `json:"preference_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetPreferencesOnScopeAccountOptions : Instantiate GetPreferencesOnScopeAccountOptions
+func (*IamIdentityV1) NewGetPreferencesOnScopeAccountOptions(accountID string, iamID string, service string, preferenceID string) *GetPreferencesOnScopeAccountOptions {
+	return &GetPreferencesOnScopeAccountOptions{
+		AccountID:    core.StringPtr(accountID),
+		IamID:        core.StringPtr(iamID),
+		Service:      core.StringPtr(service),
+		PreferenceID: core.StringPtr(preferenceID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *GetPreferencesOnScopeAccountOptions) SetAccountID(accountID string) *GetPreferencesOnScopeAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIamID : Allow user to set IamID
+func (_options *GetPreferencesOnScopeAccountOptions) SetIamID(iamID string) *GetPreferencesOnScopeAccountOptions {
+	_options.IamID = core.StringPtr(iamID)
+	return _options
+}
+
+// SetService : Allow user to set Service
+func (_options *GetPreferencesOnScopeAccountOptions) SetService(service string) *GetPreferencesOnScopeAccountOptions {
+	_options.Service = core.StringPtr(service)
+	return _options
+}
+
+// SetPreferenceID : Allow user to set PreferenceID
+func (_options *GetPreferencesOnScopeAccountOptions) SetPreferenceID(preferenceID string) *GetPreferencesOnScopeAccountOptions {
+	_options.PreferenceID = core.StringPtr(preferenceID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetPreferencesOnScopeAccountOptions) SetHeaders(param map[string]string) *GetPreferencesOnScopeAccountOptions {
+	options.Headers = param
+	return options
+}
+
 // GetProfileIdentitiesOptions : The GetProfileIdentities options.
 type GetProfileIdentitiesOptions struct {
 	// ID of the trusted profile.
 	ProfileID *string `json:"profile-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7880,22 +10350,22 @@ type GetProfileIdentityOptions struct {
 	// Identifier of the identity that can assume the trusted profiles.
 	IdentifierID *string `json:"identifier-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the GetProfileIdentityOptions.IdentityType property.
 // Type of the identity.
 const (
-	GetProfileIdentityOptionsIdentityTypeCRNConst = "crn"
+	GetProfileIdentityOptionsIdentityTypeCRNConst       = "crn"
 	GetProfileIdentityOptionsIdentityTypeServiceidConst = "serviceid"
-	GetProfileIdentityOptionsIdentityTypeUserConst = "user"
+	GetProfileIdentityOptionsIdentityTypeUserConst      = "user"
 )
 
 // NewGetProfileIdentityOptions : Instantiate GetProfileIdentityOptions
 func (*IamIdentityV1) NewGetProfileIdentityOptions(profileID string, identityType string, identifierID string) *GetProfileIdentityOptions {
 	return &GetProfileIdentityOptions{
-		ProfileID: core.StringPtr(profileID),
+		ProfileID:    core.StringPtr(profileID),
 		IdentityType: core.StringPtr(identityType),
 		IdentifierID: core.StringPtr(identifierID),
 	}
@@ -7934,7 +10404,7 @@ type GetProfileOptions struct {
 	// only request this when needed.
 	IncludeActivity *bool `json:"include_activity,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7974,7 +10444,7 @@ type GetProfileTemplateVersionOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7982,7 +10452,7 @@ type GetProfileTemplateVersionOptions struct {
 func (*IamIdentityV1) NewGetProfileTemplateVersionOptions(templateID string, version string) *GetProfileTemplateVersionOptions {
 	return &GetProfileTemplateVersionOptions{
 		TemplateID: core.StringPtr(templateID),
-		Version: core.StringPtr(version),
+		Version:    core.StringPtr(version),
 	}
 }
 
@@ -8018,7 +10488,7 @@ type GetReportOptions struct {
 	// Reference for the report to be generated, You can use 'latest' to get the latest report for the given account.
 	Reference *string `json:"reference" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8060,7 +10530,7 @@ type GetServiceIDOptions struct {
 	// only request this when needed.
 	IncludeActivity *bool `json:"include_activity,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8103,7 +10573,7 @@ type GetTrustedProfileAssignmentOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8177,71 +10647,72 @@ type IDBasedMfaEnrollment struct {
 
 // Constants associated with the IDBasedMfaEnrollment.TraitAccountDefault property.
 // Defines the MFA trait for the account. Valid values:
-//   * NONE - No MFA trait set
-//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   * TOTP - For all non-federated IBMId users
-//   * TOTP4ALL - For all users
-//   * LEVEL1 - Email-based MFA for all users
-//   * LEVEL2 - TOTP-based MFA for all users
-//   * LEVEL3 - U2F MFA for all users.
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
 const (
-	IDBasedMfaEnrollmentTraitAccountDefaultLevel1Const = "LEVEL1"
-	IDBasedMfaEnrollmentTraitAccountDefaultLevel2Const = "LEVEL2"
-	IDBasedMfaEnrollmentTraitAccountDefaultLevel3Const = "LEVEL3"
-	IDBasedMfaEnrollmentTraitAccountDefaultNoneConst = "NONE"
+	IDBasedMfaEnrollmentTraitAccountDefaultLevel1Const     = "LEVEL1"
+	IDBasedMfaEnrollmentTraitAccountDefaultLevel2Const     = "LEVEL2"
+	IDBasedMfaEnrollmentTraitAccountDefaultLevel3Const     = "LEVEL3"
+	IDBasedMfaEnrollmentTraitAccountDefaultNoneConst       = "NONE"
 	IDBasedMfaEnrollmentTraitAccountDefaultNoneNoRopcConst = "NONE_NO_ROPC"
-	IDBasedMfaEnrollmentTraitAccountDefaultTotpConst = "TOTP"
-	IDBasedMfaEnrollmentTraitAccountDefaultTotp4allConst = "TOTP4ALL"
+	IDBasedMfaEnrollmentTraitAccountDefaultTotpConst       = "TOTP"
+	IDBasedMfaEnrollmentTraitAccountDefaultTotp4allConst   = "TOTP4ALL"
 )
 
 // Constants associated with the IDBasedMfaEnrollment.TraitUserSpecific property.
 // Defines the MFA trait for the account. Valid values:
-//   * NONE - No MFA trait set
-//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   * TOTP - For all non-federated IBMId users
-//   * TOTP4ALL - For all users
-//   * LEVEL1 - Email-based MFA for all users
-//   * LEVEL2 - TOTP-based MFA for all users
-//   * LEVEL3 - U2F MFA for all users.
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
 const (
-	IDBasedMfaEnrollmentTraitUserSpecificLevel1Const = "LEVEL1"
-	IDBasedMfaEnrollmentTraitUserSpecificLevel2Const = "LEVEL2"
-	IDBasedMfaEnrollmentTraitUserSpecificLevel3Const = "LEVEL3"
-	IDBasedMfaEnrollmentTraitUserSpecificNoneConst = "NONE"
+	IDBasedMfaEnrollmentTraitUserSpecificLevel1Const     = "LEVEL1"
+	IDBasedMfaEnrollmentTraitUserSpecificLevel2Const     = "LEVEL2"
+	IDBasedMfaEnrollmentTraitUserSpecificLevel3Const     = "LEVEL3"
+	IDBasedMfaEnrollmentTraitUserSpecificNoneConst       = "NONE"
 	IDBasedMfaEnrollmentTraitUserSpecificNoneNoRopcConst = "NONE_NO_ROPC"
-	IDBasedMfaEnrollmentTraitUserSpecificTotpConst = "TOTP"
-	IDBasedMfaEnrollmentTraitUserSpecificTotp4allConst = "TOTP4ALL"
+	IDBasedMfaEnrollmentTraitUserSpecificTotpConst       = "TOTP"
+	IDBasedMfaEnrollmentTraitUserSpecificTotp4allConst   = "TOTP4ALL"
 )
 
 // Constants associated with the IDBasedMfaEnrollment.TraitEffective property.
 // Defines the MFA trait for the account. Valid values:
-//   * NONE - No MFA trait set
-//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   * TOTP - For all non-federated IBMId users
-//   * TOTP4ALL - For all users
-//   * LEVEL1 - Email-based MFA for all users
-//   * LEVEL2 - TOTP-based MFA for all users
-//   * LEVEL3 - U2F MFA for all users.
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
 const (
-	IDBasedMfaEnrollmentTraitEffectiveLevel1Const = "LEVEL1"
-	IDBasedMfaEnrollmentTraitEffectiveLevel2Const = "LEVEL2"
-	IDBasedMfaEnrollmentTraitEffectiveLevel3Const = "LEVEL3"
-	IDBasedMfaEnrollmentTraitEffectiveNoneConst = "NONE"
+	IDBasedMfaEnrollmentTraitEffectiveLevel1Const     = "LEVEL1"
+	IDBasedMfaEnrollmentTraitEffectiveLevel2Const     = "LEVEL2"
+	IDBasedMfaEnrollmentTraitEffectiveLevel3Const     = "LEVEL3"
+	IDBasedMfaEnrollmentTraitEffectiveNoneConst       = "NONE"
 	IDBasedMfaEnrollmentTraitEffectiveNoneNoRopcConst = "NONE_NO_ROPC"
-	IDBasedMfaEnrollmentTraitEffectiveTotpConst = "TOTP"
-	IDBasedMfaEnrollmentTraitEffectiveTotp4allConst = "TOTP4ALL"
+	IDBasedMfaEnrollmentTraitEffectiveTotpConst       = "TOTP"
+	IDBasedMfaEnrollmentTraitEffectiveTotp4allConst   = "TOTP4ALL"
 )
 
 // Constants associated with the IDBasedMfaEnrollment.ComplyState property.
 // Defines comply state for the account. Valid values:
-//   * NO - User does not comply in the given account.
-//   * ACCOUNT- User complies in the given account, but does not comply in at least one of the other account
+//   - NO - User does not comply in the given account.
+//   - ACCOUNT- User complies in the given account, but does not comply in at least one of the other account
+//
 // memberships.
-//   * CROSS_ACCOUNT - User complies in the given account and across all other account memberships.
+//   - CROSS_ACCOUNT - User complies in the given account and across all other account memberships.
 const (
-	IDBasedMfaEnrollmentComplyStateAccountConst = "ACCOUNT"
+	IDBasedMfaEnrollmentComplyStateAccountConst      = "ACCOUNT"
 	IDBasedMfaEnrollmentComplyStateCrossAccountConst = "CROSS_ACCOUNT"
-	IDBasedMfaEnrollmentComplyStateNoConst = "NO"
+	IDBasedMfaEnrollmentComplyStateNoConst           = "NO"
 )
 
 // UnmarshalIDBasedMfaEnrollment unmarshals an instance of IDBasedMfaEnrollment from the specified map of raw messages.
@@ -8249,22 +10720,105 @@ func UnmarshalIDBasedMfaEnrollment(m map[string]json.RawMessage, result interfac
 	obj := new(IDBasedMfaEnrollment)
 	err = core.UnmarshalPrimitive(m, "trait_account_default", &obj.TraitAccountDefault)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "trait_account_default-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "trait_user_specific", &obj.TraitUserSpecific)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "trait_user_specific-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "trait_effective", &obj.TraitEffective)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "trait_effective-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "complies", &obj.Complies)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "complies-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "comply_state", &obj.ComplyState)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "comply_state-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// IdentityPreferenceResponse : IdentityPreferenceResponse struct
+type IdentityPreferenceResponse struct {
+	// Service of the preference.
+	Service *string `json:"service,omitempty"`
+
+	// Unique ID of the preference.
+	ID *string `json:"id,omitempty"`
+
+	// Account ID of the preference, only present for scope 'account'.
+	AccountID *string `json:"account_id,omitempty"`
+
+	// Scope of the preference, 'global' or 'account'.
+	Scope *string `json:"scope,omitempty"`
+
+	// String value of the preference, only one value property is set, either 'value_string' or 'value_list_of_strings' is
+	// present.
+	ValueString *string `json:"value_string,omitempty"`
+
+	// List of value of the preference, only one value property is set, either 'value_string' or 'value_list_of_strings' is
+	// present.
+	ValueListOfStrings []string `json:"value_list_of_strings,omitempty"`
+}
+
+// UnmarshalIdentityPreferenceResponse unmarshals an instance of IdentityPreferenceResponse from the specified map of raw messages.
+func UnmarshalIdentityPreferenceResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IdentityPreferenceResponse)
+	err = core.UnmarshalPrimitive(m, "service", &obj.Service)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "scope", &obj.Scope)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "scope-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value_string", &obj.ValueString)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value_string-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value_list_of_strings", &obj.ValueListOfStrings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value_list_of_strings-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// IdentityPreferencesResponse : IdentityPreferencesResponse struct
+type IdentityPreferencesResponse struct {
+	// List of Identity Preferences.
+	Preferences []IdentityPreferenceResponse `json:"preferences" validate:"required"`
+}
+
+// UnmarshalIdentityPreferencesResponse unmarshals an instance of IdentityPreferencesResponse from the specified map of raw messages.
+func UnmarshalIdentityPreferencesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IdentityPreferencesResponse)
+	err = core.UnmarshalModel(m, "preferences", &obj.Preferences, UnmarshalIdentityPreferenceResponse)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "preferences-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8303,29 +10857,29 @@ type ListAccountSettingsAssignmentsOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the ListAccountSettingsAssignmentsOptions.TargetType property.
 // Filter results by the assignment's target type.
 const (
-	ListAccountSettingsAssignmentsOptionsTargetTypeAccountConst = "Account"
+	ListAccountSettingsAssignmentsOptionsTargetTypeAccountConst      = "Account"
 	ListAccountSettingsAssignmentsOptionsTargetTypeAccountgroupConst = "AccountGroup"
 )
 
 // Constants associated with the ListAccountSettingsAssignmentsOptions.Sort property.
 // If specified, the items are sorted by the value of this property.
 const (
-	ListAccountSettingsAssignmentsOptionsSortCreatedAtConst = "created_at"
+	ListAccountSettingsAssignmentsOptionsSortCreatedAtConst      = "created_at"
 	ListAccountSettingsAssignmentsOptionsSortLastModifiedAtConst = "last_modified_at"
-	ListAccountSettingsAssignmentsOptionsSortTemplateIDConst = "template_id"
+	ListAccountSettingsAssignmentsOptionsSortTemplateIDConst     = "template_id"
 )
 
 // Constants associated with the ListAccountSettingsAssignmentsOptions.Order property.
 // Sort order.
 const (
-	ListAccountSettingsAssignmentsOptionsOrderAscConst = "asc"
+	ListAccountSettingsAssignmentsOptionsOrderAscConst  = "asc"
 	ListAccountSettingsAssignmentsOptionsOrderDescConst = "desc"
 )
 
@@ -8420,22 +10974,22 @@ type ListAccountSettingsTemplatesOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *string `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the ListAccountSettingsTemplatesOptions.Sort property.
 // Optional sort property. If specified, the returned templated are sorted according to this property.
 const (
-	ListAccountSettingsTemplatesOptionsSortCreatedAtConst = "created_at"
+	ListAccountSettingsTemplatesOptionsSortCreatedAtConst      = "created_at"
 	ListAccountSettingsTemplatesOptionsSortLastModifiedAtConst = "last_modified_at"
-	ListAccountSettingsTemplatesOptionsSortNameConst = "name"
+	ListAccountSettingsTemplatesOptionsSortNameConst           = "name"
 )
 
 // Constants associated with the ListAccountSettingsTemplatesOptions.Order property.
 // Optional sort order.
 const (
-	ListAccountSettingsTemplatesOptionsOrderAscConst = "asc"
+	ListAccountSettingsTemplatesOptionsOrderAscConst  = "asc"
 	ListAccountSettingsTemplatesOptionsOrderDescConst = "desc"
 )
 
@@ -8519,7 +11073,7 @@ type ListAPIKeysOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8527,20 +11081,20 @@ type ListAPIKeysOptions struct {
 // Optional parameter to define the scope of the queried API keys. Can be 'entity' (default) or 'account'.
 const (
 	ListAPIKeysOptionsScopeAccountConst = "account"
-	ListAPIKeysOptionsScopeEntityConst = "entity"
+	ListAPIKeysOptionsScopeEntityConst  = "entity"
 )
 
 // Constants associated with the ListAPIKeysOptions.Type property.
 // Optional parameter to filter the type of the queried API keys. Can be 'user' or 'serviceid'.
 const (
 	ListAPIKeysOptionsTypeServiceidConst = "serviceid"
-	ListAPIKeysOptionsTypeUserConst = "user"
+	ListAPIKeysOptionsTypeUserConst      = "user"
 )
 
 // Constants associated with the ListAPIKeysOptions.Order property.
 // Optional sort order, valid values are asc and desc. Default: asc.
 const (
-	ListAPIKeysOptionsOrderAscConst = "asc"
+	ListAPIKeysOptionsOrderAscConst  = "asc"
 	ListAPIKeysOptionsOrderDescConst = "desc"
 )
 
@@ -8614,7 +11168,7 @@ type ListClaimRulesOptions struct {
 	// ID of the trusted profile.
 	ProfileID *string `json:"profile-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8642,7 +11196,7 @@ type ListLinksOptions struct {
 	// ID of the trusted profile.
 	ProfileID *string `json:"profile-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8685,22 +11239,22 @@ type ListProfileTemplatesOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *string `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the ListProfileTemplatesOptions.Sort property.
 // Optional sort property. If specified, the returned templates are sorted according to this property.
 const (
-	ListProfileTemplatesOptionsSortCreatedAtConst = "created_at"
+	ListProfileTemplatesOptionsSortCreatedAtConst      = "created_at"
 	ListProfileTemplatesOptionsSortLastModifiedAtConst = "last_modified_at"
-	ListProfileTemplatesOptionsSortNameConst = "name"
+	ListProfileTemplatesOptionsSortNameConst           = "name"
 )
 
 // Constants associated with the ListProfileTemplatesOptions.Order property.
 // Optional sort order.
 const (
-	ListProfileTemplatesOptionsOrderAscConst = "asc"
+	ListProfileTemplatesOptionsOrderAscConst  = "asc"
 	ListProfileTemplatesOptionsOrderDescConst = "desc"
 )
 
@@ -8775,14 +11329,14 @@ type ListProfilesOptions struct {
 	// Optional Prev or Next page token returned from a previous query execution. Default is start with first page.
 	Pagetoken *string `json:"pagetoken,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the ListProfilesOptions.Order property.
 // Optional sort order, valid values are asc and desc. Default: asc.
 const (
-	ListProfilesOptionsOrderAscConst = "asc"
+	ListProfilesOptionsOrderAscConst  = "asc"
 	ListProfilesOptionsOrderDescConst = "desc"
 )
 
@@ -8865,14 +11419,14 @@ type ListServiceIdsOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the ListServiceIdsOptions.Order property.
 // Optional sort order, valid values are asc and desc. Default: asc.
 const (
-	ListServiceIdsOptionsOrderAscConst = "asc"
+	ListServiceIdsOptionsOrderAscConst  = "asc"
 	ListServiceIdsOptionsOrderDescConst = "desc"
 )
 
@@ -8961,29 +11515,29 @@ type ListTrustedProfileAssignmentsOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the ListTrustedProfileAssignmentsOptions.TargetType property.
 // Filter results by the assignment's target type.
 const (
-	ListTrustedProfileAssignmentsOptionsTargetTypeAccountConst = "Account"
+	ListTrustedProfileAssignmentsOptionsTargetTypeAccountConst      = "Account"
 	ListTrustedProfileAssignmentsOptionsTargetTypeAccountgroupConst = "AccountGroup"
 )
 
 // Constants associated with the ListTrustedProfileAssignmentsOptions.Sort property.
 // If specified, the items are sorted by the value of this property.
 const (
-	ListTrustedProfileAssignmentsOptionsSortCreatedAtConst = "created_at"
+	ListTrustedProfileAssignmentsOptionsSortCreatedAtConst      = "created_at"
 	ListTrustedProfileAssignmentsOptionsSortLastModifiedAtConst = "last_modified_at"
-	ListTrustedProfileAssignmentsOptionsSortTemplateIDConst = "template_id"
+	ListTrustedProfileAssignmentsOptionsSortTemplateIDConst     = "template_id"
 )
 
 // Constants associated with the ListTrustedProfileAssignmentsOptions.Order property.
 // Sort order.
 const (
-	ListTrustedProfileAssignmentsOptionsOrderAscConst = "asc"
+	ListTrustedProfileAssignmentsOptionsOrderAscConst  = "asc"
 	ListTrustedProfileAssignmentsOptionsOrderDescConst = "desc"
 )
 
@@ -9078,22 +11632,22 @@ type ListVersionsOfAccountSettingsTemplateOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *string `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the ListVersionsOfAccountSettingsTemplateOptions.Sort property.
 // Optional sort property. If specified, the returned templated are sorted according to this property.
 const (
-	ListVersionsOfAccountSettingsTemplateOptionsSortCreatedAtConst = "created_at"
+	ListVersionsOfAccountSettingsTemplateOptionsSortCreatedAtConst      = "created_at"
 	ListVersionsOfAccountSettingsTemplateOptionsSortLastModifiedAtConst = "last_modified_at"
-	ListVersionsOfAccountSettingsTemplateOptionsSortNameConst = "name"
+	ListVersionsOfAccountSettingsTemplateOptionsSortNameConst           = "name"
 )
 
 // Constants associated with the ListVersionsOfAccountSettingsTemplateOptions.Order property.
 // Optional sort order.
 const (
-	ListVersionsOfAccountSettingsTemplateOptionsOrderAscConst = "asc"
+	ListVersionsOfAccountSettingsTemplateOptionsOrderAscConst  = "asc"
 	ListVersionsOfAccountSettingsTemplateOptionsOrderDescConst = "desc"
 )
 
@@ -9166,22 +11720,22 @@ type ListVersionsOfProfileTemplateOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *string `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the ListVersionsOfProfileTemplateOptions.Sort property.
 // Optional sort property. If specified, the returned templated are sorted according to this property.
 const (
-	ListVersionsOfProfileTemplateOptionsSortCreatedAtConst = "created_at"
+	ListVersionsOfProfileTemplateOptionsSortCreatedAtConst      = "created_at"
 	ListVersionsOfProfileTemplateOptionsSortLastModifiedAtConst = "last_modified_at"
-	ListVersionsOfProfileTemplateOptionsSortNameConst = "name"
+	ListVersionsOfProfileTemplateOptionsSortNameConst           = "name"
 )
 
 // Constants associated with the ListVersionsOfProfileTemplateOptions.Order property.
 // Optional sort order.
 const (
-	ListVersionsOfProfileTemplateOptionsOrderAscConst = "asc"
+	ListVersionsOfProfileTemplateOptionsOrderAscConst  = "asc"
 	ListVersionsOfProfileTemplateOptionsOrderDescConst = "desc"
 )
 
@@ -9239,7 +11793,7 @@ type LockAPIKeyOptions struct {
 	// Unique ID of the API key.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9267,7 +11821,7 @@ type LockServiceIDOptions struct {
 	// Unique ID of the service ID.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9304,10 +11858,12 @@ func UnmarshalMfaEnrollmentTypeStatus(m map[string]json.RawMessage, result inter
 	obj := new(MfaEnrollmentTypeStatus)
 	err = core.UnmarshalPrimitive(m, "required", &obj.Required)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "required-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enrolled", &obj.Enrolled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enrolled-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9329,14 +11885,17 @@ func UnmarshalMfaEnrollments(m map[string]json.RawMessage, result interface{}) (
 	obj := new(MfaEnrollments)
 	err = core.UnmarshalPrimitive(m, "effective_mfa_type", &obj.EffectiveMfaType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "effective_mfa_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "id_based_mfa", &obj.IDBasedMfa, UnmarshalIDBasedMfaEnrollment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id_based_mfa-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "account_based_mfa", &obj.AccountBasedMfa, UnmarshalAccountBasedMfaEnrollment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_based_mfa-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9355,10 +11914,13 @@ type PolicyTemplateReference struct {
 // NewPolicyTemplateReference : Instantiate PolicyTemplateReference (Generic Model Constructor)
 func (*IamIdentityV1) NewPolicyTemplateReference(id string, version string) (_model *PolicyTemplateReference, err error) {
 	_model = &PolicyTemplateReference{
-		ID: core.StringPtr(id),
+		ID:      core.StringPtr(id),
 		Version: core.StringPtr(version),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9367,10 +11929,12 @@ func UnmarshalPolicyTemplateReference(m map[string]json.RawMessage, result inter
 	obj := new(PolicyTemplateReference)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9415,42 +11979,52 @@ func UnmarshalProfileClaimRule(m map[string]json.RawMessage, result interface{})
 	obj := new(ProfileClaimRule)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_at", &obj.ModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "realm_name", &obj.RealmName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "realm_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expiration", &obj.Expiration)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "expiration-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cr_type", &obj.CrType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cr_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalProfileClaimRuleConditions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "conditions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9474,11 +12048,14 @@ type ProfileClaimRuleConditions struct {
 // NewProfileClaimRuleConditions : Instantiate ProfileClaimRuleConditions (Generic Model Constructor)
 func (*IamIdentityV1) NewProfileClaimRuleConditions(claim string, operator string, value string) (_model *ProfileClaimRuleConditions, err error) {
 	_model = &ProfileClaimRuleConditions{
-		Claim: core.StringPtr(claim),
+		Claim:    core.StringPtr(claim),
 		Operator: core.StringPtr(operator),
-		Value: core.StringPtr(value),
+		Value:    core.StringPtr(value),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9487,14 +12064,17 @@ func UnmarshalProfileClaimRuleConditions(m map[string]json.RawMessage, result in
 	obj := new(ProfileClaimRuleConditions)
 	err = core.UnmarshalPrimitive(m, "claim", &obj.Claim)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "claim-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "operator-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9515,10 +12095,12 @@ func UnmarshalProfileClaimRuleList(m map[string]json.RawMessage, result interfac
 	obj := new(ProfileClaimRuleList)
 	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalProfileClaimRule)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rules-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9539,10 +12121,12 @@ func UnmarshalProfileIdentitiesResponse(m map[string]json.RawMessage, result int
 	obj := new(ProfileIdentitiesResponse)
 	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "identities", &obj.Identities, UnmarshalProfileIdentityResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "identities-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9571,18 +12155,21 @@ type ProfileIdentityRequest struct {
 // Constants associated with the ProfileIdentityRequest.Type property.
 // Type of the identity.
 const (
-	ProfileIdentityRequestTypeCRNConst = "crn"
+	ProfileIdentityRequestTypeCRNConst       = "crn"
 	ProfileIdentityRequestTypeServiceidConst = "serviceid"
-	ProfileIdentityRequestTypeUserConst = "user"
+	ProfileIdentityRequestTypeUserConst      = "user"
 )
 
 // NewProfileIdentityRequest : Instantiate ProfileIdentityRequest (Generic Model Constructor)
 func (*IamIdentityV1) NewProfileIdentityRequest(identifier string, typeVar string) (_model *ProfileIdentityRequest, err error) {
 	_model = &ProfileIdentityRequest{
 		Identifier: core.StringPtr(identifier),
-		Type: core.StringPtr(typeVar),
+		Type:       core.StringPtr(typeVar),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9591,18 +12178,22 @@ func UnmarshalProfileIdentityRequest(m map[string]json.RawMessage, result interf
 	obj := new(ProfileIdentityRequest)
 	err = core.UnmarshalPrimitive(m, "identifier", &obj.Identifier)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "identifier-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "accounts", &obj.Accounts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "accounts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9634,9 +12225,9 @@ type ProfileIdentityResponse struct {
 // Constants associated with the ProfileIdentityResponse.Type property.
 // Type of the identity.
 const (
-	ProfileIdentityResponseTypeCRNConst = "crn"
+	ProfileIdentityResponseTypeCRNConst       = "crn"
 	ProfileIdentityResponseTypeServiceidConst = "serviceid"
-	ProfileIdentityResponseTypeUserConst = "user"
+	ProfileIdentityResponseTypeUserConst      = "user"
 )
 
 // UnmarshalProfileIdentityResponse unmarshals an instance of ProfileIdentityResponse from the specified map of raw messages.
@@ -9644,22 +12235,27 @@ func UnmarshalProfileIdentityResponse(m map[string]json.RawMessage, result inter
 	obj := new(ProfileIdentityResponse)
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "identifier", &obj.Identifier)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "identifier-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "accounts", &obj.Accounts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "accounts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9694,30 +12290,37 @@ func UnmarshalProfileLink(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(ProfileLink)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_at", &obj.ModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cr_type", &obj.CrType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cr_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "link", &obj.Link, UnmarshalProfileLinkLink)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "link-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9741,14 +12344,17 @@ func UnmarshalProfileLinkLink(m map[string]json.RawMessage, result interface{}) 
 	obj := new(ProfileLinkLink)
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "namespace", &obj.Namespace)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "namespace-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9766,6 +12372,7 @@ func UnmarshalProfileLinkList(m map[string]json.RawMessage, result interface{}) 
 	obj := new(ProfileLinkList)
 	err = core.UnmarshalModel(m, "links", &obj.Links, UnmarshalProfileLink)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "links-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9807,38 +12414,47 @@ func UnmarshalReport(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Report)
 	err = core.UnmarshalPrimitive(m, "created_by", &obj.CreatedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reference", &obj.Reference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reference-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "report_duration", &obj.ReportDuration)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "report_duration-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "report_start_time", &obj.ReportStartTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "report_start_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "report_end_time", &obj.ReportEndTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "report_end_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "users", &obj.Users, UnmarshalUserActivity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "users-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "apikeys", &obj.Apikeys, UnmarshalApikeyActivity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "apikeys-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "serviceids", &obj.Serviceids, UnmarshalEntityActivity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "serviceids-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "profiles", &obj.Profiles, UnmarshalEntityActivity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "profiles-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9871,26 +12487,32 @@ func UnmarshalReportMfaEnrollmentStatus(m map[string]json.RawMessage, result int
 	obj := new(ReportMfaEnrollmentStatus)
 	err = core.UnmarshalPrimitive(m, "created_by", &obj.CreatedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reference", &obj.Reference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reference-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "report_time", &obj.ReportTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "report_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ims_account_id", &obj.ImsAccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ims_account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "users", &obj.Users, UnmarshalUserReportMfaEnrollmentStatus)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "users-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9908,6 +12530,7 @@ func UnmarshalReportReference(m map[string]json.RawMessage, result interface{}) 
 	obj := new(ReportReference)
 	err = core.UnmarshalPrimitive(m, "reference", &obj.Reference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reference-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9955,46 +12578,57 @@ func UnmarshalResponseContext(m map[string]json.RawMessage, result interface{}) 
 	obj := new(ResponseContext)
 	err = core.UnmarshalPrimitive(m, "transaction_id", &obj.TransactionID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "transaction_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "operation", &obj.Operation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "operation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "user_agent", &obj.UserAgent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "user_agent-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instance_id", &obj.InstanceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "thread_id", &obj.ThreadID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "thread_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "host", &obj.Host)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "host-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "start_time", &obj.StartTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "end_time", &obj.EndTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "end_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "elapsed_time", &obj.ElapsedTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "elapsed_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cluster_name", &obj.ClusterName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cluster_name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10057,62 +12691,77 @@ func UnmarshalServiceID(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(ServiceID)
 	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "locked", &obj.Locked)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "locked-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_at", &obj.ModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "unique_instance_crns", &obj.UniqueInstanceCrns)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unique_instance_crns-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalEnityHistoryRecord)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "apikey", &obj.Apikey, UnmarshalAPIKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "apikey-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "activity", &obj.Activity, UnmarshalActivity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "activity-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10150,30 +12799,37 @@ func UnmarshalServiceIDList(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(ServiceIDList)
 	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "previous", &obj.Previous)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "serviceids", &obj.Serviceids, UnmarshalServiceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "serviceids-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10193,7 +12849,7 @@ type SetProfileIdentitiesOptions struct {
 	// List of identities that can assume the trusted profile.
 	Identities []ProfileIdentityRequest `json:"identities,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10201,7 +12857,7 @@ type SetProfileIdentitiesOptions struct {
 func (*IamIdentityV1) NewSetProfileIdentitiesOptions(profileID string, ifMatch string) *SetProfileIdentitiesOptions {
 	return &SetProfileIdentitiesOptions{
 		ProfileID: core.StringPtr(profileID),
-		IfMatch: core.StringPtr(ifMatch),
+		IfMatch:   core.StringPtr(ifMatch),
 	}
 }
 
@@ -10253,33 +12909,33 @@ type SetProfileIdentityOptions struct {
 	// used. Description is recommended for the identity type 'crn' E.g. 'Instance 1234 of IBM Cloud Service project'.
 	Description *string `json:"description,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the SetProfileIdentityOptions.IdentityType property.
 // Type of the identity.
 const (
-	SetProfileIdentityOptionsIdentityTypeCRNConst = "crn"
+	SetProfileIdentityOptionsIdentityTypeCRNConst       = "crn"
 	SetProfileIdentityOptionsIdentityTypeServiceidConst = "serviceid"
-	SetProfileIdentityOptionsIdentityTypeUserConst = "user"
+	SetProfileIdentityOptionsIdentityTypeUserConst      = "user"
 )
 
 // Constants associated with the SetProfileIdentityOptions.Type property.
 // Type of the identity.
 const (
-	SetProfileIdentityOptionsTypeCRNConst = "crn"
+	SetProfileIdentityOptionsTypeCRNConst       = "crn"
 	SetProfileIdentityOptionsTypeServiceidConst = "serviceid"
-	SetProfileIdentityOptionsTypeUserConst = "user"
+	SetProfileIdentityOptionsTypeUserConst      = "user"
 )
 
 // NewSetProfileIdentityOptions : Instantiate SetProfileIdentityOptions
 func (*IamIdentityV1) NewSetProfileIdentityOptions(profileID string, identityType string, identifier string, typeVar string) *SetProfileIdentityOptions {
 	return &SetProfileIdentityOptions{
-		ProfileID: core.StringPtr(profileID),
+		ProfileID:    core.StringPtr(profileID),
 		IdentityType: core.StringPtr(identityType),
-		Identifier: core.StringPtr(identifier),
-		Type: core.StringPtr(typeVar),
+		Identifier:   core.StringPtr(identifier),
+		Type:         core.StringPtr(typeVar),
 	}
 }
 
@@ -10356,30 +13012,37 @@ func UnmarshalTemplateAssignmentListResponse(m map[string]json.RawMessage, resul
 	obj := new(TemplateAssignmentListResponse)
 	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "previous", &obj.Previous)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "assignments", &obj.Assignments, UnmarshalTemplateAssignmentResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assignments-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10397,6 +13060,7 @@ func UnmarshalTemplateAssignmentResource(m map[string]json.RawMessage, result in
 	obj := new(TemplateAssignmentResource)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10423,18 +13087,22 @@ func UnmarshalTemplateAssignmentResourceError(m map[string]json.RawMessage, resu
 	obj := new(TemplateAssignmentResourceError)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "errorCode", &obj.ErrorCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "errorCode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "statusCode", &obj.StatusCode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "statusCode-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10499,66 +13167,82 @@ func UnmarshalTemplateAssignmentResponse(m map[string]json.RawMessage, result in
 	obj := new(TemplateAssignmentResponse)
 	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_id", &obj.TemplateID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_version", &obj.TemplateVersion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_type", &obj.TargetType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalTemplateAssignmentResponseResource)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalEnityHistoryRecord)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10583,18 +13267,22 @@ func UnmarshalTemplateAssignmentResponseResource(m map[string]json.RawMessage, r
 	obj := new(TemplateAssignmentResponseResource)
 	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "profile", &obj.Profile, UnmarshalTemplateAssignmentResponseResourceDetail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "account_settings", &obj.AccountSettings, UnmarshalTemplateAssignmentResponseResourceDetail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_settings-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "policy_template_refs", &obj.PolicyTemplateRefs, UnmarshalTemplateAssignmentResponseResourceDetail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "policy_template_refs-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10624,22 +13312,27 @@ func UnmarshalTemplateAssignmentResponseResourceDetail(m map[string]json.RawMess
 	obj := new(TemplateAssignmentResponseResourceDetail)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resource_created", &obj.ResourceCreated, UnmarshalTemplateAssignmentResource)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_created-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "error_message", &obj.ErrorMessage, UnmarshalTemplateAssignmentResourceError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error_message-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10667,6 +13360,9 @@ func (*IamIdentityV1) NewTemplateProfileComponentRequest(name string) (_model *T
 		Name: core.StringPtr(name),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -10675,18 +13371,22 @@ func UnmarshalTemplateProfileComponentRequest(m map[string]json.RawMessage, resu
 	obj := new(TemplateProfileComponentRequest)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalTrustedProfileTemplateClaimRule)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rules-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "identities", &obj.Identities, UnmarshalProfileIdentityRequest)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "identities-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10713,18 +13413,22 @@ func UnmarshalTemplateProfileComponentResponse(m map[string]json.RawMessage, res
 	obj := new(TemplateProfileComponentResponse)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalTrustedProfileTemplateClaimRule)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rules-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "identities", &obj.Identities, UnmarshalProfileIdentityResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "identities-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10792,66 +13496,82 @@ func UnmarshalTrustedProfile(m map[string]json.RawMessage, result interface{}) (
 	obj := new(TrustedProfile)
 	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "modified_at", &obj.ModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_id", &obj.TemplateID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "assignment_id", &obj.AssignmentID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assignment_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ims_account_id", &obj.ImsAccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ims_account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ims_user_id", &obj.ImsUserID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ims_user_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalEnityHistoryRecord)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "activity", &obj.Activity, UnmarshalActivity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "activity-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10886,10 +13606,13 @@ const (
 // NewTrustedProfileTemplateClaimRule : Instantiate TrustedProfileTemplateClaimRule (Generic Model Constructor)
 func (*IamIdentityV1) NewTrustedProfileTemplateClaimRule(typeVar string, conditions []ProfileClaimRuleConditions) (_model *TrustedProfileTemplateClaimRule, err error) {
 	_model = &TrustedProfileTemplateClaimRule{
-		Type: core.StringPtr(typeVar),
+		Type:       core.StringPtr(typeVar),
 		Conditions: conditions,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -10898,22 +13621,27 @@ func UnmarshalTrustedProfileTemplateClaimRule(m map[string]json.RawMessage, resu
 	obj := new(TrustedProfileTemplateClaimRule)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "realm_name", &obj.RealmName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "realm_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expiration", &obj.Expiration)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "expiration-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalProfileClaimRuleConditions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "conditions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10951,30 +13679,37 @@ func UnmarshalTrustedProfileTemplateList(m map[string]json.RawMessage, result in
 	obj := new(TrustedProfileTemplateList)
 	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "previous", &obj.Previous)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "profile_templates", &obj.ProfileTemplates, UnmarshalTrustedProfileTemplateResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "profile_templates-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11007,6 +13742,8 @@ type TrustedProfileTemplateResponse struct {
 	// Existing policy templates that you can reference to assign access in the trusted profile component.
 	PolicyTemplateReferences []PolicyTemplateReference `json:"policy_template_references,omitempty"`
 
+	ActionControls *ActionControls `json:"action_controls,omitempty"`
+
 	// History of the trusted profile template.
 	History []EnityHistoryRecord `json:"history,omitempty"`
 
@@ -11034,62 +13771,82 @@ func UnmarshalTrustedProfileTemplateResponse(m map[string]json.RawMessage, resul
 	obj := new(TrustedProfileTemplateResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "committed", &obj.Committed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "committed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "profile", &obj.Profile, UnmarshalTemplateProfileComponentResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "policy_template_references", &obj.PolicyTemplateReferences, UnmarshalPolicyTemplateReference)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "policy_template_references-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "action_controls", &obj.ActionControls, UnmarshalActionControls)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "action_controls-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalEnityHistoryRecord)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_modified_by_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11126,30 +13883,37 @@ func UnmarshalTrustedProfilesList(m map[string]json.RawMessage, result interface
 	obj := new(TrustedProfilesList)
 	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "first", &obj.First)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "previous", &obj.Previous)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "next", &obj.Next)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "profiles", &obj.Profiles, UnmarshalTrustedProfile)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "profiles-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -11161,7 +13925,7 @@ type UnlockAPIKeyOptions struct {
 	// Unique ID of the API key.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11189,7 +13953,7 @@ type UnlockServiceIDOptions struct {
 	// Unique ID of the service ID.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11222,19 +13986,19 @@ type UpdateAccountSettingsAssignmentOptions struct {
 	// result in stale updates.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
-	// Template version to be applied to the assignment. To retry all failed assignemtns, provide the existing version. To
+	// Template version to be applied to the assignment. To retry all failed assignments, provide the existing version. To
 	// migrate to a different version, provide the new version number.
 	TemplateVersion *int64 `json:"template_version" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewUpdateAccountSettingsAssignmentOptions : Instantiate UpdateAccountSettingsAssignmentOptions
 func (*IamIdentityV1) NewUpdateAccountSettingsAssignmentOptions(assignmentID string, ifMatch string, templateVersion int64) *UpdateAccountSettingsAssignmentOptions {
 	return &UpdateAccountSettingsAssignmentOptions{
-		AssignmentID: core.StringPtr(assignmentID),
-		IfMatch: core.StringPtr(ifMatch),
+		AssignmentID:    core.StringPtr(assignmentID),
+		IfMatch:         core.StringPtr(ifMatch),
 		TemplateVersion: core.Int64Ptr(templateVersion),
 	}
 }
@@ -11328,57 +14092,59 @@ type UpdateAccountSettingsOptions struct {
 	//   * NOT_SET - To unset account setting and use service default.
 	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // Constants associated with the UpdateAccountSettingsOptions.RestrictCreateServiceID property.
 // Defines whether or not creating a service ID is access controlled. Valid values:
-//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+//
 // IDs, including the account owner
-//   * NOT_RESTRICTED - all members of an account can create service IDs
-//   * NOT_SET - to 'unset' a previous set value.
+//   - NOT_RESTRICTED - all members of an account can create service IDs
+//   - NOT_SET - to 'unset' a previous set value.
 const (
 	UpdateAccountSettingsOptionsRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
-	UpdateAccountSettingsOptionsRestrictCreateServiceIDNotSetConst = "NOT_SET"
-	UpdateAccountSettingsOptionsRestrictCreateServiceIDRestrictedConst = "RESTRICTED"
+	UpdateAccountSettingsOptionsRestrictCreateServiceIDNotSetConst        = "NOT_SET"
+	UpdateAccountSettingsOptionsRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
 )
 
 // Constants associated with the UpdateAccountSettingsOptions.RestrictCreatePlatformApikey property.
 // Defines whether or not creating platform API keys is access controlled. Valid values:
-//   * RESTRICTED - only users assigned the 'User API key creator' role on the IAM Identity Service can create API keys,
+//   - RESTRICTED - only users assigned the 'User API key creator' role on the IAM Identity Service can create API keys,
+//
 // including the account owner
-//   * NOT_RESTRICTED - all members of an account can create platform API keys
-//   * NOT_SET - to 'unset' a previous set value.
+//   - NOT_RESTRICTED - all members of an account can create platform API keys
+//   - NOT_SET - to 'unset' a previous set value.
 const (
 	UpdateAccountSettingsOptionsRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
-	UpdateAccountSettingsOptionsRestrictCreatePlatformApikeyNotSetConst = "NOT_SET"
-	UpdateAccountSettingsOptionsRestrictCreatePlatformApikeyRestrictedConst = "RESTRICTED"
+	UpdateAccountSettingsOptionsRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
+	UpdateAccountSettingsOptionsRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
 )
 
 // Constants associated with the UpdateAccountSettingsOptions.Mfa property.
 // Defines the MFA trait for the account. Valid values:
-//   * NONE - No MFA trait set
-//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   * TOTP - For all non-federated IBMId users
-//   * TOTP4ALL - For all users
-//   * LEVEL1 - Email-based MFA for all users
-//   * LEVEL2 - TOTP-based MFA for all users
-//   * LEVEL3 - U2F MFA for all users.
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
 const (
-	UpdateAccountSettingsOptionsMfaLevel1Const = "LEVEL1"
-	UpdateAccountSettingsOptionsMfaLevel2Const = "LEVEL2"
-	UpdateAccountSettingsOptionsMfaLevel3Const = "LEVEL3"
-	UpdateAccountSettingsOptionsMfaNoneConst = "NONE"
+	UpdateAccountSettingsOptionsMfaLevel1Const     = "LEVEL1"
+	UpdateAccountSettingsOptionsMfaLevel2Const     = "LEVEL2"
+	UpdateAccountSettingsOptionsMfaLevel3Const     = "LEVEL3"
+	UpdateAccountSettingsOptionsMfaNoneConst       = "NONE"
 	UpdateAccountSettingsOptionsMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	UpdateAccountSettingsOptionsMfaTotpConst = "TOTP"
-	UpdateAccountSettingsOptionsMfaTotp4allConst = "TOTP4ALL"
+	UpdateAccountSettingsOptionsMfaTotpConst       = "TOTP"
+	UpdateAccountSettingsOptionsMfaTotp4allConst   = "TOTP4ALL"
 )
 
 // NewUpdateAccountSettingsOptions : Instantiate UpdateAccountSettingsOptions
 func (*IamIdentityV1) NewUpdateAccountSettingsOptions(ifMatch string, accountID string) *UpdateAccountSettingsOptions {
 	return &UpdateAccountSettingsOptions{
-		IfMatch: core.StringPtr(ifMatch),
+		IfMatch:   core.StringPtr(ifMatch),
 		AccountID: core.StringPtr(accountID),
 	}
 }
@@ -11485,16 +14251,16 @@ type UpdateAccountSettingsTemplateVersionOptions struct {
 
 	AccountSettings *AccountSettingsComponent `json:"account_settings,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewUpdateAccountSettingsTemplateVersionOptions : Instantiate UpdateAccountSettingsTemplateVersionOptions
 func (*IamIdentityV1) NewUpdateAccountSettingsTemplateVersionOptions(ifMatch string, templateID string, version string) *UpdateAccountSettingsTemplateVersionOptions {
 	return &UpdateAccountSettingsTemplateVersionOptions{
-		IfMatch: core.StringPtr(ifMatch),
+		IfMatch:    core.StringPtr(ifMatch),
 		TemplateID: core.StringPtr(templateID),
-		Version: core.StringPtr(version),
+		Version:    core.StringPtr(version),
 	}
 }
 
@@ -11564,14 +14330,22 @@ type UpdateAPIKeyOptions struct {
 	// key. If a non empty value is provided the API key will be updated.
 	Description *string `json:"description,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Defines whether you can manage CLI login sessions for the API key. When `true`, sessions are created and can be
+	// reviewed or revoked. When `false`, no sessions are tracked. To block access, delete or rotate the API key. Available
+	// only for user API keys.
+	SupportSessions *bool `json:"support_sessions,omitempty"`
+
+	// Defines the action to take when API key is leaked, valid values are 'none', 'disable' and 'delete'.
+	ActionWhenLeaked *string `json:"action_when_leaked,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewUpdateAPIKeyOptions : Instantiate UpdateAPIKeyOptions
 func (*IamIdentityV1) NewUpdateAPIKeyOptions(id string, ifMatch string) *UpdateAPIKeyOptions {
 	return &UpdateAPIKeyOptions{
-		ID: core.StringPtr(id),
+		ID:      core.StringPtr(id),
 		IfMatch: core.StringPtr(ifMatch),
 	}
 }
@@ -11597,6 +14371,18 @@ func (_options *UpdateAPIKeyOptions) SetName(name string) *UpdateAPIKeyOptions {
 // SetDescription : Allow user to set Description
 func (_options *UpdateAPIKeyOptions) SetDescription(description string) *UpdateAPIKeyOptions {
 	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetSupportSessions : Allow user to set SupportSessions
+func (_options *UpdateAPIKeyOptions) SetSupportSessions(supportSessions bool) *UpdateAPIKeyOptions {
+	_options.SupportSessions = core.BoolPtr(supportSessions)
+	return _options
+}
+
+// SetActionWhenLeaked : Allow user to set ActionWhenLeaked
+func (_options *UpdateAPIKeyOptions) SetActionWhenLeaked(actionWhenLeaked string) *UpdateAPIKeyOptions {
+	_options.ActionWhenLeaked = core.StringPtr(actionWhenLeaked)
 	return _options
 }
 
@@ -11642,17 +14428,17 @@ type UpdateClaimRuleOptions struct {
 	// Session expiration in seconds, only required if type is 'Profile-SAML'.
 	Expiration *int64 `json:"expiration,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewUpdateClaimRuleOptions : Instantiate UpdateClaimRuleOptions
 func (*IamIdentityV1) NewUpdateClaimRuleOptions(profileID string, ruleID string, ifMatch string, typeVar string, conditions []ProfileClaimRuleConditions) *UpdateClaimRuleOptions {
 	return &UpdateClaimRuleOptions{
-		ProfileID: core.StringPtr(profileID),
-		RuleID: core.StringPtr(ruleID),
-		IfMatch: core.StringPtr(ifMatch),
-		Type: core.StringPtr(typeVar),
+		ProfileID:  core.StringPtr(profileID),
+		RuleID:     core.StringPtr(ruleID),
+		IfMatch:    core.StringPtr(ifMatch),
+		Type:       core.StringPtr(typeVar),
 		Conditions: conditions,
 	}
 }
@@ -11723,6 +14509,85 @@ func (options *UpdateClaimRuleOptions) SetHeaders(param map[string]string) *Upda
 	return options
 }
 
+// UpdatePreferenceOnScopeAccountOptions : The UpdatePreferenceOnScopeAccount options.
+type UpdatePreferenceOnScopeAccountOptions struct {
+	// Account id to update preference for.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// IAM id to update the preference for.
+	IamID *string `json:"iam_id" validate:"required,ne="`
+
+	// Service of the preference to be updated.
+	Service *string `json:"service" validate:"required,ne="`
+
+	// Identifier of preference to be updated.
+	PreferenceID *string `json:"preference_id" validate:"required,ne="`
+
+	// contains a string value of the preference. only one value property is set, either 'value_string' or
+	// 'value_list_of_strings' is present.
+	ValueString *string `json:"value_string" validate:"required"`
+
+	// contains a list of string values of the preference. only one value property is set, either 'value_string' or
+	// 'value_list_of_strings' is present.
+	ValueListOfStrings []string `json:"value_list_of_strings,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewUpdatePreferenceOnScopeAccountOptions : Instantiate UpdatePreferenceOnScopeAccountOptions
+func (*IamIdentityV1) NewUpdatePreferenceOnScopeAccountOptions(accountID string, iamID string, service string, preferenceID string, valueString string) *UpdatePreferenceOnScopeAccountOptions {
+	return &UpdatePreferenceOnScopeAccountOptions{
+		AccountID:    core.StringPtr(accountID),
+		IamID:        core.StringPtr(iamID),
+		Service:      core.StringPtr(service),
+		PreferenceID: core.StringPtr(preferenceID),
+		ValueString:  core.StringPtr(valueString),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetAccountID(accountID string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIamID : Allow user to set IamID
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetIamID(iamID string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.IamID = core.StringPtr(iamID)
+	return _options
+}
+
+// SetService : Allow user to set Service
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetService(service string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.Service = core.StringPtr(service)
+	return _options
+}
+
+// SetPreferenceID : Allow user to set PreferenceID
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetPreferenceID(preferenceID string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.PreferenceID = core.StringPtr(preferenceID)
+	return _options
+}
+
+// SetValueString : Allow user to set ValueString
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetValueString(valueString string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.ValueString = core.StringPtr(valueString)
+	return _options
+}
+
+// SetValueListOfStrings : Allow user to set ValueListOfStrings
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetValueListOfStrings(valueListOfStrings []string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.ValueListOfStrings = valueListOfStrings
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdatePreferenceOnScopeAccountOptions) SetHeaders(param map[string]string) *UpdatePreferenceOnScopeAccountOptions {
+	options.Headers = param
+	return options
+}
+
 // UpdateProfileOptions : The UpdateProfile options.
 type UpdateProfileOptions struct {
 	// ID of the trusted profile to be updated.
@@ -11741,7 +14606,7 @@ type UpdateProfileOptions struct {
 	// the trusted profile. If a non empty value is provided the trusted profile will be updated.
 	Description *string `json:"description,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11749,7 +14614,7 @@ type UpdateProfileOptions struct {
 func (*IamIdentityV1) NewUpdateProfileOptions(profileID string, ifMatch string) *UpdateProfileOptions {
 	return &UpdateProfileOptions{
 		ProfileID: core.StringPtr(profileID),
-		IfMatch: core.StringPtr(ifMatch),
+		IfMatch:   core.StringPtr(ifMatch),
 	}
 }
 
@@ -11813,16 +14678,18 @@ type UpdateProfileTemplateVersionOptions struct {
 	// Existing policy templates that you can reference to assign access in the trusted profile component.
 	PolicyTemplateReferences []PolicyTemplateReference `json:"policy_template_references,omitempty"`
 
-	// Allows users to set headers on API requests
+	ActionControls *ActionControls `json:"action_controls,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewUpdateProfileTemplateVersionOptions : Instantiate UpdateProfileTemplateVersionOptions
 func (*IamIdentityV1) NewUpdateProfileTemplateVersionOptions(ifMatch string, templateID string, version string) *UpdateProfileTemplateVersionOptions {
 	return &UpdateProfileTemplateVersionOptions{
-		IfMatch: core.StringPtr(ifMatch),
+		IfMatch:    core.StringPtr(ifMatch),
 		TemplateID: core.StringPtr(templateID),
-		Version: core.StringPtr(version),
+		Version:    core.StringPtr(version),
 	}
 }
 
@@ -11874,6 +14741,12 @@ func (_options *UpdateProfileTemplateVersionOptions) SetPolicyTemplateReferences
 	return _options
 }
 
+// SetActionControls : Allow user to set ActionControls
+func (_options *UpdateProfileTemplateVersionOptions) SetActionControls(actionControls *ActionControls) *UpdateProfileTemplateVersionOptions {
+	_options.ActionControls = actionControls
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *UpdateProfileTemplateVersionOptions) SetHeaders(param map[string]string) *UpdateProfileTemplateVersionOptions {
 	options.Headers = param
@@ -11902,14 +14775,14 @@ type UpdateServiceIDOptions struct {
 	// existing unique instance crns of the service ID.
 	UniqueInstanceCrns []string `json:"unique_instance_crns,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewUpdateServiceIDOptions : Instantiate UpdateServiceIDOptions
 func (*IamIdentityV1) NewUpdateServiceIDOptions(id string, ifMatch string) *UpdateServiceIDOptions {
 	return &UpdateServiceIDOptions{
-		ID: core.StringPtr(id),
+		ID:      core.StringPtr(id),
 		IfMatch: core.StringPtr(ifMatch),
 	}
 }
@@ -11960,19 +14833,19 @@ type UpdateTrustedProfileAssignmentOptions struct {
 	// result in stale updates.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
-	// Template version to be applied to the assignment. To retry all failed assignemtns, provide the existing version. To
+	// Template version to be applied to the assignment. To retry all failed assignments, provide the existing version. To
 	// migrate to a different version, provide the new version number.
 	TemplateVersion *int64 `json:"template_version" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
 // NewUpdateTrustedProfileAssignmentOptions : Instantiate UpdateTrustedProfileAssignmentOptions
 func (*IamIdentityV1) NewUpdateTrustedProfileAssignmentOptions(assignmentID string, ifMatch string, templateVersion int64) *UpdateTrustedProfileAssignmentOptions {
 	return &UpdateTrustedProfileAssignmentOptions{
-		AssignmentID: core.StringPtr(assignmentID),
-		IfMatch: core.StringPtr(ifMatch),
+		AssignmentID:    core.StringPtr(assignmentID),
+		IfMatch:         core.StringPtr(ifMatch),
 		TemplateVersion: core.Int64Ptr(templateVersion),
 	}
 }
@@ -12024,22 +14897,27 @@ func UnmarshalUserActivity(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(UserActivity)
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "username-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_authn", &obj.LastAuthn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_authn-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12064,18 +14942,22 @@ func UnmarshalUserMfaEnrollments(m map[string]json.RawMessage, result interface{
 	obj := new(UserMfaEnrollments)
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "effective_mfa_type", &obj.EffectiveMfaType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "effective_mfa_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "id_based_mfa", &obj.IDBasedMfa, UnmarshalIDBasedMfaEnrollment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id_based_mfa-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "account_based_mfa", &obj.AccountBasedMfa, UnmarshalAccountBasedMfaEnrollment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "account_based_mfa-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12104,22 +14986,27 @@ func UnmarshalUserReportMfaEnrollmentStatus(m map[string]json.RawMessage, result
 	obj := new(UserReportMfaEnrollmentStatus)
 	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "username-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "enrollments", &obj.Enrollments, UnmarshalMfaEnrollments)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enrollments-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))

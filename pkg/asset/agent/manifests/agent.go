@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
 )
 
 const (
@@ -56,7 +59,11 @@ func (m *AgentManifests) Dependencies() []asset.Asset {
 }
 
 // Generate generates the respective manifest files.
-func (m *AgentManifests) Generate(dependencies asset.Parents) error {
+func (m *AgentManifests) Generate(ctx context.Context, dependencies asset.Parents) error {
+	if err := workflowreport.GetReport(ctx).Stage(workflow.StageCreateManifests); err != nil {
+		return err
+	}
+
 	for _, a := range []asset.WritableAsset{
 		&AgentPullSecret{},
 		&InfraEnv{},
@@ -133,11 +140,11 @@ func (m *AgentManifests) validateNMStateLabelSelector() field.ErrorList {
 
 	var allErrs field.ErrorList
 
-	fieldPath := field.NewPath("Spec", "NMStateConfigLabelSelector", "MatchLabels")
+	fieldPath := field.NewPath("spec", "nmStateConfigLabelSelector", "matchLabels")
 
 	for _, networkConfig := range m.NMStateConfigs {
 		if !reflect.DeepEqual(m.InfraEnv.Spec.NMStateConfigLabelSelector.MatchLabels, networkConfig.ObjectMeta.Labels) {
-			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("infraEnv and %s.NMStateConfig labels do not match. Expected: %s Found: %s",
+			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("infraEnv and %s NMState Config labels do not match. Expected: %s Found: %s",
 				networkConfig.Name,
 				m.InfraEnv.Spec.NMStateConfigLabelSelector.MatchLabels,
 				networkConfig.ObjectMeta.Labels)))

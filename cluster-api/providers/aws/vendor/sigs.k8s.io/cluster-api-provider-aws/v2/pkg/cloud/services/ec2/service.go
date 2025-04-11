@@ -22,14 +22,16 @@ import (
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/network"
 )
 
 // Service holds a collection of interfaces.
 // The interfaces are broken down like this to group functions together.
 // One alternative is to have a large list of functions from the ec2 client.
 type Service struct {
-	scope     scope.EC2Scope
-	EC2Client ec2iface.EC2API
+	scope      scope.EC2Scope
+	EC2Client  ec2iface.EC2API
+	netService *network.Service
 
 	// SSMClient is used to look up the official EKS AMI ID
 	SSMClient ssmiface.SSMAPI
@@ -38,8 +40,9 @@ type Service struct {
 // NewService returns a new service given the ec2 api client.
 func NewService(clusterScope scope.EC2Scope) *Service {
 	return &Service{
-		scope:     clusterScope,
-		EC2Client: scope.NewEC2Client(clusterScope, clusterScope, clusterScope, clusterScope.InfraCluster()),
-		SSMClient: scope.NewSSMClient(clusterScope, clusterScope, clusterScope, clusterScope.InfraCluster()),
+		scope:      clusterScope,
+		EC2Client:  scope.NewEC2Client(clusterScope, clusterScope, clusterScope, clusterScope.InfraCluster()),
+		SSMClient:  scope.NewSSMClient(clusterScope, clusterScope, clusterScope, clusterScope.InfraCluster()),
+		netService: network.NewService(clusterScope.(scope.NetworkScope)),
 	}
 }

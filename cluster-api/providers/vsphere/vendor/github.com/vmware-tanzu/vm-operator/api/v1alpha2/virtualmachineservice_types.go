@@ -97,6 +97,9 @@ type VirtualMachineServiceSpec struct {
 	// This feature depends on whether the underlying load balancer provider
 	// supports specifying the loadBalancerIP when a load balancer is created.
 	// This field will be ignored if the provider does not support the feature.
+	// Deprecated: This field was under-specified and its meaning varies across implementations.
+	// Using it is non-portable and it may not support dual-stack.
+	// Users are encouraged to use implementation-specific annotations when available.
 	// +optional
 	LoadBalancerIP string `json:"loadBalancerIP,omitempty"`
 

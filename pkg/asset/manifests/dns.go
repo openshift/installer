@@ -21,10 +21,10 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 	externaltypes "github.com/openshift/installer/pkg/types/external"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
-	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -67,7 +67,7 @@ func (*DNS) Dependencies() []asset.Asset {
 }
 
 // Generate generates the DNS config and its CRD.
-func (d *DNS) Generate(dependencies asset.Parents) error {
+func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	dependencies.Get(installConfig, clusterID)
@@ -89,7 +89,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 	switch installConfig.Config.Platform.Name() {
 	case awstypes.Name:
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
-			sess, err := installConfig.AWS.Session(context.TODO())
+			sess, err := installConfig.AWS.Session(ctx)
 			if err != nil {
 				return errors.Wrap(err, "failed to initialize session")
 			}
@@ -137,7 +137,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 	case gcptypes.Name:
 		// We donot want to configure cloud DNS when `UserProvisionedDNS` is enabled.
 		// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
-		if installConfig.Config.GCP.UserProvisionedDNS == gcptypes.UserProvisionedDNSEnabled {
+		if installConfig.Config.GCP.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
 			config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
 			config.Spec.PrivateZone = &configv1.DNSZone{ID: ""}
 			break
@@ -153,7 +153,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			// Do not use a public zone when not publishing externally.
 		default:
 			// Search the project for a zone with the specified base domain.
-			zone, err := client.GetDNSZone(context.TODO(), installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain, true)
+			zone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain, true)
 			if err != nil {
 				return errors.Wrapf(err, "failed to get public zone for %q", installConfig.Config.BaseDomain)
 			}
@@ -161,13 +161,9 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		}
 
 		// Set the private zone
-		privateZoneID := fmt.Sprintf("%s-private-zone", clusterID.InfraID)
-		zone, err := client.GetDNSZone(context.TODO(), installConfig.Config.GCP.ProjectID, installConfig.Config.ClusterDomain(), false)
+		privateZoneID, err := GetGCPPrivateZoneName(ctx, client, installConfig, clusterID.InfraID)
 		if err != nil {
-			return errors.Wrapf(err, "failed to get private zone for %q", installConfig.Config.BaseDomain)
-		}
-		if zone != nil {
-			privateZoneID = zone.Name
+			return fmt.Errorf("failed to find gcp private dns zone: %w", err)
 		}
 		config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneID}
 
@@ -177,7 +173,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to get IBM Cloud client")
 		}
 
-		zoneID, err := client.GetDNSZoneIDByName(context.TODO(), installConfig.Config.BaseDomain, installConfig.Config.Publish)
+		zoneID, err := client.GetDNSZoneIDByName(ctx, installConfig.Config.BaseDomain, installConfig.Config.Publish)
 		if err != nil {
 			return errors.Wrap(err, "failed to get DNS zone ID")
 		}
@@ -196,7 +192,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to get IBM PowerVS client")
 		}
 
-		zoneID, err := client.GetDNSZoneIDByName(context.TODO(), installConfig.Config.BaseDomain, installConfig.Config.Publish)
+		zoneID, err := client.GetDNSZoneIDByName(ctx, installConfig.Config.BaseDomain, installConfig.Config.Publish)
 		if err != nil {
 			return errors.Wrap(err, "failed to get DNS zone ID")
 		}
@@ -209,7 +205,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		config.Spec.PrivateZone = &configv1.DNSZone{
 			ID: zoneID,
 		}
-	case libvirttypes.Name, openstacktypes.Name, baremetaltypes.Name, externaltypes.Name, nonetypes.Name, vspheretypes.Name, ovirttypes.Name, nutanixtypes.Name:
+	case openstacktypes.Name, baremetaltypes.Name, externaltypes.Name, nonetypes.Name, vspheretypes.Name, ovirttypes.Name, nutanixtypes.Name:
 	default:
 		return errors.New("invalid Platform")
 	}
@@ -227,6 +223,36 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 	}
 
 	return nil
+}
+
+// GCPNetworkName create the full resource name for a network.
+func GCPNetworkName(project, network string) string {
+	return fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s", project, network)
+}
+
+// GetGCPPrivateZoneName attempts to find the name of the private zone for GCP installs. When a shared vpc install
+// occurs, a precreated zone may be used. If a zone is found (in this instance), then the zone should be paired with
+// the network that is supplied through the install config (when applicable).
+func GetGCPPrivateZoneName(ctx context.Context, client *icgcp.Client, installConfig *installconfig.InstallConfig, clusterID string) (string, error) {
+	privateZoneID := fmt.Sprintf("%s-private-zone", clusterID)
+	if installConfig.Config.GCP.NetworkProjectID != "" {
+		zone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.ClusterDomain(), false)
+		if err != nil {
+			return "", fmt.Errorf("failed to get private zone for %q: %w", installConfig.Config.BaseDomain, err)
+		}
+		if zone != nil {
+			if installConfig.Config.GCP.Network != "" {
+				expectedNetworkURL := GCPNetworkName(installConfig.Config.GCP.NetworkProjectID, installConfig.Config.GCP.Network)
+				for _, network := range zone.PrivateVisibilityConfig.Networks {
+					if network.NetworkUrl == expectedNetworkURL {
+						privateZoneID = zone.Name
+						break
+					}
+				}
+			}
+		}
+	}
+	return privateZoneID, nil
 }
 
 // Files returns the files generated by the asset.

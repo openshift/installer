@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,22 +66,26 @@ func NewEventNotificationsV1UsingExternalConfig(options *EventNotificationsV1Opt
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	eventNotifications, err = NewEventNotificationsV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = eventNotifications.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = eventNotifications.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -95,12 +99,14 @@ func NewEventNotificationsV1(options *EventNotificationsV1Options) (service *Eve
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -114,7 +120,7 @@ func NewEventNotificationsV1(options *EventNotificationsV1Options) (service *Eve
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "eventNotifications" suitable for processing requests.
@@ -129,7 +135,11 @@ func (eventNotifications *EventNotificationsV1) Clone() *EventNotificationsV1 {
 
 // SetServiceURL sets the service URL
 func (eventNotifications *EventNotificationsV1) SetServiceURL(url string) error {
-	return eventNotifications.Service.SetServiceURL(url)
+	err := eventNotifications.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -163,21 +173,113 @@ func (eventNotifications *EventNotificationsV1) DisableRetries() {
 	eventNotifications.Service.DisableRetries()
 }
 
+// GetMetrics : Get metrics
+// Get metrics.
+func (eventNotifications *EventNotificationsV1) GetMetrics(getMetricsOptions *GetMetricsOptions) (result *Metrics, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.GetMetricsWithContext(context.Background(), getMetricsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetMetricsWithContext is an alternate form of the GetMetrics method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) GetMetricsWithContext(ctx context.Context, getMetricsOptions *GetMetricsOptions) (result *Metrics, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getMetricsOptions, "getMetricsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getMetricsOptions, "getMetricsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *getMetricsOptions.InstanceID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/metrics`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getMetricsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "GetMetrics")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("destination_type", fmt.Sprint(*getMetricsOptions.DestinationType))
+	builder.AddQuery("gte", fmt.Sprint(*getMetricsOptions.Gte))
+	builder.AddQuery("lte", fmt.Sprint(*getMetricsOptions.Lte))
+	if getMetricsOptions.DestinationID != nil {
+		builder.AddQuery("destination_id", fmt.Sprint(*getMetricsOptions.DestinationID))
+	}
+	if getMetricsOptions.SourceID != nil {
+		builder.AddQuery("source_id", fmt.Sprint(*getMetricsOptions.SourceID))
+	}
+	if getMetricsOptions.EmailTo != nil {
+		builder.AddQuery("email_to", fmt.Sprint(*getMetricsOptions.EmailTo))
+	}
+	if getMetricsOptions.NotificationID != nil {
+		builder.AddQuery("notification_id", fmt.Sprint(*getMetricsOptions.NotificationID))
+	}
+	if getMetricsOptions.Subject != nil {
+		builder.AddQuery("subject", fmt.Sprint(*getMetricsOptions.Subject))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_metrics", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMetrics)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // SendNotifications : Send a notification
 // Send Notifications body from the instance. For more information about Event Notifications payload, see
 // [here](https://cloud.ibm.com/docs/event-notifications?topic=event-notifications-en-spec-payload).
 func (eventNotifications *EventNotificationsV1) SendNotifications(sendNotificationsOptions *SendNotificationsOptions) (result *NotificationResponse, response *core.DetailedResponse, err error) {
-	return eventNotifications.SendNotificationsWithContext(context.Background(), sendNotificationsOptions)
+	result, response, err = eventNotifications.SendNotificationsWithContext(context.Background(), sendNotificationsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SendNotificationsWithContext is an alternate form of the SendNotifications method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) SendNotificationsWithContext(ctx context.Context, sendNotificationsOptions *SendNotificationsOptions) (result *NotificationResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(sendNotificationsOptions, "sendNotificationsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(sendNotificationsOptions, "sendNotificationsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -190,6 +292,7 @@ func (eventNotifications *EventNotificationsV1) SendNotificationsWithContext(ctx
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/notifications`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -207,92 +310,28 @@ func (eventNotifications *EventNotificationsV1) SendNotificationsWithContext(ctx
 	if sendNotificationsOptions.Body != nil {
 		_, err = builder.SetBodyContentJSON(sendNotificationsOptions.Body)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "send_notifications", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalNotificationResponse)
 		if err != nil {
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// SendBulkNotifications : Send Bulk notification
-func (eventNotifications *EventNotificationsV1) SendBulkNotifications(sendBulkNotificationsOptions *SendBulkNotificationsOptions) (result *BulkNotificationResponse, response *core.DetailedResponse, err error) {
-	return eventNotifications.SendBulkNotificationsWithContext(context.Background(), sendBulkNotificationsOptions)
-}
-
-// SendBulkNotificationsWithContext is an alternate form of the SendBulkNotifications method which supports a Context parameter
-func (eventNotifications *EventNotificationsV1) SendBulkNotificationsWithContext(ctx context.Context, sendBulkNotificationsOptions *SendBulkNotificationsOptions) (result *BulkNotificationResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(sendBulkNotificationsOptions, "sendBulkNotificationsOptions cannot be nil")
-	if err != nil {
-		return
-	}
-	err = core.ValidateStruct(sendBulkNotificationsOptions, "sendBulkNotificationsOptions")
-	if err != nil {
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"instance_id": *sendBulkNotificationsOptions.InstanceID,
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/notifications/bulk`, pathParamsMap)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range sendBulkNotificationsOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "SendBulkNotifications")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-	builder.AddHeader("Content-Type", "application/json")
-
-	body := make(map[string]interface{})
-	if sendBulkNotificationsOptions.BulkMessages != nil {
-		body["bulk_messages"] = sendBulkNotificationsOptions.BulkMessages
-	}
-	_, err = builder.SetBodyContentJSON(body)
-	if err != nil {
-		return
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = eventNotifications.Service.Request(request, &rawResponse)
-	if err != nil {
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBulkNotificationResponse)
-		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -304,17 +343,21 @@ func (eventNotifications *EventNotificationsV1) SendBulkNotificationsWithContext
 // CreateSources : Create a new API Source
 // Create a new API Source.
 func (eventNotifications *EventNotificationsV1) CreateSources(createSourcesOptions *CreateSourcesOptions) (result *SourceResponse, response *core.DetailedResponse, err error) {
-	return eventNotifications.CreateSourcesWithContext(context.Background(), createSourcesOptions)
+	result, response, err = eventNotifications.CreateSourcesWithContext(context.Background(), createSourcesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateSourcesWithContext is an alternate form of the CreateSources method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) CreateSourcesWithContext(ctx context.Context, createSourcesOptions *CreateSourcesOptions) (result *SourceResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createSourcesOptions, "createSourcesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createSourcesOptions, "createSourcesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -327,6 +370,7 @@ func (eventNotifications *EventNotificationsV1) CreateSourcesWithContext(ctx con
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/sources`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -353,22 +397,27 @@ func (eventNotifications *EventNotificationsV1) CreateSourcesWithContext(ctx con
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_sources", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSourceResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -380,17 +429,21 @@ func (eventNotifications *EventNotificationsV1) CreateSourcesWithContext(ctx con
 // ListSources : List all Sources
 // List all Sources.
 func (eventNotifications *EventNotificationsV1) ListSources(listSourcesOptions *ListSourcesOptions) (result *SourceList, response *core.DetailedResponse, err error) {
-	return eventNotifications.ListSourcesWithContext(context.Background(), listSourcesOptions)
+	result, response, err = eventNotifications.ListSourcesWithContext(context.Background(), listSourcesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListSourcesWithContext is an alternate form of the ListSources method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) ListSourcesWithContext(ctx context.Context, listSourcesOptions *ListSourcesOptions) (result *SourceList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listSourcesOptions, "listSourcesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listSourcesOptions, "listSourcesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -403,6 +456,7 @@ func (eventNotifications *EventNotificationsV1) ListSourcesWithContext(ctx conte
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/sources`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -428,17 +482,21 @@ func (eventNotifications *EventNotificationsV1) ListSourcesWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_sources", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSourceList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -450,17 +508,21 @@ func (eventNotifications *EventNotificationsV1) ListSourcesWithContext(ctx conte
 // GetSource : Get a Source
 // Get a Source.
 func (eventNotifications *EventNotificationsV1) GetSource(getSourceOptions *GetSourceOptions) (result *Source, response *core.DetailedResponse, err error) {
-	return eventNotifications.GetSourceWithContext(context.Background(), getSourceOptions)
+	result, response, err = eventNotifications.GetSourceWithContext(context.Background(), getSourceOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetSourceWithContext is an alternate form of the GetSource method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) GetSourceWithContext(ctx context.Context, getSourceOptions *GetSourceOptions) (result *Source, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getSourceOptions, "getSourceOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getSourceOptions, "getSourceOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -474,6 +536,7 @@ func (eventNotifications *EventNotificationsV1) GetSourceWithContext(ctx context
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/sources/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -489,17 +552,21 @@ func (eventNotifications *EventNotificationsV1) GetSourceWithContext(ctx context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_source", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSource)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -511,17 +578,21 @@ func (eventNotifications *EventNotificationsV1) GetSourceWithContext(ctx context
 // DeleteSource : Delete a Source
 // Delete a Source.
 func (eventNotifications *EventNotificationsV1) DeleteSource(deleteSourceOptions *DeleteSourceOptions) (response *core.DetailedResponse, err error) {
-	return eventNotifications.DeleteSourceWithContext(context.Background(), deleteSourceOptions)
+	response, err = eventNotifications.DeleteSourceWithContext(context.Background(), deleteSourceOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteSourceWithContext is an alternate form of the DeleteSource method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) DeleteSourceWithContext(ctx context.Context, deleteSourceOptions *DeleteSourceOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteSourceOptions, "deleteSourceOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteSourceOptions, "deleteSourceOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -535,6 +606,7 @@ func (eventNotifications *EventNotificationsV1) DeleteSourceWithContext(ctx cont
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/sources/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -549,10 +621,16 @@ func (eventNotifications *EventNotificationsV1) DeleteSourceWithContext(ctx cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = eventNotifications.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_source", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -560,17 +638,21 @@ func (eventNotifications *EventNotificationsV1) DeleteSourceWithContext(ctx cont
 // UpdateSource : Update details of a Source
 // Update details of a Source.
 func (eventNotifications *EventNotificationsV1) UpdateSource(updateSourceOptions *UpdateSourceOptions) (result *Source, response *core.DetailedResponse, err error) {
-	return eventNotifications.UpdateSourceWithContext(context.Background(), updateSourceOptions)
+	result, response, err = eventNotifications.UpdateSourceWithContext(context.Background(), updateSourceOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateSourceWithContext is an alternate form of the UpdateSource method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) UpdateSourceWithContext(ctx context.Context, updateSourceOptions *UpdateSourceOptions) (result *Source, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateSourceOptions, "updateSourceOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateSourceOptions, "updateSourceOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -584,6 +666,7 @@ func (eventNotifications *EventNotificationsV1) UpdateSourceWithContext(ctx cont
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/sources/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -610,22 +693,27 @@ func (eventNotifications *EventNotificationsV1) UpdateSourceWithContext(ctx cont
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_source", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSource)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -637,17 +725,21 @@ func (eventNotifications *EventNotificationsV1) UpdateSourceWithContext(ctx cont
 // CreateTopic : Create a new Topic
 // Create a new Topic.
 func (eventNotifications *EventNotificationsV1) CreateTopic(createTopicOptions *CreateTopicOptions) (result *TopicResponse, response *core.DetailedResponse, err error) {
-	return eventNotifications.CreateTopicWithContext(context.Background(), createTopicOptions)
+	result, response, err = eventNotifications.CreateTopicWithContext(context.Background(), createTopicOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateTopicWithContext is an alternate form of the CreateTopic method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) CreateTopicWithContext(ctx context.Context, createTopicOptions *CreateTopicOptions) (result *TopicResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createTopicOptions, "createTopicOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createTopicOptions, "createTopicOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -660,6 +752,7 @@ func (eventNotifications *EventNotificationsV1) CreateTopicWithContext(ctx conte
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/topics`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -686,22 +779,27 @@ func (eventNotifications *EventNotificationsV1) CreateTopicWithContext(ctx conte
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_topic", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTopicResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -713,17 +811,21 @@ func (eventNotifications *EventNotificationsV1) CreateTopicWithContext(ctx conte
 // ListTopics : List all Topics
 // List all Topics.
 func (eventNotifications *EventNotificationsV1) ListTopics(listTopicsOptions *ListTopicsOptions) (result *TopicList, response *core.DetailedResponse, err error) {
-	return eventNotifications.ListTopicsWithContext(context.Background(), listTopicsOptions)
+	result, response, err = eventNotifications.ListTopicsWithContext(context.Background(), listTopicsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListTopicsWithContext is an alternate form of the ListTopics method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) ListTopicsWithContext(ctx context.Context, listTopicsOptions *ListTopicsOptions) (result *TopicList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listTopicsOptions, "listTopicsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listTopicsOptions, "listTopicsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -736,6 +838,7 @@ func (eventNotifications *EventNotificationsV1) ListTopicsWithContext(ctx contex
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/topics`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -761,17 +864,21 @@ func (eventNotifications *EventNotificationsV1) ListTopicsWithContext(ctx contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_topics", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTopicList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -783,17 +890,21 @@ func (eventNotifications *EventNotificationsV1) ListTopicsWithContext(ctx contex
 // GetTopic : Get details of a Topic
 // Get details of a Topic.
 func (eventNotifications *EventNotificationsV1) GetTopic(getTopicOptions *GetTopicOptions) (result *Topic, response *core.DetailedResponse, err error) {
-	return eventNotifications.GetTopicWithContext(context.Background(), getTopicOptions)
+	result, response, err = eventNotifications.GetTopicWithContext(context.Background(), getTopicOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetTopicWithContext is an alternate form of the GetTopic method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) GetTopicWithContext(ctx context.Context, getTopicOptions *GetTopicOptions) (result *Topic, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getTopicOptions, "getTopicOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getTopicOptions, "getTopicOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -807,6 +918,7 @@ func (eventNotifications *EventNotificationsV1) GetTopicWithContext(ctx context.
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/topics/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -826,17 +938,21 @@ func (eventNotifications *EventNotificationsV1) GetTopicWithContext(ctx context.
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_topic", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTopic)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -848,17 +964,21 @@ func (eventNotifications *EventNotificationsV1) GetTopicWithContext(ctx context.
 // ReplaceTopic : Update details of a Topic
 // Update details of a Topic.
 func (eventNotifications *EventNotificationsV1) ReplaceTopic(replaceTopicOptions *ReplaceTopicOptions) (result *Topic, response *core.DetailedResponse, err error) {
-	return eventNotifications.ReplaceTopicWithContext(context.Background(), replaceTopicOptions)
+	result, response, err = eventNotifications.ReplaceTopicWithContext(context.Background(), replaceTopicOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ReplaceTopicWithContext is an alternate form of the ReplaceTopic method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) ReplaceTopicWithContext(ctx context.Context, replaceTopicOptions *ReplaceTopicOptions) (result *Topic, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(replaceTopicOptions, "replaceTopicOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(replaceTopicOptions, "replaceTopicOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -872,6 +992,7 @@ func (eventNotifications *EventNotificationsV1) ReplaceTopicWithContext(ctx cont
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/topics/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -898,22 +1019,27 @@ func (eventNotifications *EventNotificationsV1) ReplaceTopicWithContext(ctx cont
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "replace_topic", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTopic)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -925,17 +1051,21 @@ func (eventNotifications *EventNotificationsV1) ReplaceTopicWithContext(ctx cont
 // DeleteTopic : Delete a Topic
 // Delete a Topic.
 func (eventNotifications *EventNotificationsV1) DeleteTopic(deleteTopicOptions *DeleteTopicOptions) (response *core.DetailedResponse, err error) {
-	return eventNotifications.DeleteTopicWithContext(context.Background(), deleteTopicOptions)
+	response, err = eventNotifications.DeleteTopicWithContext(context.Background(), deleteTopicOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteTopicWithContext is an alternate form of the DeleteTopic method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) DeleteTopicWithContext(ctx context.Context, deleteTopicOptions *DeleteTopicOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteTopicOptions, "deleteTopicOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteTopicOptions, "deleteTopicOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -949,6 +1079,7 @@ func (eventNotifications *EventNotificationsV1) DeleteTopicWithContext(ctx conte
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/topics/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -963,10 +1094,16 @@ func (eventNotifications *EventNotificationsV1) DeleteTopicWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = eventNotifications.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_topic", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -974,17 +1111,21 @@ func (eventNotifications *EventNotificationsV1) DeleteTopicWithContext(ctx conte
 // CreateTemplate : Create a new Template
 // Create a new Template.
 func (eventNotifications *EventNotificationsV1) CreateTemplate(createTemplateOptions *CreateTemplateOptions) (result *TemplateResponse, response *core.DetailedResponse, err error) {
-	return eventNotifications.CreateTemplateWithContext(context.Background(), createTemplateOptions)
+	result, response, err = eventNotifications.CreateTemplateWithContext(context.Background(), createTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateTemplateWithContext is an alternate form of the CreateTemplate method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) CreateTemplateWithContext(ctx context.Context, createTemplateOptions *CreateTemplateOptions) (result *TemplateResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createTemplateOptions, "createTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createTemplateOptions, "createTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -997,6 +1138,7 @@ func (eventNotifications *EventNotificationsV1) CreateTemplateWithContext(ctx co
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/templates`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1026,22 +1168,27 @@ func (eventNotifications *EventNotificationsV1) CreateTemplateWithContext(ctx co
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1053,17 +1200,21 @@ func (eventNotifications *EventNotificationsV1) CreateTemplateWithContext(ctx co
 // ListTemplates : List all templates
 // List all Templates.
 func (eventNotifications *EventNotificationsV1) ListTemplates(listTemplatesOptions *ListTemplatesOptions) (result *TemplateList, response *core.DetailedResponse, err error) {
-	return eventNotifications.ListTemplatesWithContext(context.Background(), listTemplatesOptions)
+	result, response, err = eventNotifications.ListTemplatesWithContext(context.Background(), listTemplatesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListTemplatesWithContext is an alternate form of the ListTemplates method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) ListTemplatesWithContext(ctx context.Context, listTemplatesOptions *ListTemplatesOptions) (result *TemplateList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listTemplatesOptions, "listTemplatesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listTemplatesOptions, "listTemplatesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1076,6 +1227,7 @@ func (eventNotifications *EventNotificationsV1) ListTemplatesWithContext(ctx con
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/templates`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1101,17 +1253,21 @@ func (eventNotifications *EventNotificationsV1) ListTemplatesWithContext(ctx con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_templates", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1123,17 +1279,21 @@ func (eventNotifications *EventNotificationsV1) ListTemplatesWithContext(ctx con
 // GetTemplate : Get details of a Template
 // Get details of a Template.
 func (eventNotifications *EventNotificationsV1) GetTemplate(getTemplateOptions *GetTemplateOptions) (result *Template, response *core.DetailedResponse, err error) {
-	return eventNotifications.GetTemplateWithContext(context.Background(), getTemplateOptions)
+	result, response, err = eventNotifications.GetTemplateWithContext(context.Background(), getTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetTemplateWithContext is an alternate form of the GetTemplate method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) GetTemplateWithContext(ctx context.Context, getTemplateOptions *GetTemplateOptions) (result *Template, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getTemplateOptions, "getTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getTemplateOptions, "getTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1147,6 +1307,7 @@ func (eventNotifications *EventNotificationsV1) GetTemplateWithContext(ctx conte
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/templates/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1162,17 +1323,21 @@ func (eventNotifications *EventNotificationsV1) GetTemplateWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplate)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1181,26 +1346,30 @@ func (eventNotifications *EventNotificationsV1) GetTemplateWithContext(ctx conte
 	return
 }
 
-// UpdateTemplate : Update details of a Template
+// ReplaceTemplate : Update details of a Template
 // Update details of a Template.
-func (eventNotifications *EventNotificationsV1) UpdateTemplate(updateTemplateOptions *UpdateTemplateOptions) (result *Template, response *core.DetailedResponse, err error) {
-	return eventNotifications.UpdateTemplateWithContext(context.Background(), updateTemplateOptions)
+func (eventNotifications *EventNotificationsV1) ReplaceTemplate(replaceTemplateOptions *ReplaceTemplateOptions) (result *Template, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.ReplaceTemplateWithContext(context.Background(), replaceTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-// UpdateTemplateWithContext is an alternate form of the UpdateTemplate method which supports a Context parameter
-func (eventNotifications *EventNotificationsV1) UpdateTemplateWithContext(ctx context.Context, updateTemplateOptions *UpdateTemplateOptions) (result *Template, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(updateTemplateOptions, "updateTemplateOptions cannot be nil")
+// ReplaceTemplateWithContext is an alternate form of the ReplaceTemplate method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) ReplaceTemplateWithContext(ctx context.Context, replaceTemplateOptions *ReplaceTemplateOptions) (result *Template, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(replaceTemplateOptions, "replaceTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
-	err = core.ValidateStruct(updateTemplateOptions, "updateTemplateOptions")
+	err = core.ValidateStruct(replaceTemplateOptions, "replaceTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *updateTemplateOptions.InstanceID,
-		"id":          *updateTemplateOptions.ID,
+		"instance_id": *replaceTemplateOptions.InstanceID,
+		"id":          *replaceTemplateOptions.ID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -1208,14 +1377,15 @@ func (eventNotifications *EventNotificationsV1) UpdateTemplateWithContext(ctx co
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/templates/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
-	for headerName, headerValue := range updateTemplateOptions.Headers {
+	for headerName, headerValue := range replaceTemplateOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "UpdateTemplate")
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "ReplaceTemplate")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
@@ -1223,36 +1393,41 @@ func (eventNotifications *EventNotificationsV1) UpdateTemplateWithContext(ctx co
 	builder.AddHeader("Content-Type", "application/json")
 
 	body := make(map[string]interface{})
-	if updateTemplateOptions.Name != nil {
-		body["name"] = updateTemplateOptions.Name
+	if replaceTemplateOptions.Name != nil {
+		body["name"] = replaceTemplateOptions.Name
 	}
-	if updateTemplateOptions.Description != nil {
-		body["description"] = updateTemplateOptions.Description
+	if replaceTemplateOptions.Description != nil {
+		body["description"] = replaceTemplateOptions.Description
 	}
-	if updateTemplateOptions.Type != nil {
-		body["type"] = updateTemplateOptions.Type
+	if replaceTemplateOptions.Type != nil {
+		body["type"] = replaceTemplateOptions.Type
 	}
-	if updateTemplateOptions.Params != nil {
-		body["params"] = updateTemplateOptions.Params
+	if replaceTemplateOptions.Params != nil {
+		body["params"] = replaceTemplateOptions.Params
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "replace_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplate)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1264,17 +1439,21 @@ func (eventNotifications *EventNotificationsV1) UpdateTemplateWithContext(ctx co
 // DeleteTemplate : Delete a Template
 // Delete a Template.
 func (eventNotifications *EventNotificationsV1) DeleteTemplate(deleteTemplateOptions *DeleteTemplateOptions) (response *core.DetailedResponse, err error) {
-	return eventNotifications.DeleteTemplateWithContext(context.Background(), deleteTemplateOptions)
+	response, err = eventNotifications.DeleteTemplateWithContext(context.Background(), deleteTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteTemplateWithContext is an alternate form of the DeleteTemplate method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) DeleteTemplateWithContext(ctx context.Context, deleteTemplateOptions *DeleteTemplateOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteTemplateOptions, "deleteTemplateOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteTemplateOptions, "deleteTemplateOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1288,6 +1467,7 @@ func (eventNotifications *EventNotificationsV1) DeleteTemplateWithContext(ctx co
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/templates/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1302,10 +1482,16 @@ func (eventNotifications *EventNotificationsV1) DeleteTemplateWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = eventNotifications.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1313,17 +1499,21 @@ func (eventNotifications *EventNotificationsV1) DeleteTemplateWithContext(ctx co
 // CreateDestination : Create a new Destination
 // Create a new Destination.
 func (eventNotifications *EventNotificationsV1) CreateDestination(createDestinationOptions *CreateDestinationOptions) (result *DestinationResponse, response *core.DetailedResponse, err error) {
-	return eventNotifications.CreateDestinationWithContext(context.Background(), createDestinationOptions)
+	result, response, err = eventNotifications.CreateDestinationWithContext(context.Background(), createDestinationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateDestinationWithContext is an alternate form of the CreateDestination method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) CreateDestinationWithContext(ctx context.Context, createDestinationOptions *CreateDestinationOptions) (result *DestinationResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createDestinationOptions, "createDestinationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createDestinationOptions, "createDestinationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1336,6 +1526,7 @@ func (eventNotifications *EventNotificationsV1) CreateDestinationWithContext(ctx
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1353,6 +1544,9 @@ func (eventNotifications *EventNotificationsV1) CreateDestinationWithContext(ctx
 	builder.AddFormData("type", "", "", fmt.Sprint(*createDestinationOptions.Type))
 	if createDestinationOptions.Description != nil {
 		builder.AddFormData("description", "", "", fmt.Sprint(*createDestinationOptions.Description))
+	}
+	if createDestinationOptions.CollectFailedEvents != nil {
+		builder.AddFormData("collect_failed_events", "", "", fmt.Sprint(*createDestinationOptions.CollectFailedEvents))
 	}
 	if createDestinationOptions.Config != nil {
 		builder.AddFormData("config", "", "application/json", createDestinationOptions.Config)
@@ -1388,17 +1582,21 @@ func (eventNotifications *EventNotificationsV1) CreateDestinationWithContext(ctx
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_destination", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDestinationResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1410,17 +1608,21 @@ func (eventNotifications *EventNotificationsV1) CreateDestinationWithContext(ctx
 // ListDestinations : List all Destinations
 // List all Destinations.
 func (eventNotifications *EventNotificationsV1) ListDestinations(listDestinationsOptions *ListDestinationsOptions) (result *DestinationList, response *core.DetailedResponse, err error) {
-	return eventNotifications.ListDestinationsWithContext(context.Background(), listDestinationsOptions)
+	result, response, err = eventNotifications.ListDestinationsWithContext(context.Background(), listDestinationsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListDestinationsWithContext is an alternate form of the ListDestinations method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) ListDestinationsWithContext(ctx context.Context, listDestinationsOptions *ListDestinationsOptions) (result *DestinationList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listDestinationsOptions, "listDestinationsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listDestinationsOptions, "listDestinationsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1433,6 +1635,7 @@ func (eventNotifications *EventNotificationsV1) ListDestinationsWithContext(ctx 
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1458,17 +1661,21 @@ func (eventNotifications *EventNotificationsV1) ListDestinationsWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_destinations", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDestinationList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1480,17 +1687,21 @@ func (eventNotifications *EventNotificationsV1) ListDestinationsWithContext(ctx 
 // GetDestination : Get details of a Destination
 // Get details of a Destination.
 func (eventNotifications *EventNotificationsV1) GetDestination(getDestinationOptions *GetDestinationOptions) (result *Destination, response *core.DetailedResponse, err error) {
-	return eventNotifications.GetDestinationWithContext(context.Background(), getDestinationOptions)
+	result, response, err = eventNotifications.GetDestinationWithContext(context.Background(), getDestinationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDestinationWithContext is an alternate form of the GetDestination method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) GetDestinationWithContext(ctx context.Context, getDestinationOptions *GetDestinationOptions) (result *Destination, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDestinationOptions, "getDestinationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDestinationOptions, "getDestinationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1504,6 +1715,7 @@ func (eventNotifications *EventNotificationsV1) GetDestinationWithContext(ctx co
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1519,17 +1731,21 @@ func (eventNotifications *EventNotificationsV1) GetDestinationWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_destination", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDestination)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1541,21 +1757,25 @@ func (eventNotifications *EventNotificationsV1) GetDestinationWithContext(ctx co
 // UpdateDestination : Update details of a Destination
 // Update details of a Destination.
 func (eventNotifications *EventNotificationsV1) UpdateDestination(updateDestinationOptions *UpdateDestinationOptions) (result *Destination, response *core.DetailedResponse, err error) {
-	return eventNotifications.UpdateDestinationWithContext(context.Background(), updateDestinationOptions)
+	result, response, err = eventNotifications.UpdateDestinationWithContext(context.Background(), updateDestinationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateDestinationWithContext is an alternate form of the UpdateDestination method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) UpdateDestinationWithContext(ctx context.Context, updateDestinationOptions *UpdateDestinationOptions) (result *Destination, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateDestinationOptions, "updateDestinationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateDestinationOptions, "updateDestinationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
-	if (updateDestinationOptions.Name == nil) && (updateDestinationOptions.Description == nil) && (updateDestinationOptions.Config == nil) && (updateDestinationOptions.Certificate == nil) && (updateDestinationOptions.Icon16x16 == nil) && (updateDestinationOptions.Icon16x162x == nil) && (updateDestinationOptions.Icon32x32 == nil) && (updateDestinationOptions.Icon32x322x == nil) && (updateDestinationOptions.Icon128x128 == nil) && (updateDestinationOptions.Icon128x1282x == nil) {
-		err = fmt.Errorf("at least one of name, description, config, certificate, icon16x16, icon16x162x, icon32x32, icon32x322x, icon128x128, or icon128x1282x must be supplied")
+	if (updateDestinationOptions.Name == nil) && (updateDestinationOptions.Description == nil) && (updateDestinationOptions.CollectFailedEvents == nil) && (updateDestinationOptions.Config == nil) && (updateDestinationOptions.Certificate == nil) && (updateDestinationOptions.Icon16x16 == nil) && (updateDestinationOptions.Icon16x162x == nil) && (updateDestinationOptions.Icon32x32 == nil) && (updateDestinationOptions.Icon32x322x == nil) && (updateDestinationOptions.Icon128x128 == nil) && (updateDestinationOptions.Icon128x1282x == nil) {
+		err = core.SDKErrorf(nil, "at least one of name, description, collectFailedEvents, config, certificate, icon16x16, icon16x162x, icon32x32, icon32x322x, icon128x128, or icon128x1282x must be supplied", "condition-not-met", common.GetComponentInfo())
 		return
 	}
 
@@ -1569,6 +1789,7 @@ func (eventNotifications *EventNotificationsV1) UpdateDestinationWithContext(ctx
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1587,6 +1808,9 @@ func (eventNotifications *EventNotificationsV1) UpdateDestinationWithContext(ctx
 	}
 	if updateDestinationOptions.Description != nil {
 		builder.AddFormData("description", "", "", fmt.Sprint(*updateDestinationOptions.Description))
+	}
+	if updateDestinationOptions.CollectFailedEvents != nil {
+		builder.AddFormData("collect_failed_events", "", "", fmt.Sprint(*updateDestinationOptions.CollectFailedEvents))
 	}
 	if updateDestinationOptions.Config != nil {
 		builder.AddFormData("config", "", "application/json", updateDestinationOptions.Config)
@@ -1622,17 +1846,21 @@ func (eventNotifications *EventNotificationsV1) UpdateDestinationWithContext(ctx
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_destination", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDestination)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1644,17 +1872,21 @@ func (eventNotifications *EventNotificationsV1) UpdateDestinationWithContext(ctx
 // DeleteDestination : Delete a Destination
 // Delete a Destination.
 func (eventNotifications *EventNotificationsV1) DeleteDestination(deleteDestinationOptions *DeleteDestinationOptions) (response *core.DetailedResponse, err error) {
-	return eventNotifications.DeleteDestinationWithContext(context.Background(), deleteDestinationOptions)
+	response, err = eventNotifications.DeleteDestinationWithContext(context.Background(), deleteDestinationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteDestinationWithContext is an alternate form of the DeleteDestination method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) DeleteDestinationWithContext(ctx context.Context, deleteDestinationOptions *DeleteDestinationOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteDestinationOptions, "deleteDestinationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteDestinationOptions, "deleteDestinationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1668,6 +1900,7 @@ func (eventNotifications *EventNotificationsV1) DeleteDestinationWithContext(ctx
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1682,10 +1915,156 @@ func (eventNotifications *EventNotificationsV1) DeleteDestinationWithContext(ctx
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = eventNotifications.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_destination", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetEnabledCountries : Get enabled country details of SMS destination
+// Get enabled country details of SMS destination.
+func (eventNotifications *EventNotificationsV1) GetEnabledCountries(getEnabledCountriesOptions *GetEnabledCountriesOptions) (result *EnabledCountriesResponse, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.GetEnabledCountriesWithContext(context.Background(), getEnabledCountriesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetEnabledCountriesWithContext is an alternate form of the GetEnabledCountries method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) GetEnabledCountriesWithContext(ctx context.Context, getEnabledCountriesOptions *GetEnabledCountriesOptions) (result *EnabledCountriesResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getEnabledCountriesOptions, "getEnabledCountriesOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getEnabledCountriesOptions, "getEnabledCountriesOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *getEnabledCountriesOptions.InstanceID,
+		"id":          *getEnabledCountriesOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}/enabled_countries`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getEnabledCountriesOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "GetEnabledCountries")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_enabled_countries", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEnabledCountriesResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// TestDestination : Test a Destination
+// Test a Destination.
+func (eventNotifications *EventNotificationsV1) TestDestination(testDestinationOptions *TestDestinationOptions) (result *TestDestinationResponse, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.TestDestinationWithContext(context.Background(), testDestinationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// TestDestinationWithContext is an alternate form of the TestDestination method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) TestDestinationWithContext(ctx context.Context, testDestinationOptions *TestDestinationOptions) (result *TestDestinationResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(testDestinationOptions, "testDestinationOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(testDestinationOptions, "testDestinationOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *testDestinationOptions.InstanceID,
+		"id":          *testDestinationOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}/test`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range testDestinationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "TestDestination")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "test_destination", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTestDestinationResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
 
 	return
 }
@@ -1693,17 +2072,21 @@ func (eventNotifications *EventNotificationsV1) DeleteDestinationWithContext(ctx
 // UpdateVerifyDestination : Verify SPF and DKIM records of custom domain
 // Verify SPF and DKIM records of custom domain.
 func (eventNotifications *EventNotificationsV1) UpdateVerifyDestination(updateVerifyDestinationOptions *UpdateVerifyDestinationOptions) (result *VerificationResponse, response *core.DetailedResponse, err error) {
-	return eventNotifications.UpdateVerifyDestinationWithContext(context.Background(), updateVerifyDestinationOptions)
+	result, response, err = eventNotifications.UpdateVerifyDestinationWithContext(context.Background(), updateVerifyDestinationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateVerifyDestinationWithContext is an alternate form of the UpdateVerifyDestination method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) UpdateVerifyDestinationWithContext(ctx context.Context, updateVerifyDestinationOptions *UpdateVerifyDestinationOptions) (result *VerificationResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateVerifyDestinationOptions, "updateVerifyDestinationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateVerifyDestinationOptions, "updateVerifyDestinationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1717,6 +2100,7 @@ func (eventNotifications *EventNotificationsV1) UpdateVerifyDestinationWithConte
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}/verify`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1734,17 +2118,21 @@ func (eventNotifications *EventNotificationsV1) UpdateVerifyDestinationWithConte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_verify_destination", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVerificationResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1756,17 +2144,21 @@ func (eventNotifications *EventNotificationsV1) UpdateVerifyDestinationWithConte
 // CreateTagsSubscription : Create a new tag subscription
 // Create a new tag subscription.
 func (eventNotifications *EventNotificationsV1) CreateTagsSubscription(createTagsSubscriptionOptions *CreateTagsSubscriptionOptions) (result *DestinationTagsSubscriptionResponse, response *core.DetailedResponse, err error) {
-	return eventNotifications.CreateTagsSubscriptionWithContext(context.Background(), createTagsSubscriptionOptions)
+	result, response, err = eventNotifications.CreateTagsSubscriptionWithContext(context.Background(), createTagsSubscriptionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateTagsSubscriptionWithContext is an alternate form of the CreateTagsSubscription method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) CreateTagsSubscriptionWithContext(ctx context.Context, createTagsSubscriptionOptions *CreateTagsSubscriptionOptions) (result *DestinationTagsSubscriptionResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createTagsSubscriptionOptions, "createTagsSubscriptionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createTagsSubscriptionOptions, "createTagsSubscriptionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1780,6 +2172,7 @@ func (eventNotifications *EventNotificationsV1) CreateTagsSubscriptionWithContex
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}/tag_subscriptions`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1803,22 +2196,27 @@ func (eventNotifications *EventNotificationsV1) CreateTagsSubscriptionWithContex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_tags_subscription", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDestinationTagsSubscriptionResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1830,17 +2228,21 @@ func (eventNotifications *EventNotificationsV1) CreateTagsSubscriptionWithContex
 // ListTagsSubscription : List all tag subscriptions
 // List all tag subscriptions.
 func (eventNotifications *EventNotificationsV1) ListTagsSubscription(listTagsSubscriptionOptions *ListTagsSubscriptionOptions) (result *TagsSubscriptionList, response *core.DetailedResponse, err error) {
-	return eventNotifications.ListTagsSubscriptionWithContext(context.Background(), listTagsSubscriptionOptions)
+	result, response, err = eventNotifications.ListTagsSubscriptionWithContext(context.Background(), listTagsSubscriptionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListTagsSubscriptionWithContext is an alternate form of the ListTagsSubscription method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) ListTagsSubscriptionWithContext(ctx context.Context, listTagsSubscriptionOptions *ListTagsSubscriptionOptions) (result *TagsSubscriptionList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listTagsSubscriptionOptions, "listTagsSubscriptionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listTagsSubscriptionOptions, "listTagsSubscriptionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1854,6 +2256,7 @@ func (eventNotifications *EventNotificationsV1) ListTagsSubscriptionWithContext(
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}/tag_subscriptions`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1888,17 +2291,21 @@ func (eventNotifications *EventNotificationsV1) ListTagsSubscriptionWithContext(
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_tags_subscription", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTagsSubscriptionList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1910,17 +2317,21 @@ func (eventNotifications *EventNotificationsV1) ListTagsSubscriptionWithContext(
 // DeleteTagsSubscription : Delete a tag subscription
 // Delete a tag subscription.
 func (eventNotifications *EventNotificationsV1) DeleteTagsSubscription(deleteTagsSubscriptionOptions *DeleteTagsSubscriptionOptions) (response *core.DetailedResponse, err error) {
-	return eventNotifications.DeleteTagsSubscriptionWithContext(context.Background(), deleteTagsSubscriptionOptions)
+	response, err = eventNotifications.DeleteTagsSubscriptionWithContext(context.Background(), deleteTagsSubscriptionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteTagsSubscriptionWithContext is an alternate form of the DeleteTagsSubscription method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) DeleteTagsSubscriptionWithContext(ctx context.Context, deleteTagsSubscriptionOptions *DeleteTagsSubscriptionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteTagsSubscriptionOptions, "deleteTagsSubscriptionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteTagsSubscriptionOptions, "deleteTagsSubscriptionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1934,6 +2345,7 @@ func (eventNotifications *EventNotificationsV1) DeleteTagsSubscriptionWithContex
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}/tag_subscriptions`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1955,10 +2367,16 @@ func (eventNotifications *EventNotificationsV1) DeleteTagsSubscriptionWithContex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = eventNotifications.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_tags_subscription", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1966,17 +2384,21 @@ func (eventNotifications *EventNotificationsV1) DeleteTagsSubscriptionWithContex
 // CreateSubscription : Create a new Subscription
 // Create a new Subscription.
 func (eventNotifications *EventNotificationsV1) CreateSubscription(createSubscriptionOptions *CreateSubscriptionOptions) (result *Subscription, response *core.DetailedResponse, err error) {
-	return eventNotifications.CreateSubscriptionWithContext(context.Background(), createSubscriptionOptions)
+	result, response, err = eventNotifications.CreateSubscriptionWithContext(context.Background(), createSubscriptionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateSubscriptionWithContext is an alternate form of the CreateSubscription method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) CreateSubscriptionWithContext(ctx context.Context, createSubscriptionOptions *CreateSubscriptionOptions) (result *Subscription, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createSubscriptionOptions, "createSubscriptionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createSubscriptionOptions, "createSubscriptionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1989,6 +2411,7 @@ func (eventNotifications *EventNotificationsV1) CreateSubscriptionWithContext(ct
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/subscriptions`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2021,22 +2444,27 @@ func (eventNotifications *EventNotificationsV1) CreateSubscriptionWithContext(ct
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "create_subscription", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSubscription)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2048,17 +2476,21 @@ func (eventNotifications *EventNotificationsV1) CreateSubscriptionWithContext(ct
 // ListSubscriptions : List all Subscriptions
 // List all Subscriptions.
 func (eventNotifications *EventNotificationsV1) ListSubscriptions(listSubscriptionsOptions *ListSubscriptionsOptions) (result *SubscriptionList, response *core.DetailedResponse, err error) {
-	return eventNotifications.ListSubscriptionsWithContext(context.Background(), listSubscriptionsOptions)
+	result, response, err = eventNotifications.ListSubscriptionsWithContext(context.Background(), listSubscriptionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListSubscriptionsWithContext is an alternate form of the ListSubscriptions method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) ListSubscriptionsWithContext(ctx context.Context, listSubscriptionsOptions *ListSubscriptionsOptions) (result *SubscriptionList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listSubscriptionsOptions, "listSubscriptionsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listSubscriptionsOptions, "listSubscriptionsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2071,6 +2503,7 @@ func (eventNotifications *EventNotificationsV1) ListSubscriptionsWithContext(ctx
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/subscriptions`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2096,17 +2529,21 @@ func (eventNotifications *EventNotificationsV1) ListSubscriptionsWithContext(ctx
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_subscriptions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSubscriptionList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2118,17 +2555,21 @@ func (eventNotifications *EventNotificationsV1) ListSubscriptionsWithContext(ctx
 // GetSubscription : Get details of a Subscription
 // Get details of a Subscription.
 func (eventNotifications *EventNotificationsV1) GetSubscription(getSubscriptionOptions *GetSubscriptionOptions) (result *Subscription, response *core.DetailedResponse, err error) {
-	return eventNotifications.GetSubscriptionWithContext(context.Background(), getSubscriptionOptions)
+	result, response, err = eventNotifications.GetSubscriptionWithContext(context.Background(), getSubscriptionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetSubscriptionWithContext is an alternate form of the GetSubscription method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) GetSubscriptionWithContext(ctx context.Context, getSubscriptionOptions *GetSubscriptionOptions) (result *Subscription, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getSubscriptionOptions, "getSubscriptionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getSubscriptionOptions, "getSubscriptionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2142,6 +2583,7 @@ func (eventNotifications *EventNotificationsV1) GetSubscriptionWithContext(ctx c
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/subscriptions/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2157,17 +2599,21 @@ func (eventNotifications *EventNotificationsV1) GetSubscriptionWithContext(ctx c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_subscription", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSubscription)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2179,17 +2625,21 @@ func (eventNotifications *EventNotificationsV1) GetSubscriptionWithContext(ctx c
 // DeleteSubscription : Delete a Subscription
 // Delete a Subscription.
 func (eventNotifications *EventNotificationsV1) DeleteSubscription(deleteSubscriptionOptions *DeleteSubscriptionOptions) (response *core.DetailedResponse, err error) {
-	return eventNotifications.DeleteSubscriptionWithContext(context.Background(), deleteSubscriptionOptions)
+	response, err = eventNotifications.DeleteSubscriptionWithContext(context.Background(), deleteSubscriptionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteSubscriptionWithContext is an alternate form of the DeleteSubscription method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) DeleteSubscriptionWithContext(ctx context.Context, deleteSubscriptionOptions *DeleteSubscriptionOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteSubscriptionOptions, "deleteSubscriptionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteSubscriptionOptions, "deleteSubscriptionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2203,6 +2653,7 @@ func (eventNotifications *EventNotificationsV1) DeleteSubscriptionWithContext(ct
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/subscriptions/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2217,10 +2668,16 @@ func (eventNotifications *EventNotificationsV1) DeleteSubscriptionWithContext(ct
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = eventNotifications.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_subscription", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2228,17 +2685,21 @@ func (eventNotifications *EventNotificationsV1) DeleteSubscriptionWithContext(ct
 // UpdateSubscription : Update details of a Subscription
 // Update details of a Subscription.
 func (eventNotifications *EventNotificationsV1) UpdateSubscription(updateSubscriptionOptions *UpdateSubscriptionOptions) (result *Subscription, response *core.DetailedResponse, err error) {
-	return eventNotifications.UpdateSubscriptionWithContext(context.Background(), updateSubscriptionOptions)
+	result, response, err = eventNotifications.UpdateSubscriptionWithContext(context.Background(), updateSubscriptionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateSubscriptionWithContext is an alternate form of the UpdateSubscription method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) UpdateSubscriptionWithContext(ctx context.Context, updateSubscriptionOptions *UpdateSubscriptionOptions) (result *Subscription, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateSubscriptionOptions, "updateSubscriptionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateSubscriptionOptions, "updateSubscriptionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2252,6 +2713,7 @@ func (eventNotifications *EventNotificationsV1) UpdateSubscriptionWithContext(ct
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/subscriptions/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2278,22 +2740,110 @@ func (eventNotifications *EventNotificationsV1) UpdateSubscriptionWithContext(ct
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "update_subscription", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSubscription)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateIntegration : Create an Integration
+// Create an Integration.
+func (eventNotifications *EventNotificationsV1) CreateIntegration(createIntegrationOptions *CreateIntegrationOptions) (result *IntegrationCreateResponse, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.CreateIntegrationWithContext(context.Background(), createIntegrationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateIntegrationWithContext is an alternate form of the CreateIntegration method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) CreateIntegrationWithContext(ctx context.Context, createIntegrationOptions *CreateIntegrationOptions) (result *IntegrationCreateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createIntegrationOptions, "createIntegrationOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createIntegrationOptions, "createIntegrationOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *createIntegrationOptions.InstanceID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/integrations`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range createIntegrationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "CreateIntegration")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if createIntegrationOptions.Type != nil {
+		body["type"] = createIntegrationOptions.Type
+	}
+	if createIntegrationOptions.Metadata != nil {
+		body["metadata"] = createIntegrationOptions.Metadata
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_integration", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIntegrationCreateResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2305,17 +2855,21 @@ func (eventNotifications *EventNotificationsV1) UpdateSubscriptionWithContext(ct
 // ListIntegrations : List all Integrations
 // List of all KMS Integrations.
 func (eventNotifications *EventNotificationsV1) ListIntegrations(listIntegrationsOptions *ListIntegrationsOptions) (result *IntegrationList, response *core.DetailedResponse, err error) {
-	return eventNotifications.ListIntegrationsWithContext(context.Background(), listIntegrationsOptions)
+	result, response, err = eventNotifications.ListIntegrationsWithContext(context.Background(), listIntegrationsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListIntegrationsWithContext is an alternate form of the ListIntegrations method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) ListIntegrationsWithContext(ctx context.Context, listIntegrationsOptions *ListIntegrationsOptions) (result *IntegrationList, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listIntegrationsOptions, "listIntegrationsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listIntegrationsOptions, "listIntegrationsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2328,6 +2882,7 @@ func (eventNotifications *EventNotificationsV1) ListIntegrationsWithContext(ctx 
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/integrations`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2353,17 +2908,21 @@ func (eventNotifications *EventNotificationsV1) ListIntegrationsWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "list_integrations", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIntegrationList)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2375,17 +2934,21 @@ func (eventNotifications *EventNotificationsV1) ListIntegrationsWithContext(ctx 
 // GetIntegration : Get a single Integration
 // Get a single KMS Integration.
 func (eventNotifications *EventNotificationsV1) GetIntegration(getIntegrationOptions *GetIntegrationOptions) (result *IntegrationGetResponse, response *core.DetailedResponse, err error) {
-	return eventNotifications.GetIntegrationWithContext(context.Background(), getIntegrationOptions)
+	result, response, err = eventNotifications.GetIntegrationWithContext(context.Background(), getIntegrationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetIntegrationWithContext is an alternate form of the GetIntegration method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) GetIntegrationWithContext(ctx context.Context, getIntegrationOptions *GetIntegrationOptions) (result *IntegrationGetResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getIntegrationOptions, "getIntegrationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getIntegrationOptions, "getIntegrationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2399,6 +2962,7 @@ func (eventNotifications *EventNotificationsV1) GetIntegrationWithContext(ctx co
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/integrations/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2414,17 +2978,21 @@ func (eventNotifications *EventNotificationsV1) GetIntegrationWithContext(ctx co
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "get_integration", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIntegrationGetResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2434,19 +3002,23 @@ func (eventNotifications *EventNotificationsV1) GetIntegrationWithContext(ctx co
 }
 
 // ReplaceIntegration : Update an existing Integration
-// Update an existing KMS Integration.
+// Update an existing Integration.
 func (eventNotifications *EventNotificationsV1) ReplaceIntegration(replaceIntegrationOptions *ReplaceIntegrationOptions) (result *IntegrationGetResponse, response *core.DetailedResponse, err error) {
-	return eventNotifications.ReplaceIntegrationWithContext(context.Background(), replaceIntegrationOptions)
+	result, response, err = eventNotifications.ReplaceIntegrationWithContext(context.Background(), replaceIntegrationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ReplaceIntegrationWithContext is an alternate form of the ReplaceIntegration method which supports a Context parameter
 func (eventNotifications *EventNotificationsV1) ReplaceIntegrationWithContext(ctx context.Context, replaceIntegrationOptions *ReplaceIntegrationOptions) (result *IntegrationGetResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(replaceIntegrationOptions, "replaceIntegrationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(replaceIntegrationOptions, "replaceIntegrationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2460,6 +3032,7 @@ func (eventNotifications *EventNotificationsV1) ReplaceIntegrationWithContext(ct
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/integrations/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2483,22 +3056,27 @@ func (eventNotifications *EventNotificationsV1) ReplaceIntegrationWithContext(ct
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = eventNotifications.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "replace_integration", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIntegrationGetResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2507,24 +3085,1001 @@ func (eventNotifications *EventNotificationsV1) ReplaceIntegrationWithContext(ct
 	return
 }
 
-// BulkNotificationResponse : Payload describing a notifications response.
-type BulkNotificationResponse struct {
-	// Bulk Notification ID.
-	BulkNotificationID *string `json:"bulk_notification_id,omitempty"`
-
-	// List of Notifications.
-	BulkMessages []interface{} `json:"bulk_messages,omitempty"`
+// CreateSMTPConfiguration : Create a new SMTP Configuration
+// Create a new SMTP Configuration.
+func (eventNotifications *EventNotificationsV1) CreateSMTPConfiguration(createSMTPConfigurationOptions *CreateSMTPConfigurationOptions) (result *SMTPCreateResponse, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.CreateSMTPConfigurationWithContext(context.Background(), createSMTPConfigurationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
-// UnmarshalBulkNotificationResponse unmarshals an instance of BulkNotificationResponse from the specified map of raw messages.
-func UnmarshalBulkNotificationResponse(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(BulkNotificationResponse)
-	err = core.UnmarshalPrimitive(m, "bulk_notification_id", &obj.BulkNotificationID)
+// CreateSMTPConfigurationWithContext is an alternate form of the CreateSMTPConfiguration method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) CreateSMTPConfigurationWithContext(ctx context.Context, createSMTPConfigurationOptions *CreateSMTPConfigurationOptions) (result *SMTPCreateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createSMTPConfigurationOptions, "createSMTPConfigurationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "bulk_messages", &obj.BulkMessages)
+	err = core.ValidateStruct(createSMTPConfigurationOptions, "createSMTPConfigurationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *createSMTPConfigurationOptions.InstanceID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/smtp/config`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range createSMTPConfigurationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "CreateSMTPConfiguration")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if createSMTPConfigurationOptions.Name != nil {
+		body["name"] = createSMTPConfigurationOptions.Name
+	}
+	if createSMTPConfigurationOptions.Domain != nil {
+		body["domain"] = createSMTPConfigurationOptions.Domain
+	}
+	if createSMTPConfigurationOptions.Description != nil {
+		body["description"] = createSMTPConfigurationOptions.Description
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_smtp_configuration", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSMTPCreateResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListSMTPConfigurations : List all SMTP Configurations
+// List all SMTP Configurations.
+func (eventNotifications *EventNotificationsV1) ListSMTPConfigurations(listSMTPConfigurationsOptions *ListSMTPConfigurationsOptions) (result *SMTPConfigurationsList, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.ListSMTPConfigurationsWithContext(context.Background(), listSMTPConfigurationsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListSMTPConfigurationsWithContext is an alternate form of the ListSMTPConfigurations method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) ListSMTPConfigurationsWithContext(ctx context.Context, listSMTPConfigurationsOptions *ListSMTPConfigurationsOptions) (result *SMTPConfigurationsList, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listSMTPConfigurationsOptions, "listSMTPConfigurationsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listSMTPConfigurationsOptions, "listSMTPConfigurationsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *listSMTPConfigurationsOptions.InstanceID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/smtp/config`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range listSMTPConfigurationsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "ListSMTPConfigurations")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listSMTPConfigurationsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listSMTPConfigurationsOptions.Limit))
+	}
+	if listSMTPConfigurationsOptions.Offset != nil {
+		builder.AddQuery("offset", fmt.Sprint(*listSMTPConfigurationsOptions.Offset))
+	}
+	if listSMTPConfigurationsOptions.Search != nil {
+		builder.AddQuery("search", fmt.Sprint(*listSMTPConfigurationsOptions.Search))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_smtp_configurations", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSMTPConfigurationsList)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateSMTPUser : Create a new SMTP User
+// Create a new SMTP User.
+func (eventNotifications *EventNotificationsV1) CreateSMTPUser(createSMTPUserOptions *CreateSMTPUserOptions) (result *SMTPUserResponse, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.CreateSMTPUserWithContext(context.Background(), createSMTPUserOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateSMTPUserWithContext is an alternate form of the CreateSMTPUser method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) CreateSMTPUserWithContext(ctx context.Context, createSMTPUserOptions *CreateSMTPUserOptions) (result *SMTPUserResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createSMTPUserOptions, "createSMTPUserOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createSMTPUserOptions, "createSMTPUserOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *createSMTPUserOptions.InstanceID,
+		"id":          *createSMTPUserOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/smtp/config/{id}/users`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range createSMTPUserOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "CreateSMTPUser")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if createSMTPUserOptions.Description != nil {
+		body["description"] = createSMTPUserOptions.Description
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_smtp_user", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSMTPUserResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListSMTPUsers : List all SMTP users
+// List all SMTP users.
+func (eventNotifications *EventNotificationsV1) ListSMTPUsers(listSMTPUsersOptions *ListSMTPUsersOptions) (result *SMTPUsersList, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.ListSMTPUsersWithContext(context.Background(), listSMTPUsersOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListSMTPUsersWithContext is an alternate form of the ListSMTPUsers method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) ListSMTPUsersWithContext(ctx context.Context, listSMTPUsersOptions *ListSMTPUsersOptions) (result *SMTPUsersList, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listSMTPUsersOptions, "listSMTPUsersOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listSMTPUsersOptions, "listSMTPUsersOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *listSMTPUsersOptions.InstanceID,
+		"id":          *listSMTPUsersOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/smtp/config/{id}/users`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range listSMTPUsersOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "ListSMTPUsers")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listSMTPUsersOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listSMTPUsersOptions.Limit))
+	}
+	if listSMTPUsersOptions.Offset != nil {
+		builder.AddQuery("offset", fmt.Sprint(*listSMTPUsersOptions.Offset))
+	}
+	if listSMTPUsersOptions.Search != nil {
+		builder.AddQuery("search", fmt.Sprint(*listSMTPUsersOptions.Search))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_smtp_users", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSMTPUsersList)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetSMTPConfiguration : Get details of a SMTP Configuration
+// Get details of a SMTP Configuration.
+func (eventNotifications *EventNotificationsV1) GetSMTPConfiguration(getSMTPConfigurationOptions *GetSMTPConfigurationOptions) (result *SMTPConfiguration, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.GetSMTPConfigurationWithContext(context.Background(), getSMTPConfigurationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetSMTPConfigurationWithContext is an alternate form of the GetSMTPConfiguration method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) GetSMTPConfigurationWithContext(ctx context.Context, getSMTPConfigurationOptions *GetSMTPConfigurationOptions) (result *SMTPConfiguration, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getSMTPConfigurationOptions, "getSMTPConfigurationOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getSMTPConfigurationOptions, "getSMTPConfigurationOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *getSMTPConfigurationOptions.InstanceID,
+		"id":          *getSMTPConfigurationOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/smtp/config/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getSMTPConfigurationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "GetSMTPConfiguration")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_smtp_configuration", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSMTPConfiguration)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateSMTPConfiguration : Update details of SMTP Configuration
+// Update details of SMTP Configuration.
+func (eventNotifications *EventNotificationsV1) UpdateSMTPConfiguration(updateSMTPConfigurationOptions *UpdateSMTPConfigurationOptions) (result *SMTPConfiguration, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.UpdateSMTPConfigurationWithContext(context.Background(), updateSMTPConfigurationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateSMTPConfigurationWithContext is an alternate form of the UpdateSMTPConfiguration method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) UpdateSMTPConfigurationWithContext(ctx context.Context, updateSMTPConfigurationOptions *UpdateSMTPConfigurationOptions) (result *SMTPConfiguration, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateSMTPConfigurationOptions, "updateSMTPConfigurationOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateSMTPConfigurationOptions, "updateSMTPConfigurationOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *updateSMTPConfigurationOptions.InstanceID,
+		"id":          *updateSMTPConfigurationOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/smtp/config/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updateSMTPConfigurationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "UpdateSMTPConfiguration")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if updateSMTPConfigurationOptions.Name != nil {
+		body["name"] = updateSMTPConfigurationOptions.Name
+	}
+	if updateSMTPConfigurationOptions.Description != nil {
+		body["description"] = updateSMTPConfigurationOptions.Description
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_smtp_configuration", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSMTPConfiguration)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteSMTPConfiguration : Delete a SMTP Configuration
+// Delete a SMTP Configuration.
+func (eventNotifications *EventNotificationsV1) DeleteSMTPConfiguration(deleteSMTPConfigurationOptions *DeleteSMTPConfigurationOptions) (response *core.DetailedResponse, err error) {
+	response, err = eventNotifications.DeleteSMTPConfigurationWithContext(context.Background(), deleteSMTPConfigurationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteSMTPConfigurationWithContext is an alternate form of the DeleteSMTPConfiguration method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) DeleteSMTPConfigurationWithContext(ctx context.Context, deleteSMTPConfigurationOptions *DeleteSMTPConfigurationOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteSMTPConfigurationOptions, "deleteSMTPConfigurationOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteSMTPConfigurationOptions, "deleteSMTPConfigurationOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *deleteSMTPConfigurationOptions.InstanceID,
+		"id":          *deleteSMTPConfigurationOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/smtp/config/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deleteSMTPConfigurationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "DeleteSMTPConfiguration")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = eventNotifications.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_smtp_configuration", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetSMTPUser : Get details of a SMTP User
+// Get details of a SMTP User.
+func (eventNotifications *EventNotificationsV1) GetSMTPUser(getSMTPUserOptions *GetSMTPUserOptions) (result *SMTPUser, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.GetSMTPUserWithContext(context.Background(), getSMTPUserOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetSMTPUserWithContext is an alternate form of the GetSMTPUser method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) GetSMTPUserWithContext(ctx context.Context, getSMTPUserOptions *GetSMTPUserOptions) (result *SMTPUser, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getSMTPUserOptions, "getSMTPUserOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getSMTPUserOptions, "getSMTPUserOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *getSMTPUserOptions.InstanceID,
+		"id":          *getSMTPUserOptions.ID,
+		"user_id":     *getSMTPUserOptions.UserID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/smtp/config/{id}/users/{user_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getSMTPUserOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "GetSMTPUser")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_smtp_user", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSMTPUser)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateSMTPUser : Update details of a SMTP User
+// Update details of a SMTP User.
+func (eventNotifications *EventNotificationsV1) UpdateSMTPUser(updateSMTPUserOptions *UpdateSMTPUserOptions) (result *SMTPUser, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.UpdateSMTPUserWithContext(context.Background(), updateSMTPUserOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateSMTPUserWithContext is an alternate form of the UpdateSMTPUser method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) UpdateSMTPUserWithContext(ctx context.Context, updateSMTPUserOptions *UpdateSMTPUserOptions) (result *SMTPUser, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateSMTPUserOptions, "updateSMTPUserOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateSMTPUserOptions, "updateSMTPUserOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *updateSMTPUserOptions.InstanceID,
+		"id":          *updateSMTPUserOptions.ID,
+		"user_id":     *updateSMTPUserOptions.UserID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/smtp/config/{id}/users/{user_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updateSMTPUserOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "UpdateSMTPUser")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if updateSMTPUserOptions.Description != nil {
+		body["description"] = updateSMTPUserOptions.Description
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_smtp_user", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSMTPUser)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteSMTPUser : Delete a SMTP user
+// Delete a SMTP user.
+func (eventNotifications *EventNotificationsV1) DeleteSMTPUser(deleteSMTPUserOptions *DeleteSMTPUserOptions) (response *core.DetailedResponse, err error) {
+	response, err = eventNotifications.DeleteSMTPUserWithContext(context.Background(), deleteSMTPUserOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteSMTPUserWithContext is an alternate form of the DeleteSMTPUser method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) DeleteSMTPUserWithContext(ctx context.Context, deleteSMTPUserOptions *DeleteSMTPUserOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteSMTPUserOptions, "deleteSMTPUserOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteSMTPUserOptions, "deleteSMTPUserOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *deleteSMTPUserOptions.InstanceID,
+		"id":          *deleteSMTPUserOptions.ID,
+		"user_id":     *deleteSMTPUserOptions.UserID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/smtp/config/{id}/users/{user_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deleteSMTPUserOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "DeleteSMTPUser")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = eventNotifications.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_smtp_user", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetSMTPAllowedIps : Get details of SMTP configuration allowed IPs
+// Get details of SMTP configuration allowed IPs.
+func (eventNotifications *EventNotificationsV1) GetSMTPAllowedIps(getSMTPAllowedIpsOptions *GetSMTPAllowedIpsOptions) (result *SMTPAllowedIPs, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.GetSMTPAllowedIpsWithContext(context.Background(), getSMTPAllowedIpsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetSMTPAllowedIpsWithContext is an alternate form of the GetSMTPAllowedIps method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) GetSMTPAllowedIpsWithContext(ctx context.Context, getSMTPAllowedIpsOptions *GetSMTPAllowedIpsOptions) (result *SMTPAllowedIPs, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getSMTPAllowedIpsOptions, "getSMTPAllowedIpsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getSMTPAllowedIpsOptions, "getSMTPAllowedIpsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *getSMTPAllowedIpsOptions.InstanceID,
+		"id":          *getSMTPAllowedIpsOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/smtp/config/{id}/allowed_ips`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getSMTPAllowedIpsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "GetSMTPAllowedIps")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_smtp_allowed_ips", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSMTPAllowedIPs)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateVerifySMTP : Verify SMTP configuration domain
+// Verify SMTP configuration domain.
+func (eventNotifications *EventNotificationsV1) UpdateVerifySMTP(updateVerifySMTPOptions *UpdateVerifySMTPOptions) (result *SMTPVerificationUpdateResponse, response *core.DetailedResponse, err error) {
+	result, response, err = eventNotifications.UpdateVerifySMTPWithContext(context.Background(), updateVerifySMTPOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateVerifySMTPWithContext is an alternate form of the UpdateVerifySMTP method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) UpdateVerifySMTPWithContext(ctx context.Context, updateVerifySMTPOptions *UpdateVerifySMTPOptions) (result *SMTPVerificationUpdateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateVerifySMTPOptions, "updateVerifySMTPOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateVerifySMTPOptions, "updateVerifySMTPOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *updateVerifySMTPOptions.InstanceID,
+		"id":          *updateVerifySMTPOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/smtp/config/{id}/verify`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updateVerifySMTPOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "UpdateVerifySMTP")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("type", fmt.Sprint(*updateVerifySMTPOptions.Type))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_verify_smtp", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSMTPVerificationUpdateResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.0")
+}
+
+// Buckets : Bucket object.
+type Buckets struct {
+	// Total count.
+	DocCount *int64 `json:"doc_count,omitempty"`
+
+	// Timestamp.
+	KeyAsString *strfmt.DateTime `json:"key_as_string,omitempty"`
+}
+
+// UnmarshalBuckets unmarshals an instance of Buckets from the specified map of raw messages.
+func UnmarshalBuckets(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Buckets)
+	err = core.UnmarshalPrimitive(m, "doc_count", &obj.DocCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "key_as_string", &obj.KeyAsString)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "key_as_string-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ChannelCreateAttributes : Payload describing a Slack Direct Message chennel configuration.
+type ChannelCreateAttributes struct {
+	// channel id.
+	ID *string `json:"id" validate:"required"`
+}
+
+// NewChannelCreateAttributes : Instantiate ChannelCreateAttributes (Generic Model Constructor)
+func (*EventNotificationsV1) NewChannelCreateAttributes(id string) (_model *ChannelCreateAttributes, err error) {
+	_model = &ChannelCreateAttributes{
+		ID: core.StringPtr(id),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalChannelCreateAttributes unmarshals an instance of ChannelCreateAttributes from the specified map of raw messages.
+func UnmarshalChannelCreateAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ChannelCreateAttributes)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ChannelUpdateAttributes : Payload describing a Slack Direct Message chennel configuration.
+type ChannelUpdateAttributes struct {
+	// channel id.
+	ID *string `json:"id" validate:"required"`
+
+	// The channel operation type.
+	Operation *string `json:"operation" validate:"required"`
+}
+
+// Constants associated with the ChannelUpdateAttributes.Operation property.
+// The channel operation type.
+const (
+	ChannelUpdateAttributesOperationAddConst    = "add"
+	ChannelUpdateAttributesOperationRemoveConst = "remove"
+)
+
+// NewChannelUpdateAttributes : Instantiate ChannelUpdateAttributes (Generic Model Constructor)
+func (*EventNotificationsV1) NewChannelUpdateAttributes(id string, operation string) (_model *ChannelUpdateAttributes, err error) {
+	_model = &ChannelUpdateAttributes{
+		ID:        core.StringPtr(id),
+		Operation: core.StringPtr(operation),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalChannelUpdateAttributes unmarshals an instance of ChannelUpdateAttributes from the specified map of raw messages.
+func UnmarshalChannelUpdateAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ChannelUpdateAttributes)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operation", &obj.Operation)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "operation-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2544,6 +4099,9 @@ type CreateDestinationOptions struct {
 
 	// The Destination description.
 	Description *string `json:"description,omitempty"`
+
+	// Whether to collect the failed event in Cloud Object Storage bucket.
+	CollectFailedEvents *bool `json:"collect_failed_events,omitempty"`
 
 	// Payload describing a destination configuration.
 	Config *DestinationConfig `json:"config,omitempty"`
@@ -2597,21 +4155,22 @@ type CreateDestinationOptions struct {
 // Constants associated with the CreateDestinationOptions.Type property.
 // The type of Destination Webhook.
 const (
-	CreateDestinationOptionsTypeIbmceConst       = "ibmce"
-	CreateDestinationOptionsTypeIbmcfConst       = "ibmcf"
-	CreateDestinationOptionsTypeIbmcosConst      = "ibmcos"
-	CreateDestinationOptionsTypeMsteamsConst     = "msteams"
-	CreateDestinationOptionsTypePagerdutyConst   = "pagerduty"
-	CreateDestinationOptionsTypePushAndroidConst = "push_android"
-	CreateDestinationOptionsTypePushChromeConst  = "push_chrome"
-	CreateDestinationOptionsTypePushFirefoxConst = "push_firefox"
-	CreateDestinationOptionsTypePushHuaweiConst  = "push_huawei"
-	CreateDestinationOptionsTypePushIosConst     = "push_ios"
-	CreateDestinationOptionsTypePushSafariConst  = "push_safari"
-	CreateDestinationOptionsTypeSMTPCustomConst  = "smtp_custom"
-	CreateDestinationOptionsTypeServicenowConst  = "servicenow"
-	CreateDestinationOptionsTypeSlackConst       = "slack"
-	CreateDestinationOptionsTypeWebhookConst     = "webhook"
+	CreateDestinationOptionsTypeEventStreamsConst = "event_streams"
+	CreateDestinationOptionsTypeIbmceConst        = "ibmce"
+	CreateDestinationOptionsTypeIbmcosConst       = "ibmcos"
+	CreateDestinationOptionsTypeMsteamsConst      = "msteams"
+	CreateDestinationOptionsTypePagerdutyConst    = "pagerduty"
+	CreateDestinationOptionsTypePushAndroidConst  = "push_android"
+	CreateDestinationOptionsTypePushChromeConst   = "push_chrome"
+	CreateDestinationOptionsTypePushFirefoxConst  = "push_firefox"
+	CreateDestinationOptionsTypePushHuaweiConst   = "push_huawei"
+	CreateDestinationOptionsTypePushIosConst      = "push_ios"
+	CreateDestinationOptionsTypePushSafariConst   = "push_safari"
+	CreateDestinationOptionsTypeSMTPCustomConst   = "smtp_custom"
+	CreateDestinationOptionsTypeServicenowConst   = "servicenow"
+	CreateDestinationOptionsTypeSlackConst        = "slack"
+	CreateDestinationOptionsTypeSmsCustomConst    = "sms_custom"
+	CreateDestinationOptionsTypeWebhookConst      = "webhook"
 )
 
 // NewCreateDestinationOptions : Instantiate CreateDestinationOptions
@@ -2644,6 +4203,12 @@ func (_options *CreateDestinationOptions) SetType(typeVar string) *CreateDestina
 // SetDescription : Allow user to set Description
 func (_options *CreateDestinationOptions) SetDescription(description string) *CreateDestinationOptions {
 	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetCollectFailedEvents : Allow user to set CollectFailedEvents
+func (_options *CreateDestinationOptions) SetCollectFailedEvents(collectFailedEvents bool) *CreateDestinationOptions {
+	_options.CollectFailedEvents = core.BoolPtr(collectFailedEvents)
 	return _options
 }
 
@@ -2739,6 +4304,164 @@ func (_options *CreateDestinationOptions) SetIcon128x1282xContentType(icon128x12
 
 // SetHeaders : Allow user to set Headers
 func (options *CreateDestinationOptions) SetHeaders(param map[string]string) *CreateDestinationOptions {
+	options.Headers = param
+	return options
+}
+
+// CreateIntegrationOptions : The CreateIntegration options.
+type CreateIntegrationOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// The type of Integration.
+	Type *string `json:"type" validate:"required"`
+
+	// Integration Metadata object.
+	Metadata *IntegrationCreateMetadata `json:"metadata" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the CreateIntegrationOptions.Type property.
+// The type of Integration.
+const (
+	CreateIntegrationOptionsTypeCollectFailedEventsConst = "collect_failed_events"
+)
+
+// NewCreateIntegrationOptions : Instantiate CreateIntegrationOptions
+func (*EventNotificationsV1) NewCreateIntegrationOptions(instanceID string, typeVar string, metadata *IntegrationCreateMetadata) *CreateIntegrationOptions {
+	return &CreateIntegrationOptions{
+		InstanceID: core.StringPtr(instanceID),
+		Type:       core.StringPtr(typeVar),
+		Metadata:   metadata,
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *CreateIntegrationOptions) SetInstanceID(instanceID string) *CreateIntegrationOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetType : Allow user to set Type
+func (_options *CreateIntegrationOptions) SetType(typeVar string) *CreateIntegrationOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetMetadata : Allow user to set Metadata
+func (_options *CreateIntegrationOptions) SetMetadata(metadata *IntegrationCreateMetadata) *CreateIntegrationOptions {
+	_options.Metadata = metadata
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateIntegrationOptions) SetHeaders(param map[string]string) *CreateIntegrationOptions {
+	options.Headers = param
+	return options
+}
+
+// CreateSMTPConfigurationOptions : The CreateSMTPConfiguration options.
+type CreateSMTPConfigurationOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// The name of SMTP configuration.
+	Name *string `json:"name" validate:"required"`
+
+	// Domain Name.
+	Domain *string `json:"domain" validate:"required"`
+
+	// The description of SMTP configuration.
+	Description *string `json:"description,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewCreateSMTPConfigurationOptions : Instantiate CreateSMTPConfigurationOptions
+func (*EventNotificationsV1) NewCreateSMTPConfigurationOptions(instanceID string, name string, domain string) *CreateSMTPConfigurationOptions {
+	return &CreateSMTPConfigurationOptions{
+		InstanceID: core.StringPtr(instanceID),
+		Name:       core.StringPtr(name),
+		Domain:     core.StringPtr(domain),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *CreateSMTPConfigurationOptions) SetInstanceID(instanceID string) *CreateSMTPConfigurationOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *CreateSMTPConfigurationOptions) SetName(name string) *CreateSMTPConfigurationOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetDomain : Allow user to set Domain
+func (_options *CreateSMTPConfigurationOptions) SetDomain(domain string) *CreateSMTPConfigurationOptions {
+	_options.Domain = core.StringPtr(domain)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *CreateSMTPConfigurationOptions) SetDescription(description string) *CreateSMTPConfigurationOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateSMTPConfigurationOptions) SetHeaders(param map[string]string) *CreateSMTPConfigurationOptions {
+	options.Headers = param
+	return options
+}
+
+// CreateSMTPUserOptions : The CreateSMTPUser options.
+type CreateSMTPUserOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for SMTP.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The description of SMTP configuration.
+	Description *string `json:"description,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewCreateSMTPUserOptions : Instantiate CreateSMTPUserOptions
+func (*EventNotificationsV1) NewCreateSMTPUserOptions(instanceID string, id string) *CreateSMTPUserOptions {
+	return &CreateSMTPUserOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *CreateSMTPUserOptions) SetInstanceID(instanceID string) *CreateSMTPUserOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *CreateSMTPUserOptions) SetID(id string) *CreateSMTPUserOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *CreateSMTPUserOptions) SetDescription(description string) *CreateSMTPUserOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateSMTPUserOptions) SetHeaders(param map[string]string) *CreateSMTPUserOptions {
 	options.Headers = param
 	return options
 }
@@ -2944,8 +4667,7 @@ type CreateTemplateOptions struct {
 	// The type of template.
 	Type *string `json:"type" validate:"required"`
 
-	// Payload describing a template configuration.
-	Params *TemplateConfig `json:"params" validate:"required"`
+	Params TemplateConfigOneOfIntf `json:"params" validate:"required"`
 
 	// The Template description.
 	Description *string `json:"description,omitempty"`
@@ -2954,15 +4676,8 @@ type CreateTemplateOptions struct {
 	Headers map[string]string
 }
 
-// Constants associated with the CreateTemplateOptions.Type property.
-// The type of template.
-const (
-	CreateTemplateOptionsTypeSMTPCustomInvitationConst   = "smtp_custom.invitation"
-	CreateTemplateOptionsTypeSMTPCustomNotificationConst = "smtp_custom.notification"
-)
-
 // NewCreateTemplateOptions : Instantiate CreateTemplateOptions
-func (*EventNotificationsV1) NewCreateTemplateOptions(instanceID string, name string, typeVar string, params *TemplateConfig) *CreateTemplateOptions {
+func (*EventNotificationsV1) NewCreateTemplateOptions(instanceID string, name string, typeVar string, params TemplateConfigOneOfIntf) *CreateTemplateOptions {
 	return &CreateTemplateOptions{
 		InstanceID: core.StringPtr(instanceID),
 		Name:       core.StringPtr(name),
@@ -2990,7 +4705,7 @@ func (_options *CreateTemplateOptions) SetType(typeVar string) *CreateTemplateOp
 }
 
 // SetParams : Allow user to set Params
-func (_options *CreateTemplateOptions) SetParams(params *TemplateConfig) *CreateTemplateOptions {
+func (_options *CreateTemplateOptions) SetParams(params TemplateConfigOneOfIntf) *CreateTemplateOptions {
 	_options.Params = params
 	return _options
 }
@@ -3080,14 +4795,17 @@ func UnmarshalDkimAttributes(m map[string]json.RawMessage, result interface{}) (
 	obj := new(DkimAttributes)
 	err = core.UnmarshalPrimitive(m, "public_key", &obj.PublicKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "public_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "selector", &obj.Selector)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "selector-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "verification", &obj.Verification)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "verification-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3128,6 +4846,92 @@ func (_options *DeleteDestinationOptions) SetID(id string) *DeleteDestinationOpt
 
 // SetHeaders : Allow user to set Headers
 func (options *DeleteDestinationOptions) SetHeaders(param map[string]string) *DeleteDestinationOptions {
+	options.Headers = param
+	return options
+}
+
+// DeleteSMTPConfigurationOptions : The DeleteSMTPConfiguration options.
+type DeleteSMTPConfigurationOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for SMTP.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewDeleteSMTPConfigurationOptions : Instantiate DeleteSMTPConfigurationOptions
+func (*EventNotificationsV1) NewDeleteSMTPConfigurationOptions(instanceID string, id string) *DeleteSMTPConfigurationOptions {
+	return &DeleteSMTPConfigurationOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *DeleteSMTPConfigurationOptions) SetInstanceID(instanceID string) *DeleteSMTPConfigurationOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *DeleteSMTPConfigurationOptions) SetID(id string) *DeleteSMTPConfigurationOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteSMTPConfigurationOptions) SetHeaders(param map[string]string) *DeleteSMTPConfigurationOptions {
+	options.Headers = param
+	return options
+}
+
+// DeleteSMTPUserOptions : The DeleteSMTPUser options.
+type DeleteSMTPUserOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for SMTP.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// UserID.
+	UserID *string `json:"user_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewDeleteSMTPUserOptions : Instantiate DeleteSMTPUserOptions
+func (*EventNotificationsV1) NewDeleteSMTPUserOptions(instanceID string, id string, userID string) *DeleteSMTPUserOptions {
+	return &DeleteSMTPUserOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+		UserID:     core.StringPtr(userID),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *DeleteSMTPUserOptions) SetInstanceID(instanceID string) *DeleteSMTPUserOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *DeleteSMTPUserOptions) SetID(id string) *DeleteSMTPUserOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetUserID : Allow user to set UserID
+func (_options *DeleteSMTPUserOptions) SetUserID(userID string) *DeleteSMTPUserOptions {
+	_options.UserID = core.StringPtr(userID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteSMTPUserOptions) SetHeaders(param map[string]string) *DeleteSMTPUserOptions {
 	options.Headers = param
 	return options
 }
@@ -3352,8 +5156,11 @@ type Destination struct {
 	Description *string `json:"description" validate:"required"`
 
 	// Destination type
-	// Email/SMS/Webhook/FCM/Slack/MSTeams/PagerDuty/IBMCloudFunctions/IBMCodeEngine/ServiceNow/IBMCloudObjectStorage/Huawei.
+	// Email/SMS/Webhook/FCM/Slack/MSTeams/PagerDuty/IBMCodeEngine/ServiceNow/IBMCloudObjectStorage/Huawei/CustomEmail/CustomSMS/EventStreams.
 	Type *string `json:"type" validate:"required"`
+
+	// Whether to collect the failed event in Cloud Object Storage bucket.
+	CollectFailedEvents *bool `json:"collect_failed_events,omitempty"`
 
 	// Payload describing a destination configuration.
 	Config *DestinationConfig `json:"config,omitempty"`
@@ -3370,23 +5177,24 @@ type Destination struct {
 
 // Constants associated with the Destination.Type property.
 // Destination type
-// Email/SMS/Webhook/FCM/Slack/MSTeams/PagerDuty/IBMCloudFunctions/IBMCodeEngine/ServiceNow/IBMCloudObjectStorage/Huawei.
+// Email/SMS/Webhook/FCM/Slack/MSTeams/PagerDuty/IBMCodeEngine/ServiceNow/IBMCloudObjectStorage/Huawei/CustomEmail/CustomSMS/EventStreams.
 const (
-	DestinationTypeIbmceConst       = "ibmce"
-	DestinationTypeIbmcfConst       = "ibmcf"
-	DestinationTypeIbmcosConst      = "ibmcos"
-	DestinationTypeMsteamsConst     = "msteams"
-	DestinationTypePagerdutyConst   = "pagerduty"
-	DestinationTypePushAndroidConst = "push_android"
-	DestinationTypePushHuaweiConst  = "push_huawei"
-	DestinationTypePushIosConst     = "push_ios"
-	DestinationTypePushSafariConst  = "push_safari"
-	DestinationTypeSMTPCustomConst  = "smtp_custom"
-	DestinationTypeSMTPIBMConst     = "smtp_ibm"
-	DestinationTypeServicenowConst  = "servicenow"
-	DestinationTypeSlackConst       = "slack"
-	DestinationTypeSmsIBMConst      = "sms_ibm"
-	DestinationTypeWebhookConst     = "webhook"
+	DestinationTypeEventStreamsConst = "event_streams"
+	DestinationTypeIbmceConst        = "ibmce"
+	DestinationTypeIbmcosConst       = "ibmcos"
+	DestinationTypeMsteamsConst      = "msteams"
+	DestinationTypePagerdutyConst    = "pagerduty"
+	DestinationTypePushAndroidConst  = "push_android"
+	DestinationTypePushHuaweiConst   = "push_huawei"
+	DestinationTypePushIosConst      = "push_ios"
+	DestinationTypePushSafariConst   = "push_safari"
+	DestinationTypeSMTPCustomConst   = "smtp_custom"
+	DestinationTypeSMTPIBMConst      = "smtp_ibm"
+	DestinationTypeServicenowConst   = "servicenow"
+	DestinationTypeSlackConst        = "slack"
+	DestinationTypeSmsCustomConst    = "sms_custom"
+	DestinationTypeSmsIBMConst       = "sms_ibm"
+	DestinationTypeWebhookConst      = "webhook"
 )
 
 // UnmarshalDestination unmarshals an instance of Destination from the specified map of raw messages.
@@ -3394,34 +5202,47 @@ func UnmarshalDestination(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(Destination)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "collect_failed_events", &obj.CollectFailedEvents)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "collect_failed_events-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "config", &obj.Config, UnmarshalDestinationConfig)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "config-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subscription_count", &obj.SubscriptionCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscription_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subscription_names", &obj.SubscriptionNames)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscription_names-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3439,6 +5260,9 @@ func (*EventNotificationsV1) NewDestinationConfig(params DestinationConfigOneOfI
 		Params: params,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -3447,6 +5271,7 @@ func UnmarshalDestinationConfig(m map[string]json.RawMessage, result interface{}
 	obj := new(DestinationConfig)
 	err = core.UnmarshalModel(m, "params", &obj.Params, UnmarshalDestinationConfigOneOf)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "params-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3457,18 +5282,20 @@ func UnmarshalDestinationConfig(m map[string]json.RawMessage, result interface{}
 // Models which "extend" this model:
 // - DestinationConfigOneOfCustomDomainEmailDestinationConfig
 // - DestinationConfigOneOfWebhookDestinationConfig
+// - DestinationConfigOneOfCodeEngineDestinationConfig
 // - DestinationConfigOneOfFcmDestinationConfig
 // - DestinationConfigOneOfIosDestinationConfig
 // - DestinationConfigOneOfChromeDestinationConfig
 // - DestinationConfigOneOfFirefoxDestinationConfig
 // - DestinationConfigOneOfSlackDestinationConfig
+// - DestinationConfigOneOfSlackDirectMessageDestinationConfig
 // - DestinationConfigOneOfSafariDestinationConfig
 // - DestinationConfigOneOfMsTeamsDestinationConfig
-// - DestinationConfigOneOfIBMCloudFunctionsDestinationConfig
 // - DestinationConfigOneOfPagerDutyDestinationConfig
 // - DestinationConfigOneOfServiceNowDestinationConfig
 // - DestinationConfigOneOfIBMCloudObjectStorageDestinationConfig
 // - DestinationConfigOneOfHuaweiDestinationConfig
+// - DestinationConfigOneOfEventStreamsDestinationConfig
 type DestinationConfigOneOf struct {
 	// Email Domain.
 	Domain *string `json:"domain,omitempty"`
@@ -3490,6 +5317,15 @@ type DestinationConfigOneOf struct {
 
 	// List of sensitive headers from custom headers.
 	SensitiveHeaders []string `json:"sensitive_headers,omitempty"`
+
+	// The code engine destination type.
+	Type *string `json:"type,omitempty"`
+
+	// CRN of the code engine project.
+	ProjectCRN *string `json:"project_crn,omitempty"`
+
+	// name of the code engine job.
+	JobName *string `json:"job_name,omitempty"`
 
 	// FCM server_key.
 	// Deprecated: this field is deprecated and may be removed in a future release.
@@ -3538,6 +5374,9 @@ type DestinationConfigOneOf struct {
 	// Chrome VAPID public key.
 	PublicKey *string `json:"public_key,omitempty"`
 
+	// Token of slack application.
+	Token *string `json:"token,omitempty"`
+
 	// Website url.
 	WebsiteName *string `json:"website_name,omitempty"`
 
@@ -3570,6 +5409,12 @@ type DestinationConfigOneOf struct {
 
 	// End Point of Cloud Object Storage.
 	Endpoint *string `json:"endpoint,omitempty"`
+
+	// CRN of the Event Streans instance.
+	CRN *string `json:"crn,omitempty"`
+
+	// Topic of Event Streams.
+	Topic *string `json:"topic,omitempty"`
 }
 
 // Constants associated with the DestinationConfigOneOf.Verb property.
@@ -3577,6 +5422,13 @@ type DestinationConfigOneOf struct {
 const (
 	DestinationConfigOneOfVerbGetConst  = "get"
 	DestinationConfigOneOfVerbPostConst = "post"
+)
+
+// Constants associated with the DestinationConfigOneOf.Type property.
+// The code engine destination type.
+const (
+	DestinationConfigOneOfTypeApplicationConst = "application"
+	DestinationConfigOneOfTypeJobConst         = "job"
 )
 
 func (*DestinationConfigOneOf) isaDestinationConfigOneOf() bool {
@@ -3592,134 +5444,197 @@ func UnmarshalDestinationConfigOneOf(m map[string]json.RawMessage, result interf
 	obj := new(DestinationConfigOneOf)
 	err = core.UnmarshalPrimitive(m, "domain", &obj.Domain)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "domain-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "dkim", &obj.Dkim, UnmarshalDkimAttributes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dkim-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "spf", &obj.Spf, UnmarshalSpfAttributes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "spf-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "verb", &obj.Verb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "verb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "custom_headers", &obj.CustomHeaders)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "custom_headers-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sensitive_headers", &obj.SensitiveHeaders)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sensitive_headers-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "project_crn", &obj.ProjectCRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "project_crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "job_name", &obj.JobName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "job_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "server_key", &obj.ServerKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "server_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sender_id", &obj.SenderID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sender_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pre_prod-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "project_id", &obj.ProjectID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "project_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "private_key", &obj.PrivateKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "private_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "client_email", &obj.ClientEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client_email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cert_type", &obj.CertType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cert_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_sandbox", &obj.IsSandbox)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_sandbox-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "key_id", &obj.KeyID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "team_id", &obj.TeamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "team_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "bundle_id", &obj.BundleID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bundle_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "api_key", &obj.APIKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "website_url", &obj.WebsiteURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "website_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "public_key", &obj.PublicKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "public_key-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "token", &obj.Token)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "token-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "website_name", &obj.WebsiteName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "website_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url_format_string", &obj.URLFormatString)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url_format_string-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "website_push_id", &obj.WebsitePushID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "website_push_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "routing_key", &obj.RoutingKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "routing_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "client_id", &obj.ClientID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "client_secret", &obj.ClientSecret)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client_secret-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "username-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instance_name", &obj.InstanceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "bucket_name", &obj.BucketName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bucket_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instance_id", &obj.InstanceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "endpoint", &obj.Endpoint)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "endpoint-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "topic", &obj.Topic)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "topic-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3755,30 +5670,37 @@ func UnmarshalDestinationList(m map[string]json.RawMessage, result interface{}) 
 	obj := new(DestinationList)
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "destinations", &obj.Destinations, UnmarshalDestinationListItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destinations-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3791,12 +5713,16 @@ func (resp *DestinationList) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -3816,6 +5742,9 @@ type DestinationListItem struct {
 	// Destination type.
 	Type *string `json:"type" validate:"required"`
 
+	// Whether to collect the failed event in Cloud Object Storage bucket.
+	CollectFailedEvents *bool `json:"collect_failed_events,omitempty"`
+
 	// Subscription count.
 	SubscriptionCount *int64 `json:"subscription_count" validate:"required"`
 
@@ -3829,21 +5758,22 @@ type DestinationListItem struct {
 // Constants associated with the DestinationListItem.Type property.
 // Destination type.
 const (
-	DestinationListItemTypeIbmceConst       = "ibmce"
-	DestinationListItemTypeIbmcfConst       = "ibmcf"
-	DestinationListItemTypeIbmcosConst      = "ibmcos"
-	DestinationListItemTypeMsteamsConst     = "msteams"
-	DestinationListItemTypePagerdutyConst   = "pagerduty"
-	DestinationListItemTypePushAndroidConst = "push_android"
-	DestinationListItemTypePushHuaweiConst  = "push_huawei"
-	DestinationListItemTypePushIosConst     = "push_ios"
-	DestinationListItemTypePushSafariConst  = "push_safari"
-	DestinationListItemTypeSMTPCustomConst  = "smtp_custom"
-	DestinationListItemTypeSMTPIBMConst     = "smtp_ibm"
-	DestinationListItemTypeServicenowConst  = "servicenow"
-	DestinationListItemTypeSlackConst       = "slack"
-	DestinationListItemTypeSmsIBMConst      = "sms_ibm"
-	DestinationListItemTypeWebhookConst     = "webhook"
+	DestinationListItemTypeEventStreamsConst = "event_streams"
+	DestinationListItemTypeIbmceConst        = "ibmce"
+	DestinationListItemTypeIbmcosConst       = "ibmcos"
+	DestinationListItemTypeMsteamsConst      = "msteams"
+	DestinationListItemTypePagerdutyConst    = "pagerduty"
+	DestinationListItemTypePushAndroidConst  = "push_android"
+	DestinationListItemTypePushHuaweiConst   = "push_huawei"
+	DestinationListItemTypePushIosConst      = "push_ios"
+	DestinationListItemTypePushSafariConst   = "push_safari"
+	DestinationListItemTypeSMTPCustomConst   = "smtp_custom"
+	DestinationListItemTypeSMTPIBMConst      = "smtp_ibm"
+	DestinationListItemTypeServicenowConst   = "servicenow"
+	DestinationListItemTypeSlackConst        = "slack"
+	DestinationListItemTypeSmsCustomConst    = "sms_custom"
+	DestinationListItemTypeSmsIBMConst       = "sms_ibm"
+	DestinationListItemTypeWebhookConst      = "webhook"
 )
 
 // UnmarshalDestinationListItem unmarshals an instance of DestinationListItem from the specified map of raw messages.
@@ -3851,30 +5781,42 @@ func UnmarshalDestinationListItem(m map[string]json.RawMessage, result interface
 	obj := new(DestinationListItem)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "collect_failed_events", &obj.CollectFailedEvents)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "collect_failed_events-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subscription_count", &obj.SubscriptionCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscription_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subscription_names", &obj.SubscriptionNames)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscription_names-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3895,6 +5837,9 @@ type DestinationResponse struct {
 	// Destination type.
 	Type *string `json:"type" validate:"required"`
 
+	// Whether to collect the failed event in Cloud Object Storage bucket.
+	CollectFailedEvents *bool `json:"collect_failed_events,omitempty"`
+
 	// Payload describing a destination configuration.
 	Config *DestinationConfig `json:"config" validate:"required"`
 
@@ -3905,21 +5850,22 @@ type DestinationResponse struct {
 // Constants associated with the DestinationResponse.Type property.
 // Destination type.
 const (
-	DestinationResponseTypeIbmceConst       = "ibmce"
-	DestinationResponseTypeIbmcfConst       = "ibmcf"
-	DestinationResponseTypeIbmcosConst      = "ibmcos"
-	DestinationResponseTypeMsteamsConst     = "msteams"
-	DestinationResponseTypePagerdutyConst   = "pagerduty"
-	DestinationResponseTypePushAndroidConst = "push_android"
-	DestinationResponseTypePushChromeConst  = "push_chrome"
-	DestinationResponseTypePushFirefoxConst = "push_firefox"
-	DestinationResponseTypePushHuaweiConst  = "push_huawei"
-	DestinationResponseTypePushIosConst     = "push_ios"
-	DestinationResponseTypePushSafariConst  = "push_safari"
-	DestinationResponseTypeSMTPCustomConst  = "smtp_custom"
-	DestinationResponseTypeServicenowConst  = "servicenow"
-	DestinationResponseTypeSlackConst       = "slack"
-	DestinationResponseTypeWebhookConst     = "webhook"
+	DestinationResponseTypeEventStreamsConst = "event_streams"
+	DestinationResponseTypeIbmceConst        = "ibmce"
+	DestinationResponseTypeIbmcosConst       = "ibmcos"
+	DestinationResponseTypeMsteamsConst      = "msteams"
+	DestinationResponseTypePagerdutyConst    = "pagerduty"
+	DestinationResponseTypePushAndroidConst  = "push_android"
+	DestinationResponseTypePushChromeConst   = "push_chrome"
+	DestinationResponseTypePushFirefoxConst  = "push_firefox"
+	DestinationResponseTypePushHuaweiConst   = "push_huawei"
+	DestinationResponseTypePushIosConst      = "push_ios"
+	DestinationResponseTypePushSafariConst   = "push_safari"
+	DestinationResponseTypeSMTPCustomConst   = "smtp_custom"
+	DestinationResponseTypeServicenowConst   = "servicenow"
+	DestinationResponseTypeSlackConst        = "slack"
+	DestinationResponseTypeSmsCustomConst    = "sms_custom"
+	DestinationResponseTypeWebhookConst      = "webhook"
 )
 
 // UnmarshalDestinationResponse unmarshals an instance of DestinationResponse from the specified map of raw messages.
@@ -3927,26 +5873,37 @@ func UnmarshalDestinationResponse(m map[string]json.RawMessage, result interface
 	obj := new(DestinationResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "collect_failed_events", &obj.CollectFailedEvents)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "collect_failed_events-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "config", &obj.Config, UnmarshalDestinationConfig)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "config-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3976,22 +5933,45 @@ func UnmarshalDestinationTagsSubscriptionResponse(m map[string]json.RawMessage, 
 	obj := new(DestinationTagsSubscriptionResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "device_id", &obj.DeviceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "device_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tag_name", &obj.TagName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tag_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "user_id", &obj.UserID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "user_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EnAuthAttributes : The en_authorization attributes.
+type EnAuthAttributes struct {
+	// en_authorization verification.
+	Verification *string `json:"verification,omitempty"`
+}
+
+// UnmarshalEnAuthAttributes unmarshals an instance of EnAuthAttributes from the specified map of raw messages.
+func UnmarshalEnAuthAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EnAuthAttributes)
+	err = core.UnmarshalPrimitive(m, "verification", &obj.Verification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "verification-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4015,14 +5995,17 @@ func UnmarshalEmailAttributesResponseInvitedItems(m map[string]json.RawMessage, 
 	obj := new(EmailAttributesResponseInvitedItems)
 	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expires_at", &obj.ExpiresAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "expires_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4043,10 +6026,72 @@ func UnmarshalEmailAttributesResponseSubscribedUnsubscribedItems(m map[string]js
 	obj := new(EmailAttributesResponseSubscribedUnsubscribedItems)
 	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EnabledCountriesResponse : Payload describing a custom SMS Configuration.
+type EnabledCountriesResponse struct {
+	// The SMS destination status.
+	Status *string `json:"status" validate:"required"`
+
+	// List enabled countries.
+	EnabledCountries []SmsCountryConfig `json:"enabled_countries" validate:"required"`
+}
+
+// UnmarshalEnabledCountriesResponse unmarshals an instance of EnabledCountriesResponse from the specified map of raw messages.
+func UnmarshalEnabledCountriesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EnabledCountriesResponse)
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "enabled_countries", &obj.EnabledCountries, UnmarshalSmsCountryConfig)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled_countries-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EventScheduleFilterAttributes : Event schedule filter attributes.
+type EventScheduleFilterAttributes struct {
+	// event schedule start time.
+	StartsAt *strfmt.DateTime `json:"starts_at,omitempty"`
+
+	// event schedule end time.
+	EndsAt *strfmt.DateTime `json:"ends_at,omitempty"`
+
+	// cron schedule expression.
+	Expression *string `json:"expression,omitempty"`
+}
+
+// UnmarshalEventScheduleFilterAttributes unmarshals an instance of EventScheduleFilterAttributes from the specified map of raw messages.
+func UnmarshalEventScheduleFilterAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EventScheduleFilterAttributes)
+	err = core.UnmarshalPrimitive(m, "starts_at", &obj.StartsAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "starts_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ends_at", &obj.EndsAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ends_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "expression", &obj.Expression)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "expression-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4091,6 +6136,44 @@ func (options *GetDestinationOptions) SetHeaders(param map[string]string) *GetDe
 	return options
 }
 
+// GetEnabledCountriesOptions : The GetEnabledCountries options.
+type GetEnabledCountriesOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for Destination.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetEnabledCountriesOptions : Instantiate GetEnabledCountriesOptions
+func (*EventNotificationsV1) NewGetEnabledCountriesOptions(instanceID string, id string) *GetEnabledCountriesOptions {
+	return &GetEnabledCountriesOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *GetEnabledCountriesOptions) SetInstanceID(instanceID string) *GetEnabledCountriesOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetEnabledCountriesOptions) SetID(id string) *GetEnabledCountriesOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetEnabledCountriesOptions) SetHeaders(param map[string]string) *GetEnabledCountriesOptions {
+	options.Headers = param
+	return options
+}
+
 // GetIntegrationOptions : The GetIntegration options.
 type GetIntegrationOptions struct {
 	// Unique identifier for IBM Cloud Event Notifications instance.
@@ -4125,6 +6208,239 @@ func (_options *GetIntegrationOptions) SetID(id string) *GetIntegrationOptions {
 
 // SetHeaders : Allow user to set Headers
 func (options *GetIntegrationOptions) SetHeaders(param map[string]string) *GetIntegrationOptions {
+	options.Headers = param
+	return options
+}
+
+// GetMetricsOptions : The GetMetrics options.
+type GetMetricsOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Destination type. Allowed values are [smtp_custom].
+	DestinationType *string `json:"destination_type" validate:"required"`
+
+	// GTE (greater than equal), start timestamp in UTC.
+	Gte *string `json:"gte" validate:"required"`
+
+	// LTE (less than equal), end timestamp in UTC.
+	Lte *string `json:"lte" validate:"required"`
+
+	// Unique identifier for Destination.
+	DestinationID *string `json:"destination_id,omitempty"`
+
+	// Unique identifier for Source.
+	SourceID *string `json:"source_id,omitempty"`
+
+	// Receiver email id.
+	EmailTo *string `json:"email_to,omitempty"`
+
+	// Notification Id.
+	NotificationID *string `json:"notification_id,omitempty"`
+
+	// Email subject.
+	Subject *string `json:"subject,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the GetMetricsOptions.DestinationType property.
+// Destination type. Allowed values are [smtp_custom].
+const (
+	GetMetricsOptionsDestinationTypeSMTPCustomConst = "smtp_custom"
+)
+
+// NewGetMetricsOptions : Instantiate GetMetricsOptions
+func (*EventNotificationsV1) NewGetMetricsOptions(instanceID string, destinationType string, gte string, lte string) *GetMetricsOptions {
+	return &GetMetricsOptions{
+		InstanceID:      core.StringPtr(instanceID),
+		DestinationType: core.StringPtr(destinationType),
+		Gte:             core.StringPtr(gte),
+		Lte:             core.StringPtr(lte),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *GetMetricsOptions) SetInstanceID(instanceID string) *GetMetricsOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetDestinationType : Allow user to set DestinationType
+func (_options *GetMetricsOptions) SetDestinationType(destinationType string) *GetMetricsOptions {
+	_options.DestinationType = core.StringPtr(destinationType)
+	return _options
+}
+
+// SetGte : Allow user to set Gte
+func (_options *GetMetricsOptions) SetGte(gte string) *GetMetricsOptions {
+	_options.Gte = core.StringPtr(gte)
+	return _options
+}
+
+// SetLte : Allow user to set Lte
+func (_options *GetMetricsOptions) SetLte(lte string) *GetMetricsOptions {
+	_options.Lte = core.StringPtr(lte)
+	return _options
+}
+
+// SetDestinationID : Allow user to set DestinationID
+func (_options *GetMetricsOptions) SetDestinationID(destinationID string) *GetMetricsOptions {
+	_options.DestinationID = core.StringPtr(destinationID)
+	return _options
+}
+
+// SetSourceID : Allow user to set SourceID
+func (_options *GetMetricsOptions) SetSourceID(sourceID string) *GetMetricsOptions {
+	_options.SourceID = core.StringPtr(sourceID)
+	return _options
+}
+
+// SetEmailTo : Allow user to set EmailTo
+func (_options *GetMetricsOptions) SetEmailTo(emailTo string) *GetMetricsOptions {
+	_options.EmailTo = core.StringPtr(emailTo)
+	return _options
+}
+
+// SetNotificationID : Allow user to set NotificationID
+func (_options *GetMetricsOptions) SetNotificationID(notificationID string) *GetMetricsOptions {
+	_options.NotificationID = core.StringPtr(notificationID)
+	return _options
+}
+
+// SetSubject : Allow user to set Subject
+func (_options *GetMetricsOptions) SetSubject(subject string) *GetMetricsOptions {
+	_options.Subject = core.StringPtr(subject)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetMetricsOptions) SetHeaders(param map[string]string) *GetMetricsOptions {
+	options.Headers = param
+	return options
+}
+
+// GetSMTPAllowedIpsOptions : The GetSMTPAllowedIps options.
+type GetSMTPAllowedIpsOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for SMTP.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetSMTPAllowedIpsOptions : Instantiate GetSMTPAllowedIpsOptions
+func (*EventNotificationsV1) NewGetSMTPAllowedIpsOptions(instanceID string, id string) *GetSMTPAllowedIpsOptions {
+	return &GetSMTPAllowedIpsOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *GetSMTPAllowedIpsOptions) SetInstanceID(instanceID string) *GetSMTPAllowedIpsOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetSMTPAllowedIpsOptions) SetID(id string) *GetSMTPAllowedIpsOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetSMTPAllowedIpsOptions) SetHeaders(param map[string]string) *GetSMTPAllowedIpsOptions {
+	options.Headers = param
+	return options
+}
+
+// GetSMTPConfigurationOptions : The GetSMTPConfiguration options.
+type GetSMTPConfigurationOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for SMTP.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetSMTPConfigurationOptions : Instantiate GetSMTPConfigurationOptions
+func (*EventNotificationsV1) NewGetSMTPConfigurationOptions(instanceID string, id string) *GetSMTPConfigurationOptions {
+	return &GetSMTPConfigurationOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *GetSMTPConfigurationOptions) SetInstanceID(instanceID string) *GetSMTPConfigurationOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetSMTPConfigurationOptions) SetID(id string) *GetSMTPConfigurationOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetSMTPConfigurationOptions) SetHeaders(param map[string]string) *GetSMTPConfigurationOptions {
+	options.Headers = param
+	return options
+}
+
+// GetSMTPUserOptions : The GetSMTPUser options.
+type GetSMTPUserOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for SMTP.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// UserID.
+	UserID *string `json:"user_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetSMTPUserOptions : Instantiate GetSMTPUserOptions
+func (*EventNotificationsV1) NewGetSMTPUserOptions(instanceID string, id string, userID string) *GetSMTPUserOptions {
+	return &GetSMTPUserOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+		UserID:     core.StringPtr(userID),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *GetSMTPUserOptions) SetInstanceID(instanceID string) *GetSMTPUserOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetSMTPUserOptions) SetID(id string) *GetSMTPUserOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetUserID : Allow user to set UserID
+func (_options *GetSMTPUserOptions) SetUserID(userID string) *GetSMTPUserOptions {
+	_options.UserID = core.StringPtr(userID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetSMTPUserOptions) SetHeaders(param map[string]string) *GetSMTPUserOptions {
 	options.Headers = param
 	return options
 }
@@ -4290,6 +6606,114 @@ func (options *GetTopicOptions) SetHeaders(param map[string]string) *GetTopicOpt
 	return options
 }
 
+// Histrogram : Payload describing histogram.
+type Histrogram struct {
+	// List of buckets.
+	Buckets []Buckets `json:"buckets,omitempty"`
+}
+
+// UnmarshalHistrogram unmarshals an instance of Histrogram from the specified map of raw messages.
+func UnmarshalHistrogram(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Histrogram)
+	err = core.UnmarshalModel(m, "buckets", &obj.Buckets, UnmarshalBuckets)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "buckets-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// IntegrationCreateMetadata : Integration Metadata object.
+type IntegrationCreateMetadata struct {
+	// URL for Cloud Object storage.
+	Endpoint *string `json:"endpoint" validate:"required"`
+
+	// CRN of the Cloud Object Storage instance.
+	CRN *string `json:"crn" validate:"required"`
+
+	// Cloud Object Storage bucket name.
+	BucketName *string `json:"bucket_name" validate:"required"`
+}
+
+// NewIntegrationCreateMetadata : Instantiate IntegrationCreateMetadata (Generic Model Constructor)
+func (*EventNotificationsV1) NewIntegrationCreateMetadata(endpoint string, crn string, bucketName string) (_model *IntegrationCreateMetadata, err error) {
+	_model = &IntegrationCreateMetadata{
+		Endpoint:   core.StringPtr(endpoint),
+		CRN:        core.StringPtr(crn),
+		BucketName: core.StringPtr(bucketName),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalIntegrationCreateMetadata unmarshals an instance of IntegrationCreateMetadata from the specified map of raw messages.
+func UnmarshalIntegrationCreateMetadata(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IntegrationCreateMetadata)
+	err = core.UnmarshalPrimitive(m, "endpoint", &obj.Endpoint)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "endpoint-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bucket_name", &obj.BucketName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bucket_name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// IntegrationCreateResponse : Integration create response object.
+type IntegrationCreateResponse struct {
+	// ID of the integration.
+	ID *strfmt.UUID `json:"id" validate:"required"`
+
+	// Integration type. Allowed values collect_failed_events.
+	Type *string `json:"type" validate:"required"`
+
+	// Integration Metadata object.
+	Metadata *IntegrationCreateMetadata `json:"metadata" validate:"required"`
+
+	// Creation time of an integration.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+}
+
+// UnmarshalIntegrationCreateResponse unmarshals an instance of IntegrationCreateResponse from the specified map of raw messages.
+func UnmarshalIntegrationCreateResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IntegrationCreateResponse)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "metadata", &obj.Metadata, UnmarshalIntegrationCreateMetadata)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "metadata-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // IntegrationGetResponse : Integration response object.
 type IntegrationGetResponse struct {
 	// ID of the integration.
@@ -4313,22 +6737,27 @@ func UnmarshalIntegrationGetResponse(m map[string]json.RawMessage, result interf
 	obj := new(IntegrationGetResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "metadata", &obj.Metadata, UnmarshalIntegrationMetadata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metadata-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4364,30 +6793,37 @@ func UnmarshalIntegrationList(m map[string]json.RawMessage, result interface{}) 
 	obj := new(IntegrationList)
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "integrations", &obj.Integrations, UnmarshalIntegrationListItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "integrations-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4400,12 +6836,16 @@ func (resp *IntegrationList) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -4434,22 +6874,27 @@ func UnmarshalIntegrationListItem(m map[string]json.RawMessage, result interface
 	obj := new(IntegrationListItem)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "metadata", &obj.Metadata, UnmarshalIntegrationMetadata)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metadata-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4458,24 +6903,29 @@ func UnmarshalIntegrationListItem(m map[string]json.RawMessage, result interface
 
 // IntegrationMetadata : Integration Metadata object.
 type IntegrationMetadata struct {
-	// KMS url for key management.
+	// KMS url for key management or url for COS bucket.
 	Endpoint *string `json:"endpoint" validate:"required"`
 
-	// CRN of the KMS instance.
+	// CRN of the KMS/COS instance.
 	CRN *string `json:"crn" validate:"required"`
 
 	// Root Key ID of KMS.
-	RootKeyID *string `json:"root_key_id" validate:"required"`
+	RootKeyID *string `json:"root_key_id,omitempty"`
+
+	// cloud object storage bucket name.
+	BucketName *string `json:"bucket_name,omitempty"`
 }
 
 // NewIntegrationMetadata : Instantiate IntegrationMetadata (Generic Model Constructor)
-func (*EventNotificationsV1) NewIntegrationMetadata(endpoint string, crn string, rootKeyID string) (_model *IntegrationMetadata, err error) {
+func (*EventNotificationsV1) NewIntegrationMetadata(endpoint string, crn string) (_model *IntegrationMetadata, err error) {
 	_model = &IntegrationMetadata{
-		Endpoint:  core.StringPtr(endpoint),
-		CRN:       core.StringPtr(crn),
-		RootKeyID: core.StringPtr(rootKeyID),
+		Endpoint: core.StringPtr(endpoint),
+		CRN:      core.StringPtr(crn),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -4484,14 +6934,22 @@ func UnmarshalIntegrationMetadata(m map[string]json.RawMessage, result interface
 	obj := new(IntegrationMetadata)
 	err = core.UnmarshalPrimitive(m, "endpoint", &obj.Endpoint)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "endpoint-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "root_key_id", &obj.RootKeyID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "root_key_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bucket_name", &obj.BucketName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bucket_name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4604,6 +7062,126 @@ func (_options *ListIntegrationsOptions) SetSearch(search string) *ListIntegrati
 
 // SetHeaders : Allow user to set Headers
 func (options *ListIntegrationsOptions) SetHeaders(param map[string]string) *ListIntegrationsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListSMTPConfigurationsOptions : The ListSMTPConfigurations options.
+type ListSMTPConfigurationsOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Page limit for paginated results.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// offset for paginated results.
+	Offset *int64 `json:"offset,omitempty"`
+
+	// Search string for filtering results.
+	Search *string `json:"search,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListSMTPConfigurationsOptions : Instantiate ListSMTPConfigurationsOptions
+func (*EventNotificationsV1) NewListSMTPConfigurationsOptions(instanceID string) *ListSMTPConfigurationsOptions {
+	return &ListSMTPConfigurationsOptions{
+		InstanceID: core.StringPtr(instanceID),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *ListSMTPConfigurationsOptions) SetInstanceID(instanceID string) *ListSMTPConfigurationsOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListSMTPConfigurationsOptions) SetLimit(limit int64) *ListSMTPConfigurationsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetOffset : Allow user to set Offset
+func (_options *ListSMTPConfigurationsOptions) SetOffset(offset int64) *ListSMTPConfigurationsOptions {
+	_options.Offset = core.Int64Ptr(offset)
+	return _options
+}
+
+// SetSearch : Allow user to set Search
+func (_options *ListSMTPConfigurationsOptions) SetSearch(search string) *ListSMTPConfigurationsOptions {
+	_options.Search = core.StringPtr(search)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListSMTPConfigurationsOptions) SetHeaders(param map[string]string) *ListSMTPConfigurationsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListSMTPUsersOptions : The ListSMTPUsers options.
+type ListSMTPUsersOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for SMTP.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Page limit for paginated results.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// offset for paginated results.
+	Offset *int64 `json:"offset,omitempty"`
+
+	// Search string for filtering results.
+	Search *string `json:"search,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListSMTPUsersOptions : Instantiate ListSMTPUsersOptions
+func (*EventNotificationsV1) NewListSMTPUsersOptions(instanceID string, id string) *ListSMTPUsersOptions {
+	return &ListSMTPUsersOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *ListSMTPUsersOptions) SetInstanceID(instanceID string) *ListSMTPUsersOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *ListSMTPUsersOptions) SetID(id string) *ListSMTPUsersOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListSMTPUsersOptions) SetLimit(limit int64) *ListSMTPUsersOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetOffset : Allow user to set Offset
+func (_options *ListSMTPUsersOptions) SetOffset(offset int64) *ListSMTPUsersOptions {
+	_options.Offset = core.Int64Ptr(offset)
+	return _options
+}
+
+// SetSearch : Allow user to set Search
+func (_options *ListSMTPUsersOptions) SetSearch(search string) *ListSMTPUsersOptions {
+	_options.Search = core.StringPtr(search)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListSMTPUsersOptions) SetHeaders(param map[string]string) *ListSMTPUsersOptions {
 	options.Headers = param
 	return options
 }
@@ -4920,6 +7498,68 @@ func (options *ListTopicsOptions) SetHeaders(param map[string]string) *ListTopic
 	return options
 }
 
+// Metric : Payload describing metrics request.
+type Metric struct {
+	// key.
+	Key *string `json:"key,omitempty"`
+
+	// doc count.
+	DocCount *int64 `json:"doc_count,omitempty"`
+
+	// Payload describing histogram.
+	Histogram *Histrogram `json:"histogram,omitempty"`
+}
+
+// Constants associated with the Metric.Key property.
+// key.
+const (
+	MetricKeyBouncedConst   = "bounced"
+	MetricKeyDeferredConst  = "deferred"
+	MetricKeyOpenedConst    = "opened"
+	MetricKeySubmittedConst = "submitted"
+	MetricKeySuccessConst   = "success"
+)
+
+// UnmarshalMetric unmarshals an instance of Metric from the specified map of raw messages.
+func UnmarshalMetric(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Metric)
+	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "key-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "doc_count", &obj.DocCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "histogram", &obj.Histogram, UnmarshalHistrogram)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "histogram-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Metrics : Payload describing a metrics.
+type Metrics struct {
+	// array of metrics.
+	Metrics []Metric `json:"metrics" validate:"required"`
+}
+
+// UnmarshalMetrics unmarshals an instance of Metrics from the specified map of raw messages.
+func UnmarshalMetrics(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Metrics)
+	err = core.UnmarshalModel(m, "metrics", &obj.Metrics, UnmarshalMetric)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "metrics-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // NotificationCreate : Payload describing a notification create request.
 type NotificationCreate struct {
 	// The version of the notification specification.
@@ -4950,7 +7590,31 @@ type NotificationCreate struct {
 	Ibmendefaultlong *string `json:"ibmendefaultlong" validate:"required"`
 
 	// The subject of the notification.
+	Ibmensubject *string `json:"ibmensubject,omitempty"`
+
+	// The template id Array of string.
+	Ibmentemplates *string `json:"ibmentemplates,omitempty"`
+
+	// The email id string.
+	Ibmenmailto *string `json:"ibmenmailto,omitempty"`
+
+	// The slack channel id/member id stringified array.
+	Ibmenslackto *string `json:"ibmenslackto,omitempty"`
+
+	// The SMS text.
+	Ibmensmstext *string `json:"ibmensmstext,omitempty"`
+
+	// The SMS number string.
+	Ibmensmsto *string `json:"ibmensmsto,omitempty"`
+
+	// The html body of notification.
+	Ibmenhtmlbody *string `json:"ibmenhtmlbody,omitempty"`
+
+	// The subject of the notification.
 	Subject *string `json:"subject,omitempty"`
+
+	// Stringified MMS Attachment JSON.
+	Ibmenmms *string `json:"ibmenmms,omitempty"`
 
 	// The payload for webhook notification.
 	Data map[string]interface{} `json:"data,omitempty"`
@@ -5005,6 +7669,9 @@ func (*EventNotificationsV1) NewNotificationCreate(specversion string, id string
 		Ibmendefaultlong:  core.StringPtr(ibmendefaultlong),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -5069,8 +7736,32 @@ func (o *NotificationCreate) MarshalJSON() (buffer []byte, err error) {
 	if o.Ibmendefaultlong != nil {
 		m["ibmendefaultlong"] = o.Ibmendefaultlong
 	}
+	if o.Ibmensubject != nil {
+		m["ibmensubject"] = o.Ibmensubject
+	}
+	if o.Ibmentemplates != nil {
+		m["ibmentemplates"] = o.Ibmentemplates
+	}
+	if o.Ibmenmailto != nil {
+		m["ibmenmailto"] = o.Ibmenmailto
+	}
+	if o.Ibmenslackto != nil {
+		m["ibmenslackto"] = o.Ibmenslackto
+	}
+	if o.Ibmensmstext != nil {
+		m["ibmensmstext"] = o.Ibmensmstext
+	}
+	if o.Ibmensmsto != nil {
+		m["ibmensmsto"] = o.Ibmensmsto
+	}
+	if o.Ibmenhtmlbody != nil {
+		m["ibmenhtmlbody"] = o.Ibmenhtmlbody
+	}
 	if o.Subject != nil {
 		m["subject"] = o.Subject
+	}
+	if o.Ibmenmms != nil {
+		m["ibmenmms"] = o.Ibmenmms
 	}
 	if o.Data != nil {
 		m["data"] = o.Data
@@ -5109,6 +7800,9 @@ func (o *NotificationCreate) MarshalJSON() (buffer []byte, err error) {
 		m["ibmensafaribody"] = o.Ibmensafaribody
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -5117,111 +7811,169 @@ func UnmarshalNotificationCreate(m map[string]json.RawMessage, result interface{
 	obj := new(NotificationCreate)
 	err = core.UnmarshalPrimitive(m, "specversion", &obj.Specversion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "specversion-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "specversion")
 	err = core.UnmarshalPrimitive(m, "time", &obj.Time)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "time-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "time")
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "id")
 	err = core.UnmarshalPrimitive(m, "source", &obj.Source)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "source-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "source")
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "type")
 	err = core.UnmarshalPrimitive(m, "ibmenseverity", &obj.Ibmenseverity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmenseverity-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "ibmenseverity")
 	err = core.UnmarshalPrimitive(m, "ibmensourceid", &obj.Ibmensourceid)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmensourceid-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "ibmensourceid")
 	err = core.UnmarshalPrimitive(m, "ibmendefaultshort", &obj.Ibmendefaultshort)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmendefaultshort-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "ibmendefaultshort")
 	err = core.UnmarshalPrimitive(m, "ibmendefaultlong", &obj.Ibmendefaultlong)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmendefaultlong-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "ibmendefaultlong")
+	err = core.UnmarshalPrimitive(m, "ibmensubject", &obj.Ibmensubject)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmensubject-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "ibmensubject")
+	err = core.UnmarshalPrimitive(m, "ibmentemplates", &obj.Ibmentemplates)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmentemplates-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "ibmentemplates")
+	err = core.UnmarshalPrimitive(m, "ibmenmailto", &obj.Ibmenmailto)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmenmailto-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "ibmenmailto")
+	err = core.UnmarshalPrimitive(m, "ibmenslackto", &obj.Ibmenslackto)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmenslackto-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "ibmenslackto")
+	err = core.UnmarshalPrimitive(m, "ibmensmstext", &obj.Ibmensmstext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmensmstext-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "ibmensmstext")
+	err = core.UnmarshalPrimitive(m, "ibmensmsto", &obj.Ibmensmsto)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmensmsto-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "ibmensmsto")
+	err = core.UnmarshalPrimitive(m, "ibmenhtmlbody", &obj.Ibmenhtmlbody)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmenhtmlbody-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "ibmenhtmlbody")
 	err = core.UnmarshalPrimitive(m, "subject", &obj.Subject)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subject-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "subject")
+	err = core.UnmarshalPrimitive(m, "ibmenmms", &obj.Ibmenmms)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmenmms-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "ibmenmms")
 	err = core.UnmarshalPrimitive(m, "data", &obj.Data)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "data-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "data")
 	err = core.UnmarshalPrimitive(m, "datacontenttype", &obj.Datacontenttype)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "datacontenttype-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "datacontenttype")
-	err = core.UnmarshalPrimitive(m, "ibmenpushto", &obj.Ibmenpushto)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmenpushto")
-	err = core.UnmarshalPrimitive(m, "ibmenfcmbody", &obj.Ibmenfcmbody)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmenfcmbody")
 	err = core.UnmarshalPrimitive(m, "ibmenapnsbody", &obj.Ibmenapnsbody)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmenapnsbody-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "ibmenapnsbody")
 	err = core.UnmarshalPrimitive(m, "ibmenapnsheaders", &obj.Ibmenapnsheaders)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmenapnsheaders-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "ibmenapnsheaders")
 	err = core.UnmarshalPrimitive(m, "ibmenchromebody", &obj.Ibmenchromebody)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmenchromebody-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "ibmenchromebody")
 	err = core.UnmarshalPrimitive(m, "ibmenchromeheaders", &obj.Ibmenchromeheaders)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmenchromeheaders-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "ibmenchromeheaders")
 	err = core.UnmarshalPrimitive(m, "ibmenfirefoxbody", &obj.Ibmenfirefoxbody)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmenfirefoxbody-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "ibmenfirefoxbody")
 	err = core.UnmarshalPrimitive(m, "ibmenfirefoxheaders", &obj.Ibmenfirefoxheaders)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmenfirefoxheaders-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "ibmenfirefoxheaders")
 	err = core.UnmarshalPrimitive(m, "ibmenhuaweibody", &obj.Ibmenhuaweibody)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmenhuaweibody-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "ibmenhuaweibody")
 	err = core.UnmarshalPrimitive(m, "ibmensafaribody", &obj.Ibmensafaribody)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ibmensafaribody-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "ibmensafaribody")
@@ -5229,7 +7981,7 @@ func UnmarshalNotificationCreate(m map[string]json.RawMessage, result interface{
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -5249,6 +8001,7 @@ func UnmarshalNotificationResponse(m map[string]json.RawMessage, result interfac
 	obj := new(NotificationResponse)
 	err = core.UnmarshalPrimitive(m, "notification_id", &obj.NotificationID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "notification_id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5266,6 +8019,7 @@ func UnmarshalPageHrefResponse(m map[string]json.RawMessage, result interface{})
 	obj := new(PageHrefResponse)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5280,7 +8034,7 @@ type ReplaceIntegrationOptions struct {
 	// Unique identifier for integration.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Integration type. Allowed values are kms and hs-crypto.
+	// Integration type. Allowed values are kms, hs-crypto and collect_failed_events.
 	Type *string `json:"type" validate:"required"`
 
 	// Integration Metadata object.
@@ -5326,6 +8080,79 @@ func (_options *ReplaceIntegrationOptions) SetMetadata(metadata *IntegrationMeta
 
 // SetHeaders : Allow user to set Headers
 func (options *ReplaceIntegrationOptions) SetHeaders(param map[string]string) *ReplaceIntegrationOptions {
+	options.Headers = param
+	return options
+}
+
+// ReplaceTemplateOptions : The ReplaceTemplate options.
+type ReplaceTemplateOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for Template.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Template name.
+	Name *string `json:"name,omitempty"`
+
+	// Template description.
+	Description *string `json:"description,omitempty"`
+
+	// The type of template.
+	Type *string `json:"type,omitempty"`
+
+	Params TemplateConfigOneOfIntf `json:"params,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewReplaceTemplateOptions : Instantiate ReplaceTemplateOptions
+func (*EventNotificationsV1) NewReplaceTemplateOptions(instanceID string, id string) *ReplaceTemplateOptions {
+	return &ReplaceTemplateOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *ReplaceTemplateOptions) SetInstanceID(instanceID string) *ReplaceTemplateOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *ReplaceTemplateOptions) SetID(id string) *ReplaceTemplateOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *ReplaceTemplateOptions) SetName(name string) *ReplaceTemplateOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *ReplaceTemplateOptions) SetDescription(description string) *ReplaceTemplateOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetType : Allow user to set Type
+func (_options *ReplaceTemplateOptions) SetType(typeVar string) *ReplaceTemplateOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetParams : Allow user to set Params
+func (_options *ReplaceTemplateOptions) SetParams(params TemplateConfigOneOfIntf) *ReplaceTemplateOptions {
+	_options.Params = params
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ReplaceTemplateOptions) SetHeaders(param map[string]string) *ReplaceTemplateOptions {
 	options.Headers = param
 	return options
 }
@@ -5401,19 +8228,13 @@ type Rules struct {
 	Enabled *bool `json:"enabled,omitempty"`
 
 	// Event type filter.
-	EventTypeFilter *string `json:"event_type_filter" validate:"required"`
+	EventTypeFilter *string `json:"event_type_filter,omitempty"`
 
 	// Notification filter.
 	NotificationFilter *string `json:"notification_filter,omitempty"`
-}
 
-// NewRules : Instantiate Rules (Generic Model Constructor)
-func (*EventNotificationsV1) NewRules(eventTypeFilter string) (_model *Rules, err error) {
-	_model = &Rules{
-		EventTypeFilter: core.StringPtr(eventTypeFilter),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
+	// Event schedule filter attributes.
+	EventScheduleFilter *EventScheduleFilterAttributes `json:"event_schedule_filter,omitempty"`
 }
 
 // UnmarshalRules unmarshals an instance of Rules from the specified map of raw messages.
@@ -5421,14 +8242,22 @@ func UnmarshalRules(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(Rules)
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "event_type_filter", &obj.EventTypeFilter)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "event_type_filter-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "notification_filter", &obj.NotificationFilter)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "notification_filter-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "event_schedule_filter", &obj.EventScheduleFilter, UnmarshalEventScheduleFilterAttributes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "event_schedule_filter-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5441,10 +8270,13 @@ type RulesGet struct {
 	Enabled *bool `json:"enabled" validate:"required"`
 
 	// Event type filter.
-	EventTypeFilter *string `json:"event_type_filter" validate:"required"`
+	EventTypeFilter *string `json:"event_type_filter,omitempty"`
 
 	// Notification filter.
-	NotificationFilter *string `json:"notification_filter" validate:"required"`
+	NotificationFilter *string `json:"notification_filter,omitempty"`
+
+	// Event schedule filter attributes.
+	EventScheduleFilter *EventScheduleFilterAttributes `json:"event_schedule_filter,omitempty"`
 
 	// Last time the topic was updated.
 	UpdatedAt *string `json:"updated_at" validate:"required"`
@@ -5458,22 +8290,32 @@ func UnmarshalRulesGet(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(RulesGet)
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "event_type_filter", &obj.EventTypeFilter)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "event_type_filter-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "notification_filter", &obj.NotificationFilter)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "notification_filter-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "event_schedule_filter", &obj.EventScheduleFilter, UnmarshalEventScheduleFilterAttributes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "event_schedule_filter-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5494,10 +8336,38 @@ func UnmarshalSmsAttributesItems(m map[string]json.RawMessage, result interface{
 	obj := new(SmsAttributesItems)
 	err = core.UnmarshalPrimitive(m, "phone_number", &obj.PhoneNumber)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "phone_number-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SmsCountryConfig : Payload describing a country Configuration.
+type SmsCountryConfig struct {
+	// Phone number.
+	Number *string `json:"number" validate:"required"`
+
+	// List of Countries.
+	Country []string `json:"country" validate:"required"`
+}
+
+// UnmarshalSmsCountryConfig unmarshals an instance of SmsCountryConfig from the specified map of raw messages.
+func UnmarshalSmsCountryConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SmsCountryConfig)
+	err = core.UnmarshalPrimitive(m, "number", &obj.Number)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "number-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "country", &obj.Country)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "country-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5521,14 +8391,577 @@ func UnmarshalSmsInviteAttributesItems(m map[string]json.RawMessage, result inte
 	obj := new(SmsInviteAttributesItems)
 	err = core.UnmarshalPrimitive(m, "phone_number", &obj.PhoneNumber)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "phone_number-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expires_at", &obj.ExpiresAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "expires_at-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SMTPAllowedIPs : Payload describing a SMTP allowed Ips.
+type SMTPAllowedIPs struct {
+	// The SMTP allowed Ips.
+	Subnets []string `json:"subnets" validate:"required"`
+
+	// Updated at.
+	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
+}
+
+// UnmarshalSMTPAllowedIPs unmarshals an instance of SMTPAllowedIPs from the specified map of raw messages.
+func UnmarshalSMTPAllowedIPs(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SMTPAllowedIPs)
+	err = core.UnmarshalPrimitive(m, "subnets", &obj.Subnets)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "subnets-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SMTPConfig : Payload describing a SMTP configuration.
+type SMTPConfig struct {
+	// The SMTP DKIM attributes.
+	Dkim *SmtpdkimAttributes `json:"dkim,omitempty"`
+
+	// The en_authorization attributes.
+	EnAuthorization *EnAuthAttributes `json:"en_authorization,omitempty"`
+
+	// The SPF attributes.
+	Spf *SpfAttributes `json:"spf,omitempty"`
+}
+
+// UnmarshalSMTPConfig unmarshals an instance of SMTPConfig from the specified map of raw messages.
+func UnmarshalSMTPConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SMTPConfig)
+	err = core.UnmarshalModel(m, "dkim", &obj.Dkim, UnmarshalSmtpdkimAttributes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "dkim-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "en_authorization", &obj.EnAuthorization, UnmarshalEnAuthAttributes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "en_authorization-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "spf", &obj.Spf, UnmarshalSpfAttributes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "spf-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SMTPConfiguration : Payload describing a SMTP List response.
+type SMTPConfiguration struct {
+	// SMTP ID.
+	ID *string `json:"id" validate:"required"`
+
+	// SMTP name.
+	Name *string `json:"name" validate:"required"`
+
+	// SMTP description.
+	Description *string `json:"description,omitempty"`
+
+	// Domain Name.
+	Domain *string `json:"domain" validate:"required"`
+
+	// Payload describing a SMTP configuration.
+	Config *SMTPConfig `json:"config" validate:"required"`
+
+	// Created time.
+	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
+}
+
+// UnmarshalSMTPConfiguration unmarshals an instance of SMTPConfiguration from the specified map of raw messages.
+func UnmarshalSMTPConfiguration(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SMTPConfiguration)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "domain", &obj.Domain)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "domain-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "config", &obj.Config, UnmarshalSMTPConfig)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "config-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SMTPConfigurationsList : Payload describing a SMTP Configurations list.
+type SMTPConfigurationsList struct {
+	// Total number of SMTP configurations.
+	TotalCount *int64 `json:"total_count" validate:"required"`
+
+	// Current offset.
+	Offset *int64 `json:"offset" validate:"required"`
+
+	// limit to show configurations.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// List of SMTP Configurations.
+	SMTPConfigurations []SMTPConfiguration `json:"smtp_configurations" validate:"required"`
+
+	// Response having URL of the page.
+	First *PageHrefResponse `json:"first,omitempty"`
+
+	// Response having URL of the page.
+	Previous *PageHrefResponse `json:"previous,omitempty"`
+
+	// Response having URL of the page.
+	Next *PageHrefResponse `json:"next,omitempty"`
+}
+
+// UnmarshalSMTPConfigurationsList unmarshals an instance of SMTPConfigurationsList from the specified map of raw messages.
+func UnmarshalSMTPConfigurationsList(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SMTPConfigurationsList)
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "smtp_configurations", &obj.SMTPConfigurations, UnmarshalSMTPConfiguration)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "smtp_configurations-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *SMTPConfigurationsList) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
+		return nil, err
+	} else if offset == nil {
+		return nil, nil
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
+}
+
+// SMTPCreateResponse : Payload describing a SMTP create response.
+type SMTPCreateResponse struct {
+	// SMTP ID.
+	ID *string `json:"id" validate:"required"`
+
+	// SMTP name.
+	Name *string `json:"name" validate:"required"`
+
+	// SMTP description.
+	Description *string `json:"description,omitempty"`
+
+	// Domain Name.
+	Domain *string `json:"domain" validate:"required"`
+
+	// Payload describing a SMTP configuration.
+	Config *SMTPConfig `json:"config" validate:"required"`
+
+	// Created time.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+}
+
+// UnmarshalSMTPCreateResponse unmarshals an instance of SMTPCreateResponse from the specified map of raw messages.
+func UnmarshalSMTPCreateResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SMTPCreateResponse)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "domain", &obj.Domain)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "domain-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "config", &obj.Config, UnmarshalSMTPConfig)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "config-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SmtpdkimAttributes : The SMTP DKIM attributes.
+type SmtpdkimAttributes struct {
+	// DKIM text name.
+	TxtName *string `json:"txt_name,omitempty"`
+
+	// DKIM text value.
+	TxtValue *string `json:"txt_value,omitempty"`
+
+	// DKIM verification.
+	Verification *string `json:"verification,omitempty"`
+}
+
+// UnmarshalSmtpdkimAttributes unmarshals an instance of SmtpdkimAttributes from the specified map of raw messages.
+func UnmarshalSmtpdkimAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SmtpdkimAttributes)
+	err = core.UnmarshalPrimitive(m, "txt_name", &obj.TxtName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "txt_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "txt_value", &obj.TxtValue)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "txt_value-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "verification", &obj.Verification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "verification-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SMTPUser : Payload describing a SMTP User.
+type SMTPUser struct {
+	// Id.
+	ID *string `json:"id" validate:"required"`
+
+	// SMTP confg Id.
+	SMTPConfigID *string `json:"smtp_config_id" validate:"required"`
+
+	// SMTP User description.
+	Description *string `json:"description" validate:"required"`
+
+	// Domain Name.
+	Domain *string `json:"domain" validate:"required"`
+
+	// SMTP user name.
+	Username *string `json:"username" validate:"required"`
+
+	// Updated time.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// Updated time.
+	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
+}
+
+// UnmarshalSMTPUser unmarshals an instance of SMTPUser from the specified map of raw messages.
+func UnmarshalSMTPUser(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SMTPUser)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "smtp_config_id", &obj.SMTPConfigID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "smtp_config_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "domain", &obj.Domain)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "domain-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "username-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SMTPUserResponse : Payload describing a SMTP User create response.
+type SMTPUserResponse struct {
+	// SMTP Id.
+	ID *string `json:"id" validate:"required"`
+
+	// SMTP User description.
+	Description *string `json:"description,omitempty"`
+
+	// Domain Name.
+	Domain *string `json:"domain,omitempty"`
+
+	// SMTP confg Id.
+	SMTPConfigID *string `json:"smtp_config_id" validate:"required"`
+
+	// SMTP user name.
+	Username *string `json:"username" validate:"required"`
+
+	// password.
+	Password *string `json:"password" validate:"required"`
+
+	// Created time.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+}
+
+// UnmarshalSMTPUserResponse unmarshals an instance of SMTPUserResponse from the specified map of raw messages.
+func UnmarshalSMTPUserResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SMTPUserResponse)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "domain", &obj.Domain)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "domain-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "smtp_config_id", &obj.SMTPConfigID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "smtp_config_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "username-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SMTPUsersList : Payload describing a SMTP users list request.
+type SMTPUsersList struct {
+	// Total number of destinations.
+	TotalCount *int64 `json:"total_count" validate:"required"`
+
+	// Current offset.
+	Offset *int64 `json:"offset" validate:"required"`
+
+	// limit to show destinations.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// List of users.
+	Users []SMTPUser `json:"users" validate:"required"`
+
+	// Response having URL of the page.
+	First *PageHrefResponse `json:"first,omitempty"`
+
+	// Response having URL of the page.
+	Previous *PageHrefResponse `json:"previous,omitempty"`
+
+	// Response having URL of the page.
+	Next *PageHrefResponse `json:"next,omitempty"`
+}
+
+// UnmarshalSMTPUsersList unmarshals an instance of SMTPUsersList from the specified map of raw messages.
+func UnmarshalSMTPUsersList(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SMTPUsersList)
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "users", &obj.Users, UnmarshalSMTPUser)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "users-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *SMTPUsersList) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
+		return nil, err
+	} else if offset == nil {
+		return nil, nil
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
+}
+
+// SMTPVerificationResponse : verification object.
+type SMTPVerificationResponse struct {
+	// verification type.
+	Type *string `json:"type" validate:"required"`
+
+	// verification status.
+	Verification *string `json:"verification" validate:"required"`
+}
+
+// UnmarshalSMTPVerificationResponse unmarshals an instance of SMTPVerificationResponse from the specified map of raw messages.
+func UnmarshalSMTPVerificationResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SMTPVerificationResponse)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "verification", &obj.Verification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "verification-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SMTPVerificationUpdateResponse : Payload describing SMTP verification response.
+type SMTPVerificationUpdateResponse struct {
+	// SMTP verification status.
+	Status []SMTPVerificationResponse `json:"status" validate:"required"`
+}
+
+// UnmarshalSMTPVerificationUpdateResponse unmarshals an instance of SMTPVerificationUpdateResponse from the specified map of raw messages.
+func UnmarshalSMTPVerificationUpdateResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SMTPVerificationUpdateResponse)
+	err = core.UnmarshalModel(m, "status", &obj.Status, UnmarshalSMTPVerificationResponse)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5552,55 +8985,21 @@ func UnmarshalSpfAttributes(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(SpfAttributes)
 	err = core.UnmarshalPrimitive(m, "txt_name", &obj.TxtName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "txt_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "txt_value", &obj.TxtValue)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "txt_value-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "verification", &obj.Verification)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "verification-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
-}
-
-// SendBulkNotificationsOptions : The SendBulkNotifications options.
-type SendBulkNotificationsOptions struct {
-	// Unique identifier for IBM Cloud Event Notifications instance.
-	InstanceID *string `json:"instance_id" validate:"required,ne="`
-
-	// List of notifications body.
-	BulkMessages []NotificationCreate `json:"bulk_messages,omitempty"`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewSendBulkNotificationsOptions : Instantiate SendBulkNotificationsOptions
-func (*EventNotificationsV1) NewSendBulkNotificationsOptions(instanceID string) *SendBulkNotificationsOptions {
-	return &SendBulkNotificationsOptions{
-		InstanceID: core.StringPtr(instanceID),
-	}
-}
-
-// SetInstanceID : Allow user to set InstanceID
-func (_options *SendBulkNotificationsOptions) SetInstanceID(instanceID string) *SendBulkNotificationsOptions {
-	_options.InstanceID = core.StringPtr(instanceID)
-	return _options
-}
-
-// SetBulkMessages : Allow user to set BulkMessages
-func (_options *SendBulkNotificationsOptions) SetBulkMessages(bulkMessages []NotificationCreate) *SendBulkNotificationsOptions {
-	_options.BulkMessages = bulkMessages
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *SendBulkNotificationsOptions) SetHeaders(param map[string]string) *SendBulkNotificationsOptions {
-	options.Headers = param
-	return options
 }
 
 // SendNotificationsOptions : The SendNotifications options.
@@ -5672,34 +9071,42 @@ func UnmarshalSource(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Source)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "topic_count", &obj.TopicCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "topic_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "topic_names", &obj.TopicNames)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "topic_names-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5735,30 +9142,37 @@ func UnmarshalSourceList(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(SourceList)
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "sources", &obj.Sources, UnmarshalSourceListItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5771,12 +9185,16 @@ func (resp *SourceList) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -5811,30 +9229,37 @@ func UnmarshalSourceListItem(m map[string]json.RawMessage, result interface{}) (
 	obj := new(SourceListItem)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "topic_count", &obj.TopicCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "topic_count-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5864,22 +9289,27 @@ func UnmarshalSourceResponse(m map[string]json.RawMessage, result interface{}) (
 	obj := new(SourceResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5902,6 +9332,9 @@ func (*EventNotificationsV1) NewSourcesItems(id string, rules []Rules) (_model *
 		Rules: rules,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -5910,10 +9343,12 @@ func UnmarshalSourcesItems(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(SourcesItems)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalRules)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rules-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5937,14 +9372,17 @@ func UnmarshalSourcesListItems(m map[string]json.RawMessage, result interface{})
 	obj := new(SourcesListItems)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalRulesGet)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rules-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5992,23 +9430,24 @@ type Subscription struct {
 // Constants associated with the Subscription.DestinationType property.
 // The type of destination.
 const (
-	SubscriptionDestinationTypeIbmceConst       = "ibmce"
-	SubscriptionDestinationTypeIbmcfConst       = "ibmcf"
-	SubscriptionDestinationTypeIbmcosConst      = "ibmcos"
-	SubscriptionDestinationTypeMsteamsConst     = "msteams"
-	SubscriptionDestinationTypePagerdutyConst   = "pagerduty"
-	SubscriptionDestinationTypePushAndroidConst = "push_android"
-	SubscriptionDestinationTypePushChromeConst  = "push_chrome"
-	SubscriptionDestinationTypePushFirefoxConst = "push_firefox"
-	SubscriptionDestinationTypePushHuaweiConst  = "push_huawei"
-	SubscriptionDestinationTypePushIosConst     = "push_ios"
-	SubscriptionDestinationTypePushSafariConst  = "push_safari"
-	SubscriptionDestinationTypeSMTPCustomConst  = "smtp_custom"
-	SubscriptionDestinationTypeSMTPIBMConst     = "smtp_ibm"
-	SubscriptionDestinationTypeServicenowConst  = "servicenow"
-	SubscriptionDestinationTypeSlackConst       = "slack"
-	SubscriptionDestinationTypeSmsIBMConst      = "sms_ibm"
-	SubscriptionDestinationTypeWebhookConst     = "webhook"
+	SubscriptionDestinationTypeEventStreamsConst = "event_streams"
+	SubscriptionDestinationTypeIbmceConst        = "ibmce"
+	SubscriptionDestinationTypeIbmcosConst       = "ibmcos"
+	SubscriptionDestinationTypeMsteamsConst      = "msteams"
+	SubscriptionDestinationTypePagerdutyConst    = "pagerduty"
+	SubscriptionDestinationTypePushAndroidConst  = "push_android"
+	SubscriptionDestinationTypePushChromeConst   = "push_chrome"
+	SubscriptionDestinationTypePushFirefoxConst  = "push_firefox"
+	SubscriptionDestinationTypePushHuaweiConst   = "push_huawei"
+	SubscriptionDestinationTypePushIosConst      = "push_ios"
+	SubscriptionDestinationTypePushSafariConst   = "push_safari"
+	SubscriptionDestinationTypeSMTPCustomConst   = "smtp_custom"
+	SubscriptionDestinationTypeSMTPIBMConst      = "smtp_ibm"
+	SubscriptionDestinationTypeServicenowConst   = "servicenow"
+	SubscriptionDestinationTypeSlackConst        = "slack"
+	SubscriptionDestinationTypeSmsCustomConst    = "sms_custom"
+	SubscriptionDestinationTypeSmsIBMConst       = "sms_ibm"
+	SubscriptionDestinationTypeWebhookConst      = "webhook"
 )
 
 // SetProperty allows the user to set an arbitrary property on an instance of Subscription
@@ -6079,6 +9518,9 @@ func (o *Subscription) MarshalJSON() (buffer []byte, err error) {
 		m["attributes"] = o.Attributes
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -6087,56 +9529,67 @@ func UnmarshalSubscription(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(Subscription)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "id")
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "name")
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "description")
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "updated_at")
 	err = core.UnmarshalPrimitive(m, "from", &obj.From)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "from")
 	err = core.UnmarshalPrimitive(m, "destination_type", &obj.DestinationType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destination_type-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "destination_type")
 	err = core.UnmarshalPrimitive(m, "destination_id", &obj.DestinationID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destination_id-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "destination_id")
 	err = core.UnmarshalPrimitive(m, "destination_name", &obj.DestinationName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destination_name-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "destination_name")
 	err = core.UnmarshalPrimitive(m, "topic_id", &obj.TopicID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "topic_id-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "topic_id")
 	err = core.UnmarshalPrimitive(m, "topic_name", &obj.TopicName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "topic_name-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "topic_name")
 	err = core.UnmarshalModel(m, "attributes", &obj.Attributes, UnmarshalSubscriptionAttributes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "attributes-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "attributes")
@@ -6144,7 +9597,7 @@ func UnmarshalSubscription(m map[string]json.RawMessage, result interface{}) (er
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -6156,11 +9609,15 @@ func UnmarshalSubscription(m map[string]json.RawMessage, result interface{}) (er
 // SubscriptionAttributes : SubscriptionAttributes struct
 // Models which "extend" this model:
 // - SubscriptionAttributesSmsAttributesResponse
+// - SubscriptionAttributesCustomSmsAttributesResponse
 // - SubscriptionAttributesEmailAttributesResponse
 // - SubscriptionAttributesCustomEmailAttributesResponse
 // - SubscriptionAttributesWebhookAttributesResponse
 // - SubscriptionAttributesSlackAttributesResponse
+// - SubscriptionAttributesPagerDutyAttributesResponse
+// - SubscriptionAttributesSlackDirectMessageAttributesResponse
 // - SubscriptionAttributesServiceNowAttributesResponse
+// - SubscriptionAttributesEventStreamsAttributesResponse
 type SubscriptionAttributes struct {
 	// The subscribed list.
 	Subscribed []SmsAttributesItems `json:"subscribed,omitempty"`
@@ -6168,7 +9625,7 @@ type SubscriptionAttributes struct {
 	// The unsubscribe list.
 	Unsubscribed []SmsAttributesItems `json:"unsubscribed,omitempty"`
 
-	// The email id string.
+	// The SMS numder string.
 	Invited []SmsInviteAttributesItems `json:"invited,omitempty"`
 
 	// Whether to add the notification payload to the email.
@@ -6197,6 +9654,9 @@ type SubscriptionAttributes struct {
 
 	// Attachment Color for Slack Notification.
 	AttachmentColor *string `json:"attachment_color,omitempty"`
+
+	// List of channels.
+	Channels []ChannelCreateAttributes `json:"channels,omitempty"`
 
 	// Assigned name from ServiceNow account.
 	AssignedTo *string `json:"assigned_to,omitempty"`
@@ -6290,6 +9750,9 @@ func (o *SubscriptionAttributes) MarshalJSON() (buffer []byte, err error) {
 	if o.AttachmentColor != nil {
 		m["attachment_color"] = o.AttachmentColor
 	}
+	if o.Channels != nil {
+		m["channels"] = o.Channels
+	}
 	if o.AssignedTo != nil {
 		m["assigned_to"] = o.AssignedTo
 	}
@@ -6297,6 +9760,9 @@ func (o *SubscriptionAttributes) MarshalJSON() (buffer []byte, err error) {
 		m["assignment_group"] = o.AssignmentGroup
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -6305,71 +9771,91 @@ func UnmarshalSubscriptionAttributes(m map[string]json.RawMessage, result interf
 	obj := new(SubscriptionAttributes)
 	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalSmsAttributesItems)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscribed-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "subscribed")
 	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalSmsAttributesItems)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unsubscribed-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "unsubscribed")
 	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalSmsInviteAttributesItems)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "invited")
 	err = core.UnmarshalPrimitive(m, "add_notification_payload", &obj.AddNotificationPayload)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add_notification_payload-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "add_notification_payload")
 	err = core.UnmarshalPrimitive(m, "reply_to_mail", &obj.ReplyToMail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_mail-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "reply_to_mail")
 	err = core.UnmarshalPrimitive(m, "reply_to_name", &obj.ReplyToName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_name-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "reply_to_name")
 	err = core.UnmarshalPrimitive(m, "from_name", &obj.FromName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_name-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "from_name")
 	err = core.UnmarshalPrimitive(m, "from_email", &obj.FromEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_email-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "from_email")
 	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "template_id_notification")
 	err = core.UnmarshalPrimitive(m, "template_id_invitation", &obj.TemplateIDInvitation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_invitation-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "template_id_invitation")
 	err = core.UnmarshalPrimitive(m, "signing_enabled", &obj.SigningEnabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "signing_enabled-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "signing_enabled")
 	err = core.UnmarshalPrimitive(m, "attachment_color", &obj.AttachmentColor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "attachment_color-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "attachment_color")
+	err = core.UnmarshalModel(m, "channels", &obj.Channels, UnmarshalChannelCreateAttributes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "channels-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "channels")
 	err = core.UnmarshalPrimitive(m, "assigned_to", &obj.AssignedTo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assigned_to-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "assigned_to")
 	err = core.UnmarshalPrimitive(m, "assignment_group", &obj.AssignmentGroup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assignment_group-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "assignment_group")
@@ -6377,7 +9863,7 @@ func UnmarshalSubscriptionAttributes(m map[string]json.RawMessage, result interf
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -6390,11 +9876,15 @@ func UnmarshalSubscriptionAttributes(m map[string]json.RawMessage, result interf
 // Models which "extend" this model:
 // - SubscriptionCreateAttributesSmsAttributes
 // - SubscriptionCreateAttributesEmailAttributes
+// - SubscriptionCreateAttributesCustomSmsAttributes
 // - SubscriptionCreateAttributesCustomEmailAttributes
 // - SubscriptionCreateAttributesWebhookAttributes
 // - SubscriptionCreateAttributesFcmAttributes
 // - SubscriptionCreateAttributesSlackAttributes
+// - SubscriptionCreateAttributesPagerDutyAttributes
+// - SubscriptionCreateAttributesSlackDirectMessageAttributes
 // - SubscriptionCreateAttributesServiceNowAttributes
+// - SubscriptionCreateAttributesEventstreamsAttributes
 type SubscriptionCreateAttributes struct {
 	// The sms id string.
 	Invited []string `json:"invited,omitempty"`
@@ -6426,6 +9916,9 @@ type SubscriptionCreateAttributes struct {
 	// Attachment Color for the slack message.
 	AttachmentColor *string `json:"attachment_color,omitempty"`
 
+	// List of channels.
+	Channels []ChannelCreateAttributes `json:"channels,omitempty"`
+
 	// Name of user ServiceNow incident will be assigned to.
 	AssignedTo *string `json:"assigned_to,omitempty"`
 
@@ -6446,50 +9939,67 @@ func UnmarshalSubscriptionCreateAttributes(m map[string]json.RawMessage, result 
 	obj := new(SubscriptionCreateAttributes)
 	err = core.UnmarshalPrimitive(m, "invited", &obj.Invited)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "add_notification_payload", &obj.AddNotificationPayload)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add_notification_payload-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reply_to_mail", &obj.ReplyToMail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_mail-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reply_to_name", &obj.ReplyToName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "from_name", &obj.FromName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "from_email", &obj.FromEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_id_invitation", &obj.TemplateIDInvitation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_invitation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "signing_enabled", &obj.SigningEnabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "signing_enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "attachment_color", &obj.AttachmentColor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "attachment_color-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "channels", &obj.Channels, UnmarshalChannelCreateAttributes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "channels-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "assigned_to", &obj.AssignedTo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assigned_to-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "assignment_group", &obj.AssignmentGroup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assignment_group-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6525,30 +10035,37 @@ func UnmarshalSubscriptionList(m map[string]json.RawMessage, result interface{})
 	obj := new(SubscriptionList)
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "subscriptions", &obj.Subscriptions, UnmarshalSubscriptionListItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscriptions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6561,12 +10078,16 @@ func (resp *SubscriptionList) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -6605,23 +10126,24 @@ type SubscriptionListItem struct {
 // Constants associated with the SubscriptionListItem.DestinationType property.
 // The type of destination.
 const (
-	SubscriptionListItemDestinationTypeIbmceConst       = "ibmce"
-	SubscriptionListItemDestinationTypeIbmcfConst       = "ibmcf"
-	SubscriptionListItemDestinationTypeIbmcosConst      = "ibmcos"
-	SubscriptionListItemDestinationTypeMsteamsConst     = "msteams"
-	SubscriptionListItemDestinationTypePagerdutyConst   = "pagerduty"
-	SubscriptionListItemDestinationTypePushAndroidConst = "push_android"
-	SubscriptionListItemDestinationTypePushChromeConst  = "push_chrome"
-	SubscriptionListItemDestinationTypePushFirefoxConst = "push_firefox"
-	SubscriptionListItemDestinationTypePushHuaweiConst  = "push_huawei"
-	SubscriptionListItemDestinationTypePushIosConst     = "push_ios"
-	SubscriptionListItemDestinationTypePushSafariConst  = "push_safari"
-	SubscriptionListItemDestinationTypeSMTPCustomConst  = "smtp_custom"
-	SubscriptionListItemDestinationTypeSMTPIBMConst     = "smtp_ibm"
-	SubscriptionListItemDestinationTypeServicenowConst  = "servicenow"
-	SubscriptionListItemDestinationTypeSlackConst       = "slack"
-	SubscriptionListItemDestinationTypeSmsIBMConst      = "sms_ibm"
-	SubscriptionListItemDestinationTypeWebhookConst     = "webhook"
+	SubscriptionListItemDestinationTypeEventStreamsConst = "event_streams"
+	SubscriptionListItemDestinationTypeIbmceConst        = "ibmce"
+	SubscriptionListItemDestinationTypeIbmcosConst       = "ibmcos"
+	SubscriptionListItemDestinationTypeMsteamsConst      = "msteams"
+	SubscriptionListItemDestinationTypePagerdutyConst    = "pagerduty"
+	SubscriptionListItemDestinationTypePushAndroidConst  = "push_android"
+	SubscriptionListItemDestinationTypePushChromeConst   = "push_chrome"
+	SubscriptionListItemDestinationTypePushFirefoxConst  = "push_firefox"
+	SubscriptionListItemDestinationTypePushHuaweiConst   = "push_huawei"
+	SubscriptionListItemDestinationTypePushIosConst      = "push_ios"
+	SubscriptionListItemDestinationTypePushSafariConst   = "push_safari"
+	SubscriptionListItemDestinationTypeSMTPCustomConst   = "smtp_custom"
+	SubscriptionListItemDestinationTypeSMTPIBMConst      = "smtp_ibm"
+	SubscriptionListItemDestinationTypeServicenowConst   = "servicenow"
+	SubscriptionListItemDestinationTypeSlackConst        = "slack"
+	SubscriptionListItemDestinationTypeSmsCustomConst    = "sms_custom"
+	SubscriptionListItemDestinationTypeSmsIBMConst       = "sms_ibm"
+	SubscriptionListItemDestinationTypeWebhookConst      = "webhook"
 )
 
 // UnmarshalSubscriptionListItem unmarshals an instance of SubscriptionListItem from the specified map of raw messages.
@@ -6629,38 +10151,47 @@ func UnmarshalSubscriptionListItem(m map[string]json.RawMessage, result interfac
 	obj := new(SubscriptionListItem)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "destination_id", &obj.DestinationID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destination_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "destination_name", &obj.DestinationName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destination_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "destination_type", &obj.DestinationType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "destination_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "topic_id", &obj.TopicID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "topic_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "topic_name", &obj.TopicName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "topic_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6671,10 +10202,14 @@ func UnmarshalSubscriptionListItem(m map[string]json.RawMessage, result interfac
 // Models which "extend" this model:
 // - SubscriptionUpdateAttributesSmsUpdateAttributes
 // - SubscriptionUpdateAttributesEmailUpdateAttributes
+// - SubscriptionUpdateAttributesCustomSmsUpdateAttributes
 // - SubscriptionUpdateAttributesCustomEmailUpdateAttributes
 // - SubscriptionUpdateAttributesWebhookAttributes
 // - SubscriptionUpdateAttributesSlackAttributes
+// - SubscriptionUpdateAttributesPagerDutyAttributes
+// - SubscriptionUpdateAttributesSlackDirectMessageUpdateAttributes
 // - SubscriptionUpdateAttributesServiceNowAttributes
+// - SubscriptionUpdateAttributesEventstreamsAttributes
 type SubscriptionUpdateAttributes struct {
 	// The email ids or phone numbers.
 	Invited *UpdateAttributesInvited `json:"invited,omitempty"`
@@ -6712,6 +10247,9 @@ type SubscriptionUpdateAttributes struct {
 	// Attachment Color for the slack message.
 	AttachmentColor *string `json:"attachment_color,omitempty"`
 
+	// List of channels.
+	Channels []ChannelUpdateAttributes `json:"channels,omitempty"`
+
 	// Name of user ServiceNow incident will be assigned to.
 	AssignedTo *string `json:"assigned_to,omitempty"`
 
@@ -6732,58 +10270,77 @@ func UnmarshalSubscriptionUpdateAttributes(m map[string]json.RawMessage, result 
 	obj := new(SubscriptionUpdateAttributes)
 	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalUpdateAttributesInvited)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalUpdateAttributesSubscribed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscribed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalUpdateAttributesUnsubscribed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unsubscribed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "add_notification_payload", &obj.AddNotificationPayload)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add_notification_payload-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reply_to_mail", &obj.ReplyToMail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_mail-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reply_to_name", &obj.ReplyToName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "from_name", &obj.FromName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "from_email", &obj.FromEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_id_invitation", &obj.TemplateIDInvitation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_invitation-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "signing_enabled", &obj.SigningEnabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "signing_enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "attachment_color", &obj.AttachmentColor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "attachment_color-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "channels", &obj.Channels, UnmarshalChannelUpdateAttributes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "channels-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "assigned_to", &obj.AssignedTo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assigned_to-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "assignment_group", &obj.AssignmentGroup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assignment_group-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6819,30 +10376,37 @@ func UnmarshalTagsSubscriptionList(m map[string]json.RawMessage, result interfac
 	obj := new(TagsSubscriptionList)
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "tag_subscriptions", &obj.TagSubscriptions, UnmarshalTagsSubscriptionListItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tag_subscriptions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6855,12 +10419,16 @@ func (resp *TagsSubscriptionList) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -6889,22 +10457,27 @@ func UnmarshalTagsSubscriptionListItem(m map[string]json.RawMessage, result inte
 	obj := new(TagsSubscriptionListItem)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "device_id", &obj.DeviceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "device_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tag_name", &obj.TagName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tag_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "user_id", &obj.UserID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "user_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6922,7 +10495,7 @@ type Template struct {
 	// Template description.
 	Description *string `json:"description" validate:"required"`
 
-	// template type.
+	// The type of template.
 	Type *string `json:"type" validate:"required"`
 
 	// Subscription count.
@@ -6935,76 +10508,82 @@ type Template struct {
 	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
 }
 
-// Constants associated with the Template.Type property.
-// template type.
-const (
-	TemplateTypeSMTPCustomInvitationConst   = "smtp_custom.invitation"
-	TemplateTypeSMTPCustomNotificationConst = "smtp_custom.notification"
-)
-
 // UnmarshalTemplate unmarshals an instance of Template from the specified map of raw messages.
 func UnmarshalTemplate(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(Template)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subscription_count", &obj.SubscriptionCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscription_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subscription_names", &obj.SubscriptionNames)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscription_names-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// TemplateConfig : Payload describing a template configuration.
-type TemplateConfig struct {
-	// Template body.
-	Body *string `json:"body" validate:"required"`
+// TemplateConfigOneOf : TemplateConfigOneOf struct
+// Models which "extend" this model:
+// - TemplateConfigOneOfEmailTemplateConfig
+// - TemplateConfigOneOfSlackTemplateConfig
+// - TemplateConfigOneOfWebhookTemplateConfig
+// - TemplateConfigOneOfPagerdutyTemplateConfig
+// - TemplateConfigOneOfEventStreamsTemplateConfig
+type TemplateConfigOneOf struct {
+	// Template body(Base64 encoded).
+	Body *string `json:"body,omitempty"`
 
 	// The template subject.
-	Subject *string `json:"subject" validate:"required"`
+	Subject *string `json:"subject,omitempty"`
 }
 
-// NewTemplateConfig : Instantiate TemplateConfig (Generic Model Constructor)
-func (*EventNotificationsV1) NewTemplateConfig(body string, subject string) (_model *TemplateConfig, err error) {
-	_model = &TemplateConfig{
-		Body:    core.StringPtr(body),
-		Subject: core.StringPtr(subject),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
+func (*TemplateConfigOneOf) isaTemplateConfigOneOf() bool {
+	return true
 }
 
-// UnmarshalTemplateConfig unmarshals an instance of TemplateConfig from the specified map of raw messages.
-func UnmarshalTemplateConfig(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TemplateConfig)
+type TemplateConfigOneOfIntf interface {
+	isaTemplateConfigOneOf() bool
+}
+
+// UnmarshalTemplateConfigOneOf unmarshals an instance of TemplateConfigOneOf from the specified map of raw messages.
+func UnmarshalTemplateConfigOneOf(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateConfigOneOf)
 	err = core.UnmarshalPrimitive(m, "body", &obj.Body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "body-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subject", &obj.Subject)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subject-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7040,30 +10619,37 @@ func UnmarshalTemplateList(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(TemplateList)
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "templates", &obj.Templates, UnmarshalTemplate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "templates-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7076,12 +10662,16 @@ func (resp *TemplateList) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -7098,48 +10688,102 @@ type TemplateResponse struct {
 	// Template description.
 	Description *string `json:"description,omitempty"`
 
-	// Template type.
+	// The type of template.
 	Type *string `json:"type" validate:"required"`
 
-	// Payload describing a template configuration.
-	Params *TemplateConfig `json:"params" validate:"required"`
+	Params TemplateConfigOneOfIntf `json:"params" validate:"required"`
 
 	// Created time.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 }
-
-// Constants associated with the TemplateResponse.Type property.
-// Template type.
-const (
-	TemplateResponseTypeSMTPCustomInvitationConst   = "smtp_custom.invitation"
-	TemplateResponseTypeSMTPCustomNotificationConst = "smtp_custom.notification"
-)
 
 // UnmarshalTemplateResponse unmarshals an instance of TemplateResponse from the specified map of raw messages.
 func UnmarshalTemplateResponse(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(TemplateResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "params", &obj.Params, UnmarshalTemplateConfig)
+	err = core.UnmarshalModel(m, "params", &obj.Params, UnmarshalTemplateConfigOneOf)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "params-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TestDestinationOptions : The TestDestination options.
+type TestDestinationOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for Destination.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewTestDestinationOptions : Instantiate TestDestinationOptions
+func (*EventNotificationsV1) NewTestDestinationOptions(instanceID string, id string) *TestDestinationOptions {
+	return &TestDestinationOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *TestDestinationOptions) SetInstanceID(instanceID string) *TestDestinationOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *TestDestinationOptions) SetID(id string) *TestDestinationOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *TestDestinationOptions) SetHeaders(param map[string]string) *TestDestinationOptions {
+	options.Headers = param
+	return options
+}
+
+// TestDestinationResponse : Destination test object.
+type TestDestinationResponse struct {
+	// test destiantion status.
+	Status *string `json:"status" validate:"required"`
+}
+
+// UnmarshalTestDestinationResponse unmarshals an instance of TestDestinationResponse from the specified map of raw messages.
+func UnmarshalTestDestinationResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TestDestinationResponse)
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7178,34 +10822,42 @@ func UnmarshalTopic(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(Topic)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_at-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "source_count", &obj.SourceCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "source_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "sources", &obj.Sources, UnmarshalSourcesListItems)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sources-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subscription_count", &obj.SubscriptionCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscription_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "subscriptions", &obj.Subscriptions, UnmarshalSubscriptionListItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscriptions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7241,30 +10893,37 @@ func UnmarshalTopicList(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(TopicList)
 	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "offset-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "topics", &obj.Topics, UnmarshalTopicsListItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "topics-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "previous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7277,12 +10936,16 @@ func (resp *TopicList) GetNextOffset() (*int64, error) {
 		return nil, nil
 	}
 	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
 		return nil, err
+	} else if offset == nil {
+		return nil, nil
 	}
 	var offsetValue int64
 	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "parse-int-query-error", common.GetComponentInfo())
 		return nil, err
 	}
 	return core.Int64Ptr(offsetValue), nil
@@ -7308,18 +10971,22 @@ func UnmarshalTopicResponse(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(TopicResponse)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7352,26 +11019,32 @@ func UnmarshalTopicsListItem(m map[string]json.RawMessage, result interface{}) (
 	obj := new(TopicsListItem)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "source_count", &obj.SourceCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "source_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sources_names", &obj.SourcesNames)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sources_names-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "subscription_count", &obj.SubscriptionCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscription_count-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7392,10 +11065,12 @@ func UnmarshalUpdateAttributesInvited(m map[string]json.RawMessage, result inter
 	obj := new(UpdateAttributesInvited)
 	err = core.UnmarshalPrimitive(m, "add", &obj.Add)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "remove-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7413,6 +11088,7 @@ func UnmarshalUpdateAttributesSubscribed(m map[string]json.RawMessage, result in
 	obj := new(UpdateAttributesSubscribed)
 	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "remove-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7430,6 +11106,7 @@ func UnmarshalUpdateAttributesUnsubscribed(m map[string]json.RawMessage, result 
 	obj := new(UpdateAttributesUnsubscribed)
 	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "remove-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7449,6 +11126,9 @@ type UpdateDestinationOptions struct {
 
 	// Destination description.
 	Description *string `json:"description,omitempty"`
+
+	// Whether to collect the failed event in Cloud Object Storage bucket.
+	CollectFailedEvents *bool `json:"collect_failed_events,omitempty"`
 
 	// Payload describing a destination configuration.
 	Config *DestinationConfig `json:"config,omitempty"`
@@ -7528,6 +11208,12 @@ func (_options *UpdateDestinationOptions) SetName(name string) *UpdateDestinatio
 // SetDescription : Allow user to set Description
 func (_options *UpdateDestinationOptions) SetDescription(description string) *UpdateDestinationOptions {
 	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetCollectFailedEvents : Allow user to set CollectFailedEvents
+func (_options *UpdateDestinationOptions) SetCollectFailedEvents(collectFailedEvents bool) *UpdateDestinationOptions {
+	_options.CollectFailedEvents = core.BoolPtr(collectFailedEvents)
 	return _options
 }
 
@@ -7623,6 +11309,119 @@ func (_options *UpdateDestinationOptions) SetIcon128x1282xContentType(icon128x12
 
 // SetHeaders : Allow user to set Headers
 func (options *UpdateDestinationOptions) SetHeaders(param map[string]string) *UpdateDestinationOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdateSMTPConfigurationOptions : The UpdateSMTPConfiguration options.
+type UpdateSMTPConfigurationOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for SMTP.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// SMTP name.
+	Name *string `json:"name,omitempty"`
+
+	// SMTP description.
+	Description *string `json:"description,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewUpdateSMTPConfigurationOptions : Instantiate UpdateSMTPConfigurationOptions
+func (*EventNotificationsV1) NewUpdateSMTPConfigurationOptions(instanceID string, id string) *UpdateSMTPConfigurationOptions {
+	return &UpdateSMTPConfigurationOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *UpdateSMTPConfigurationOptions) SetInstanceID(instanceID string) *UpdateSMTPConfigurationOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *UpdateSMTPConfigurationOptions) SetID(id string) *UpdateSMTPConfigurationOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *UpdateSMTPConfigurationOptions) SetName(name string) *UpdateSMTPConfigurationOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *UpdateSMTPConfigurationOptions) SetDescription(description string) *UpdateSMTPConfigurationOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateSMTPConfigurationOptions) SetHeaders(param map[string]string) *UpdateSMTPConfigurationOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdateSMTPUserOptions : The UpdateSMTPUser options.
+type UpdateSMTPUserOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for SMTP.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// UserID.
+	UserID *string `json:"user_id" validate:"required,ne="`
+
+	// SMTP user description.
+	Description *string `json:"description,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewUpdateSMTPUserOptions : Instantiate UpdateSMTPUserOptions
+func (*EventNotificationsV1) NewUpdateSMTPUserOptions(instanceID string, id string, userID string) *UpdateSMTPUserOptions {
+	return &UpdateSMTPUserOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+		UserID:     core.StringPtr(userID),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *UpdateSMTPUserOptions) SetInstanceID(instanceID string) *UpdateSMTPUserOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *UpdateSMTPUserOptions) SetID(id string) *UpdateSMTPUserOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetUserID : Allow user to set UserID
+func (_options *UpdateSMTPUserOptions) SetUserID(userID string) *UpdateSMTPUserOptions {
+	_options.UserID = core.StringPtr(userID)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *UpdateSMTPUserOptions) SetDescription(description string) *UpdateSMTPUserOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateSMTPUserOptions) SetHeaders(param map[string]string) *UpdateSMTPUserOptions {
 	options.Headers = param
 	return options
 }
@@ -7756,87 +11555,6 @@ func (options *UpdateSubscriptionOptions) SetHeaders(param map[string]string) *U
 	return options
 }
 
-// UpdateTemplateOptions : The UpdateTemplate options.
-type UpdateTemplateOptions struct {
-	// Unique identifier for IBM Cloud Event Notifications instance.
-	InstanceID *string `json:"instance_id" validate:"required,ne="`
-
-	// Unique identifier for Template.
-	ID *string `json:"id" validate:"required,ne="`
-
-	// Template name.
-	Name *string `json:"name,omitempty"`
-
-	// Template description.
-	Description *string `json:"description,omitempty"`
-
-	// The type of template.
-	Type *string `json:"type,omitempty"`
-
-	// Payload describing a template configuration.
-	Params *TemplateConfig `json:"params,omitempty"`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// Constants associated with the UpdateTemplateOptions.Type property.
-// The type of template.
-const (
-	UpdateTemplateOptionsTypeSMTPCustomInvitationConst   = "smtp_custom.invitation"
-	UpdateTemplateOptionsTypeSMTPCustomNotificationConst = "smtp_custom.notification"
-)
-
-// NewUpdateTemplateOptions : Instantiate UpdateTemplateOptions
-func (*EventNotificationsV1) NewUpdateTemplateOptions(instanceID string, id string) *UpdateTemplateOptions {
-	return &UpdateTemplateOptions{
-		InstanceID: core.StringPtr(instanceID),
-		ID:         core.StringPtr(id),
-	}
-}
-
-// SetInstanceID : Allow user to set InstanceID
-func (_options *UpdateTemplateOptions) SetInstanceID(instanceID string) *UpdateTemplateOptions {
-	_options.InstanceID = core.StringPtr(instanceID)
-	return _options
-}
-
-// SetID : Allow user to set ID
-func (_options *UpdateTemplateOptions) SetID(id string) *UpdateTemplateOptions {
-	_options.ID = core.StringPtr(id)
-	return _options
-}
-
-// SetName : Allow user to set Name
-func (_options *UpdateTemplateOptions) SetName(name string) *UpdateTemplateOptions {
-	_options.Name = core.StringPtr(name)
-	return _options
-}
-
-// SetDescription : Allow user to set Description
-func (_options *UpdateTemplateOptions) SetDescription(description string) *UpdateTemplateOptions {
-	_options.Description = core.StringPtr(description)
-	return _options
-}
-
-// SetType : Allow user to set Type
-func (_options *UpdateTemplateOptions) SetType(typeVar string) *UpdateTemplateOptions {
-	_options.Type = core.StringPtr(typeVar)
-	return _options
-}
-
-// SetParams : Allow user to set Params
-func (_options *UpdateTemplateOptions) SetParams(params *TemplateConfig) *UpdateTemplateOptions {
-	_options.Params = params
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *UpdateTemplateOptions) SetHeaders(param map[string]string) *UpdateTemplateOptions {
-	options.Headers = param
-	return options
-}
-
 // UpdateVerifyDestinationOptions : The UpdateVerifyDestination options.
 type UpdateVerifyDestinationOptions struct {
 	// Unique identifier for IBM Cloud Event Notifications instance.
@@ -7885,6 +11603,54 @@ func (options *UpdateVerifyDestinationOptions) SetHeaders(param map[string]strin
 	return options
 }
 
+// UpdateVerifySMTPOptions : The UpdateVerifySMTP options.
+type UpdateVerifySMTPOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for SMTP.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// SMTP verification type.
+	Type *string `json:"type" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewUpdateVerifySMTPOptions : Instantiate UpdateVerifySMTPOptions
+func (*EventNotificationsV1) NewUpdateVerifySMTPOptions(instanceID string, id string, typeVar string) *UpdateVerifySMTPOptions {
+	return &UpdateVerifySMTPOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+		Type:       core.StringPtr(typeVar),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *UpdateVerifySMTPOptions) SetInstanceID(instanceID string) *UpdateVerifySMTPOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *UpdateVerifySMTPOptions) SetID(id string) *UpdateVerifySMTPOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetType : Allow user to set Type
+func (_options *UpdateVerifySMTPOptions) SetType(typeVar string) *UpdateVerifySMTPOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateVerifySMTPOptions) SetHeaders(param map[string]string) *UpdateVerifySMTPOptions {
+	options.Headers = param
+	return options
+}
+
 // VerificationResponse : Destination verification object.
 type VerificationResponse struct {
 	// verification type.
@@ -7899,10 +11665,12 @@ func UnmarshalVerificationResponse(m map[string]json.RawMessage, result interfac
 	obj := new(VerificationResponse)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "verification", &obj.Verification)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "verification-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7932,6 +11700,9 @@ func (*EventNotificationsV1) NewDestinationConfigOneOfChromeDestinationConfig(ap
 		WebsiteURL: core.StringPtr(websiteURL),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -7944,18 +11715,119 @@ func UnmarshalDestinationConfigOneOfChromeDestinationConfig(m map[string]json.Ra
 	obj := new(DestinationConfigOneOfChromeDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "api_key", &obj.APIKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "website_url", &obj.WebsiteURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "website_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "public_key", &obj.PublicKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "public_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pre_prod-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// DestinationConfigOneOfCodeEngineDestinationConfig : Payload describing a code engine destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfCodeEngineDestinationConfig struct {
+	// URL of code engine.
+	URL *string `json:"url,omitempty"`
+
+	// HTTP method of code engine.
+	Verb *string `json:"verb,omitempty"`
+
+	// The code engine destination type.
+	Type *string `json:"type" validate:"required"`
+
+	// CRN of the code engine project.
+	ProjectCRN *string `json:"project_crn,omitempty"`
+
+	// name of the code engine job.
+	JobName *string `json:"job_name,omitempty"`
+
+	// Custom headers (Key-Value pair) for webhook call.
+	CustomHeaders map[string]string `json:"custom_headers,omitempty"`
+
+	// List of sensitive headers from custom headers.
+	SensitiveHeaders []string `json:"sensitive_headers,omitempty"`
+}
+
+// Constants associated with the DestinationConfigOneOfCodeEngineDestinationConfig.Verb property.
+// HTTP method of code engine.
+const (
+	DestinationConfigOneOfCodeEngineDestinationConfigVerbGetConst  = "get"
+	DestinationConfigOneOfCodeEngineDestinationConfigVerbPostConst = "post"
+)
+
+// Constants associated with the DestinationConfigOneOfCodeEngineDestinationConfig.Type property.
+// The code engine destination type.
+const (
+	DestinationConfigOneOfCodeEngineDestinationConfigTypeApplicationConst = "application"
+	DestinationConfigOneOfCodeEngineDestinationConfigTypeJobConst         = "job"
+)
+
+// NewDestinationConfigOneOfCodeEngineDestinationConfig : Instantiate DestinationConfigOneOfCodeEngineDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfCodeEngineDestinationConfig(typeVar string) (_model *DestinationConfigOneOfCodeEngineDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfCodeEngineDestinationConfig{
+		Type: core.StringPtr(typeVar),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*DestinationConfigOneOfCodeEngineDestinationConfig) isaDestinationConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalDestinationConfigOneOfCodeEngineDestinationConfig unmarshals an instance of DestinationConfigOneOfCodeEngineDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfCodeEngineDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfCodeEngineDestinationConfig)
+	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "verb", &obj.Verb)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "verb-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "project_crn", &obj.ProjectCRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "project_crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "job_name", &obj.JobName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "job_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "custom_headers", &obj.CustomHeaders)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "custom_headers-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "sensitive_headers", &obj.SensitiveHeaders)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "sensitive_headers-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7981,6 +11853,9 @@ func (*EventNotificationsV1) NewDestinationConfigOneOfCustomDomainEmailDestinati
 		Domain: core.StringPtr(domain),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -7993,14 +11868,70 @@ func UnmarshalDestinationConfigOneOfCustomDomainEmailDestinationConfig(m map[str
 	obj := new(DestinationConfigOneOfCustomDomainEmailDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "domain", &obj.Domain)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "domain-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "dkim", &obj.Dkim, UnmarshalDkimAttributes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dkim-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "spf", &obj.Spf, UnmarshalSpfAttributes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "spf-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// DestinationConfigOneOfEventStreamsDestinationConfig : Payload describing a Event Streams destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfEventStreamsDestinationConfig struct {
+	// CRN of the Event Streans instance.
+	CRN *string `json:"crn" validate:"required"`
+
+	// End Point of Event Streams.
+	Endpoint *string `json:"endpoint" validate:"required"`
+
+	// Topic of Event Streams.
+	Topic *string `json:"topic" validate:"required"`
+}
+
+// NewDestinationConfigOneOfEventStreamsDestinationConfig : Instantiate DestinationConfigOneOfEventStreamsDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfEventStreamsDestinationConfig(crn string, endpoint string, topic string) (_model *DestinationConfigOneOfEventStreamsDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfEventStreamsDestinationConfig{
+		CRN:      core.StringPtr(crn),
+		Endpoint: core.StringPtr(endpoint),
+		Topic:    core.StringPtr(topic),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*DestinationConfigOneOfEventStreamsDestinationConfig) isaDestinationConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalDestinationConfigOneOfEventStreamsDestinationConfig unmarshals an instance of DestinationConfigOneOfEventStreamsDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfEventStreamsDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfEventStreamsDestinationConfig)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "endpoint", &obj.Endpoint)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "endpoint-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "topic", &obj.Topic)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "topic-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8040,26 +11971,32 @@ func UnmarshalDestinationConfigOneOfFcmDestinationConfig(m map[string]json.RawMe
 	obj := new(DestinationConfigOneOfFcmDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "server_key", &obj.ServerKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "server_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sender_id", &obj.SenderID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sender_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pre_prod-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "project_id", &obj.ProjectID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "project_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "private_key", &obj.PrivateKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "private_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "client_email", &obj.ClientEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client_email-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8085,6 +12022,9 @@ func (*EventNotificationsV1) NewDestinationConfigOneOfFirefoxDestinationConfig(w
 		WebsiteURL: core.StringPtr(websiteURL),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8097,14 +12037,17 @@ func UnmarshalDestinationConfigOneOfFirefoxDestinationConfig(m map[string]json.R
 	obj := new(DestinationConfigOneOfFirefoxDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "website_url", &obj.WebsiteURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "website_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "public_key", &obj.PublicKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "public_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pre_prod-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8131,6 +12074,9 @@ func (*EventNotificationsV1) NewDestinationConfigOneOfHuaweiDestinationConfig(cl
 		ClientSecret: core.StringPtr(clientSecret),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8143,52 +12089,17 @@ func UnmarshalDestinationConfigOneOfHuaweiDestinationConfig(m map[string]json.Ra
 	obj := new(DestinationConfigOneOfHuaweiDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "client_id", &obj.ClientID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "client_secret", &obj.ClientSecret)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client_secret-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
 	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// DestinationConfigOneOfIBMCloudFunctionsDestinationConfig : Payload describing an IBM Cloud Functions destination configuration.
-// This model "extends" DestinationConfigOneOf
-type DestinationConfigOneOfIBMCloudFunctionsDestinationConfig struct {
-	// URL of IBM Cloud Functions Trigger EndPoint.
-	URL *string `json:"url" validate:"required"`
-
-	// API Key with access of IBM Cloud Functions IAM Namespace.
-	APIKey *string `json:"api_key,omitempty"`
-}
-
-// NewDestinationConfigOneOfIBMCloudFunctionsDestinationConfig : Instantiate DestinationConfigOneOfIBMCloudFunctionsDestinationConfig (Generic Model Constructor)
-func (*EventNotificationsV1) NewDestinationConfigOneOfIBMCloudFunctionsDestinationConfig(url string) (_model *DestinationConfigOneOfIBMCloudFunctionsDestinationConfig, err error) {
-	_model = &DestinationConfigOneOfIBMCloudFunctionsDestinationConfig{
-		URL: core.StringPtr(url),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-func (*DestinationConfigOneOfIBMCloudFunctionsDestinationConfig) isaDestinationConfigOneOf() bool {
-	return true
-}
-
-// UnmarshalDestinationConfigOneOfIBMCloudFunctionsDestinationConfig unmarshals an instance of DestinationConfigOneOfIBMCloudFunctionsDestinationConfig from the specified map of raw messages.
-func UnmarshalDestinationConfigOneOfIBMCloudFunctionsDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DestinationConfigOneOfIBMCloudFunctionsDestinationConfig)
-	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "api_key", &obj.APIKey)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "pre_prod-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8216,6 +12127,9 @@ func (*EventNotificationsV1) NewDestinationConfigOneOfIBMCloudObjectStorageDesti
 		Endpoint:   core.StringPtr(endpoint),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8228,14 +12142,17 @@ func UnmarshalDestinationConfigOneOfIBMCloudObjectStorageDestinationConfig(m map
 	obj := new(DestinationConfigOneOfIBMCloudObjectStorageDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "bucket_name", &obj.BucketName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bucket_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instance_id", &obj.InstanceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "endpoint", &obj.Endpoint)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "endpoint-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8274,6 +12191,9 @@ func (*EventNotificationsV1) NewDestinationConfigOneOfIosDestinationConfig(certT
 		IsSandbox: core.BoolPtr(isSandbox),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8286,30 +12206,37 @@ func UnmarshalDestinationConfigOneOfIosDestinationConfig(m map[string]json.RawMe
 	obj := new(DestinationConfigOneOfIosDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "cert_type", &obj.CertType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cert_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_sandbox", &obj.IsSandbox)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_sandbox-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "key_id", &obj.KeyID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "team_id", &obj.TeamID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "team_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "bundle_id", &obj.BundleID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bundle_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pre_prod-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8329,6 +12256,9 @@ func (*EventNotificationsV1) NewDestinationConfigOneOfMsTeamsDestinationConfig(u
 		URL: core.StringPtr(url),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8341,6 +12271,7 @@ func UnmarshalDestinationConfigOneOfMsTeamsDestinationConfig(m map[string]json.R
 	obj := new(DestinationConfigOneOfMsTeamsDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8364,6 +12295,9 @@ func (*EventNotificationsV1) NewDestinationConfigOneOfPagerDutyDestinationConfig
 		RoutingKey: core.StringPtr(routingKey),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8376,10 +12310,12 @@ func UnmarshalDestinationConfigOneOfPagerDutyDestinationConfig(m map[string]json
 	obj := new(DestinationConfigOneOfPagerDutyDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "api_key", &obj.APIKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "routing_key", &obj.RoutingKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "routing_key-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8422,6 +12358,9 @@ func (*EventNotificationsV1) NewDestinationConfigOneOfSafariDestinationConfig(ce
 		WebsitePushID:   core.StringPtr(websitePushID),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8434,30 +12373,37 @@ func UnmarshalDestinationConfigOneOfSafariDestinationConfig(m map[string]json.Ra
 	obj := new(DestinationConfigOneOfSafariDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "cert_type", &obj.CertType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cert_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "website_url", &obj.WebsiteURL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "website_url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "website_name", &obj.WebsiteName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "website_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url_format_string", &obj.URLFormatString)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url_format_string-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "website_push_id", &obj.WebsitePushID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "website_push_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pre_prod-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8493,6 +12439,9 @@ func (*EventNotificationsV1) NewDestinationConfigOneOfServiceNowDestinationConfi
 		InstanceName: core.StringPtr(instanceName),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8505,41 +12454,59 @@ func UnmarshalDestinationConfigOneOfServiceNowDestinationConfig(m map[string]jso
 	obj := new(DestinationConfigOneOfServiceNowDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "client_id", &obj.ClientID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "client_secret", &obj.ClientSecret)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client_secret-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "username-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "instance_name", &obj.InstanceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// DestinationConfigOneOfSlackDestinationConfig : Payload describing a Slack destination configuration.
+// DestinationConfigOneOfSlackDestinationConfig : Payload describing a Slack webhook destination configuration.
 // This model "extends" DestinationConfigOneOf
 type DestinationConfigOneOfSlackDestinationConfig struct {
 	// URL of Slack Incoming Notifications.
 	URL *string `json:"url" validate:"required"`
+
+	// The Slack Destination type.
+	Type *string `json:"type" validate:"required"`
 }
 
+// Constants associated with the DestinationConfigOneOfSlackDestinationConfig.Type property.
+// The Slack Destination type.
+const (
+	DestinationConfigOneOfSlackDestinationConfigTypeIncomingWebhookConst = "incoming_webhook"
+)
+
 // NewDestinationConfigOneOfSlackDestinationConfig : Instantiate DestinationConfigOneOfSlackDestinationConfig (Generic Model Constructor)
-func (*EventNotificationsV1) NewDestinationConfigOneOfSlackDestinationConfig(url string) (_model *DestinationConfigOneOfSlackDestinationConfig, err error) {
+func (*EventNotificationsV1) NewDestinationConfigOneOfSlackDestinationConfig(url string, typeVar string) (_model *DestinationConfigOneOfSlackDestinationConfig, err error) {
 	_model = &DestinationConfigOneOfSlackDestinationConfig{
-		URL: core.StringPtr(url),
+		URL:  core.StringPtr(url),
+		Type: core.StringPtr(typeVar),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8552,6 +12519,62 @@ func UnmarshalDestinationConfigOneOfSlackDestinationConfig(m map[string]json.Raw
 	obj := new(DestinationConfigOneOfSlackDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// DestinationConfigOneOfSlackDirectMessageDestinationConfig : Payload describing a Slack direct message destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfSlackDirectMessageDestinationConfig struct {
+	// Token of slack application.
+	Token *string `json:"token" validate:"required"`
+
+	// The Slack Destination type.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the DestinationConfigOneOfSlackDirectMessageDestinationConfig.Type property.
+// The Slack Destination type.
+const (
+	DestinationConfigOneOfSlackDirectMessageDestinationConfigTypeDirectMessageConst = "direct_message"
+)
+
+// NewDestinationConfigOneOfSlackDirectMessageDestinationConfig : Instantiate DestinationConfigOneOfSlackDirectMessageDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfSlackDirectMessageDestinationConfig(token string, typeVar string) (_model *DestinationConfigOneOfSlackDirectMessageDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfSlackDirectMessageDestinationConfig{
+		Token: core.StringPtr(token),
+		Type:  core.StringPtr(typeVar),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*DestinationConfigOneOfSlackDirectMessageDestinationConfig) isaDestinationConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalDestinationConfigOneOfSlackDirectMessageDestinationConfig unmarshals an instance of DestinationConfigOneOfSlackDirectMessageDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfSlackDirectMessageDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfSlackDirectMessageDestinationConfig)
+	err = core.UnmarshalPrimitive(m, "token", &obj.Token)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "token-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8588,6 +12611,9 @@ func (*EventNotificationsV1) NewDestinationConfigOneOfWebhookDestinationConfig(u
 		Verb: core.StringPtr(verb),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8600,18 +12626,22 @@ func UnmarshalDestinationConfigOneOfWebhookDestinationConfig(m map[string]json.R
 	obj := new(DestinationConfigOneOfWebhookDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "verb", &obj.Verb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "verb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "custom_headers", &obj.CustomHeaders)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "custom_headers-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sensitive_headers", &obj.SensitiveHeaders)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sensitive_headers-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8724,6 +12754,9 @@ func (o *SubscriptionAttributesCustomEmailAttributesResponse) MarshalJSON() (buf
 		m["template_id_invitation"] = o.TemplateIDInvitation
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8732,51 +12765,61 @@ func UnmarshalSubscriptionAttributesCustomEmailAttributesResponse(m map[string]j
 	obj := new(SubscriptionAttributesCustomEmailAttributesResponse)
 	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalEmailAttributesResponseInvitedItems)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "invited")
 	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalEmailAttributesResponseSubscribedUnsubscribedItems)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscribed-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "subscribed")
 	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalEmailAttributesResponseSubscribedUnsubscribedItems)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unsubscribed-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "unsubscribed")
 	err = core.UnmarshalPrimitive(m, "add_notification_payload", &obj.AddNotificationPayload)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add_notification_payload-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "add_notification_payload")
 	err = core.UnmarshalPrimitive(m, "reply_to_mail", &obj.ReplyToMail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_mail-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "reply_to_mail")
 	err = core.UnmarshalPrimitive(m, "reply_to_name", &obj.ReplyToName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_name-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "reply_to_name")
 	err = core.UnmarshalPrimitive(m, "from_name", &obj.FromName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_name-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "from_name")
 	err = core.UnmarshalPrimitive(m, "from_email", &obj.FromEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_email-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "from_email")
 	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "template_id_notification")
 	err = core.UnmarshalPrimitive(m, "template_id_invitation", &obj.TemplateIDInvitation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_invitation-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "template_id_invitation")
@@ -8784,7 +12827,111 @@ func UnmarshalSubscriptionAttributesCustomEmailAttributesResponse(m map[string]j
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
+			return
+		}
+		obj.SetProperty(k, v)
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionAttributesCustomSmsAttributesResponse : Custom SMS attributes object.
+// This model "extends" SubscriptionAttributes
+type SubscriptionAttributesCustomSmsAttributesResponse struct {
+	// The subscribed list.
+	Subscribed []SmsAttributesItems `json:"subscribed,omitempty"`
+
+	// The unsubscribe list.
+	Unsubscribed []SmsAttributesItems `json:"unsubscribed,omitempty"`
+
+	// The SMS number string.
+	Invited []SmsInviteAttributesItems `json:"invited,omitempty"`
+
+	// Allows users to set arbitrary properties
+	additionalProperties map[string]interface{}
+}
+
+func (*SubscriptionAttributesCustomSmsAttributesResponse) isaSubscriptionAttributes() bool {
+	return true
+}
+
+// SetProperty allows the user to set an arbitrary property on an instance of SubscriptionAttributesCustomSmsAttributesResponse
+func (o *SubscriptionAttributesCustomSmsAttributesResponse) SetProperty(key string, value interface{}) {
+	if o.additionalProperties == nil {
+		o.additionalProperties = make(map[string]interface{})
+	}
+	o.additionalProperties[key] = value
+}
+
+// SetProperties allows the user to set a map of arbitrary properties on an instance of SubscriptionAttributesCustomSmsAttributesResponse
+func (o *SubscriptionAttributesCustomSmsAttributesResponse) SetProperties(m map[string]interface{}) {
+	o.additionalProperties = make(map[string]interface{})
+	for k, v := range m {
+		o.additionalProperties[k] = v
+	}
+}
+
+// GetProperty allows the user to retrieve an arbitrary property from an instance of SubscriptionAttributesCustomSmsAttributesResponse
+func (o *SubscriptionAttributesCustomSmsAttributesResponse) GetProperty(key string) interface{} {
+	return o.additionalProperties[key]
+}
+
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SubscriptionAttributesCustomSmsAttributesResponse
+func (o *SubscriptionAttributesCustomSmsAttributesResponse) GetProperties() map[string]interface{} {
+	return o.additionalProperties
+}
+
+// MarshalJSON performs custom serialization for instances of SubscriptionAttributesCustomSmsAttributesResponse
+func (o *SubscriptionAttributesCustomSmsAttributesResponse) MarshalJSON() (buffer []byte, err error) {
+	m := make(map[string]interface{})
+	if len(o.additionalProperties) > 0 {
+		for k, v := range o.additionalProperties {
+			m[k] = v
+		}
+	}
+	if o.Subscribed != nil {
+		m["subscribed"] = o.Subscribed
+	}
+	if o.Unsubscribed != nil {
+		m["unsubscribed"] = o.Unsubscribed
+	}
+	if o.Invited != nil {
+		m["invited"] = o.Invited
+	}
+	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalSubscriptionAttributesCustomSmsAttributesResponse unmarshals an instance of SubscriptionAttributesCustomSmsAttributesResponse from the specified map of raw messages.
+func UnmarshalSubscriptionAttributesCustomSmsAttributesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionAttributesCustomSmsAttributesResponse)
+	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalSmsAttributesItems)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "subscribed-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "subscribed")
+	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalSmsAttributesItems)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unsubscribed-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "unsubscribed")
+	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalSmsInviteAttributesItems)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "invited")
+	for k := range m {
+		var v interface{}
+		e := core.UnmarshalPrimitive(m, k, &v)
+		if e != nil {
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -8881,6 +13028,9 @@ func (o *SubscriptionAttributesEmailAttributesResponse) MarshalJSON() (buffer []
 		m["from_name"] = o.FromName
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8889,36 +13039,43 @@ func UnmarshalSubscriptionAttributesEmailAttributesResponse(m map[string]json.Ra
 	obj := new(SubscriptionAttributesEmailAttributesResponse)
 	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalEmailAttributesResponseInvitedItems)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "invited")
 	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalEmailAttributesResponseSubscribedUnsubscribedItems)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscribed-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "subscribed")
 	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalEmailAttributesResponseSubscribedUnsubscribedItems)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unsubscribed-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "unsubscribed")
 	err = core.UnmarshalPrimitive(m, "add_notification_payload", &obj.AddNotificationPayload)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add_notification_payload-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "add_notification_payload")
 	err = core.UnmarshalPrimitive(m, "reply_to_mail", &obj.ReplyToMail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_mail-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "reply_to_mail")
 	err = core.UnmarshalPrimitive(m, "reply_to_name", &obj.ReplyToName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_name-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "reply_to_name")
 	err = core.UnmarshalPrimitive(m, "from_name", &obj.FromName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_name-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "from_name")
@@ -8926,7 +13083,167 @@ func UnmarshalSubscriptionAttributesEmailAttributesResponse(m map[string]json.Ra
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
+			return
+		}
+		obj.SetProperty(k, v)
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionAttributesEventStreamsAttributesResponse : The attributes for a Event Streams response.
+// This model "extends" SubscriptionAttributes
+type SubscriptionAttributesEventStreamsAttributesResponse struct {
+	// ID of Base64 converted JSON Pagerduty Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
+
+	// Allows users to set arbitrary properties
+	additionalProperties map[string]interface{}
+}
+
+func (*SubscriptionAttributesEventStreamsAttributesResponse) isaSubscriptionAttributes() bool {
+	return true
+}
+
+// SetProperty allows the user to set an arbitrary property on an instance of SubscriptionAttributesEventStreamsAttributesResponse
+func (o *SubscriptionAttributesEventStreamsAttributesResponse) SetProperty(key string, value interface{}) {
+	if o.additionalProperties == nil {
+		o.additionalProperties = make(map[string]interface{})
+	}
+	o.additionalProperties[key] = value
+}
+
+// SetProperties allows the user to set a map of arbitrary properties on an instance of SubscriptionAttributesEventStreamsAttributesResponse
+func (o *SubscriptionAttributesEventStreamsAttributesResponse) SetProperties(m map[string]interface{}) {
+	o.additionalProperties = make(map[string]interface{})
+	for k, v := range m {
+		o.additionalProperties[k] = v
+	}
+}
+
+// GetProperty allows the user to retrieve an arbitrary property from an instance of SubscriptionAttributesEventStreamsAttributesResponse
+func (o *SubscriptionAttributesEventStreamsAttributesResponse) GetProperty(key string) interface{} {
+	return o.additionalProperties[key]
+}
+
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SubscriptionAttributesEventStreamsAttributesResponse
+func (o *SubscriptionAttributesEventStreamsAttributesResponse) GetProperties() map[string]interface{} {
+	return o.additionalProperties
+}
+
+// MarshalJSON performs custom serialization for instances of SubscriptionAttributesEventStreamsAttributesResponse
+func (o *SubscriptionAttributesEventStreamsAttributesResponse) MarshalJSON() (buffer []byte, err error) {
+	m := make(map[string]interface{})
+	if len(o.additionalProperties) > 0 {
+		for k, v := range o.additionalProperties {
+			m[k] = v
+		}
+	}
+	if o.TemplateIDNotification != nil {
+		m["template_id_notification"] = o.TemplateIDNotification
+	}
+	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalSubscriptionAttributesEventStreamsAttributesResponse unmarshals an instance of SubscriptionAttributesEventStreamsAttributesResponse from the specified map of raw messages.
+func UnmarshalSubscriptionAttributesEventStreamsAttributesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionAttributesEventStreamsAttributesResponse)
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "template_id_notification")
+	for k := range m {
+		var v interface{}
+		e := core.UnmarshalPrimitive(m, k, &v)
+		if e != nil {
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
+			return
+		}
+		obj.SetProperty(k, v)
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionAttributesPagerDutyAttributesResponse : The attributes for a PagerDuty notification.
+// This model "extends" SubscriptionAttributes
+type SubscriptionAttributesPagerDutyAttributesResponse struct {
+	// ID of Base64 converted JSON Pagerduty Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
+
+	// Allows users to set arbitrary properties
+	additionalProperties map[string]interface{}
+}
+
+func (*SubscriptionAttributesPagerDutyAttributesResponse) isaSubscriptionAttributes() bool {
+	return true
+}
+
+// SetProperty allows the user to set an arbitrary property on an instance of SubscriptionAttributesPagerDutyAttributesResponse
+func (o *SubscriptionAttributesPagerDutyAttributesResponse) SetProperty(key string, value interface{}) {
+	if o.additionalProperties == nil {
+		o.additionalProperties = make(map[string]interface{})
+	}
+	o.additionalProperties[key] = value
+}
+
+// SetProperties allows the user to set a map of arbitrary properties on an instance of SubscriptionAttributesPagerDutyAttributesResponse
+func (o *SubscriptionAttributesPagerDutyAttributesResponse) SetProperties(m map[string]interface{}) {
+	o.additionalProperties = make(map[string]interface{})
+	for k, v := range m {
+		o.additionalProperties[k] = v
+	}
+}
+
+// GetProperty allows the user to retrieve an arbitrary property from an instance of SubscriptionAttributesPagerDutyAttributesResponse
+func (o *SubscriptionAttributesPagerDutyAttributesResponse) GetProperty(key string) interface{} {
+	return o.additionalProperties[key]
+}
+
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SubscriptionAttributesPagerDutyAttributesResponse
+func (o *SubscriptionAttributesPagerDutyAttributesResponse) GetProperties() map[string]interface{} {
+	return o.additionalProperties
+}
+
+// MarshalJSON performs custom serialization for instances of SubscriptionAttributesPagerDutyAttributesResponse
+func (o *SubscriptionAttributesPagerDutyAttributesResponse) MarshalJSON() (buffer []byte, err error) {
+	m := make(map[string]interface{})
+	if len(o.additionalProperties) > 0 {
+		for k, v := range o.additionalProperties {
+			m[k] = v
+		}
+	}
+	if o.TemplateIDNotification != nil {
+		m["template_id_notification"] = o.TemplateIDNotification
+	}
+	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalSubscriptionAttributesPagerDutyAttributesResponse unmarshals an instance of SubscriptionAttributesPagerDutyAttributesResponse from the specified map of raw messages.
+func UnmarshalSubscriptionAttributesPagerDutyAttributesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionAttributesPagerDutyAttributesResponse)
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "template_id_notification")
+	for k := range m {
+		var v interface{}
+		e := core.UnmarshalPrimitive(m, k, &v)
+		if e != nil {
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -8944,7 +13261,7 @@ type SubscriptionAttributesSmsAttributesResponse struct {
 	// The unsubscribe list.
 	Unsubscribed []SmsAttributesItems `json:"unsubscribed,omitempty"`
 
-	// The email id string.
+	// The SMS numder string.
 	Invited []SmsInviteAttributesItems `json:"invited,omitempty"`
 
 	// Allows users to set arbitrary properties
@@ -8999,6 +13316,9 @@ func (o *SubscriptionAttributesSmsAttributesResponse) MarshalJSON() (buffer []by
 		m["invited"] = o.Invited
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9007,16 +13327,19 @@ func UnmarshalSubscriptionAttributesSmsAttributesResponse(m map[string]json.RawM
 	obj := new(SubscriptionAttributesSmsAttributesResponse)
 	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalSmsAttributesItems)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscribed-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "subscribed")
 	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalSmsAttributesItems)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unsubscribed-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "unsubscribed")
 	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalSmsInviteAttributesItems)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "invited")
@@ -9024,7 +13347,7 @@ func UnmarshalSubscriptionAttributesSmsAttributesResponse(m map[string]json.RawM
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -9091,6 +13414,9 @@ func (o *SubscriptionAttributesServiceNowAttributesResponse) MarshalJSON() (buff
 		m["assignment_group"] = o.AssignmentGroup
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9099,11 +13425,13 @@ func UnmarshalSubscriptionAttributesServiceNowAttributesResponse(m map[string]js
 	obj := new(SubscriptionAttributesServiceNowAttributesResponse)
 	err = core.UnmarshalPrimitive(m, "assigned_to", &obj.AssignedTo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assigned_to-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "assigned_to")
 	err = core.UnmarshalPrimitive(m, "assignment_group", &obj.AssignmentGroup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assignment_group-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "assignment_group")
@@ -9111,7 +13439,7 @@ func UnmarshalSubscriptionAttributesServiceNowAttributesResponse(m map[string]js
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -9125,6 +13453,9 @@ func UnmarshalSubscriptionAttributesServiceNowAttributesResponse(m map[string]js
 type SubscriptionAttributesSlackAttributesResponse struct {
 	// Attachment Color for Slack Notification.
 	AttachmentColor *string `json:"attachment_color,omitempty"`
+
+	// ID of Base64 converted JSON Slack Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
 
 	// Allows users to set arbitrary properties
 	additionalProperties map[string]interface{}
@@ -9171,7 +13502,13 @@ func (o *SubscriptionAttributesSlackAttributesResponse) MarshalJSON() (buffer []
 	if o.AttachmentColor != nil {
 		m["attachment_color"] = o.AttachmentColor
 	}
+	if o.TemplateIDNotification != nil {
+		m["template_id_notification"] = o.TemplateIDNotification
+	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9180,14 +13517,113 @@ func UnmarshalSubscriptionAttributesSlackAttributesResponse(m map[string]json.Ra
 	obj := new(SubscriptionAttributesSlackAttributesResponse)
 	err = core.UnmarshalPrimitive(m, "attachment_color", &obj.AttachmentColor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "attachment_color-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "attachment_color")
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "template_id_notification")
 	for k := range m {
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
+			return
+		}
+		obj.SetProperty(k, v)
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionAttributesSlackDirectMessageAttributesResponse : The attributes for a slack direct message.
+// This model "extends" SubscriptionAttributes
+type SubscriptionAttributesSlackDirectMessageAttributesResponse struct {
+	// List of channels.
+	Channels []ChannelCreateAttributes `json:"channels,omitempty"`
+
+	// ID of Base64 converted JSON Slack Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
+
+	// Allows users to set arbitrary properties
+	additionalProperties map[string]interface{}
+}
+
+func (*SubscriptionAttributesSlackDirectMessageAttributesResponse) isaSubscriptionAttributes() bool {
+	return true
+}
+
+// SetProperty allows the user to set an arbitrary property on an instance of SubscriptionAttributesSlackDirectMessageAttributesResponse
+func (o *SubscriptionAttributesSlackDirectMessageAttributesResponse) SetProperty(key string, value interface{}) {
+	if o.additionalProperties == nil {
+		o.additionalProperties = make(map[string]interface{})
+	}
+	o.additionalProperties[key] = value
+}
+
+// SetProperties allows the user to set a map of arbitrary properties on an instance of SubscriptionAttributesSlackDirectMessageAttributesResponse
+func (o *SubscriptionAttributesSlackDirectMessageAttributesResponse) SetProperties(m map[string]interface{}) {
+	o.additionalProperties = make(map[string]interface{})
+	for k, v := range m {
+		o.additionalProperties[k] = v
+	}
+}
+
+// GetProperty allows the user to retrieve an arbitrary property from an instance of SubscriptionAttributesSlackDirectMessageAttributesResponse
+func (o *SubscriptionAttributesSlackDirectMessageAttributesResponse) GetProperty(key string) interface{} {
+	return o.additionalProperties[key]
+}
+
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SubscriptionAttributesSlackDirectMessageAttributesResponse
+func (o *SubscriptionAttributesSlackDirectMessageAttributesResponse) GetProperties() map[string]interface{} {
+	return o.additionalProperties
+}
+
+// MarshalJSON performs custom serialization for instances of SubscriptionAttributesSlackDirectMessageAttributesResponse
+func (o *SubscriptionAttributesSlackDirectMessageAttributesResponse) MarshalJSON() (buffer []byte, err error) {
+	m := make(map[string]interface{})
+	if len(o.additionalProperties) > 0 {
+		for k, v := range o.additionalProperties {
+			m[k] = v
+		}
+	}
+	if o.Channels != nil {
+		m["channels"] = o.Channels
+	}
+	if o.TemplateIDNotification != nil {
+		m["template_id_notification"] = o.TemplateIDNotification
+	}
+	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalSubscriptionAttributesSlackDirectMessageAttributesResponse unmarshals an instance of SubscriptionAttributesSlackDirectMessageAttributesResponse from the specified map of raw messages.
+func UnmarshalSubscriptionAttributesSlackDirectMessageAttributesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionAttributesSlackDirectMessageAttributesResponse)
+	err = core.UnmarshalModel(m, "channels", &obj.Channels, UnmarshalChannelCreateAttributes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "channels-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "channels")
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "template_id_notification")
+	for k := range m {
+		var v interface{}
+		e := core.UnmarshalPrimitive(m, k, &v)
+		if e != nil {
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -9254,6 +13690,9 @@ func (o *SubscriptionAttributesWebhookAttributesResponse) MarshalJSON() (buffer 
 		m["add_notification_payload"] = o.AddNotificationPayload
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9262,11 +13701,13 @@ func UnmarshalSubscriptionAttributesWebhookAttributesResponse(m map[string]json.
 	obj := new(SubscriptionAttributesWebhookAttributesResponse)
 	err = core.UnmarshalPrimitive(m, "signing_enabled", &obj.SigningEnabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "signing_enabled-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "signing_enabled")
 	err = core.UnmarshalPrimitive(m, "add_notification_payload", &obj.AddNotificationPayload)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add_notification_payload-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "add_notification_payload")
@@ -9274,7 +13715,7 @@ func UnmarshalSubscriptionAttributesWebhookAttributesResponse(m map[string]json.
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -9322,6 +13763,9 @@ func (*EventNotificationsV1) NewSubscriptionCreateAttributesCustomEmailAttribute
 		FromEmail:              core.StringPtr(fromEmail),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9334,34 +13778,77 @@ func UnmarshalSubscriptionCreateAttributesCustomEmailAttributes(m map[string]jso
 	obj := new(SubscriptionCreateAttributesCustomEmailAttributes)
 	err = core.UnmarshalPrimitive(m, "invited", &obj.Invited)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "add_notification_payload", &obj.AddNotificationPayload)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add_notification_payload-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reply_to_mail", &obj.ReplyToMail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_mail-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reply_to_name", &obj.ReplyToName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "from_name", &obj.FromName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "from_email", &obj.FromEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_id_invitation", &obj.TemplateIDInvitation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_invitation-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionCreateAttributesCustomSmsAttributes : The attributes for an custom sms notification.
+// This model "extends" SubscriptionCreateAttributes
+type SubscriptionCreateAttributesCustomSmsAttributes struct {
+	// The sms id string.
+	Invited []string `json:"invited" validate:"required"`
+}
+
+// NewSubscriptionCreateAttributesCustomSmsAttributes : Instantiate SubscriptionCreateAttributesCustomSmsAttributes (Generic Model Constructor)
+func (*EventNotificationsV1) NewSubscriptionCreateAttributesCustomSmsAttributes(invited []string) (_model *SubscriptionCreateAttributesCustomSmsAttributes, err error) {
+	_model = &SubscriptionCreateAttributesCustomSmsAttributes{
+		Invited: invited,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*SubscriptionCreateAttributesCustomSmsAttributes) isaSubscriptionCreateAttributes() bool {
+	return true
+}
+
+// UnmarshalSubscriptionCreateAttributesCustomSmsAttributes unmarshals an instance of SubscriptionCreateAttributesCustomSmsAttributes from the specified map of raw messages.
+func UnmarshalSubscriptionCreateAttributesCustomSmsAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionCreateAttributesCustomSmsAttributes)
+	err = core.UnmarshalPrimitive(m, "invited", &obj.Invited)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9397,6 +13884,9 @@ func (*EventNotificationsV1) NewSubscriptionCreateAttributesEmailAttributes(invi
 		FromName:               core.StringPtr(fromName),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9409,22 +13899,50 @@ func UnmarshalSubscriptionCreateAttributesEmailAttributes(m map[string]json.RawM
 	obj := new(SubscriptionCreateAttributesEmailAttributes)
 	err = core.UnmarshalPrimitive(m, "invited", &obj.Invited)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "add_notification_payload", &obj.AddNotificationPayload)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add_notification_payload-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reply_to_mail", &obj.ReplyToMail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_mail-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reply_to_name", &obj.ReplyToName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "from_name", &obj.FromName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionCreateAttributesEventstreamsAttributes : The attributes for a Event Streams subscription.
+// This model "extends" SubscriptionCreateAttributes
+type SubscriptionCreateAttributesEventstreamsAttributes struct {
+	// ID of Base64 converted JSON Slack Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
+}
+
+func (*SubscriptionCreateAttributesEventstreamsAttributes) isaSubscriptionCreateAttributes() bool {
+	return true
+}
+
+// UnmarshalSubscriptionCreateAttributesEventstreamsAttributes unmarshals an instance of SubscriptionCreateAttributesEventstreamsAttributes from the specified map of raw messages.
+func UnmarshalSubscriptionCreateAttributesEventstreamsAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionCreateAttributesEventstreamsAttributes)
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9447,6 +13965,29 @@ func UnmarshalSubscriptionCreateAttributesFcmAttributes(m map[string]json.RawMes
 	return
 }
 
+// SubscriptionCreateAttributesPagerDutyAttributes : The attributes for a pagerduty notification.
+// This model "extends" SubscriptionCreateAttributes
+type SubscriptionCreateAttributesPagerDutyAttributes struct {
+	// ID of Base64 converted JSON Slack Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
+}
+
+func (*SubscriptionCreateAttributesPagerDutyAttributes) isaSubscriptionCreateAttributes() bool {
+	return true
+}
+
+// UnmarshalSubscriptionCreateAttributesPagerDutyAttributes unmarshals an instance of SubscriptionCreateAttributesPagerDutyAttributes from the specified map of raw messages.
+func UnmarshalSubscriptionCreateAttributesPagerDutyAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionCreateAttributesPagerDutyAttributes)
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // SubscriptionCreateAttributesSmsAttributes : The attributes for an sms notification.
 // This model "extends" SubscriptionCreateAttributes
 type SubscriptionCreateAttributesSmsAttributes struct {
@@ -9460,6 +14001,9 @@ func (*EventNotificationsV1) NewSubscriptionCreateAttributesSmsAttributes(invite
 		Invited: invited,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9472,6 +14016,7 @@ func UnmarshalSubscriptionCreateAttributesSmsAttributes(m map[string]json.RawMes
 	obj := new(SubscriptionCreateAttributesSmsAttributes)
 	err = core.UnmarshalPrimitive(m, "invited", &obj.Invited)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9497,10 +14042,12 @@ func UnmarshalSubscriptionCreateAttributesServiceNowAttributes(m map[string]json
 	obj := new(SubscriptionCreateAttributesServiceNowAttributes)
 	err = core.UnmarshalPrimitive(m, "assigned_to", &obj.AssignedTo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assigned_to-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "assignment_group", &obj.AssignmentGroup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assignment_group-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9512,6 +14059,9 @@ func UnmarshalSubscriptionCreateAttributesServiceNowAttributes(m map[string]json
 type SubscriptionCreateAttributesSlackAttributes struct {
 	// Attachment Color for the slack message.
 	AttachmentColor *string `json:"attachment_color,omitempty"`
+
+	// ID of Base64 converted JSON Slack Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
 }
 
 func (*SubscriptionCreateAttributesSlackAttributes) isaSubscriptionCreateAttributes() bool {
@@ -9523,6 +14073,43 @@ func UnmarshalSubscriptionCreateAttributesSlackAttributes(m map[string]json.RawM
 	obj := new(SubscriptionCreateAttributesSlackAttributes)
 	err = core.UnmarshalPrimitive(m, "attachment_color", &obj.AttachmentColor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "attachment_color-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionCreateAttributesSlackDirectMessageAttributes : The attributes for a slack direct message.
+// This model "extends" SubscriptionCreateAttributes
+type SubscriptionCreateAttributesSlackDirectMessageAttributes struct {
+	// List of channels.
+	Channels []ChannelCreateAttributes `json:"channels,omitempty"`
+
+	// ID of Base64 converted JSON Slack Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
+}
+
+func (*SubscriptionCreateAttributesSlackDirectMessageAttributes) isaSubscriptionCreateAttributes() bool {
+	return true
+}
+
+// UnmarshalSubscriptionCreateAttributesSlackDirectMessageAttributes unmarshals an instance of SubscriptionCreateAttributesSlackDirectMessageAttributes from the specified map of raw messages.
+func UnmarshalSubscriptionCreateAttributesSlackDirectMessageAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionCreateAttributesSlackDirectMessageAttributes)
+	err = core.UnmarshalModel(m, "channels", &obj.Channels, UnmarshalChannelCreateAttributes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "channels-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9533,16 +14120,10 @@ func UnmarshalSubscriptionCreateAttributesSlackAttributes(m map[string]json.RawM
 // This model "extends" SubscriptionCreateAttributes
 type SubscriptionCreateAttributesWebhookAttributes struct {
 	// Signing webhook attributes.
-	SigningEnabled *bool `json:"signing_enabled" validate:"required"`
-}
+	SigningEnabled *bool `json:"signing_enabled,omitempty"`
 
-// NewSubscriptionCreateAttributesWebhookAttributes : Instantiate SubscriptionCreateAttributesWebhookAttributes (Generic Model Constructor)
-func (*EventNotificationsV1) NewSubscriptionCreateAttributesWebhookAttributes(signingEnabled bool) (_model *SubscriptionCreateAttributesWebhookAttributes, err error) {
-	_model = &SubscriptionCreateAttributesWebhookAttributes{
-		SigningEnabled: core.BoolPtr(signingEnabled),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
+	// ID of Base64 converted JSON webhook Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
 }
 
 func (*SubscriptionCreateAttributesWebhookAttributes) isaSubscriptionCreateAttributes() bool {
@@ -9554,6 +14135,12 @@ func UnmarshalSubscriptionCreateAttributesWebhookAttributes(m map[string]json.Ra
 	obj := new(SubscriptionCreateAttributesWebhookAttributes)
 	err = core.UnmarshalPrimitive(m, "signing_enabled", &obj.SigningEnabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "signing_enabled-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9604,6 +14191,9 @@ func (*EventNotificationsV1) NewSubscriptionUpdateAttributesCustomEmailUpdateAtt
 		FromEmail:              core.StringPtr(fromEmail),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9616,42 +14206,91 @@ func UnmarshalSubscriptionUpdateAttributesCustomEmailUpdateAttributes(m map[stri
 	obj := new(SubscriptionUpdateAttributesCustomEmailUpdateAttributes)
 	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalUpdateAttributesInvited)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "add_notification_payload", &obj.AddNotificationPayload)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add_notification_payload-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reply_to_mail", &obj.ReplyToMail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_mail-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reply_to_name", &obj.ReplyToName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "from_name", &obj.FromName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "from_email", &obj.FromEmail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalUpdateAttributesSubscribed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscribed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalUpdateAttributesUnsubscribed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unsubscribed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "template_id_invitation", &obj.TemplateIDInvitation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_invitation-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionUpdateAttributesCustomSmsUpdateAttributes : SMS attributes object.
+// This model "extends" SubscriptionUpdateAttributes
+type SubscriptionUpdateAttributesCustomSmsUpdateAttributes struct {
+	// The email ids or phone numbers.
+	Invited *UpdateAttributesInvited `json:"invited,omitempty"`
+
+	// The email ids or phone numbers.
+	Subscribed *UpdateAttributesSubscribed `json:"subscribed,omitempty"`
+
+	// The email ids or phone numbers.
+	Unsubscribed *UpdateAttributesUnsubscribed `json:"unsubscribed,omitempty"`
+}
+
+func (*SubscriptionUpdateAttributesCustomSmsUpdateAttributes) isaSubscriptionUpdateAttributes() bool {
+	return true
+}
+
+// UnmarshalSubscriptionUpdateAttributesCustomSmsUpdateAttributes unmarshals an instance of SubscriptionUpdateAttributesCustomSmsUpdateAttributes from the specified map of raw messages.
+func UnmarshalSubscriptionUpdateAttributesCustomSmsUpdateAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionUpdateAttributesCustomSmsUpdateAttributes)
+	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalUpdateAttributesInvited)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalUpdateAttributesSubscribed)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "subscribed-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalUpdateAttributesUnsubscribed)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unsubscribed-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9692,6 +14331,9 @@ func (*EventNotificationsV1) NewSubscriptionUpdateAttributesEmailUpdateAttribute
 		FromName:               core.StringPtr(fromName),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9704,30 +14346,83 @@ func UnmarshalSubscriptionUpdateAttributesEmailUpdateAttributes(m map[string]jso
 	obj := new(SubscriptionUpdateAttributesEmailUpdateAttributes)
 	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalUpdateAttributesInvited)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "add_notification_payload", &obj.AddNotificationPayload)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "add_notification_payload-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reply_to_mail", &obj.ReplyToMail)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_mail-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reply_to_name", &obj.ReplyToName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reply_to_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "from_name", &obj.FromName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalUpdateAttributesSubscribed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscribed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalUpdateAttributesUnsubscribed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unsubscribed-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionUpdateAttributesEventstreamsAttributes : The attributes for a Event Streams subscription.
+// This model "extends" SubscriptionUpdateAttributes
+type SubscriptionUpdateAttributesEventstreamsAttributes struct {
+	// ID of Base64 converted JSON Slack Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
+}
+
+func (*SubscriptionUpdateAttributesEventstreamsAttributes) isaSubscriptionUpdateAttributes() bool {
+	return true
+}
+
+// UnmarshalSubscriptionUpdateAttributesEventstreamsAttributes unmarshals an instance of SubscriptionUpdateAttributesEventstreamsAttributes from the specified map of raw messages.
+func UnmarshalSubscriptionUpdateAttributesEventstreamsAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionUpdateAttributesEventstreamsAttributes)
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionUpdateAttributesPagerDutyAttributes : The attributes for a pagerduty notification.
+// This model "extends" SubscriptionUpdateAttributes
+type SubscriptionUpdateAttributesPagerDutyAttributes struct {
+	// ID of Base64 converted JSON Slack Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
+}
+
+func (*SubscriptionUpdateAttributesPagerDutyAttributes) isaSubscriptionUpdateAttributes() bool {
+	return true
+}
+
+// UnmarshalSubscriptionUpdateAttributesPagerDutyAttributes unmarshals an instance of SubscriptionUpdateAttributesPagerDutyAttributes from the specified map of raw messages.
+func UnmarshalSubscriptionUpdateAttributesPagerDutyAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionUpdateAttributesPagerDutyAttributes)
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9756,14 +14451,17 @@ func UnmarshalSubscriptionUpdateAttributesSmsUpdateAttributes(m map[string]json.
 	obj := new(SubscriptionUpdateAttributesSmsUpdateAttributes)
 	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalUpdateAttributesInvited)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invited-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalUpdateAttributesSubscribed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "subscribed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalUpdateAttributesUnsubscribed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unsubscribed-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9789,10 +14487,12 @@ func UnmarshalSubscriptionUpdateAttributesServiceNowAttributes(m map[string]json
 	obj := new(SubscriptionUpdateAttributesServiceNowAttributes)
 	err = core.UnmarshalPrimitive(m, "assigned_to", &obj.AssignedTo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assigned_to-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "assignment_group", &obj.AssignmentGroup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "assignment_group-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9804,6 +14504,9 @@ func UnmarshalSubscriptionUpdateAttributesServiceNowAttributes(m map[string]json
 type SubscriptionUpdateAttributesSlackAttributes struct {
 	// Attachment Color for the slack message.
 	AttachmentColor *string `json:"attachment_color,omitempty"`
+
+	// ID of Base64 converted JSON Slack Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
 }
 
 func (*SubscriptionUpdateAttributesSlackAttributes) isaSubscriptionUpdateAttributes() bool {
@@ -9815,6 +14518,43 @@ func UnmarshalSubscriptionUpdateAttributesSlackAttributes(m map[string]json.RawM
 	obj := new(SubscriptionUpdateAttributesSlackAttributes)
 	err = core.UnmarshalPrimitive(m, "attachment_color", &obj.AttachmentColor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "attachment_color-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionUpdateAttributesSlackDirectMessageUpdateAttributes : The attributes for a slack direct message.
+// This model "extends" SubscriptionUpdateAttributes
+type SubscriptionUpdateAttributesSlackDirectMessageUpdateAttributes struct {
+	// List of channels.
+	Channels []ChannelUpdateAttributes `json:"channels,omitempty"`
+
+	// ID of Base64 converted JSON Slack Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
+}
+
+func (*SubscriptionUpdateAttributesSlackDirectMessageUpdateAttributes) isaSubscriptionUpdateAttributes() bool {
+	return true
+}
+
+// UnmarshalSubscriptionUpdateAttributesSlackDirectMessageUpdateAttributes unmarshals an instance of SubscriptionUpdateAttributesSlackDirectMessageUpdateAttributes from the specified map of raw messages.
+func UnmarshalSubscriptionUpdateAttributesSlackDirectMessageUpdateAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionUpdateAttributesSlackDirectMessageUpdateAttributes)
+	err = core.UnmarshalModel(m, "channels", &obj.Channels, UnmarshalChannelUpdateAttributes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "channels-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9825,16 +14565,10 @@ func UnmarshalSubscriptionUpdateAttributesSlackAttributes(m map[string]json.RawM
 // This model "extends" SubscriptionUpdateAttributes
 type SubscriptionUpdateAttributesWebhookAttributes struct {
 	// Signing webhook attributes.
-	SigningEnabled *bool `json:"signing_enabled" validate:"required"`
-}
+	SigningEnabled *bool `json:"signing_enabled,omitempty"`
 
-// NewSubscriptionUpdateAttributesWebhookAttributes : Instantiate SubscriptionUpdateAttributesWebhookAttributes (Generic Model Constructor)
-func (*EventNotificationsV1) NewSubscriptionUpdateAttributesWebhookAttributes(signingEnabled bool) (_model *SubscriptionUpdateAttributesWebhookAttributes, err error) {
-	_model = &SubscriptionUpdateAttributesWebhookAttributes{
-		SigningEnabled: core.BoolPtr(signingEnabled),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
+	// ID of Base64 converted JSON webhook Blocks w/o Handlebars.
+	TemplateIDNotification *string `json:"template_id_notification,omitempty"`
 }
 
 func (*SubscriptionUpdateAttributesWebhookAttributes) isaSubscriptionUpdateAttributes() bool {
@@ -9846,6 +14580,195 @@ func UnmarshalSubscriptionUpdateAttributesWebhookAttributes(m map[string]json.Ra
 	obj := new(SubscriptionUpdateAttributesWebhookAttributes)
 	err = core.UnmarshalPrimitive(m, "signing_enabled", &obj.SigningEnabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "signing_enabled-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_id_notification", &obj.TemplateIDNotification)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id_notification-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TemplateConfigOneOfEmailTemplateConfig : Payload describing an email template configuration.
+// This model "extends" TemplateConfigOneOf
+type TemplateConfigOneOfEmailTemplateConfig struct {
+	// Template body(Base64 encoded).
+	Body *string `json:"body" validate:"required"`
+
+	// The template subject.
+	Subject *string `json:"subject,omitempty"`
+}
+
+// NewTemplateConfigOneOfEmailTemplateConfig : Instantiate TemplateConfigOneOfEmailTemplateConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewTemplateConfigOneOfEmailTemplateConfig(body string) (_model *TemplateConfigOneOfEmailTemplateConfig, err error) {
+	_model = &TemplateConfigOneOfEmailTemplateConfig{
+		Body: core.StringPtr(body),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*TemplateConfigOneOfEmailTemplateConfig) isaTemplateConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalTemplateConfigOneOfEmailTemplateConfig unmarshals an instance of TemplateConfigOneOfEmailTemplateConfig from the specified map of raw messages.
+func UnmarshalTemplateConfigOneOfEmailTemplateConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateConfigOneOfEmailTemplateConfig)
+	err = core.UnmarshalPrimitive(m, "body", &obj.Body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "body-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "subject", &obj.Subject)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "subject-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TemplateConfigOneOfEventStreamsTemplateConfig : Payload describing a event streams template configuration.
+// This model "extends" TemplateConfigOneOf
+type TemplateConfigOneOfEventStreamsTemplateConfig struct {
+	// Template body(Base64 encoded).
+	Body *string `json:"body" validate:"required"`
+}
+
+// NewTemplateConfigOneOfEventStreamsTemplateConfig : Instantiate TemplateConfigOneOfEventStreamsTemplateConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewTemplateConfigOneOfEventStreamsTemplateConfig(body string) (_model *TemplateConfigOneOfEventStreamsTemplateConfig, err error) {
+	_model = &TemplateConfigOneOfEventStreamsTemplateConfig{
+		Body: core.StringPtr(body),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*TemplateConfigOneOfEventStreamsTemplateConfig) isaTemplateConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalTemplateConfigOneOfEventStreamsTemplateConfig unmarshals an instance of TemplateConfigOneOfEventStreamsTemplateConfig from the specified map of raw messages.
+func UnmarshalTemplateConfigOneOfEventStreamsTemplateConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateConfigOneOfEventStreamsTemplateConfig)
+	err = core.UnmarshalPrimitive(m, "body", &obj.Body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "body-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TemplateConfigOneOfPagerdutyTemplateConfig : Payload describing a pagerduty template configuration.
+// This model "extends" TemplateConfigOneOf
+type TemplateConfigOneOfPagerdutyTemplateConfig struct {
+	// Template body(Base64 encoded).
+	Body *string `json:"body" validate:"required"`
+}
+
+// NewTemplateConfigOneOfPagerdutyTemplateConfig : Instantiate TemplateConfigOneOfPagerdutyTemplateConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewTemplateConfigOneOfPagerdutyTemplateConfig(body string) (_model *TemplateConfigOneOfPagerdutyTemplateConfig, err error) {
+	_model = &TemplateConfigOneOfPagerdutyTemplateConfig{
+		Body: core.StringPtr(body),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*TemplateConfigOneOfPagerdutyTemplateConfig) isaTemplateConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalTemplateConfigOneOfPagerdutyTemplateConfig unmarshals an instance of TemplateConfigOneOfPagerdutyTemplateConfig from the specified map of raw messages.
+func UnmarshalTemplateConfigOneOfPagerdutyTemplateConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateConfigOneOfPagerdutyTemplateConfig)
+	err = core.UnmarshalPrimitive(m, "body", &obj.Body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "body-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TemplateConfigOneOfSlackTemplateConfig : Payload describing a slack template configuration.
+// This model "extends" TemplateConfigOneOf
+type TemplateConfigOneOfSlackTemplateConfig struct {
+	// Template body(Base64 encoded).
+	Body *string `json:"body" validate:"required"`
+}
+
+// NewTemplateConfigOneOfSlackTemplateConfig : Instantiate TemplateConfigOneOfSlackTemplateConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewTemplateConfigOneOfSlackTemplateConfig(body string) (_model *TemplateConfigOneOfSlackTemplateConfig, err error) {
+	_model = &TemplateConfigOneOfSlackTemplateConfig{
+		Body: core.StringPtr(body),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*TemplateConfigOneOfSlackTemplateConfig) isaTemplateConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalTemplateConfigOneOfSlackTemplateConfig unmarshals an instance of TemplateConfigOneOfSlackTemplateConfig from the specified map of raw messages.
+func UnmarshalTemplateConfigOneOfSlackTemplateConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateConfigOneOfSlackTemplateConfig)
+	err = core.UnmarshalPrimitive(m, "body", &obj.Body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "body-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TemplateConfigOneOfWebhookTemplateConfig : Payload describing a webhook template configuration.
+// This model "extends" TemplateConfigOneOf
+type TemplateConfigOneOfWebhookTemplateConfig struct {
+	// Template body(Base64 encoded).
+	Body *string `json:"body" validate:"required"`
+}
+
+// NewTemplateConfigOneOfWebhookTemplateConfig : Instantiate TemplateConfigOneOfWebhookTemplateConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewTemplateConfigOneOfWebhookTemplateConfig(body string) (_model *TemplateConfigOneOfWebhookTemplateConfig, err error) {
+	_model = &TemplateConfigOneOfWebhookTemplateConfig{
+		Body: core.StringPtr(body),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*TemplateConfigOneOfWebhookTemplateConfig) isaTemplateConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalTemplateConfigOneOfWebhookTemplateConfig unmarshals an instance of TemplateConfigOneOfWebhookTemplateConfig from the specified map of raw messages.
+func UnmarshalTemplateConfigOneOfWebhookTemplateConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TemplateConfigOneOfWebhookTemplateConfig)
+	err = core.UnmarshalPrimitive(m, "body", &obj.Body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "body-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9865,7 +14788,7 @@ type SourcesPager struct {
 // NewSourcesPager returns a new SourcesPager instance.
 func (eventNotifications *EventNotificationsV1) NewSourcesPager(options *ListSourcesOptions) (pager *SourcesPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -9893,6 +14816,7 @@ func (pager *SourcesPager) GetNextWithContext(ctx context.Context) (page []Sourc
 
 	result, _, err := pager.client.ListSourcesWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -9901,7 +14825,8 @@ func (pager *SourcesPager) GetNextWithContext(ctx context.Context) (page []Sourc
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -9920,6 +14845,7 @@ func (pager *SourcesPager) GetAllWithContext(ctx context.Context) (allItems []So
 		var nextPage []SourceListItem
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -9929,12 +14855,16 @@ func (pager *SourcesPager) GetAllWithContext(ctx context.Context) (allItems []So
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *SourcesPager) GetNext() (page []SourceListItem, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *SourcesPager) GetAll() (allItems []SourceListItem, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // TopicsPager can be used to simplify the use of the "ListTopics" method.
@@ -9950,7 +14880,7 @@ type TopicsPager struct {
 // NewTopicsPager returns a new TopicsPager instance.
 func (eventNotifications *EventNotificationsV1) NewTopicsPager(options *ListTopicsOptions) (pager *TopicsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -9978,6 +14908,7 @@ func (pager *TopicsPager) GetNextWithContext(ctx context.Context) (page []Topics
 
 	result, _, err := pager.client.ListTopicsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -9986,7 +14917,8 @@ func (pager *TopicsPager) GetNextWithContext(ctx context.Context) (page []Topics
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -10005,6 +14937,7 @@ func (pager *TopicsPager) GetAllWithContext(ctx context.Context) (allItems []Top
 		var nextPage []TopicsListItem
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -10014,12 +14947,16 @@ func (pager *TopicsPager) GetAllWithContext(ctx context.Context) (allItems []Top
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *TopicsPager) GetNext() (page []TopicsListItem, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *TopicsPager) GetAll() (allItems []TopicsListItem, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // TemplatesPager can be used to simplify the use of the "ListTemplates" method.
@@ -10035,7 +14972,7 @@ type TemplatesPager struct {
 // NewTemplatesPager returns a new TemplatesPager instance.
 func (eventNotifications *EventNotificationsV1) NewTemplatesPager(options *ListTemplatesOptions) (pager *TemplatesPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -10063,6 +15000,7 @@ func (pager *TemplatesPager) GetNextWithContext(ctx context.Context) (page []Tem
 
 	result, _, err := pager.client.ListTemplatesWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -10071,7 +15009,8 @@ func (pager *TemplatesPager) GetNextWithContext(ctx context.Context) (page []Tem
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -10090,6 +15029,7 @@ func (pager *TemplatesPager) GetAllWithContext(ctx context.Context) (allItems []
 		var nextPage []Template
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -10099,12 +15039,16 @@ func (pager *TemplatesPager) GetAllWithContext(ctx context.Context) (allItems []
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *TemplatesPager) GetNext() (page []Template, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *TemplatesPager) GetAll() (allItems []Template, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DestinationsPager can be used to simplify the use of the "ListDestinations" method.
@@ -10120,7 +15064,7 @@ type DestinationsPager struct {
 // NewDestinationsPager returns a new DestinationsPager instance.
 func (eventNotifications *EventNotificationsV1) NewDestinationsPager(options *ListDestinationsOptions) (pager *DestinationsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -10148,6 +15092,7 @@ func (pager *DestinationsPager) GetNextWithContext(ctx context.Context) (page []
 
 	result, _, err := pager.client.ListDestinationsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -10156,7 +15101,8 @@ func (pager *DestinationsPager) GetNextWithContext(ctx context.Context) (page []
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -10175,6 +15121,7 @@ func (pager *DestinationsPager) GetAllWithContext(ctx context.Context) (allItems
 		var nextPage []DestinationListItem
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -10184,12 +15131,16 @@ func (pager *DestinationsPager) GetAllWithContext(ctx context.Context) (allItems
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *DestinationsPager) GetNext() (page []DestinationListItem, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *DestinationsPager) GetAll() (allItems []DestinationListItem, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // TagsSubscriptionPager can be used to simplify the use of the "ListTagsSubscription" method.
@@ -10205,7 +15156,7 @@ type TagsSubscriptionPager struct {
 // NewTagsSubscriptionPager returns a new TagsSubscriptionPager instance.
 func (eventNotifications *EventNotificationsV1) NewTagsSubscriptionPager(options *ListTagsSubscriptionOptions) (pager *TagsSubscriptionPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -10233,6 +15184,7 @@ func (pager *TagsSubscriptionPager) GetNextWithContext(ctx context.Context) (pag
 
 	result, _, err := pager.client.ListTagsSubscriptionWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -10241,7 +15193,8 @@ func (pager *TagsSubscriptionPager) GetNextWithContext(ctx context.Context) (pag
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -10260,6 +15213,7 @@ func (pager *TagsSubscriptionPager) GetAllWithContext(ctx context.Context) (allI
 		var nextPage []TagsSubscriptionListItem
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -10269,12 +15223,16 @@ func (pager *TagsSubscriptionPager) GetAllWithContext(ctx context.Context) (allI
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *TagsSubscriptionPager) GetNext() (page []TagsSubscriptionListItem, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *TagsSubscriptionPager) GetAll() (allItems []TagsSubscriptionListItem, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SubscriptionsPager can be used to simplify the use of the "ListSubscriptions" method.
@@ -10290,7 +15248,7 @@ type SubscriptionsPager struct {
 // NewSubscriptionsPager returns a new SubscriptionsPager instance.
 func (eventNotifications *EventNotificationsV1) NewSubscriptionsPager(options *ListSubscriptionsOptions) (pager *SubscriptionsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -10318,6 +15276,7 @@ func (pager *SubscriptionsPager) GetNextWithContext(ctx context.Context) (page [
 
 	result, _, err := pager.client.ListSubscriptionsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -10326,7 +15285,8 @@ func (pager *SubscriptionsPager) GetNextWithContext(ctx context.Context) (page [
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -10345,6 +15305,7 @@ func (pager *SubscriptionsPager) GetAllWithContext(ctx context.Context) (allItem
 		var nextPage []SubscriptionListItem
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -10354,12 +15315,16 @@ func (pager *SubscriptionsPager) GetAllWithContext(ctx context.Context) (allItem
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *SubscriptionsPager) GetNext() (page []SubscriptionListItem, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *SubscriptionsPager) GetAll() (allItems []SubscriptionListItem, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // IntegrationsPager can be used to simplify the use of the "ListIntegrations" method.
@@ -10375,7 +15340,7 @@ type IntegrationsPager struct {
 // NewIntegrationsPager returns a new IntegrationsPager instance.
 func (eventNotifications *EventNotificationsV1) NewIntegrationsPager(options *ListIntegrationsOptions) (pager *IntegrationsPager, err error) {
 	if options.Offset != nil && *options.Offset != 0 {
-		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
 		return
 	}
 
@@ -10403,6 +15368,7 @@ func (pager *IntegrationsPager) GetNextWithContext(ctx context.Context) (page []
 
 	result, _, err := pager.client.ListIntegrationsWithContext(ctx, pager.options)
 	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 		return
 	}
 
@@ -10411,7 +15377,8 @@ func (pager *IntegrationsPager) GetNextWithContext(ctx context.Context) (page []
 		var offset *int64
 		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
 		if err != nil {
-			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
 			return
 		}
 		next = offset
@@ -10430,6 +15397,7 @@ func (pager *IntegrationsPager) GetAllWithContext(ctx context.Context) (allItems
 		var nextPage []IntegrationListItem
 		nextPage, err = pager.GetNextWithContext(ctx)
 		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
 			return
 		}
 		allItems = append(allItems, nextPage...)
@@ -10439,10 +15407,198 @@ func (pager *IntegrationsPager) GetAllWithContext(ctx context.Context) (allItems
 
 // GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
 func (pager *IntegrationsPager) GetNext() (page []IntegrationListItem, err error) {
-	return pager.GetNextWithContext(context.Background())
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *IntegrationsPager) GetAll() (allItems []IntegrationListItem, err error) {
-	return pager.GetAllWithContext(context.Background())
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// SMTPConfigurationsPager can be used to simplify the use of the "ListSMTPConfigurations" method.
+type SMTPConfigurationsPager struct {
+	hasNext     bool
+	options     *ListSMTPConfigurationsOptions
+	client      *EventNotificationsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewSMTPConfigurationsPager returns a new SMTPConfigurationsPager instance.
+func (eventNotifications *EventNotificationsV1) NewSMTPConfigurationsPager(options *ListSMTPConfigurationsOptions) (pager *SMTPConfigurationsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListSMTPConfigurationsOptions = *options
+	pager = &SMTPConfigurationsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  eventNotifications,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *SMTPConfigurationsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *SMTPConfigurationsPager) GetNextWithContext(ctx context.Context) (page []SMTPConfiguration, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListSMTPConfigurationsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.SMTPConfigurations
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *SMTPConfigurationsPager) GetAllWithContext(ctx context.Context) (allItems []SMTPConfiguration, err error) {
+	for pager.HasNext() {
+		var nextPage []SMTPConfiguration
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *SMTPConfigurationsPager) GetNext() (page []SMTPConfiguration, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *SMTPConfigurationsPager) GetAll() (allItems []SMTPConfiguration, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// SMTPUsersPager can be used to simplify the use of the "ListSMTPUsers" method.
+type SMTPUsersPager struct {
+	hasNext     bool
+	options     *ListSMTPUsersOptions
+	client      *EventNotificationsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewSMTPUsersPager returns a new SMTPUsersPager instance.
+func (eventNotifications *EventNotificationsV1) NewSMTPUsersPager(options *ListSMTPUsersOptions) (pager *SMTPUsersPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = core.SDKErrorf(nil, "the 'options.Offset' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListSMTPUsersOptions = *options
+	pager = &SMTPUsersPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  eventNotifications,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *SMTPUsersPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *SMTPUsersPager) GetNextWithContext(ctx context.Context) (page []SMTPUser, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListSMTPUsersWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			errMsg := fmt.Sprintf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Users
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *SMTPUsersPager) GetAllWithContext(ctx context.Context) (allItems []SMTPUser, err error) {
+	for pager.HasNext() {
+		var nextPage []SMTPUser
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *SMTPUsersPager) GetNext() (page []SMTPUser, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *SMTPUsersPager) GetAll() (allItems []SMTPUser, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }

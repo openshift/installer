@@ -5,7 +5,7 @@ set -e
 TARGET_OS_ARCH=$(go env GOOS)_$(go env GOARCH)
 CLUSTER_API_BIN_DIR="${PWD}/cluster-api/bin/${TARGET_OS_ARCH}"
 CLUSTER_API_MIRROR_DIR="${PWD}/pkg/clusterapi/mirror/"
-ENVTEST_K8S_VERSION="1.28.0"
+ENVTEST_K8S_VERSION="1.32.0"
 ENVTEST_ARCH=$(go env GOOS)-$(go env GOARCH)
 
 copy_cluster_api_to_mirror() {
@@ -15,7 +15,9 @@ copy_cluster_api_to_mirror() {
   # Clean the mirror, but preserve the README file.
   rm -rf "${CLUSTER_API_MIRROR_DIR:?}/*.zip"
 
-  sync_envtest
+  if test "${SKIP_ENVTEST}" != y; then
+    sync_envtest
+  fi
 
   # Zip every binary in the folder into a single zip file.
   zip -j1 "${CLUSTER_API_MIRROR_DIR}/cluster-api.zip" "${CLUSTER_API_BIN_DIR}"/*
@@ -34,8 +36,8 @@ sync_envtest() {
     fi
   fi
 
-  bucket="https://storage.googleapis.com/kubebuilder-tools"
-  tar_file="kubebuilder-tools-${ENVTEST_K8S_VERSION}-${ENVTEST_ARCH}.tar.gz"
+  bucket="https://github.com/kubernetes-sigs/controller-tools/releases/download/envtest-v${ENVTEST_K8S_VERSION}"
+  tar_file="envtest-v${ENVTEST_K8S_VERSION}-${ENVTEST_ARCH}.tar.gz"
   dst="${CLUSTER_API_BIN_DIR}/${tar_file}"
   if ! [ -f "${CLUSTER_API_BIN_DIR}/${tar_file}" ]; then
     echo "Downloading envtest binaries"

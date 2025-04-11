@@ -1,0 +1,39 @@
+---
+- name: vsphere
+  config:
+    version: v1.13.99
+    image: gcr.io/k8s-staging-capi-vsphere/cluster-api-vsphere-controller
+    live_reload_deps:
+      - main.go
+      - go.mod
+      - go.sum
+      - apis
+      - controllers
+      - feature
+      - internal
+      - pkg
+    label: CAPV
+- name: vsphere-supervisor
+  config:
+    version: v1.13.99
+    image: gcr.io/k8s-staging-capi-vsphere/cluster-api-vsphere-controller
+    live_reload_deps:
+      - main.go
+      - go.mod
+      - go.sum
+      - apis
+      - controllers
+      - feature
+      - internal
+      - pkg
+    label: CAPV
+    kustomize_folder: "/config/supervisor"
+
+# IMPORTANT: run "make vm-operator-manifest-build" before using this "provider" with tilt
+- name: vm-operator
+  config:
+    version: v1.8.6
+    label: VMOP
+    kustomize_folder: "/test/infrastructure/vm-operator/config"
+    kustomize_options:
+      - "--load-restrictor=LoadRestrictionsNone"

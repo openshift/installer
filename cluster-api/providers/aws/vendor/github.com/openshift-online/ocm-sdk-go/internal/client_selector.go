@@ -323,7 +323,8 @@ func (s *ClientSelector) createTransport(ctx context.Context,
 	// Prepare the TLS configuration:
 	// #nosec 402
 	config := &tls.Config{
-		ServerName:         address.Host,
+		// ServerName is not included to allow the tls library to set it based on the hostname
+		// provided in the request. This is necessary to support OCM region redirects.
 		InsecureSkipVerify: s.insecure,
 		RootCAs:            s.trustedCAs,
 	}
@@ -351,6 +352,8 @@ func (s *ClientSelector) createTransport(ctx context.Context,
 			}
 			transport.DialTLSContext = func(ctx context.Context, _, _ string) (net.Conn,
 				error) {
+				// Append server name manually for TLS with sockets
+				config.ServerName = address.Host
 				dialer := tls.Dialer{
 					Config: config,
 				}

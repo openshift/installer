@@ -115,23 +115,61 @@ func ResourceIBMCmCatalog() *schema.Resource {
 			"catalog_filters": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
+				Optional:    true,
 				Description: "Filters for account and catalog filters.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"include_all": &schema.Schema{
 							Type:        schema.TypeBool,
+							Computed:    true,
 							Optional:    true,
 							Description: "-> true - Include all of the public catalog when filtering. Further settings will specifically exclude some offerings. false - Exclude all of the public catalog when filtering. Further settings will specifically include some offerings.",
 						},
 						"category_filters": &schema.Schema{
-							Type:        schema.TypeMap,
+							Type:        schema.TypeList,
+							Computed:    true,
 							Optional:    true,
-							Description: "Filter against offering properties.",
-							Elem:        &schema.Schema{Type: schema.TypeString},
+							Description: "Filter against offering categories with dynamic keys.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"category_name": &schema.Schema{
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "Name of this category",
+									},
+									"include": &schema.Schema{
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Optional:    true,
+										Description: "Whether to include the category in the catalog filter.",
+									},
+									"filter": &schema.Schema{
+										Type:        schema.TypeList,
+										MaxItems:    1,
+										Computed:    true,
+										Optional:    true,
+										Description: "Filter terms related to the category.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"filter_terms": &schema.Schema{
+													Type:        schema.TypeList,
+													Computed:    true,
+													Optional:    true,
+													Description: "List of filter terms for the category.",
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 						"id_filters": &schema.Schema{
 							Type:        schema.TypeList,
 							MaxItems:    1,
+							Computed:    true,
 							Optional:    true,
 							Description: "Filter on offering ID's. There is an include filter and an exclule filter. Both can be set.",
 							Elem: &schema.Resource{
@@ -139,12 +177,14 @@ func ResourceIBMCmCatalog() *schema.Resource {
 									"include": &schema.Schema{
 										Type:        schema.TypeList,
 										MaxItems:    1,
+										Computed:    true,
 										Optional:    true,
 										Description: "Offering filter terms.",
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"filter_terms": &schema.Schema{
 													Type:        schema.TypeList,
+													Computed:    true,
 													Optional:    true,
 													Description: "List of values to match against. If include is true, then if the offering has one of the values then the offering is included. If include is false, then if the offering has one of the values then the offering is excluded.",
 													Elem:        &schema.Schema{Type: schema.TypeString},
@@ -156,162 +196,19 @@ func ResourceIBMCmCatalog() *schema.Resource {
 										Type:        schema.TypeList,
 										MaxItems:    1,
 										Optional:    true,
+										Computed:    true,
 										Description: "Offering filter terms.",
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"filter_terms": &schema.Schema{
 													Type:        schema.TypeList,
+													Computed:    true,
 													Optional:    true,
 													Description: "List of values to match against. If include is true, then if the offering has one of the values then the offering is included. If include is false, then if the offering has one of the values then the offering is excluded.",
 													Elem:        &schema.Schema{Type: schema.TypeString},
 												},
 											},
 										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			"syndication_settings": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "Feature information.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"remove_related_components": &schema.Schema{
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Description: "Remove related components.",
-						},
-						"clusters": &schema.Schema{
-							Type:        schema.TypeList,
-							Optional:    true,
-							Description: "Syndication clusters.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"region": &schema.Schema{
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Cluster region.",
-									},
-									"id": &schema.Schema{
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Cluster ID.",
-									},
-									"name": &schema.Schema{
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Cluster name.",
-									},
-									"resource_group_name": &schema.Schema{
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Resource group ID.",
-									},
-									"type": &schema.Schema{
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Syndication type.",
-									},
-									"namespaces": &schema.Schema{
-										Type:        schema.TypeList,
-										Optional:    true,
-										Description: "Syndicated namespaces.",
-										Elem:        &schema.Schema{Type: schema.TypeString},
-									},
-									"all_namespaces": &schema.Schema{
-										Type:        schema.TypeBool,
-										Optional:    true,
-										Description: "Syndicated to all namespaces on cluster.",
-									},
-								},
-							},
-						},
-						"history": &schema.Schema{
-							Type:        schema.TypeList,
-							MaxItems:    1,
-							Optional:    true,
-							Description: "Feature information.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"namespaces": &schema.Schema{
-										Type:        schema.TypeList,
-										Optional:    true,
-										Description: "Array of syndicated namespaces.",
-										Elem:        &schema.Schema{Type: schema.TypeString},
-									},
-									"clusters": &schema.Schema{
-										Type:        schema.TypeList,
-										Optional:    true,
-										Description: "Array of syndicated namespaces.",
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"region": &schema.Schema{
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "Cluster region.",
-												},
-												"id": &schema.Schema{
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "Cluster ID.",
-												},
-												"name": &schema.Schema{
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "Cluster name.",
-												},
-												"resource_group_name": &schema.Schema{
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "Resource group ID.",
-												},
-												"type": &schema.Schema{
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "Syndication type.",
-												},
-												"namespaces": &schema.Schema{
-													Type:        schema.TypeList,
-													Optional:    true,
-													Description: "Syndicated namespaces.",
-													Elem:        &schema.Schema{Type: schema.TypeString},
-												},
-												"all_namespaces": &schema.Schema{
-													Type:        schema.TypeBool,
-													Optional:    true,
-													Description: "Syndicated to all namespaces on cluster.",
-												},
-											},
-										},
-									},
-									"last_run": &schema.Schema{
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Date and time last syndicated.",
-									},
-								},
-							},
-						},
-						"authorization": &schema.Schema{
-							Type:        schema.TypeList,
-							MaxItems:    1,
-							Optional:    true,
-							Description: "Feature information.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"token": &schema.Schema{
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Array of syndicated namespaces.",
-									},
-									"last_run": &schema.Schema{
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Date and time last updated.",
 									},
 								},
 							},
@@ -428,7 +325,9 @@ func ResourceIBMCmCatalog() *schema.Resource {
 func resourceIBMCmCatalogCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	catalogManagementClient, err := meta.(conns.ClientSession).CatalogManagementV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_catalog", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createCatalogOptions := &catalogmanagementv1.CreateCatalogOptions{}
@@ -454,7 +353,9 @@ func resourceIBMCmCatalogCreate(context context.Context, d *schema.ResourceData,
 			value := e.(map[string]interface{})
 			featuresItem, err := resourceIBMCmCatalogMapToFeature(value)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_catalog", "create")
+				log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			features = append(features, *featuresItem)
 		}
@@ -472,16 +373,11 @@ func resourceIBMCmCatalogCreate(context context.Context, d *schema.ResourceData,
 	if _, ok := d.GetOk("catalog_filters"); ok {
 		catalogFiltersModel, err := resourceIBMCmCatalogMapToFilters(d.Get("catalog_filters.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_catalog", "create")
+			log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		createCatalogOptions.SetCatalogFilters(catalogFiltersModel)
-	}
-	if _, ok := d.GetOk("syndication_settings"); ok {
-		syndicationSettingsModel, err := resourceIBMCmCatalogMapToSyndicationResource(d.Get("syndication_settings.0").(map[string]interface{}))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		createCatalogOptions.SetSyndicationSettings(syndicationSettingsModel)
 	}
 	if _, ok := d.GetOk("kind"); ok {
 		createCatalogOptions.SetKind(d.Get("kind").(string))
@@ -492,7 +388,9 @@ func resourceIBMCmCatalogCreate(context context.Context, d *schema.ResourceData,
 			value := e.(map[string]interface{})
 			targetAccountContextsItem, err := resourceIBMCmCatalogMapToTargetAccountContexts(nil, value)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_catalog", "create")
+				log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			target_account_contexts = append(target_account_contexts, *targetAccountContextsItem)
 		}
@@ -501,8 +399,9 @@ func resourceIBMCmCatalogCreate(context context.Context, d *schema.ResourceData,
 
 	catalog, response, err := catalogManagementClient.CreateCatalogWithContext(context, createCatalogOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateCatalogWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateCatalogWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateCatalogWithContext failed %s\n%s", err, response), "ibm_cm_catalog", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*catalog.ID)
@@ -513,7 +412,9 @@ func resourceIBMCmCatalogCreate(context context.Context, d *schema.ResourceData,
 func resourceIBMCmCatalogRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	catalogManagementClient, err := meta.(conns.ClientSession).CatalogManagementV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getCatalogOptions := &catalogmanagementv1.GetCatalogOptions{}
@@ -525,28 +426,41 @@ func resourceIBMCmCatalogRead(context context.Context, d *schema.ResourceData, m
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetCatalogWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetCatalogWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetCatalogWithContext failed %s\n%s", err, response), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("rev", catalog.Rev); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rev: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting rev: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("label", catalog.Label); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting label: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting label: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("short_description", catalog.ShortDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting short_description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting short_description: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("catalog_icon_url", catalog.CatalogIconURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting catalog_icon_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting catalog_icon_url: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("catalog_banner_url", catalog.CatalogBannerURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting catalog_banner_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting catalog_banner_url: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if catalog.Tags != nil {
 		if err = d.Set("tags", catalog.Tags); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting tags: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting tags: %s", err), "ibm_cm_catalog", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	features := []map[string]interface{}{}
@@ -554,74 +468,97 @@ func resourceIBMCmCatalogRead(context context.Context, d *schema.ResourceData, m
 		for _, featuresItem := range catalog.Features {
 			featuresItemMap, err := resourceIBMCmCatalogFeatureToMap(&featuresItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_catalog", "read")
+				log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			features = append(features, featuresItemMap)
 		}
 	}
 	if err = d.Set("features", features); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting features: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting features: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("disabled", catalog.Disabled); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting disabled: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting disabled: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("resource_group_id", catalog.ResourceGroupID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting resource_group_id: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("owning_account", catalog.OwningAccount); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting owning_account: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting owning_account: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if catalog.CatalogFilters != nil {
 		catalogFiltersMap, err := resourceIBMCmCatalogFiltersToMap(catalog.CatalogFilters)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_catalog", "read")
+			log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("catalog_filters", []map[string]interface{}{catalogFiltersMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting catalog_filters: %s", err))
-		}
-	}
-	if catalog.SyndicationSettings != nil {
-		syndicationSettingsMap, err := resourceIBMCmCatalogSyndicationResourceToMap(catalog.SyndicationSettings)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		if err = d.Set("syndication_settings", []map[string]interface{}{syndicationSettingsMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting syndication_settings: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting catalog_filters: %s", err), "ibm_cm_catalog", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("kind", catalog.Kind); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting kind: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting kind: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("rev", catalog.Rev); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rev: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting rev: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("url", catalog.URL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting url: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("crn", catalog.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting crn: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("offerings_url", catalog.OfferingsURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting offerings_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting offerings_url: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created", flex.DateTimeToString(catalog.Created)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated", flex.DateTimeToString(catalog.Updated)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	targetAccountContexts := []map[string]interface{}{}
 	if catalog.TargetAccountContexts != nil {
 		for _, tacItem := range catalog.TargetAccountContexts {
 			tacItemMap, err := resourceIBMCmCatalogTargetAccountContextToMap(&tacItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_catalog", "read")
+				log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			targetAccountContexts = append(targetAccountContexts, tacItemMap)
 		}
 	}
 	if err = d.Set("target_account_contexts", targetAccountContexts); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting target_account_contexts: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting target_account_contexts: %s", err), "ibm_cm_catalog", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -630,7 +567,9 @@ func resourceIBMCmCatalogRead(context context.Context, d *schema.ResourceData, m
 func resourceIBMCmCatalogUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	catalogManagementClient, err := meta.(conns.ClientSession).CatalogManagementV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_catalog", "update")
+		log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getCatalogOptions := &catalogmanagementv1.GetCatalogOptions{}
@@ -642,8 +581,9 @@ func resourceIBMCmCatalogUpdate(context context.Context, d *schema.ResourceData,
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetCatalogWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetCatalogWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetCatalogWithContext failed %s\n%s", err, response), "ibm_cm_catalog", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	replaceCatalogOptions := &catalogmanagementv1.ReplaceCatalogOptions{}
@@ -672,7 +612,9 @@ func resourceIBMCmCatalogUpdate(context context.Context, d *schema.ResourceData,
 			value := e.(map[string]interface{})
 			featuresItem, err := resourceIBMCmCatalogMapToFeature(value)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_catalog", "update")
+				log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			features = append(features, *featuresItem)
 		}
@@ -690,16 +632,11 @@ func resourceIBMCmCatalogUpdate(context context.Context, d *schema.ResourceData,
 	if _, ok := d.GetOk("catalog_filters"); ok {
 		catalogFilters, err := resourceIBMCmCatalogMapToFilters(d.Get("catalog_filters.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_catalog", "update")
+			log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		replaceCatalogOptions.SetCatalogFilters(catalogFilters)
-	}
-	if _, ok := d.GetOk("syndication_settings"); ok {
-		syndicationSettings, err := resourceIBMCmCatalogMapToSyndicationResource(d.Get("syndication_settings.0").(map[string]interface{}))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		replaceCatalogOptions.SetSyndicationSettings(syndicationSettings)
 	}
 	if _, ok := d.GetOk("kind"); ok {
 		replaceCatalogOptions.SetKind(d.Get("kind").(string))
@@ -710,7 +647,9 @@ func resourceIBMCmCatalogUpdate(context context.Context, d *schema.ResourceData,
 			value := e.(map[string]interface{})
 			targetAccountContextsItem, err := resourceIBMCmCatalogMapToTargetAccountContexts(catalog, value)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_catalog", "update")
+				log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			target_account_contexts = append(target_account_contexts, *targetAccountContextsItem)
 		}
@@ -719,8 +658,9 @@ func resourceIBMCmCatalogUpdate(context context.Context, d *schema.ResourceData,
 
 	_, response, err = catalogManagementClient.ReplaceCatalogWithContext(context, replaceCatalogOptions)
 	if err != nil {
-		log.Printf("[DEBUG] ReplaceCatalogWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("ReplaceCatalogWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ReplaceCatalogWithContext failed %s\n%s", err, response), "ibm_cm_catalog", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return resourceIBMCmCatalogRead(context, d, meta)
@@ -729,7 +669,9 @@ func resourceIBMCmCatalogUpdate(context context.Context, d *schema.ResourceData,
 func resourceIBMCmCatalogDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	catalogManagementClient, err := meta.(conns.ClientSession).CatalogManagementV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_catalog", "delete")
+		log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteCatalogOptions := &catalogmanagementv1.DeleteCatalogOptions{}
@@ -738,8 +680,9 @@ func resourceIBMCmCatalogDelete(context context.Context, d *schema.ResourceData,
 
 	response, err := catalogManagementClient.DeleteCatalogWithContext(context, deleteCatalogOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteCatalogWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteCatalogWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteCatalogWithContext failed %s\n%s", err, response), "ibm_cm_catalog", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -824,6 +767,27 @@ func resourceIBMCmCatalogMapToFilters(modelMap map[string]interface{}) (*catalog
 		}
 		model.IDFilters = IDFiltersModel
 	}
+	if modelMap["category_filters"] != nil {
+		categoryFiltersList := modelMap["category_filters"].([]interface{})
+		categoryFilters := make(map[string]catalogmanagementv1.CategoryFilter) // Initialize the map for category filters
+
+		for _, item := range categoryFiltersList {
+			categoryFilterMap := item.(map[string]interface{})
+			categoryName := categoryFilterMap["category_name"].(string) // Extract category_name as the map key
+
+			// Convert the category filter to the appropriate struct
+			categoryFilter, err := resourceIBMCmCatalogMapToCategoryFilter(categoryFilterMap)
+			if err != nil {
+				return model, err
+			}
+
+			// Add the category filter to the map using category_name as the key
+			categoryFilters[categoryName] = *categoryFilter
+		}
+
+		// Assign the map to the model
+		model.CategoryFilters = categoryFilters
+	}
 	return model, nil
 }
 
@@ -857,122 +821,22 @@ func resourceIBMCmCatalogMapToFilterTerms(modelMap map[string]interface{}) (*cat
 func resourceIBMCmCatalogMapToIDFilter(modelMap map[string]interface{}) (*catalogmanagementv1.IDFilter, error) {
 	model := &catalogmanagementv1.IDFilter{}
 	if modelMap["include"] != nil && len(modelMap["include"].([]interface{})) > 0 {
-		IncludeModel, err := resourceIBMCmCatalogMapToFilterTerms(modelMap["include"].([]interface{})[0].(map[string]interface{}))
-		if err != nil {
-			return model, err
+		if modelMap["include"].([]interface{})[0] != nil && modelMap["include"].([]interface{})[0].(map[string]interface{}) != nil {
+			IncludeModel, err := resourceIBMCmCatalogMapToFilterTerms(modelMap["include"].([]interface{})[0].(map[string]interface{}))
+			if err != nil {
+				return model, err
+			}
+			model.Include = IncludeModel
 		}
-		model.Include = IncludeModel
 	}
 	if modelMap["exclude"] != nil && len(modelMap["exclude"].([]interface{})) > 0 {
-		ExcludeModel, err := resourceIBMCmCatalogMapToFilterTerms(modelMap["exclude"].([]interface{})[0].(map[string]interface{}))
-		if err != nil {
-			return model, err
-		}
-		model.Exclude = ExcludeModel
-	}
-	return model, nil
-}
-
-func resourceIBMCmCatalogMapToSyndicationResource(modelMap map[string]interface{}) (*catalogmanagementv1.SyndicationResource, error) {
-	model := &catalogmanagementv1.SyndicationResource{}
-	if modelMap["remove_related_components"] != nil {
-		model.RemoveRelatedComponents = core.BoolPtr(modelMap["remove_related_components"].(bool))
-	}
-	if modelMap["clusters"] != nil {
-		clusters := []catalogmanagementv1.SyndicationCluster{}
-		for _, clustersItem := range modelMap["clusters"].([]interface{}) {
-			clustersItemModel, err := resourceIBMCmCatalogMapToSyndicationCluster(clustersItem.(map[string]interface{}))
+		if modelMap["exclude"].([]interface{})[0] != nil && modelMap["exclude"].([]interface{})[0].(map[string]interface{}) != nil {
+			ExcludeModel, err := resourceIBMCmCatalogMapToFilterTerms(modelMap["exclude"].([]interface{})[0].(map[string]interface{}))
 			if err != nil {
 				return model, err
 			}
-			clusters = append(clusters, *clustersItemModel)
+			model.Exclude = ExcludeModel
 		}
-		model.Clusters = clusters
-	}
-	if modelMap["history"] != nil && len(modelMap["history"].([]interface{})) > 0 {
-		var HistoryModel *catalogmanagementv1.SyndicationHistory
-		var err error
-		if modelMap["history"].([]interface{})[0] != nil {
-			HistoryModel, err = resourceIBMCmCatalogMapToSyndicationHistory(modelMap["history"].([]interface{})[0].(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-		}
-		model.History = HistoryModel
-	}
-	if modelMap["authorization"] != nil && len(modelMap["authorization"].([]interface{})) > 0 {
-		AuthorizationModel, err := resourceIBMCmCatalogMapToSyndicationAuthorization(modelMap["authorization"].([]interface{})[0].(map[string]interface{}))
-		if err != nil {
-			return model, err
-		}
-		model.Authorization = AuthorizationModel
-	}
-	return model, nil
-}
-
-func resourceIBMCmCatalogMapToSyndicationCluster(modelMap map[string]interface{}) (*catalogmanagementv1.SyndicationCluster, error) {
-	model := &catalogmanagementv1.SyndicationCluster{}
-	if modelMap["region"] != nil && modelMap["region"].(string) != "" {
-		model.Region = core.StringPtr(modelMap["region"].(string))
-	}
-	if modelMap["id"] != nil && modelMap["id"].(string) != "" {
-		model.ID = core.StringPtr(modelMap["id"].(string))
-	}
-	if modelMap["name"] != nil && modelMap["name"].(string) != "" {
-		model.Name = core.StringPtr(modelMap["name"].(string))
-	}
-	if modelMap["resource_group_name"] != nil && modelMap["resource_group_name"].(string) != "" {
-		model.ResourceGroupName = core.StringPtr(modelMap["resource_group_name"].(string))
-	}
-	if modelMap["type"] != nil && modelMap["type"].(string) != "" {
-		model.Type = core.StringPtr(modelMap["type"].(string))
-	}
-	if modelMap["namespaces"] != nil {
-		namespaces := []string{}
-		for _, namespacesItem := range modelMap["namespaces"].([]interface{}) {
-			namespaces = append(namespaces, namespacesItem.(string))
-		}
-		model.Namespaces = namespaces
-	}
-	if modelMap["all_namespaces"] != nil {
-		model.AllNamespaces = core.BoolPtr(modelMap["all_namespaces"].(bool))
-	}
-	return model, nil
-}
-
-func resourceIBMCmCatalogMapToSyndicationHistory(modelMap map[string]interface{}) (*catalogmanagementv1.SyndicationHistory, error) {
-	model := &catalogmanagementv1.SyndicationHistory{}
-	if modelMap["namespaces"] != nil {
-		namespaces := []string{}
-		for _, namespacesItem := range modelMap["namespaces"].([]interface{}) {
-			namespaces = append(namespaces, namespacesItem.(string))
-		}
-		model.Namespaces = namespaces
-	}
-	if modelMap["clusters"] != nil {
-		clusters := []catalogmanagementv1.SyndicationCluster{}
-		for _, clustersItem := range modelMap["clusters"].([]interface{}) {
-			clustersItemModel, err := resourceIBMCmCatalogMapToSyndicationCluster(clustersItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			clusters = append(clusters, *clustersItemModel)
-		}
-		model.Clusters = clusters
-	}
-	if modelMap["last_run"] != nil {
-
-	}
-	return model, nil
-}
-
-func resourceIBMCmCatalogMapToSyndicationAuthorization(modelMap map[string]interface{}) (*catalogmanagementv1.SyndicationAuthorization, error) {
-	model := &catalogmanagementv1.SyndicationAuthorization{}
-	if modelMap["token"] != nil && modelMap["token"].(string) != "" {
-		model.Token = core.StringPtr(modelMap["token"].(string))
-	}
-	if modelMap["last_run"] != nil {
-
 	}
 	return model, nil
 }
@@ -1041,11 +905,25 @@ func resourceIBMCmCatalogFiltersToMap(model *catalogmanagementv1.Filters) (map[s
 		}
 		modelMap["id_filters"] = []map[string]interface{}{idFiltersMap}
 	}
+	if model.CategoryFilters != nil {
+		var categoryFiltersList []map[string]interface{}
+		for k, category := range model.CategoryFilters {
+			categoryFilterMap, err := resourceIBMCmCatalogCategoryFilterToMap(k, &category)
+			if err != nil {
+				return modelMap, err
+			}
+			categoryFiltersList = append(categoryFiltersList, categoryFilterMap)
+		}
+		modelMap["category_filters"] = categoryFiltersList
+	}
 	return modelMap, nil
 }
 
-func resourceIBMCmCatalogCategoryFilterToMap(model *catalogmanagementv1.CategoryFilter) (map[string]interface{}, error) {
+func resourceIBMCmCatalogCategoryFilterToMap(key string, model *catalogmanagementv1.CategoryFilter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
+	if key != "" {
+		modelMap["category_name"] = key
+	}
 	if model.Include != nil {
 		modelMap["include"] = model.Include
 	}
@@ -1082,98 +960,6 @@ func resourceIBMCmCatalogIDFilterToMap(model *catalogmanagementv1.IDFilter) (map
 			return modelMap, err
 		}
 		modelMap["exclude"] = []map[string]interface{}{excludeMap}
-	}
-	return modelMap, nil
-}
-
-func resourceIBMCmCatalogSyndicationResourceToMap(model *catalogmanagementv1.SyndicationResource) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.RemoveRelatedComponents != nil {
-		modelMap["remove_related_components"] = model.RemoveRelatedComponents
-	}
-	if model.Clusters != nil {
-		clusters := []map[string]interface{}{}
-		for _, clustersItem := range model.Clusters {
-			clustersItemMap, err := resourceIBMCmCatalogSyndicationClusterToMap(&clustersItem)
-			if err != nil {
-				return modelMap, err
-			}
-			clusters = append(clusters, clustersItemMap)
-		}
-		modelMap["clusters"] = clusters
-	}
-	if model.History != nil {
-		historyMap, err := resourceIBMCmCatalogSyndicationHistoryToMap(model.History)
-		if err != nil {
-			return modelMap, err
-		}
-		modelMap["history"] = []map[string]interface{}{historyMap}
-	}
-	if model.Authorization != nil {
-		authorizationMap, err := resourceIBMCmCatalogSyndicationAuthorizationToMap(model.Authorization)
-		if err != nil {
-			return modelMap, err
-		}
-		modelMap["authorization"] = []map[string]interface{}{authorizationMap}
-	}
-	return modelMap, nil
-}
-
-func resourceIBMCmCatalogSyndicationClusterToMap(model *catalogmanagementv1.SyndicationCluster) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Region != nil {
-		modelMap["region"] = model.Region
-	}
-	if model.ID != nil {
-		modelMap["id"] = model.ID
-	}
-	if model.Name != nil {
-		modelMap["name"] = model.Name
-	}
-	if model.ResourceGroupName != nil {
-		modelMap["resource_group_name"] = model.ResourceGroupName
-	}
-	if model.Type != nil {
-		modelMap["type"] = model.Type
-	}
-	if model.Namespaces != nil {
-		modelMap["namespaces"] = model.Namespaces
-	}
-	if model.AllNamespaces != nil {
-		modelMap["all_namespaces"] = model.AllNamespaces
-	}
-	return modelMap, nil
-}
-
-func resourceIBMCmCatalogSyndicationHistoryToMap(model *catalogmanagementv1.SyndicationHistory) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Namespaces != nil {
-		modelMap["namespaces"] = model.Namespaces
-	}
-	if model.Clusters != nil {
-		clusters := []map[string]interface{}{}
-		for _, clustersItem := range model.Clusters {
-			clustersItemMap, err := resourceIBMCmCatalogSyndicationClusterToMap(&clustersItem)
-			if err != nil {
-				return modelMap, err
-			}
-			clusters = append(clusters, clustersItemMap)
-		}
-		modelMap["clusters"] = clusters
-	}
-	if model.LastRun != nil {
-		modelMap["last_run"] = model.LastRun.String()
-	}
-	return modelMap, nil
-}
-
-func resourceIBMCmCatalogSyndicationAuthorizationToMap(model *catalogmanagementv1.SyndicationAuthorization) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Token != nil {
-		modelMap["token"] = model.Token
-	}
-	if model.LastRun != nil {
-		modelMap["last_run"] = model.LastRun.String()
 	}
 	return modelMap, nil
 }

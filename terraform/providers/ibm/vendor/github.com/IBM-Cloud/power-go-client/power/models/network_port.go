@@ -208,7 +208,7 @@ type NetworkPortPvmInstance struct {
 	// Link to pvm-instance resource
 	Href string `json:"href,omitempty"`
 
-	// The attahed pvm-instance ID
+	// The attached pvm-instance ID
 	PvmInstanceID string `json:"pvmInstanceID,omitempty"`
 }
 

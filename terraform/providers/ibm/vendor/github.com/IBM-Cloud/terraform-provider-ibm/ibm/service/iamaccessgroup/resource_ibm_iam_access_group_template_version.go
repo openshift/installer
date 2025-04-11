@@ -238,7 +238,7 @@ func ResourceIBMIAMAccessGroupTemplateVersion() *schema.Resource {
 				},
 			},
 			"policy_template_references": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "References to policy templates assigned to the access group template.",
 				Elem: &schema.Resource{
@@ -370,7 +370,7 @@ func resourceIBMIAMAccessGroupTemplateVersionCreate(context context.Context, d *
 	}
 	if _, ok := d.GetOk("policy_template_references"); ok {
 		var policyTemplateReferences []iamaccessgroupsv2.PolicyTemplates
-		for _, v := range d.Get("policy_template_references").([]interface{}) {
+		for _, v := range d.Get("policy_template_references").(*schema.Set).List() {
 			value := v.(map[string]interface{})
 			policyTemplateReferencesItem, err := resourceIBMIAMAccessGroupTemplateVersionMapToPolicyTemplates(value)
 			if err != nil {
@@ -388,6 +388,18 @@ func resourceIBMIAMAccessGroupTemplateVersionCreate(context context.Context, d *
 	if err != nil {
 		log.Printf("[DEBUG] CreateTemplateVersionWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("CreateTemplateVersionWithContext failed %s\n%s", err, response))
+	}
+
+	if d.Get("committed").(bool) {
+		commitTemplateOptions := &iamaccessgroupsv2.CommitTemplateOptions{}
+		commitTemplateOptions.SetTemplateID(*templateVersionResponse.ID)
+		commitTemplateOptions.SetVersionNum(*templateVersionResponse.Version)
+		commitTemplateOptions.SetIfMatch(response.Headers.Get("ETag"))
+		response, err = iamAccessGroupsClient.CommitTemplateWithContext(context, commitTemplateOptions)
+		if err != nil {
+			log.Printf("[DEBUG] CommitTemplateWithContext failed %s\n%s", err, response)
+			return diag.FromErr(fmt.Errorf("CommitTemplateWithContext failed %s\n%s", err, response))
+		}
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *templateVersionResponse.ID, *templateVersionResponse.Version))
@@ -544,7 +556,7 @@ func resourceIBMIAMAccessGroupTemplateVersionUpdate(context context.Context, d *
 
 	if _, ok := d.GetOk("policy_template_references"); ok {
 		var policyTemplateReferences []iamaccessgroupsv2.PolicyTemplates
-		for _, v := range d.Get("policy_template_references").([]interface{}) {
+		for _, v := range d.Get("policy_template_references").(*schema.Set).List() {
 			value := v.(map[string]interface{})
 			policyTemplateReferencesItem, err := resourceIBMIAMAccessGroupTemplateVersionMapToPolicyTemplates(value)
 			if err != nil {

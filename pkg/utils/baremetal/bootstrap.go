@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/rest"
 	clientwatch "k8s.io/client-go/tools/watch"
 
+	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/infrastructure/baremetal"
 )
 
@@ -106,5 +107,9 @@ func WaitForBaremetalBootstrapControlPlane(ctx context.Context, config *rest.Con
 		return fmt.Errorf("failed to persist masters file to disk: %w", err)
 	}
 
-	return withSyncErr
+	if withSyncErr != nil {
+		// wrap with ControlPlaneCreationError to trigger bootstrap log bundle gather
+		return fmt.Errorf("%s: %w", asset.ControlPlaneCreationError, withSyncErr)
+	}
+	return nil
 }

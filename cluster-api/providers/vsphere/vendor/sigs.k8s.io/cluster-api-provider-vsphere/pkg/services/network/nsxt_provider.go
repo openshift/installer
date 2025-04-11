@@ -21,7 +21,8 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
+	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
+	vmoprv1common "github.com/vmware-tanzu/vm-operator/api/v1alpha2/common"
 	ncpv1 "github.com/vmware-tanzu/vm-operator/external/ncp/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -56,23 +57,38 @@ func (np *nsxtNetworkProvider) HasLoadBalancer() bool {
 	return true
 }
 
+func (np *nsxtNetworkProvider) SupportsVMReadinessProbe() bool {
+	return true
+}
+
 // GetNSXTVirtualNetworkName returns the name of the NSX-T vnet object.
 func GetNSXTVirtualNetworkName(clusterName string) string {
 	return fmt.Sprintf("%s-vnet", clusterName)
 }
 
-func (np *nsxtNetworkProvider) verifyNSXTVirtualNetworkStatus(ctx *vmware.ClusterContext, vnet *ncpv1.VirtualNetwork) error {
-	clusterName := ctx.VSphereCluster.Name
-	namespace := ctx.VSphereCluster.Namespace
+func (np *nsxtNetworkProvider) verifyNSXTVirtualNetworkStatus(vspherecluster *vmwarev1.VSphereCluster, vnet *ncpv1.VirtualNetwork) error {
+	clusterName := vspherecluster.Name
+	namespace := vspherecluster.Namespace
+	hasReadyCondition := false
+
 	for _, condition := range vnet.Status.Conditions {
-		if condition.Type == "Ready" && condition.Status != "True" {
-			conditions.MarkFalse(ctx.VSphereCluster, vmwarev1.ClusterNetworkReadyCondition, vmwarev1.ClusterNetworkProvisionFailedReason, clusterv1.ConditionSeverityWarning, condition.Message)
+		if condition.Type != "Ready" {
+			continue
+		}
+		hasReadyCondition = true
+		if condition.Status != "True" {
+			conditions.MarkFalse(vspherecluster, vmwarev1.ClusterNetworkReadyCondition, vmwarev1.ClusterNetworkProvisionFailedReason, clusterv1.ConditionSeverityWarning, condition.Message)
 			return errors.Errorf("virtual network ready status is: '%s' in cluster %s. reason: %s, message: %s",
 				condition.Status, types.NamespacedName{Namespace: namespace, Name: clusterName}, condition.Reason, condition.Message)
 		}
 	}
 
-	conditions.MarkTrue(ctx.VSphereCluster, vmwarev1.ClusterNetworkReadyCondition)
+	if !hasReadyCondition {
+		conditions.MarkFalse(vspherecluster, vmwarev1.ClusterNetworkReadyCondition, vmwarev1.ClusterNetworkProvisionFailedReason, clusterv1.ConditionSeverityWarning, "No Ready status for virtual network")
+		return errors.Errorf("virtual network ready status in cluster %s has not been set", types.NamespacedName{Namespace: namespace, Name: clusterName})
+	}
+
+	conditions.MarkTrue(vspherecluster, vmwarev1.ClusterNetworkReadyCondition)
 	return nil
 }
 
@@ -82,7 +98,7 @@ func (np *nsxtNetworkProvider) VerifyNetworkStatus(_ context.Context, clusterCtx
 		return fmt.Errorf("expected NCP VirtualNetwork but got %T", obj)
 	}
 
-	return np.verifyNSXTVirtualNetworkStatus(clusterCtx, vnet)
+	return np.verifyNSXTVirtualNetworkStatus(clusterCtx.VSphereCluster, vnet)
 }
 
 func (np *nsxtNetworkProvider) ProvisionClusterNetwork(ctx context.Context, clusterCtx *vmware.ClusterContext) error {
@@ -143,7 +159,7 @@ func (np *nsxtNetworkProvider) ProvisionClusterNetwork(ctx context.Context, clus
 		return errors.Wrap(err, "Failed to provision network")
 	}
 
-	return np.verifyNSXTVirtualNetworkStatus(clusterCtx, vnet)
+	return np.verifyNSXTVirtualNetworkStatus(clusterCtx.VSphereCluster, vnet)
 }
 
 // GetClusterNetworkName returns the name of a valid cluster network if one exists.
@@ -172,15 +188,24 @@ func (np *nsxtNetworkProvider) GetVMServiceAnnotations(ctx context.Context, clus
 // ConfigureVirtualMachine configures a VirtualMachine object based on the networking configuration.
 func (np *nsxtNetworkProvider) ConfigureVirtualMachine(_ context.Context, clusterCtx *vmware.ClusterContext, vm *vmoprv1.VirtualMachine) error {
 	nsxtClusterNetworkName := GetNSXTVirtualNetworkName(clusterCtx.VSphereCluster.Name)
-	for _, vnif := range vm.Spec.NetworkInterfaces {
-		if vnif.NetworkType == NSXTTypeNetwork && vnif.NetworkName == nsxtClusterNetworkName {
+	if vm.Spec.Network == nil {
+		vm.Spec.Network = &vmoprv1.VirtualMachineNetworkSpec{}
+	}
+	for _, vnif := range vm.Spec.Network.Interfaces {
+		if vnif.Network.TypeMeta.GroupVersionKind() == NetworkGVKNSXT && vnif.Network.Name == nsxtClusterNetworkName {
 			// expected network interface is already found
 			return nil
 		}
 	}
-	vm.Spec.NetworkInterfaces = append(vm.Spec.NetworkInterfaces, vmoprv1.VirtualMachineNetworkInterface{
-		NetworkName: nsxtClusterNetworkName,
-		NetworkType: NSXTTypeNetwork,
+	vm.Spec.Network.Interfaces = append(vm.Spec.Network.Interfaces, vmoprv1.VirtualMachineNetworkInterfaceSpec{
+		Name: fmt.Sprintf("eth%d", len(vm.Spec.Network.Interfaces)),
+		Network: vmoprv1common.PartialObjectRef{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       NetworkGVKNSXT.Kind,
+				APIVersion: NetworkGVKNSXT.GroupVersion().String(),
+			},
+			Name: nsxtClusterNetworkName,
+		},
 	})
 	return nil
 }

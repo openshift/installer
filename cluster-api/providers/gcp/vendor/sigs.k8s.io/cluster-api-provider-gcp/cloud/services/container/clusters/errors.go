@@ -17,25 +17,22 @@ limitations under the License.
 package clusters
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
 )
 
-var (
-	// ErrAutopilotClusterMachinePoolsNotAllowed is used when there are machine pools specified for an autopilot enabled cluster.
-	ErrAutopilotClusterMachinePoolsNotAllowed = errors.New("cannot use machine pools with an autopilot enabled cluster")
-)
+// ErrAutopilotClusterMachinePoolsNotAllowed is used when there are machine pools specified for an autopilot enabled cluster.
+var ErrAutopilotClusterMachinePoolsNotAllowed = errors.New("cannot use machine pools with an autopilot enabled cluster")
 
 // NewErrUnexpectedClusterStatus creates a new error for an unexpected cluster status.
 func NewErrUnexpectedClusterStatus(status string) error {
-	return &errUnexpectedClusterStatus{status}
+	return &UnexpectedClusterStatusError{status}
 }
 
-type errUnexpectedClusterStatus struct {
+// UnexpectedClusterStatusError is the error struct
+type UnexpectedClusterStatusError struct {
 	status string
 }
 
-func (e *errUnexpectedClusterStatus) Error() string {
-	return fmt.Sprintf("unexpected error status: %s", e.status)
+func (e *UnexpectedClusterStatusError) Error() string {
+	return "unexpected error status: " + e.status
 }

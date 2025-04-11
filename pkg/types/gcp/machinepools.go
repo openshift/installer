@@ -1,5 +1,93 @@
 package gcp
 
+import "k8s.io/apimachinery/pkg/util/sets"
+
+// FeatureSwitch indicates whether the feature is enabled or disabled.
+type FeatureSwitch string
+
+// OnHostMaintenanceType indicates the setting for the OnHostMaintenance feature, but this is only
+// applicable when ConfidentialCompute is Enabled.
+type OnHostMaintenanceType string
+
+// ConfidentialComputePolicy indicates the setting for the ConfidentialCompute feature.
+type ConfidentialComputePolicy string
+
+const (
+	// PDSSD is the constant string representation for persistent disk ssd disk types.
+	PDSSD = "pd-ssd"
+	// PDStandard is the constant string representation for persistent disk standard disk types.
+	PDStandard = "pd-standard"
+	// PDBalanced is the constant string representation for persistent disk balanced disk types.
+	PDBalanced = "pd-balanced"
+	// HyperDiskBalanced is the constant string representation for hyperdisk balanced disk types.
+	HyperDiskBalanced = "hyperdisk-balanced"
+)
+
+var (
+	// ControlPlaneSupportedDisks contains the supported disk types for control plane nodes.
+	ControlPlaneSupportedDisks = sets.New(HyperDiskBalanced, PDBalanced, PDSSD)
+
+	// ComputeSupportedDisks contains the supported disk types for control plane nodes.
+	ComputeSupportedDisks = sets.New(HyperDiskBalanced, PDBalanced, PDSSD, PDStandard)
+
+	// DefaultCustomInstanceType is the default instance type on the GCP server side. The default custom
+	// instance type can be changed on the client side with gcloud.
+	DefaultCustomInstanceType = "n1"
+
+	// InstanceTypeToDiskTypeMap contains a map where the key is the Instance Type, and the
+	// values are a list of disk types that are supported by the installer and correlate to the Instance Type.
+	InstanceTypeToDiskTypeMap = map[string][]string{
+		"a2":  {PDStandard, PDSSD, PDBalanced},
+		"a3":  {PDSSD, PDBalanced},
+		"c2":  {PDStandard, PDSSD, PDBalanced},
+		"c2d": {PDStandard, PDSSD, PDBalanced},
+		"c3":  {PDSSD, PDBalanced, HyperDiskBalanced},
+		"c3d": {PDSSD, PDBalanced, HyperDiskBalanced},
+		"c4":  {HyperDiskBalanced},
+		"c4a": {HyperDiskBalanced},
+		"e2":  {PDStandard, PDSSD, PDBalanced},
+		"m1":  {PDSSD, PDBalanced, HyperDiskBalanced},
+		"n1":  {PDStandard, PDSSD, PDBalanced},
+		"n2":  {PDStandard, PDSSD, PDBalanced},
+		"n2d": {PDStandard, PDSSD, PDBalanced},
+		"n4":  {HyperDiskBalanced},
+		"t2a": {PDStandard, PDSSD, PDBalanced},
+		"t2d": {PDStandard, PDSSD, PDBalanced},
+	}
+)
+
+const (
+	// EnabledFeature indicates that the feature is configured as enabled.
+	EnabledFeature FeatureSwitch = "Enabled"
+
+	// DisabledFeature indicates that the feature is configured as disabled.
+	DisabledFeature FeatureSwitch = "Disabled"
+
+	// OnHostMaintenanceMigrate is the default, and it indicates that the OnHostMaintenance feature is set to Migrate.
+	OnHostMaintenanceMigrate OnHostMaintenanceType = "Migrate"
+
+	// OnHostMaintenanceTerminate indicates that the OnHostMaintenance feature is set to Terminate.
+	OnHostMaintenanceTerminate OnHostMaintenanceType = "Terminate"
+
+	// ConfidentialComputePolicySEV indicates that the ConfidentialCompute feature is set to AMDEncryptedVirtualization.
+	ConfidentialComputePolicySEV ConfidentialComputePolicy = "AMDEncryptedVirtualization"
+
+	// ConfidentialComputePolicySEVSNP indicates that the ConfidentialCompute feature is set to AMDEncryptedVirtualizationNestedPaging.
+	ConfidentialComputePolicySEVSNP ConfidentialComputePolicy = "AMDEncryptedVirtualizationNestedPaging"
+
+	// ConfidentialComputePolicyTDX indicates that the ConfidentialCompute feature is set to IntelTrustedDomainExtensions.
+	ConfidentialComputePolicyTDX ConfidentialComputePolicy = "IntelTrustedDomainExtensions"
+)
+
+var (
+	// ConfidentialComputePolicyToSupportedInstanceType is a map containing machine types and the list of confidential computing technologies each of them support.
+	ConfidentialComputePolicyToSupportedInstanceType = map[ConfidentialComputePolicy][]string{
+		ConfidentialComputePolicySEV:    {"c2d", "n2d", "c3d"},
+		ConfidentialComputePolicySEVSNP: {"n2d"},
+		ConfidentialComputePolicyTDX:    {"c3"},
+	}
+)
+
 // MachinePool stores the configuration for a machine pool installed on GCP.
 type MachinePool struct {
 	// Zones is list of availability zones that can be used.
@@ -38,21 +126,40 @@ type MachinePool struct {
 	// OnHostMaintenance determines the behavior when a maintenance event occurs that might cause the instance to reboot.
 	// Allowed values are "Migrate" and "Terminate".
 	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is "Migrate".
+	// +kubebuilder:default="Migrate"
+	// +default="Migrate"
 	// +kubebuilder:validation:Enum=Migrate;Terminate;
 	// +optional
 	OnHostMaintenance string `json:"onHostMaintenance,omitempty"`
 
-	// ConfidentialCompute Defines whether the instance should have confidential compute enabled.
-	// If enabled OnHostMaintenance is required to be set to "Terminate".
-	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
-	// +kubebuilder:validation:Enum=Enabled;Disabled
+	// confidentialCompute is an optional field defining whether the instance should have
+	// Confidential Computing enabled or not, and the Confidential Computing technology of choice.
+	//     With Disabled, Confidential Computing is disabled.
+	//     With Enabled, Confidential Computing is enabled with no preference on the
+	// Confidential Computing technology. The platform chooses a default i.e. AMD SEV,
+	// which is subject to change over time.
+	//     With AMDEncryptedVirtualization, Confidential Computing is enabled with
+	// AMD Secure Encrypted Virtualization (AMD SEV).
+	//     With AMDEncryptedVirtualizationNestedPaging, Confidential Computing is
+	// enabled with AMD Secure Encrypted Virtualization Secure Nested Paging
+	// (AMD SEV-SNP).
+	//     With IntelTrustedDomainExtensions, Confidential Computing is enabled with
+	// Intel Trusted Domain Extensions (Intel TDX).
+	//     If any value other than Disabled is set, a machine type and region that supports
+	// Confidential Computing must be specified. Machine series and regions supporting
+	// Confidential Computing technologies can be checked at
+	// https://cloud.google.com/confidential-computing/confidential-vm/docs/supported-configurations#machine-type-cpu-zone
+	//     If any value other than Disabled is set, onHostMaintenance is required to be set
+	// to "Terminate".
+	// +kubebuilder:default="Disabled"
+	// +default="Disabled"
+	// +kubebuilder:validation:Enum="";Enabled;Disabled;AMDEncryptedVirtualization;AMDEncryptedVirtualizationNestedPaging;IntelTrustedDomainExtensions
 	// +optional
 	ConfidentialCompute string `json:"confidentialCompute,omitempty"`
 
-	// ServiceAccount is the email of a gcp service account to be used for shared
-	// vpc installations. The provided service account will be attached to control-plane nodes
-	// in order to provide the permissions required by the cloud provider in the host project.
-	// This field is only supported in the control-plane machinepool.
+	// ServiceAccount is the email of a gcp service account to be used during installations.
+	// The provided service account can be attached to both control-plane nodes
+	// and worker nodes in order to provide the permissions required by the cloud provider.
 	//
 	// +optional
 	ServiceAccount string `json:"serviceAccount,omitempty"`
@@ -61,9 +168,9 @@ type MachinePool struct {
 // OSDisk defines the disk for machines on GCP.
 type OSDisk struct {
 	// DiskType defines the type of disk.
-	// For control plane nodes, the valid value is pd-ssd.
+	// For control plane nodes, the valid values are pd-balanced, pd-ssd, and hyperdisk-balanced.
 	// +optional
-	// +kubebuilder:validation:Enum=pd-balanced;pd-ssd;pd-standard
+	// +kubebuilder:validation:Enum=pd-balanced;pd-ssd;pd-standard;hyperdisk-balanced
 	DiskType string `json:"diskType"`
 
 	// DiskSizeGB defines the size of disk in GB.

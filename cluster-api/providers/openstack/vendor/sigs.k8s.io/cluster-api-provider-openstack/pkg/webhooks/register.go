@@ -39,6 +39,7 @@ func RegisterAllWithManager(mgr manager.Manager) []error {
 		{"OpenStackClusterTemplate", SetupOpenStackClusterTemplateWebhook},
 		{"OpenStackMachine", SetupOpenStackMachineWebhook},
 		{"OpenStackMachineTemplate", SetupOpenStackMachineTemplateWebhook},
+		{"OpenStackServer", SetupOpenStackServerWebhook},
 	} {
 		if err := webhook.setup(mgr); err != nil {
 			errs = append(errs, fmt.Errorf("creating webhook for %s: %v", webhook.name, err))

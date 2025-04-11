@@ -55,6 +55,21 @@ func Test_GenerateMachines(t *testing.T) {
 			installConfig:     getICWithSecureBoot(),
 			expectedGCPConfig: getGCPMachineWithSecureBoot(),
 		},
+		{
+			name:              "serviceaccount",
+			installConfig:     getICWithServiceAccount(),
+			expectedGCPConfig: getGCPMachineWithServiceAccount(),
+		},
+		{
+			name:              "serviceaccount-controlplane-machine",
+			installConfig:     getICWithServiceAccountControlPlaneMachine(),
+			expectedGCPConfig: getGCPMachineWithServiceAccountControlPlaneMachine(),
+		},
+		{
+			name:              "usertags",
+			installConfig:     getICWithUserTags(),
+			expectedGCPConfig: getGCPMachineWithTags(),
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -149,6 +164,33 @@ func getICWithSecureBoot() *installconfig.InstallConfig {
 	return ic
 }
 
+func getICWithServiceAccount() *installconfig.InstallConfig {
+	ic := getBaseInstallConfig()
+	ic.Config.Platform.GCP.DefaultMachinePlatform = &gcptypes.MachinePool{ServiceAccount: "user-service-account@some-project.iam.gserviceaccount.com"}
+	return ic
+}
+
+func getICWithServiceAccountControlPlaneMachine() *installconfig.InstallConfig {
+	ic := getBaseInstallConfig()
+	ic.Config.Platform.GCP.DefaultMachinePlatform = &gcptypes.MachinePool{ServiceAccount: "user-service-account@some-project.iam.gserviceaccount.com"}
+	ic.Config.ControlPlane = &types.MachinePool{
+		Name:     "master",
+		Replicas: ptr.To(int64(numReplicas)),
+		Platform: types.MachinePoolPlatform{
+			GCP: &gcptypes.MachinePool{
+				ServiceAccount: "other-service-account@some-project.iam.gserviceaccount.com"},
+		},
+	}
+	return ic
+}
+
+func getICWithUserTags() *installconfig.InstallConfig {
+	ic := getBaseInstallConfig()
+	ic.Config.Platform.GCP.UserTags = []gcptypes.UserTag{{ParentID: "my-project", Key: "foo", Value: "bar"},
+		{ParentID: "other-project", Key: "id", Value: "1234"}}
+	return ic
+}
+
 func getBaseGCPMachine() *capg.GCPMachine {
 	subnet := "012345678-master-subnet"
 	image := "rhcos-415-92-202311241643-0-gcp-x86-64"
@@ -173,6 +215,8 @@ func getBaseGCPMachine() *capg.GCPMachine {
 				Email:  "012345678-m@my-project.iam.gserviceaccount.com",
 				Scopes: []string{compute.CloudPlatformScope},
 			},
+			ResourceManagerTags: []capg.ResourceManagerTag{},
+			IPForwarding:        ptr.To(capg.IPForwardingDisabled),
 		},
 	}
 	gcpMachine.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPMachine"))
@@ -209,6 +253,24 @@ func getGCPMachineWithSecureBoot() *capg.GCPMachine {
 	return gcpMachine
 }
 
+func getGCPMachineWithServiceAccount() *capg.GCPMachine {
+	gcpMachine := getBaseGCPMachine()
+	gcpMachine.Spec.ServiceAccount = &capg.ServiceAccount{
+		Email:  "user-service-account@some-project.iam.gserviceaccount.com",
+		Scopes: []string{compute.CloudPlatformScope},
+	}
+	return gcpMachine
+}
+
+func getGCPMachineWithServiceAccountControlPlaneMachine() *capg.GCPMachine {
+	gcpMachine := getBaseGCPMachine()
+	gcpMachine.Spec.ServiceAccount = &capg.ServiceAccount{
+		Email:  "other-service-account@some-project.iam.gserviceaccount.com",
+		Scopes: []string{compute.CloudPlatformScope},
+	}
+	return gcpMachine
+}
+
 func getBaseCapiMachine() *capi.Machine {
 	dataSecret := fmt.Sprintf("%s-master", "012345678")
 
@@ -233,4 +295,16 @@ func getBaseCapiMachine() *capi.Machine {
 	}
 	capiMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 	return capiMachine
+}
+
+func getGCPMachineWithTags() *capg.GCPMachine {
+	gcpMachine := getBaseGCPMachine()
+	gcpMachine.Spec.ResourceManagerTags = []capg.ResourceManagerTag{
+		{ParentID: "my-project",
+			Key:   "foo",
+			Value: "bar"},
+		{ParentID: "other-project",
+			Key:   "id",
+			Value: "1234"}}
+	return gcpMachine
 }

@@ -1,10 +1,14 @@
 package gcp
 
 import (
+	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/apparentlymart/go-cidr/cidr"
+	"google.golang.org/api/compute/v1"
+	"google.golang.org/api/option"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -12,10 +16,13 @@ import (
 	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
@@ -33,26 +40,47 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		networkName = installConfig.Config.GCP.Network
 	}
 
-	masterSubnet := gcp.DefaultSubnetName(clusterID.InfraID, "master")
-	if installConfig.Config.GCP.ControlPlaneSubnet != "" {
-		masterSubnet = installConfig.Config.GCP.ControlPlaneSubnet
+	networkProject := installConfig.Config.GCP.ProjectID
+	if installConfig.Config.GCP.NetworkProjectID != "" {
+		networkProject = installConfig.Config.GCP.NetworkProjectID
 	}
 
-	master := capg.SubnetSpec{
-		Name:        masterSubnet,
-		CidrBlock:   "",
+	controlPlaneSubnetName := gcp.DefaultSubnetName(clusterID.InfraID, "master")
+	controlPlaneSubnetCidr := ""
+	if installConfig.Config.GCP.ControlPlaneSubnet != "" {
+		controlPlaneSubnetName = installConfig.Config.GCP.ControlPlaneSubnet
+
+		controlPlaneSubnet, err := getSubnet(context.TODO(), networkProject, installConfig.Config.GCP.Region, controlPlaneSubnetName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get control plane subnet: %w", err)
+		}
+		// IpCidr is the IPv4 version, the IPv6 version can be accessed as well
+		controlPlaneSubnetCidr = controlPlaneSubnet.IpCidrRange
+	}
+
+	controlPlane := capg.SubnetSpec{
+		Name:        controlPlaneSubnetName,
+		CidrBlock:   controlPlaneSubnetCidr,
 		Description: ptr.To(description),
 		Region:      installConfig.Config.GCP.Region,
 	}
 
-	workerSubnet := gcp.DefaultSubnetName(clusterID.InfraID, "worker")
+	computeSubnetName := gcp.DefaultSubnetName(clusterID.InfraID, "worker")
+	computeSubnetCidr := ""
 	if installConfig.Config.GCP.ComputeSubnet != "" {
-		workerSubnet = installConfig.Config.GCP.ComputeSubnet
+		computeSubnetName = installConfig.Config.GCP.ComputeSubnet
+
+		computeSubnet, err := getSubnet(context.TODO(), networkProject, installConfig.Config.GCP.Region, computeSubnetName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get compute subnet: %w", err)
+		}
+		// IpCidr is the IPv4 version, the IPv6 version can be accessed as well
+		computeSubnetCidr = computeSubnet.IpCidrRange
 	}
 
-	worker := capg.SubnetSpec{
-		Name:        workerSubnet,
-		CidrBlock:   "",
+	compute := capg.SubnetSpec{
+		Name:        computeSubnetName,
+		CidrBlock:   computeSubnetCidr,
 		Description: ptr.To(description),
 		Region:      installConfig.Config.GCP.Region,
 	}
@@ -79,18 +107,18 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		if err != nil {
 			return nil, fmt.Errorf("failed to create the master subnet %w", err)
 		}
-		master.CidrBlock = masterCIDR.String()
+		controlPlane.CidrBlock = masterCIDR.String()
 	}
 
 	if installConfig.Config.GCP.ComputeSubnet == "" {
-		workerCIDR, err := cidr.Subnet(ipv4Net, 1, 1)
+		computeCIDR, err := cidr.Subnet(ipv4Net, 1, 1)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create the worker subnet %w", err)
+			return nil, fmt.Errorf("failed to create the compute subnet %w", err)
 		}
-		worker.CidrBlock = workerCIDR.String()
+		compute.CidrBlock = computeCIDR.String()
 	}
 
-	subnets := []capg.SubnetSpec{master, worker}
+	subnets := []capg.SubnetSpec{controlPlane, compute}
 	// Subnets should never be auto created, even in shared VPC installs
 	autoCreateSubnets := false
 
@@ -99,6 +127,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	labels[fmt.Sprintf("capg-cluster-%s", clusterID.InfraID)] = "owned"
 	for _, label := range installConfig.Config.GCP.UserLabels {
 		labels[label.Key] = label.Value
+	}
+
+	capgLoadBalancerType := capg.InternalExternal
+	if installConfig.Config.Publish == types.InternalPublishingStrategy {
+		capgLoadBalancerType = capg.Internal
 	}
 
 	gcpCluster := &capg.GCPCluster{
@@ -121,10 +154,18 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			FailureDomains:   findFailureDomains(installConfig),
 			LoadBalancer: capg.LoadBalancerSpec{
 				APIServerInstanceGroupTagOverride: ptr.To(InstanceGroupRoleTag),
+				LoadBalancerType:                  ptr.To(capgLoadBalancerType),
 			},
+			ResourceManagerTags: GetTagsFromInstallConfig(installConfig),
+			ServiceEndpoints:    getServiceEndpointsFromInstallConfig(installConfig),
 		},
 	}
 	gcpCluster.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPCluster"))
+
+	// Set the network project during shared vpc installs
+	if installConfig.Config.GCP.NetworkProjectID != "" {
+		gcpCluster.Spec.Network.HostProject = ptr.To(installConfig.Config.GCP.NetworkProjectID)
+	}
 
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: gcpCluster,
@@ -133,11 +174,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
-		InfrastructureRef: &corev1.ObjectReference{
-			APIVersion: capg.GroupVersion.String(),
-			Kind:       "GCPCluster",
-			Name:       gcpCluster.Name,
-			Namespace:  gcpCluster.Namespace,
+		InfrastructureRefs: []*corev1.ObjectReference{
+			{
+				APIVersion: capg.GroupVersion.String(),
+				Kind:       "GCPCluster",
+				Name:       gcpCluster.Name,
+				Namespace:  gcpCluster.Namespace,
+			},
 		},
 	}, nil
 }
@@ -181,4 +224,64 @@ func findFailureDomains(installConfig *installconfig.InstallConfig) []string {
 	}
 
 	return zones.UnsortedList()
+}
+
+// getSubnet will find a subnet in a project by the name. The matching subnet structure will be returned if
+// one is found.
+func getSubnet(ctx context.Context, project, region, subnetName string) (*compute.Subnetwork, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
+	defer cancel()
+
+	ssn, err := gcpic.GetSession(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session: %w", err)
+	}
+
+	computeService, err := compute.NewService(ctx, option.WithCredentials(ssn.Credentials))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create compute service: %w", err)
+	}
+
+	subnetService := compute.NewSubnetworksService(computeService)
+	subnet, err := subnetService.Get(project, region, subnetName).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to find subnet %s: %w", subnetName, err)
+	} else if subnet == nil {
+		return nil, fmt.Errorf("subnet %s is empty", subnetName)
+	}
+
+	return subnet, nil
+}
+
+// GetTagsFromInstallConfig will return a slice of ResourceManagerTags from UserTags in install-config.
+func GetTagsFromInstallConfig(installConfig *installconfig.InstallConfig) []capg.ResourceManagerTag {
+	tags := make([]capg.ResourceManagerTag, len(installConfig.Config.Platform.GCP.UserTags))
+	for i, tag := range installConfig.Config.Platform.GCP.UserTags {
+		tags[i] = capg.ResourceManagerTag{
+			ParentID: tag.ParentID,
+			Key:      tag.Key,
+			Value:    tag.Value,
+		}
+	}
+
+	return tags
+}
+
+// getServiceEndpointsFromInstallConfig gets the service endpoints for CAPG use.
+func getServiceEndpointsFromInstallConfig(installConfig *installconfig.InstallConfig) *capg.ServiceEndpoints {
+	capgServiceEndpoints := &capg.ServiceEndpoints{}
+
+	for _, endpoint := range installConfig.Config.GCP.ServiceEndpoints {
+		switch endpoint.Name {
+		case configv1.GCPServiceEndpointNameCompute:
+			capgServiceEndpoints.ComputeServiceEndpoint = endpoint.URL
+		case configv1.GCPServiceEndpointNameContainer:
+			capgServiceEndpoints.ContainerServiceEndpoint = endpoint.URL
+		case configv1.GCPServiceEndpointNameIAM:
+			capgServiceEndpoints.IAMServiceEndpoint = endpoint.URL
+		case configv1.GCPServiceEndpointNameCloudResource:
+			capgServiceEndpoints.ResourceManagerServiceEndpoint = endpoint.URL
+		}
+	}
+	return capgServiceEndpoints
 }

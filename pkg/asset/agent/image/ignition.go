@@ -2,7 +2,9 @@ package image
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"html/template"
 	"net"
 	"net/url"
 	"path"
@@ -29,6 +31,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/password"
@@ -46,6 +49,8 @@ const nmConnectionsPath = "/etc/assisted/network"
 const extraManifestPath = "/etc/assisted/extra-manifests"
 const registriesConfPath = "/etc/containers/registries.conf"
 const registryCABundlePath = "/etc/pki/ca-trust/source/anchors/domain.crt"
+const clusterConfigPath = "/etc/assisted/clusterconfig"
+const chronyConfPath = "/etc/chrony.conf"
 
 // Ignition is an asset that generates the agent installer ignition file.
 type Ignition struct {
@@ -73,7 +78,11 @@ type agentTemplateData struct {
 	ConfigImageFiles          string
 	ImageTypeISO              string
 	PublicKeyPEM              string
-	PrivateKeyPEM             string
+	AgentAuthToken            string
+	UserAuthToken             string
+	WatcherAuthToken          string
+	TokenExpiry               string
+	AuthType                  string
 	CaBundleMount             string
 }
 
@@ -88,6 +97,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&workflow.AgentWorkflow{},
 		&joiner.ClusterInfo{},
 		&joiner.AddNodesConfig{},
+		&joiner.ImportClusterConfig{},
 		&manifests.AgentManifests{},
 		&manifests.ExtraManifests{},
 		&tls.KubeAPIServerLBSignerCertKey{},
@@ -105,17 +115,19 @@ func (a *Ignition) Dependencies() []asset.Asset {
 }
 
 // Generate generates the agent installer ignition.
-func (a *Ignition) Generate(dependencies asset.Parents) error {
+func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
-	clusterInfo := &joiner.ClusterInfo{}
-	addNodesConfig := &joiner.AddNodesConfig{}
 	agentManifests := &manifests.AgentManifests{}
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	agentHostsAsset := &agentconfig.AgentHosts{}
 	extraManifests := &manifests.ExtraManifests{}
-	keyPairAsset := &gencrypto.AuthConfig{}
+	authConfig := &gencrypto.AuthConfig{}
 	infraEnvAsset := &common.InfraEnvID{}
-	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, keyPairAsset, agentWorkflow, clusterInfo, addNodesConfig, infraEnvAsset)
+	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, authConfig, agentWorkflow, infraEnvAsset)
+
+	if err := workflowreport.GetReport(ctx).Stage(workflow.StageIgnition); err != nil {
+		return err
+	}
 
 	pwd := &password.KubeadminPassword{}
 	dependencies.Get(pwd)
@@ -158,9 +170,10 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		}
 		a.RendezvousIP = nodeZeroIP
 		logrus.Infof("The rendezvous host IP (node0 IP) is %s", a.RendezvousIP)
-		// Define cluster name and image type.
+		// Define cluster name
 		clusterName = fmt.Sprintf("%s.%s", agentManifests.ClusterDeployment.Spec.ClusterName, agentManifests.ClusterDeployment.Spec.BaseDomain)
-		if agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType {
+		if (agentConfigAsset.Config != nil && agentConfigAsset.Config.MinimalISO) ||
+			(agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType) {
 			imageTypeISO = "minimal-iso"
 		}
 		// Fetch the required number of master and worker nodes.
@@ -176,6 +189,11 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		streamGetter = DefaultCoreOSStreamGetter
 
 	case workflow.AgentWorkflowTypeAddNodes:
+		clusterInfo := &joiner.ClusterInfo{}
+		addNodesConfig := &joiner.AddNodesConfig{}
+		importClusterConfig := &joiner.ImportClusterConfig{}
+		dependencies.Get(clusterInfo, addNodesConfig, importClusterConfig)
+
 		// In the add-nodes workflow, every node will act independently from the others.
 		a.RendezvousIP = "127.0.0.1"
 		// Reuse the existing cluster name.
@@ -185,15 +203,29 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		// that all the hosts defined are workers.
 		numMasters = 0
 		numWorkers = len(addNodesConfig.Config.Hosts)
+
 		// Enable add-nodes specific services
 		enabledServices = append(enabledServices, "agent-add-node.service")
 		// Generate add-nodes.env file
-		addNodesEnvFile := ignition.FileFromString(addNodesEnvPath, "root", 0644, getAddNodesEnv(*clusterInfo))
+		addNodesEnvFile := ignition.FileFromString(addNodesEnvPath, "root", 0644, getAddNodesEnv(*clusterInfo, authConfig.AuthTokenExpiry))
 		config.Storage.Files = append(config.Storage.Files, addNodesEnvFile)
+
+		// Enable auth token service
+		enabledServices = append(enabledServices, "agent-auth-token-status.service")
+
 		// Version matches the source cluster one
 		openshiftVersion = clusterInfo.Version
 		streamGetter = func(ctx context.Context) (*stream.Stream, error) {
 			return clusterInfo.OSImage, nil
+		}
+		// If defined, add the ignition endpoints
+		if err := addDay2ClusterConfigFiles(&config, *clusterInfo, *importClusterConfig); err != nil {
+			return err
+		}
+		// Configure the live environment with the chrony configuration provided by the
+		// cluster, to allow using the same NTP servers.
+		if clusterInfo.ChronyConf != nil {
+			config.Storage.Files = append(config.Storage.Files, *clusterInfo.ChronyConf)
 		}
 
 	default:
@@ -241,23 +273,27 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	a.CPUArch = *osImage.CPUArchitecture
 
 	caBundleMount := defineCABundleMount(registriesConfig, registryCABundle)
-
 	agentTemplateData := getTemplateData(
 		clusterName,
 		agentManifests.GetPullSecretData(),
 		releaseImageList,
 		agentManifests.ClusterImageSet.Spec.ReleaseImage,
 		releaseImageMirror,
-		len(registriesConfig.MirrorConfig) > 0,
 		publicContainerRegistries,
-		numMasters, numWorkers,
+		imageTypeISO,
 		infraEnvID,
+		authConfig.PublicKey,
+		authConfig.AuthType,
+		authConfig.AgentAuthToken,
+		authConfig.UserAuthToken,
+		authConfig.WatcherAuthToken,
+		authConfig.AuthTokenExpiry,
+		caBundleMount,
+		len(registriesConfig.MirrorConfig) > 0,
+		numMasters, numWorkers,
 		osImage,
 		infraEnv.Spec.Proxy,
-		imageTypeISO,
-		keyPairAsset.PrivateKey,
-		keyPairAsset.PublicKey,
-		caBundleMount)
+	)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -266,7 +302,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
 		"root", 0644,
-		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP, agentWorkflow.Workflow))
+		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP, authConfig.AgentAuthToken, authConfig.UserAuthToken, agentWorkflow.Workflow))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 	err = addBootstrapScripts(&config, agentManifests.ClusterImageSet.Spec.ReleaseImage)
@@ -319,6 +355,11 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
+	err = addNTPSources(&config, infraEnv)
+	if err != nil {
+		return err
+	}
+
 	a.Config = &config
 	return nil
 }
@@ -338,7 +379,10 @@ func getDefaultEnabledServices() []string {
 		"multipathd.service",
 		"selinux.service",
 		"install-status.service",
+		"oci-eval-user-data.service",
+		"iscsistart.service",
 		"set-hostname.service",
+		"iscsiadm.service",
 	}
 }
 
@@ -366,15 +410,12 @@ func addBootstrapScripts(config *igntypes.Config, releaseImage string) (err erro
 	return nil
 }
 
-func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
-	releaseImageMirror string, haveMirrorConfig bool, publicContainerRegistries string,
+func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries,
+	imageTypeISO, infraEnvID, publicKey, authType, agentAuthToken, userAuthToken, watcherAuthToken, tokenExpiry, caBundleMount string,
+	haveMirrorConfig bool,
 	numMasters, numWorkers int,
-	infraEnvID string,
 	osImage *models.OsImage,
-	proxy *v1beta1.Proxy,
-	imageTypeISO,
-	privateKey, publicKey string,
-	caBundleMount string) *agentTemplateData {
+	proxy *v1beta1.Proxy) *agentTemplateData {
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
@@ -390,13 +431,17 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 		OSImage:                   osImage,
 		Proxy:                     proxy,
 		ImageTypeISO:              imageTypeISO,
-		PrivateKeyPEM:             privateKey,
 		PublicKeyPEM:              publicKey,
+		AuthType:                  authType,
+		AgentAuthToken:            agentAuthToken,
+		UserAuthToken:             userAuthToken,
+		WatcherAuthToken:          watcherAuthToken,
+		TokenExpiry:               tokenExpiry,
 		CaBundleMount:             caBundleMount,
 	}
 }
 
-func getRendezvousHostEnv(serviceProtocol, nodeZeroIP string, workflowType workflow.AgentWorkflowType) string {
+func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, agentAuthtoken, userAuthToken string, workflowType workflow.AgentWorkflowType) string {
 	serviceBaseURL := url.URL{
 		Scheme: serviceProtocol,
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
@@ -407,19 +452,47 @@ func getRendezvousHostEnv(serviceProtocol, nodeZeroIP string, workflowType workf
 		Host:   net.JoinHostPort(nodeZeroIP, "8888"),
 		Path:   "/",
 	}
+	// USER_AUTH_TOKEN is required to authenticate API requests against agent-installer-local auth type
+	// and for the endpoints marked with userAuth security definition in assisted-service swagger.yaml.
+	// PULL_SECRET_TOKEN contains the AGENT_AUTH_TOKEN and is required for the endpoints marked with agentAuth security definition in assisted-service swagger.yaml.
+	// The name PULL_SECRET_TOKEN is used in
+	// assisted-installer-agent, which is responsible for authenticating API requests related to agents.
+	// Historically, PULL_SECRET_TOKEN was used solely to store the pull secrets.
+	// However, as the authentication mechanisms have evolved, PULL_SECRET_TOKEN now
+	// stores a JWT (JSON Web Token) in the context of local authentication.
+	// Consequently, PULL_SECRET_TOKEN must be set with the value of AGENT_AUTH_TOKEN to maintain compatibility
+	// and ensure successful authentication.
+	// In the absence of PULL_SECRET_TOKEN, the cluster installation will wait forever.
 
-	return fmt.Sprintf(`NODE_ZERO_IP=%s
+	rendezvousHostEnv := fmt.Sprintf(`NODE_ZERO_IP=%s
 SERVICE_BASE_URL=%s
 IMAGE_SERVICE_BASE_URL=%s
+PULL_SECRET_TOKEN=%s
+USER_AUTH_TOKEN=%s
 WORKFLOW_TYPE=%s
-`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), workflowType)
+`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), agentAuthtoken, userAuthToken, workflowType)
+
+	if workflowType == workflow.AgentWorkflowTypeInstallInteractiveDisconnected {
+		uiBaseURL := url.URL{
+			Scheme: serviceProtocol,
+			Host:   net.JoinHostPort(nodeZeroIP, "3001"),
+			Path:   "/",
+		}
+		uiEnv := fmt.Sprintf(`AIUI_APP_API_URL=%s
+AIUI_URL=%s
+`, serviceBaseURL.String(), uiBaseURL.String())
+		rendezvousHostEnv = fmt.Sprintf("%s%s", rendezvousHostEnv, uiEnv)
+	}
+
+	return rendezvousHostEnv
 }
 
-func getAddNodesEnv(clusterInfo joiner.ClusterInfo) string {
+func getAddNodesEnv(clusterInfo joiner.ClusterInfo, authTokenExpiry string) string {
 	return fmt.Sprintf(`CLUSTER_ID=%s
 CLUSTER_NAME=%s
 CLUSTER_API_VIP_DNS_NAME=%s
-`, clusterInfo.ClusterID, clusterInfo.ClusterName, clusterInfo.APIDNSName)
+AUTH_TOKEN_EXPIRY=%s
+`, clusterInfo.ClusterID, clusterInfo.ClusterName, clusterInfo.APIDNSName, authTokenExpiry)
 }
 
 func addStaticNetworkConfig(config *igntypes.Config, staticNetworkConfig []*models.HostStaticNetworkConfig) (err error) {
@@ -528,6 +601,51 @@ func addHostConfig(config *igntypes.Config, agentHosts *agentconfig.AgentHosts) 
 		hostConfigFile := ignition.FileFromBytes(filepath.Join("/etc/assisted/hostconfig", path), "root", 0644, content)
 		config.Storage.Files = append(config.Storage.Files, hostConfigFile)
 	}
+	return nil
+}
+
+func addDay2ClusterConfigFiles(config *igntypes.Config, clusterInfo joiner.ClusterInfo, importClusterConfig joiner.ImportClusterConfig) error {
+	// Create cluster config folder.
+	user := "root"
+	mode := 0644
+	config.Storage.Directories = append(config.Storage.Directories, igntypes.Directory{
+		Node: igntypes.Node{
+			Path: clusterConfigPath,
+			User: igntypes.NodeUser{
+				Name: &user,
+			},
+			Overwrite: util.BoolToPtr(true),
+		},
+		DirectoryEmbedded1: igntypes.DirectoryEmbedded1{
+			Mode: &mode,
+		},
+	})
+
+	day2Files := []struct {
+		name    string
+		rawData interface{}
+	}{
+		{
+			name:    "worker-ignition-endpoint.json",
+			rawData: clusterInfo.IgnitionEndpointWorker,
+		},
+		{
+			name:    joiner.ImportClusterConfigFilename,
+			rawData: importClusterConfig.Config,
+		},
+	}
+	for _, f := range day2Files {
+		if f.rawData == nil {
+			continue
+		}
+		data, err := json.MarshalIndent(f.rawData, "", "  ")
+		if err != nil {
+			return err
+		}
+		ignFile := ignition.FileFromBytes(path.Join(clusterConfigPath, f.name), user, mode, data)
+		config.Storage.Files = append(config.Storage.Files, ignFile)
+	}
+
 	return nil
 }
 
@@ -651,4 +769,29 @@ func getPublicContainerRegistries(registriesConfig *mirror.RegistriesConf) strin
 	}
 
 	return "quay.io"
+}
+
+func addNTPSources(config *igntypes.Config, infraEnv *v1beta1.InfraEnv) error {
+	if len(infraEnv.Spec.AdditionalNTPSources) == 0 {
+		return nil
+	}
+
+	chronyConfTemplate := `{{ range . }}server {{ . }} iburst
+{{ end }}makestep 1.0 3
+rtcsync
+logdir /var/log/chrony
+`
+	tmpl, err := template.New("chronyConf").Parse(chronyConfTemplate)
+	if err != nil {
+		return fmt.Errorf("error while parsing template for %s file: %w", chronyConfPath, err)
+	}
+
+	var sb strings.Builder
+	err = tmpl.Execute(&sb, infraEnv.Spec.AdditionalNTPSources)
+	if err != nil {
+		return fmt.Errorf("error while generating %s file: %w", chronyConfPath, err)
+	}
+
+	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString(chronyConfPath, "root", 0644, sb.String()))
+	return nil
 }

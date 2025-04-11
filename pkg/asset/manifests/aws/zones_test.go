@@ -87,15 +87,15 @@ func stubInstallConfigPoolControl() *types.MachinePool {
 }
 
 func tSortCapaSubnetsByID(in capa.Subnets) capa.Subnets {
-	subnetIds := []string{}
+	subnetIDs := []string{}
 	subnetsMap := make(map[string]capa.SubnetSpec, len(in))
 	for _, subnet := range in {
 		subnetsMap[subnet.ID] = subnet
-		subnetIds = append(subnetIds, subnet.ID)
+		subnetIDs = append(subnetIDs, subnet.ID)
 	}
-	sort.Strings(subnetIds)
+	sort.Strings(subnetIDs)
 	out := capa.Subnets{}
-	for _, sid := range subnetIds {
+	for _, sid := range subnetIDs {
 		out = append(out, subnetsMap[sid])
 	}
 	return out

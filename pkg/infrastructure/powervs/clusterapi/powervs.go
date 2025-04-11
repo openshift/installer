@@ -29,6 +29,7 @@ type Provider struct {
 	clusterapi.InfraProvider
 }
 
+var _ clusterapi.Timeouts = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.Provider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
@@ -37,6 +38,10 @@ var _ clusterapi.PostProvider = (*Provider)(nil)
 func (p Provider) Name() string {
 	return powervstypes.Name
 }
+
+// PublicGatherEndpoint indicates that machine ready checks should NOT wait for an ExternalIP
+// in the status when declaring machines ready.
+func (Provider) PublicGatherEndpoint() clusterapi.GatherEndpoint { return clusterapi.InternalIP }
 
 func leftInContext(ctx context.Context) time.Duration {
 	deadline, ok := ctx.Deadline()
@@ -51,6 +56,18 @@ func leftInContext(ctx context.Context) time.Duration {
 
 const privatePrefix = "api-int."
 const publicPrefix = "api."
+
+// NetworkTimeout allows platform provider to override the timeout
+// when waiting for the network infrastructure to become ready.
+func (p Provider) NetworkTimeout() time.Duration {
+	return 30 * time.Minute
+}
+
+// ProvisionTimeout allows platform provider to override the timeout
+// when waiting for the machines to provision.
+func (p Provider) ProvisionTimeout() time.Duration {
+	return 15 * time.Minute
+}
 
 // InfraReady is called once cluster.Status.InfrastructureReady
 // is true, typically after load balancers have been provisioned. It can be used
@@ -121,7 +138,6 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 
 	// Step 3: Add to security group rules
 	for port := range missingPorts {
-		port := port // TODO: remove when using golang 1.22+
 		rule = &vpcv1.SecurityGroupRulePrototype{
 			Direction: ptr.To("inbound"),
 			Protocol:  ptr.To("tcp"),
@@ -146,6 +162,19 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	if err != nil {
 		return fmt.Errorf("failed to add ping security group rule: %w", err)
 	}
+
+	if in.InstallConfig.Config.Publish == types.InternalPublishingStrategy &&
+		(len(in.InstallConfig.Config.ImageDigestSources) > 0 || len(in.InstallConfig.Config.DeprecatedImageContentSources) > 0) {
+		vpcID := *powerVSCluster.Status.VPC.ID
+		logrus.Debugf("InfraReady: Ensuring necessary VPE gateways are in place in VPC %v", vpcID)
+		groupID := *powerVSCluster.Status.ResourceGroup.ID
+		subnetID := *powerVSCluster.Status.VPCSubnet[*powerVSCluster.Spec.VPCSubnets[1].Name].ID
+		err = in.InstallConfig.PowerVS.CreateVirtualPrivateEndpointGateways(ctx, in.InfraID, vpcRegion, vpcID, subnetID, groupID, in.InstallConfig.Config.PowerVS.ServiceEndpoints)
+		if err != nil {
+			return fmt.Errorf("failed to create VPE: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -190,7 +219,7 @@ func createLoadBalancerDNSRecords(ctx context.Context, in clusterapi.InfraReadyI
 
 func findMissingSecurityGroupRules(ctx context.Context, in clusterapi.InfraReadyInput, vpcID string) (sets.Set[int64], error) {
 	foundPorts := sets.Set[int64]{}
-	wantedPorts := sets.New[int64](22, 10258, 22623)
+	wantedPorts := sets.New[int64](22, 443, 5000, 6443, 10258, 22623)
 
 	existingRules, err := in.InstallConfig.PowerVS.ListSecurityGroupRules(ctx, vpcID)
 	if err != nil {

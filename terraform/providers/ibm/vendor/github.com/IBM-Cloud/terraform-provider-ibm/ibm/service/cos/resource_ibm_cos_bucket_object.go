@@ -478,15 +478,16 @@ func resourceIBMCOSBucketObjectDelete(ctx context.Context, d *schema.ResourceDat
 
 func getCosEndpoint(bucketLocation string, endpointType string) string {
 	if bucketLocation != "" {
+		hostUrl := "cloud-object-storage.appdomain.cloud"
 		switch endpointType {
 		case "public":
-			return fmt.Sprintf("s3.%s.cloud-object-storage.appdomain.cloud", bucketLocation)
+			return fmt.Sprintf("s3.%s.%s", bucketLocation, hostUrl)
 		case "private":
-			return fmt.Sprintf("s3.private.%s.cloud-object-storage.appdomain.cloud", bucketLocation)
+			return fmt.Sprintf("s3.private.%s.%s", bucketLocation, hostUrl)
 		case "direct":
-			return fmt.Sprintf("s3.direct.%s.cloud-object-storage.appdomain.cloud", bucketLocation)
+			return fmt.Sprintf("s3.direct.%s.%s", bucketLocation, hostUrl)
 		default:
-			return fmt.Sprintf("s3.%s.cloud-object-storage.appdomain.cloud", bucketLocation)
+			return fmt.Sprintf("s3.%s.%s", bucketLocation, hostUrl)
 		}
 	}
 	return ""
@@ -494,8 +495,12 @@ func getCosEndpoint(bucketLocation string, endpointType string) string {
 
 func getS3Client(bxSession *bxsession.Session, bucketLocation string, endpointType string, instanceCRN string) (*s3.S3, error) {
 	var s3Conf *aws.Config
-
+	visibility := endpointType
+	if endpointType == "direct" {
+		visibility = "private"
+	}
 	apiEndpoint := getCosEndpoint(bucketLocation, endpointType)
+	apiEndpoint = conns.FileFallBack(bxSession.Config.EndpointsFile, visibility, "IBMCLOUD_COS_ENDPOINT", bucketLocation, apiEndpoint)
 	apiEndpoint = conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)
 	if apiEndpoint == "" {
 		return nil, fmt.Errorf("the endpoint doesn't exists for given location %s and endpoint type %s", bucketLocation, endpointType)

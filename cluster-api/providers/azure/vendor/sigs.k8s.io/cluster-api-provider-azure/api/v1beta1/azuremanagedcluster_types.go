@@ -25,6 +25,8 @@ import (
 type AzureManagedClusterSpec struct {
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// Immutable, populated by the AKS API at create.
+	// Because this field is programmatically set by CAPZ after resource creation, we define it as +optional
+	// in the API schema to permit resource admission.
 	// +optional
 	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
 }

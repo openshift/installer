@@ -24,6 +24,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/simulator/esx"
 	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -72,6 +73,11 @@ func (add *addHost) Run(task *Task) (types.AnyType, types.BaseMethodFault) {
 	host.Summary.Host = &host.Self
 	host.Config.Host = host.Self
 
+	task.ctx.Map.WithLock(task.ctx, *cr.EnvironmentBrowser, func() {
+		eb := task.ctx.Map.Get(*cr.EnvironmentBrowser).(*EnvironmentBrowser)
+		eb.addHost(task.ctx, host.Self)
+	})
+
 	cr.Host = append(cr.Host, host.Reference())
 	addComputeResource(cr.Summary.GetComputeResourceSummary(), host)
 
@@ -98,6 +104,9 @@ func (c *ClusterComputeResource) update(cfg *types.ClusterConfigInfoEx, cspec *t
 	if cspec.DrsConfig != nil {
 		if val := cspec.DrsConfig.Enabled; val != nil {
 			cfg.DrsConfig.Enabled = val
+		}
+		if val := cspec.DrsConfig.DefaultVmBehavior; val != "" {
+			cfg.DrsConfig.DefaultVmBehavior = val
 		}
 	}
 
@@ -432,18 +441,57 @@ func (c *ClusterComputeResource) PlaceVm(ctx *Context, req *types.PlaceVm) soap.
 		datastores = c.Datastore
 	}
 
-	spec := &types.VirtualMachineRelocateSpec{
-		Datastore: &datastores[rand.Intn(len(c.Datastore))],
-		Host:      &hosts[rand.Intn(len(c.Host))],
-		Pool:      c.ResourcePool,
-	}
-
 	switch types.PlacementSpecPlacementType(req.PlacementSpec.PlacementType) {
 	case types.PlacementSpecPlacementTypeClone, types.PlacementSpecPlacementTypeCreate:
+		spec := &types.VirtualMachineRelocateSpec{
+			Datastore: &datastores[rand.Intn(len(c.Datastore))],
+			Host:      &hosts[rand.Intn(len(c.Host))],
+			Pool:      c.ResourcePool,
+		}
 		res.Action = append(res.Action, &types.PlacementAction{
 			Vm:           req.PlacementSpec.Vm,
 			TargetHost:   spec.Host,
 			RelocateSpec: spec,
+		})
+	case types.PlacementSpecPlacementTypeReconfigure:
+		// Validate input.
+		if req.PlacementSpec.ConfigSpec == nil {
+			body.Fault_ = Fault("", &types.InvalidArgument{
+				InvalidProperty: "PlacementSpec.configSpec",
+			})
+			return body
+		}
+
+		// Update PlacementResult.
+		vmObj := ctx.Map.Get(*req.PlacementSpec.Vm).(*VirtualMachine)
+		spec := &types.VirtualMachineRelocateSpec{
+			Datastore:    &vmObj.Datastore[0],
+			Host:         vmObj.Runtime.Host,
+			Pool:         vmObj.ResourcePool,
+			DiskMoveType: string(types.VirtualMachineRelocateDiskMoveOptionsMoveAllDiskBackingsAndAllowSharing),
+		}
+		res.Action = append(res.Action, &types.PlacementAction{
+			Vm:           req.PlacementSpec.Vm,
+			TargetHost:   spec.Host,
+			RelocateSpec: spec,
+		})
+	case types.PlacementSpecPlacementTypeRelocate:
+		// Validate fields of req.PlacementSpec, if explicitly provided.
+		if !validatePlacementSpecForPlaceVmRelocate(ctx, req, body) {
+			return body
+		}
+
+		// After validating req.PlacementSpec, we must have a valid req.PlacementSpec.Vm.
+		vmObj := ctx.Map.Get(*req.PlacementSpec.Vm).(*VirtualMachine)
+
+		// Populate RelocateSpec's common fields, if not explicitly provided.
+		populateRelocateSpecForPlaceVmRelocate(&req.PlacementSpec.RelocateSpec, vmObj)
+
+		// Update PlacementResult.
+		res.Action = append(res.Action, &types.PlacementAction{
+			Vm:           req.PlacementSpec.Vm,
+			TargetHost:   req.PlacementSpec.RelocateSpec.Host,
+			RelocateSpec: req.PlacementSpec.RelocateSpec,
 		})
 	default:
 		log.Printf("unsupported placement type: %s", req.PlacementSpec.PlacementType)
@@ -460,6 +508,134 @@ func (c *ClusterComputeResource) PlaceVm(ctx *Context, req *types.PlaceVm) soap.
 	return body
 }
 
+// validatePlacementSpecForPlaceVmRelocate validates the fields of req.PlacementSpec for a relocate placement type.
+// Returns true if the fields are valid, false otherwise.
+func validatePlacementSpecForPlaceVmRelocate(ctx *Context, req *types.PlaceVm, body *methods.PlaceVmBody) bool {
+	if req.PlacementSpec.Vm == nil {
+		body.Fault_ = Fault("", &types.InvalidArgument{
+			InvalidProperty: "PlacementSpec",
+		})
+		return false
+	}
+
+	// Oddly when the VM is not found, PlaceVm complains about configSpec being invalid, despite this being
+	// a relocate placement type. Possibly due to treating the missing VM as a create placement type
+	// internally, which requires the configSpec to be present.
+	vmObj, exist := ctx.Map.Get(*req.PlacementSpec.Vm).(*VirtualMachine)
+	if !exist {
+		body.Fault_ = Fault("", &types.InvalidArgument{
+			InvalidProperty: "PlacementSpec.configSpec",
+		})
+		return false
+	}
+
+	return validateRelocateSpecForPlaceVmRelocate(ctx, req.PlacementSpec.RelocateSpec, body, vmObj)
+}
+
+// validateRelocateSpecForPlaceVmRelocate validates the fields of req.PlacementSpec.RelocateSpec for a relocate
+// placement type. Returns true if the fields are valid, false otherwise.
+func validateRelocateSpecForPlaceVmRelocate(ctx *Context, spec *types.VirtualMachineRelocateSpec, body *methods.PlaceVmBody, vmObj *VirtualMachine) bool {
+	if spec == nil {
+		// An empty relocate spec is valid, as it will be populated with default values.
+		return true
+	}
+
+	if spec.Host != nil {
+		if _, exist := ctx.Map.Get(*spec.Host).(*HostSystem); !exist {
+			body.Fault_ = Fault("", &types.ManagedObjectNotFound{
+				Obj: *spec.Host,
+			})
+			return false
+		}
+	}
+
+	if spec.Datastore != nil {
+		if _, exist := ctx.Map.Get(*spec.Datastore).(*Datastore); !exist {
+			body.Fault_ = Fault("", &types.ManagedObjectNotFound{
+				Obj: *spec.Datastore,
+			})
+			return false
+		}
+	}
+
+	if spec.Pool != nil {
+		if _, exist := ctx.Map.Get(*spec.Pool).(*ResourcePool); !exist {
+			body.Fault_ = Fault("", &types.ManagedObjectNotFound{
+				Obj: *spec.Pool,
+			})
+			return false
+		}
+	}
+
+	if spec.Disk != nil {
+		deviceList := object.VirtualDeviceList(vmObj.Config.Hardware.Device)
+		vdiskList := deviceList.SelectByType(&types.VirtualDisk{})
+		for _, disk := range spec.Disk {
+			var diskFound bool
+			for _, vdisk := range vdiskList {
+				if disk.DiskId == vdisk.GetVirtualDevice().Key {
+					diskFound = true
+					break
+				}
+			}
+			if !diskFound {
+				body.Fault_ = Fault("", &types.InvalidArgument{
+					InvalidProperty: "PlacementSpec.vm",
+				})
+				return false
+			}
+
+			// Unlike a non-existing spec.Datastore that throws ManagedObjectNotFound, a non-existing disk.Datastore
+			// throws InvalidArgument.
+			if _, exist := ctx.Map.Get(disk.Datastore).(*Datastore); !exist {
+				body.Fault_ = Fault("", &types.InvalidArgument{
+					InvalidProperty: "RelocateSpec",
+				})
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+// populateRelocateSpecForPlaceVmRelocate populates the fields of req.PlacementSpec.RelocateSpec for a relocate
+// placement type, if not explicitly provided.
+func populateRelocateSpecForPlaceVmRelocate(specPtr **types.VirtualMachineRelocateSpec, vmObj *VirtualMachine) {
+	if *specPtr == nil {
+		*specPtr = &types.VirtualMachineRelocateSpec{}
+	}
+
+	spec := *specPtr
+
+	if spec.DiskMoveType == "" {
+		spec.DiskMoveType = string(types.VirtualMachineRelocateDiskMoveOptionsMoveAllDiskBackingsAndDisallowSharing)
+	}
+
+	if spec.Datastore == nil {
+		spec.Datastore = &vmObj.Datastore[0]
+	}
+
+	if spec.Host == nil {
+		spec.Host = vmObj.Runtime.Host
+	}
+
+	if spec.Pool == nil {
+		spec.Pool = vmObj.ResourcePool
+	}
+
+	if spec.Disk == nil {
+		deviceList := object.VirtualDeviceList(vmObj.Config.Hardware.Device)
+		for _, vdisk := range deviceList.SelectByType(&types.VirtualDisk{}) {
+			spec.Disk = append(spec.Disk, types.VirtualMachineRelocateSpecDiskLocator{
+				DiskId:       vdisk.GetVirtualDevice().Key,
+				Datastore:    *spec.Datastore,
+				DiskMoveType: spec.DiskMoveType,
+			})
+		}
+	}
+}
+
 func CreateClusterComputeResource(ctx *Context, f *Folder, name string, spec types.ClusterConfigSpecEx) (*ClusterComputeResource, types.BaseMethodFault) {
 	if e := ctx.Map.FindByName(name, f.ChildEntity); e != nil {
 		return nil, &types.DuplicateName{
@@ -469,7 +645,7 @@ func CreateClusterComputeResource(ctx *Context, f *Folder, name string, spec typ
 	}
 
 	cluster := &ClusterComputeResource{}
-	cluster.EnvironmentBrowser = newEnvironmentBrowser()
+	cluster.EnvironmentBrowser = newEnvironmentBrowser(ctx)
 	cluster.Name = name
 	cluster.Network = ctx.Map.getEntityDatacenter(f).defaultNetwork()
 	cluster.Summary = &types.ClusterComputeResourceSummary{

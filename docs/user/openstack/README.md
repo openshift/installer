@@ -54,6 +54,7 @@ It covers the installation with the default CNI (OVNKubernetes).
 
 ## Reference Documents
 
+- [Observability](observability.md)
 - [Privileges](privileges.md)
 - [Control plane machine set](control-plane-machine-set.md)
 - [Known Issues and Workarounds](known-issues.md)
@@ -132,7 +133,11 @@ See the [OpenShift documentation](https://docs.openshift.com/container-platform/
 
 ### Bootstrap Node
 
-The bootstrap node is a temporary node that is responsible for standing up the control plane on the masters. Only one bootstrap node will be stood up and it will be deprovisioned once the production control plane is ready. To do so, you need 1 instance, and 1 port. We recommend a flavor with a minimum of 16 GB RAM, 4 vCPUs, and 100 GB Disk (or Root Volume).
+The bootstrap node is a temporary node that is responsible for standing up the control plane on the masters. Only one bootstrap node will be stood up and it will be deprovisioned once the production control plane is ready. To do so, you need 1 instance, and 1 port. We recommend a flavor with a minimum of 16 GB RAM, 4 vCPUs, and 100 GB Disk (or Root Volume), it can be created using below command:
+
+```sh
+openstack flavor create --ram 16384 --disk 128 --vcpu 4 okd-cluster
+```
 
 ### Image Registry Requirements
 

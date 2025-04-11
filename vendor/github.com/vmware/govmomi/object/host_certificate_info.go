@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016-2023 VMware, Inc. All Rights Reserved.
+Copyright (c) 2016-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,11 +17,12 @@ limitations under the License.
 package object
 
 import (
-	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -58,20 +59,25 @@ func (info *HostCertificateInfo) FromCertificate(cert *x509.Certificate) *HostCe
 	info.Subject = info.fromName(info.subjectName)
 
 	info.ThumbprintSHA1 = soap.ThumbprintSHA1(cert)
-
-	// SHA-256 for info purposes only, API fields all use SHA-1
-	sum := sha256.Sum256(cert.Raw)
-	hex := make([]string, len(sum))
-	for i, b := range sum {
-		hex[i] = fmt.Sprintf("%02X", b)
-	}
-	info.ThumbprintSHA256 = strings.Join(hex, ":")
+	info.ThumbprintSHA256 = soap.ThumbprintSHA256(cert)
 
 	if info.Status == "" {
 		info.Status = string(types.HostCertificateManagerCertificateInfoCertificateStatusUnknown)
 	}
 
 	return info
+}
+
+func (info *HostCertificateInfo) FromPEM(cert []byte) (*HostCertificateInfo, error) {
+	block, _ := pem.Decode(cert)
+	if block == nil {
+		return nil, errors.New("failed to pem.Decode cert")
+	}
+	x, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	return info.FromCertificate(x), nil
 }
 
 // FromURL connects to the given URL.Host via tls.Dial with the given tls.Config and populates the HostCertificateInfo

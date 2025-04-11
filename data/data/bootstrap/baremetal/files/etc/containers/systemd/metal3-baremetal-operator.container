@@ -12,6 +12,7 @@ Exec=/baremetal-operator -build-preprov-image -webhook-port 0 -enable-leader-ele
 Network=host
 Volume=${AUTH_DIR}:/auth:z,ro
 Volume=/opt/openshift:/opt/openshift:z,ro
+Volume=/opt/openshift/tls/ironic/:/certs/ironic/:z
 Environment="XDG_RUNTIME_DIR=/run/user/${UID}"
 Environment="KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback"
 Environment="DEPLOY_KERNEL_URL=file:///shared/html/images/ironic-python-agent.kernel"
@@ -22,6 +23,7 @@ Environment="IRONIC_EXTERNAL_URL_V6=${IRONIC_EXTERNAL_URL_V6}"
 Environment="LEASE_DURATION_SECONDS=137"
 Environment="RENEW_DEADLINE_SECONDS=107"
 Environment="RETRY_PERIOD_SECONDS=26"
+Environment="IRONIC_INSECURE=true"
 
 [Service]
 EnvironmentFile=/etc/metal3.env

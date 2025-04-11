@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/rhcos/cache"
 	"github.com/openshift/installer/pkg/types"
@@ -47,8 +48,8 @@ func (i *BaseIso) Name() string {
 	return "BaseIso Image"
 }
 
-func (i *BaseIso) getMetalArtifact(archName string) (stream.PlatformArtifacts, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+func (i *BaseIso) getMetalArtifact(ctx context.Context, archName string) (stream.PlatformArtifacts, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	// Get the ISO to use from rhcos.json
@@ -71,8 +72,8 @@ func (i *BaseIso) getMetalArtifact(archName string) (stream.PlatformArtifacts, e
 }
 
 // Download the ISO using the URL in rhcos.json.
-func (i *BaseIso) downloadIso(archName string) (string, error) {
-	metal, err := i.getMetalArtifact(archName)
+func (i *BaseIso) downloadIso(ctx context.Context, archName string) (string, error) {
+	metal, err := i.getMetalArtifact(ctx, archName)
 	if err != nil {
 		return "", err
 	}
@@ -93,8 +94,8 @@ func (i *BaseIso) downloadIso(archName string) (string, error) {
 }
 
 // Fetch RootFS URL using the rhcos.json.
-func (i *BaseIso) getRootFSURL(archName string) (string, error) {
-	metal, err := i.getMetalArtifact(archName)
+func (i *BaseIso) getRootFSURL(ctx context.Context, archName string) (string, error) {
+	metal, err := i.getMetalArtifact(ctx, archName)
 	if err != nil {
 		return "", err
 	}
@@ -118,7 +119,7 @@ func (i *BaseIso) Dependencies() []asset.Asset {
 	}
 }
 
-func (i *BaseIso) checkReleasePayloadBaseISOVersion(r Release, archName string) {
+func (i *BaseIso) checkReleasePayloadBaseISOVersion(ctx context.Context, r Release, archName string) {
 	logrus.Debugf("Checking release payload base ISO version")
 
 	// Get current release payload CoreOS version
@@ -129,7 +130,7 @@ func (i *BaseIso) checkReleasePayloadBaseISOVersion(r Release, archName string) 
 	}
 
 	// Get pinned version from installer
-	metal, err := i.getMetalArtifact(archName)
+	metal, err := i.getMetalArtifact(ctx, archName)
 	if err != nil {
 		logrus.Warnf("unable to determine base ISO version: %s", err.Error())
 		return
@@ -142,16 +143,20 @@ func (i *BaseIso) checkReleasePayloadBaseISOVersion(r Release, archName string) 
 }
 
 // Generate the baseIso
-func (i *BaseIso) Generate(dependencies asset.Parents) error {
+func (i *BaseIso) Generate(ctx context.Context, dependencies asset.Parents) error {
 	var err error
 	var baseIsoFileName string
+
+	if err := workflowreport.GetReport(ctx).Stage(workflow.StageFetchBaseISO); err != nil {
+		return err
+	}
 
 	if urlOverride, ok := os.LookupEnv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE"); ok && urlOverride != "" {
 		logrus.Warn("Found override for OS Image. Please be warned, this is not advised")
 		baseIsoFileName, err = cache.DownloadImageFile(urlOverride, cache.AgentApplicationName)
 	} else {
 		i.setStreamGetter(dependencies)
-		baseIsoFileName, err = i.retrieveBaseIso(dependencies)
+		baseIsoFileName, err = i.retrieveBaseIso(ctx, dependencies)
 	}
 
 	if err == nil {
@@ -196,7 +201,7 @@ func (i *BaseIso) getRelease(agentManifests *manifests.AgentManifests, registrie
 	return i.ocRelease
 }
 
-func (i *BaseIso) retrieveBaseIso(dependencies asset.Parents) (string, error) {
+func (i *BaseIso) retrieveBaseIso(ctx context.Context, dependencies asset.Parents) (string, error) {
 	// use the GetIso function to get the BaseIso from the release payload
 	agentManifests := &manifests.AgentManifests{}
 	registriesConf := &mirror.RegistriesConf{}
@@ -214,9 +219,16 @@ func (i *BaseIso) retrieveBaseIso(dependencies asset.Parents) (string, error) {
 		// If we have the image registry location and 'oc' command is available then get from release payload
 		ocRelease := i.getRelease(agentManifests, registriesConf)
 		logrus.Info("Extracting base ISO from release payload")
+
+		if err := workflowreport.GetReport(ctx).SubStage(workflow.StageFetchBaseISOExtract); err != nil {
+			return "", err
+		}
 		baseIsoFileName, err := ocRelease.GetBaseIso(archName)
 		if err == nil {
-			i.checkReleasePayloadBaseISOVersion(ocRelease, archName)
+			if err := workflowreport.GetReport(ctx).SubStage(workflow.StageFetchBaseISOVerify); err != nil {
+				return "", err
+			}
+			i.checkReleasePayloadBaseISOVersion(ctx, ocRelease, archName)
 
 			logrus.Debugf("Extracted base ISO image %s from release payload", baseIsoFileName)
 			i.File = &asset.File{Filename: baseIsoFileName}
@@ -233,7 +245,10 @@ func (i *BaseIso) retrieveBaseIso(dependencies asset.Parents) (string, error) {
 	}
 
 	logrus.Info("Downloading base ISO")
-	return i.downloadIso(archName)
+	if err := workflowreport.GetReport(ctx).SubStage(workflow.StageFetchBaseISODownload); err != nil {
+		return "", err
+	}
+	return i.downloadIso(ctx, archName)
 }
 
 // Files returns the files generated by the asset.

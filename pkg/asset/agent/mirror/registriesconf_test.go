@@ -1,12 +1,13 @@
 package mirror
 
 import (
+	"context"
 	"errors"
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -90,7 +91,7 @@ func TestRegistriesConf_Generate(t *testing.T) {
 					PullSpec: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
 				},
 			},
-			expectedConfig: "unqualified-search-registries = []\n\n[[registry]]\n  location = \"registry.ci.openshift.org/origin/release\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    location = \"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image\"\n\n[[registry]]\n  location = \"quay.io/openshift-release-dev/ocp-v4.0-art-dev\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    location = \"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image\"\n",
+			expectedConfig: "credential-helpers = []\nshort-name-mode = \"\"\nunqualified-search-registries = []\n\n[[registry]]\n  location = \"registry.ci.openshift.org/origin/release\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    location = \"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image\"\n\n[[registry]]\n  location = \"quay.io/openshift-release-dev/ocp-v4.0-art-dev\"\n  mirror-by-digest-only = true\n  prefix = \"\"\n\n  [[registry.mirror]]\n    location = \"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image\"\n",
 		},
 		{
 			name: "valid-image-content-sources",
@@ -125,7 +126,9 @@ func TestRegistriesConf_Generate(t *testing.T) {
 					PullSpec: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
 				},
 			},
-			expectedConfig: `unqualified-search-registries = []
+			expectedConfig: `credential-helpers = []
+short-name-mode = ""
+unqualified-search-registries = []
 
 [[registry]]
   location = "registry.ci.openshift.org/ocp/release"
@@ -177,7 +180,9 @@ func TestRegistriesConf_Generate(t *testing.T) {
 					PullSpec: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
 				},
 			},
-			expectedConfig: `unqualified-search-registries = []
+			expectedConfig: `credential-helpers = []
+short-name-mode = ""
+unqualified-search-registries = []
 
 [[registry]]
   location = "registry.ci.openshift.org/ocp/release"
@@ -194,6 +199,68 @@ func TestRegistriesConf_Generate(t *testing.T) {
 
   [[registry.mirror]]
     location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+`,
+		},
+		{
+			name: "image-digest-sources-multiple-mirrors",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
+				&agent.OptionalInstallConfig{
+					Supplied: true,
+					AssetBase: installconfig.AssetBase{
+						Config: &types.InstallConfig{
+							ObjectMeta: v1.ObjectMeta{
+								Namespace: "cluster-0",
+							},
+							ImageDigestSources: []types.ImageDigestSource{
+								{
+									Source: "registry.ci.openshift.org/ocp/release",
+									Mirrors: []string{
+										"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+										"virthost.ostest.test.metalkube.org:5000/localimages/ocp-release",
+									},
+								},
+								{
+									Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+									Mirrors: []string{
+										"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+										"virthost.ostest.test.metalkube.org:5000/localimages/ocp-release",
+									},
+								},
+							},
+						},
+					},
+				},
+				&releaseimage.Image{
+					PullSpec: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
+				},
+			},
+			expectedConfig: `credential-helpers = []
+short-name-mode = ""
+unqualified-search-registries = []
+
+[[registry]]
+  location = "registry.ci.openshift.org/ocp/release"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
+
+[[registry]]
+  location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
 `,
 		},
 		{
@@ -217,12 +284,14 @@ func TestRegistriesConf_Generate(t *testing.T) {
 							Source: "registry.ci.openshift.org/ocp/release",
 							Mirrors: []string{
 								"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+								"virthost.ostest.test.metalkube.org:5000/localimages/ocp-release",
 							},
 						},
 						{
 							Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
 							Mirrors: []string{
 								"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+								"virthost.ostest.test.metalkube.org:5000/localimages/ocp-release",
 							},
 						},
 					},
@@ -230,7 +299,9 @@ func TestRegistriesConf_Generate(t *testing.T) {
 				&agent.OptionalInstallConfig{},
 				&releaseimage.Image{},
 			},
-			expectedConfig: `unqualified-search-registries = []
+			expectedConfig: `credential-helpers = []
+short-name-mode = ""
+unqualified-search-registries = []
 
 [[registry]]
   location = "registry.ci.openshift.org/ocp/release"
@@ -240,6 +311,9 @@ func TestRegistriesConf_Generate(t *testing.T) {
   [[registry.mirror]]
     location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
 
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
+
 [[registry]]
   location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
   mirror-by-digest-only = true
@@ -247,6 +321,9 @@ func TestRegistriesConf_Generate(t *testing.T) {
 
   [[registry.mirror]]
     location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release"
 `,
 		},
 	}
@@ -257,7 +334,7 @@ func TestRegistriesConf_Generate(t *testing.T) {
 			parents.Add(tc.dependencies...)
 
 			asset := &RegistriesConf{}
-			err := asset.Generate(parents)
+			err := asset.Generate(context.Background(), parents)
 
 			assert.NoError(t, err)
 

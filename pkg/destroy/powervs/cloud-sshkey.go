@@ -16,13 +16,67 @@ const (
 	cloudSSHKeyTypeName = "cloudSshKey"
 )
 
-// listCloudSSHKeys lists images in the vpc.
+// listCloudSSHKeys lists ssh-keys matching either name or tag in the IBM Cloud.
 func (o *ClusterUninstaller) listCloudSSHKeys() (cloudResources, error) {
-	o.Logger.Debugf("Listing Cloud SSHKeys")
+	var (
+		keyIDs   []string
+		keyID    string
+		ctx      context.Context
+		cancel   context.CancelFunc
+		result   = make([]cloudResource, 0, 1)
+		options  *vpcv1.GetKeyOptions
+		response *core.DetailedResponse
+		sshKey   *vpcv1.Key
+		err      error
+	)
 
-	// https://raw.githubusercontent.com/IBM/vpc-go-sdk/master/vpcv1/vpc_v1.go
+	if false { // @TODO o.searchByTag {
+		// Should we list by tag matching?
+		// @TODO keyIDs, err = o.listByTag(TagTypeCloudSshKey)
+		err = fmt.Errorf("listByTag(TagTypeCloudSshKey) is not supported yet")
+	} else {
+		// Otherwise list will list by name matching.
+		keyIDs, err = o.listCloudSSHKeysByName()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel = contextWithTimeout()
+	defer cancel()
+
+	for _, keyID = range keyIDs {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("listCloudSSHKeys: case <-ctx.Done()")
+			return nil, ctx.Err() // we're cancelled, abort
+		default:
+		}
+
+		options = o.vpcSvc.NewGetKeyOptions(keyID)
+
+		sshKey, response, err = o.vpcSvc.GetKeyWithContext(ctx, options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get cloud ssh-key (%s): err = %w, response = %v", keyID, err, response)
+		}
+
+		result = append(result, cloudResource{
+			key:      *sshKey.Name,
+			name:     *sshKey.Name,
+			status:   "",
+			typeName: cloudSSHKeyTypeName,
+			id:       *sshKey.ID,
+		})
+	}
+
+	return cloudResources{}.insert(result...), nil
+}
+
+// listCloudSSHKeysByName lists ssh-keys matching by name in the IBM Cloud.
+func (o *ClusterUninstaller) listCloudSSHKeysByName() ([]string, error) {
 	var (
 		ctx              context.Context
+		cancel           context.CancelFunc
 		foundOne         bool  = false
 		perPage          int64 = 20
 		moreData         bool  = true
@@ -31,24 +85,26 @@ func (o *ClusterUninstaller) listCloudSSHKeys() (cloudResources, error) {
 		detailedResponse *core.DetailedResponse
 		err              error
 		sshKey           vpcv1.Key
+		result           = make([]string, 0, 20)
 	)
 
-	ctx, cancel := o.contextWithTimeout()
-	defer cancel()
+	o.Logger.Debugf("Listing Cloud SSHKeys by NAME")
 
-	select {
-	case <-ctx.Done():
-		o.Logger.Debugf("listCloudSSHKeys: case <-ctx.Done()")
-		return nil, o.Context.Err() // we're cancelled, abort
-	default:
-	}
+	ctx, cancel = contextWithTimeout()
+	defer cancel()
 
 	listKeysOptions = o.vpcSvc.NewListKeysOptions()
 	listKeysOptions.SetLimit(perPage)
-
-	result := []cloudResource{}
+	listKeysOptions.SetResourceGroupID(o.resourceGroupID)
 
 	for moreData {
+		select {
+		case <-ctx.Done():
+			o.Logger.Debugf("listCloudSSHKeysByName: case <-ctx.Done()")
+			return nil, ctx.Err() // we're cancelled, abort
+		default:
+		}
+
 		sshKeyCollection, detailedResponse, err = o.vpcSvc.ListKeysWithContext(ctx, listKeysOptions)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list Cloud ssh keys: %w and the response is: %s", err, detailedResponse)
@@ -57,95 +113,99 @@ func (o *ClusterUninstaller) listCloudSSHKeys() (cloudResources, error) {
 		for _, sshKey = range sshKeyCollection.Keys {
 			if strings.Contains(*sshKey.Name, o.InfraID) {
 				foundOne = true
-				o.Logger.Debugf("listCloudSSHKeys: FOUND: %v", *sshKey.Name)
-				result = append(result, cloudResource{
-					key:      *sshKey.Name,
-					name:     *sshKey.Name,
-					status:   "",
-					typeName: cloudSSHKeyTypeName,
-					id:       *sshKey.ID,
-				})
+				o.Logger.Debugf("listCloudSSHKeysByName: FOUND: %v", *sshKey.Name)
+				result = append(result, *sshKey.ID)
 			}
 		}
 
 		if sshKeyCollection.First != nil {
-			o.Logger.Debugf("listCloudSSHKeys: First = %v", *sshKeyCollection.First.Href)
+			o.Logger.Debugf("listCloudSSHKeysByName: First = %v", *sshKeyCollection.First.Href)
 		}
 		if sshKeyCollection.Limit != nil {
-			o.Logger.Debugf("listCloudSSHKeys: Limit = %v", *sshKeyCollection.Limit)
+			o.Logger.Debugf("listCloudSSHKeysByName: Limit = %v", *sshKeyCollection.Limit)
 		}
 		if sshKeyCollection.Next != nil {
 			start, err := sshKeyCollection.GetNextStart()
 			if err != nil {
-				o.Logger.Debugf("listCloudSSHKeys: err = %v", err)
-				return nil, fmt.Errorf("listCloudSSHKeys: failed to GetNextStart: %w", err)
+				o.Logger.Debugf("listCloudSSHKeysByName: err = %v", err)
+				return nil, fmt.Errorf("listCloudSSHKeysByName: failed to GetNextStart: %w", err)
 			}
 			if start != nil {
-				o.Logger.Debugf("listCloudSSHKeys: start = %v", *start)
+				o.Logger.Debugf("listCloudSSHKeysByName: start = %v", *start)
 				listKeysOptions.SetStart(*start)
 			}
 		} else {
-			o.Logger.Debugf("listCloudSSHKeys: Next = nil")
+			o.Logger.Debugf("listCloudSSHKeysByName: Next = nil")
 			moreData = false
 		}
 	}
 	if !foundOne {
-		o.Logger.Debugf("listCloudSSHKeys: NO matching sshKey against: %s", o.InfraID)
+		o.Logger.Debugf("listCloudSSHKeysByName: NO matching sshKey against: %s", o.InfraID)
 
 		listKeysOptions = o.vpcSvc.NewListKeysOptions()
 		listKeysOptions.SetLimit(perPage)
+		listKeysOptions.SetResourceGroupID(o.resourceGroupID)
+
 		moreData = true
 
 		for moreData {
+			select {
+			case <-ctx.Done():
+				o.Logger.Debugf("listCloudSSHKeysByName: case <-ctx.Done()")
+				return nil, ctx.Err() // we're cancelled, abort
+			default:
+			}
+
 			sshKeyCollection, detailedResponse, err = o.vpcSvc.ListKeysWithContext(ctx, listKeysOptions)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list Cloud ssh keys: %w and the response is: %s", err, detailedResponse)
 			}
 			for _, sshKey = range sshKeyCollection.Keys {
-				o.Logger.Debugf("listCloudSSHKeys: FOUND: %v", *sshKey.Name)
+				o.Logger.Debugf("listCloudSSHKeysByName: FOUND: %v", *sshKey.Name)
 			}
 			if sshKeyCollection.First != nil {
-				o.Logger.Debugf("listCloudSSHKeys: First = %v", *sshKeyCollection.First.Href)
+				o.Logger.Debugf("listCloudSSHKeysByName: First = %v", *sshKeyCollection.First.Href)
 			}
 			if sshKeyCollection.Limit != nil {
-				o.Logger.Debugf("listCloudSSHKeys: Limit = %v", *sshKeyCollection.Limit)
+				o.Logger.Debugf("listCloudSSHKeysByName: Limit = %v", *sshKeyCollection.Limit)
 			}
 			if sshKeyCollection.Next != nil {
 				start, err := sshKeyCollection.GetNextStart()
 				if err != nil {
-					o.Logger.Debugf("listCloudSSHKeys: err = %v", err)
-					return nil, fmt.Errorf("listCloudSSHKeys: failed to GetNextStart: %w", err)
+					o.Logger.Debugf("listCloudSSHKeysByName: err = %v", err)
+					return nil, fmt.Errorf("listCloudSSHKeysByName: failed to GetNextStart: %w", err)
 				}
 				if start != nil {
-					o.Logger.Debugf("listCloudSSHKeys: start = %v", *start)
+					o.Logger.Debugf("listCloudSSHKeysByName: start = %v", *start)
 					listKeysOptions.SetStart(*start)
 				}
 			} else {
-				o.Logger.Debugf("listCloudSSHKeys: Next = nil")
+				o.Logger.Debugf("listCloudSSHKeysByName: Next = nil")
 				moreData = false
 			}
 		}
 	}
 
-	return cloudResources{}.insert(result...), nil
+	return result, nil
 }
 
 // deleteCloudSSHKey deletes a given ssh key.
 func (o *ClusterUninstaller) deleteCloudSSHKey(item cloudResource) error {
 	var (
 		ctx              context.Context
+		cancel           context.CancelFunc
 		getKeyOptions    *vpcv1.GetKeyOptions
 		deleteKeyOptions *vpcv1.DeleteKeyOptions
 		err              error
 	)
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel = contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("deleteCloudSSHKey: case <-ctx.Done()")
-		return o.Context.Err() // we're cancelled, abort
+		return ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -185,14 +245,14 @@ func (o *ClusterUninstaller) destroyCloudSSHKeys() error {
 
 	items := o.insertPendingItems(cloudSSHKeyTypeName, firstPassList.list())
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
 		case <-ctx.Done():
 			o.Logger.Debugf("destroyCloudSSHKeys: case <-ctx.Done()")
-			return o.Context.Err() // we're cancelled, abort
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 
@@ -219,6 +279,13 @@ func (o *ClusterUninstaller) destroyCloudSSHKeys() error {
 			o.Logger.Debugf("destroyCloudSSHKeys: found %s in pending items", item.name)
 		}
 		return fmt.Errorf("destroyCloudSSHKeys: %d undeleted items pending", len(items))
+	}
+
+	select {
+	case <-ctx.Done():
+		o.Logger.Debugf("destroyCloudSSHKeys: case <-ctx.Done()")
+		return ctx.Err() // we're cancelled, abort
+	default:
 	}
 
 	backoff := wait.Backoff{

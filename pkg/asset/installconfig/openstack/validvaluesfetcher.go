@@ -1,14 +1,15 @@
 package openstack
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/external"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
-	"github.com/gophercloud/utils/openstack/clientconfig"
-	networkutils "github.com/gophercloud/utils/openstack/networking/v2/networks"
+	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/flavors"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/external"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/extensions/layer3/floatingips"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/networks"
+	"github.com/gophercloud/utils/v2/openstack/clientconfig"
+	networkutils "github.com/gophercloud/utils/v2/openstack/networking/v2/networks"
 
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
@@ -29,8 +30,8 @@ func getCloudNames() ([]string, error) {
 
 // getExternalNetworkNames interrogates OpenStack to get the external network
 // names.
-func getExternalNetworkNames(cloud string) ([]string, error) {
-	conn, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
+func getExternalNetworkNames(ctx context.Context, cloud string) ([]string, error) {
+	conn, err := openstackdefaults.NewServiceClient(ctx, "network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +42,7 @@ func getExternalNetworkNames(cloud string) ([]string, error) {
 		External:        &iTrue,
 	}
 
-	allPages, err := networks.List(conn, listOpts).AllPages()
+	allPages, err := networks.List(conn, listOpts).AllPages(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -60,14 +61,14 @@ func getExternalNetworkNames(cloud string) ([]string, error) {
 }
 
 // getFlavorNames gets a list of valid flavor names.
-func getFlavorNames(cloud string) ([]string, error) {
-	conn, err := openstackdefaults.NewServiceClient("compute", openstackdefaults.DefaultClientOpts(cloud))
+func getFlavorNames(ctx context.Context, cloud string) ([]string, error) {
+	conn, err := openstackdefaults.NewServiceClient(ctx, "compute", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}
 
 	listOpts := flavors.ListOpts{}
-	allPages, err := flavors.ListDetail(conn, listOpts).AllPages()
+	allPages, err := flavors.ListDetail(conn, listOpts).AllPages(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -120,14 +121,14 @@ func (fips sortableFloatingIPCollection) Contains(value string) bool {
 	return false
 }
 
-func getFloatingIPs(cloud string, floatingNetworkName string) (sortableFloatingIPCollection, error) {
-	conn, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
+func getFloatingIPs(ctx context.Context, cloud string, floatingNetworkName string) (sortableFloatingIPCollection, error) {
+	conn, err := openstackdefaults.NewServiceClient(ctx, "network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}
 
 	// floatingips.ListOpts requires an ID so we must get it from the name
-	floatingNetworkID, err := networkutils.IDFromName(conn, floatingNetworkName)
+	floatingNetworkID, err := networkutils.IDFromName(ctx, conn, floatingNetworkName)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +139,7 @@ func getFloatingIPs(cloud string, floatingNetworkName string) (sortableFloatingI
 		Status:            "DOWN",
 	}
 
-	allPages, err := floatingips.List(conn, listOpts).AllPages()
+	allPages, err := floatingips.List(conn, listOpts).AllPages(ctx)
 	if err != nil {
 		return nil, err
 	}

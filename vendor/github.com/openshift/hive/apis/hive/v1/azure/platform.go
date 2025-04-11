@@ -50,7 +50,7 @@ func (e CloudEnvironment) Name() string {
 	return string(e)
 }
 
-//SetBaseDomain parses the baseDomainID and sets the related fields on azure.Platform
+// SetBaseDomain parses the baseDomainID and sets the related fields on azure.Platform
 func (p *Platform) SetBaseDomain(baseDomainID string) error {
 	parts := strings.Split(baseDomainID, "/")
 	p.BaseDomainResourceGroupName = parts[4]

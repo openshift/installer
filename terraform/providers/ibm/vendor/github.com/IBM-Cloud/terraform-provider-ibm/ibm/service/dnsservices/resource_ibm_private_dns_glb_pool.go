@@ -178,10 +178,10 @@ func resourceIBMPrivateDNSGLBPoolCreate(d *schema.ResourceData, meta interface{}
 	}
 
 	instanceID := d.Get(pdnsInstanceID).(string)
-	CreatePoolOptions := sess.NewCreatePoolOptions(instanceID)
-
 	poolname := d.Get(pdnsGlbPoolName).(string)
-	CreatePoolOptions.SetName(poolname)
+	poolorigins := d.Get(pdnsGlbPoolOrigins).(*schema.Set)
+
+	CreatePoolOptions := sess.NewCreatePoolOptions(instanceID, poolname, expandPDNSGlbPoolOrigins(poolorigins))
 
 	if description, ok := d.GetOk(pdnsGlbPoolDescription); ok {
 		CreatePoolOptions.SetDescription(description.(string))
@@ -205,9 +205,6 @@ func resourceIBMPrivateDNSGLBPoolCreate(d *schema.ResourceData, meta interface{}
 	if subnets, ok := d.GetOk(pdnsGlbPoolSubnet); ok {
 		CreatePoolOptions.SetHealthcheckSubnets(flex.ExpandStringList(subnets.([]interface{})))
 	}
-
-	poolorigins := d.Get(pdnsGlbPoolOrigins).(*schema.Set)
-	CreatePoolOptions.SetOrigins(expandPDNSGlbPoolOrigins(poolorigins))
 
 	result, resp, err := sess.CreatePool(CreatePoolOptions)
 	if err != nil {

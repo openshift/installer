@@ -19,6 +19,10 @@ limitations under the License.
 
 package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
+import (
+	time "time"
+)
+
 // ManifestKind is the name of the type used to represent objects
 // of type 'manifest'.
 const ManifestKind = "Manifest"
@@ -35,10 +39,14 @@ const ManifestNilKind = "ManifestNil"
 //
 // Representation of a manifestwork.
 type Manifest struct {
-	bitmap_   uint32
-	id        string
-	href      string
-	workloads []interface{}
+	bitmap_           uint32
+	id                string
+	href              string
+	creationTimestamp time.Time
+	liveResource      interface{}
+	spec              interface{}
+	updatedTimestamp  time.Time
+	workloads         []interface{}
 }
 
 // Kind returns the name of the type of the object.
@@ -98,12 +106,106 @@ func (o *Manifest) Empty() bool {
 	return o == nil || o.bitmap_&^1 == 0
 }
 
+// CreationTimestamp returns the value of the 'creation_timestamp' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Date and time when the manifest got created in OCM database.
+func (o *Manifest) CreationTimestamp() time.Time {
+	if o != nil && o.bitmap_&8 != 0 {
+		return o.creationTimestamp
+	}
+	return time.Time{}
+}
+
+// GetCreationTimestamp returns the value of the 'creation_timestamp' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Date and time when the manifest got created in OCM database.
+func (o *Manifest) GetCreationTimestamp() (value time.Time, ok bool) {
+	ok = o != nil && o.bitmap_&8 != 0
+	if ok {
+		value = o.creationTimestamp
+	}
+	return
+}
+
+// LiveResource returns the value of the 'live_resource' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Transient value to represent the underlying live resource.
+func (o *Manifest) LiveResource() interface{} {
+	if o != nil && o.bitmap_&16 != 0 {
+		return o.liveResource
+	}
+	return nil
+}
+
+// GetLiveResource returns the value of the 'live_resource' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Transient value to represent the underlying live resource.
+func (o *Manifest) GetLiveResource() (value interface{}, ok bool) {
+	ok = o != nil && o.bitmap_&16 != 0
+	if ok {
+		value = o.liveResource
+	}
+	return
+}
+
+// Spec returns the value of the 'spec' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Spec of Manifest Work object from open cluster management
+// For more info please check https://open-cluster-management.io/concepts/manifestwork.
+func (o *Manifest) Spec() interface{} {
+	if o != nil && o.bitmap_&32 != 0 {
+		return o.spec
+	}
+	return nil
+}
+
+// GetSpec returns the value of the 'spec' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Spec of Manifest Work object from open cluster management
+// For more info please check https://open-cluster-management.io/concepts/manifestwork.
+func (o *Manifest) GetSpec() (value interface{}, ok bool) {
+	ok = o != nil && o.bitmap_&32 != 0
+	if ok {
+		value = o.spec
+	}
+	return
+}
+
+// UpdatedTimestamp returns the value of the 'updated_timestamp' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Date and time when the manifest got updated in OCM database.
+func (o *Manifest) UpdatedTimestamp() time.Time {
+	if o != nil && o.bitmap_&64 != 0 {
+		return o.updatedTimestamp
+	}
+	return time.Time{}
+}
+
+// GetUpdatedTimestamp returns the value of the 'updated_timestamp' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Date and time when the manifest got updated in OCM database.
+func (o *Manifest) GetUpdatedTimestamp() (value time.Time, ok bool) {
+	ok = o != nil && o.bitmap_&64 != 0
+	if ok {
+		value = o.updatedTimestamp
+	}
+	return
+}
+
 // Workloads returns the value of the 'workloads' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // List of k8s objects to deploy on a hosted cluster.
 func (o *Manifest) Workloads() []interface{} {
-	if o != nil && o.bitmap_&8 != 0 {
+	if o != nil && o.bitmap_&128 != 0 {
 		return o.workloads
 	}
 	return nil
@@ -114,7 +216,7 @@ func (o *Manifest) Workloads() []interface{} {
 //
 // List of k8s objects to deploy on a hosted cluster.
 func (o *Manifest) GetWorkloads() (value []interface{}, ok bool) {
-	ok = o != nil && o.bitmap_&8 != 0
+	ok = o != nil && o.bitmap_&128 != 0
 	if ok {
 		value = o.workloads
 	}

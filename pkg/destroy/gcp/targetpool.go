@@ -10,31 +10,37 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
+const (
+	targetPoolResourceName = "targetpool"
+)
+
+type targetPoolFilterFunc func(pool *compute.TargetPool) bool
+
 func (o *ClusterUninstaller) listTargetPools(ctx context.Context) ([]cloudResource, error) {
-	return o.listTargetPoolsWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
+	return o.listTargetPoolsWithFilter(ctx, "items(name),nextPageToken", func(item *compute.TargetPool) bool {
+		return o.isClusterResource(item.Name)
+	})
 }
 
 // listTargetPoolsWithFilter lists target pools in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listTargetPoolsWithFilter(ctx context.Context, fields string, filter string, filterFunc func(*compute.TargetPool) bool) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listTargetPoolsWithFilter(ctx context.Context, fields string, filterFunc targetPoolFilterFunc) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing target pools")
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []cloudResource{}
 	req := o.computeSvc.TargetPools.List(o.ProjectID, o.Region).Fields(googleapi.Field(fields))
-	if len(filter) > 0 {
-		req = req.Filter(filter)
-	}
+
 	err := req.Pages(ctx, func(list *compute.TargetPoolList) error {
 		for _, item := range list.Items {
-			if filterFunc == nil || filterFunc != nil && filterFunc(item) {
+			if filterFunc(item) {
 				o.Logger.Debugf("Found target pool: %s", item.Name)
 				result = append(result, cloudResource{
 					key:      item.Name,
 					name:     item.Name,
-					typeName: "targetpool",
+					typeName: targetPoolResourceName,
 					quota: []gcp.QuotaUsage{{
 						Metric: &gcp.Metric{
 							Service: gcp.ServiceComputeEngineAPI,
@@ -58,20 +64,8 @@ func (o *ClusterUninstaller) deleteTargetPool(ctx context.Context, item cloudRes
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.TargetPools.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
-	if err != nil && !isNoOp(err) {
-		o.resetRequestID(item.typeName, item.name)
-		return errors.Wrapf(err, "failed to delete target pool %s", item.name)
-	}
-	if op != nil && op.Status == "DONE" && isErrorStatus(op.HttpErrorStatusCode) {
-		o.resetRequestID(item.typeName, item.name)
-		return errors.Errorf("failed to delete target pool %s with error: %s", item.name, operationErrorMessage(op))
-	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
-		o.resetRequestID(item.typeName, item.name)
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted target pool %s", item.name)
-	}
-	return nil
+	item.scope = regional
+	return o.handleOperation(ctx, op, err, item, "target pool")
 }
 
 // destroyTargetPools removes target pools resources that have a name prefixed
@@ -81,14 +75,14 @@ func (o *ClusterUninstaller) destroyTargetPools(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	items := o.insertPendingItems("targetpool", found)
+	items := o.insertPendingItems(targetPoolResourceName, found)
 	for _, item := range items {
 		err := o.deleteTargetPool(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
 	}
-	if items = o.getPendingItems("targetpool"); len(items) > 0 {
+	if items = o.getPendingItems(targetPoolResourceName); len(items) > 0 {
 		return errors.Errorf("%d items pending", len(items))
 	}
 	return nil

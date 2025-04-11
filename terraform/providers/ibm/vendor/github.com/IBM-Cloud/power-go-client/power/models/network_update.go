@@ -12,7 +12,6 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 )
 
 // NetworkUpdate network update
@@ -30,7 +29,6 @@ type NetworkUpdate struct {
 	IPAddressRanges []*IPAddressRange `json:"ipAddressRanges"`
 
 	// Replaces the current Network Name
-	// Max Length: 255
 	Name *string `json:"name,omitempty"`
 }
 
@@ -39,10 +37,6 @@ func (m *NetworkUpdate) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateIPAddressRanges(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateName(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -73,18 +67,6 @@ func (m *NetworkUpdate) validateIPAddressRanges(formats strfmt.Registry) error {
 			}
 		}
 
-	}
-
-	return nil
-}
-
-func (m *NetworkUpdate) validateName(formats strfmt.Registry) error {
-	if swag.IsZero(m.Name) { // not required
-		return nil
-	}
-
-	if err := validate.MaxLength("name", "body", *m.Name, 255); err != nil {
-		return err
 	}
 
 	return nil

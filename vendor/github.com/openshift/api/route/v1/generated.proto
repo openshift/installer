@@ -54,7 +54,7 @@ message LocalObjectReference {
 message Route {
   // metadata is the standard object's metadata.
   // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+  optional .k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
 
   // spec is the desired state of the route
   // +kubebuilder:validation:XValidation:rule="!has(self.tls) || self.tls.termination != 'passthrough' || !has(self.httpHeaders)",message="header actions are not permitted when tls termination is passthrough."
@@ -74,7 +74,7 @@ message RouteHTTPHeader {
   // Strict-Transport-Security, Proxy, Cookie, Set-Cookie.
   // It must be no more than 255 characters in length.
   // Header name must be unique.
-  // +kubebuilder:validation:Required
+  // +required
   // +kubebuilder:validation:MinLength=1
   // +kubebuilder:validation:MaxLength=255
   // +kubebuilder:validation:Pattern="^[-!#$%&'*+.0-9A-Z^_`a-z|~]+$"
@@ -85,7 +85,7 @@ message RouteHTTPHeader {
   optional string name = 1;
 
   // action specifies actions to perform on headers, such as setting or deleting headers.
-  // +kubebuilder:validation:Required
+  // +required
   optional RouteHTTPHeaderActionUnion action = 2;
 }
 
@@ -99,7 +99,7 @@ message RouteHTTPHeaderActionUnion {
   // Delete allows you to delete HTTP request and response headers.
   // +unionDiscriminator
   // +kubebuilder:validation:Enum:=Set;Delete
-  // +kubebuilder:validation:Required
+  // +required
   optional string type = 1;
 
   // set defines the HTTP header that should be set: added if it doesn't exist or replaced if it does.
@@ -192,13 +192,15 @@ message RouteHTTPHeaders {
 
 // RouteIngress holds information about the places where a route is exposed.
 message RouteIngress {
-  // Host is the host string under which the route is exposed; this value is required
+  // host is the host string under which the route is exposed; this value is required
   optional string host = 1;
 
   // Name is a name chosen by the router to identify itself; this value is required
   optional string routerName = 2;
 
-  // Conditions is the state of the route, may be empty.
+  // conditions is the state of the route, may be empty.
+  // +listType=map
+  // +listMapKey=type
   repeated RouteIngressCondition conditions = 3;
 
   // Wildcard policy is the wildcard policy that was allowed where this route is exposed.
@@ -212,11 +214,11 @@ message RouteIngress {
 // RouteIngressCondition contains details for the current condition of this route on a particular
 // router.
 message RouteIngressCondition {
-  // Type is the type of the condition.
+  // type is the type of the condition.
   // Currently only Admitted or UnservableInFutureVersions.
   optional string type = 1;
 
-  // Status is the status of the condition.
+  // status is the status of the condition.
   // Can be True, False, Unknown.
   optional string status = 2;
 
@@ -228,7 +230,7 @@ message RouteIngressCondition {
   optional string message = 4;
 
   // RFC 3339 date and time when this condition last transitioned
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastTransitionTime = 5;
+  optional .k8s.io.apimachinery.pkg.apis.meta.v1.Time lastTransitionTime = 5;
 }
 
 // RouteList is a collection of Routes.
@@ -238,7 +240,7 @@ message RouteIngressCondition {
 message RouteList {
   // metadata is the standard list's metadata.
   // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+  optional .k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
 
   // items is a list of routes
   repeated Route items = 2;
@@ -249,7 +251,7 @@ message RoutePort {
   // The target port on pods selected by the service this route points to.
   // If this is a string, it will be looked up as a named port in the target
   // endpoints port list. Required
-  optional k8s.io.apimachinery.pkg.util.intstr.IntOrString targetPort = 1;
+  optional .k8s.io.apimachinery.pkg.util.intstr.IntOrString targetPort = 1;
 }
 
 // RouteSetHTTPHeader specifies what value needs to be set on an HTTP header.
@@ -265,7 +267,7 @@ message RouteSetHTTPHeader {
   // + ---
   // + Note: This limit was selected as most common web servers have a limit of 16384 characters or some lower limit.
   // + See <https://www.geekersdigest.com/max-http-request-header-size-server-comparison/>.
-  // +kubebuilder:validation:Required
+  // +required
   // +kubebuilder:validation:MinLength=1
   // +kubebuilder:validation:MaxLength=16384
   optional string value = 1;
@@ -331,6 +333,9 @@ message RouteSpec {
   // Use the weight field in RouteTargetReference object to specify relative preference.
   //
   // +kubebuilder:validation:MaxItems=3
+  // +listType=map
+  // +listMapKey=name
+  // +listMapKey=kind
   repeated RouteTargetReference alternateBackends = 4;
 
   // If specified, the port to be used by the router. Most routers will use all
@@ -360,6 +365,7 @@ message RouteStatus {
   // ingress describes the places where the route may be exposed. The list of
   // ingress points may contain duplicate Host or RouterName values. Routes
   // are considered live once they are `Ready`
+  // +listType=atomic
   repeated RouteIngress ingress = 1;
 }
 
@@ -404,7 +410,7 @@ message RouterShard {
 // TLSConfig defines config used to secure a route and provide termination
 //
 // +kubebuilder:validation:XValidation:rule="has(self.termination) && has(self.insecureEdgeTerminationPolicy) ? !((self.termination=='passthrough') && (self.insecureEdgeTerminationPolicy=='Allow')) : true", message="cannot have both spec.tls.termination: passthrough and spec.tls.insecureEdgeTerminationPolicy: Allow"
-// +openshift:validation:FeatureGateAwareXValidation:featureGate=ExternalRouteCertificate,rule="!(has(self.certificate) && has(self.externalCertificate))", message="cannot have both spec.tls.certificate and spec.tls.externalCertificate"
+// +openshift:validation:FeatureGateAwareXValidation:featureGate=RouteExternalCertificate,rule="!(has(self.certificate) && has(self.externalCertificate))", message="cannot have both spec.tls.certificate and spec.tls.externalCertificate"
 message TLSConfig {
   // termination indicates termination type.
   //
@@ -452,8 +458,10 @@ message TLSConfig {
   // chain. Do not include a CA certificate. The secret referenced should
   // be present in the same namespace as that of the Route.
   // Forbidden when `certificate` is set.
+  // The router service account needs to be granted with read-only access to this secret,
+  // please refer to openshift docs for additional details.
   //
-  // +openshift:enable:FeatureGate=ExternalRouteCertificate
+  // +openshift:enable:FeatureGate=RouteExternalCertificate
   // +optional
   optional LocalObjectReference externalCertificate = 7;
 }

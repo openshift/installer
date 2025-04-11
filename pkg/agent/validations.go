@@ -34,22 +34,20 @@ type validationResultHistory struct {
 	previousMessage string
 }
 
-func checkValidations(cluster *models.Cluster, validationResults *validationResults, log *logrus.Logger, hostLogPrefix string) error {
+func checkValidations(cluster *models.Cluster, validationResults *validationResults, log *logrus.Logger, ch chan logEntry) error {
 	clusterLogPrefix := "Cluster validation: "
-	updatedClusterValidationHistory, err := updateValidationResultHistory(clusterLogPrefix, cluster.ValidationsInfo, validationResults.ClusterValidationHistory, log)
+	updatedClusterValidationHistory, err := updateValidationResultHistory(clusterLogPrefix, cluster.ValidationsInfo, validationResults.ClusterValidationHistory, log, ch)
 	if err != nil {
 		return err
 	}
 	validationResults.ClusterValidationHistory = updatedClusterValidationHistory
 
 	for _, h := range cluster.Hosts {
-		if hostLogPrefix == "" {
-			hostLogPrefix = "Host " + h.RequestedHostname + " validation: "
-		}
+		hostLogPrefix := "Host " + h.RequestedHostname + " validation: "
 		if _, ok := validationResults.HostValidationHistory[h.RequestedHostname]; !ok {
 			validationResults.HostValidationHistory[h.RequestedHostname] = make(map[string]*validationResultHistory)
 		}
-		updatedHostValidationHistory, err := updateValidationResultHistory(hostLogPrefix, h.ValidationsInfo, validationResults.HostValidationHistory[h.RequestedHostname], log)
+		updatedHostValidationHistory, err := updateValidationResultHistory(hostLogPrefix, h.ValidationsInfo, validationResults.HostValidationHistory[h.RequestedHostname], log, ch)
 		if err != nil {
 			return err
 		}
@@ -58,8 +56,7 @@ func checkValidations(cluster *models.Cluster, validationResults *validationResu
 	return nil
 }
 
-func updateValidationResultHistory(logPrefix string, validationsInfoString string, validationHistory map[string]*validationResultHistory, log *logrus.Logger) (map[string]*validationResultHistory, error) {
-
+func updateValidationResultHistory(logPrefix string, validationsInfoString string, validationHistory map[string]*validationResultHistory, log *logrus.Logger, ch chan logEntry) (map[string]*validationResultHistory, error) {
 	if validationsInfoString == "" {
 		return validationHistory, nil
 	}
@@ -84,23 +81,23 @@ func updateValidationResultHistory(logPrefix string, validationsInfoString strin
 			case validationFailure, validationError:
 				validationHistory[r.ID].numFailures++
 			}
-			logValidationHistory(logPrefix, validationHistory[r.ID], log)
+			logValidationHistory(logPrefix, validationHistory[r.ID], log, ch)
 		}
 	}
 	return validationHistory, nil
 }
 
-func logValidationHistory(logPrefix string, history *validationResultHistory, log *logrus.Logger) {
+func logValidationHistory(logPrefix string, history *validationResultHistory, logger *logrus.Logger, ch chan logEntry) {
 	// First time we print something
 	if !history.seen {
 		history.seen = true
 		switch history.currentStatus {
 		case validationSuccess:
-			log.Debug(logPrefix + history.currentMessage)
+			log(Debug, logPrefix+history.currentMessage, logger, ch)
 		case validationFailure, validationError:
-			log.Warning(logPrefix + history.currentMessage)
+			log(Warning, logPrefix+history.currentMessage, logger, ch)
 		default:
-			log.Trace(logPrefix + history.currentMessage)
+			log(Trace, logPrefix+history.currentMessage, logger, ch)
 		}
 		return
 	}
@@ -109,12 +106,12 @@ func logValidationHistory(logPrefix string, history *validationResultHistory, lo
 		switch history.currentStatus {
 		case validationSuccess:
 			if history.previousStatus == validationError || history.previousStatus == validationFailure {
-				log.Info(logPrefix + history.currentMessage)
+				log(Info, logPrefix+history.currentMessage, logger, ch)
 			}
 		case validationFailure, validationError:
-			log.Warning(logPrefix + history.currentMessage)
+			log(Warning, logPrefix+history.currentMessage, logger, ch)
 		default:
-			log.Trace(logPrefix + history.currentMessage)
+			log(Trace, logPrefix+history.currentMessage, logger, ch)
 		}
 	}
 }

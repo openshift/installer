@@ -27,6 +27,7 @@ func (o *ClusterUninstaller) listServiceAccounts(ctx context.Context) ([]cloudRe
 			key:      item.Name,
 			name:     item.Name,
 			url:      item.Email,
+			project:  item.ProjectId,
 			typeName: "serviceaccount",
 			quota: []gcp.QuotaUsage{{
 				Metric: &gcp.Metric{
@@ -44,7 +45,7 @@ func (o *ClusterUninstaller) listClusterServiceAccount(ctx context.Context) ([]*
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []*iam.ServiceAccount{}
-	req := o.iamSvc.Projects.ServiceAccounts.List(fmt.Sprintf("projects/%s", o.ProjectID)).Fields("accounts(name,displayName,email),nextPageToken")
+	req := o.iamSvc.Projects.ServiceAccounts.List(fmt.Sprintf("projects/%s", o.ProjectID)).Fields("accounts(name,displayName,email,projectId),nextPageToken")
 	err := req.Pages(ctx, func(list *iam.ListServiceAccountsResponse) error {
 		for idx, item := range list.Accounts {
 			if o.isClusterResource(item.Email) || o.isClusterResource(item.DisplayName) {
@@ -54,7 +55,7 @@ func (o *ClusterUninstaller) listClusterServiceAccount(ctx context.Context) ([]*
 		return nil
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to fetch service accounts")
+		return nil, fmt.Errorf("failed to fetch service accounts: %w", err)
 	}
 	return result, nil
 }
@@ -84,22 +85,32 @@ func (o *ClusterUninstaller) destroyServiceAccounts(ctx context.Context) error {
 		return nil
 	}
 
-	// Remove service accounts from project policy
-	policy, err := o.getProjectIAMPolicy(ctx)
-	if err != nil {
-		return err
-	}
 	emails := sets.NewString()
 	for _, item := range items {
 		emails.Insert(item.url)
 	}
-	if o.clearIAMPolicyBindings(policy, emails, o.Logger) {
-		err = o.setProjectIAMPolicy(ctx, policy)
+
+	projects := []string{o.ProjectID}
+	if o.NetworkProjectID != "" {
+		projects = append(projects, o.NetworkProjectID)
+	}
+
+	// During XPN installs, permissions bindings occur in the host project. Those
+	// should be deleted here.
+	for _, project := range projects {
+		// Remove service accounts from project policy
+		policy, err := o.getProjectIAMPolicy(ctx, project)
 		if err != nil {
-			o.errorTracker.suppressWarning("iampolicy", err, o.Logger)
-			return errors.Errorf("%d items pending", len(items))
+			return err
 		}
-		o.Logger.Infof("Deleted IAM project role bindings")
+		if o.clearIAMPolicyBindings(policy, emails, o.Logger) {
+			err = o.setProjectIAMPolicy(ctx, project, policy)
+			if err != nil {
+				o.errorTracker.suppressWarning("iampolicy", err, o.Logger)
+				return errors.Errorf("%d items pending", len(items))
+			}
+			o.Logger.Infof("Deleted IAM project role bindings")
+		}
 	}
 
 	for _, item := range items {

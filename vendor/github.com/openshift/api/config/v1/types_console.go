@@ -19,6 +19,7 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=consoles,scope=Cluster
 // +kubebuilder:subresource:status
+// +kubebuilder:metadata:annotations=release.openshift.io/bootstrap-required=true
 type Console struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -27,7 +28,6 @@ type Console struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec holds user settable values for configuration
-	// +kubebuilder:validation:Required
 	// +required
 	Spec ConsoleSpec `json:"spec"`
 	// status holds observed values from the cluster. They may not be overridden.

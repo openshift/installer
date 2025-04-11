@@ -1,11 +1,12 @@
 package networkextensions
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack/common/extensions"
+	"github.com/gophercloud/gophercloud/v2"
+	"github.com/gophercloud/gophercloud/v2/openstack/common/extensions"
 )
 
 const (
@@ -18,8 +19,8 @@ const (
 
 // Get returns a slice of the extensions available in the Neutron instance
 // targeted by networkClient, or a non-nil error.
-func Get(networkClient *gophercloud.ServiceClient) ([]extensions.Extension, error) {
-	allPages, err := extensions.List(networkClient).AllPages()
+func Get(ctx context.Context, networkClient *gophercloud.ServiceClient) ([]extensions.Extension, error) {
+	allPages, err := extensions.List(networkClient).AllPages(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list network extensions: %w", err)
 	}

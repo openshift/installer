@@ -30,7 +30,7 @@ type Event struct {
 
 	// Level of the event (notice, info, warning, error)
 	// Required: true
-	// Enum: [notice info warning error]
+	// Enum: ["notice","info","warning","error"]
 	Level *string `json:"level"`
 
 	// The (translated) message of the event

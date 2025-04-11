@@ -9,7 +9,6 @@ linters:
   - dogsled
   - errcheck
   - errchkjson
-  - execinquery
   - exportloopref
   - gci
   - goconst
@@ -100,10 +99,6 @@ linters-settings:
     allow-unused: false
     allow-leading-space: false
     require-specific: true
-  staticcheck:
-    go: "1.21"
-  stylecheck:
-    go: "1.21"
   gosec:
     excludes:
     - G307 # Deferring unsafe method "Close" on type "\*os.File"
@@ -126,7 +121,7 @@ linters-settings:
     - whyNoLint
     - wrapperFunc
   unused:
-    go: "1.21"
+    go: "1.23"
 issues:
   max-same-issues: 0
   max-issues-per-linter: 0
@@ -208,12 +203,13 @@ issues:
     - gocritic
     text: "deferInLoop: Possible resource leak, 'defer' is called in the 'for' loop"
     path: _test\.go
+  exclude-files:
+  - "zz_generated.*\\.go$"
 
 run:
+  go: "1.23"
   timeout: 10m
   build-tags:
   - tools
   - e2e
-  skip-files:
-  - "zz_generated.*\\.go$"
   allow-parallel-runners: true

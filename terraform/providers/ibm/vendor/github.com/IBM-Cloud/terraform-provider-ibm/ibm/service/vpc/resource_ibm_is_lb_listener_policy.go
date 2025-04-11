@@ -13,8 +13,9 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -52,20 +53,12 @@ const (
 
 func ResourceIBMISLBListenerPolicy() *schema.Resource {
 	return &schema.Resource{
-		Create:   resourceIBMISLBListenerPolicyCreate,
-		Read:     resourceIBMISLBListenerPolicyRead,
-		Update:   resourceIBMISLBListenerPolicyUpdate,
-		Delete:   resourceIBMISLBListenerPolicyDelete,
-		Exists:   resourceIBMISLBListenerPolicyExists,
-		Importer: &schema.ResourceImporter{},
-
-		CustomizeDiff: customdiff.All(
-			customdiff.Sequence(
-				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
-					return flex.ResourceLBListenerPolicyCustomizeDiff(diff)
-				},
-			),
-		),
+		CreateContext: resourceIBMISLBListenerPolicyCreate,
+		ReadContext:   resourceIBMISLBListenerPolicyRead,
+		UpdateContext: resourceIBMISLBListenerPolicyUpdate,
+		DeleteContext: resourceIBMISLBListenerPolicyDelete,
+		Exists:        resourceIBMISLBListenerPolicyExists,
+		Importer:      &schema.ResourceImporter{},
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(10 * time.Minute),
@@ -114,12 +107,14 @@ func ResourceIBMISLBListenerPolicy() *schema.Resource {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				RequiredWith: []string{isLBListenerPolicyHTTPSRedirectListener},
+				Deprecated:   "Please use the argument 'target'",
 				Description:  "The HTTP status code to be returned in the redirect response",
 			},
 
 			isLBListenerPolicyHTTPSRedirectURI: {
 				Type:         schema.TypeString,
 				Optional:     true,
+				Deprecated:   "Please use the argument 'target'",
 				RequiredWith: []string{isLBListenerPolicyHTTPSRedirectListener, isLBListenerPolicyHTTPSRedirectStatusCode},
 				Description:  "Target URI where traffic will be redirected",
 			},
@@ -127,6 +122,7 @@ func ResourceIBMISLBListenerPolicy() *schema.Resource {
 			isLBListenerPolicyHTTPSRedirectListener: {
 				Type:         schema.TypeString,
 				Optional:     true,
+				Deprecated:   "Please use the argument 'target'",
 				RequiredWith: []string{isLBListenerPolicyHTTPSRedirectStatusCode},
 				Description:  "ID of the listener that will be set as http redirect target",
 			},
@@ -207,9 +203,10 @@ func ResourceIBMISLBListenerPolicy() *schema.Resource {
 			},
 
 			isLBListenerPolicyTargetID: {
-				Type:     schema.TypeString,
-				ForceNew: false,
-				Optional: true,
+				Type:       schema.TypeString,
+				ForceNew:   false,
+				Optional:   true,
+				Deprecated: "Please use the argument 'target'",
 				DiffSuppressFunc: func(k, o, n string, d *schema.ResourceData) bool {
 					if o == "" {
 						return false
@@ -237,6 +234,7 @@ func ResourceIBMISLBListenerPolicy() *schema.Resource {
 				Type:        schema.TypeInt,
 				ForceNew:    false,
 				Optional:    true,
+				Deprecated:  "Please use the argument 'target'",
 				Description: "Listener Policy target HTTPS Status code.",
 			},
 
@@ -244,9 +242,106 @@ func ResourceIBMISLBListenerPolicy() *schema.Resource {
 				Type:        schema.TypeString,
 				ForceNew:    false,
 				Optional:    true,
+				Deprecated:  "Please use the argument 'target'",
 				Description: "Policy Target URL",
 			},
-
+			"target": &schema.Schema{
+				Type:          schema.TypeList,
+				MaxItems:      1,
+				Optional:      true,
+				ConflictsWith: []string{"target_url", "target_http_status_code", "target_id", "target_https_redirect_listener", "target_https_redirect_uri", "target_https_redirect_status_code"},
+				Description:   "- If `action` is `forward`, the response is a `LoadBalancerPoolReference`- If `action` is `redirect`, the response is a `LoadBalancerListenerPolicyRedirectURL`- If `action` is `https_redirect`, the response is a `LoadBalancerListenerHTTPSRedirect`.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"deleted": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						"href": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The pool's canonical URL.",
+						},
+						"id": &schema.Schema{
+							Type:          schema.TypeString,
+							Optional:      true,
+							AtLeastOneOf:  []string{"target.0.id", "target.0.http_status_code", "target.0.url", "target.0.listener"},
+							ConflictsWith: []string{"target.0.http_status_code", "target.0.url", "target.0.listener", "target.0.uri"},
+							Description:   "The unique identifier for this load balancer pool.",
+						},
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name for this load balancer pool. The name is unique across all pools for the load balancer.",
+						},
+						"http_status_code": &schema.Schema{
+							Type:          schema.TypeInt,
+							Optional:      true,
+							AtLeastOneOf:  []string{"target.0.id", "target.0.http_status_code", "target.0.url", "target.0.listener"},
+							ConflictsWith: []string{"target.0.id"},
+							Description:   "The HTTP status code for this redirect.",
+						},
+						"url": &schema.Schema{
+							Type:          schema.TypeString,
+							Optional:      true,
+							AtLeastOneOf:  []string{"target.0.id", "target.0.http_status_code", "target.0.url", "target.0.listener"},
+							ConflictsWith: []string{"target.0.id", "target.0.listener", "target.0.uri"},
+							Description:   "The redirect target URL.",
+						},
+						"listener": &schema.Schema{
+							Type:          schema.TypeList,
+							MaxItems:      1,
+							Optional:      true,
+							AtLeastOneOf:  []string{"target.0.id", "target.0.http_status_code", "target.0.url", "target.0.listener"},
+							ConflictsWith: []string{"target.0.id", "target.0.url"},
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"deleted": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The listener's canonical URL.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "The unique identifier for this load balancer listener.",
+									},
+								},
+							},
+						},
+						"uri": &schema.Schema{
+							Type:          schema.TypeString,
+							Optional:      true,
+							ConflictsWith: []string{"target.0.id", "target.0.url"},
+							Description:   "The redirect relative target URI.",
+						},
+					},
+				},
+			},
 			isLBListenerPolicyStatus: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -287,7 +382,7 @@ func ResourceIBMISLBListenerPolicyValidator() *validate.ResourceValidator {
 	return &ibmISLBListenerPolicyResourceValidator
 }
 
-func resourceIBMISLBListenerPolicyCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceIBMISLBListenerPolicyCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	//Get the Load balancer ID
 	lbID := d.Get(isLBListenerPolicyLBID).(string)
@@ -295,7 +390,7 @@ func resourceIBMISLBListenerPolicyCreate(d *schema.ResourceData, meta interface{
 	//User can set listener id as combination of lbID/listenerID, parse and get the listenerID
 	listenerID, err := getListenerID(d.Get(isLBListenerPolicyListenerID).(string))
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	action := d.Get(isLBListenerPolicyAction).(string)
@@ -307,12 +402,12 @@ func resourceIBMISLBListenerPolicyCreate(d *schema.ResourceData, meta interface{
 		name = n.(string)
 	}
 
-	err = lbListenerPolicyCreate(d, meta, lbID, listenerID, action, name, priority)
-	if err != nil {
-		return err
+	errDiag := lbListenerPolicyCreate(d, meta, lbID, listenerID, action, name, priority)
+	if errDiag != nil {
+		return errDiag
 	}
 
-	return resourceIBMISLBListenerPolicyRead(d, meta)
+	return resourceIBMISLBListenerPolicyRead(context, d, meta)
 }
 
 func getListenerID(id string) (string, error) {
@@ -341,11 +436,11 @@ func getPoolID(id string) (string, error) {
 
 }
 
-func lbListenerPolicyCreate(d *schema.ResourceData, meta interface{}, lbID, listenerID, action, name string, priority int64) error {
+func lbListenerPolicyCreate(d *schema.ResourceData, meta interface{}, lbID, listenerID, action, name string, priority int64) diag.Diagnostics {
 
 	sess, err := vpcClient(meta)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	// When `action` is `forward`, `LoadBalancerPoolIdentity` is required to specify which
@@ -362,69 +457,75 @@ func lbListenerPolicyCreate(d *schema.ResourceData, meta interface{}, lbID, list
 	listener, listenerSet := d.GetOk(isLBListenerPolicyHTTPSRedirectListener)
 	httpsStatusCode, httpsStatusSet := d.GetOk(isLBListenerPolicyHTTPSRedirectStatusCode)
 	uri, uriSet := d.GetOk(isLBListenerPolicyHTTPSRedirectURI)
+	if _, ok := d.GetOk("target"); ok {
+		target, err = resourceIBMIsLbListenerPolicyMapToLoadBalancerListenerPolicyTargetPrototype(d.Get("target.0").(map[string]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
-	if actionChk.(string) == "forward" {
-		if targetIDSet {
+	} else {
+		if actionChk.(string) == "forward" {
+			if targetIDSet {
 
-			//User can set the poolId as combination of lbID/poolID, if so parse the string & get the poolID
-			id, err := getPoolID(tID.(string))
-			if err != nil {
-				return err
+				//User can set the poolId as combination of lbID/poolID, if so parse the string & get the poolID
+				id, err := getPoolID(tID.(string))
+				if err != nil {
+					return diag.FromErr(err)
+				}
+
+				target = &vpcv1.LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentity{
+					ID: &id,
+				}
+			} else {
+				return diag.FromErr(fmt.Errorf("When action is forward please specify target_id"))
+			}
+		} else if actionChk.(string) == "redirect" {
+
+			urlPrototype := vpcv1.LoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyRedirectURLPrototype{}
+
+			if statusSet {
+				sc := int64(statusCode.(int))
+				urlPrototype.HTTPStatusCode = &sc
+			} else {
+				return diag.FromErr(fmt.Errorf("When action is redirect please specify target_http_status_code"))
 			}
 
-			target = &vpcv1.LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentity{
-				ID: &id,
+			if urlSet {
+				link := url.(string)
+				urlPrototype.URL = &link
+			} else {
+				return diag.FromErr(fmt.Errorf("When action is redirect please specify target_url"))
 			}
-		} else {
-			return fmt.Errorf("When action is forward please specify target_id")
-		}
-	} else if actionChk.(string) == "redirect" {
 
-		urlPrototype := vpcv1.LoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyRedirectURLPrototype{}
+			target = &urlPrototype
+		} else if actionChk.(string) == "https_redirect" {
 
-		if statusSet {
-			sc := int64(statusCode.(int))
-			urlPrototype.HTTPStatusCode = &sc
-		} else {
-			return fmt.Errorf("When action is redirect please specify target_http_status_code")
-		}
+			urlPrototype := vpcv1.LoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyHTTPSRedirectPrototype{}
 
-		if urlSet {
-			link := url.(string)
-			urlPrototype.URL = &link
-		} else {
-			return fmt.Errorf("When action is redirect please specify target_url")
-		}
-
-		target = &urlPrototype
-	} else if actionChk.(string) == "https_redirect" {
-
-		urlPrototype := vpcv1.LoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerHTTPSRedirectPrototype{}
-
-		if listenerSet {
-			listener := listener.(string)
-			urlPrototype.Listener = &vpcv1.LoadBalancerListenerIdentity{
-				ID: &listener,
+			if listenerSet {
+				listener := listener.(string)
+				urlPrototype.Listener = &vpcv1.LoadBalancerListenerIdentity{
+					ID: &listener,
+				}
+			} else {
+				return diag.FromErr(fmt.Errorf("When action is https_redirect please specify target_https_redirect_listener"))
 			}
-		} else {
-			return fmt.Errorf("When action is https_redirect please specify target_https_redirect_listener")
-		}
 
-		if httpsStatusSet {
-			sc := int64(httpsStatusCode.(int))
-			urlPrototype.HTTPStatusCode = &sc
-		} else {
-			return fmt.Errorf("When action is https_redirect please specify target_https_redirect_status_code")
-		}
+			if httpsStatusSet {
+				sc := int64(httpsStatusCode.(int))
+				urlPrototype.HTTPStatusCode = &sc
+			} else {
+				return diag.FromErr(fmt.Errorf("When action is https_redirect please specify target_https_redirect_status_code"))
+			}
 
-		if uriSet {
-			link := uri.(string)
-			urlPrototype.URI = &link
-		}
+			if uriSet {
+				link := uri.(string)
+				urlPrototype.URI = &link
+			}
 
-		target = &urlPrototype
+			target = &urlPrototype
+		}
 	}
-
 	//Read Rules
 	rulesInfo := make([]vpcv1.LoadBalancerListenerPolicyRulePrototype, 0)
 	if rules, rulesSet := d.GetOk(isLBListenerPolicyRules); rulesSet {
@@ -477,20 +578,20 @@ func lbListenerPolicyCreate(d *schema.ResourceData, meta interface{}, lbID, list
 
 	_, err = isWaitForLbAvailable(sess, lbID, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
-		return fmt.Errorf(
-			"LB-LP Error checking for load balancer (%s) is active: %s", lbID, err)
+		return diag.FromErr(fmt.Errorf(
+			"LB-LP Error checking for load balancer (%s) is active: %s", lbID, err))
 	}
 
 	policy, response, err := sess.CreateLoadBalancerListenerPolicy(options)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error while creating lb listener policy for LB %s: Error %v Response %v", lbID, err, *response)
+		return diag.FromErr(fmt.Errorf("[ERROR] Error while creating lb listener policy for LB %s: Error %v Response %v", lbID, err, *response))
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s/%s", lbID, listenerID, *(policy.ID)))
 
 	_, err = isWaitForLbListenerPolicyAvailable(sess, d.Id(), d.Timeout(schema.TimeoutCreate))
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	return nil
 }
@@ -575,21 +676,21 @@ func isLbListenerPolicyRefreshFunc(vpc *vpcv1.VpcV1, id string) resource.StateRe
 	}
 }
 
-func resourceIBMISLBListenerPolicyRead(d *schema.ResourceData, meta interface{}) error {
+func resourceIBMISLBListenerPolicyRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	ID := d.Id()
 	parts, err := flex.IdParts(ID)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	lbID := parts[0]
 	listenerID := parts[1]
 	policyID := parts[2]
 
-	err = lbListenerPolicyGet(d, meta, lbID, listenerID, policyID)
-	if err != nil {
-		return err
+	diag := lbListenerPolicyGet(d, meta, lbID, listenerID, policyID)
+	if diag != nil {
+		return diag
 	}
 
 	return nil
@@ -638,29 +739,29 @@ func lbListenerPolicyExists(d *schema.ResourceData, meta interface{}, ID string)
 	}
 	return true, nil
 }
-func resourceIBMISLBListenerPolicyUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceIBMISLBListenerPolicyUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	parts, err := flex.IdParts(d.Id())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	lbID := parts[0]
 	listenerID := parts[1]
 	policyID := parts[2]
 
-	err = lbListenerPolicyUpdate(d, meta, lbID, listenerID, policyID)
-	if err != nil {
-		return err
+	diagErr := lbListenerPolicyUpdate(d, meta, lbID, listenerID, policyID)
+	if diagErr != nil {
+		return diagErr
 	}
 
-	return resourceIBMISLBListenerPolicyRead(d, meta)
+	return resourceIBMISLBListenerPolicyRead(context, d, meta)
 }
 
-func lbListenerPolicyUpdate(d *schema.ResourceData, meta interface{}, lbID, listenerID, ID string) error {
+func lbListenerPolicyUpdate(d *schema.ResourceData, meta interface{}, lbID, listenerID, ID string) diag.Diagnostics {
 	sess, err := vpcClient(meta)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	hasChanged := false
 	updatePolicyOptions := vpcv1.UpdateLoadBalancerListenerPolicyOptions{}
@@ -683,92 +784,101 @@ func lbListenerPolicyUpdate(d *schema.ResourceData, meta interface{}, lbID, list
 		hasChanged = true
 	}
 	httpsURIRemoved := false
-
 	var target vpcv1.LoadBalancerListenerPolicyTargetPatchIntf
-	//If Action is forward and TargetID is changed, set the target to pool ID
-	if d.Get(isLBListenerPolicyAction).(string) == "forward" && d.HasChange(isLBListenerPolicyTargetID) {
-
-		//User can set the poolId as combination of lbID/poolID, if so parse the string & get the poolID
-		id, err := getPoolID(d.Get(isLBListenerPolicyTargetID).(string))
+	if d.HasChange("target") {
+		target, err := resourceIBMIsLbListenerPolicyMapToLoadBalancerListenerPolicyTargetPatch(d, d.Get("target.0").(map[string]interface{}), &httpsURIRemoved)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
-		target = &vpcv1.LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentity{
-			ID: &id,
-		}
-
 		loadBalancerListenerPolicyPatchModel.Target = target
 		hasChanged = true
-	} else if d.Get(isLBListenerPolicyAction).(string) == "redirect" {
-		//if Action is redirect and either status code or URL chnaged, set accordingly
-		//LoadBalancerListenerPolicyPatchTargetLoadBalancerListenerPolicyRedirectURLPatch
 
-		redirectPatch := vpcv1.LoadBalancerListenerPolicyTargetPatchLoadBalancerListenerPolicyRedirectURLPatch{}
+	} else {
 
-		targetChange := false
-		if d.HasChange(isLBListenerPolicyTargetHTTPStatusCode) {
-			status := d.Get(isLBListenerPolicyTargetHTTPStatusCode).(int)
-			sc := int64(status)
-			redirectPatch.HTTPStatusCode = &sc
-			hasChanged = true
-			targetChange = true
-		}
+		//If Action is forward and TargetID is changed, set the target to pool ID
+		if d.Get(isLBListenerPolicyAction).(string) == "forward" && d.HasChange(isLBListenerPolicyTargetID) {
 
-		if d.HasChange(isLBListenerPolicyTargetURL) {
-			url := d.Get(isLBListenerPolicyTargetURL).(string)
-			redirectPatch.URL = &url
-			hasChanged = true
-			targetChange = true
-		}
-
-		//Update the target only if there is a change in either statusCode or URL
-		if targetChange {
-			target = &redirectPatch
-			loadBalancerListenerPolicyPatchModel.Target = target
-		}
-	} else if d.Get(isLBListenerPolicyAction).(string) == "https_redirect" {
-
-		httpsRedirectPatch := vpcv1.LoadBalancerListenerPolicyTargetPatchLoadBalancerListenerHTTPSRedirectPatch{}
-
-		targetChange := false
-		if d.HasChange(isLBListenerPolicyHTTPSRedirectListener) {
-			listener := d.Get(isLBListenerPolicyHTTPSRedirectListener).(string)
-			httpsRedirectPatch.Listener = &vpcv1.LoadBalancerListenerIdentity{
-				ID: &listener,
+			//User can set the poolId as combination of lbID/poolID, if so parse the string & get the poolID
+			id, err := getPoolID(d.Get(isLBListenerPolicyTargetID).(string))
+			if err != nil {
+				return diag.FromErr(err)
 			}
-			hasChanged = true
-			targetChange = true
-		}
-
-		if d.HasChange(isLBListenerPolicyHTTPSRedirectStatusCode) {
-			status := d.Get(isLBListenerPolicyHTTPSRedirectStatusCode).(int)
-			sc := int64(status)
-			httpsRedirectPatch.HTTPStatusCode = &sc
-			hasChanged = true
-			targetChange = true
-		}
-
-		if d.HasChange(isLBListenerPolicyHTTPSRedirectURI) {
-			uri := d.Get(isLBListenerPolicyHTTPSRedirectURI).(string)
-			httpsRedirectPatch.URI = &uri
-			hasChanged = true
-			targetChange = true
-			if uri == "" {
-				httpsURIRemoved = true
+			target = &vpcv1.LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentity{
+				ID: &id,
 			}
-		}
 
-		//Update the target only if there is a change in either listener, statusCode or URI
-		if targetChange {
-			target = &httpsRedirectPatch
 			loadBalancerListenerPolicyPatchModel.Target = target
+			hasChanged = true
+		} else if d.Get(isLBListenerPolicyAction).(string) == "redirect" {
+			//if Action is redirect and either status code or URL chnaged, set accordingly
+			//LoadBalancerListenerPolicyPatchTargetLoadBalancerListenerPolicyRedirectURLPatch
+
+			redirectPatch := vpcv1.LoadBalancerListenerPolicyTargetPatchLoadBalancerListenerPolicyRedirectURLPatch{}
+
+			targetChange := false
+			if d.HasChange(isLBListenerPolicyTargetHTTPStatusCode) {
+				status := d.Get(isLBListenerPolicyTargetHTTPStatusCode).(int)
+				sc := int64(status)
+				redirectPatch.HTTPStatusCode = &sc
+				hasChanged = true
+				targetChange = true
+			}
+
+			if d.HasChange(isLBListenerPolicyTargetURL) {
+				url := d.Get(isLBListenerPolicyTargetURL).(string)
+				redirectPatch.URL = &url
+				hasChanged = true
+				targetChange = true
+			}
+
+			//Update the target only if there is a change in either statusCode or URL
+			if targetChange {
+				target = &redirectPatch
+				loadBalancerListenerPolicyPatchModel.Target = target
+			}
+		} else if d.Get(isLBListenerPolicyAction).(string) == "https_redirect" {
+
+			httpsRedirectPatch := vpcv1.LoadBalancerListenerPolicyTargetPatchLoadBalancerListenerPolicyHTTPSRedirectPatch{}
+
+			targetChange := false
+			if d.HasChange(isLBListenerPolicyHTTPSRedirectListener) {
+				listener := d.Get(isLBListenerPolicyHTTPSRedirectListener).(string)
+				httpsRedirectPatch.Listener = &vpcv1.LoadBalancerListenerIdentity{
+					ID: &listener,
+				}
+				hasChanged = true
+				targetChange = true
+			}
+
+			if d.HasChange(isLBListenerPolicyHTTPSRedirectStatusCode) {
+				status := d.Get(isLBListenerPolicyHTTPSRedirectStatusCode).(int)
+				sc := int64(status)
+				httpsRedirectPatch.HTTPStatusCode = &sc
+				hasChanged = true
+				targetChange = true
+			}
+
+			if d.HasChange(isLBListenerPolicyHTTPSRedirectURI) {
+				uri := d.Get(isLBListenerPolicyHTTPSRedirectURI).(string)
+				httpsRedirectPatch.URI = &uri
+				hasChanged = true
+				targetChange = true
+				if uri == "" {
+					httpsURIRemoved = true
+				}
+			}
+
+			//Update the target only if there is a change in either listener, statusCode or URI
+			if targetChange {
+				target = &httpsRedirectPatch
+				loadBalancerListenerPolicyPatchModel.Target = target
+			}
 		}
 	}
-
 	if hasChanged {
 		loadBalancerListenerPolicyPatch, err := loadBalancerListenerPolicyPatchModel.AsPatch()
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error calling asPatch for LoadBalancerListenerPolicyPatch: %s", err)
+			return diag.FromErr(fmt.Errorf("[ERROR] Error calling asPatch for LoadBalancerListenerPolicyPatch: %s", err))
 		}
 		if httpsURIRemoved {
 			loadBalancerListenerPolicyPatch["target"].(map[string]interface{})["uri"] = nil
@@ -780,28 +890,28 @@ func lbListenerPolicyUpdate(d *schema.ResourceData, meta interface{}, lbID, list
 
 		_, err = isWaitForLbAvailable(sess, lbID, d.Timeout(schema.TimeoutCreate))
 		if err != nil {
-			return fmt.Errorf(
-				"LB-LP Error checking for load balancer (%s) is active: %s", lbID, err)
+			return diag.FromErr(fmt.Errorf(
+				"LB-LP Error checking for load balancer (%s) is active: %s", lbID, err))
 		}
 		_, response, err := sess.UpdateLoadBalancerListenerPolicy(&updatePolicyOptions)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error Updating in policy : %s\n%s", err, response)
+			return diag.FromErr(fmt.Errorf("[ERROR] Error Updating in policy : %s\n%s", err, response))
 		}
 
 		_, err = isWaitForLbListenerPolicyAvailable(sess, d.Id(), d.Timeout(schema.TimeoutCreate))
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 	return nil
 }
 
-func resourceIBMISLBListenerPolicyDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceIBMISLBListenerPolicyDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	//Retrieve lbId, listenerId and policyID
 	parts, err := flex.IdParts(d.Id())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	lbID := parts[0]
@@ -814,7 +924,7 @@ func resourceIBMISLBListenerPolicyDelete(d *schema.ResourceData, meta interface{
 
 	err = lbListenerPolicyDelete(d, meta, lbID, listenerID, policyID)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
@@ -912,11 +1022,11 @@ func isLbListenerPolicyDeleteRefreshFunc(vpc *vpcv1.VpcV1, id string) resource.S
 	}
 }
 
-func lbListenerPolicyGet(d *schema.ResourceData, meta interface{}, lbID, listenerID, id string) error {
+func lbListenerPolicyGet(d *schema.ResourceData, meta interface{}, lbID, listenerID, id string) diag.Diagnostics {
 
 	sess, err := vpcClient(meta)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	//Getting policy optins
@@ -933,7 +1043,7 @@ func lbListenerPolicyGet(d *schema.ResourceData, meta interface{}, lbID, listene
 			d.SetId("")
 			return nil
 		}
-		return err
+		return diag.FromErr(err)
 	}
 
 	//set the argument values
@@ -965,7 +1075,7 @@ func lbListenerPolicyGet(d *schema.ResourceData, meta interface{}, lbID, listene
 					d.SetId("")
 					return nil
 				}
-				return err
+				return diag.FromErr(err)
 			}
 
 			l := map[string]interface{}{
@@ -983,41 +1093,222 @@ func lbListenerPolicyGet(d *schema.ResourceData, meta interface{}, lbID, listene
 	// `LoadBalancerPoolReference` is in the response if `action` is `forward`.
 	// `LoadBalancerListenerPolicyRedirectURL` is in the response if `action` is `redirect`.
 
-	if *(policy.Action) == "forward" {
-		if reflect.TypeOf(policy.Target).String() == "*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerPoolReference" {
-			target, ok := policy.Target.(*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerPoolReference)
-			if ok {
-				d.Set(isLBListenerPolicyTargetID, target.ID)
-			}
-		}
+	if !core.IsNil(policy.Target) {
+		if _, ok := d.GetOk("target"); ok {
 
-	} else if *(policy.Action) == "redirect" {
-		if reflect.TypeOf(policy.Target).String() == "*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyRedirectURL" {
-			target, ok := policy.Target.(*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyRedirectURL)
-			if ok {
-				d.Set(isLBListenerPolicyTargetURL, target.URL)
-				d.Set(isLBListenerPolicyTargetHTTPStatusCode, target.HTTPStatusCode)
+			targetMap, err := resourceIBMIsLbListenerPolicyLoadBalancerListenerPolicyTargetToMap(policy.Target)
+			if err != nil {
+				return diag.FromErr(err)
 			}
-		}
-	} else if *(policy.Action) == "https_redirect" {
-		if reflect.TypeOf(policy.Target).String() == "*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerHTTPSRedirect" {
-			target, ok := policy.Target.(*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerHTTPSRedirect)
-			if ok {
-				d.Set(isLBListenerPolicyHTTPSRedirectListener, target.Listener.ID)
-				d.Set(isLBListenerPolicyHTTPSRedirectStatusCode, target.HTTPStatusCode)
-				d.Set(isLBListenerPolicyHTTPSRedirectURI, target.URI)
+			if err = d.Set("target", []map[string]interface{}{targetMap}); err != nil {
+				return diag.FromErr(fmt.Errorf("Error setting target: %s", err))
+			}
+		} else {
+			if *(policy.Action) == "forward" {
+				if reflect.TypeOf(policy.Target).String() == "*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerPoolReference" {
+					target, ok := policy.Target.(*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerPoolReference)
+					if ok {
+						d.Set(isLBListenerPolicyTargetID, target.ID)
+					}
+				}
+
+			} else if *(policy.Action) == "redirect" {
+				if reflect.TypeOf(policy.Target).String() == "*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyRedirectURL" {
+					target, ok := policy.Target.(*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyRedirectURL)
+					if ok {
+						d.Set(isLBListenerPolicyTargetURL, target.URL)
+						d.Set(isLBListenerPolicyTargetHTTPStatusCode, target.HTTPStatusCode)
+					}
+				}
+			} else if *(policy.Action) == "https_redirect" {
+				if reflect.TypeOf(policy.Target).String() == "*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyHTTPSRedirect" {
+					target, ok := policy.Target.(*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyHTTPSRedirect)
+					if ok {
+						d.Set(isLBListenerPolicyHTTPSRedirectListener, target.Listener.ID)
+						d.Set(isLBListenerPolicyHTTPSRedirectStatusCode, target.HTTPStatusCode)
+						d.Set(isLBListenerPolicyHTTPSRedirectURI, target.URI)
+					}
+				}
 			}
 		}
 	}
-
 	getLoadBalancerOptions := &vpcv1.GetLoadBalancerOptions{
 		ID: &lbID,
 	}
 	lb, response, err := sess.GetLoadBalancer(getLoadBalancerOptions)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error Getting Load Balancer : %s\n%s", err, response)
+		return diag.FromErr(fmt.Errorf("[ERROR] Error Getting Load Balancer : %s\n%s", err, response))
 	}
 	d.Set(flex.RelatedCRN, *lb.CRN)
 
 	return nil
+}
+
+func resourceIBMIsLbListenerPolicyMapToLoadBalancerListenerPolicyTargetPrototype(modelMap map[string]interface{}) (vpcv1.LoadBalancerListenerPolicyTargetPrototypeIntf, error) {
+	model := &vpcv1.LoadBalancerListenerPolicyTargetPrototype{}
+	if modelMap["id"] != nil && modelMap["id"].(string) != "" {
+		model.ID = core.StringPtr(modelMap["id"].(string))
+	}
+	if modelMap["http_status_code"] != nil && modelMap["http_status_code"].(int) != 0 {
+		model.HTTPStatusCode = core.Int64Ptr(int64(modelMap["http_status_code"].(int)))
+	}
+	if modelMap["url"] != nil && modelMap["url"].(string) != "" {
+		model.URL = core.StringPtr(modelMap["url"].(string))
+	}
+	if modelMap["listener"] != nil && len(modelMap["listener"].([]interface{})) > 0 {
+		ListenerModel, err := resourceIBMIsLbListenerPolicyMapToLoadBalancerListenerIdentity(modelMap["listener"].([]interface{})[0].(map[string]interface{}))
+		if err != nil {
+			return model, err
+		}
+		model.Listener = ListenerModel
+	}
+	if modelMap["uri"] != nil && modelMap["uri"].(string) != "" {
+		model.URI = core.StringPtr(modelMap["uri"].(string))
+	}
+	return model, nil
+}
+func resourceIBMIsLbListenerPolicyMapToLoadBalancerListenerIdentity(modelMap map[string]interface{}) (vpcv1.LoadBalancerListenerIdentityIntf, error) {
+	model := &vpcv1.LoadBalancerListenerIdentity{}
+	if modelMap["id"] != nil && modelMap["id"].(string) != "" {
+		model.ID = core.StringPtr(modelMap["id"].(string))
+	}
+	return model, nil
+}
+
+func resourceIBMIsLbListenerPolicyLoadBalancerListenerPolicyTargetToMap(model vpcv1.LoadBalancerListenerPolicyTargetIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerPoolReference); ok {
+		return resourceIBMIsLbListenerPolicyLoadBalancerListenerPolicyTargetLoadBalancerPoolReferenceToMap(model.(*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerPoolReference))
+	} else if _, ok := model.(*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyRedirectURL); ok {
+		return resourceIBMIsLbListenerPolicyLoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyRedirectURLToMap(model.(*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyRedirectURL))
+	} else if _, ok := model.(*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyHTTPSRedirect); ok {
+		return resourceIBMIsLbListenerPolicyLoadBalancerListenerPolicyTargetLoadBalancerListenerHTTPSRedirectToMap(model.(*vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyHTTPSRedirect))
+	} else if _, ok := model.(*vpcv1.LoadBalancerListenerPolicyTarget); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*vpcv1.LoadBalancerListenerPolicyTarget)
+		if model.Deleted != nil {
+			deletedMap, err := resourceIBMIsLbListenerPolicyLoadBalancerPoolReferenceDeletedToMap(model.Deleted)
+			if err != nil {
+				return modelMap, err
+			}
+			modelMap["deleted"] = []map[string]interface{}{deletedMap}
+		}
+		if model.Href != nil {
+			modelMap["href"] = model.Href
+		}
+		if model.ID != nil {
+			modelMap["id"] = model.ID
+		}
+		if model.Name != nil {
+			modelMap["name"] = model.Name
+		}
+		if model.HTTPStatusCode != nil {
+			modelMap["http_status_code"] = flex.IntValue(model.HTTPStatusCode)
+		}
+		if model.URL != nil {
+			modelMap["url"] = model.URL
+		}
+		if model.Listener != nil {
+			listenerMap, err := resourceIBMIsLbListenerPolicyLoadBalancerListenerReferenceToMap(model.Listener)
+			if err != nil {
+				return modelMap, err
+			}
+			modelMap["listener"] = []map[string]interface{}{listenerMap}
+		}
+		if model.URI != nil {
+			modelMap["uri"] = model.URI
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized vpcv1.LoadBalancerListenerPolicyTargetIntf subtype encountered")
+	}
+}
+
+func resourceIBMIsLbListenerPolicyLoadBalancerPoolReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = model.MoreInfo
+	return modelMap, nil
+}
+
+func resourceIBMIsLbListenerPolicyLoadBalancerListenerReferenceToMap(model *vpcv1.LoadBalancerListenerReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Deleted != nil {
+		deletedMap, err := resourceIBMIsLbListenerPolicyLoadBalancerListenerReferenceDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = model.Href
+	modelMap["id"] = model.ID
+	return modelMap, nil
+}
+
+func resourceIBMIsLbListenerPolicyLoadBalancerListenerReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = model.MoreInfo
+	return modelMap, nil
+}
+
+func resourceIBMIsLbListenerPolicyLoadBalancerListenerPolicyTargetLoadBalancerPoolReferenceToMap(model *vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerPoolReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Deleted != nil {
+		deletedMap, err := resourceIBMIsLbListenerPolicyLoadBalancerPoolReferenceDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = model.Href
+	modelMap["id"] = model.ID
+	modelMap["name"] = model.Name
+	return modelMap, nil
+}
+
+func resourceIBMIsLbListenerPolicyLoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyRedirectURLToMap(model *vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyRedirectURL) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["http_status_code"] = flex.IntValue(model.HTTPStatusCode)
+	modelMap["url"] = model.URL
+	return modelMap, nil
+}
+
+func resourceIBMIsLbListenerPolicyLoadBalancerListenerPolicyTargetLoadBalancerListenerHTTPSRedirectToMap(model *vpcv1.LoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyHTTPSRedirect) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["http_status_code"] = flex.IntValue(model.HTTPStatusCode)
+	listenerMap, err := resourceIBMIsLbListenerPolicyLoadBalancerListenerReferenceToMap(model.Listener)
+	if err != nil {
+		return modelMap, err
+	}
+	modelMap["listener"] = []map[string]interface{}{listenerMap}
+	if model.URI != nil {
+		modelMap["uri"] = model.URI
+	}
+	return modelMap, nil
+}
+
+func resourceIBMIsLbListenerPolicyMapToLoadBalancerListenerPolicyTargetPatch(d *schema.ResourceData, modelMap map[string]interface{}, httpsURIRemoved *bool) (vpcv1.LoadBalancerListenerPolicyTargetPatchIntf, error) {
+	model := &vpcv1.LoadBalancerListenerPolicyTargetPatch{}
+	if d.HasChange("target.0.id") && modelMap["id"] != nil && modelMap["id"].(string) != "" {
+		model.ID = core.StringPtr(modelMap["id"].(string))
+	}
+	if d.HasChange("target.0.http_status_code") && modelMap["http_status_code"] != nil {
+		model.HTTPStatusCode = core.Int64Ptr(int64(modelMap["http_status_code"].(int)))
+	}
+	if d.HasChange("target.0.url") && modelMap["url"] != nil && modelMap["url"].(string) != "" {
+		model.URL = core.StringPtr(modelMap["url"].(string))
+	}
+	if d.HasChange("target.0.listener") && modelMap["listener"] != nil && len(modelMap["listener"].([]interface{})) > 0 {
+		ListenerModel, err := resourceIBMIsLbListenerPolicyMapToLoadBalancerListenerIdentity(modelMap["listener"].([]interface{})[0].(map[string]interface{}))
+		if err != nil {
+			return model, err
+		}
+		model.Listener = ListenerModel
+	}
+	if d.HasChange("target.0.uri") {
+		if modelMap["uri"] != nil && modelMap["uri"].(string) != "" {
+			model.URI = core.StringPtr(modelMap["uri"].(string))
+		} else {
+			*httpsURIRemoved = true
+		}
+	}
+	return model, nil
 }

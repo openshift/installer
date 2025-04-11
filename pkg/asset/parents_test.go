@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ func (a *parentsAsset) Dependencies() []Asset {
 	return []Asset{}
 }
 
-func (a *parentsAsset) Generate(Parents) error {
+func (a *parentsAsset) Generate(context.Context, Parents) error {
 	return nil
 }
 

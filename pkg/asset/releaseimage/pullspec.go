@@ -1,9 +1,10 @@
 package releaseimage
 
 import (
+	"context"
 	"os"
 
-	dockerref "github.com/containers/image/docker/reference"
+	dockerref "github.com/containers/image/v5/docker/reference"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -24,7 +25,7 @@ func (a *Image) Dependencies() []asset.Asset {
 }
 
 // Generate creates the asset using the dependencies.
-func (a *Image) Generate(dependencies asset.Parents) error {
+func (a *Image) Generate(_ context.Context, dependencies asset.Parents) error {
 	var pullSpec string
 	if ri, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && ri != "" {
 		logrus.Warnf("Found override for release image (%s). Please be warned, this is not advised", ri)

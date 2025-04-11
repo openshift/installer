@@ -19,6 +19,7 @@ package v1beta2
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -65,8 +66,8 @@ type RosaMachinePoolSpec struct {
 	AdditionalTags infrav1.Tags `json:"additionalTags,omitempty"`
 
 	// AutoRepair specifies whether health checks should be enabled for machines
-	// in the NodePool. The default is false.
-	// +kubebuilder:default=false
+	// in the NodePool. The default is true.
+	// +kubebuilder:default=true
 	// +optional
 	AutoRepair bool `json:"autoRepair,omitempty"`
 
@@ -105,6 +106,11 @@ type RosaMachinePoolSpec struct {
 	//
 	// +optional
 	NodeDrainGracePeriod *metav1.Duration `json:"nodeDrainGracePeriod,omitempty"`
+
+	// UpdateConfig specifies update configurations.
+	//
+	// +optional
+	UpdateConfig *RosaUpdateConfig `json:"updateConfig,omitempty"`
 }
 
 // RosaTaint represents a taint to be applied to a node.
@@ -132,6 +138,55 @@ type RosaMachinePoolAutoScaling struct {
 	MinReplicas int `json:"minReplicas,omitempty"`
 	// +kubebuilder:validation:Minimum=1
 	MaxReplicas int `json:"maxReplicas,omitempty"`
+}
+
+// RosaUpdateConfig specifies update configuration
+type RosaUpdateConfig struct {
+	// RollingUpdate specifies MaxUnavailable & MaxSurge number of nodes during update.
+	//
+	// +optional
+	RollingUpdate *RollingUpdate `json:"rollingUpdate,omitempty"`
+}
+
+// RollingUpdate specifies MaxUnavailable & MaxSurge number of nodes during update.
+type RollingUpdate struct {
+	// MaxUnavailable is the maximum number of nodes that can be unavailable during the update.
+	// Value can be an absolute number (ex: 5) or a percentage of desired nodes (ex: 10%).
+	// Absolute number is calculated from percentage by rounding down.
+	//
+	// MaxUnavailable can not be 0 if MaxSurge is 0, default is 0.
+	// Both MaxUnavailable & MaxSurge must use the same units (absolute value or percentage).
+	//
+	// Example: when MaxUnavailable is set to 30%, old nodes can be deleted down to 70% of
+	// desired nodes immediately when the rolling update starts. Once new nodes
+	// are ready, more old nodes be deleted, followed by provisioning new nodes,
+	// ensuring that the total number of nodes available at all times during the
+	// update is at least 70% of desired nodes.
+	//
+	// +kubebuilder:validation:Pattern="^((100|[0-9]{1,2})%|[0-9]+)$"
+	// +kubebuilder:validation:XIntOrString
+	// +kubebuilder:default=0
+	// +optional
+	MaxUnavailable *intstr.IntOrString `json:"maxUnavailable,omitempty"`
+
+	// MaxSurge is the maximum number of nodes that can be provisioned above the desired number of nodes.
+	// Value can be an absolute number (ex: 5) or a percentage of desired nodes (ex: 10%).
+	// Absolute number is calculated from percentage by rounding up.
+	//
+	// MaxSurge can not be 0 if MaxUnavailable is 0, default is 1.
+	// Both MaxSurge & MaxUnavailable must use the same units (absolute value or percentage).
+	//
+	// Example: when MaxSurge is set to 30%, new nodes can be provisioned immediately
+	// when the rolling update starts, such that the total number of old and new
+	// nodes do not exceed 130% of desired nodes. Once old nodes have been
+	// deleted, new nodes can be provisioned, ensuring that total number of nodes
+	// running at any time during the update is at most 130% of desired nodes.
+	//
+	// +kubebuilder:validation:Pattern="^((100|[0-9]{1,2})%|[0-9]+)$"
+	// +kubebuilder:validation:XIntOrString
+	// +kubebuilder:default=1
+	// +optional
+	MaxSurge *intstr.IntOrString `json:"maxSurge,omitempty"`
 }
 
 // RosaMachinePoolStatus defines the observed state of RosaMachinePool.

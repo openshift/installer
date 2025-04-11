@@ -56,11 +56,12 @@ func AddVsphereClusterIdentityControllerToManager(ctx context.Context, controlle
 		Client:               controllerManagerCtx.Client,
 		Recorder:             mgr.GetEventRecorderFor("vsphereclusteridentity-controller"),
 	}
+	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "vsphereclusteridentity")
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1.VSphereClusterIdentity{}).
 		WithOptions(options).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), controllerManagerCtx.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), predicateLog, controllerManagerCtx.WatchFilterValue)).
 		Complete(reconciler)
 }
 
@@ -90,7 +91,7 @@ func (r clusterIdentityReconciler) Reconcile(ctx context.Context, req reconcile.
 	// Create the patch helper.
 	patchHelper, err := patch.NewHelper(identity, r.Client)
 	if err != nil {
-		return reconcile.Result{}, errors.Wrap(err, "failed to initialize patch helper")
+		return reconcile.Result{}, err
 	}
 
 	defer func() {
@@ -173,14 +174,14 @@ func (r clusterIdentityReconciler) reconcileDelete(ctx context.Context, identity
 	if ctrlutil.RemoveFinalizer(secret, infrav1.SecretIdentitySetFinalizer) {
 		log.Info(fmt.Sprintf("Removing finalizer %s", infrav1.SecretIdentitySetFinalizer), "Secret", klog.KObj(secret))
 		if err := r.Client.Update(ctx, secret); err != nil {
-			return errors.Wrapf(err, fmt.Sprintf("failed to update Secret %s", klog.KObj(secret)))
+			return errors.Wrapf(err, "failed to update Secret %s", klog.KObj(secret))
 		}
 	}
 
 	if secret.DeletionTimestamp.IsZero() {
 		log.Info("Deleting Secret", "Secret", klog.KObj(secret))
 		if err := r.Client.Delete(ctx, secret); err != nil {
-			return errors.Wrapf(err, fmt.Sprintf("failed to delete Secret %s", klog.KObj(secret)))
+			return errors.Wrapf(err, "failed to delete Secret %s", klog.KObj(secret))
 		}
 	}
 

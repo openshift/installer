@@ -19,7 +19,7 @@ package network
 import (
 	"context"
 
-	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
+	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context/vmware"
@@ -36,6 +36,10 @@ func DummyNetworkProvider() services.NetworkProvider {
 
 func (np *dummyNetworkProvider) HasLoadBalancer() bool {
 	return false
+}
+
+func (np *dummyNetworkProvider) SupportsVMReadinessProbe() bool {
+	return true
 }
 
 func (np *dummyNetworkProvider) ProvisionClusterNetwork(_ context.Context, _ *vmware.ClusterContext) error {

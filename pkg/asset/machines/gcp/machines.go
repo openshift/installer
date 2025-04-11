@@ -2,10 +2,7 @@
 package gcp
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"sort"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -15,7 +12,6 @@ import (
 	v1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
-	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
@@ -73,7 +69,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 	replicas := int32(total)
 	failureDomains := []machinev1.GCPFailureDomain{}
-	sort.Strings(mpool.Zones)
+
 	for _, zone := range mpool.Zones {
 		domain := machinev1.GCPFailureDomain{
 			Zone: zone,
@@ -81,6 +77,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		failureDomains = append(failureDomains, domain)
 	}
 	machineSetProvider.Zone = ""
+
 	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1",
@@ -154,37 +151,9 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		}
 	}
 
-	instanceServiceAccount := fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID)
-	// The installer will create a service account for compute nodes with the above naming convention.
-	// The same service account will be used for control plane nodes during a vanilla installation. During a
-	// xpn installation, the installer will attempt to use an existing service account either through the
-	// credentials or through a user supplied value from the install-config.
-	if role == "master" && len(platform.NetworkProjectID) > 0 {
-		instanceServiceAccount = mpool.ServiceAccount
-
-		if instanceServiceAccount == "" {
-			sess, err := gcpconfig.GetSession(context.TODO())
-			if err != nil {
-				return nil, err
-			}
-
-			// The JSON can be `nil` if auth is provided from env
-			// https://pkg.go.dev/golang.org/x/oauth2@v0.17.0/google#Credentials
-			if len(sess.Credentials.JSON) == 0 {
-				return nil, fmt.Errorf("could not extract service account from loaded credentials. Please specify a service account to be used for shared vpc installations in the install-config.yaml")
-			}
-
-			var found bool
-			serviceAccount := make(map[string]interface{})
-			err = json.Unmarshal(sess.Credentials.JSON, &serviceAccount)
-			if err != nil {
-				return nil, err
-			}
-			instanceServiceAccount, found = serviceAccount["client_email"].(string)
-			if !found {
-				return nil, errors.New("could not find google service account")
-			}
-		}
+	serviceAccountEmail := gcp.GetConfiguredServiceAccount(platform, mpool)
+	if serviceAccountEmail == "" {
+		serviceAccountEmail = gcp.GetDefaultServiceAccount(platform, clusterID, role[0:1])
 	}
 
 	shieldedInstanceConfig := machineapi.GCPShieldedInstanceConfig{}
@@ -225,10 +194,10 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Subnetwork: subnetwork,
 		}},
 		ServiceAccounts: []machineapi.GCPServiceAccount{{
-			Email:  instanceServiceAccount,
+			Email:  serviceAccountEmail,
 			Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
 		}},
-		Tags:                   append(mpool.Tags, []string{fmt.Sprintf("%s-%s", clusterID, role)}...),
+		Tags:                   append(mpool.Tags, getTags(clusterID, role)...),
 		MachineType:            mpool.InstanceType,
 		Region:                 platform.Region,
 		Zone:                   az,
@@ -260,6 +229,7 @@ func ConfigMasters(machines []machineapi.Machine, controlPlane *machinev1.Contro
 	providerSpec.TargetPools = targetPools
 	return nil
 }
+
 func getNetworks(platform *gcp.Platform, clusterID, role string) (string, string, error) {
 	if platform.Network == "" {
 		return fmt.Sprintf("%s-network", clusterID), fmt.Sprintf("%s-%s-subnet", clusterID, role), nil
@@ -272,5 +242,16 @@ func getNetworks(platform *gcp.Platform, clusterID, role string) (string, string
 		return platform.Network, platform.ControlPlaneSubnet, nil
 	default:
 		return "", "", fmt.Errorf("unrecognized machine role %s", role)
+	}
+}
+
+func getTags(clusterID, role string) []string {
+	switch role {
+	case "worker":
+		return []string{fmt.Sprintf("%s-%s", clusterID, role)}
+	case "master":
+		return []string{fmt.Sprintf("%s-%s", clusterID, "control-plane"), clusterID}
+	default:
+		panic(fmt.Sprintf("unrecognized machine role %s", role))
 	}
 }

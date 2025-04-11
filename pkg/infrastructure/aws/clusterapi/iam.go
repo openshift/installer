@@ -137,7 +137,31 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 		return fmt.Errorf("failed to marshal assume policy: %w", err)
 	}
 
+	var defaultProfile string
+	if dmp := ic.Config.AWS.DefaultMachinePlatform; dmp != nil && len(dmp.IAMProfile) > 0 {
+		defaultProfile = dmp.IAMProfile
+	}
+
 	for _, role := range []string{master, worker} {
+		instanceProfile := defaultProfile
+		switch role {
+		case master:
+			if cp := ic.Config.ControlPlane; cp != nil && cp.Platform.AWS != nil && len(cp.Platform.AWS.IAMProfile) > 0 {
+				instanceProfile = cp.Platform.AWS.IAMProfile
+			}
+		case worker:
+			if w := ic.Config.Compute; len(w) > 0 && w[0].Platform.AWS != nil && len(w[0].Platform.AWS.IAMProfile) > 0 {
+				instanceProfile = w[0].Platform.AWS.IAMProfile
+			}
+		}
+
+		// A user-provided instance profile already has a role attached to it, so there is nothing else for the
+		// Installer to do.
+		if len(instanceProfile) > 0 {
+			logrus.Debugf("Using existing %s instance profile %q", role, instanceProfile)
+			continue
+		}
+
 		roleName, err := getOrCreateIAMRole(ctx, role, infraID, string(assumePolicyBytes), *ic, tags, svc)
 		if err != nil {
 			return fmt.Errorf("failed to create IAM %s role: %w", role, err)

@@ -80,7 +80,7 @@ func DataSourceIbmSmServiceCredentialsSecret() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				ForceNew:    true,
-				Description: "A v4 UUID identifier, or `default` secret group.",
+				Description: "A UUID identifier, or `default` secret group.",
 			},
 			"secret_group_name": &schema.Schema{
 				Type:         schema.TypeString,
@@ -117,6 +117,11 @@ func DataSourceIbmSmServiceCredentialsSecret() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The time-to-live (TTL) or lease duration to assign to generated credentials.",
+			},
+			"expiration_date": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The date a secret is expired. The date format follows RFC 3339.",
 			},
 			"rotation": &schema.Schema{
 				Type:        schema.TypeList,
@@ -275,7 +280,7 @@ func DataSourceIbmSmServiceCredentialsSecret() *schema.Resource {
 }
 
 func dataSourceIbmSmServiceCredentialsSecretRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ServiceCredentialsSecretIntf, region, instanceId, diagError := getSecretByIdOrByName(context, d, meta, ServiceCredentialsSecretType)
+	ServiceCredentialsSecretIntf, region, instanceId, diagError := getSecretByIdOrByName(context, d, meta, ServiceCredentialsSecretType, ServiceCredentialsSecretResourceName)
 	if diagError != nil {
 		return diagError
 	}
@@ -285,18 +290,22 @@ func dataSourceIbmSmServiceCredentialsSecretRead(context context.Context, d *sch
 
 	var err error
 	if err = d.Set("region", region); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting region: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("created_by", ServiceCredentialsSecret.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_by"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("created_at", DateTimeToRFC3339(ServiceCredentialsSecret.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_at"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("crn", ServiceCredentialsSecret.Crn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting crn"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if ServiceCredentialsSecret.CustomMetadata != nil {
@@ -306,77 +315,94 @@ func dataSourceIbmSmServiceCredentialsSecretRead(context context.Context, d *sch
 		}
 
 		if err = d.Set("custom_metadata", flex.Flatten(convertedMap)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting custom_metadata: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting custom_metadata"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+			return tfErr.GetDiag()
 		}
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting custom_metadata %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting custom_metadata"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("description", ServiceCredentialsSecret.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting description"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("downloaded", ServiceCredentialsSecret.Downloaded); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting downloaded: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting downloaded"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if ServiceCredentialsSecret.Labels != nil {
 		if err = d.Set("labels", ServiceCredentialsSecret.Labels); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting labels: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting labels"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("locks_total", flex.IntValue(ServiceCredentialsSecret.LocksTotal)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting locks_total: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting locks_total"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("name", ServiceCredentialsSecret.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("secret_group_id", ServiceCredentialsSecret.SecretGroupID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_group_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_group_id"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("secret_type", ServiceCredentialsSecret.SecretType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_type"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("state", flex.IntValue(ServiceCredentialsSecret.State)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting state"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("state_description", ServiceCredentialsSecret.StateDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting state_description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting state_description"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("updated_at", DateTimeToRFC3339(ServiceCredentialsSecret.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("versions_total", flex.IntValue(ServiceCredentialsSecret.VersionsTotal)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting versions_total: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting versions_total"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("ttl", ServiceCredentialsSecret.TTL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting ttl: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting ttl"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	rotation := []map[string]interface{}{}
 	if ServiceCredentialsSecret.Rotation != nil {
 		modelMap, err := dataSourceIbmSmServiceCredentialsSecretRotationPolicyToMap(ServiceCredentialsSecret.Rotation.(*secretsmanagerv2.RotationPolicy))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, "", fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+			return tfErr.GetDiag()
 		}
 		rotation = append(rotation, modelMap)
 	}
 	if err = d.Set("rotation", rotation); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rotation %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting rotation"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("next_rotation_date", DateTimeToRFC3339(ServiceCredentialsSecret.NextRotationDate)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting next_rotation_date: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting next_rotation_date"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if ServiceCredentialsSecret.Credentials != nil {
@@ -384,17 +410,27 @@ func dataSourceIbmSmServiceCredentialsSecretRead(context context.Context, d *sch
 		cred, _ := json.Marshal(ServiceCredentialsSecret.Credentials)
 		json.Unmarshal(cred, &credInterface)
 		if err = d.Set("credentials", flex.Flatten(credInterface)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting credentials: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting credentials"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	sourceServiceMap, err := dataSourceIbmSmServiceCredentialsSecretSourceServiceToMap(ServiceCredentialsSecret.SourceService)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 	if len(sourceServiceMap) > 0 {
 		if err = d.Set("source_service", []map[string]interface{}{sourceServiceMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting source_service: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting source_service"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+			return tfErr.GetDiag()
+		}
+	}
+
+	if ServiceCredentialsSecret.ExpirationDate != nil {
+		if err = d.Set("expiration_date", DateTimeToRFC3339(ServiceCredentialsSecret.ExpirationDate)); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting expiration_date"), fmt.Sprintf("(Data) %s", ServiceCredentialsSecretResourceName), "read")
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -415,7 +451,7 @@ func dataSourceIbmSmServiceCredentialsSecretRotationPolicyToMap(model *secretsma
 	return modelMap, nil
 }
 
-func dataSourceIbmSmServiceCredentialsSecretSourceServiceToMap(sourceService *secretsmanagerv2.ServiceCredentialsSecretSourceService) (map[string]interface{}, error) {
+func dataSourceIbmSmServiceCredentialsSecretSourceServiceToMap(sourceService *secretsmanagerv2.ServiceCredentialsSecretSourceServiceRO) (map[string]interface{}, error) {
 	mainModelMap := make(map[string]interface{})
 	if sourceService.Instance != nil {
 		instanceMap := make(map[string]interface{})

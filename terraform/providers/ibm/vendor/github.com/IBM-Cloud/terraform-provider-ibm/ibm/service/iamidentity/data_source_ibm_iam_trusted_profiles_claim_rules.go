@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2021 All Rights Reserved.
+// Copyright IBM Corp. 2025 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.98.0-8be2046a-20241205-162752
+ */
 
 package iamidentity
 
@@ -9,11 +13,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 )
 
@@ -22,81 +27,81 @@ func DataSourceIBMIamTrustedProfileClaimRules() *schema.Resource {
 		ReadContext: dataSourceIBMIamTrustedProfileClaimRuleListRead,
 
 		Schema: map[string]*schema.Schema{
-			"profile_id": {
+			"profile_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "ID of the trusted profile.",
 				ValidateFunc: validate.InvokeDataSourceValidator("ibm_iam_trusted_profile_claim_rules",
 					"profile_id"),
 			},
-			"rules": {
+			"rules": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "List of claim rules.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"id": {
+						"id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "the unique identifier of the claim rule.",
 						},
-						"entity_tag": {
+						"entity_tag": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "version of the claim rule.",
 						},
-						"created_at": {
+						"created_at": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "If set contains a date time string of the creation date in ISO format.",
 						},
-						"modified_at": {
+						"modified_at": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "If set contains a date time string of the last modification date in ISO format.",
 						},
-						"name": {
+						"name": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The optional claim rule name.",
 						},
-						"type": {
+						"type": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type of the Calim rule, either 'Profile-SAML' or 'Profile-CR'.",
+							Description: "Type of the claim rule, either 'Profile-SAML' or 'Profile-CR'.",
 						},
-						"realm_name": {
+						"realm_name": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The realm name of the Idp this claim rule applies to.",
 						},
-						"expiration": {
+						"expiration": &schema.Schema{
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Session expiration in seconds.",
 						},
-						"cr_type": {
+						"cr_type": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The compute resource type. Not required if type is Profile-SAML. Valid values are VSI, IKS_SA, ROKS_SA.",
 						},
-						"conditions": {
+						"conditions": &schema.Schema{
 							Type:        schema.TypeList,
 							Computed:    true,
 							Description: "Conditions of this claim rule.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"claim": {
+									"claim": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "The claim to evaluate against.",
+										Description: "The claim to evaluate against. [Learn more](/docs/account?topic=account-iam-condition-properties&interface=ui#cr-attribute-names).",
 									},
-									"operator": {
+									"operator": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The operation to perform on the claim. valid values are EQUALS, NOT_EQUALS, EQUALS_IGNORE_CASE, NOT_EQUALS_IGNORE_CASE, CONTAINS, IN.",
 									},
-									"value": {
+									"value": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The stringified JSON value that the claim is compared to using the operator.",
@@ -128,97 +133,79 @@ func DataSourceIBMIamTrustedProfileClaimRulesValidator() *validate.ResourceValid
 func dataSourceIBMIamTrustedProfileClaimRuleListRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	iamIdentityClient, err := meta.(conns.ClientSession).IAMIdentityV1API()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_iam_trusted_profiles_claim_rules", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	listClaimRulesOptions := &iamidentityv1.ListClaimRulesOptions{}
 
 	listClaimRulesOptions.SetProfileID(d.Get("profile_id").(string))
 
-	profileClaimRuleList, response, err := iamIdentityClient.ListClaimRules(listClaimRulesOptions)
+	profileClaimRuleList, _, err := iamIdentityClient.ListClaimRulesWithContext(context, listClaimRulesOptions)
 	if err != nil {
-		log.Printf("[DEBUG] ListClaimRules failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("ListClaimRules failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListClaimRulesWithContext failed: %s", err.Error()), "(Data) ibm_iam_trusted_profiles_claim_rules", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
-	d.SetId(dataSourceIBMIamTrustedProfileClaimRuleListID(d))
+	d.SetId(dataSourceIBMIamTrustedProfilesClaimRulesID(d))
 
-	if profileClaimRuleList.Rules != nil {
-		err = d.Set("rules", dataSourceProfileClaimRuleListFlattenRules(profileClaimRuleList.Rules))
+	rules := []map[string]interface{}{}
+	for _, rulesItem := range profileClaimRuleList.Rules {
+		rulesItemMap, err := DataSourceIBMIamTrustedProfilesClaimRulesProfileClaimRuleToMap(&rulesItem) // #nosec G601
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error setting rules %s", err))
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_iam_trusted_profiles_claim_rules", "read", "rules-to-map").GetDiag()
 		}
+		rules = append(rules, rulesItemMap)
+	}
+	if err = d.Set("rules", rules); err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting rules: %s", err), "(Data) ibm_iam_trusted_profiles_claim_rules", "read", "set-rules").GetDiag()
 	}
 
 	return nil
 }
 
-// dataSourceIBMIamTrustedProfileClaimRuleListID returns a reasonable ID for the list.
-func dataSourceIBMIamTrustedProfileClaimRuleListID(d *schema.ResourceData) string {
+// dataSourceIBMIamTrustedProfilesClaimRulesID returns a reasonable ID for the list.
+func dataSourceIBMIamTrustedProfilesClaimRulesID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceProfileClaimRuleListFlattenRules(result []iamidentityv1.ProfileClaimRule) (rules []map[string]interface{}) {
-	for _, rulesItem := range result {
-		rules = append(rules, dataSourceProfileClaimRuleListRuleToMap(rulesItem))
+func DataSourceIBMIamTrustedProfilesClaimRulesProfileClaimRuleToMap(model *iamidentityv1.ProfileClaimRule) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["id"] = *model.ID
+	modelMap["entity_tag"] = *model.EntityTag
+	modelMap["created_at"] = model.CreatedAt.String()
+	if model.ModifiedAt != nil {
+		modelMap["modified_at"] = model.ModifiedAt.String()
 	}
-
-	return rules
-}
-
-func dataSourceProfileClaimRuleListRuleToMap(rulesItem iamidentityv1.ProfileClaimRule) (rulesMap map[string]interface{}) {
-	rulesMap = map[string]interface{}{}
-
-	if rulesItem.ID != nil {
-		rulesMap["id"] = rulesItem.ID
+	if model.Name != nil {
+		modelMap["name"] = *model.Name
 	}
-	if rulesItem.EntityTag != nil {
-		rulesMap["entity_tag"] = rulesItem.EntityTag
+	modelMap["type"] = *model.Type
+	if model.RealmName != nil {
+		modelMap["realm_name"] = *model.RealmName
 	}
-	if rulesItem.CreatedAt != nil {
-		rulesMap["created_at"] = rulesItem.CreatedAt.String()
+	modelMap["expiration"] = flex.IntValue(model.Expiration)
+	if model.CrType != nil {
+		modelMap["cr_type"] = *model.CrType
 	}
-	if rulesItem.ModifiedAt != nil {
-		rulesMap["modified_at"] = rulesItem.ModifiedAt.String()
-	}
-	if rulesItem.Name != nil {
-		rulesMap["name"] = rulesItem.Name
-	}
-	if rulesItem.Type != nil {
-		rulesMap["type"] = rulesItem.Type
-	}
-	if rulesItem.RealmName != nil {
-		rulesMap["realm_name"] = rulesItem.RealmName
-	}
-	if rulesItem.Expiration != nil {
-		rulesMap["expiration"] = rulesItem.Expiration
-	}
-	if rulesItem.CrType != nil {
-		rulesMap["cr_type"] = rulesItem.CrType
-	}
-	if rulesItem.Conditions != nil {
-		conditionsList := []map[string]interface{}{}
-		for _, conditionsItem := range rulesItem.Conditions {
-			conditionsList = append(conditionsList, dataSourceProfileClaimRuleListRulesConditionsToMap(conditionsItem))
+	conditions := []map[string]interface{}{}
+	for _, conditionsItem := range model.Conditions {
+		conditionsItemMap, err := DataSourceIBMIamTrustedProfilesClaimRulesProfileClaimRuleConditionsToMap(&conditionsItem) // #nosec G601
+		if err != nil {
+			return modelMap, err
 		}
-		rulesMap["conditions"] = conditionsList
+		conditions = append(conditions, conditionsItemMap)
 	}
-
-	return rulesMap
+	modelMap["conditions"] = conditions
+	return modelMap, nil
 }
 
-func dataSourceProfileClaimRuleListRulesConditionsToMap(conditionsItem iamidentityv1.ProfileClaimRuleConditions) (conditionsMap map[string]interface{}) {
-	conditionsMap = map[string]interface{}{}
-
-	if conditionsItem.Claim != nil {
-		conditionsMap["claim"] = conditionsItem.Claim
-	}
-	if conditionsItem.Operator != nil {
-		conditionsMap["operator"] = conditionsItem.Operator
-	}
-	if conditionsItem.Value != nil {
-		conditionsMap["value"] = conditionsItem.Value
-	}
-
-	return conditionsMap
+func DataSourceIBMIamTrustedProfilesClaimRulesProfileClaimRuleConditionsToMap(model *iamidentityv1.ProfileClaimRuleConditions) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["claim"] = *model.Claim
+	modelMap["operator"] = *model.Operator
+	modelMap["value"] = *model.Value
+	return modelMap, nil
 }

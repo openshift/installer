@@ -351,6 +351,11 @@ type NetworkSpec struct {
 	// AdditionalControlPlaneIngressRules is an optional set of ingress rules to add to the control plane
 	// +optional
 	AdditionalControlPlaneIngressRules []IngressRule `json:"additionalControlPlaneIngressRules,omitempty"`
+
+	// NodePortIngressRuleCidrBlocks is an optional set of CIDR blocks to allow traffic to nodes' NodePort services.
+	// If none are specified here, all IPs are allowed to connect.
+	// +optional
+	NodePortIngressRuleCidrBlocks []string `json:"nodePortIngressRuleCidrBlocks,omitempty"`
 }
 
 // IPv6 contains ipv6 specific settings for the network.
@@ -388,6 +393,13 @@ type IPAMPool struct {
 	NetmaskLength int64 `json:"netmaskLength,omitempty"`
 }
 
+// VpcCidrBlock defines the CIDR block and settings to associate with the managed VPC. Currently, only IPv4 is supported.
+type VpcCidrBlock struct {
+	// IPv4CidrBlock is the IPv4 CIDR block to associate with the managed VPC.
+	// +kubebuilder:validation:MinLength=1
+	IPv4CidrBlock string `json:"ipv4CidrBlock"`
+}
+
 // VPCSpec configures an AWS VPC.
 type VPCSpec struct {
 	// ID is the vpc-id of the VPC this provider should use to create resources.
@@ -397,6 +409,12 @@ type VPCSpec struct {
 	// Defaults to 10.0.0.0/16.
 	// Mutually exclusive with IPAMPool.
 	CidrBlock string `json:"cidrBlock,omitempty"`
+
+	// SecondaryCidrBlocks are additional CIDR blocks to be associated when the provider creates a managed VPC.
+	// Defaults to none. Mutually exclusive with IPAMPool. This makes sense to use if, for example, you want to use
+	// a separate IP range for pods (e.g. Cilium ENI mode).
+	// +optional
+	SecondaryCidrBlocks []VpcCidrBlock `json:"secondaryCidrBlocks,omitempty"`
 
 	// IPAMPool defines the IPAMv4 pool to be used for VPC.
 	// Mutually exclusive with CidrBlock.
@@ -455,6 +473,22 @@ type VPCSpec struct {
 	// +optional
 	// +kubebuilder:validation:Enum:=ip-name;resource-name
 	PrivateDNSHostnameTypeOnLaunch *string `json:"privateDnsHostnameTypeOnLaunch,omitempty"`
+
+	// ElasticIPPool contains specific configuration to allocate Public IPv4 address (Elastic IP) from user-defined pool
+	// brought to AWS for core infrastructure resources, like NAT Gateways and Public Network Load Balancers for
+	// the API Server.
+	// +optional
+	ElasticIPPool *ElasticIPPool `json:"elasticIpPool,omitempty"`
+
+	// SubnetSchema specifies how CidrBlock should be divided on subnets in the VPC depending on the number of AZs.
+	// PreferPrivate - one private subnet for each AZ plus one other subnet that will be further sub-divided for the public subnets.
+	// PreferPublic - have the reverse logic of PreferPrivate, one public subnet for each AZ plus one other subnet
+	// that will be further sub-divided for the private subnets.
+	// Defaults to PreferPrivate
+	// +optional
+	// +kubebuilder:default=PreferPrivate
+	// +kubebuilder:validation:Enum=PreferPrivate;PreferPublic
+	SubnetSchema *SubnetSchemaType `json:"subnetSchema,omitempty"`
 }
 
 // String returns a string representation of the VPC.
@@ -475,6 +509,22 @@ func (v *VPCSpec) IsManaged(clusterName string) bool {
 // IsIPv6Enabled returns true if the IPv6 block is defined on the network spec.
 func (v *VPCSpec) IsIPv6Enabled() bool {
 	return v.IPv6 != nil
+}
+
+// GetElasticIPPool returns the custom Elastic IP Pool configuration when present.
+func (v *VPCSpec) GetElasticIPPool() *ElasticIPPool {
+	return v.ElasticIPPool
+}
+
+// GetPublicIpv4Pool returns the custom public IPv4 pool brought to AWS when present.
+func (v *VPCSpec) GetPublicIpv4Pool() *string {
+	if v.ElasticIPPool == nil {
+		return nil
+	}
+	if v.ElasticIPPool.PublicIpv4Pool != nil {
+		return v.ElasticIPPool.PublicIpv4Pool
+	}
+	return nil
 }
 
 // SubnetSpec configures an AWS Subnet.
@@ -715,6 +765,17 @@ func (s Subnets) FilterPrivate() (res Subnets) {
 	return
 }
 
+// FilterNonCni returns the subnets that are NOT intended for usage with the CNI pod network
+// (i.e. do NOT have the `sigs.k8s.io/cluster-api-provider-aws/association=secondary` tag).
+func (s Subnets) FilterNonCni() (res Subnets) {
+	for _, x := range s {
+		if x.Tags[NameAWSSubnetAssociation] != SecondarySubnetTagValue {
+			res = append(res, x)
+		}
+	}
+	return
+}
+
 // FilterPublic returns a slice containing all subnets marked as public.
 func (s Subnets) FilterPublic() (res Subnets) {
 	for _, x := range s {
@@ -897,6 +958,10 @@ type IngressRule struct {
 	// The field will be combined with source security group IDs if specified.
 	// +optional
 	SourceSecurityGroupRoles []SecurityGroupRole `json:"sourceSecurityGroupRoles,omitempty"`
+
+	// NatGatewaysIPsSource use the NAT gateways IPs as the source for the ingress rule.
+	// +optional
+	NatGatewaysIPsSource bool `json:"natGatewaysIPsSource,omitempty"`
 }
 
 // String returns a string representation of the ingress rule.
@@ -1001,4 +1066,58 @@ func (z ZoneType) String() string {
 // Equal compares two zone types.
 func (z ZoneType) Equal(other ZoneType) bool {
 	return z == other
+}
+
+// ElasticIPPool allows configuring a Elastic IP pool for resources allocating
+// public IPv4 addresses on public subnets.
+type ElasticIPPool struct {
+	// PublicIpv4Pool sets a custom Public IPv4 Pool used to create Elastic IP address for resources
+	// created in public IPv4 subnets. Every IPv4 address, Elastic IP, will be allocated from the custom
+	// Public IPv4 pool that you brought to AWS, instead of Amazon-provided pool. The public IPv4 pool
+	// resource ID starts with 'ipv4pool-ec2'.
+	//
+	// +kubebuilder:validation:MaxLength=30
+	// +optional
+	PublicIpv4Pool *string `json:"publicIpv4Pool,omitempty"`
+
+	// PublicIpv4PoolFallBackOrder defines the fallback action when the Public IPv4 Pool has been exhausted,
+	// no more IPv4 address available in the pool.
+	//
+	// When set to 'amazon-pool', the controller check if the pool has available IPv4 address, when pool has reached the
+	// IPv4 limit, the address will be claimed from Amazon-pool (default).
+	//
+	// When set to 'none', the controller will fail the Elastic IP allocation when the publicIpv4Pool is exhausted.
+	//
+	// +kubebuilder:validation:Enum:=amazon-pool;none
+	// +optional
+	PublicIpv4PoolFallBackOrder *PublicIpv4PoolFallbackOrder `json:"publicIpv4PoolFallbackOrder,omitempty"`
+
+	// TODO(mtulio): add future support of user-defined Elastic IP to allow users to assign BYO Public IP from
+	// 'static'/preallocated amazon-provided IPsstrucute currently holds only 'BYO Public IP from Public IPv4 Pool' (user brought to AWS),
+	// although a dedicated structure would help to hold 'BYO Elastic IP' variants like:
+	// - AllocationIdPoolApiLoadBalancer: an user-defined (static) IP address to the Public API Load Balancer.
+	// - AllocationIdPoolNatGateways: an user-defined (static) IP address to allocate to NAT Gateways (egress traffic).
+}
+
+// PublicIpv4PoolFallbackOrder defines the list of available fallback action when the PublicIpv4Pool is exhausted.
+// 'none' let the controllers return failures when the PublicIpv4Pool is exhausted - no more IPv4 available.
+// 'amazon-pool' let the controllers to skip the PublicIpv4Pool and use the Amazon pool, the default.
+// +kubebuilder:validation:XValidation:rule="self in ['none','amazon-pool']",message="allowed values are 'none' and 'amazon-pool'"
+type PublicIpv4PoolFallbackOrder string
+
+const (
+	// PublicIpv4PoolFallbackOrderAmazonPool refers to use Amazon-pool Public IPv4 Pool as a fallback strategy.
+	PublicIpv4PoolFallbackOrderAmazonPool = PublicIpv4PoolFallbackOrder("amazon-pool")
+
+	// PublicIpv4PoolFallbackOrderNone refers to not use any fallback strategy.
+	PublicIpv4PoolFallbackOrderNone = PublicIpv4PoolFallbackOrder("none")
+)
+
+func (r PublicIpv4PoolFallbackOrder) String() string {
+	return string(r)
+}
+
+// Equal compares PublicIpv4PoolFallbackOrder types and return true if input param is equal.
+func (r PublicIpv4PoolFallbackOrder) Equal(e PublicIpv4PoolFallbackOrder) bool {
+	return r == e
 }

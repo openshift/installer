@@ -20,7 +20,6 @@ import (
 	"context"
 	"os"
 	"strings"
-	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -41,10 +40,6 @@ type AddToManagerFunc func(context.Context, *capvcontext.ControllerManagerContex
 type Options struct {
 	ctrlmgr.Options
 
-	// EnableKeepAlive is a session feature to enable keep alive handler
-	// for better load management on vSphere api server
-	EnableKeepAlive bool
-
 	// PodNamespace is the namespace in which the pod running the controller
 	// maintains a leader election lock.
 	//
@@ -63,10 +58,6 @@ type Options struct {
 	// Password is the password for the account used to access remote vSphere
 	// endpoints.
 	Password string
-
-	// KeepAliveDuration is the idle time interval in between send() requests
-	// in keepalive handler
-	KeepAliveDuration time.Duration
 
 	// CredentialsFile is the file that contains credentials of CAPV
 	CredentialsFile string
@@ -113,7 +104,7 @@ func (o *Options) defaults() {
 	if ns, ok := os.LookupEnv("POD_NAMESPACE"); ok {
 		o.PodNamespace = ns
 	} else if data, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
-		if ns := strings.TrimSpace(string(data)); len(ns) > 0 {
+		if ns := strings.TrimSpace(string(data)); ns != "" {
 			o.PodNamespace = ns
 		}
 	} else {

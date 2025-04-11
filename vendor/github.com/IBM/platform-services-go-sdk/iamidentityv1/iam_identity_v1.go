@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2024.
+ * (C) Copyright IBM Corp. 2025.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.87.0-91c7c775-20240320-213027
+ * IBM OpenAPI SDK Code Generator Version: 3.98.0-8be2046a-20241205-162752
  */
 
 // Package iamidentityv1 : Operations and models for the IamIdentityV1 service
@@ -173,9 +173,7 @@ func (iamIdentity *IamIdentityV1) DisableRetries() {
 
 // ListAPIKeys : Get API keys for a given service or user IAM ID and account ID
 // Returns the list of API key details for a given service or user IAM ID and account ID. Users can manage user API keys
-// for themself, or service ID API keys for service IDs that are bound to an entity they have access to. In case of
-// service IDs and their API keys, a user must be either an account owner, a IBM Cloud org manager or IBM Cloud space
-// developer in order to manage service IDs of the entity.
+// for themself, or service ID API keys for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) ListAPIKeys(listAPIKeysOptions *ListAPIKeysOptions) (result *APIKeyList, response *core.DetailedResponse, err error) {
 	result, response, err = iamIdentity.ListAPIKeysWithContext(context.Background(), listAPIKeysOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -264,7 +262,7 @@ func (iamIdentity *IamIdentityV1) ListAPIKeysWithContext(ctx context.Context, li
 
 // CreateAPIKey : Create an API key
 // Creates an API key for a UserID or service ID. Users can manage user API keys for themself, or service ID API keys
-// for service IDs that are bound to an entity they have access to.
+// for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) CreateAPIKey(createAPIKeyOptions *CreateAPIKeyOptions) (result *APIKey, response *core.DetailedResponse, err error) {
 	result, response, err = iamIdentity.CreateAPIKeyWithContext(context.Background(), createAPIKeyOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -368,7 +366,7 @@ func (iamIdentity *IamIdentityV1) CreateAPIKeyWithContext(ctx context.Context, c
 
 // GetAPIKeysDetails : Get details of an API key by its value
 // Returns the details of an API key by its value. Users can manage user API keys for themself, or service ID API keys
-// for service IDs that are bound to an entity they have access to.
+// for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) GetAPIKeysDetails(getAPIKeysDetailsOptions *GetAPIKeysDetailsOptions) (result *APIKey, response *core.DetailedResponse, err error) {
 	result, response, err = iamIdentity.GetAPIKeysDetailsWithContext(context.Background(), getAPIKeysDetailsOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -436,8 +434,7 @@ func (iamIdentity *IamIdentityV1) GetAPIKeysDetailsWithContext(ctx context.Conte
 
 // GetAPIKey : Get details of an API key
 // Returns the details of an API key. Users can manage user API keys for themself, or service ID API keys for service
-// IDs that are bound to an entity they have access to. In case of service IDs and their API keys, a user must be either
-// an account owner, a IBM Cloud org manager or IBM Cloud space developer in order to manage service IDs of the entity.
+// IDs they have access to.
 func (iamIdentity *IamIdentityV1) GetAPIKey(getAPIKeyOptions *GetAPIKeyOptions) (result *APIKey, response *core.DetailedResponse, err error) {
 	result, response, err = iamIdentity.GetAPIKeyWithContext(context.Background(), getAPIKeyOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -515,8 +512,8 @@ func (iamIdentity *IamIdentityV1) GetAPIKeyWithContext(ctx context.Context, getA
 // UpdateAPIKey : Updates an API key
 // Updates properties of an API key. This does NOT affect existing access tokens. Their token content will stay
 // unchanged until the access token is refreshed. To update an API key, pass the property to be modified. To delete one
-// property's value, pass the property with an empty value "".Users can manage user API keys for themself, or service ID
-// API keys for service IDs that are bound to an entity they have access to.
+// property's value, pass the property with an empty value "". Users can manage user API keys for themself, or service
+// ID API keys for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) UpdateAPIKey(updateAPIKeyOptions *UpdateAPIKeyOptions) (result *APIKey, response *core.DetailedResponse, err error) {
 	result, response, err = iamIdentity.UpdateAPIKeyWithContext(context.Background(), updateAPIKeyOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -609,7 +606,7 @@ func (iamIdentity *IamIdentityV1) UpdateAPIKeyWithContext(ctx context.Context, u
 
 // DeleteAPIKey : Deletes an API key
 // Deletes an API key. Existing tokens will remain valid until expired. Users can manage user API keys for themself, or
-// service ID API keys for service IDs that are bound to an entity they have access to.
+// service ID API keys for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) DeleteAPIKey(deleteAPIKeyOptions *DeleteAPIKeyOptions) (response *core.DetailedResponse, err error) {
 	response, err = iamIdentity.DeleteAPIKeyWithContext(context.Background(), deleteAPIKeyOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -668,9 +665,8 @@ func (iamIdentity *IamIdentityV1) DeleteAPIKeyWithContext(ctx context.Context, d
 }
 
 // LockAPIKey : Lock the API key
-// Locks an API key by ID. Users can manage user API keys for themself, or service ID API keys for service IDs that are
-// bound to an entity they have access to. In case of service IDs and their API keys, a user must be either an account
-// owner, a IBM Cloud org manager or IBM Cloud space developer in order to manage service IDs of the entity.
+// Locks an API key by ID. Users can manage user API keys for themself, or service ID API keys for service IDs they have
+// access to.
 func (iamIdentity *IamIdentityV1) LockAPIKey(lockAPIKeyOptions *LockAPIKeyOptions) (response *core.DetailedResponse, err error) {
 	response, err = iamIdentity.LockAPIKeyWithContext(context.Background(), lockAPIKeyOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -729,9 +725,8 @@ func (iamIdentity *IamIdentityV1) LockAPIKeyWithContext(ctx context.Context, loc
 }
 
 // UnlockAPIKey : Unlock the API key
-// Unlocks an API key by ID. Users can manage user API keys for themself, or service ID API keys for service IDs that
-// are bound to an entity they have access to. In case of service IDs and their API keys, a user must be either an
-// account owner, a IBM Cloud org manager or IBM Cloud space developer in order to manage service IDs of the entity.
+// Unlocks an API key by ID. Users can manage user API keys for themself, or service ID API keys for service IDs they
+// have access to.
 func (iamIdentity *IamIdentityV1) UnlockAPIKey(unlockAPIKeyOptions *UnlockAPIKeyOptions) (response *core.DetailedResponse, err error) {
 	response, err = iamIdentity.UnlockAPIKeyWithContext(context.Background(), unlockAPIKeyOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -789,9 +784,9 @@ func (iamIdentity *IamIdentityV1) UnlockAPIKeyWithContext(ctx context.Context, u
 	return
 }
 
-// DisableAPIKey : disable the API key
-// Disable an API key. Users can manage user API keys for themself, or service ID API keys for service IDs that are
-// bound to an entity they have access to.
+// DisableAPIKey : Disable the API key
+// Disable an API key. Users can manage user API keys for themself, or service ID API keys for service IDs they have
+// access to.
 func (iamIdentity *IamIdentityV1) DisableAPIKey(disableAPIKeyOptions *DisableAPIKeyOptions) (response *core.DetailedResponse, err error) {
 	response, err = iamIdentity.DisableAPIKeyWithContext(context.Background(), disableAPIKeyOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -850,8 +845,8 @@ func (iamIdentity *IamIdentityV1) DisableAPIKeyWithContext(ctx context.Context, 
 }
 
 // EnableAPIKey : Enable the API key
-// Enable an API key. Users can manage user API keys for themself, or service ID API keys for service IDs that are bound
-// to an entity they have access to.
+// Enable an API key. Users can manage user API keys for themself, or service ID API keys for service IDs they have
+// access to.
 func (iamIdentity *IamIdentityV1) EnableAPIKey(enableAPIKeyOptions *EnableAPIKeyOptions) (response *core.DetailedResponse, err error) {
 	response, err = iamIdentity.EnableAPIKeyWithContext(context.Background(), enableAPIKeyOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -911,8 +906,8 @@ func (iamIdentity *IamIdentityV1) EnableAPIKeyWithContext(ctx context.Context, e
 
 // ListServiceIds : List service IDs
 // Returns a list of service IDs. Users can manage user API keys for themself, or service ID API keys for service IDs
-// that are bound to an entity they have access to. Note: apikey details are only included in the response when creating
-// a Service ID with an api key.
+// they have access to. Note: apikey details are only included in the response when creating a Service ID with an api
+// key.
 func (iamIdentity *IamIdentityV1) ListServiceIds(listServiceIdsOptions *ListServiceIdsOptions) (result *ServiceIDList, response *core.DetailedResponse, err error) {
 	result, response, err = iamIdentity.ListServiceIdsWithContext(context.Background(), listServiceIdsOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -995,7 +990,7 @@ func (iamIdentity *IamIdentityV1) ListServiceIdsWithContext(ctx context.Context,
 
 // CreateServiceID : Create a service ID
 // Creates a service ID for an IBM Cloud account. Users can manage user API keys for themself, or service ID API keys
-// for service IDs that are bound to an entity they have access to.
+// for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) CreateServiceID(createServiceIDOptions *CreateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
 	result, response, err = iamIdentity.CreateServiceIDWithContext(context.Background(), createServiceIDOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -1087,8 +1082,8 @@ func (iamIdentity *IamIdentityV1) CreateServiceIDWithContext(ctx context.Context
 
 // GetServiceID : Get details of a service ID
 // Returns the details of a service ID. Users can manage user API keys for themself, or service ID API keys for service
-// IDs that are bound to an entity they have access to. Note: apikey details are only included in the response when
-// creating a Service ID with an api key.
+// IDs they have access to. Note: apikey details are only included in the response when creating a Service ID with an
+// api key.
 func (iamIdentity *IamIdentityV1) GetServiceID(getServiceIDOptions *GetServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
 	result, response, err = iamIdentity.GetServiceIDWithContext(context.Background(), getServiceIDOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -1167,8 +1162,8 @@ func (iamIdentity *IamIdentityV1) GetServiceIDWithContext(ctx context.Context, g
 // Updates properties of a service ID. This does NOT affect existing access tokens. Their token content will stay
 // unchanged until the access token is refreshed. To update a service ID, pass the property to be modified. To delete
 // one property's value, pass the property with an empty value "".Users can manage user API keys for themself, or
-// service ID API keys for service IDs that are bound to an entity they have access to. Note: apikey details are only
-// included in the response when creating a Service ID with an apikey.
+// service ID API keys for service IDs they have access to. Note: apikey details are only included in the response when
+// creating a Service ID with an apikey.
 func (iamIdentity *IamIdentityV1) UpdateServiceID(updateServiceIDOptions *UpdateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
 	result, response, err = iamIdentity.UpdateServiceIDWithContext(context.Background(), updateServiceIDOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -1260,7 +1255,7 @@ func (iamIdentity *IamIdentityV1) UpdateServiceIDWithContext(ctx context.Context
 // Deletes a service ID and all API keys associated to it. Before deleting the service ID, all associated API keys are
 // deleted. In case a Delete Conflict (status code 409) a retry of the request may help as the service ID is only
 // deleted if the associated API keys were successfully deleted before. Users can manage user API keys for themself, or
-// service ID API keys for service IDs that are bound to an entity they have access to.
+// service ID API keys for service IDs they have access to.
 func (iamIdentity *IamIdentityV1) DeleteServiceID(deleteServiceIDOptions *DeleteServiceIDOptions) (response *core.DetailedResponse, err error) {
 	response, err = iamIdentity.DeleteServiceIDWithContext(context.Background(), deleteServiceIDOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -1319,9 +1314,8 @@ func (iamIdentity *IamIdentityV1) DeleteServiceIDWithContext(ctx context.Context
 }
 
 // LockServiceID : Lock the service ID
-// Locks a service ID by ID. Users can manage user API keys for themself, or service ID API keys for service IDs that
-// are bound to an entity they have access to. In case of service IDs and their API keys, a user must be either an
-// account owner, a IBM Cloud org manager or IBM Cloud space developer in order to manage service IDs of the entity.
+// Locks a service ID by ID. Users can manage user API keys for themself, or service ID API keys for service IDs they
+// have access to.
 func (iamIdentity *IamIdentityV1) LockServiceID(lockServiceIDOptions *LockServiceIDOptions) (response *core.DetailedResponse, err error) {
 	response, err = iamIdentity.LockServiceIDWithContext(context.Background(), lockServiceIDOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -1380,9 +1374,8 @@ func (iamIdentity *IamIdentityV1) LockServiceIDWithContext(ctx context.Context, 
 }
 
 // UnlockServiceID : Unlock the service ID
-// Unlocks a service ID by ID. Users can manage user API keys for themself, or service ID API keys for service IDs that
-// are bound to an entity they have access to. In case of service IDs and their API keys, a user must be either an
-// account owner, a IBM Cloud org manager or IBM Cloud space developer in order to manage service IDs of the entity.
+// Unlocks a service ID by ID. Users can manage user API keys for themself, or service ID API keys for service IDs they
+// have access to.
 func (iamIdentity *IamIdentityV1) UnlockServiceID(unlockServiceIDOptions *UnlockServiceIDOptions) (response *core.DetailedResponse, err error) {
 	response, err = iamIdentity.UnlockServiceIDWithContext(context.Background(), unlockServiceIDOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -4599,6 +4592,390 @@ func (iamIdentity *IamIdentityV1) GetReportWithContext(ctx context.Context, getR
 	return
 }
 
+// GetEffectiveAccountSettings : Get effective account settings configuration
+// Returns effective account settings for given account ID.
+func (iamIdentity *IamIdentityV1) GetEffectiveAccountSettings(getEffectiveAccountSettingsOptions *GetEffectiveAccountSettingsOptions) (result *EffectiveAccountSettingsResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetEffectiveAccountSettingsWithContext(context.Background(), getEffectiveAccountSettingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetEffectiveAccountSettingsWithContext is an alternate form of the GetEffectiveAccountSettings method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetEffectiveAccountSettingsWithContext(ctx context.Context, getEffectiveAccountSettingsOptions *GetEffectiveAccountSettingsOptions) (result *EffectiveAccountSettingsResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getEffectiveAccountSettingsOptions, "getEffectiveAccountSettingsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getEffectiveAccountSettingsOptions, "getEffectiveAccountSettingsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id": *getEffectiveAccountSettingsOptions.AccountID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/accounts/{account_id}/effective_settings/identity`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getEffectiveAccountSettingsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetEffectiveAccountSettings")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getEffectiveAccountSettingsOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*getEffectiveAccountSettingsOptions.IncludeHistory))
+	}
+	if getEffectiveAccountSettingsOptions.ResolveUserMfa != nil {
+		builder.AddQuery("resolve_user_mfa", fmt.Sprint(*getEffectiveAccountSettingsOptions.ResolveUserMfa))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_effective_account_settings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEffectiveAccountSettingsResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdatePreferenceOnScopeAccount : Update Identity Preference on scope account
+// Update one Identity Preference on scope 'account'. supported preferences:
+//
+//	The following preferences are storing values for identities inside an account,
+//	i.e. for each account that an identity is member of, the value stored might be different.
+//	This means, users who might be member of multiple accounts can have multiple preferences, one per account.
+//	Identities like Service Ids or Trusted Profiles can only exist in one account,
+//	therefore they can only have one preference inside their related account.
+//	preference: console/landing_page
+//	  service: console
+//	  preferenceId: landing_page
+//	  supportedIdentityType: Trusted Profiles, Users
+//	  type: string
+//	  validation: valid URL (without host part), e.g. /billing or /iam
+//	preference: console/global_left_navigation
+//	  service: console
+//	  preferenceId: global_left_navigation
+//	  supportedIdentityType: Trusted Profiles, Users
+//	  type: list of strings
+//	  validation: each entry in the list of strings must match the identifier of one navigation entry in the console.
+func (iamIdentity *IamIdentityV1) UpdatePreferenceOnScopeAccount(updatePreferenceOnScopeAccountOptions *UpdatePreferenceOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.UpdatePreferenceOnScopeAccountWithContext(context.Background(), updatePreferenceOnScopeAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdatePreferenceOnScopeAccountWithContext is an alternate form of the UpdatePreferenceOnScopeAccount method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) UpdatePreferenceOnScopeAccountWithContext(ctx context.Context, updatePreferenceOnScopeAccountOptions *UpdatePreferenceOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updatePreferenceOnScopeAccountOptions, "updatePreferenceOnScopeAccountOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updatePreferenceOnScopeAccountOptions, "updatePreferenceOnScopeAccountOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id":    *updatePreferenceOnScopeAccountOptions.AccountID,
+		"iam_id":        *updatePreferenceOnScopeAccountOptions.IamID,
+		"service":       *updatePreferenceOnScopeAccountOptions.Service,
+		"preference_id": *updatePreferenceOnScopeAccountOptions.PreferenceID,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/preferences/accounts/{account_id}/identities/{iam_id}/{service}/{preference_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updatePreferenceOnScopeAccountOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdatePreferenceOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if updatePreferenceOnScopeAccountOptions.ValueString != nil {
+		body["value_string"] = updatePreferenceOnScopeAccountOptions.ValueString
+	}
+	if updatePreferenceOnScopeAccountOptions.ValueListOfStrings != nil {
+		body["value_list_of_strings"] = updatePreferenceOnScopeAccountOptions.ValueListOfStrings
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_preference_on_scope_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIdentityPreferenceResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeletePreferencesOnScopeAccount : Delete Identity Preference on scope account
+// Delete one Identity Preference on scope 'account'.
+func (iamIdentity *IamIdentityV1) DeletePreferencesOnScopeAccount(deletePreferencesOnScopeAccountOptions *DeletePreferencesOnScopeAccountOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.DeletePreferencesOnScopeAccountWithContext(context.Background(), deletePreferencesOnScopeAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeletePreferencesOnScopeAccountWithContext is an alternate form of the DeletePreferencesOnScopeAccount method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) DeletePreferencesOnScopeAccountWithContext(ctx context.Context, deletePreferencesOnScopeAccountOptions *DeletePreferencesOnScopeAccountOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deletePreferencesOnScopeAccountOptions, "deletePreferencesOnScopeAccountOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deletePreferencesOnScopeAccountOptions, "deletePreferencesOnScopeAccountOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id":    *deletePreferencesOnScopeAccountOptions.AccountID,
+		"iam_id":        *deletePreferencesOnScopeAccountOptions.IamID,
+		"service":       *deletePreferencesOnScopeAccountOptions.Service,
+		"preference_id": *deletePreferencesOnScopeAccountOptions.PreferenceID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/preferences/accounts/{account_id}/identities/{iam_id}/{service}/{preference_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deletePreferencesOnScopeAccountOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeletePreferencesOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_preferences_on_scope_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetPreferencesOnScopeAccount : Get Identity Preference on scope account
+// Get one Identity Preference on scope 'account'.
+func (iamIdentity *IamIdentityV1) GetPreferencesOnScopeAccount(getPreferencesOnScopeAccountOptions *GetPreferencesOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetPreferencesOnScopeAccountWithContext(context.Background(), getPreferencesOnScopeAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetPreferencesOnScopeAccountWithContext is an alternate form of the GetPreferencesOnScopeAccount method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetPreferencesOnScopeAccountWithContext(ctx context.Context, getPreferencesOnScopeAccountOptions *GetPreferencesOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getPreferencesOnScopeAccountOptions, "getPreferencesOnScopeAccountOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getPreferencesOnScopeAccountOptions, "getPreferencesOnScopeAccountOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id":    *getPreferencesOnScopeAccountOptions.AccountID,
+		"iam_id":        *getPreferencesOnScopeAccountOptions.IamID,
+		"service":       *getPreferencesOnScopeAccountOptions.Service,
+		"preference_id": *getPreferencesOnScopeAccountOptions.PreferenceID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/preferences/accounts/{account_id}/identities/{iam_id}/{service}/{preference_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getPreferencesOnScopeAccountOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetPreferencesOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_preferences_on_scope_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIdentityPreferenceResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetAllPreferencesOnScopeAccount : Get all Identity Preferences for one account
+// Get all Identity Preferences for one account / user combination.
+func (iamIdentity *IamIdentityV1) GetAllPreferencesOnScopeAccount(getAllPreferencesOnScopeAccountOptions *GetAllPreferencesOnScopeAccountOptions) (result *IdentityPreferencesResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetAllPreferencesOnScopeAccountWithContext(context.Background(), getAllPreferencesOnScopeAccountOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAllPreferencesOnScopeAccountWithContext is an alternate form of the GetAllPreferencesOnScopeAccount method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetAllPreferencesOnScopeAccountWithContext(ctx context.Context, getAllPreferencesOnScopeAccountOptions *GetAllPreferencesOnScopeAccountOptions) (result *IdentityPreferencesResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getAllPreferencesOnScopeAccountOptions, "getAllPreferencesOnScopeAccountOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getAllPreferencesOnScopeAccountOptions, "getAllPreferencesOnScopeAccountOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id": *getAllPreferencesOnScopeAccountOptions.AccountID,
+		"iam_id":     *getAllPreferencesOnScopeAccountOptions.IamID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/preferences/accounts/{account_id}/identities/{iam_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getAllPreferencesOnScopeAccountOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAllPreferencesOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_all_preferences_on_scope_account", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIdentityPreferencesResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // ListTrustedProfileAssignments : List assignments
 // List trusted profile template assignments.
 func (iamIdentity *IamIdentityV1) ListTrustedProfileAssignments(listTrustedProfileAssignmentsOptions *ListTrustedProfileAssignmentsOptions) (result *TemplateAssignmentListResponse, response *core.DetailedResponse, err error) {
@@ -5137,6 +5514,9 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateWithContext(ctx context.C
 	if createProfileTemplateOptions.PolicyTemplateReferences != nil {
 		body["policy_template_references"] = createProfileTemplateOptions.PolicyTemplateReferences
 	}
+	if createProfileTemplateOptions.ActionControls != nil {
+		body["action_controls"] = createProfileTemplateOptions.ActionControls
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
@@ -5447,6 +5827,9 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersionWithContext(ctx co
 	if createProfileTemplateVersionOptions.PolicyTemplateReferences != nil {
 		body["policy_template_references"] = createProfileTemplateVersionOptions.PolicyTemplateReferences
 	}
+	if createProfileTemplateVersionOptions.ActionControls != nil {
+		body["action_controls"] = createProfileTemplateVersionOptions.ActionControls
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
@@ -5616,6 +5999,9 @@ func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersionWithContext(ctx co
 	}
 	if updateProfileTemplateVersionOptions.PolicyTemplateReferences != nil {
 		body["policy_template_references"] = updateProfileTemplateVersionOptions.PolicyTemplateReferences
+	}
+	if updateProfileTemplateVersionOptions.ActionControls != nil {
+		body["action_controls"] = updateProfileTemplateVersionOptions.ActionControls
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -5812,6 +6198,360 @@ func UnmarshalAccountBasedMfaEnrollment(m map[string]json.RawMessage, result int
 	return
 }
 
+// AccountSettingsAccountSection : AccountSettingsAccountSection struct
+type AccountSettingsAccountSection struct {
+	// Unique ID of the account.
+	AccountID *string `json:"account_id,omitempty"`
+
+	// Defines whether or not creating a service ID is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
+
+	// Defines whether or not creating platform API keys is access controlled. Valid values:
+	//   * RESTRICTED - to apply access control
+	//   * NOT_RESTRICTED - to remove access control
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey,omitempty"`
+
+	// Defines the IP addresses and subnets from which IAM tokens can be created for the account.
+	AllowedIPAddresses *string `json:"allowed_ip_addresses,omitempty"`
+
+	// Defines the MFA requirement for the user. Valid values:
+	//   * NONE - No MFA trait set
+	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+	//   * TOTP - For all non-federated IBMId users
+	//   * TOTP4ALL - For all users
+	//   * LEVEL1 - Email-based MFA for all users
+	//   * LEVEL2 - TOTP-based MFA for all users
+	//   * LEVEL3 - U2F MFA for all users.
+	Mfa *string `json:"mfa,omitempty"`
+
+	// List of users that are exempted from the MFA requirement of the account.
+	UserMfa []EffectiveAccountSettingsUserMfa `json:"user_mfa,omitempty"`
+
+	// History of the Account Settings.
+	History []EnityHistoryRecord `json:"history,omitempty"`
+
+	// Defines the session expiration in seconds for the account. Valid values:
+	//   * Any whole number between between '900' and '86400'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionExpirationInSeconds *string `json:"session_expiration_in_seconds,omitempty"`
+
+	// Defines the period of time in seconds in which a session will be invalidated due to inactivity. Valid values:
+	//   * Any whole number between '900' and '7200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionInvalidationInSeconds *string `json:"session_invalidation_in_seconds,omitempty"`
+
+	// Defines the max allowed sessions per identity required by the account. Valid values:
+	//   * Any whole number greater than 0
+	//   * NOT_SET - To unset account setting and use service default.
+	MaxSessionsPerIdentity *string `json:"max_sessions_per_identity,omitempty"`
+
+	// Defines the access token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '3600'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemAccessTokenExpirationInSeconds *string `json:"system_access_token_expiration_in_seconds,omitempty"`
+
+	// Defines the refresh token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '259200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds,omitempty"`
+}
+
+// Constants associated with the AccountSettingsAccountSection.RestrictCreateServiceID property.
+// Defines whether or not creating a service ID is access controlled. Valid values:
+//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+//
+// IDs, including the account owner
+//   - NOT_RESTRICTED - all members of an account can create service IDs
+//   - NOT_SET - to 'unset' a previous set value.
+const (
+	AccountSettingsAccountSectionRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsAccountSectionRestrictCreateServiceIDNotSetConst        = "NOT_SET"
+	AccountSettingsAccountSectionRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
+)
+
+// Constants associated with the AccountSettingsAccountSection.RestrictCreatePlatformApikey property.
+// Defines whether or not creating platform API keys is access controlled. Valid values:
+//   - RESTRICTED - to apply access control
+//   - NOT_RESTRICTED - to remove access control
+//   - NOT_SET - to 'unset' a previous set value.
+const (
+	AccountSettingsAccountSectionRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsAccountSectionRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
+	AccountSettingsAccountSectionRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
+)
+
+// Constants associated with the AccountSettingsAccountSection.Mfa property.
+// Defines the MFA requirement for the user. Valid values:
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
+const (
+	AccountSettingsAccountSectionMfaLevel1Const     = "LEVEL1"
+	AccountSettingsAccountSectionMfaLevel2Const     = "LEVEL2"
+	AccountSettingsAccountSectionMfaLevel3Const     = "LEVEL3"
+	AccountSettingsAccountSectionMfaNoneConst       = "NONE"
+	AccountSettingsAccountSectionMfaNoneNoRopcConst = "NONE_NO_ROPC"
+	AccountSettingsAccountSectionMfaTotpConst       = "TOTP"
+	AccountSettingsAccountSectionMfaTotp4allConst   = "TOTP4ALL"
+)
+
+// UnmarshalAccountSettingsAccountSection unmarshals an instance of AccountSettingsAccountSection from the specified map of raw messages.
+func UnmarshalAccountSettingsAccountSection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AccountSettingsAccountSection)
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_create_service_id", &obj.RestrictCreateServiceID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_service_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_create_platform_apikey", &obj.RestrictCreatePlatformApikey)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_platform_apikey-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "allowed_ip_addresses", &obj.AllowedIPAddresses)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_ip_addresses-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalEffectiveAccountSettingsUserMfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalEnityHistoryRecord)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_expiration_in_seconds", &obj.SessionExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_invalidation_in_seconds", &obj.SessionInvalidationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_invalidation_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max_sessions_per_identity", &obj.MaxSessionsPerIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max_sessions_per_identity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_access_token_expiration_in_seconds", &obj.SystemAccessTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_access_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_refresh_token_expiration_in_seconds", &obj.SystemRefreshTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_refresh_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AccountSettingsAssignedTemplatesSection : AccountSettingsAssignedTemplatesSection struct
+type AccountSettingsAssignedTemplatesSection struct {
+	// Template Id.
+	TemplateID *string `json:"template_id,omitempty"`
+
+	// Template version.
+	TemplateVersion *int64 `json:"template_version,omitempty"`
+
+	// Template name.
+	TemplateName *string `json:"template_name,omitempty"`
+
+	// Defines whether or not creating a service ID is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
+
+	// Defines whether or not creating platform API keys is access controlled. Valid values:
+	//   * RESTRICTED - to apply access control
+	//   * NOT_RESTRICTED - to remove access control
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey,omitempty"`
+
+	// Defines the IP addresses and subnets from which IAM tokens can be created for the account.
+	AllowedIPAddresses *string `json:"allowed_ip_addresses,omitempty"`
+
+	// Defines the MFA requirement for the user. Valid values:
+	//   * NONE - No MFA trait set
+	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+	//   * TOTP - For all non-federated IBMId users
+	//   * TOTP4ALL - For all users
+	//   * LEVEL1 - Email-based MFA for all users
+	//   * LEVEL2 - TOTP-based MFA for all users
+	//   * LEVEL3 - U2F MFA for all users.
+	Mfa *string `json:"mfa,omitempty"`
+
+	// List of users that are exempted from the MFA requirement of the account.
+	UserMfa []EffectiveAccountSettingsUserMfa `json:"user_mfa,omitempty"`
+
+	// Defines the session expiration in seconds for the account. Valid values:
+	//   * Any whole number between between '900' and '86400'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionExpirationInSeconds *string `json:"session_expiration_in_seconds,omitempty"`
+
+	// Defines the period of time in seconds in which a session will be invalidated due to inactivity. Valid values:
+	//   * Any whole number between '900' and '7200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionInvalidationInSeconds *string `json:"session_invalidation_in_seconds,omitempty"`
+
+	// Defines the max allowed sessions per identity required by the account. Valid values:
+	//   * Any whole number greater than 0
+	//   * NOT_SET - To unset account setting and use service default.
+	MaxSessionsPerIdentity *string `json:"max_sessions_per_identity,omitempty"`
+
+	// Defines the access token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '3600'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemAccessTokenExpirationInSeconds *string `json:"system_access_token_expiration_in_seconds,omitempty"`
+
+	// Defines the refresh token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '259200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds,omitempty"`
+}
+
+// Constants associated with the AccountSettingsAssignedTemplatesSection.RestrictCreateServiceID property.
+// Defines whether or not creating a service ID is access controlled. Valid values:
+//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+//
+// IDs, including the account owner
+//   - NOT_RESTRICTED - all members of an account can create service IDs
+//   - NOT_SET - to 'unset' a previous set value.
+const (
+	AccountSettingsAssignedTemplatesSectionRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsAssignedTemplatesSectionRestrictCreateServiceIDNotSetConst        = "NOT_SET"
+	AccountSettingsAssignedTemplatesSectionRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
+)
+
+// Constants associated with the AccountSettingsAssignedTemplatesSection.RestrictCreatePlatformApikey property.
+// Defines whether or not creating platform API keys is access controlled. Valid values:
+//   - RESTRICTED - to apply access control
+//   - NOT_RESTRICTED - to remove access control
+//   - NOT_SET - to 'unset' a previous set value.
+const (
+	AccountSettingsAssignedTemplatesSectionRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsAssignedTemplatesSectionRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
+	AccountSettingsAssignedTemplatesSectionRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
+)
+
+// Constants associated with the AccountSettingsAssignedTemplatesSection.Mfa property.
+// Defines the MFA requirement for the user. Valid values:
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
+const (
+	AccountSettingsAssignedTemplatesSectionMfaLevel1Const     = "LEVEL1"
+	AccountSettingsAssignedTemplatesSectionMfaLevel2Const     = "LEVEL2"
+	AccountSettingsAssignedTemplatesSectionMfaLevel3Const     = "LEVEL3"
+	AccountSettingsAssignedTemplatesSectionMfaNoneConst       = "NONE"
+	AccountSettingsAssignedTemplatesSectionMfaNoneNoRopcConst = "NONE_NO_ROPC"
+	AccountSettingsAssignedTemplatesSectionMfaTotpConst       = "TOTP"
+	AccountSettingsAssignedTemplatesSectionMfaTotp4allConst   = "TOTP4ALL"
+)
+
+// UnmarshalAccountSettingsAssignedTemplatesSection unmarshals an instance of AccountSettingsAssignedTemplatesSection from the specified map of raw messages.
+func UnmarshalAccountSettingsAssignedTemplatesSection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AccountSettingsAssignedTemplatesSection)
+	err = core.UnmarshalPrimitive(m, "template_id", &obj.TemplateID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_version", &obj.TemplateVersion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_version-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_name", &obj.TemplateName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "template_name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_create_service_id", &obj.RestrictCreateServiceID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_service_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_create_platform_apikey", &obj.RestrictCreatePlatformApikey)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_platform_apikey-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "allowed_ip_addresses", &obj.AllowedIPAddresses)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_ip_addresses-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalEffectiveAccountSettingsUserMfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_expiration_in_seconds", &obj.SessionExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_invalidation_in_seconds", &obj.SessionInvalidationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_invalidation_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max_sessions_per_identity", &obj.MaxSessionsPerIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max_sessions_per_identity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_access_token_expiration_in_seconds", &obj.SystemAccessTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_access_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_refresh_token_expiration_in_seconds", &obj.SystemRefreshTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_refresh_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // AccountSettingsComponent : AccountSettingsComponent struct
 type AccountSettingsComponent struct {
 	// Defines whether or not creating a service ID is access controlled. Valid values:
@@ -5936,6 +6676,163 @@ func UnmarshalAccountSettingsComponent(m map[string]json.RawMessage, result inte
 		return
 	}
 	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalAccountSettingsUserMfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_expiration_in_seconds", &obj.SessionExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "session_invalidation_in_seconds", &obj.SessionInvalidationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "session_invalidation_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max_sessions_per_identity", &obj.MaxSessionsPerIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max_sessions_per_identity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_access_token_expiration_in_seconds", &obj.SystemAccessTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_access_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "system_refresh_token_expiration_in_seconds", &obj.SystemRefreshTokenExpirationInSeconds)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "system_refresh_token_expiration_in_seconds-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AccountSettingsEffectiveSection : AccountSettingsEffectiveSection struct
+type AccountSettingsEffectiveSection struct {
+	// Defines whether or not creating a service ID is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
+
+	// Defines whether or not creating platform API keys is access controlled. Valid values:
+	//   * RESTRICTED - to apply access control
+	//   * NOT_RESTRICTED - to remove access control
+	//   * NOT_SET - to 'unset' a previous set value.
+	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey,omitempty"`
+
+	// Defines the IP addresses and subnets from which IAM tokens can be created for the account.
+	AllowedIPAddresses *string `json:"allowed_ip_addresses,omitempty"`
+
+	// Defines the MFA requirement for the user. Valid values:
+	//   * NONE - No MFA trait set
+	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+	//   * TOTP - For all non-federated IBMId users
+	//   * TOTP4ALL - For all users
+	//   * LEVEL1 - Email-based MFA for all users
+	//   * LEVEL2 - TOTP-based MFA for all users
+	//   * LEVEL3 - U2F MFA for all users.
+	Mfa *string `json:"mfa,omitempty"`
+
+	// List of users that are exempted from the MFA requirement of the account.
+	UserMfa []EffectiveAccountSettingsUserMfa `json:"user_mfa,omitempty"`
+
+	// Defines the session expiration in seconds for the account. Valid values:
+	//   * Any whole number between between '900' and '86400'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionExpirationInSeconds *string `json:"session_expiration_in_seconds,omitempty"`
+
+	// Defines the period of time in seconds in which a session will be invalidated due to inactivity. Valid values:
+	//   * Any whole number between '900' and '7200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SessionInvalidationInSeconds *string `json:"session_invalidation_in_seconds,omitempty"`
+
+	// Defines the max allowed sessions per identity required by the account. Valid values:
+	//   * Any whole number greater than 0
+	//   * NOT_SET - To unset account setting and use service default.
+	MaxSessionsPerIdentity *string `json:"max_sessions_per_identity,omitempty"`
+
+	// Defines the access token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '3600'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemAccessTokenExpirationInSeconds *string `json:"system_access_token_expiration_in_seconds,omitempty"`
+
+	// Defines the refresh token expiration in seconds. Valid values:
+	//   * Any whole number between '900' and '259200'
+	//   * NOT_SET - To unset account setting and use service default.
+	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds,omitempty"`
+}
+
+// Constants associated with the AccountSettingsEffectiveSection.RestrictCreateServiceID property.
+// Defines whether or not creating a service ID is access controlled. Valid values:
+//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+//
+// IDs, including the account owner
+//   - NOT_RESTRICTED - all members of an account can create service IDs
+//   - NOT_SET - to 'unset' a previous set value.
+const (
+	AccountSettingsEffectiveSectionRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsEffectiveSectionRestrictCreateServiceIDNotSetConst        = "NOT_SET"
+	AccountSettingsEffectiveSectionRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
+)
+
+// Constants associated with the AccountSettingsEffectiveSection.RestrictCreatePlatformApikey property.
+// Defines whether or not creating platform API keys is access controlled. Valid values:
+//   - RESTRICTED - to apply access control
+//   - NOT_RESTRICTED - to remove access control
+//   - NOT_SET - to 'unset' a previous set value.
+const (
+	AccountSettingsEffectiveSectionRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
+	AccountSettingsEffectiveSectionRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
+	AccountSettingsEffectiveSectionRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
+)
+
+// Constants associated with the AccountSettingsEffectiveSection.Mfa property.
+// Defines the MFA requirement for the user. Valid values:
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
+const (
+	AccountSettingsEffectiveSectionMfaLevel1Const     = "LEVEL1"
+	AccountSettingsEffectiveSectionMfaLevel2Const     = "LEVEL2"
+	AccountSettingsEffectiveSectionMfaLevel3Const     = "LEVEL3"
+	AccountSettingsEffectiveSectionMfaNoneConst       = "NONE"
+	AccountSettingsEffectiveSectionMfaNoneNoRopcConst = "NONE_NO_ROPC"
+	AccountSettingsEffectiveSectionMfaTotpConst       = "TOTP"
+	AccountSettingsEffectiveSectionMfaTotp4allConst   = "TOTP4ALL"
+)
+
+// UnmarshalAccountSettingsEffectiveSection unmarshals an instance of AccountSettingsEffectiveSection from the specified map of raw messages.
+func UnmarshalAccountSettingsEffectiveSection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AccountSettingsEffectiveSection)
+	err = core.UnmarshalPrimitive(m, "restrict_create_service_id", &obj.RestrictCreateServiceID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_service_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "restrict_create_platform_apikey", &obj.RestrictCreatePlatformApikey)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "restrict_create_platform_apikey-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "allowed_ip_addresses", &obj.AllowedIPAddresses)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_ip_addresses-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "user_mfa", &obj.UserMfa, UnmarshalEffectiveAccountSettingsUserMfa)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "user_mfa-error", common.GetComponentInfo())
 		return
@@ -6412,6 +7309,161 @@ func UnmarshalAccountSettingsUserMfa(m map[string]json.RawMessage, result interf
 	return
 }
 
+// ActionControls : ActionControls struct
+type ActionControls struct {
+	Identities *ActionControlsIdentities `json:"identities,omitempty"`
+
+	Rules *ActionControlsRules `json:"rules" validate:"required"`
+
+	Policies *ActionControlsPolicies `json:"policies" validate:"required"`
+}
+
+// NewActionControls : Instantiate ActionControls (Generic Model Constructor)
+func (*IamIdentityV1) NewActionControls(rules *ActionControlsRules, policies *ActionControlsPolicies) (_model *ActionControls, err error) {
+	_model = &ActionControls{
+		Rules:    rules,
+		Policies: policies,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalActionControls unmarshals an instance of ActionControls from the specified map of raw messages.
+func UnmarshalActionControls(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControls)
+	err = core.UnmarshalModel(m, "identities", &obj.Identities, UnmarshalActionControlsIdentities)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "identities-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalActionControlsRules)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "rules-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "policies", &obj.Policies, UnmarshalActionControlsPolicies)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "policies-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ActionControlsIdentities : ActionControlsIdentities struct
+type ActionControlsIdentities struct {
+	Add *bool `json:"add" validate:"required"`
+
+	Remove *bool `json:"remove" validate:"required"`
+}
+
+// NewActionControlsIdentities : Instantiate ActionControlsIdentities (Generic Model Constructor)
+func (*IamIdentityV1) NewActionControlsIdentities(add bool, remove bool) (_model *ActionControlsIdentities, err error) {
+	_model = &ActionControlsIdentities{
+		Add:    core.BoolPtr(add),
+		Remove: core.BoolPtr(remove),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalActionControlsIdentities unmarshals an instance of ActionControlsIdentities from the specified map of raw messages.
+func UnmarshalActionControlsIdentities(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlsIdentities)
+	err = core.UnmarshalPrimitive(m, "add", &obj.Add)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "add-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remove-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ActionControlsPolicies : ActionControlsPolicies struct
+type ActionControlsPolicies struct {
+	Add *bool `json:"add" validate:"required"`
+
+	Remove *bool `json:"remove" validate:"required"`
+}
+
+// NewActionControlsPolicies : Instantiate ActionControlsPolicies (Generic Model Constructor)
+func (*IamIdentityV1) NewActionControlsPolicies(add bool, remove bool) (_model *ActionControlsPolicies, err error) {
+	_model = &ActionControlsPolicies{
+		Add:    core.BoolPtr(add),
+		Remove: core.BoolPtr(remove),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalActionControlsPolicies unmarshals an instance of ActionControlsPolicies from the specified map of raw messages.
+func UnmarshalActionControlsPolicies(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlsPolicies)
+	err = core.UnmarshalPrimitive(m, "add", &obj.Add)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "add-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remove-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ActionControlsRules : ActionControlsRules struct
+type ActionControlsRules struct {
+	Add *bool `json:"add" validate:"required"`
+
+	Remove *bool `json:"remove" validate:"required"`
+}
+
+// NewActionControlsRules : Instantiate ActionControlsRules (Generic Model Constructor)
+func (*IamIdentityV1) NewActionControlsRules(add bool, remove bool) (_model *ActionControlsRules, err error) {
+	_model = &ActionControlsRules{
+		Add:    core.BoolPtr(add),
+		Remove: core.BoolPtr(remove),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+// UnmarshalActionControlsRules unmarshals an instance of ActionControlsRules from the specified map of raw messages.
+func UnmarshalActionControlsRules(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ActionControlsRules)
+	err = core.UnmarshalPrimitive(m, "add", &obj.Add)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "add-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remove-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // Activity : Activity struct
 type Activity struct {
 	// Time when the entity was last authenticated.
@@ -6473,7 +7525,9 @@ type APIKey struct {
 	// Access is done via the UUID of the API key.
 	Name *string `json:"name" validate:"required"`
 
-	// Defines if the API key supports sessions. Sessions are only supported for user apikeys.
+	// Defines whether you can manage CLI login sessions for the API key. When `true`, sessions are created and can be
+	// reviewed or revoked. When `false`, no sessions are tracked. To block access, delete or rotate the API key. Available
+	// only for user API keys.
 	SupportSessions *bool `json:"support_sessions,omitempty"`
 
 	// Defines the action to take when API key is leaked, valid values are 'none', 'disable' and 'delete'.
@@ -6862,7 +7916,7 @@ type CommitAccountSettingsTemplateOptions struct {
 	// Version of the account settings template.
 	Version *string `json:"version" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6900,7 +7954,7 @@ type CommitProfileTemplateOptions struct {
 	// Version of the Profile Template.
 	Version *string `json:"version" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -6944,7 +7998,7 @@ type CreateAccountSettingsAssignmentOptions struct {
 	// Identifier of target to deploy to.
 	Target *string `json:"target" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7008,7 +8062,7 @@ type CreateAccountSettingsTemplateOptions struct {
 
 	AccountSettings *AccountSettingsComponent `json:"account_settings,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7063,7 +8117,7 @@ type CreateAccountSettingsTemplateVersionOptions struct {
 
 	AccountSettings *AccountSettingsComponent `json:"account_settings,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7138,7 +8192,9 @@ type CreateAPIKeyOptions struct {
 	// of API keys for users.
 	StoreValue *bool `json:"store_value,omitempty"`
 
-	// Defines if the API key supports sessions. Sessions are only supported for user apikeys.
+	// Defines whether you can manage CLI login sessions for the API key. When `true`, sessions are created and can be
+	// reviewed or revoked. When `false`, no sessions are tracked. To block access, delete or rotate the API key. Available
+	// only for user API keys.
 	SupportSessions *bool `json:"support_sessions,omitempty"`
 
 	// Defines the action to take when API key is leaked, valid values are 'none', 'disable' and 'delete'.
@@ -7150,7 +8206,7 @@ type CreateAPIKeyOptions struct {
 	// Indicates if the API key is disabled. False by default.
 	EntityDisable *string `json:"Entity-Disable,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7256,7 +8312,7 @@ type CreateClaimRuleOptions struct {
 	// Session expiration in seconds, only required if type is 'Profile-SAML'.
 	Expiration *int64 `json:"expiration,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7337,7 +8393,7 @@ type CreateLinkOptions struct {
 	// Optional name of the Link.
 	Name *string `json:"name,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7388,7 +8444,7 @@ type CreateMfaReportOptions struct {
 	// Optional report type. The supported value is 'mfa_status'. List MFA enrollment status for all the identities.
 	Type *string `json:"type,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7477,7 +8533,7 @@ type CreateProfileOptions struct {
 	// provided during creation of trusted profile.
 	Description *string `json:"description,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7532,7 +8588,9 @@ type CreateProfileTemplateOptions struct {
 	// Existing policy templates that you can reference to assign access in the trusted profile component.
 	PolicyTemplateReferences []PolicyTemplateReference `json:"policy_template_references,omitempty"`
 
-	// Allows users to set headers on API requests
+	ActionControls *ActionControls `json:"action_controls,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7571,6 +8629,12 @@ func (_options *CreateProfileTemplateOptions) SetPolicyTemplateReferences(policy
 	return _options
 }
 
+// SetActionControls : Allow user to set ActionControls
+func (_options *CreateProfileTemplateOptions) SetActionControls(actionControls *ActionControls) *CreateProfileTemplateOptions {
+	_options.ActionControls = actionControls
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *CreateProfileTemplateOptions) SetHeaders(param map[string]string) *CreateProfileTemplateOptions {
 	options.Headers = param
@@ -7599,7 +8663,9 @@ type CreateProfileTemplateVersionOptions struct {
 	// Existing policy templates that you can reference to assign access in the trusted profile component.
 	PolicyTemplateReferences []PolicyTemplateReference `json:"policy_template_references,omitempty"`
 
-	// Allows users to set headers on API requests
+	ActionControls *ActionControls `json:"action_controls,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7646,6 +8712,12 @@ func (_options *CreateProfileTemplateVersionOptions) SetPolicyTemplateReferences
 	return _options
 }
 
+// SetActionControls : Allow user to set ActionControls
+func (_options *CreateProfileTemplateVersionOptions) SetActionControls(actionControls *ActionControls) *CreateProfileTemplateVersionOptions {
+	_options.ActionControls = actionControls
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *CreateProfileTemplateVersionOptions) SetHeaders(param map[string]string) *CreateProfileTemplateVersionOptions {
 	options.Headers = param
@@ -7664,7 +8736,7 @@ type CreateReportOptions struct {
 	// Optional duration of the report. The supported unit of duration is hours.
 	Duration *string `json:"duration,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7721,7 +8793,7 @@ type CreateServiceIDOptions struct {
 	// Indicates if the service ID is locked for further write operations. False by default.
 	EntityLock *string `json:"Entity-Lock,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7789,7 +8861,7 @@ type CreateTrustedProfileAssignmentOptions struct {
 	// Identifier of target to deploy to.
 	Target *string `json:"target" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7845,7 +8917,7 @@ type DeleteAccountSettingsAssignmentOptions struct {
 	// ID of the Assignment Record.
 	AssignmentID *string `json:"assignment_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7876,7 +8948,7 @@ type DeleteAccountSettingsTemplateVersionOptions struct {
 	// Version of the account settings template.
 	Version *string `json:"version" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7911,7 +8983,7 @@ type DeleteAllVersionsOfAccountSettingsTemplateOptions struct {
 	// ID of the account settings template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7939,7 +9011,7 @@ type DeleteAllVersionsOfProfileTemplateOptions struct {
 	// ID of the trusted profile template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7967,7 +9039,7 @@ type DeleteAPIKeyOptions struct {
 	// Unique ID of the API key.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -7998,7 +9070,7 @@ type DeleteClaimRuleOptions struct {
 	// ID of the claim rule to delete.
 	RuleID *string `json:"rule-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8036,7 +9108,7 @@ type DeleteLinkOptions struct {
 	// ID of the link.
 	LinkID *string `json:"link-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8066,6 +9138,64 @@ func (options *DeleteLinkOptions) SetHeaders(param map[string]string) *DeleteLin
 	return options
 }
 
+// DeletePreferencesOnScopeAccountOptions : The DeletePreferencesOnScopeAccount options.
+type DeletePreferencesOnScopeAccountOptions struct {
+	// Account id to delete preference for.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// IAM id to delete the preference for.
+	IamID *string `json:"iam_id" validate:"required,ne="`
+
+	// Service of the preference to be deleted.
+	Service *string `json:"service" validate:"required,ne="`
+
+	// Identifier of preference to be deleted.
+	PreferenceID *string `json:"preference_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeletePreferencesOnScopeAccountOptions : Instantiate DeletePreferencesOnScopeAccountOptions
+func (*IamIdentityV1) NewDeletePreferencesOnScopeAccountOptions(accountID string, iamID string, service string, preferenceID string) *DeletePreferencesOnScopeAccountOptions {
+	return &DeletePreferencesOnScopeAccountOptions{
+		AccountID:    core.StringPtr(accountID),
+		IamID:        core.StringPtr(iamID),
+		Service:      core.StringPtr(service),
+		PreferenceID: core.StringPtr(preferenceID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *DeletePreferencesOnScopeAccountOptions) SetAccountID(accountID string) *DeletePreferencesOnScopeAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIamID : Allow user to set IamID
+func (_options *DeletePreferencesOnScopeAccountOptions) SetIamID(iamID string) *DeletePreferencesOnScopeAccountOptions {
+	_options.IamID = core.StringPtr(iamID)
+	return _options
+}
+
+// SetService : Allow user to set Service
+func (_options *DeletePreferencesOnScopeAccountOptions) SetService(service string) *DeletePreferencesOnScopeAccountOptions {
+	_options.Service = core.StringPtr(service)
+	return _options
+}
+
+// SetPreferenceID : Allow user to set PreferenceID
+func (_options *DeletePreferencesOnScopeAccountOptions) SetPreferenceID(preferenceID string) *DeletePreferencesOnScopeAccountOptions {
+	_options.PreferenceID = core.StringPtr(preferenceID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeletePreferencesOnScopeAccountOptions) SetHeaders(param map[string]string) *DeletePreferencesOnScopeAccountOptions {
+	options.Headers = param
+	return options
+}
+
 // DeleteProfileIdentityOptions : The DeleteProfileIdentity options.
 type DeleteProfileIdentityOptions struct {
 	// ID of the trusted profile.
@@ -8077,7 +9207,7 @@ type DeleteProfileIdentityOptions struct {
 	// Identifier of the identity that can assume the trusted profiles.
 	IdentifierID *string `json:"identifier-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8127,7 +9257,7 @@ type DeleteProfileOptions struct {
 	// ID of the trusted profile.
 	ProfileID *string `json:"profile-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8158,7 +9288,7 @@ type DeleteProfileTemplateVersionOptions struct {
 	// Version of the Profile Template.
 	Version *string `json:"version" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8193,7 +9323,7 @@ type DeleteServiceIDOptions struct {
 	// Unique ID of the service ID.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8221,7 +9351,7 @@ type DeleteTrustedProfileAssignmentOptions struct {
 	// ID of the Assignment Record.
 	AssignmentID *string `json:"assignment_id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8249,7 +9379,7 @@ type DisableAPIKeyOptions struct {
 	// Unique ID of the API key.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8272,12 +9402,144 @@ func (options *DisableAPIKeyOptions) SetHeaders(param map[string]string) *Disabl
 	return options
 }
 
+// EffectiveAccountSettingsResponse : Response body format for Account Settings REST requests.
+type EffectiveAccountSettingsResponse struct {
+	// Context with key properties for problem determination.
+	Context *ResponseContext `json:"context,omitempty"`
+
+	// Unique ID of the account.
+	AccountID *string `json:"account_id" validate:"required"`
+
+	Effective *AccountSettingsEffectiveSection `json:"effective" validate:"required"`
+
+	Account *AccountSettingsAccountSection `json:"account" validate:"required"`
+
+	// assigned template section.
+	AssignedTemplates []AccountSettingsAssignedTemplatesSection `json:"assigned_templates,omitempty"`
+}
+
+// UnmarshalEffectiveAccountSettingsResponse unmarshals an instance of EffectiveAccountSettingsResponse from the specified map of raw messages.
+func UnmarshalEffectiveAccountSettingsResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EffectiveAccountSettingsResponse)
+	err = core.UnmarshalModel(m, "context", &obj.Context, UnmarshalResponseContext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "context-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "effective", &obj.Effective, UnmarshalAccountSettingsEffectiveSection)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "effective-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "account", &obj.Account, UnmarshalAccountSettingsAccountSection)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "assigned_templates", &obj.AssignedTemplates, UnmarshalAccountSettingsAssignedTemplatesSection)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "assigned_templates-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EffectiveAccountSettingsUserMfa : EffectiveAccountSettingsUserMfa struct
+type EffectiveAccountSettingsUserMfa struct {
+	// The iam_id of the user.
+	IamID *string `json:"iam_id" validate:"required"`
+
+	// Defines the MFA requirement for the user. Valid values:
+	//   * NONE - No MFA trait set
+	//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+	//   * TOTP - For all non-federated IBMId users
+	//   * TOTP4ALL - For all users
+	//   * LEVEL1 - Email-based MFA for all users
+	//   * LEVEL2 - TOTP-based MFA for all users
+	//   * LEVEL3 - U2F MFA for all users.
+	Mfa *string `json:"mfa" validate:"required"`
+
+	// name of the user account.
+	Name *string `json:"name,omitempty"`
+
+	// userName of the user.
+	UserName *string `json:"userName,omitempty"`
+
+	// email of the user.
+	Email *string `json:"email,omitempty"`
+
+	// optional description.
+	Description *string `json:"description,omitempty"`
+}
+
+// Constants associated with the EffectiveAccountSettingsUserMfa.Mfa property.
+// Defines the MFA requirement for the user. Valid values:
+//   - NONE - No MFA trait set
+//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   - TOTP - For all non-federated IBMId users
+//   - TOTP4ALL - For all users
+//   - LEVEL1 - Email-based MFA for all users
+//   - LEVEL2 - TOTP-based MFA for all users
+//   - LEVEL3 - U2F MFA for all users.
+const (
+	EffectiveAccountSettingsUserMfaMfaLevel1Const     = "LEVEL1"
+	EffectiveAccountSettingsUserMfaMfaLevel2Const     = "LEVEL2"
+	EffectiveAccountSettingsUserMfaMfaLevel3Const     = "LEVEL3"
+	EffectiveAccountSettingsUserMfaMfaNoneConst       = "NONE"
+	EffectiveAccountSettingsUserMfaMfaNoneNoRopcConst = "NONE_NO_ROPC"
+	EffectiveAccountSettingsUserMfaMfaTotpConst       = "TOTP"
+	EffectiveAccountSettingsUserMfaMfaTotp4allConst   = "TOTP4ALL"
+)
+
+// UnmarshalEffectiveAccountSettingsUserMfa unmarshals an instance of EffectiveAccountSettingsUserMfa from the specified map of raw messages.
+func UnmarshalEffectiveAccountSettingsUserMfa(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EffectiveAccountSettingsUserMfa)
+	err = core.UnmarshalPrimitive(m, "iam_id", &obj.IamID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "iam_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "mfa-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "userName", &obj.UserName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "userName-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // EnableAPIKeyOptions : The EnableAPIKey options.
 type EnableAPIKeyOptions struct {
 	// Unique ID of the API key.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8486,7 +9748,7 @@ type GetAccountSettingsAssignmentOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8523,7 +9785,7 @@ type GetAccountSettingsOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8563,7 +9825,7 @@ type GetAccountSettingsTemplateVersionOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8599,6 +9861,44 @@ func (options *GetAccountSettingsTemplateVersionOptions) SetHeaders(param map[st
 	return options
 }
 
+// GetAllPreferencesOnScopeAccountOptions : The GetAllPreferencesOnScopeAccount options.
+type GetAllPreferencesOnScopeAccountOptions struct {
+	// Account id to get preferences for.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// IAM id to get the preferences for.
+	IamID *string `json:"iam_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetAllPreferencesOnScopeAccountOptions : Instantiate GetAllPreferencesOnScopeAccountOptions
+func (*IamIdentityV1) NewGetAllPreferencesOnScopeAccountOptions(accountID string, iamID string) *GetAllPreferencesOnScopeAccountOptions {
+	return &GetAllPreferencesOnScopeAccountOptions{
+		AccountID: core.StringPtr(accountID),
+		IamID:     core.StringPtr(iamID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *GetAllPreferencesOnScopeAccountOptions) SetAccountID(accountID string) *GetAllPreferencesOnScopeAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIamID : Allow user to set IamID
+func (_options *GetAllPreferencesOnScopeAccountOptions) SetIamID(iamID string) *GetAllPreferencesOnScopeAccountOptions {
+	_options.IamID = core.StringPtr(iamID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetAllPreferencesOnScopeAccountOptions) SetHeaders(param map[string]string) *GetAllPreferencesOnScopeAccountOptions {
+	options.Headers = param
+	return options
+}
+
 // GetAPIKeyOptions : The GetAPIKey options.
 type GetAPIKeyOptions struct {
 	// Unique ID of the API key.
@@ -8611,7 +9911,7 @@ type GetAPIKeyOptions struct {
 	// only request this when needed.
 	IncludeActivity *bool `json:"include_activity,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8654,7 +9954,7 @@ type GetAPIKeysDetailsOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8689,7 +9989,7 @@ type GetClaimRuleOptions struct {
 	// ID of the claim rule to get.
 	RuleID *string `json:"rule-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8719,6 +10019,52 @@ func (options *GetClaimRuleOptions) SetHeaders(param map[string]string) *GetClai
 	return options
 }
 
+// GetEffectiveAccountSettingsOptions : The GetEffectiveAccountSettings options.
+type GetEffectiveAccountSettingsOptions struct {
+	// Unique ID of the account.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// Defines if the entity history is included in the response.
+	IncludeHistory *bool `json:"include_history,omitempty"`
+
+	// Enrich MFA exemptions with user information.
+	ResolveUserMfa *bool `json:"resolve_user_mfa,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetEffectiveAccountSettingsOptions : Instantiate GetEffectiveAccountSettingsOptions
+func (*IamIdentityV1) NewGetEffectiveAccountSettingsOptions(accountID string) *GetEffectiveAccountSettingsOptions {
+	return &GetEffectiveAccountSettingsOptions{
+		AccountID: core.StringPtr(accountID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *GetEffectiveAccountSettingsOptions) SetAccountID(accountID string) *GetEffectiveAccountSettingsOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIncludeHistory : Allow user to set IncludeHistory
+func (_options *GetEffectiveAccountSettingsOptions) SetIncludeHistory(includeHistory bool) *GetEffectiveAccountSettingsOptions {
+	_options.IncludeHistory = core.BoolPtr(includeHistory)
+	return _options
+}
+
+// SetResolveUserMfa : Allow user to set ResolveUserMfa
+func (_options *GetEffectiveAccountSettingsOptions) SetResolveUserMfa(resolveUserMfa bool) *GetEffectiveAccountSettingsOptions {
+	_options.ResolveUserMfa = core.BoolPtr(resolveUserMfa)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetEffectiveAccountSettingsOptions) SetHeaders(param map[string]string) *GetEffectiveAccountSettingsOptions {
+	options.Headers = param
+	return options
+}
+
 // GetLatestAccountSettingsTemplateVersionOptions : The GetLatestAccountSettingsTemplateVersion options.
 type GetLatestAccountSettingsTemplateVersionOptions struct {
 	// ID of the account settings template.
@@ -8727,7 +10073,7 @@ type GetLatestAccountSettingsTemplateVersionOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8764,7 +10110,7 @@ type GetLatestProfileTemplateVersionOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8801,7 +10147,7 @@ type GetLinkOptions struct {
 	// ID of the link.
 	LinkID *string `json:"link-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8839,7 +10185,7 @@ type GetMfaReportOptions struct {
 	// Reference for the report to be generated, You can use 'latest' to get the latest report for the given account.
 	Reference *string `json:"reference" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8877,7 +10223,7 @@ type GetMfaStatusOptions struct {
 	// iam_id of the user. This user must be the member of the account.
 	IamID *string `json:"iam_id" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8907,12 +10253,70 @@ func (options *GetMfaStatusOptions) SetHeaders(param map[string]string) *GetMfaS
 	return options
 }
 
+// GetPreferencesOnScopeAccountOptions : The GetPreferencesOnScopeAccount options.
+type GetPreferencesOnScopeAccountOptions struct {
+	// Account id to get preference for.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// IAM id to get the preference for.
+	IamID *string `json:"iam_id" validate:"required,ne="`
+
+	// Service of the preference to be fetched.
+	Service *string `json:"service" validate:"required,ne="`
+
+	// Identifier of preference to be fetched.
+	PreferenceID *string `json:"preference_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetPreferencesOnScopeAccountOptions : Instantiate GetPreferencesOnScopeAccountOptions
+func (*IamIdentityV1) NewGetPreferencesOnScopeAccountOptions(accountID string, iamID string, service string, preferenceID string) *GetPreferencesOnScopeAccountOptions {
+	return &GetPreferencesOnScopeAccountOptions{
+		AccountID:    core.StringPtr(accountID),
+		IamID:        core.StringPtr(iamID),
+		Service:      core.StringPtr(service),
+		PreferenceID: core.StringPtr(preferenceID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *GetPreferencesOnScopeAccountOptions) SetAccountID(accountID string) *GetPreferencesOnScopeAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIamID : Allow user to set IamID
+func (_options *GetPreferencesOnScopeAccountOptions) SetIamID(iamID string) *GetPreferencesOnScopeAccountOptions {
+	_options.IamID = core.StringPtr(iamID)
+	return _options
+}
+
+// SetService : Allow user to set Service
+func (_options *GetPreferencesOnScopeAccountOptions) SetService(service string) *GetPreferencesOnScopeAccountOptions {
+	_options.Service = core.StringPtr(service)
+	return _options
+}
+
+// SetPreferenceID : Allow user to set PreferenceID
+func (_options *GetPreferencesOnScopeAccountOptions) SetPreferenceID(preferenceID string) *GetPreferencesOnScopeAccountOptions {
+	_options.PreferenceID = core.StringPtr(preferenceID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetPreferencesOnScopeAccountOptions) SetHeaders(param map[string]string) *GetPreferencesOnScopeAccountOptions {
+	options.Headers = param
+	return options
+}
+
 // GetProfileIdentitiesOptions : The GetProfileIdentities options.
 type GetProfileIdentitiesOptions struct {
 	// ID of the trusted profile.
 	ProfileID *string `json:"profile-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -8946,7 +10350,7 @@ type GetProfileIdentityOptions struct {
 	// Identifier of the identity that can assume the trusted profiles.
 	IdentifierID *string `json:"identifier-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9000,7 +10404,7 @@ type GetProfileOptions struct {
 	// only request this when needed.
 	IncludeActivity *bool `json:"include_activity,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9040,7 +10444,7 @@ type GetProfileTemplateVersionOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9084,7 +10488,7 @@ type GetReportOptions struct {
 	// Reference for the report to be generated, You can use 'latest' to get the latest report for the given account.
 	Reference *string `json:"reference" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9126,7 +10530,7 @@ type GetServiceIDOptions struct {
 	// only request this when needed.
 	IncludeActivity *bool `json:"include_activity,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9169,7 +10573,7 @@ type GetTrustedProfileAssignmentOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9343,6 +10747,84 @@ func UnmarshalIDBasedMfaEnrollment(m map[string]json.RawMessage, result interfac
 	return
 }
 
+// IdentityPreferenceResponse : IdentityPreferenceResponse struct
+type IdentityPreferenceResponse struct {
+	// Service of the preference.
+	Service *string `json:"service,omitempty"`
+
+	// Unique ID of the preference.
+	ID *string `json:"id,omitempty"`
+
+	// Account ID of the preference, only present for scope 'account'.
+	AccountID *string `json:"account_id,omitempty"`
+
+	// Scope of the preference, 'global' or 'account'.
+	Scope *string `json:"scope,omitempty"`
+
+	// String value of the preference, only one value property is set, either 'value_string' or 'value_list_of_strings' is
+	// present.
+	ValueString *string `json:"value_string,omitempty"`
+
+	// List of value of the preference, only one value property is set, either 'value_string' or 'value_list_of_strings' is
+	// present.
+	ValueListOfStrings []string `json:"value_list_of_strings,omitempty"`
+}
+
+// UnmarshalIdentityPreferenceResponse unmarshals an instance of IdentityPreferenceResponse from the specified map of raw messages.
+func UnmarshalIdentityPreferenceResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IdentityPreferenceResponse)
+	err = core.UnmarshalPrimitive(m, "service", &obj.Service)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "scope", &obj.Scope)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "scope-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value_string", &obj.ValueString)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value_string-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value_list_of_strings", &obj.ValueListOfStrings)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value_list_of_strings-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// IdentityPreferencesResponse : IdentityPreferencesResponse struct
+type IdentityPreferencesResponse struct {
+	// List of Identity Preferences.
+	Preferences []IdentityPreferenceResponse `json:"preferences" validate:"required"`
+}
+
+// UnmarshalIdentityPreferencesResponse unmarshals an instance of IdentityPreferencesResponse from the specified map of raw messages.
+func UnmarshalIdentityPreferencesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IdentityPreferencesResponse)
+	err = core.UnmarshalModel(m, "preferences", &obj.Preferences, UnmarshalIdentityPreferenceResponse)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "preferences-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // ListAccountSettingsAssignmentsOptions : The ListAccountSettingsAssignments options.
 type ListAccountSettingsAssignmentsOptions struct {
 	// Account ID of the Assignments to query. This parameter is required unless using a pagetoken.
@@ -9375,7 +10857,7 @@ type ListAccountSettingsAssignmentsOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9492,7 +10974,7 @@ type ListAccountSettingsTemplatesOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *string `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9591,7 +11073,7 @@ type ListAPIKeysOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9686,7 +11168,7 @@ type ListClaimRulesOptions struct {
 	// ID of the trusted profile.
 	ProfileID *string `json:"profile-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9714,7 +11196,7 @@ type ListLinksOptions struct {
 	// ID of the trusted profile.
 	ProfileID *string `json:"profile-id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9757,7 +11239,7 @@ type ListProfileTemplatesOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *string `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9847,7 +11329,7 @@ type ListProfilesOptions struct {
 	// Optional Prev or Next page token returned from a previous query execution. Default is start with first page.
 	Pagetoken *string `json:"pagetoken,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -9937,7 +11419,7 @@ type ListServiceIdsOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10033,7 +11515,7 @@ type ListTrustedProfileAssignmentsOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10150,7 +11632,7 @@ type ListVersionsOfAccountSettingsTemplateOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *string `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10238,7 +11720,7 @@ type ListVersionsOfProfileTemplateOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *string `json:"include_history,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10311,7 +11793,7 @@ type LockAPIKeyOptions struct {
 	// Unique ID of the API key.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -10339,7 +11821,7 @@ type LockServiceIDOptions struct {
 	// Unique ID of the service ID.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11367,7 +12849,7 @@ type SetProfileIdentitiesOptions struct {
 	// List of identities that can assume the trusted profile.
 	Identities []ProfileIdentityRequest `json:"identities,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -11427,7 +12909,7 @@ type SetProfileIdentityOptions struct {
 	// used. Description is recommended for the identity type 'crn' E.g. 'Instance 1234 of IBM Cloud Service project'.
 	Description *string `json:"description,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12260,6 +13742,8 @@ type TrustedProfileTemplateResponse struct {
 	// Existing policy templates that you can reference to assign access in the trusted profile component.
 	PolicyTemplateReferences []PolicyTemplateReference `json:"policy_template_references,omitempty"`
 
+	ActionControls *ActionControls `json:"action_controls,omitempty"`
+
 	// History of the trusted profile template.
 	History []EnityHistoryRecord `json:"history,omitempty"`
 
@@ -12323,6 +13807,11 @@ func UnmarshalTrustedProfileTemplateResponse(m map[string]json.RawMessage, resul
 	err = core.UnmarshalModel(m, "policy_template_references", &obj.PolicyTemplateReferences, UnmarshalPolicyTemplateReference)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "policy_template_references-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "action_controls", &obj.ActionControls, UnmarshalActionControls)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "action_controls-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalEnityHistoryRecord)
@@ -12436,7 +13925,7 @@ type UnlockAPIKeyOptions struct {
 	// Unique ID of the API key.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12464,7 +13953,7 @@ type UnlockServiceIDOptions struct {
 	// Unique ID of the service ID.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12501,7 +13990,7 @@ type UpdateAccountSettingsAssignmentOptions struct {
 	// migrate to a different version, provide the new version number.
 	TemplateVersion *int64 `json:"template_version" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12603,7 +14092,7 @@ type UpdateAccountSettingsOptions struct {
 	//   * NOT_SET - To unset account setting and use service default.
 	SystemRefreshTokenExpirationInSeconds *string `json:"system_refresh_token_expiration_in_seconds,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12762,7 +14251,7 @@ type UpdateAccountSettingsTemplateVersionOptions struct {
 
 	AccountSettings *AccountSettingsComponent `json:"account_settings,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12841,13 +14330,15 @@ type UpdateAPIKeyOptions struct {
 	// key. If a non empty value is provided the API key will be updated.
 	Description *string `json:"description,omitempty"`
 
-	// Defines if the API key supports sessions. Sessions are only supported for user apikeys.
+	// Defines whether you can manage CLI login sessions for the API key. When `true`, sessions are created and can be
+	// reviewed or revoked. When `false`, no sessions are tracked. To block access, delete or rotate the API key. Available
+	// only for user API keys.
 	SupportSessions *bool `json:"support_sessions,omitempty"`
 
 	// Defines the action to take when API key is leaked, valid values are 'none', 'disable' and 'delete'.
 	ActionWhenLeaked *string `json:"action_when_leaked,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -12937,7 +14428,7 @@ type UpdateClaimRuleOptions struct {
 	// Session expiration in seconds, only required if type is 'Profile-SAML'.
 	Expiration *int64 `json:"expiration,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13018,6 +14509,85 @@ func (options *UpdateClaimRuleOptions) SetHeaders(param map[string]string) *Upda
 	return options
 }
 
+// UpdatePreferenceOnScopeAccountOptions : The UpdatePreferenceOnScopeAccount options.
+type UpdatePreferenceOnScopeAccountOptions struct {
+	// Account id to update preference for.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// IAM id to update the preference for.
+	IamID *string `json:"iam_id" validate:"required,ne="`
+
+	// Service of the preference to be updated.
+	Service *string `json:"service" validate:"required,ne="`
+
+	// Identifier of preference to be updated.
+	PreferenceID *string `json:"preference_id" validate:"required,ne="`
+
+	// contains a string value of the preference. only one value property is set, either 'value_string' or
+	// 'value_list_of_strings' is present.
+	ValueString *string `json:"value_string" validate:"required"`
+
+	// contains a list of string values of the preference. only one value property is set, either 'value_string' or
+	// 'value_list_of_strings' is present.
+	ValueListOfStrings []string `json:"value_list_of_strings,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewUpdatePreferenceOnScopeAccountOptions : Instantiate UpdatePreferenceOnScopeAccountOptions
+func (*IamIdentityV1) NewUpdatePreferenceOnScopeAccountOptions(accountID string, iamID string, service string, preferenceID string, valueString string) *UpdatePreferenceOnScopeAccountOptions {
+	return &UpdatePreferenceOnScopeAccountOptions{
+		AccountID:    core.StringPtr(accountID),
+		IamID:        core.StringPtr(iamID),
+		Service:      core.StringPtr(service),
+		PreferenceID: core.StringPtr(preferenceID),
+		ValueString:  core.StringPtr(valueString),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetAccountID(accountID string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetIamID : Allow user to set IamID
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetIamID(iamID string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.IamID = core.StringPtr(iamID)
+	return _options
+}
+
+// SetService : Allow user to set Service
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetService(service string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.Service = core.StringPtr(service)
+	return _options
+}
+
+// SetPreferenceID : Allow user to set PreferenceID
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetPreferenceID(preferenceID string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.PreferenceID = core.StringPtr(preferenceID)
+	return _options
+}
+
+// SetValueString : Allow user to set ValueString
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetValueString(valueString string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.ValueString = core.StringPtr(valueString)
+	return _options
+}
+
+// SetValueListOfStrings : Allow user to set ValueListOfStrings
+func (_options *UpdatePreferenceOnScopeAccountOptions) SetValueListOfStrings(valueListOfStrings []string) *UpdatePreferenceOnScopeAccountOptions {
+	_options.ValueListOfStrings = valueListOfStrings
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdatePreferenceOnScopeAccountOptions) SetHeaders(param map[string]string) *UpdatePreferenceOnScopeAccountOptions {
+	options.Headers = param
+	return options
+}
+
 // UpdateProfileOptions : The UpdateProfile options.
 type UpdateProfileOptions struct {
 	// ID of the trusted profile to be updated.
@@ -13036,7 +14606,7 @@ type UpdateProfileOptions struct {
 	// the trusted profile. If a non empty value is provided the trusted profile will be updated.
 	Description *string `json:"description,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13108,7 +14678,9 @@ type UpdateProfileTemplateVersionOptions struct {
 	// Existing policy templates that you can reference to assign access in the trusted profile component.
 	PolicyTemplateReferences []PolicyTemplateReference `json:"policy_template_references,omitempty"`
 
-	// Allows users to set headers on API requests
+	ActionControls *ActionControls `json:"action_controls,omitempty"`
+
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13169,6 +14741,12 @@ func (_options *UpdateProfileTemplateVersionOptions) SetPolicyTemplateReferences
 	return _options
 }
 
+// SetActionControls : Allow user to set ActionControls
+func (_options *UpdateProfileTemplateVersionOptions) SetActionControls(actionControls *ActionControls) *UpdateProfileTemplateVersionOptions {
+	_options.ActionControls = actionControls
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *UpdateProfileTemplateVersionOptions) SetHeaders(param map[string]string) *UpdateProfileTemplateVersionOptions {
 	options.Headers = param
@@ -13197,7 +14775,7 @@ type UpdateServiceIDOptions struct {
 	// existing unique instance crns of the service ID.
 	UniqueInstanceCrns []string `json:"unique_instance_crns,omitempty"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 
@@ -13259,7 +14837,7 @@ type UpdateTrustedProfileAssignmentOptions struct {
 	// migrate to a different version, provide the new version number.
 	TemplateVersion *int64 `json:"template_version" validate:"required"`
 
-	// Allows users to set headers on API requests
+	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
 

@@ -171,6 +171,20 @@ const (
 	PhaseDeleting string = "Deleting"
 )
 
+type MachineAuthority string
+
+const (
+	// MachineAuthorityMachineAPI indicates that the Machine API resource should be the authoritative API.
+	MachineAuthorityMachineAPI MachineAuthority = "MachineAPI"
+
+	// MachineAuthorityClusterAPI indicates that the Cluster API resource should be the authoritative API.
+	MachineAuthorityClusterAPI MachineAuthority = "ClusterAPI"
+
+	// MachineAuthorityMigrating indicates that the authoritative API is currently migrating between states.
+	// Only applicable for status usages of the MachineAuthority.
+	MachineAuthorityMigrating MachineAuthority = "Migrating"
+)
+
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -213,7 +227,7 @@ type MachineSpec struct {
 	// +optional
 	ObjectMeta `json:"metadata,omitempty"`
 
-	// LifecycleHooks allow users to pause operations on the machine at
+	// lifecycleHooks allow users to pause operations on the machine at
 	// certain predefined points within the machine lifecycle.
 	// +optional
 	LifecycleHooks LifecycleHooks `json:"lifecycleHooks,omitempty"`
@@ -225,13 +239,14 @@ type MachineSpec struct {
 	// the taint the machine controller will put it back) but not have the machine controller
 	// remove any taints
 	// +optional
+	// +listType=atomic
 	Taints []corev1.Taint `json:"taints,omitempty"`
 
-	// ProviderSpec details Provider-specific configuration to use during node creation.
+	// providerSpec details Provider-specific configuration to use during node creation.
 	// +optional
 	ProviderSpec ProviderSpec `json:"providerSpec"`
 
-	// ProviderID is the identification ID of the machine provided by the provider.
+	// providerID is the identification ID of the machine provided by the provider.
 	// This field must match the provider ID as seen on the node object corresponding to this machine.
 	// This field is required by higher level consumers of cluster-api. Example use case is cluster autoscaler
 	// with cluster-api as provider. Clean-up logic in the autoscaler compares machines to nodes to find out
@@ -243,19 +258,33 @@ type MachineSpec struct {
 	// be interfacing with cluster-api as generic provider.
 	// +optional
 	ProviderID *string `json:"providerID,omitempty"`
+
+	// authoritativeAPI is the API that is authoritative for this resource.
+	// Valid values are MachineAPI and ClusterAPI.
+	// When set to MachineAPI, writes to the spec of the machine.openshift.io copy of this resource will be reflected into the cluster.x-k8s.io copy.
+	// When set to ClusterAPI, writes to the spec of the cluster.x-k8s.io copy of this resource will be reflected into the machine.openshift.io copy.
+	// Updates to the status will be reflected in both copies of the resource, based on the controller implementing the functionality of the API.
+	// Currently the authoritative API determines which controller will manage the resource, this will change in a future release.
+	// To ensure the change has been accepted, please verify that the `status.authoritativeAPI` field has been updated to the desired value and that the `Synchronized` condition is present and set to `True`.
+	// +kubebuilder:validation:Enum=MachineAPI;ClusterAPI
+	// +kubebuilder:validation:Default=MachineAPI
+	// +default="MachineAPI"
+	// +openshift:enable:FeatureGate=MachineAPIMigration
+	// +optional
+	AuthoritativeAPI MachineAuthority `json:"authoritativeAPI,omitempty"`
 }
 
 // LifecycleHooks allow users to pause operations on the machine at
 // certain prefedined points within the machine lifecycle.
 type LifecycleHooks struct {
-	// PreDrain hooks prevent the machine from being drained.
+	// preDrain hooks prevent the machine from being drained.
 	// This also blocks further lifecycle events, such as termination.
 	// +listType=map
 	// +listMapKey=name
 	// +optional
 	PreDrain []LifecycleHook `json:"preDrain,omitempty"`
 
-	// PreTerminate hooks prevent the machine from being terminated.
+	// preTerminate hooks prevent the machine from being terminated.
 	// PreTerminate hooks be actioned after the Machine has been drained.
 	// +listType=map
 	// +listMapKey=name
@@ -265,38 +294,39 @@ type LifecycleHooks struct {
 
 // LifecycleHook represents a single instance of a lifecycle hook
 type LifecycleHook struct {
-	// Name defines a unique name for the lifcycle hook.
+	// name defines a unique name for the lifcycle hook.
 	// The name should be unique and descriptive, ideally 1-3 words, in CamelCase or
 	// it may be namespaced, eg. foo.example.com/CamelCase.
 	// Names must be unique and should only be managed by a single entity.
 	// +kubebuilder:validation:Pattern=`^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$`
-	// +kubebuilder:validation:MinLength:=3
-	// +kubebuilder:validation:MaxLength:=256
-	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=3
+	// +kubebuilder:validation:MaxLength=256
+	// +required
 	Name string `json:"name"`
 
-	// Owner defines the owner of the lifecycle hook.
+	// owner defines the owner of the lifecycle hook.
 	// This should be descriptive enough so that users can identify
 	// who/what is responsible for blocking the lifecycle.
 	// This could be the name of a controller (e.g. clusteroperator/etcd)
 	// or an administrator managing the hook.
-	// +kubebuilder:validation:MinLength:=3
-	// +kubebuilder:validation:MaxLength:=512
-	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=3
+	// +kubebuilder:validation:MaxLength=512
+	// +required
 	Owner string `json:"owner"`
 }
 
 // MachineStatus defines the observed state of Machine
+// +openshift:validation:FeatureGateAwareXValidation:featureGate=MachineAPIMigration,rule="!has(oldSelf.synchronizedGeneration) || (has(self.synchronizedGeneration) && self.synchronizedGeneration >= oldSelf.synchronizedGeneration) || (oldSelf.authoritativeAPI == 'Migrating' && self.authoritativeAPI != 'Migrating')",message="synchronizedGeneration must not decrease unless authoritativeAPI is transitioning from Migrating to another value"
 type MachineStatus struct {
-	// NodeRef will point to the corresponding Node if it exists.
+	// nodeRef will point to the corresponding Node if it exists.
 	// +optional
 	NodeRef *corev1.ObjectReference `json:"nodeRef,omitempty"`
 
-	// LastUpdated identifies when this status was last observed.
+	// lastUpdated identifies when this status was last observed.
 	// +optional
 	LastUpdated *metav1.Time `json:"lastUpdated,omitempty"`
 
-	// ErrorReason will be set in the event that there is a terminal problem
+	// errorReason will be set in the event that there is a terminal problem
 	// reconciling the Machine and will contain a succinct value suitable
 	// for machine interpretation.
 	//
@@ -315,7 +345,7 @@ type MachineStatus struct {
 	// +optional
 	ErrorReason *MachineStatusError `json:"errorReason,omitempty"`
 
-	// ErrorMessage will be set in the event that there is a terminal problem
+	// errorMessage will be set in the event that there is a terminal problem
 	// reconciling the Machine and will contain a more verbose string suitable
 	// for logging and human consumption.
 	//
@@ -334,7 +364,7 @@ type MachineStatus struct {
 	// +optional
 	ErrorMessage *string `json:"errorMessage,omitempty"`
 
-	// ProviderStatus details a Provider-specific status.
+	// providerStatus details a Provider-specific status.
 	// It is recommended that providers maintain their
 	// own versioned API types that should be
 	// serialized/deserialized from this field.
@@ -342,39 +372,60 @@ type MachineStatus struct {
 	// +kubebuilder:validation:XPreserveUnknownFields
 	ProviderStatus *runtime.RawExtension `json:"providerStatus,omitempty"`
 
-	// Addresses is a list of addresses assigned to the machine. Queried from cloud provider, if available.
+	// addresses is a list of addresses assigned to the machine. Queried from cloud provider, if available.
 	// +optional
+	// +listType=atomic
 	Addresses []corev1.NodeAddress `json:"addresses,omitempty"`
 
-	// LastOperation describes the last-operation performed by the machine-controller.
+	// lastOperation describes the last-operation performed by the machine-controller.
 	// This API should be useful as a history in terms of the latest operation performed on the
 	// specific machine. It should also convey the state of the latest-operation for example if
 	// it is still on-going, failed or completed successfully.
 	// +optional
 	LastOperation *LastOperation `json:"lastOperation,omitempty"`
 
-	// Phase represents the current phase of machine actuation.
+	// phase represents the current phase of machine actuation.
 	// One of: Failed, Provisioning, Provisioned, Running, Deleting
 	// +optional
 	Phase *string `json:"phase,omitempty"`
 
-	// Conditions defines the current state of the Machine
-	Conditions Conditions `json:"conditions,omitempty"`
+	// conditions defines the current state of the Machine
+	// +listType=map
+	// +listMapKey=type
+	Conditions []Condition `json:"conditions,omitempty"`
+
+	// authoritativeAPI is the API that is authoritative for this resource.
+	// Valid values are MachineAPI, ClusterAPI and Migrating.
+	// This value is updated by the migration controller to reflect the authoritative API.
+	// Machine API and Cluster API controllers use this value to determine whether or not to reconcile the resource.
+	// When set to Migrating, the migration controller is currently performing the handover of authority from one API to the other.
+	// +kubebuilder:validation:Enum=MachineAPI;ClusterAPI;Migrating
+	// +kubebuilder:validation:XValidation:rule="self == 'Migrating' || self == oldSelf || oldSelf == 'Migrating'",message="The authoritativeAPI field must not transition directly from MachineAPI to ClusterAPI or vice versa. It must transition through Migrating."
+	// +openshift:enable:FeatureGate=MachineAPIMigration
+	// +optional
+	AuthoritativeAPI MachineAuthority `json:"authoritativeAPI,omitempty"`
+
+	// synchronizedGeneration is the generation of the authoritative resource that the non-authoritative resource is synchronised with.
+	// This field is set when the authoritative resource is updated and the sync controller has updated the non-authoritative resource to match.
+	// +kubebuilder:validation:Minimum=0
+	// +openshift:enable:FeatureGate=MachineAPIMigration
+	// +optional
+	SynchronizedGeneration int64 `json:"synchronizedGeneration,omitempty"`
 }
 
 // LastOperation represents the detail of the last performed operation on the MachineObject.
 type LastOperation struct {
-	// Description is the human-readable description of the last operation.
+	// description is the human-readable description of the last operation.
 	Description *string `json:"description,omitempty"`
 
-	// LastUpdated is the timestamp at which LastOperation API was last-updated.
+	// lastUpdated is the timestamp at which LastOperation API was last-updated.
 	LastUpdated *metav1.Time `json:"lastUpdated,omitempty"`
 
-	// State is the current status of the last performed operation.
+	// state is the current status of the last performed operation.
 	// E.g. Processing, Failed, Successful etc
 	State *string `json:"state,omitempty"`
 
-	// Type is the type of operation which was last performed.
+	// type is the type of operation which was last performed.
 	// E.g. Create, Delete, Update etc
 	Type *string `json:"type,omitempty"`
 }

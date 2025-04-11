@@ -70,6 +70,8 @@ const AttachVolumeOperationFailed = "failed to perform the Attach volume Operati
 const DetachVolumeOperationFailed = "failed to perform the Detach volume Operation for volume %s with error %w"
 const GetVolumeRemoteCopyRelationshipsOperationFailed = "failed to Get remote copy relationships of a volume %s for the cloud instance %s with error %w"
 const GetVolumeFlashCopyMappingOperationFailed = "failed to Get flash copy mapping of a volume %s for the cloud instance %s with error %w"
+const DetachVolumesOperationFailed = "failed to perfome the Detach volumes Operation V2 for pvminstance %s in cloud instance %s with error %w"
+const AttachVolumesOperationFailed = "failed to perform the Attach volume Operation for volumes %s with error %w"
 
 // start of volume onboarding
 const GetVolumeOnboardingOperationFailed = "failed to perform the Get Volume Onboarding Operation for volume-onboarding ID:%s for the cloud instance %s with error %w"
@@ -119,11 +121,14 @@ const DeleteSPPPlacementGroupOperationFailed = "failed to perform Delete Shared 
 const AddMemberSPPPlacementGroupOperationFailed = "failed to perform Add Member Operation for pool %s and shared processor pool placement group %s with error %w"
 const DeleteMemberSPPPlacementGroupOperationFailed = "failed to perform Delete Member Operation for pool %s and shared processor pool placement group %s with error %w"
 
-// start of workspaces
+// start of Workspaces Messages
 const GetWorkspaceOperationFailed = "failed to perform Get Workspace Operation for id %s with error %w"
 
-// Datacenter
+// start of Datacenter Messages
 const GetDatacenterOperationFailed = "failed to perform Get Datacenter Operation for id %s with error %w"
+
+// start of StorageTier Messages
+const GetAllStorageTiersOperationFailed = "failed to perform get all Storage Tiers Operation for id %s with error %w"
 
 // ErrorTarget ...
 type ErrorTarget struct {

@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
+ */
 
 package mqcloud
 
@@ -25,7 +29,7 @@ func DataSourceIbmMqcloudTruststoreCertificate() *schema.Resource {
 			"service_instance_guid": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The GUID that uniquely identifies the MQ on Cloud service instance.",
+				Description: "The GUID that uniquely identifies the MQaaS service instance.",
 			},
 			"queue_manager_id": {
 				Type:        schema.TypeString,
@@ -118,11 +122,17 @@ func DataSourceIbmMqcloudTruststoreCertificate() *schema.Resource {
 func dataSourceIbmMqcloudTruststoreCertificateRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mqcloudClient, err := meta.(conns.ClientSession).MqcloudV1()
 	if err != nil {
-		return diag.FromErr(err)
+		// Error is coming from SDK client, so it doesn't need to be discriminated.
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_mqcloud_truststore_certificate", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
+
 	err = checkSIPlan(d, meta)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Read Truststore Certificate failed %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Read Truststore Certificate failed: %s", err.Error()), "(Data) ibm_mqcloud_truststore_certificate", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	listTrustStoreCertificatesOptions := &mqcloudv1.ListTrustStoreCertificatesOptions{}
@@ -130,10 +140,11 @@ func dataSourceIbmMqcloudTruststoreCertificateRead(context context.Context, d *s
 	listTrustStoreCertificatesOptions.SetServiceInstanceGuid(d.Get("service_instance_guid").(string))
 	listTrustStoreCertificatesOptions.SetQueueManagerID(d.Get("queue_manager_id").(string))
 
-	trustStoreCertificateDetailsCollection, response, err := mqcloudClient.ListTrustStoreCertificatesWithContext(context, listTrustStoreCertificatesOptions)
+	trustStoreCertificateDetailsCollection, _, err := mqcloudClient.ListTrustStoreCertificatesWithContext(context, listTrustStoreCertificatesOptions)
 	if err != nil {
-		log.Printf("[DEBUG] ListTrustStoreCertificatesWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("ListTrustStoreCertificatesWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListTrustStoreCertificatesWithContext failed: %s", err.Error()), "(Data) ibm_mqcloud_truststore_certificate", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	// Use the provided filter argument and construct a new list with only the requested resource(s)
@@ -156,7 +167,7 @@ func dataSourceIbmMqcloudTruststoreCertificateRead(context context.Context, d *s
 
 	if suppliedFilter {
 		if len(trustStoreCertificateDetailsCollection.TrustStore) == 0 {
-			return diag.FromErr(fmt.Errorf("No Trust Store Certificate found with label: \"%s\"", label))
+			return flex.DiscriminatedTerraformErrorf(nil, fmt.Sprintf("no TrustStore found with label %s", label), "(Data) ibm_mqcloud_truststore_certificate", "read", "no-collection-found").GetDiag()
 		}
 		d.SetId(label)
 	} else {
@@ -164,22 +175,21 @@ func dataSourceIbmMqcloudTruststoreCertificateRead(context context.Context, d *s
 	}
 
 	if err = d.Set("total_count", flex.IntValue(trustStoreCertificateDetailsCollection.TotalCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting total_count: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting total_count: %s", err), "(Data) ibm_mqcloud_truststore_certificate", "read", "set-total_count").GetDiag()
 	}
-
 	trustStore := []map[string]interface{}{}
 	if trustStoreCertificateDetailsCollection.TrustStore != nil {
 		for _, modelItem := range trustStoreCertificateDetailsCollection.TrustStore {
 			modelItem := modelItem
-			modelMap, err := dataSourceIbmMqcloudTruststoreCertificateTrustStoreCertificateDetailsToMap(&modelItem)
+			modelMap, err := DataSourceIbmMqcloudTruststoreCertificateTrustStoreCertificateDetailsToMap(&modelItem)
 			if err != nil {
-				return diag.FromErr(err)
+				return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_mqcloud_truststore_certificate", "read", "trust_store-to-map").GetDiag()
 			}
 			trustStore = append(trustStore, modelMap)
 		}
 	}
 	if err = d.Set("trust_store", trustStore); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting trust_store: %s", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting trust_store: %s", err), "(Data) ibm_mqcloud_truststore_certificate", "read", "set-trust_store").GetDiag()
 	}
 
 	return nil
@@ -190,19 +200,19 @@ func dataSourceIbmMqcloudTruststoreCertificateID(d *schema.ResourceData) string 
 	return time.Now().UTC().String()
 }
 
-func dataSourceIbmMqcloudTruststoreCertificateTrustStoreCertificateDetailsToMap(model *mqcloudv1.TrustStoreCertificateDetails) (map[string]interface{}, error) {
+func DataSourceIbmMqcloudTruststoreCertificateTrustStoreCertificateDetailsToMap(model *mqcloudv1.TrustStoreCertificateDetails) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["id"] = model.ID
-	modelMap["label"] = model.Label
-	modelMap["certificate_type"] = model.CertificateType
-	modelMap["fingerprint_sha256"] = model.FingerprintSha256
-	modelMap["subject_dn"] = model.SubjectDn
-	modelMap["subject_cn"] = model.SubjectCn
-	modelMap["issuer_dn"] = model.IssuerDn
-	modelMap["issuer_cn"] = model.IssuerCn
+	modelMap["id"] = *model.ID
+	modelMap["label"] = *model.Label
+	modelMap["certificate_type"] = *model.CertificateType
+	modelMap["fingerprint_sha256"] = *model.FingerprintSha256
+	modelMap["subject_dn"] = *model.SubjectDn
+	modelMap["subject_cn"] = *model.SubjectCn
+	modelMap["issuer_dn"] = *model.IssuerDn
+	modelMap["issuer_cn"] = *model.IssuerCn
 	modelMap["issued"] = model.Issued.String()
 	modelMap["expiry"] = model.Expiry.String()
-	modelMap["trusted"] = model.Trusted
-	modelMap["href"] = model.Href
+	modelMap["trusted"] = *model.Trusted
+	modelMap["href"] = *model.Href
 	return modelMap, nil
 }

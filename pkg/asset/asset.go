@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"context"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,10 +13,12 @@ import (
 )
 
 const (
-	// ClusterCreationError is the error when terraform fails, implying infrastructure failures
-	ClusterCreationError = "failed to create cluster"
-	// InstallConfigError wraps all configuration errors in one single error
+	// InstallConfigError wraps all configuration errors in one single error.
 	InstallConfigError = "failed to create install config"
+	// ClusterCreationError is the error when infrastructure provisioning fails.
+	ClusterCreationError = "failed to create cluster"
+	// ControlPlaneCreationError is the error when machine provisioning fails.
+	ControlPlaneCreationError = "failed to provision control-plane machines"
 )
 
 // Asset used to install OpenShift.
@@ -24,7 +27,7 @@ type Asset interface {
 	Dependencies() []Asset
 
 	// Generate generates this asset given the states of its parent assets.
-	Generate(Parents) error
+	Generate(context.Context, Parents) error
 
 	// Name returns the human-friendly name of the asset.
 	Name() string

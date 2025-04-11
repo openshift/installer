@@ -11,6 +11,6 @@ else
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/go/src/github.com/openshift/installer:z" \
     --workdir /go/src/github.com/openshift/installer \
-    docker.io/golang:1.21 \
+    docker.io/golang:1.23 \
     ./hack/go-fmt.sh "${@}"
 fi

@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/blang/semver"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/rosa/pkg/ocm"
 	"github.com/pkg/errors"
@@ -16,6 +17,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
@@ -106,7 +108,7 @@ func (r *ROSAMachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	cluster, err := util.GetClusterFromMetadata(ctx, r.Client, machinePool.ObjectMeta)
 	if err != nil {
 		log.Info("Failed to retrieve Cluster from MachinePool")
-		return reconcile.Result{}, nil
+		return ctrl.Result{}, nil
 	}
 
 	if annotations.IsPaused(cluster, rosaMachinePool) {
@@ -123,7 +125,7 @@ func (r *ROSAMachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	controlPlane := &rosacontrolplanev1.ROSAControlPlane{}
 	if err := r.Client.Get(ctx, controlPlaneKey, controlPlane); err != nil {
 		log.Info("Failed to retrieve ControlPlane from MachinePool")
-		return reconcile.Result{}, nil
+		return ctrl.Result{}, err
 	}
 
 	machinePoolScope, err := scope.NewRosaMachinePoolScope(scope.RosaMachinePoolScopeParams{
@@ -137,7 +139,7 @@ func (r *ROSAMachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		Endpoints:       r.Endpoints,
 	})
 	if err != nil {
-		return ctrl.Result{}, errors.Wrap(err, "failed to create scope")
+		return ctrl.Result{}, errors.Wrap(err, "failed to create rosaMachinePool scope")
 	}
 
 	rosaControlPlaneScope, err := scope.NewROSAControlPlaneScope(scope.ROSAControlPlaneScopeParams{
@@ -148,10 +150,10 @@ func (r *ROSAMachinePoolReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		Endpoints:      r.Endpoints,
 	})
 	if err != nil {
-		return ctrl.Result{}, errors.Wrap(err, "failed to create control plane scope")
+		return ctrl.Result{}, errors.Wrap(err, "failed to create rosaControlPlane scope")
 	}
 
-	if !controlPlane.Status.Ready {
+	if !controlPlane.Status.Ready && controlPlane.ObjectMeta.DeletionTimestamp.IsZero() {
 		log.Info("Control plane is not ready yet")
 		err := machinePoolScope.RosaMchinePoolReadyFalse(expinfrav1.WaitingForRosaControlPlaneReason, "")
 		return ctrl.Result{}, err
@@ -220,6 +222,11 @@ func (r *ROSAMachinePoolReconciler) reconcileNormal(ctx context.Context,
 	}
 
 	if found {
+		if rosaMachinePool.Spec.AvailabilityZone == "" {
+			// reflect the current AvailabilityZone in the spec if not set.
+			rosaMachinePool.Spec.AvailabilityZone = nodePool.AvailabilityZone()
+		}
+
 		nodePool, err := r.updateNodePool(machinePoolScope, ocmClient, nodePool)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("failed to ensure rosaMachinePool: %w", err)
@@ -305,6 +312,7 @@ func (r *ROSAMachinePoolReconciler) reconcileDelete(
 		if err := ocmClient.DeleteNodePool(machinePoolScope.ControlPlane.Status.ID, nodePool.ID()); err != nil {
 			return err
 		}
+		machinePoolScope.Info("Successfully deleted NodePool")
 	}
 
 	controllerutil.RemoveFinalizer(machinePoolScope.RosaMachinePool, expinfrav1.RosaMachinePoolFinalizer)
@@ -349,23 +357,24 @@ func (r *ROSAMachinePoolReconciler) reconcileMachinePoolVersion(machinePoolScope
 }
 
 func (r *ROSAMachinePoolReconciler) updateNodePool(machinePoolScope *scope.RosaMachinePoolScope, ocmClient *ocm.Client, nodePool *cmv1.NodePool) (*cmv1.NodePool, error) {
-	desiredSpec := machinePoolScope.RosaMachinePool.Spec.DeepCopy()
+	machinePool := machinePoolScope.RosaMachinePool.DeepCopy()
+	// default all fields before comparing, so that nil/unset fields don't cause an unnecessary update call.
+	machinePool.Default()
+	desiredSpec := machinePool.Spec
 
-	currentSpec := nodePoolToRosaMachinePoolSpec(nodePool)
-	currentSpec.ProviderIDList = desiredSpec.ProviderIDList // providerIDList is set by the controller and shouldn't be compared here.
-	currentSpec.Version = desiredSpec.Version               // Version changes are reconciled separately and shouldn't be compared here.
-
-	if cmp.Equal(desiredSpec, currentSpec) {
+	specDiff := computeSpecDiff(desiredSpec, nodePool)
+	if specDiff == "" {
 		// no changes detected.
 		return nodePool, nil
 	}
+	machinePoolScope.Info("MachinePool spec diff detected", "diff", specDiff)
 
 	// zero-out fields that shouldn't be part of the update call.
 	desiredSpec.Version = ""
 	desiredSpec.AdditionalSecurityGroups = nil
 	desiredSpec.AdditionalTags = nil
 
-	npBuilder := nodePoolBuilder(*desiredSpec, machinePoolScope.MachinePool.Spec)
+	npBuilder := nodePoolBuilder(desiredSpec, machinePoolScope.MachinePool.Spec)
 	nodePoolSpec, err := npBuilder.Build()
 	if err != nil {
 		return nil, fmt.Errorf("failed to build nodePool spec: %w", err)
@@ -382,6 +391,21 @@ func (r *ROSAMachinePoolReconciler) updateNodePool(machinePoolScope *scope.RosaM
 	}
 
 	return updatedNodePool, nil
+}
+
+func computeSpecDiff(desiredSpec expinfrav1.RosaMachinePoolSpec, nodePool *cmv1.NodePool) string {
+	currentSpec := nodePoolToRosaMachinePoolSpec(nodePool)
+
+	ignoredFields := []string{
+		"ProviderIDList",           // providerIDList is set by the controller.
+		"Version",                  // Version changes are reconciled separately.
+		"AdditionalTags",           // AdditionalTags day2 changes not supported.
+		"AdditionalSecurityGroups", // AdditionalSecurityGroups day2 changes not supported.
+	}
+
+	return cmp.Diff(desiredSpec, currentSpec,
+		cmpopts.EquateEmpty(), // ensures empty non-nil slices and nil slices are considered equal.
+		cmpopts.IgnoreFields(currentSpec, ignoredFields...))
 }
 
 func validateMachinePoolSpec(machinePoolScope *scope.RosaMachinePoolScope) (*string, error) {
@@ -460,6 +484,21 @@ func nodePoolBuilder(rosaMachinePoolSpec expinfrav1.RosaMachinePoolSpec, machine
 		npBuilder.NodeDrainGracePeriod(valueBuilder)
 	}
 
+	if rosaMachinePoolSpec.UpdateConfig != nil {
+		configMgmtBuilder := cmv1.NewNodePoolManagementUpgrade()
+
+		if rollingUpdate := rosaMachinePoolSpec.UpdateConfig.RollingUpdate; rollingUpdate != nil {
+			if rollingUpdate.MaxSurge != nil {
+				configMgmtBuilder = configMgmtBuilder.MaxSurge(rollingUpdate.MaxSurge.String())
+			}
+			if rollingUpdate.MaxUnavailable != nil {
+				configMgmtBuilder = configMgmtBuilder.MaxUnavailable(rollingUpdate.MaxUnavailable.String())
+			}
+		}
+
+		npBuilder = npBuilder.ManagementUpgrade(configMgmtBuilder)
+	}
+
 	return npBuilder
 }
 
@@ -470,11 +509,13 @@ func nodePoolToRosaMachinePoolSpec(nodePool *cmv1.NodePool) expinfrav1.RosaMachi
 		AvailabilityZone:         nodePool.AvailabilityZone(),
 		Subnet:                   nodePool.Subnet(),
 		Labels:                   nodePool.Labels(),
-		AdditionalTags:           nodePool.AWSNodePool().Tags(),
 		AutoRepair:               nodePool.AutoRepair(),
 		InstanceType:             nodePool.AWSNodePool().InstanceType(),
 		TuningConfigs:            nodePool.TuningConfigs(),
 		AdditionalSecurityGroups: nodePool.AWSNodePool().AdditionalSecurityGroupIds(),
+		// nodePool.AWSNodePool().Tags() returns all tags including "system" tags if "fetchUserTagsOnly" parameter is not specified.
+		// TODO: enable when AdditionalTags day2 changes is supported.
+		// AdditionalTags:           nodePool.AWSNodePool().Tags(),
 	}
 
 	if nodePool.Autoscaling() != nil {
@@ -484,7 +525,7 @@ func nodePoolToRosaMachinePoolSpec(nodePool *cmv1.NodePool) expinfrav1.RosaMachi
 		}
 	}
 	if nodePool.Taints() != nil {
-		rosaTaints := make([]expinfrav1.RosaTaint, len(nodePool.Taints()))
+		rosaTaints := make([]expinfrav1.RosaTaint, 0, len(nodePool.Taints()))
 		for _, taint := range nodePool.Taints() {
 			rosaTaints = append(rosaTaints, expinfrav1.RosaTaint{
 				Key:    taint.Key(),
@@ -497,6 +538,17 @@ func nodePoolToRosaMachinePoolSpec(nodePool *cmv1.NodePool) expinfrav1.RosaMachi
 	if nodePool.NodeDrainGracePeriod() != nil {
 		spec.NodeDrainGracePeriod = &metav1.Duration{
 			Duration: time.Minute * time.Duration(nodePool.NodeDrainGracePeriod().Value()),
+		}
+	}
+	if nodePool.ManagementUpgrade() != nil {
+		spec.UpdateConfig = &expinfrav1.RosaUpdateConfig{
+			RollingUpdate: &expinfrav1.RollingUpdate{},
+		}
+		if nodePool.ManagementUpgrade().MaxSurge() != "" {
+			spec.UpdateConfig.RollingUpdate.MaxSurge = ptr.To(intstr.Parse(nodePool.ManagementUpgrade().MaxSurge()))
+		}
+		if nodePool.ManagementUpgrade().MaxUnavailable() != "" {
+			spec.UpdateConfig.RollingUpdate.MaxUnavailable = ptr.To(intstr.Parse(nodePool.ManagementUpgrade().MaxUnavailable()))
 		}
 	}
 

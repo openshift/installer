@@ -109,14 +109,27 @@ func (m *GCPMachine) Default() {
 }
 
 func validateConfidentialCompute(spec GCPMachineSpec) error {
-	if spec.ConfidentialCompute != nil && *spec.ConfidentialCompute == ConfidentialComputePolicyEnabled {
+	if spec.ConfidentialCompute != nil && *spec.ConfidentialCompute != ConfidentialComputePolicyDisabled {
 		if spec.OnHostMaintenance == nil || *spec.OnHostMaintenance == HostMaintenancePolicyMigrate {
 			return fmt.Errorf("ConfidentialCompute require OnHostMaintenance to be set to %s, the current value is: %s", HostMaintenancePolicyTerminate, HostMaintenancePolicyMigrate)
 		}
 
 		machineSeries := strings.Split(spec.InstanceType, "-")[0]
-		if !slices.Contains(confidentialComputeSupportedMachineSeries, machineSeries) {
-			return fmt.Errorf("ConfidentialCompute require instance type in the following series: %s", confidentialComputeSupportedMachineSeries)
+		switch *spec.ConfidentialCompute {
+		case ConfidentialComputePolicyEnabled, ConfidentialComputePolicySEV:
+			if !slices.Contains(confidentialMachineSeriesSupportingSev, machineSeries) {
+				return fmt.Errorf("ConfidentialCompute %s requires any of the following machine series: %s. %s was found instead", *spec.ConfidentialCompute, strings.Join(confidentialMachineSeriesSupportingSev, ", "), spec.InstanceType)
+			}
+		case ConfidentialComputePolicySEVSNP:
+			if !slices.Contains(confidentialMachineSeriesSupportingSevsnp, machineSeries) {
+				return fmt.Errorf("ConfidentialCompute %s requires any of the following machine series: %s. %s was found instead", *spec.ConfidentialCompute, strings.Join(confidentialMachineSeriesSupportingSevsnp, ", "), spec.InstanceType)
+			}
+		case ConfidentialComputePolicyTDX:
+			if !slices.Contains(confidentialMachineSeriesSupportingTdx, machineSeries) {
+				return fmt.Errorf("ConfidentialCompute %s requires any of the following machine series: %s. %s was found instead", *spec.ConfidentialCompute, strings.Join(confidentialMachineSeriesSupportingTdx, ", "), spec.InstanceType)
+			}
+		default:
+			return fmt.Errorf("invalid ConfidentialCompute %s", *spec.ConfidentialCompute)
 		}
 	}
 	return nil
@@ -126,14 +139,14 @@ func checkKeyType(key *CustomerEncryptionKey) error {
 	switch key.KeyType {
 	case CustomerManagedKey:
 		if key.ManagedKey == nil || key.SuppliedKey != nil {
-			return fmt.Errorf("CustomerEncryptionKey KeyType of Managed requires only ManagedKey to be set")
+			return errors.New("CustomerEncryptionKey KeyType of Managed requires only ManagedKey to be set")
 		}
 	case CustomerSuppliedKey:
 		if key.SuppliedKey == nil || key.ManagedKey != nil {
-			return fmt.Errorf("CustomerEncryptionKey KeyType of Supplied requires only SuppliedKey to be set")
+			return errors.New("CustomerEncryptionKey KeyType of Supplied requires only SuppliedKey to be set")
 		}
 		if len(key.SuppliedKey.RawKey) > 0 && len(key.SuppliedKey.RSAEncryptedKey) > 0 {
-			return fmt.Errorf("CustomerEncryptionKey KeyType of Supplied requires either RawKey or RSAEncryptedKey to be set, not both")
+			return errors.New("CustomerEncryptionKey KeyType of Supplied requires either RawKey or RSAEncryptedKey to be set, not both")
 		}
 	default:
 		return fmt.Errorf("invalid value for CustomerEncryptionKey KeyType %s", key.KeyType)

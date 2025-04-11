@@ -850,7 +850,7 @@ func floatingIPCollectionFloatingIpTargetToMap(targetItemIntf vpcv1.FloatingIPTa
 	return targetId, targetMap
 }
 
-func floatingIPTargetNicDeletedToMap(deletedItem vpcv1.NetworkInterfaceReferenceDeleted) (deletedMap map[string]interface{}) {
+func floatingIPTargetNicDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -859,7 +859,7 @@ func floatingIPTargetNicDeletedToMap(deletedItem vpcv1.NetworkInterfaceReference
 
 	return deletedMap
 }
-func floatingIPTargetPgDeletedToMap(deletedItem vpcv1.PublicGatewayReferenceDeleted) (deletedMap map[string]interface{}) {
+func floatingIPTargetPgDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

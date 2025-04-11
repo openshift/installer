@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,11 +11,23 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/dns"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
+)
+
+const (
+	defaultMachineNetwork = "10.0.0.0/16"
+	ipv6MachineNetwork    = "2001:db8::/32"
+	ipv4APIVIP            = "192.168.1.0"
+	ipv4IngressVIP        = "192.168.222.4"
+	ipv6APIVIP            = "fe80::1"
+	ipv6IngressVIP        = "fe80::2"
 )
 
 func TestGenerateInfrastructure(t *testing.T) {
@@ -33,16 +46,27 @@ func TestGenerateInfrastructure(t *testing.T) {
 		),
 		expectedFilesGenerated: 1,
 	}, {
-		name: "service endpoints",
+		name: "aws service endpoints",
 		installConfig: icBuild.build(
 			icBuild.forAWS(),
-			icBuild.withServiceEndpoint("service", "https://endpoint"),
+			icBuild.withAWSServiceEndpoint("service", "https://endpoint"),
 		),
 		expectedInfrastructure: infraBuild.build(
 			infraBuild.forPlatform(configv1.AWSPlatformType),
-			infraBuild.withServiceEndpoint("service", "https://endpoint"),
+			infraBuild.withAWSServiceEndpoint("service", "https://endpoint"),
 		),
 		expectedFilesGenerated: 1,
+	}, {
+		name: "gcp service endpoints",
+		installConfig: icBuild.build(
+			icBuild.forGCP(),
+			icBuild.withGCPServiceEndpoint(configv1.GCPServiceEndpointNameCompute, "https://googleapis.com/compute/v1/"),
+		),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.GCPPlatformType),
+			infraBuild.withGCPServiceEndpoint(configv1.GCPServiceEndpointNameCompute, "https://googleapis.com/compute/v1/"),
+		),
+		expectedFilesGenerated: 2,
 	}, {
 		name: "azure resource tags",
 		installConfig: icBuild.build(
@@ -73,7 +97,74 @@ func TestGenerateInfrastructure(t *testing.T) {
 			infraBuild.withGCPClusterHostedDNS("Enabled"),
 		),
 		expectedFilesGenerated: 2,
-	}}
+	},
+		{
+			name:          "default AWS custom DNS",
+			installConfig: icBuild.build(icBuild.forAWS()),
+			expectedInfrastructure: infraBuild.build(
+				infraBuild.forPlatform(configv1.AWSPlatformType),
+				infraBuild.withAWSClusterHostedDNS("Disabled"),
+				infraBuild.withAWSPlatformSpec(),
+				infraBuild.withAWSPlatformStatus(),
+			),
+			expectedFilesGenerated: 1,
+		}, {
+			name: "AWS custom DNS",
+			installConfig: icBuild.build(
+				icBuild.forAWS(),
+				icBuild.withAWSUserProvisionedDNS("Enabled"),
+			),
+			expectedInfrastructure: infraBuild.build(
+				infraBuild.forPlatform(configv1.AWSPlatformType),
+				infraBuild.withAWSClusterHostedDNS("Enabled"),
+				infraBuild.withAWSPlatformSpec(),
+				infraBuild.withAWSPlatformStatus(),
+			),
+			expectedFilesGenerated: 1,
+		}, {
+			name: "vsphere with VIPs appended to machine networks",
+			installConfig: icBuild.build(
+				icBuild.forVSphere(),
+				icBuild.withMachineNetwork(defaultMachineNetwork),
+				icBuild.withVSphereAPIVIP(ipv4APIVIP),
+				icBuild.withVSphereIngressVIP(ipv4IngressVIP),
+			),
+			expectedInfrastructure: infraBuild.build(
+				infraBuild.forPlatform(configv1.VSpherePlatformType),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(defaultMachineNetwork)),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(ipv4APIVIP+"/32")),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(ipv4IngressVIP+"/32")),
+				infraBuild.withVSphereAPIVIP(ipv4APIVIP),
+				infraBuild.withVSphereIngressVIP(ipv4IngressVIP),
+			),
+			expectedFilesGenerated: 1,
+		}, {
+			name: "dual stack vsphere with VIPs appended to machine networks",
+			installConfig: icBuild.build(
+				icBuild.forVSphere(),
+				icBuild.withMachineNetwork(defaultMachineNetwork),
+				icBuild.withMachineNetwork(ipv6MachineNetwork),
+				icBuild.withVSphereAPIVIP(ipv4APIVIP),
+				icBuild.withVSphereIngressVIP(ipv4IngressVIP),
+				icBuild.withVSphereAPIVIP(ipv6APIVIP),
+				icBuild.withVSphereIngressVIP(ipv6IngressVIP),
+			),
+			expectedInfrastructure: infraBuild.build(
+				infraBuild.forPlatform(configv1.VSpherePlatformType),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(defaultMachineNetwork)),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(ipv6MachineNetwork)),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(ipv4APIVIP+"/32")),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(ipv6APIVIP+"/128")),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(ipv4IngressVIP+"/32")),
+				infraBuild.withVSphereMachineNetworkEntry(configv1.CIDR(ipv6IngressVIP+"/128")),
+				infraBuild.withVSphereAPIVIP(ipv4APIVIP),
+				infraBuild.withVSphereIngressVIP(ipv4IngressVIP),
+				infraBuild.withVSphereAPIVIP(ipv6APIVIP),
+				infraBuild.withVSphereIngressVIP(ipv6IngressVIP),
+			),
+			expectedFilesGenerated: 1,
+		},
+	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			parents := asset.Parents{}
@@ -87,7 +178,7 @@ func TestGenerateInfrastructure(t *testing.T) {
 				&AdditionalTrustBundleConfig{},
 			)
 			infraAsset := &Infrastructure{}
-			err := infraAsset.Generate(parents)
+			err := infraAsset.Generate(context.Background(), parents)
 			if !assert.NoError(t, err, "failed to generate asset") {
 				return
 			}
@@ -153,7 +244,27 @@ func (b icBuildNamespace) forNone() icOption {
 	}
 }
 
-func (b icBuildNamespace) withServiceEndpoint(name, url string) icOption {
+func (b icBuildNamespace) forVSphere() icOption {
+	return func(ic *types.InstallConfig) {
+		if ic.Platform.VSphere != nil {
+			return
+		}
+		ic.Platform.VSphere = &vspheretypes.Platform{}
+	}
+}
+
+func (b icBuildNamespace) withMachineNetwork(cidr string) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forVSphere()(ic)
+		if ic.Networking == nil {
+			ic.Networking = &types.Networking{}
+		}
+		mn := types.MachineNetworkEntry{CIDR: *ipnet.MustParseCIDR(cidr)}
+		ic.Networking.MachineNetwork = append(ic.Networking.MachineNetwork, mn)
+	}
+}
+
+func (b icBuildNamespace) withAWSServiceEndpoint(name, url string) icOption {
 	return func(ic *types.InstallConfig) {
 		b.forAWS()(ic)
 		ic.Platform.AWS.ServiceEndpoints = append(
@@ -163,6 +274,13 @@ func (b icBuildNamespace) withServiceEndpoint(name, url string) icOption {
 				URL:  url,
 			},
 		)
+	}
+}
+
+func (b icBuildNamespace) withGCPServiceEndpoint(name configv1.GCPServiceEndpointName, url string) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forGCP()(ic)
+		ic.Platform.GCP.ServiceEndpoints = append(ic.Platform.GCP.ServiceEndpoints, configv1.GCPServiceEndpoint{Name: name, URL: url})
 	}
 }
 
@@ -177,9 +295,33 @@ func (b icBuildNamespace) withGCPUserProvisionedDNS(enabled string) icOption {
 	return func(ic *types.InstallConfig) {
 		b.forGCP()(ic)
 		if enabled == "Enabled" {
-			ic.Platform.GCP.UserProvisionedDNS = gcptypes.UserProvisionedDNSEnabled
+			ic.Platform.GCP.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
 			ic.FeatureGates = []string{"GCPClusterHostedDNS=true"}
 		}
+	}
+}
+
+func (b icBuildNamespace) withAWSUserProvisionedDNS(enabled string) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forAWS()(ic)
+		if enabled == "Enabled" {
+			ic.Platform.AWS.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
+			ic.FeatureGates = []string{"AWSClusterHostedDNS=true"}
+		}
+	}
+}
+
+func (b icBuildNamespace) withVSphereAPIVIP(vip string) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forVSphere()(ic)
+		ic.Platform.VSphere.APIVIPs = append(ic.Platform.VSphere.APIVIPs, vip)
+	}
+}
+
+func (b icBuildNamespace) withVSphereIngressVIP(vip string) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forVSphere()(ic)
+		ic.Platform.VSphere.IngressVIPs = append(ic.Platform.VSphere.IngressVIPs, vip)
 	}
 }
 
@@ -240,16 +382,29 @@ func (b infraBuildNamespace) withAWSPlatformStatus() infraOption {
 			return
 		}
 		infra.Status.PlatformStatus.AWS = &configv1.AWSPlatformStatus{}
+		infra.Status.PlatformStatus.AWS.CloudLoadBalancerConfig = &configv1.CloudLoadBalancerConfig{
+			DNSType: configv1.PlatformDefaultDNSType,
+		}
 	}
 }
 
-func (b infraBuildNamespace) withServiceEndpoint(name, url string) infraOption {
+func (b infraBuildNamespace) withAWSServiceEndpoint(name, url string) infraOption {
 	return func(infra *configv1.Infrastructure) {
 		b.withAWSPlatformSpec()(infra)
 		b.withAWSPlatformStatus()(infra)
 		endpoint := configv1.AWSServiceEndpoint{Name: name, URL: url}
 		infra.Spec.PlatformSpec.AWS.ServiceEndpoints = append(infra.Spec.PlatformSpec.AWS.ServiceEndpoints, endpoint)
 		infra.Status.PlatformStatus.AWS.ServiceEndpoints = append(infra.Status.PlatformStatus.AWS.ServiceEndpoints, endpoint)
+	}
+}
+
+func (b infraBuildNamespace) withGCPServiceEndpoint(name configv1.GCPServiceEndpointName, url string) infraOption {
+	return func(infra *configv1.Infrastructure) {
+		b.withGCPPlatformStatus()(infra)
+		endpoint := configv1.GCPServiceEndpoint{Name: name, URL: url}
+		infra.Status.PlatformStatus.GCP.CloudLoadBalancerConfig = &configv1.CloudLoadBalancerConfig{}
+		infra.Status.PlatformStatus.GCP.CloudLoadBalancerConfig.DNSType = configv1.PlatformDefaultDNSType
+		infra.Status.PlatformStatus.GCP.ServiceEndpoints = append(infra.Status.PlatformStatus.GCP.ServiceEndpoints, endpoint)
 	}
 }
 
@@ -305,5 +460,62 @@ func (b infraBuildNamespace) withGCPClusterHostedDNS(enabled string) infraOption
 		if enabled == "Enabled" {
 			infra.Status.PlatformStatus.GCP.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
 		}
+	}
+}
+
+func (b infraBuildNamespace) withAWSClusterHostedDNS(enabled string) infraOption {
+	return func(infra *configv1.Infrastructure) {
+		b.withAWSPlatformStatus()(infra)
+		infra.Status.PlatformStatus.AWS.CloudLoadBalancerConfig = &configv1.CloudLoadBalancerConfig{
+			DNSType: configv1.PlatformDefaultDNSType,
+		}
+		if enabled == "Enabled" {
+			infra.Status.PlatformStatus.AWS.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
+		}
+	}
+}
+
+func (b infraBuildNamespace) withVSpherePlatformSpec() infraOption {
+	return func(infra *configv1.Infrastructure) {
+		if infra.Spec.PlatformSpec.VSphere != nil {
+			return
+		}
+		infra.Spec.PlatformSpec.VSphere = &configv1.VSpherePlatformSpec{}
+	}
+}
+
+func (b infraBuildNamespace) withVSpherePlatformStatus() infraOption {
+	return func(infra *configv1.Infrastructure) {
+		if infra.Status.PlatformStatus.VSphere != nil {
+			return
+		}
+		infra.Status.PlatformStatus.VSphere = &configv1.VSpherePlatformStatus{}
+	}
+}
+
+func (b infraBuildNamespace) withVSphereMachineNetworkEntry(cidr configv1.CIDR) infraOption {
+	return func(infra *configv1.Infrastructure) {
+		b.withVSpherePlatformSpec()(infra)
+		b.withVSpherePlatformStatus()(infra)
+		infra.Spec.PlatformSpec.VSphere.MachineNetworks = append(infra.Spec.PlatformSpec.VSphere.MachineNetworks, cidr)
+		infra.Status.PlatformStatus.VSphere.MachineNetworks = append(infra.Status.PlatformStatus.VSphere.MachineNetworks, cidr)
+	}
+}
+
+func (b infraBuildNamespace) withVSphereAPIVIP(vip string) infraOption {
+	return func(infra *configv1.Infrastructure) {
+		b.withVSpherePlatformSpec()(infra)
+		b.withVSpherePlatformStatus()(infra)
+		infra.Spec.PlatformSpec.VSphere.APIServerInternalIPs = append(infra.Spec.PlatformSpec.VSphere.APIServerInternalIPs, configv1.IP(vip))
+		infra.Status.PlatformStatus.VSphere.APIServerInternalIPs = append(infra.Status.PlatformStatus.VSphere.APIServerInternalIPs, vip)
+	}
+}
+
+func (b infraBuildNamespace) withVSphereIngressVIP(vip string) infraOption {
+	return func(infra *configv1.Infrastructure) {
+		b.withVSpherePlatformSpec()(infra)
+		b.withVSpherePlatformStatus()(infra)
+		infra.Spec.PlatformSpec.VSphere.IngressIPs = append(infra.Spec.PlatformSpec.VSphere.IngressIPs, configv1.IP(vip))
+		infra.Status.PlatformStatus.VSphere.IngressIPs = append(infra.Status.PlatformStatus.VSphere.IngressIPs, vip)
 	}
 }

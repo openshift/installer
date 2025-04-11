@@ -1,10 +1,12 @@
 package lbconfig
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,7 +51,7 @@ func (*Config) Dependencies() []asset.Asset {
 }
 
 // Generate generates the openshift-install ConfigMap.
-func (i *Config) Generate(dependencies asset.Parents) error {
+func (i *Config) Generate(_ context.Context, dependencies asset.Parents) error {
 	cm, err := CreateLBConfigMap("openshift-lb-config", "", "")
 	if err != nil {
 		return err
@@ -66,7 +68,7 @@ func (i *Config) Generate(dependencies asset.Parents) error {
 // GenerateLBConfigOverride generates an LBConfig an overrides the file data.
 func GenerateLBConfigOverride(lbIntDNS, lbDNS string) (*Config, error) {
 	config := &Config{}
-	if err := config.Generate(asset.Parents{}); err != nil {
+	if err := config.Generate(context.TODO(), asset.Parents{}); err != nil {
 		return nil, err
 	}
 
@@ -141,13 +143,14 @@ func (i *Config) ParseDNSDataFromConfig(loadBalancerType LoadBalancerCategory) (
 
 	if internalData, ok := lbData["data"]; ok {
 		if lbStoredData, ok := internalData.(map[string]interface{})[string(loadBalancerType)]; ok {
-			// TODO: make this parse a comma separated string
-			parsedIP := net.ParseIP(lbStoredData.(string))
-			if parsedIP != nil {
-				ipAddresses = append(ipAddresses, parsedIP)
-			} else {
-				// assume the data is a dns entry
-				dnsNames = append(dnsNames, lbStoredData.(string))
+			candidates := strings.Split(lbStoredData.(string), ",")
+			for _, candidate := range candidates {
+				if parsedIP := net.ParseIP(candidate); parsedIP != nil {
+					ipAddresses = append(ipAddresses, parsedIP)
+				} else {
+					// assume the data is a dns entry
+					dnsNames = append(dnsNames, candidate)
+				}
 			}
 		}
 	}

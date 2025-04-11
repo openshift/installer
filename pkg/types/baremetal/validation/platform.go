@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"reflect"
 	"strings"
 
 	"github.com/apparentlymart/go-cidr/cidr"
@@ -23,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/common"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -124,6 +124,18 @@ func validateOSImageURI(uri string) error {
 	return nil
 }
 
+// ValidateNTPServers checks list of NTP servers strings are valid IPs or domain names.
+func ValidateNTPServers(servers []string, fldPath *field.Path) (allErrs field.ErrorList) {
+	for i, server := range servers {
+		if ipErr := validate.IP(server); ipErr != nil {
+			if domainErr := validate.DomainName(server, true); domainErr != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath, servers[i], "NTP server is not a valid IP or domain name"))
+			}
+		}
+	}
+	return
+}
+
 // validateDHCPRange ensures the provided range is valid, and that provisioning service IP's do not overlap.
 func validateDHCPRange(p *baremetal.Platform, fldPath *field.Path) (allErrs field.ErrorList) {
 	dhcpRange := strings.Split(p.ProvisioningDHCPRange, ",")
@@ -168,53 +180,7 @@ func validateDHCPRange(p *baremetal.Platform, fldPath *field.Path) (allErrs fiel
 
 // validateHostsBase validates the hosts based on a filtering function
 func validateHostsBase(hosts []*baremetal.Host, fldPath *field.Path, filter validator.FilterFunc) field.ErrorList {
-	hostErrs := field.ErrorList{}
-
-	values := make(map[string]map[interface{}]struct{})
-
-	//Initialize a new validator and register a custom validation rule for the tag `uniqueField`
-	validate := validator.New()
-	validate.RegisterValidation("uniqueField", func(fl validator.FieldLevel) bool {
-		valueFound := false
-		fieldName := fl.Parent().Type().Name() + "." + fl.FieldName()
-		fieldValue := fl.Field().Interface()
-
-		if fl.Field().Type().Comparable() {
-			if _, present := values[fieldName]; !present {
-				values[fieldName] = make(map[interface{}]struct{})
-			}
-
-			fieldValues := values[fieldName]
-			if _, valueFound = fieldValues[fieldValue]; !valueFound {
-				fieldValues[fieldValue] = struct{}{}
-			}
-		} else {
-			panic(fmt.Sprintf("Cannot apply validation rule 'uniqueField' on field %s", fl.FieldName()))
-		}
-
-		return !valueFound
-	})
-
-	//Apply validations and translate errors
-	fldPath = fldPath.Child("hosts")
-
-	for idx, host := range hosts {
-		err := validate.StructFiltered(host, filter)
-		if err != nil {
-			hostType := reflect.TypeOf(hosts).Elem().Elem().Name()
-			for _, err := range err.(validator.ValidationErrors) {
-				childName := fldPath.Index(idx).Child(err.Namespace()[len(hostType)+1:])
-				switch err.Tag() {
-				case "required":
-					hostErrs = append(hostErrs, field.Required(childName, "missing "+err.Field()))
-				case "uniqueField":
-					hostErrs = append(hostErrs, field.Duplicate(childName, err.Value()))
-				}
-			}
-		}
-	}
-
-	return hostErrs
+	return common.ValidateUniqueAndRequiredFields(hosts, fldPath, filter)
 }
 
 // filterHostsBMC is a function to control whether to filter BMC details of Hosts
@@ -235,40 +201,26 @@ func validateHostsBMCOnly(hosts []*baremetal.Host, fldPath *field.Path) field.Er
 }
 
 func validateOSImages(p *baremetal.Platform, fldPath *field.Path) field.ErrorList {
-	platformErrs := field.ErrorList{}
+	var errs field.ErrorList
 
-	validate := validator.New()
-
-	customErrs := make(map[string]error)
-	validate.RegisterValidation("osimageuri", func(fl validator.FieldLevel) bool {
-		err := validateOSImageURI(fl.Field().String())
-		if err != nil {
-			customErrs[fl.FieldName()] = err
-		}
-		return err == nil
-	})
-	validate.RegisterValidation("urlexist", func(fl validator.FieldLevel) bool {
-		if res, err := http.Head(fl.Field().String()); err == nil {
-			return res.StatusCode == http.StatusOK
-		}
-		return false
-	})
-	err := validate.Struct(p)
-
-	if err != nil {
-		baseType := reflect.TypeOf(p).Elem().Name()
-		for _, err := range err.(validator.ValidationErrors) {
-			childName := fldPath.Child(err.Namespace()[len(baseType)+1:])
-			switch err.Tag() {
-			case "osimageuri":
-				platformErrs = append(platformErrs, field.Invalid(childName, err.Value(), customErrs[err.Field()].Error()))
-			case "urlexist":
-				platformErrs = append(platformErrs, field.NotFound(childName, err.Value()))
-			}
-		}
+	fields := map[string]string{
+		"bootstrapOSImage": p.BootstrapOSImage,
+		"clusterOSImage":   p.ClusterOSImage,
 	}
 
-	return platformErrs
+	for fieldName, url := range fields {
+		if url == "" {
+			continue
+		}
+		if err := validateOSImageURI(url); err != nil {
+			errs = append(errs,
+				field.Invalid(fldPath.Child(fieldName), url, err.Error()))
+		} else if res, err := http.Head(url); err != nil || res.StatusCode != http.StatusOK /* #nosec G107 */ {
+			errs = append(errs,
+				field.NotFound(fldPath.Child(fieldName), url))
+		}
+	}
+	return errs
 }
 
 func validateHostsName(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
@@ -299,18 +251,28 @@ func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallCon
 		}
 	}
 
+	numRequiredArbiters := int64(0)
+	if installConfig.Arbiter != nil && installConfig.Arbiter.Replicas != nil {
+		numRequiredArbiters += *installConfig.Arbiter.Replicas
+	}
+
 	numMasters := int64(0)
+	numArbiters := int64(0)
 	numWorkers := int64(0)
 
 	for _, h := range hosts {
 		if h.IsMaster() {
 			numMasters++
+		} else if h.IsArbiter() {
+			numArbiters++
 		} else if h.IsWorker() {
 			numWorkers++
 		} else {
 			logrus.Warn(fmt.Sprintf("Host %s hasn't any role configured", h.Name))
 			if numMasters < numRequiredMasters {
 				numMasters++
+			} else if numArbiters < numRequiredArbiters {
+				numArbiters++
 			} else if numWorkers < numRequiredWorkers {
 				numWorkers++
 			}
@@ -319,6 +281,10 @@ func validateHostsCount(hosts []*baremetal.Host, installConfig *types.InstallCon
 
 	if numMasters < numRequiredMasters {
 		return fmt.Errorf("not enough hosts found (%v) to support all the configured ControlPlane replicas (%v)", numMasters, numRequiredMasters)
+	}
+
+	if numArbiters < numRequiredArbiters {
+		return fmt.Errorf("not enough hosts found (%v) to support all the configured Arbiter replicas (%v)", numArbiters, numRequiredArbiters)
 	}
 
 	if numWorkers < numRequiredWorkers {
@@ -399,10 +365,10 @@ func validateProvisioningNetworkDisabledSupported(hosts []*baremetal.Host, fldPa
 	for idx, host := range hosts {
 		accessDetails, err := bmc.NewAccessDetails(host.BMC.Address, host.BMC.DisableCertificateVerification)
 		if err != nil {
-			errors = append(errors, field.Invalid(fldPath.Index(idx).Child("BMC"), host.BMC.Address, err.Error()))
+			errors = append(errors, field.Invalid(fldPath.Index(idx).Child("bmc"), host.BMC.Address, err.Error()))
 		} else if accessDetails.RequiresProvisioningNetwork() {
 			msg := fmt.Sprintf("driver %s requires provisioning network", accessDetails.Driver())
-			errors = append(errors, field.Invalid(fldPath.Index(idx).Child("BMC"), host.BMC.Address, msg))
+			errors = append(errors, field.Invalid(fldPath.Index(idx).Child("bmc"), host.BMC.Address, msg))
 		}
 	}
 
@@ -433,7 +399,8 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		}
 	}
 
-	if !agentBasedInstallation && p.Hosts == nil {
+	enabledCaps := c.GetEnabledCapabilities()
+	if !agentBasedInstallation && enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) && p.Hosts == nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("hosts"), p.Hosts, "bare metal hosts are missing"))
 	}
 
@@ -441,16 +408,10 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
-	if !agentBasedInstallation {
-		if err := validateHostsCount(p.Hosts, c); err != nil {
-			allErrs = append(allErrs, field.Required(fldPath.Child("Hosts"), err.Error()))
+	if !agentBasedInstallation && enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
+		if err := ValidateHosts(p, fldPath, c); err != nil {
+			allErrs = append(allErrs, err...)
 		}
-		allErrs = append(allErrs, validateHostsWithoutBMC(p.Hosts, fldPath)...)
-		allErrs = append(allErrs, validateBootMode(p.Hosts, fldPath.Child("Hosts"))...)
-		allErrs = append(allErrs, validateRootDeviceHints(p.Hosts, fldPath.Child("Hosts"))...)
-		allErrs = append(allErrs, validateNetworkConfig(p.Hosts, fldPath.Child("Hosts"))...)
-
-		allErrs = append(allErrs, validateHostsName(p.Hosts, fldPath.Child("Hosts"))...)
 	}
 
 	if c.BareMetal.LoadBalancer != nil {
@@ -459,6 +420,23 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		}
 	}
 
+	return allErrs
+}
+
+// ValidateHosts returns an error if the Hosts are not valid.
+func ValidateHosts(p *baremetal.Platform, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	fldPath = fldPath.Child("hosts")
+	if err := validateHostsCount(p.Hosts, c); err != nil {
+		allErrs = append(allErrs, field.Required(fldPath, err.Error()))
+	}
+	allErrs = append(allErrs, validateHostsWithoutBMC(p.Hosts, fldPath)...)
+	allErrs = append(allErrs, validateBootMode(p.Hosts, fldPath)...)
+	allErrs = append(allErrs, validateRootDeviceHints(p.Hosts, fldPath)...)
+	allErrs = append(allErrs, validateNetworkConfig(p.Hosts, fldPath)...)
+
+	allErrs = append(allErrs, validateHostsName(p.Hosts, fldPath)...)
 	return allErrs
 }
 
@@ -538,7 +516,7 @@ func ValidateProvisioningNetworking(p *baremetal.Platform, n *types.Networking, 
 	// will be run on the external network. Users must provide IP's on the
 	// machine networks to host those services.
 	case baremetal.DisabledProvisioningNetwork:
-		allErrs = validateProvisioningNetworkDisabledSupported(p.Hosts, fldPath.Child("Hosts"))
+		allErrs = validateProvisioningNetworkDisabledSupported(p.Hosts, fldPath.Child("hosts"))
 
 		// If set, ensure clusterProvisioningIP is in one of the machine networks
 		if p.ClusterProvisioningIP != "" {
@@ -570,12 +548,16 @@ func ValidateProvisioningNetworking(p *baremetal.Platform, n *types.Networking, 
 				fmt.Sprintf("provisioningNetworkCIDR has host bits set, expected %s/%d", expectedIP, expectedLen)))
 		}
 
+		if len(p.AdditionalNTPServers) > 0 {
+			allErrs = append(allErrs, ValidateNTPServers(p.AdditionalNTPServers, fldPath)...)
+		}
+
 		if p.ProvisioningDHCPRange != "" {
 			allErrs = append(allErrs, validateDHCPRange(p, fldPath)...)
 		}
 	}
 
-	allErrs = append(allErrs, validateHostsBMCOnly(p.Hosts, fldPath)...)
+	allErrs = append(allErrs, validateHostsBMCOnly(p.Hosts, fldPath.Child("hosts"))...)
 
 	return allErrs
 }

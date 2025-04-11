@@ -46,7 +46,7 @@ func (s *Service) reconcileNatGateways() error {
 
 	s.scope.Debug("Reconciling NAT gateways")
 
-	if len(s.scope.Subnets().FilterPrivate()) == 0 {
+	if len(s.scope.Subnets().FilterPrivate().FilterNonCni()) == 0 {
 		s.scope.Debug("No private subnets available, skipping NAT gateways")
 		conditions.MarkFalse(
 			s.scope.InfraCluster(),
@@ -55,7 +55,7 @@ func (s *Service) reconcileNatGateways() error {
 			clusterv1.ConditionSeverityWarning,
 			"No private subnets available, skipping NAT gateways")
 		return nil
-	} else if len(s.scope.Subnets().FilterPublic()) == 0 {
+	} else if len(s.scope.Subnets().FilterPublic().FilterNonCni()) == 0 {
 		s.scope.Debug("No public subnets available. Cannot create NAT gateways for private subnets, this might be a configuration error.")
 		conditions.MarkFalse(
 			s.scope.InfraCluster(),
@@ -74,7 +74,7 @@ func (s *Service) reconcileNatGateways() error {
 	natGatewaysIPs := []string{}
 	subnetIDs := []string{}
 
-	for _, sn := range s.scope.Subnets().FilterPublic() {
+	for _, sn := range s.scope.Subnets().FilterPublic().FilterNonCni() {
 		if sn.GetResourceID() == "" {
 			continue
 		}
@@ -222,7 +222,7 @@ func (s *Service) getNatGatewayTagParams(id string) infrav1.BuildParams {
 }
 
 func (s *Service) createNatGateways(subnetIDs []string) (natgateways []*ec2.NatGateway, err error) {
-	eips, err := s.getOrAllocateAddresses(len(subnetIDs), infrav1.APIServerRoleTagValue)
+	eips, err := s.getOrAllocateAddresses(len(subnetIDs), infrav1.CommonRoleTagValue, s.scope.VPC().GetElasticIPPool())
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create one or more IP addresses for NAT gateways")
 	}

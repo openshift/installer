@@ -3,6 +3,7 @@ package conversion
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"path"
 	"time"
@@ -47,7 +48,12 @@ func GetFinder(server, username, password string) (*find.Finder, error) {
 			// If bogus authentication is provided in the scenario of AI or assisted
 			// just provide warning message. If this is IPI or UPI validation will
 			// catch and halt on incorrect authentication.
-			localLogger.Warnf("unable to log into vCenter %s, %v", server, err)
+
+			localLogger.Debugf("this can be safely ignored if non-deprecated platform spec fields are used"+
+				"or installing via UPI, Assisted or Agent Installer. "+
+				"Conversion of deprecated platform spec fields cannot continue without vCenter %s access, error: %v",
+				server, err)
+
 			return nil, nil
 		}
 		finder = find.NewFinder(client.Client, true)
@@ -97,10 +103,12 @@ func fixNoVCentersScenario(platform *vsphere.Platform) {
 				}
 			}
 		}
+	} else if platform.DeprecatedVCenter != "" {
+		localLogger.Warn("vcenter field is deprecated please avoid using both vcenter and vcenters fields together")
 	}
 }
 
-func fixTechPreviewZonalFailureDomainsScenario(platform *vsphere.Platform, finder *find.Finder) error {
+func fixTechPreviewZonalFailureDomainsScenario(platform *vsphere.Platform, finders map[string]*find.Finder) error {
 	if len(platform.FailureDomains) > 0 {
 		var err error
 
@@ -109,27 +117,36 @@ func fixTechPreviewZonalFailureDomainsScenario(platform *vsphere.Platform, finde
 			datastore := platform.FailureDomains[i].Topology.Datastore
 			folder := platform.FailureDomains[i].Topology.Folder
 			datacenter := platform.FailureDomains[i].Topology.Datacenter
+			vCenter := platform.FailureDomains[i].Server
+			fdName := platform.FailureDomains[i].Name
 
+			finder, ok := finders[vCenter]
+			if !ok {
+				// This is when invalid config happens.  There is a check later in cycle that will print it out.  For now,
+				// lets just log warning and return.
+				localLogger.Warnf("unable to find finder for vCenter %v in order to do upconvert", vCenter)
+				return nil
+			}
 			platform.FailureDomains[i].Topology.ComputeCluster, err = SetObjectPath(finder, "host", computeCluster, datacenter)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to SetObjectPath for compute cluster of failure domain %s: %w", fdName, err)
 			}
 
 			platform.FailureDomains[i].Topology.Datastore, err = SetObjectPath(finder, "datastore", datastore, datacenter)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to SetObjectPath for datastore of failure domain %s: %w", fdName, err)
 			}
 
 			platform.FailureDomains[i].Topology.Folder, err = SetObjectPath(finder, "vm", folder, datacenter)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to SetObjectPath for folder of failure domain %s: %w", fdName, err)
 			}
 		}
 	}
 	return nil
 }
 
-func fixLegacyPlatformScenario(platform *vsphere.Platform, finder *find.Finder) error {
+func fixLegacyPlatformScenario(platform *vsphere.Platform, finders map[string]*find.Finder) error {
 	if len(platform.FailureDomains) == 0 {
 		var err error
 		localLogger.Warn("vsphere topology fields are now deprecated; please use failureDomains")
@@ -145,6 +162,10 @@ func fixLegacyPlatformScenario(platform *vsphere.Platform, finder *find.Finder) 
 		platform.FailureDomains[0].Topology.Networks = make([]string, 1)
 		platform.FailureDomains[0].Topology.Networks[0] = platform.DeprecatedNetwork
 
+		finder, ok := finders[platform.FailureDomains[0].Server]
+		if !ok {
+			return fmt.Errorf("unable to find finder for vCenter %v", platform.FailureDomains[0].Server)
+		}
 		platform.FailureDomains[0].Topology.ComputeCluster, err = SetObjectPath(finder, "host", platform.DeprecatedCluster, platform.DeprecatedDatacenter)
 		if err != nil {
 			return err
@@ -159,24 +180,32 @@ func fixLegacyPlatformScenario(platform *vsphere.Platform, finder *find.Finder) 
 		if err != nil {
 			return err
 		}
+	} else if platform.DeprecatedDatacenter != "" || platform.DeprecatedFolder != "" || platform.DeprecatedCluster != "" || platform.DeprecatedDefaultDatastore != "" || platform.DeprecatedResourcePool != "" || platform.DeprecatedNetwork != "" {
+		localLogger.Warn("vsphere topology fields are now deprecated; please avoid using failureDomains and the vsphere topology fields together")
 	}
+
 	return nil
 }
 
 // ConvertInstallConfig modifies a given platform spec for the new requirements.
 func ConvertInstallConfig(config *types.InstallConfig) error {
+	var err error
 	platform := config.Platform.VSphere
 
 	fixNoVCentersScenario(platform)
-	finder, err := GetFinder(platform.VCenters[0].Server, platform.VCenters[0].Username, platform.VCenters[0].Password)
+	finders := make(map[string]*find.Finder)
+	for _, vcenter := range platform.VCenters {
+		finder, err := GetFinder(vcenter.Server, vcenter.Username, vcenter.Password)
+		if err != nil {
+			return err
+		}
+		finders[vcenter.Server] = finder
+	}
+	err = fixTechPreviewZonalFailureDomainsScenario(platform, finders)
 	if err != nil {
 		return err
 	}
-	err = fixTechPreviewZonalFailureDomainsScenario(platform, finder)
-	if err != nil {
-		return err
-	}
-	err = fixLegacyPlatformScenario(platform, finder)
+	err = fixLegacyPlatformScenario(platform, finders)
 	if err != nil {
 		return err
 	}

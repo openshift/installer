@@ -409,7 +409,7 @@ func dataSourceNetworkInterfaceFloatingIpsToMap(floatingIpsItem vpcv1.FloatingIP
 	return floatingIpsMap
 }
 
-func dataSourceNetworkInterfaceFloatingIpsDeletedToMap(deletedItem vpcv1.FloatingIPReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceNetworkInterfaceFloatingIpsDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -452,7 +452,7 @@ func dataSourceNetworkInterfaceSecurityGroupsToMap(securityGroupsItem vpcv1.Secu
 	return securityGroupsMap
 }
 
-func dataSourceNetworkInterfaceSecurityGroupsDeletedToMap(deletedItem vpcv1.SecurityGroupReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceNetworkInterfaceSecurityGroupsDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -495,7 +495,7 @@ func dataSourceNetworkInterfaceSubnetToMap(subnetItem vpcv1.SubnetReference) (su
 	return subnetMap
 }
 
-func dataSourceNetworkInterfaceSubnetDeletedToMap(deletedItem vpcv1.SubnetReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceNetworkInterfaceSubnetDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

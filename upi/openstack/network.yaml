@@ -5,6 +5,8 @@
 # openstacksdk
 # netaddr
 
+- ansible.builtin.import_playbook: common.yaml
+
 - hosts: all
   gather_facts: no
 
@@ -18,8 +20,8 @@
       name: "{{ os_subnet }}"
       network_name: "{{ os_network }}"
       cidr: "{{ os_subnet_range }}"
-      allocation_pool_start: "{{ os_subnet_range | ansible.utils.next_nth_usable(10) }}"
-      allocation_pool_end: "{{ os_subnet_range | ansible.utils.ipaddr('last_usable') }}"
+      allocation_pool_start: "{{ os_subnet_range | next_nth_usable(10) }}"
+      allocation_pool_end: "{{ os_subnet_range | ipaddr('last_usable') }}"
       dns_nameservers: "{{ os_external_dns }}"
 
   - name: 'Create the cluster IPv6 subnet'
@@ -30,7 +32,7 @@
       ip_version: 6
       ipv6_address_mode: "{{ os_subnet6_address_mode }}"
       ipv6_ra_mode: "{{ os_subnet6_router_advertisements_mode }}"
-    when: os_subnet6 is defined
+    when: os_subnet6_range is defined
 
   - name: 'Create external router for IPv4'
     openstack.cloud.router:
@@ -40,7 +42,7 @@
     when:
     - os_external_network is defined
     - os_external_network|length>0
-    - os_subnet6 is not defined
+    - os_subnet6_range is not defined
 
   - name: 'Create external router for dualstack'
     openstack.cloud.router:
@@ -52,7 +54,7 @@
     when:
     - os_external_network is defined
     - os_external_network|length>0
-    - os_subnet6 is defined
+    - os_subnet6_range is defined
 
   - name: 'Create the API port'
     openstack.cloud.port:
@@ -62,7 +64,7 @@
       - subnet: "{{ os_subnet }}"
         ip_address: "{{ os_apiVIP }}"
     register: _api_ports
-    when: os_subnet6 is not defined
+    when: os_subnet6_range is not defined
 
   - set_fact:
       api_ports: "{{ _api_ports }}"
@@ -73,7 +75,7 @@
       name: "{{ os_port_api }}"
       network: "{{ os_network }}"
     register: _api_ports
-    when: os_subnet6 is defined
+    when: os_subnet6_range is defined
 
   - set_fact:
       api_ports: "{{ _api_ports }}"
@@ -87,7 +89,7 @@
       - subnet: "{{ os_subnet }}"
         ip_address: "{{ os_ingressVIP }}"
     register: _ingress_ports
-    when: os_subnet6 is not defined
+    when: os_subnet6_range is not defined
 
   - set_fact:
       ingress_ports: "{{ _ingress_ports }}"
@@ -98,7 +100,7 @@
       name: "{{ os_port_ingress }}"
       network: "{{ os_network }}"
     register: _ingress_ports
-    when: os_subnet6 is defined
+    when: os_subnet6_range is defined
 
   - set_fact:
       ingress_ports: "{{ _ingress_ports }}"
@@ -108,8 +110,8 @@
     shell: |
       python -c 'import yaml
       path = "inventory.yaml"
-      ipv4 = "{{ item.ip_address|ansible.utils.ipv4 }}"
-      ipv6 = "{{ item.ip_address|ansible.utils.ipv6 }}"
+      ipv4 = "{{ item.ip_address|ipv4 }}"
+      ipv6 = "{{ item.ip_address|ipv6 }}"
       if ipv4 != "False":
         key = "os_apiVIP"
         ip = ipv4
@@ -127,8 +129,8 @@
     shell: |
       python -c 'import yaml
       path = "inventory.yaml"
-      ipv4 = "{{ item.ip_address|ansible.utils.ipv4 }}"
-      ipv6 = "{{ item.ip_address|ansible.utils.ipv6 }}"
+      ipv4 = "{{ item.ip_address|ipv4 }}"
+      ipv6 = "{{ item.ip_address|ipv6 }}"
       if ipv4 != "False":
         key = "os_ingressVIP"
         ip = ipv4

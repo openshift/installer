@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
 
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
-	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
+	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/sirupsen/logrus"
@@ -526,7 +527,19 @@ func validateNetworks(client API, p *aztypes.Platform, machineNetworks []types.M
 func validateSubnet(client API, fieldPath *field.Path, subnet *aznetwork.Subnet, subnetName string, networks []types.MachineNetworkEntry) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	subnetIP, _, err := net.ParseCIDR(*subnet.AddressPrefix)
+	var addressPrefix string
+	switch {
+	case subnet.AddressPrefix != nil:
+		addressPrefix = *subnet.AddressPrefix
+	// NOTE: if the subscription has the `AllowMultipleAddressPrefixesOnSubnet` feature, the Azure API will return a
+	// `addressPrefixes` field with a slice of addresses instead of a single value via `addressPrefix`.
+	case subnet.AddressPrefixes != nil && len(*subnet.AddressPrefixes) > 0:
+		addressPrefix = (*subnet.AddressPrefixes)[0]
+	default:
+		return append(allErrs, field.Invalid(fieldPath, subnetName, "subnet does not have an address prefix"))
+	}
+
+	subnetIP, _, err := net.ParseCIDR(addressPrefix)
 	if err != nil {
 		return append(allErrs, field.Invalid(fieldPath, subnetName, "unable to parse subnet CIDR"))
 	}
@@ -628,12 +641,46 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateResourceGroup(client, field.NewPath("platform").Child("azure"), ic.Azure)...)
 	allErrs = append(allErrs, ValidateDiskEncryptionSet(client, ic)...)
 	allErrs = append(allErrs, ValidateSecurityProfileDiskEncryptionSet(client, ic)...)
+	allErrs = append(allErrs, validateSkipImageUpload(field.NewPath("image"), ic)...)
 	if ic.Azure.CloudName == aztypes.StackCloud {
 		allErrs = append(allErrs, checkAzureStackClusterOSImageSet(ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
 	}
 	return allErrs.ToAggregate()
 }
 
+func validateSkipImageUpload(fieldPath *field.Path, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+	defaultOSImage := aztypes.OSImage{}
+	if ic.Azure.DefaultMachinePlatform != nil {
+		defaultOSImage = aztypes.OSImage{
+			Plan:      ic.Azure.DefaultMachinePlatform.OSImage.Plan,
+			Publisher: ic.Azure.DefaultMachinePlatform.OSImage.Publisher,
+			SKU:       ic.Azure.DefaultMachinePlatform.OSImage.SKU,
+			Version:   ic.Azure.DefaultMachinePlatform.OSImage.Version,
+			Offer:     ic.Azure.DefaultMachinePlatform.OSImage.Offer,
+		}
+	}
+	controlPlaneOSImage := defaultOSImage
+	if ic.ControlPlane.Platform.Azure != nil {
+		controlPlaneOSImage = ic.ControlPlane.Platform.Azure.OSImage
+	}
+	allErrs = append(allErrs, validateOSImage(fieldPath.Child("controlplane"), controlPlaneOSImage)...)
+	computeOSImage := defaultOSImage
+	if len(ic.Compute) > 0 && ic.Compute[0].Platform.Azure != nil {
+		computeOSImage = ic.Compute[0].Platform.Azure.OSImage
+	}
+	allErrs = append(allErrs, validateOSImage(fieldPath.Child("compute"), computeOSImage)...)
+	return allErrs
+}
+func validateOSImage(fieldPath *field.Path, osImage aztypes.OSImage) field.ErrorList {
+	if _, ok := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_IMAGE_UPLOAD"); ok {
+		if len(osImage.SKU) > 0 {
+			return nil
+		}
+		return field.ErrorList{field.Invalid(fieldPath, "image", "cannot skip image upload without marketplace image specified")}
+	}
+	return nil
+}
 func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.Platform) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if len(platform.ResourceGroupName) == 0 {

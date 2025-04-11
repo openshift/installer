@@ -69,6 +69,16 @@ type ClusterClaimCondition struct {
 // ClusterClaimConditionType is a valid value for ClusterClaimCondition.Type.
 type ClusterClaimConditionType string
 
+// ConditionType satisfies the conditions.Condition interface
+func (c ClusterClaimCondition) ConditionType() ConditionType {
+	return c.Type
+}
+
+// String satisfies the conditions.ConditionType interface
+func (t ClusterClaimConditionType) String() string {
+	return string(t)
+}
+
 const (
 	// ClusterClaimPendingCondition is set when a cluster has not yet been assigned and made ready to the claim.
 	ClusterClaimPendingCondition ClusterClaimConditionType = "Pending"

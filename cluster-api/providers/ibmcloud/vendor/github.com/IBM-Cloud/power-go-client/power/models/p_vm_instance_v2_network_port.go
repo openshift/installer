@@ -24,7 +24,7 @@ type PVMInstanceV2NetworkPort struct {
 	ID string `json:"id,omitempty"`
 
 	// Dynamic Host Configuration Protocol {IPv4, IPv6}
-	// Enum: [IPv4 IPv6]
+	// Enum: ["IPv4","IPv6"]
 	IPProtocol string `json:"ipProtocol,omitempty"`
 
 	// The mac address of the network interface
@@ -34,7 +34,7 @@ type PVMInstanceV2NetworkPort struct {
 	PrivateIP string `json:"privateIP,omitempty"`
 
 	// The type of ip allocation {dhcp, static}
-	// Enum: [dhcp static]
+	// Enum: ["dhcp","static"]
 	Type string `json:"type,omitempty"`
 }
 

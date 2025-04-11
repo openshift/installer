@@ -5,8 +5,8 @@ package kms
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -36,12 +36,18 @@ func ResourceIBMKmsInstancePolicy() *schema.Resource {
 				Description:      "Key protect or hpcs instance GUID or CRN",
 				DiffSuppressFunc: suppressKMSInstanceIDDiff,
 			},
-			"dual_auth_delete": {
-				Type:         schema.TypeList,
+			"endpoint_type": {
+				Type:         schema.TypeString,
 				Optional:     true,
-				AtLeastOneOf: []string{"rotation", "dual_auth_delete", "metrics", "key_create_import_access"},
-				MaxItems:     1,
-				Description:  "Data associated with the dual authorization delete policy for instance",
+				Computed:     true,
+				ValidateFunc: validate.ValidateAllowedStringValues([]string{"public", "private"}),
+				Description:  "public or private",
+			},
+			"dual_auth_delete": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Data associated with the dual authorization delete policy for instance",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enabled": {
@@ -73,11 +79,10 @@ func ResourceIBMKmsInstancePolicy() *schema.Resource {
 				},
 			},
 			"rotation": {
-				Type:         schema.TypeList,
-				Optional:     true,
-				AtLeastOneOf: []string{"rotation", "dual_auth_delete", "metrics", "key_create_import_access"},
-				MaxItems:     1,
-				Description:  "Data associated with the rotation policy for instance",
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Data associated with the rotation policy for instance",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enabled": {
@@ -115,11 +120,10 @@ func ResourceIBMKmsInstancePolicy() *schema.Resource {
 				},
 			},
 			"key_create_import_access": {
-				Type:         schema.TypeList,
-				Optional:     true,
-				AtLeastOneOf: []string{"rotation", "dual_auth_delete", "metrics", "key_create_import_access"},
-				MaxItems:     1,
-				Description:  "Data associated with the key create import access policy for the instance",
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Data associated with the key create import access policy for the instance",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enabled": {
@@ -181,11 +185,10 @@ func ResourceIBMKmsInstancePolicy() *schema.Resource {
 				},
 			},
 			"metrics": {
-				Type:         schema.TypeList,
-				Optional:     true,
-				AtLeastOneOf: []string{"rotation", "dual_auth_delete", "metrics", "key_create_import_access"},
-				MaxItems:     1,
-				Description:  "Data associated with the metric policy for instance",
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Data associated with the metric policy for instance",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enabled": {
@@ -242,10 +245,26 @@ func resourceIBMKmsInstancePoliciesRead(context context.Context, d *schema.Resou
 		return diag.Errorf("[ERROR] Get Policies failed with error : %s", err)
 	}
 	d.Set("instance_id", instanceID)
-	d.Set("dual_auth_delete", flex.FlattenInstancePolicy("dual_auth_delete", instancePolicies))
-	d.Set("rotation", flex.FlattenInstancePolicy("rotation", instancePolicies))
-	d.Set("metrics", flex.FlattenInstancePolicy("metrics", instancePolicies))
-	d.Set("key_create_import_access", flex.FlattenInstancePolicy("key_create_import_access", instancePolicies))
+
+	setIfNotEmpty := func(policyType string, instancePolicies []kp.InstancePolicy) {
+		// if policy has been set to [] which indicates not to track, then ignore
+		if _, ok := d.GetOk(policyType); !ok {
+			return
+		}
+		policyAttr := flex.FlattenInstancePolicy(policyType, instancePolicies)
+		d.Set(policyType, policyAttr)
+	}
+	setIfNotEmpty("dual_auth_delete", instancePolicies)
+	setIfNotEmpty("rotation", instancePolicies)
+	setIfNotEmpty("metrics", instancePolicies)
+	setIfNotEmpty("key_create_import_access", instancePolicies)
+
+	if strings.Contains((kpAPI.URL).String(), "private") || strings.Contains(kpAPI.Config.BaseURL, "private") {
+		d.Set("endpoint_type", "private")
+	} else {
+		d.Set("endpoint_type", "public")
+	}
+
 	return nil
 
 }
@@ -270,7 +289,7 @@ func resourceIBMKmsInstancePolicyUpdate(context context.Context, d *schema.Resou
 
 func resourceIBMKmsInstancePolicyDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	//Do not support delete Policies
-	log.Println("Warning:  `terraform destroy` does not remove the policies of the Instance but only clears the state file. Instance Policies get deleted when the associated instance resource is destroyed.")
+	log.Println("[WARN] `terraform destroy` does not remove the policies of the Instance but only clears the state file. Instance Policies get deleted when the associated instance resource is destroyed.")
 	d.SetId("")
 	return nil
 
@@ -314,22 +333,40 @@ func policyCreateOrUpdate(context context.Context, d *schema.ResourceData, kpAPI
 			}
 		}
 	}
+
 	if kciaip, ok := d.GetOk("key_create_import_access"); ok {
 		kciaipList := kciaip.([]interface{})
 		if len(kciaipList) != 0 {
-			mulPolicy.KeyCreateImportAccess = &kp.KeyCreateImportAccessInstancePolicy{
-				Enabled:           kciaipList[0].(map[string]interface{})["enabled"].(bool),
-				CreateRootKey:     kciaipList[0].(map[string]interface{})["create_root_key"].(bool),
-				CreateStandardKey: kciaipList[0].(map[string]interface{})["create_standard_key"].(bool),
-				ImportRootKey:     kciaipList[0].(map[string]interface{})["import_root_key"].(bool),
-				ImportStandardKey: kciaipList[0].(map[string]interface{})["import_standard_key"].(bool),
-				EnforceToken:      kciaipList[0].(map[string]interface{})["enforce_token"].(bool),
+			enabled := kciaipList[0].(map[string]interface{})["enabled"].(bool)
+			create_root_key := kciaipList[0].(map[string]interface{})["create_root_key"].(bool)
+			create_standard_key := kciaipList[0].(map[string]interface{})["create_standard_key"].(bool)
+			import_root_key := kciaipList[0].(map[string]interface{})["import_root_key"].(bool)
+			import_standard_key := kciaipList[0].(map[string]interface{})["import_standard_key"].(bool)
+			enforce_token := kciaipList[0].(map[string]interface{})["enforce_token"].(bool)
+
+			// we must make sure not to attempt any updates on attributes when enabled is false or face input validation errors
+			if enabled {
+				mulPolicy.KeyCreateImportAccess = &kp.KeyCreateImportAccessInstancePolicy{
+					Enabled: enabled,
+					Attributes: &kp.KeyCreateImportAccessInstancePolicyAttributes{
+						CreateRootKey:     &create_root_key,
+						CreateStandardKey: &create_standard_key,
+						ImportRootKey:     &import_root_key,
+						ImportStandardKey: &import_standard_key,
+						EnforceToken:      &enforce_token,
+					},
+				}
+			} else {
+				mulPolicy.KeyCreateImportAccess = &kp.KeyCreateImportAccessInstancePolicy{
+					Enabled:    enabled,
+					Attributes: nil,
+				}
 			}
 		}
 	}
 	err := kpAPI.SetInstancePolicies(context, mulPolicy)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error while setting instance policies: %s", err)
+		return flex.FmtErrorf("[ERROR] Error while setting instance policies: %s", err)
 	}
 	return nil
 

@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/go-openapi/strfmt"
@@ -15,8 +14,8 @@ import (
 
 	"github.com/openshift/assisted-service/client/installer"
 	"github.com/openshift/assisted-service/models"
+	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
-	"github.com/openshift/installer/pkg/gather/ssh"
 )
 
 // Cluster is a struct designed to help interact with the cluster that is
@@ -70,10 +69,26 @@ func NewCluster(ctx context.Context, assetDir, rendezvousIP, kubeconfigPath, ssh
 	czero := &Cluster{}
 	capi := &clientSet{}
 
-	restclient, err := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey)
-	if err != nil {
-		logrus.Fatal(err)
+	var watcherAuthToken string
+	var err error
+
+	switch workflowType {
+	case workflow.AgentWorkflowTypeInstall:
+		watcherAuthToken, err = FindAuthTokenFromAssetStore(assetDir)
+		if err != nil {
+			return nil, err
+		}
+	case workflow.AgentWorkflowTypeAddNodes:
+		watcherAuthToken, err = gencrypto.GetWatcherAuthTokenFromCluster(ctx, kubeconfigPath)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("AgentWorkflowType value not supported: %s", workflowType)
 	}
+
+	restclient := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey, watcherAuthToken)
+
 	kubeclient, err := NewClusterKubeAPIClient(ctx, kubeconfigPath)
 	if err != nil {
 		logrus.Fatal(err)
@@ -139,8 +154,8 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 		if !czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
 			logrus.Debug("Agent Rest API never initialized. Bootstrap Kube API never initialized")
 			elapsedSinceInit := time.Since(czero.installHistory.ClusterInitTime)
-			// After allowing time for the interface to come up, check if Node0 can be accessed via ssh
-			if elapsedSinceInit > 2*time.Minute && !czero.CanSSHToNodeZero() {
+			// After allowing time for the interface to come up, check if Node0 can be accessed
+			if elapsedSinceInit > 2*time.Minute && !czero.CanConnectToNodeZero() {
 				logrus.Info("Cannot access Rendezvous Host. There may be a network configuration problem, check console for additional info")
 			} else {
 				logrus.Info("Waiting for cluster install to initialize. Sleeping for 30 seconds")
@@ -178,7 +193,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
 	// Agent Rest API is available
 	if agentRestAPILive {
-		exitOnErr, err := czero.MonitorStatusFromAssistedService()
+		exitOnErr, err := czero.MonitorStatusFromAssistedService(nil)
 		if err != nil {
 			return false, exitOnErr, err
 		}
@@ -199,17 +214,16 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 // After cluster or host installation has started, new events from
 // the Assisted Service API are also logged and updated to the cluster's
 // install history.
-func (czero *Cluster) MonitorStatusFromAssistedService() (bool, error) {
+func (czero *Cluster) MonitorStatusFromAssistedService(ch chan logEntry) (bool, error) {
+	logger := logrus.StandardLogger()
 	resource := "cluster"
-	logPrefix := ""
 	if czero.workflow == workflow.AgentWorkflowTypeAddNodes {
 		resource = "host"
-		logPrefix = fmt.Sprintf("Node %s: ", czero.API.Rest.NodeZeroIP)
 	}
 
 	// First time we see the agent Rest API
 	if !czero.installHistory.RestAPISeen {
-		logrus.Debugf("%sAgent Rest API Initialized", logPrefix)
+		log(Debug, "Agent Rest API Initialized", logger, ch)
 		czero.installHistory.RestAPISeen = true
 		czero.installHistory.NotReadyTime = time.Now()
 	}
@@ -241,18 +255,14 @@ func (czero *Cluster) MonitorStatusFromAssistedService() (bool, error) {
 		return false, errors.New("cluster metadata returned nil from Agent Rest API")
 	}
 
-	czero.PrintInstallStatus(clusterMetadata)
+	czero.PrintInstallStatus(clusterMetadata, ch)
 
 	// If status indicates pending action, log host info to help pinpoint what is missing
 	if (*clusterMetadata.Status != czero.installHistory.RestAPIPreviousClusterStatus) &&
 		(*clusterMetadata.Status == models.ClusterStatusInstallingPendingUserAction) {
 		for _, host := range clusterMetadata.Hosts {
 			if *host.Status == models.ClusterStatusInstallingPendingUserAction {
-				if logPrefix != "" {
-					logrus.Warningf("%s%s %s", logPrefix, host.RequestedHostname, *host.StatusInfo)
-				} else {
-					logrus.Warningf("Host %s %s", host.RequestedHostname, *host.StatusInfo)
-				}
+				log(Warning, fmt.Sprintf("Host %s %s", host.RequestedHostname, *host.StatusInfo), logger, ch)
 			}
 		}
 	}
@@ -278,10 +288,9 @@ func (czero *Cluster) MonitorStatusFromAssistedService() (bool, error) {
 		}
 	}
 
-	validationsErr := checkValidations(clusterMetadata, czero.installHistory.ValidationResults, logrus.StandardLogger(), logPrefix)
+	validationsErr := checkValidations(clusterMetadata, czero.installHistory.ValidationResults, logger, ch)
 	if validationsErr != nil {
 		return false, errors.Wrap(validationsErr, "host validations failed")
-
 	}
 
 	// Print most recent event associated with the clusterInfraEnvID
@@ -296,9 +305,9 @@ func (czero *Cluster) MonitorStatusFromAssistedService() (bool, error) {
 		// Don't print the same status message back to back
 		if *mostRecentEvent.Message != czero.installHistory.RestAPIPreviousEventMessage {
 			if *mostRecentEvent.Severity == models.EventSeverityInfo {
-				logrus.Infof("%s%s", logPrefix, *mostRecentEvent.Message)
+				log(Info, *mostRecentEvent.Message, logger, ch)
 			} else {
-				logrus.Warnf("%s%s", logPrefix, *mostRecentEvent.Message)
+				log(Warning, *mostRecentEvent.Message, logger, ch)
 			}
 		}
 		czero.installHistory.RestAPIPreviousEventMessage = *mostRecentEvent.Message
@@ -459,24 +468,26 @@ func (czero *Cluster) PrintInstallationComplete() error {
 }
 
 // PrintInstallStatus Print a human friendly message using the models from the Agent Rest API.
-func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster) {
+func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster, ch chan logEntry) {
 	friendlyStatus := czero.humanFriendlyClusterInstallStatus(*cluster.Status)
 	// Don't print the same status message back to back
 	if *cluster.Status != czero.installHistory.RestAPIPreviousClusterStatus {
-		logrus.Info(friendlyStatus)
+		log(Info, friendlyStatus, logrus.StandardLogger(), ch)
 	}
 }
 
-// CanSSHToNodeZero Checks if ssh to NodeZero succeeds.
-func (czero *Cluster) CanSSHToNodeZero() bool {
+// CanConnectToNodeZero Checks if NodeZero is reachable.
+func (czero *Cluster) CanConnectToNodeZero() bool {
 	ip := czero.API.Rest.NodeZeroIP
-	port := 22
+	port := "22"
 
-	_, err := ssh.NewClient("core", net.JoinHostPort(ip, strconv.Itoa(port)), czero.API.Rest.NodeSSHKey)
+	conn, err := net.Dial("tcp", net.JoinHostPort(ip, port))
 	if err != nil {
-		logrus.Debugf("Failed to connect to the Rendezvous Host: %s", err)
+		logrus.Debugf("Failed to connect to the Rendezvous Host on port %s: %s", port, err)
+		return false
 	}
-	return err == nil
+	conn.Close()
+	return true
 }
 
 // Human friendly install status strings mapped to the Agent Rest API cluster statuses

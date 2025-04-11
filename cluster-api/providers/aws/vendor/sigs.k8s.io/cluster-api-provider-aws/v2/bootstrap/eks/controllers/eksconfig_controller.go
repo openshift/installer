@@ -313,9 +313,9 @@ func (r *EKSConfigReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Man
 	}
 
 	err = c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc((r.ClusterToEKSConfigs)),
-		predicates.ClusterUnpausedAndInfrastructureReady(logger.FromContext(ctx).GetLogger()),
+		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc((r.ClusterToEKSConfigs)),
+			predicates.ClusterUnpausedAndInfrastructureReady(logger.FromContext(ctx).GetLogger())),
 	)
 	if err != nil {
 		return errors.Wrap(err, "failed adding watch for Clusters to controller manager")

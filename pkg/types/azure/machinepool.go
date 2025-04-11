@@ -1,5 +1,11 @@
 package azure
 
+import (
+	"fmt"
+
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+)
+
 // SecurityTypes represents the SecurityType of the virtual machine.
 type SecurityTypes string
 
@@ -58,6 +64,16 @@ type MachinePool struct {
 	// be set for Confidential VMs and Trusted Launch for VMs.
 	// +optional
 	Settings *SecuritySettings `json:"settings,omitempty"`
+
+	// Identity is the type of identity used for the virtual machine.
+	// The type 'SystemAssigned' is an implicitly created identity.
+	// The generated identity will be assigned a Subscription contributor role.
+	// The type 'UserAssigned' is a standalone Azure resource provided by the user
+	// and assigned to the VM
+	// Identity can only be set for control-plane nodes.
+	// +kubebuilder:default=None
+	// +optional
+	Identity *VMIdentity `json:"identity,omitempty"`
 }
 
 // SecuritySettings define the security type and the UEFI settings of the virtual machine.
@@ -181,6 +197,10 @@ func (a *MachinePool) Set(required *MachinePool) {
 	if required.Settings != nil {
 		a.Settings = required.Settings
 	}
+
+	if required.Identity != nil {
+		a.Identity = required.Identity
+	}
 }
 
 // ImagePurchasePlan defines the purchase plan of a Marketplace image.
@@ -208,4 +228,34 @@ type OSImage struct {
 	SKU string `json:"sku"`
 	// Version is the version of the image.
 	Version string `json:"version"`
+}
+
+// VMIdentity configures the identity attached to the VM.
+type VMIdentity struct {
+	// Type specifies the type of identity to be used.
+	Type capz.VMIdentity `json:"type"`
+
+	// UserAssignedIdentities is a list of identities to be attached to a node.
+	// Only one user-assigned identity may be supplied.
+	// Supplying more than one user-assigned identity is an experimental feature
+	// which may be enabled with the MachineAPIMigration feature gate.
+	UserAssignedIdentities []UserAssignedIdentity `json:"userAssignedIdentities"`
+}
+
+// UserAssignedIdentity contains the fields that comprise a user-assigned identity.
+type UserAssignedIdentity struct {
+	// Name is the name of the user-assigned identity to be assigned to the node.
+	Name string `json:"name"`
+
+	// Subscription is the subscription that contains the user-assigned identity.
+	Subscription string `json:"subscription"`
+
+	// ResourceGroup is the resource group that contains the user-assigned identity.
+	ResourceGroup string `json:"resourceGroup"`
+}
+
+// ProviderID returns the formated provider id of the user-assigned identity.
+// e.g. '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{identityName}'.
+func (i *UserAssignedIdentity) ProviderID() string {
+	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s", i.Subscription, i.ResourceGroup, i.Name)
 }

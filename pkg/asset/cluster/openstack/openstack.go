@@ -40,8 +40,8 @@ func PreTerraform(ctx context.Context, tfvarsFile *asset.File, installConfig *in
 		// upload the corresponding image to Glance if rhcosImage contains a
 		// URL. If rhcosImage contains a name, then that points to an existing
 		// Glance image.
-		if imageName, isURL := rhcos.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID); isURL {
-			if err := preprovision.UploadBaseImage(ctx, installConfig.Config.Platform.OpenStack.Cloud, string(*rhcosImage), imageName, clusterID.InfraID, installConfig.Config.Platform.OpenStack.ClusterOSImageProperties); err != nil {
+		if imageName, isURL := rhcos.GenerateOpenStackImageName(rhcosImage.ControlPlane, clusterID.InfraID); isURL {
+			if err := preprovision.UploadBaseImage(ctx, installConfig.Config.Platform.OpenStack.Cloud, rhcosImage.ControlPlane, imageName, clusterID.InfraID, installConfig.Config.Platform.OpenStack.ClusterOSImageProperties); err != nil {
 				return err
 			}
 		}

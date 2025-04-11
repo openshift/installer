@@ -22,7 +22,7 @@
   - name: 'Set tags on primary cluster subnet IPv6'
     ansible.builtin.command:
       cmd: "openstack subnet set --tag {{ cluster_id_tag }} {{ os_subnet6 }}"
-    when: os_subnet6 is defined
+    when: os_subnet6_range is defined
 
   - name: 'Set tags on the API VIP port'
     ansible.builtin.command:

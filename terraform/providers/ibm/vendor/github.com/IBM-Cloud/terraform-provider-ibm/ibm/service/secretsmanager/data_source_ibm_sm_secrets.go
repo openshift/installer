@@ -36,6 +36,18 @@ func DataSourceIbmSmSecrets() *schema.Resource {
 				Optional:    true,
 				Description: "Filter secrets by groups. You can apply multiple filters by using a comma-separated list of secret group IDs. If you need to filter secrets that are in the default secret group, use the `default` keyword.",
 			},
+			"secret_types": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Filter secrets by secret types.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"match_all_labels": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Filter secrets by a label or a combination of labels.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"total_count": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -83,7 +95,7 @@ func DataSourceIbmSmSecrets() *schema.Resource {
 						"id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "A v4 UUID identifier.",
+							Description: "A UUID identifier.",
 						},
 						"labels": &schema.Schema{
 							Type:        schema.TypeList,
@@ -106,7 +118,7 @@ func DataSourceIbmSmSecrets() *schema.Resource {
 						"secret_group_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "A v4 UUID identifier, or `default` secret group.",
+							Description: "A UUID identifier, or `default` secret group.",
 						},
 						"secret_type": &schema.Schema{
 							Type:        schema.TypeString,
@@ -380,6 +392,123 @@ func DataSourceIbmSmSecrets() *schema.Resource {
 							Computed:    true,
 							Description: "The date and time that the certificate was revoked. The date format follows RFC 3339.",
 						},
+						"source_service": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The properties required for creating the service credentials for the specified source service instance.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"instance": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The source service instance identifier.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"crn": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "A CRN that uniquely identifies a service credentials target.",
+												},
+											},
+										},
+									},
+									"role": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The service-specific custom role object, CRN role is accepted. Refer to the service’s documentation for supported roles.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"crn": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The CRN role identifier for creating a service-id.",
+												},
+											},
+										},
+									},
+									"iam": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The source service IAM data is returned in case IAM credentials where created for this secret.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"apikey": &schema.Schema{
+													Type:        schema.TypeList,
+													Computed:    true,
+													Description: "The IAM apikey metadata for the IAM credentials that were generated.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"name": &schema.Schema{
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The IAM API key name for the generated service credentials.",
+															},
+															"description": &schema.Schema{
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The IAM API key description for the generated service credentials.",
+															},
+														},
+													},
+												},
+												"role": &schema.Schema{
+													Type:        schema.TypeList,
+													Computed:    true,
+													Description: "The IAM role for the generate service credentials.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"crn": &schema.Schema{
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The IAM role CRN assigned to the generated service credentials.",
+															},
+														},
+													},
+												},
+												"serviceid": &schema.Schema{
+													Type:        schema.TypeList,
+													Computed:    true,
+													Description: "The IAM serviceid for the generated service credentials.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"crn": &schema.Schema{
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The IAM Service ID CRN.",
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+									"resource_key": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The source service resource key data of the generated service credentials.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"crn": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The resource key CRN of the generated service credentials.",
+												},
+												"name": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The resource key name of the generated service credentials.",
+												},
+											},
+										},
+									},
+									"parameters": &schema.Schema{
+										Type:        schema.TypeMap,
+										Computed:    true,
+										Description: "The collection of parameters for the service credentials target.",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -390,7 +519,8 @@ func DataSourceIbmSmSecrets() *schema.Resource {
 func dataSourceIbmSmSecretsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", fmt.Sprintf("(Data) %s", SecretsResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	region := getRegion(secretsManagerClient, d)
@@ -419,16 +549,36 @@ func dataSourceIbmSmSecretsRead(context context.Context, d *schema.ResourceData,
 		}
 	}
 
+	if _, ok := d.GetOk("secret_types"); ok {
+		secretTypes := d.Get("secret_types").([]interface{})
+		parsedTypes := make([]string, len(secretTypes))
+		for i, v := range secretTypes {
+			parsedTypes[i] = fmt.Sprint(v)
+		}
+		listSecretsOptions.SetSecretTypes(parsedTypes)
+	}
+
+	if _, ok := d.GetOk("match_all_labels"); ok {
+		labels := d.Get("match_all_labels").([]interface{})
+		parsedLabels := make([]string, len(labels))
+		for i, v := range labels {
+			parsedLabels[i] = fmt.Sprint(v)
+		}
+		listSecretsOptions.SetMatchAllLabels(parsedLabels)
+	}
+
 	var pager *secretsmanagerv2.SecretsPager
 	pager, err = secretsManagerClient.NewSecretsPager(listSecretsOptions)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", fmt.Sprintf("(Data) %s", SecretsResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	allItems, err := pager.GetAll()
 	if err != nil {
 		log.Printf("[DEBUG] SecretsPager.GetAll() failed %s", err)
-		return diag.FromErr(fmt.Errorf("SecretsPager.GetAll() failed %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("SecretsPager.GetAll() failed %s", err), fmt.Sprintf("(Data) %s", SecretsResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", region, instanceId))
@@ -437,20 +587,24 @@ func dataSourceIbmSmSecretsRead(context context.Context, d *schema.ResourceData,
 	for _, modelItem := range allItems {
 		modelMap, err := dataSourceIbmSmSecretsSecretMetadataToMap(modelItem)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, "", fmt.Sprintf("(Data) %s", SecretsResourceName), "read")
+			return tfErr.GetDiag()
 		}
 		mapSlice = append(mapSlice, modelMap)
 	}
 
 	if err = d.Set("region", region); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting region: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region"), fmt.Sprintf("(Data) %s", SecretsResourceName), "read")
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("secrets", mapSlice); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secrets %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secrets"), fmt.Sprintf("(Data) %s", SecretsResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("total_count", len(mapSlice)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting locks_total: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting total_count"), fmt.Sprintf("(Data) %s", SecretsResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -471,152 +625,8 @@ func dataSourceIbmSmSecretsSecretMetadataToMap(model secretsmanagerv2.SecretMeta
 		return dataSourceIbmSmSecretsArbitrarySecretMetadataToMap(model.(*secretsmanagerv2.ArbitrarySecretMetadata))
 	} else if _, ok := model.(*secretsmanagerv2.PrivateCertificateMetadata); ok {
 		return dataSourceIbmSmSecretsPrivateCertificateMetadataToMap(model.(*secretsmanagerv2.PrivateCertificateMetadata))
-	} else if _, ok := model.(*secretsmanagerv2.SecretMetadata); ok {
-		modelMap := make(map[string]interface{})
-		model := model.(*secretsmanagerv2.SecretMetadata)
-		if model.CreatedBy != nil {
-			modelMap["created_by"] = *model.CreatedBy
-		}
-		if model.CreatedAt != nil {
-			modelMap["created_at"] = model.CreatedAt.String()
-		}
-		if model.Crn != nil {
-			modelMap["crn"] = *model.Crn
-		}
-		if model.CustomMetadata != nil {
-			customMetadataMap := make(map[string]interface{}, len(model.CustomMetadata))
-			for k, v := range model.CustomMetadata {
-				customMetadataMap[k] = v
-			}
-			modelMap["custom_metadata"] = flex.Flatten(customMetadataMap)
-		}
-		if model.Description != nil {
-			modelMap["description"] = *model.Description
-		}
-		if model.Downloaded != nil {
-			modelMap["downloaded"] = *model.Downloaded
-		}
-		if model.ID != nil {
-			modelMap["id"] = *model.ID
-		}
-		if model.Labels != nil {
-			modelMap["labels"] = model.Labels
-		}
-		if model.LocksTotal != nil {
-			modelMap["locks_total"] = *model.LocksTotal
-		}
-		if model.Name != nil {
-			modelMap["name"] = *model.Name
-		}
-		if model.SecretGroupID != nil {
-			modelMap["secret_group_id"] = *model.SecretGroupID
-		}
-		if model.SecretType != nil {
-			modelMap["secret_type"] = *model.SecretType
-		}
-		if model.State != nil {
-			modelMap["state"] = *model.State
-		}
-		if model.StateDescription != nil {
-			modelMap["state_description"] = *model.StateDescription
-		}
-		if model.UpdatedAt != nil {
-			modelMap["updated_at"] = model.UpdatedAt.String()
-		}
-		if model.VersionsTotal != nil {
-			modelMap["versions_total"] = *model.VersionsTotal
-		}
-		if model.SigningAlgorithm != nil {
-			modelMap["signing_algorithm"] = *model.SigningAlgorithm
-		}
-		if model.AltNames != nil {
-			modelMap["alt_names"] = model.AltNames
-		}
-		if model.CommonName != nil {
-			modelMap["common_name"] = *model.CommonName
-		}
-		if model.ExpirationDate != nil {
-			modelMap["expiration_date"] = model.ExpirationDate.String()
-		}
-		if model.IntermediateIncluded != nil {
-			modelMap["intermediate_included"] = *model.IntermediateIncluded
-		}
-		if model.Issuer != nil {
-			modelMap["issuer"] = *model.Issuer
-		}
-		if model.KeyAlgorithm != nil {
-			modelMap["key_algorithm"] = *model.KeyAlgorithm
-		}
-		if model.PrivateKeyIncluded != nil {
-			modelMap["private_key_included"] = *model.PrivateKeyIncluded
-		}
-		if model.SerialNumber != nil {
-			modelMap["serial_number"] = *model.SerialNumber
-		}
-		if model.Validity != nil {
-			validityMap, err := dataSourceIbmSmSecretsCertificateValidityToMap(model.Validity)
-			if err != nil {
-				return modelMap, err
-			}
-			modelMap["validity"] = []map[string]interface{}{validityMap}
-		}
-		if model.IssuanceInfo != nil {
-			issuanceInfoMap, err := dataSourceIbmSmSecretsCertificateIssuanceInfoToMap(model.IssuanceInfo)
-			if err != nil {
-				return modelMap, err
-			}
-			modelMap["issuance_info"] = []map[string]interface{}{issuanceInfoMap}
-		}
-		if model.Rotation != nil {
-			rotationMap, err := dataSourceIbmSmSecretsRotationPolicyToMap(model.Rotation)
-			if err != nil {
-				return modelMap, err
-			}
-			modelMap["rotation"] = []map[string]interface{}{rotationMap}
-		}
-		if model.BundleCerts != nil {
-			modelMap["bundle_certs"] = *model.BundleCerts
-		}
-		if model.Ca != nil {
-			modelMap["ca"] = *model.Ca
-		}
-		if model.Dns != nil {
-			modelMap["dns"] = *model.Dns
-		}
-		if model.NextRotationDate != nil {
-			modelMap["next_rotation_date"] = model.NextRotationDate.String()
-		}
-		if model.TTL != nil {
-			modelMap["ttl"] = *model.TTL
-		}
-		if model.AccessGroups != nil {
-			modelMap["access_groups"] = model.AccessGroups
-		}
-		if model.ApiKeyID != nil {
-			modelMap["api_key_id"] = *model.ApiKeyID
-		}
-		if model.ServiceID != nil {
-			modelMap["service_id"] = *model.ServiceID
-		}
-		if model.ServiceIdIsStatic != nil {
-			modelMap["service_id_is_static"] = *model.ServiceIdIsStatic
-		}
-		if model.ReuseApiKey != nil {
-			modelMap["reuse_api_key"] = *model.ReuseApiKey
-		}
-		if model.CertificateAuthority != nil {
-			modelMap["certificate_authority"] = *model.CertificateAuthority
-		}
-		if model.CertificateTemplate != nil {
-			modelMap["certificate_template"] = *model.CertificateTemplate
-		}
-		if model.RevocationTimeSeconds != nil {
-			modelMap["revocation_time_seconds"] = *model.RevocationTimeSeconds
-		}
-		if model.RevocationTimeRfc3339 != nil {
-			modelMap["revocation_time_rfc3339"] = model.RevocationTimeRfc3339.String()
-		}
-		return modelMap, nil
+	} else if _, ok := model.(*secretsmanagerv2.ServiceCredentialsSecretMetadata); ok {
+		return dataSourceIbmSmSecretsServiceCredentialsSecretMetadataToMap(model.(*secretsmanagerv2.ServiceCredentialsSecretMetadata))
 	} else {
 		return nil, fmt.Errorf("Unrecognized secretsmanagerv2.SecretMetadataIntf subtype encountered")
 	}
@@ -1316,5 +1326,83 @@ func dataSourceIbmSmSecretsPrivateCertificateMetadataToMap(model *secretsmanager
 	if model.RevocationTimeRfc3339 != nil {
 		modelMap["revocation_time_rfc3339"] = model.RevocationTimeRfc3339.String()
 	}
+	return modelMap, nil
+}
+
+func dataSourceIbmSmSecretsServiceCredentialsSecretMetadataToMap(model *secretsmanagerv2.ServiceCredentialsSecretMetadata) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.CreatedBy != nil {
+		modelMap["created_by"] = *model.CreatedBy
+	}
+	if model.CreatedAt != nil {
+		modelMap["created_at"] = model.CreatedAt.String()
+	}
+	if model.Crn != nil {
+		modelMap["crn"] = *model.Crn
+	}
+	if model.CustomMetadata != nil {
+		customMetadataMap := make(map[string]interface{}, len(model.CustomMetadata))
+		for k, v := range model.CustomMetadata {
+			customMetadataMap[k] = v
+		}
+		modelMap["custom_metadata"] = flex.Flatten(customMetadataMap)
+	}
+	if model.Description != nil {
+		modelMap["description"] = *model.Description
+	}
+	if model.Downloaded != nil {
+		modelMap["downloaded"] = *model.Downloaded
+	}
+	if model.ID != nil {
+		modelMap["id"] = *model.ID
+	}
+	if model.Labels != nil {
+		modelMap["labels"] = model.Labels
+	}
+	if model.LocksTotal != nil {
+		modelMap["locks_total"] = *model.LocksTotal
+	}
+	if model.Name != nil {
+		modelMap["name"] = *model.Name
+	}
+	if model.SecretGroupID != nil {
+		modelMap["secret_group_id"] = *model.SecretGroupID
+	}
+	if model.SecretType != nil {
+		modelMap["secret_type"] = *model.SecretType
+	}
+	if model.State != nil {
+		modelMap["state"] = *model.State
+	}
+	if model.StateDescription != nil {
+		modelMap["state_description"] = *model.StateDescription
+	}
+	if model.UpdatedAt != nil {
+		modelMap["updated_at"] = model.UpdatedAt.String()
+	}
+	if model.VersionsTotal != nil {
+		modelMap["versions_total"] = *model.VersionsTotal
+	}
+	if model.TTL != nil {
+		modelMap["ttl"] = *model.TTL
+	}
+	if model.Rotation != nil {
+		rotationMap, err := dataSourceIbmSmSecretsRotationPolicyToMap(model.Rotation)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["rotation"] = []map[string]interface{}{rotationMap}
+	}
+	if model.NextRotationDate != nil {
+		modelMap["next_rotation_date"] = model.NextRotationDate.String()
+	}
+	if model.SourceService != nil {
+		sourceServiceMap, err := dataSourceIbmSmServiceCredentialsSecretMetadataSourceServiceToMap(model.SourceService)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["source_service"] = []map[string]interface{}{sourceServiceMap}
+	}
+
 	return modelMap, nil
 }

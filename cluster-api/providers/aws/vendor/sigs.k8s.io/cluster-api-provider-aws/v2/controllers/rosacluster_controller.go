@@ -136,17 +136,17 @@ func (r *ROSAClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.M
 
 	// Add a watch for clusterv1.Cluster unpaise
 	if err = controller.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind("ROSACluster"), mgr.GetClient(), &expinfrav1.ROSACluster{})),
-		predicates.ClusterUnpaused(log.GetLogger()),
+		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind("ROSACluster"), mgr.GetClient(), &expinfrav1.ROSACluster{})),
+			predicates.ClusterUnpaused(log.GetLogger())),
 	); err != nil {
 		return fmt.Errorf("failed adding a watch for ready clusters: %w", err)
 	}
 
 	// Add a watch for ROSAControlPlane
 	if err = controller.Watch(
-		source.Kind(mgr.GetCache(), &rosacontrolplanev1.ROSAControlPlane{}),
-		handler.EnqueueRequestsFromMapFunc(r.rosaControlPlaneToManagedCluster(log)),
+		source.Kind[client.Object](mgr.GetCache(), &rosacontrolplanev1.ROSAControlPlane{},
+			handler.EnqueueRequestsFromMapFunc(r.rosaControlPlaneToManagedCluster(log))),
 	); err != nil {
 		return fmt.Errorf("failed adding watch on ROSAControlPlane: %w", err)
 	}

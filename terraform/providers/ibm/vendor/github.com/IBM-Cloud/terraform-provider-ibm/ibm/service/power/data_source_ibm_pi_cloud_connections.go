@@ -7,113 +7,118 @@ import (
 	"context"
 	"log"
 
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-/*
-Datasource to get the list of Cloud Connections in a power instance
-*/
-
-const PICloudConnections = "connections"
-
+// Datasource to list Cloud Connections in a power instance
 func DataSourceIBMPICloudConnections() *schema.Resource {
-
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPICloudConnectionsRead,
 		Schema: map[string]*schema.Schema{
-			helpers.PICloudInstanceId: {
-				Type:         schema.TypeString,
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
-			// Computed Attributes
-			PICloudConnections: {
-				Type:     schema.TypeList,
-				Computed: true,
+
+			// Attributes
+			Attr_Connections: {
+				Computed:    true,
+				Description: "List of all the Cloud Connections.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						PICloudConnectionId: {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						PICloudConnectionName: {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						PICloudConnectionSpeed: {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-						PICloudConnectionGlobalRouting: {
-							Type:     schema.TypeBool,
-							Computed: true,
-						},
-						PICloudConnectionMetered: {
-							Type:     schema.TypeBool,
-							Computed: true,
-						},
-						PICloudConnectionStatus: {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						PICloudConnectionIBMIPAddress: {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						PICloudConnectionUserIPAddress: {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						PICloudConnectionPort: {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						PICloudConnectionNetworks: {
-							Type:        schema.TypeSet,
+						Attr_ClassicEnabled: {
 							Computed:    true,
-							Elem:        &schema.Schema{Type: schema.TypeString},
-							Description: "Set of Networks attached to this cloud connection",
-						},
-						PICloudConnectionClassicEnabled: {
+							Description: "Enable classic endpoint destination.",
 							Type:        schema.TypeBool,
-							Computed:    true,
-							Description: "Enable classic endpoint destination",
 						},
-						PICloudConnectionClassicGreDest: {
+						Attr_CloudConnectionID: {
+							Computed:    true,
+							Description: "The unique identifier of the cloud connection.",
 							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "GRE destination IP address",
 						},
-						PICloudConnectionClassicGreSource: {
+						Attr_ConnectionMode: {
+							Computed:    true,
+							Description: "Type of service the gateway is attached to.",
 							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "GRE auto-assigned source IP address",
 						},
-						PICloudConnectionVPCEnabled: {
+						Attr_GlobalRouting: {
+							Computed:    true,
+							Description: "Enable global routing for this cloud connection.",
 							Type:        schema.TypeBool,
-							Computed:    true,
-							Description: "Enable VPC for this cloud connection",
 						},
-						PICloudConnectionVPCCRNs: {
-							Type:        schema.TypeSet,
+						Attr_GreDestinationAddress: {
 							Computed:    true,
-							Elem:        &schema.Schema{Type: schema.TypeString},
-							Description: "Set of VPCs attached to this cloud connection",
-						},
-						PICloudConnectionConnectionMode: {
+							Description: "GRE destination IP address.",
 							Type:        schema.TypeString,
+						},
+						Attr_GreSourceAddress: {
 							Computed:    true,
-							Description: "Type of service the gateway is attached to",
+							Description: "GRE auto-assigned source IP address.",
+							Type:        schema.TypeString,
+						},
+						Attr_IBMIPAddress: {
+							Computed:    true,
+							Description: "IBM IP address.",
+							Type:        schema.TypeString,
+						},
+						Attr_Metered: {
+							Computed:    true,
+							Description: "Enable metering for this cloud connection.",
+							Type:        schema.TypeBool,
+						},
+						Attr_Name: {
+							Computed:    true,
+							Description: "Name of the cloud connection.",
+							Type:        schema.TypeString,
+						},
+						Attr_Networks: {
+							Computed:    true,
+							Description: "Set of Networks attached to this cloud connection.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Type:        schema.TypeSet,
+						},
+						Attr_Port: {
+							Computed:    true,
+							Description: "Port.",
+							Type:        schema.TypeString,
+						},
+						Attr_Speed: {
+							Computed:    true,
+							Description: "Speed of the cloud connection (speed in megabits per second).",
+							Type:        schema.TypeInt,
+						},
+						Attr_Status: {
+							Computed:    true,
+							Description: "Link status.",
+							Type:        schema.TypeString,
+						},
+						Attr_UserIPAddress: {
+							Computed:    true,
+							Description: "User IP address.",
+							Type:        schema.TypeString,
+						},
+						Attr_VPCCRNs: {
+							Computed:    true,
+							Description: "Set of VPCs attached to this cloud connection.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Type:        schema.TypeSet,
+						},
+						Attr_VPCEnabled: {
+							Computed:    true,
+							Description: "Enable VPC for this cloud connection.",
+							Type:        schema.TypeBool,
 						},
 					},
 				},
+				Type: schema.TypeList,
 			},
 		},
 	}
@@ -125,8 +130,8 @@ func dataSourceIBMPICloudConnectionsRead(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
-	client := st.NewIBMPICloudConnectionClient(ctx, sess, cloudInstanceID)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
+	client := instance.NewIBMPICloudConnectionClient(ctx, sess, cloudInstanceID)
 
 	cloudConnections, err := client.GetAll()
 	if err != nil {
@@ -137,16 +142,16 @@ func dataSourceIBMPICloudConnectionsRead(ctx context.Context, d *schema.Resource
 	result := make([]map[string]interface{}, 0, len(cloudConnections.CloudConnections))
 	for _, cloudConnection := range cloudConnections.CloudConnections {
 		cc := map[string]interface{}{
-			PICloudConnectionId:             *cloudConnection.CloudConnectionID,
-			PICloudConnectionName:           *cloudConnection.Name,
-			PICloudConnectionGlobalRouting:  *cloudConnection.GlobalRouting,
-			PICloudConnectionMetered:        *cloudConnection.Metered,
-			PICloudConnectionIBMIPAddress:   *cloudConnection.IbmIPAddress,
-			PICloudConnectionUserIPAddress:  *cloudConnection.UserIPAddress,
-			PICloudConnectionStatus:         *cloudConnection.LinkStatus,
-			PICloudConnectionPort:           *cloudConnection.Port,
-			PICloudConnectionSpeed:          *cloudConnection.Speed,
-			PICloudConnectionConnectionMode: cloudConnection.ConnectionMode,
+			Attr_CloudConnectionID: *cloudConnection.CloudConnectionID,
+			Attr_ConnectionMode:    cloudConnection.ConnectionMode,
+			Attr_GlobalRouting:     *cloudConnection.GlobalRouting,
+			Attr_IBMIPAddress:      *cloudConnection.IbmIPAddress,
+			Attr_Metered:           *cloudConnection.Metered,
+			Attr_Name:              *cloudConnection.Name,
+			Attr_Port:              *cloudConnection.Port,
+			Attr_Speed:             *cloudConnection.Speed,
+			Attr_Status:            *cloudConnection.LinkStatus,
+			Attr_UserIPAddress:     *cloudConnection.UserIPAddress,
 		}
 
 		if cloudConnection.Networks != nil {
@@ -156,23 +161,23 @@ func dataSourceIBMPICloudConnectionsRead(ctx context.Context, d *schema.Resource
 					networks[i] = *ccNetwork.NetworkID
 				}
 			}
-			cc[PICloudConnectionNetworks] = networks
+			cc[Attr_Networks] = networks
 		}
 		if cloudConnection.Classic != nil {
-			cc[PICloudConnectionClassicEnabled] = cloudConnection.Classic.Enabled
+			cc[Attr_ClassicEnabled] = cloudConnection.Classic.Enabled
 			if cloudConnection.Classic.Gre != nil {
-				cc[PICloudConnectionClassicGreDest] = cloudConnection.Classic.Gre.DestIPAddress
-				cc[PICloudConnectionClassicGreSource] = cloudConnection.Classic.Gre.SourceIPAddress
+				cc[Attr_GreDestinationAddress] = cloudConnection.Classic.Gre.DestIPAddress
+				cc[Attr_GreSourceAddress] = cloudConnection.Classic.Gre.SourceIPAddress
 			}
 		}
 		if cloudConnection.Vpc != nil {
-			cc[PICloudConnectionVPCEnabled] = cloudConnection.Vpc.Enabled
+			cc[Attr_VPCEnabled] = cloudConnection.Vpc.Enabled
 			if cloudConnection.Vpc.Vpcs != nil && len(cloudConnection.Vpc.Vpcs) > 0 {
 				vpcCRNs := make([]string, len(cloudConnection.Vpc.Vpcs))
 				for i, vpc := range cloudConnection.Vpc.Vpcs {
 					vpcCRNs[i] = *vpc.VpcID
 				}
-				cc[PICloudConnectionVPCCRNs] = vpcCRNs
+				cc[Attr_VPCCRNs] = vpcCRNs
 			}
 		}
 
@@ -181,7 +186,7 @@ func dataSourceIBMPICloudConnectionsRead(ctx context.Context, d *schema.Resource
 
 	var genID, _ = uuid.GenerateUUID()
 	d.SetId(genID)
-	d.Set(PICloudConnections, result)
+	d.Set(Attr_Connections, result)
 
 	return nil
 }

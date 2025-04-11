@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017-2023 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package simulator
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"log"
 	"net"
@@ -232,11 +233,14 @@ func (vm *VirtualMachine) apply(spec *types.VirtualMachineConfigSpec) {
 		{spec.InstanceUuid, &vm.Config.InstanceUuid},
 		{spec.InstanceUuid, &vm.Summary.Config.InstanceUuid},
 		{spec.Version, &vm.Config.Version},
+		{spec.Version, &vm.Summary.Config.HwVersion},
 		{spec.Files.VmPathName, &vm.Config.Files.VmPathName},
 		{spec.Files.VmPathName, &vm.Summary.Config.VmPathName},
 		{spec.Files.SnapshotDirectory, &vm.Config.Files.SnapshotDirectory},
 		{spec.Files.SuspendDirectory, &vm.Config.Files.SuspendDirectory},
 		{spec.Files.LogDirectory, &vm.Config.Files.LogDirectory},
+		{spec.FtEncryptionMode, &vm.Config.FtEncryptionMode},
+		{spec.MigrateEncryption, &vm.Config.MigrateEncryption},
 	}
 
 	for _, f := range apply {
@@ -276,7 +280,11 @@ func (vm *VirtualMachine) apply(spec *types.VirtualMachineConfigSpec) {
 	}
 
 	if spec.ManagedBy != nil {
+		if spec.ManagedBy.ExtensionKey == "" {
+			spec.ManagedBy = nil
+		}
 		vm.Config.ManagedBy = spec.ManagedBy
+		vm.Summary.Config.ManagedBy = spec.ManagedBy
 	}
 
 	if spec.BootOptions != nil {
@@ -428,12 +436,19 @@ func extraConfigKey(key string) string {
 }
 
 func (vm *VirtualMachine) applyExtraConfig(ctx *Context, spec *types.VirtualMachineConfigSpec) types.BaseMethodFault {
+	if len(spec.ExtraConfig) == 0 {
+		return nil
+	}
 	var removedContainerBacking bool
 	var changes []types.PropertyChange
+	field := mo.Field{Path: "config.extraConfig"}
+
 	for _, c := range spec.ExtraConfig {
 		val := c.GetOptionValue()
 		key := strings.TrimPrefix(extraConfigKey(val.Key), "SET.")
 		if key == val.Key {
+			field.Key = key
+			op := types.PropertyChangeOpAssign
 			keyIndex := -1
 			for i := range vm.Config.ExtraConfig {
 				bov := vm.Config.ExtraConfig[i]
@@ -450,23 +465,26 @@ func (vm *VirtualMachine) applyExtraConfig(ctx *Context, spec *types.VirtualMach
 				}
 			}
 			if keyIndex < 0 {
+				op = types.PropertyChangeOpAdd
 				vm.Config.ExtraConfig = append(vm.Config.ExtraConfig, c)
 			} else {
 				if s, ok := val.Value.(string); ok && s == "" {
+					op = types.PropertyChangeOpRemove
 					if key == ContainerBackingOptionKey {
 						removedContainerBacking = true
 					}
 					// Remove existing element
-					l := len(vm.Config.ExtraConfig)
-					vm.Config.ExtraConfig[keyIndex] = vm.Config.ExtraConfig[l-1]
-					vm.Config.ExtraConfig[l-1] = nil
-					vm.Config.ExtraConfig = vm.Config.ExtraConfig[:l-1]
+					vm.Config.ExtraConfig = append(
+						vm.Config.ExtraConfig[:keyIndex],
+						vm.Config.ExtraConfig[keyIndex+1:]...)
+					val = nil
 				} else {
 					// Update existing element
-					vm.Config.ExtraConfig[keyIndex].GetOptionValue().Value = val.Value
+					vm.Config.ExtraConfig[keyIndex] = val
 				}
 			}
 
+			changes = append(changes, types.PropertyChange{Name: field.String(), Val: val, Op: op})
 			continue
 		}
 		changes = append(changes, types.PropertyChange{Name: key, Val: val.Value})
@@ -528,9 +546,8 @@ func (vm *VirtualMachine) applyExtraConfig(ctx *Context, spec *types.VirtualMach
 		}
 	}
 
-	if len(changes) != 0 {
-		Map.Update(vm, changes)
-	}
+	change := types.PropertyChange{Name: field.Path, Val: vm.Config.ExtraConfig}
+	ctx.Update(vm, append(changes, change))
 
 	return fault
 }
@@ -545,7 +562,13 @@ func validateGuestID(id string) types.BaseMethodFault {
 	return &types.InvalidArgument{InvalidProperty: "configSpec.guestId"}
 }
 
-func (vm *VirtualMachine) configure(ctx *Context, spec *types.VirtualMachineConfigSpec) types.BaseMethodFault {
+func (vm *VirtualMachine) configure(ctx *Context, spec *types.VirtualMachineConfigSpec) (result types.BaseMethodFault) {
+	defer func() {
+		if result == nil {
+			vm.updateLastModifiedAndChangeVersion(ctx)
+		}
+	}()
+
 	vm.apply(spec)
 
 	if spec.MemoryAllocation != nil {
@@ -574,6 +597,12 @@ func (vm *VirtualMachine) configure(ctx *Context, spec *types.VirtualMachineConf
 
 	if spec.VAppConfig != nil {
 		if err := vm.updateVAppProperty(spec.VAppConfig.GetVmConfigSpec()); err != nil {
+			return err
+		}
+	}
+
+	if spec.Crypto != nil {
+		if err := vm.updateCrypto(ctx, spec.Crypto); err != nil {
 			return err
 		}
 	}
@@ -1177,7 +1206,10 @@ func getDiskSize(disk *types.VirtualDisk) int64 {
 
 func changedDiskSize(oldDisk *types.VirtualDisk, newDiskSpec *types.VirtualDisk) (int64, bool) {
 	// capacity cannot be decreased
-	if newDiskSpec.CapacityInBytes < oldDisk.CapacityInBytes || newDiskSpec.CapacityInKB < oldDisk.CapacityInKB {
+	if newDiskSpec.CapacityInBytes > 0 && newDiskSpec.CapacityInBytes < oldDisk.CapacityInBytes {
+		return 0, false
+	}
+	if newDiskSpec.CapacityInKB > 0 && newDiskSpec.CapacityInKB < oldDisk.CapacityInKB {
 		return 0, false
 	}
 
@@ -1189,10 +1221,13 @@ func changedDiskSize(oldDisk *types.VirtualDisk, newDiskSpec *types.VirtualDisk)
 		return newDiskSpec.CapacityInBytes, true
 	}
 
-	// CapacityInBytes and CapacityInKB indicate different values
-	if newDiskSpec.CapacityInBytes != newDiskSpec.CapacityInKB*1024 {
-		return 0, false
+	// if both set, CapacityInBytes and CapacityInKB must be the same
+	if newDiskSpec.CapacityInBytes > 0 && newDiskSpec.CapacityInKB > 0 {
+		if newDiskSpec.CapacityInBytes != newDiskSpec.CapacityInKB*1024 {
+			return 0, false
+		}
 	}
+
 	return newDiskSpec.CapacityInBytes, true
 }
 
@@ -1247,10 +1282,26 @@ func (vm *VirtualMachine) configureDevice(
 	d := device.GetVirtualDevice()
 	var controller types.BaseVirtualController
 
+	key := d.Key
 	if d.Key <= 0 {
 		// Keys can't be negative; Key 0 is reserved
 		d.Key = devices.NewKey()
 		d.Key *= -1
+	}
+
+	// Update device controller's key reference
+	if key != d.Key {
+		if device := devices.FindByKey(d.ControllerKey); device != nil {
+			if c, ok := device.(types.BaseVirtualController); ok {
+				c := c.GetVirtualController()
+				for i := range c.Device {
+					if c.Device[i] == key {
+						c.Device[i] = d.Key
+						break
+					}
+				}
+			}
+		}
 	}
 
 	// Choose a unique key
@@ -1286,7 +1337,7 @@ func (vm *VirtualMachine) configureDevice(
 			}
 		}
 
-		ctx.Map.Update(vm, []types.PropertyChange{
+		ctx.Update(vm, []types.PropertyChange{
 			{Name: "summary.config.numEthernetCards", Val: vm.Summary.Config.NumEthernetCards + 1},
 			{Name: "network", Val: append(vm.Network, net)},
 		})
@@ -1337,6 +1388,13 @@ func (vm *VirtualMachine) configureDevice(
 
 		summary = fmt.Sprintf("%s KB", numberToString(x.CapacityInKB, ','))
 		switch b := d.Backing.(type) {
+		case *types.VirtualDiskSparseVer2BackingInfo:
+			// Sparse disk creation not supported in ESX
+			return &types.DeviceUnsupportedForVmPlatform{
+				InvalidDeviceSpec: types.InvalidDeviceSpec{
+					InvalidVmConfig: types.InvalidVmConfig{Property: "VirtualDeviceSpec.device.backing"},
+				},
+			}
 		case types.BaseVirtualDeviceFileBackingInfo:
 			info := b.GetVirtualDeviceFileBackingInfo()
 			var path object.DatastorePath
@@ -1359,7 +1417,7 @@ func (vm *VirtualMachine) configureDevice(
 				return err
 			}
 
-			ctx.Map.Update(vm, []types.PropertyChange{
+			ctx.Update(vm, []types.PropertyChange{
 				{Name: "summary.config.numVirtualDisks", Val: vm.Summary.Config.NumVirtualDisks + 1},
 			})
 
@@ -1498,7 +1556,7 @@ func (vm *VirtualMachine) removeDevice(ctx *Context, devices object.VirtualDevic
 					ctask.Wait()
 				}
 			}
-			ctx.Map.Update(vm, []types.PropertyChange{
+			ctx.Update(vm, []types.PropertyChange{
 				{Name: "summary.config.numVirtualDisks", Val: vm.Summary.Config.NumVirtualDisks - 1},
 			})
 
@@ -1523,7 +1581,7 @@ func (vm *VirtualMachine) removeDevice(ctx *Context, devices object.VirtualDevic
 
 			networks := vm.Network
 			RemoveReference(&networks, net)
-			ctx.Map.Update(vm, []types.PropertyChange{
+			ctx.Update(vm, []types.PropertyChange{
 				{Name: "summary.config.numEthernetCards", Val: vm.Summary.Config.NumEthernetCards - 1},
 				{Name: "network", Val: networks},
 			})
@@ -1572,7 +1630,181 @@ func (vm *VirtualMachine) genVmdkPath(p object.DatastorePath) (string, types.Bas
 	}
 }
 
+// Encrypt requires powered off VM with no snapshots.
+// Decrypt requires powered off VM.
+// Deep recrypt requires powered off VM with no snapshots.
+// Shallow recrypt works with VMs in any power state and even if snapshots are
+// present as long as it is a single chain and not a tree.
+func (vm *VirtualMachine) updateCrypto(
+	ctx *Context,
+	spec types.BaseCryptoSpec) types.BaseMethodFault {
+
+	const configKeyId = "config.keyId"
+
+	assertEncrypted := func() types.BaseMethodFault {
+		if vm.Config.KeyId == nil {
+			return newInvalidStateFault("vm is not encrypted")
+		}
+		return nil
+	}
+
+	assertPoweredOff := func() types.BaseMethodFault {
+		if vm.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOff {
+			return &types.InvalidPowerState{
+				ExistingState:  vm.Runtime.PowerState,
+				RequestedState: types.VirtualMachinePowerStatePoweredOff,
+			}
+		}
+		return nil
+	}
+
+	assertNoSnapshots := func(allowSingleChain bool) types.BaseMethodFault {
+		hasSnapshots := vm.Snapshot != nil && vm.Snapshot.CurrentSnapshot != nil
+		if !hasSnapshots {
+			return nil
+		}
+		if !allowSingleChain {
+			return newInvalidStateFault("vm has snapshots")
+		}
+		type node = types.VirtualMachineSnapshotTree
+		var isTreeFn func(nodes []node) types.BaseMethodFault
+		isTreeFn = func(nodes []node) types.BaseMethodFault {
+			switch len(nodes) {
+			case 0:
+				return nil
+			case 1:
+				return isTreeFn(nodes[0].ChildSnapshotList)
+			default:
+				return newInvalidStateFault("vm has snapshot tree")
+			}
+		}
+		return isTreeFn(vm.Snapshot.RootSnapshotList)
+	}
+
+	doRecrypt := func(newKeyID types.CryptoKeyId) types.BaseMethodFault {
+		if err := assertEncrypted(); err != nil {
+			return err
+		}
+
+		var providerID *types.KeyProviderId
+		if pid := newKeyID.ProviderId; pid != nil {
+			providerID = &types.KeyProviderId{
+				Id: pid.Id,
+			}
+		}
+
+		keyID := newKeyID.KeyId
+		if providerID == nil {
+			if p, k := getDefaultProvider(ctx, vm, true); p != "" && k != "" {
+				providerID = &types.KeyProviderId{
+					Id: p,
+				}
+				keyID = k
+			}
+		} else if keyID == "" {
+			keyID = generateKeyForProvider(ctx, providerID.Id)
+		}
+
+		ctx.Update(vm, []types.PropertyChange{
+			{
+				Name: configKeyId,
+				Op:   types.PropertyChangeOpAssign,
+				Val: &types.CryptoKeyId{
+					KeyId:      keyID,
+					ProviderId: providerID,
+				},
+			},
+		})
+		return nil
+	}
+
+	switch tspec := spec.(type) {
+	case *types.CryptoSpecDecrypt:
+		if err := assertPoweredOff(); err != nil {
+			return err
+		}
+		if err := assertNoSnapshots(false); err != nil {
+			return err
+		}
+		if err := assertEncrypted(); err != nil {
+			return err
+		}
+		ctx.Update(vm, []types.PropertyChange{
+			{
+				Name: configKeyId,
+				Op:   types.PropertyChangeOpRemove,
+				Val:  nil,
+			},
+		})
+
+	case *types.CryptoSpecDeepRecrypt:
+		if err := assertPoweredOff(); err != nil {
+			return err
+		}
+		if err := assertNoSnapshots(false); err != nil {
+			return err
+		}
+		return doRecrypt(tspec.NewKeyId)
+
+	case *types.CryptoSpecShallowRecrypt:
+		if err := assertNoSnapshots(true); err != nil {
+			return err
+		}
+		return doRecrypt(tspec.NewKeyId)
+
+	case *types.CryptoSpecEncrypt:
+		if err := assertPoweredOff(); err != nil {
+			return err
+		}
+		if err := assertNoSnapshots(false); err != nil {
+			return err
+		}
+		if vm.Config.KeyId != nil {
+			return newInvalidStateFault("vm is already encrypted")
+		}
+
+		var providerID *types.KeyProviderId
+		if pid := tspec.CryptoKeyId.ProviderId; pid != nil {
+			providerID = &types.KeyProviderId{
+				Id: pid.Id,
+			}
+		}
+
+		keyID := tspec.CryptoKeyId.KeyId
+		if providerID == nil {
+			if p, k := getDefaultProvider(ctx, vm, true); p != "" && k != "" {
+				providerID = &types.KeyProviderId{
+					Id: p,
+				}
+				keyID = k
+			}
+		} else if keyID == "" {
+			keyID = generateKeyForProvider(ctx, providerID.Id)
+		}
+
+		ctx.Update(vm, []types.PropertyChange{
+			{
+				Name: configKeyId,
+				Op:   types.PropertyChangeOpAssign,
+				Val: &types.CryptoKeyId{
+					KeyId:      keyID,
+					ProviderId: providerID,
+				},
+			},
+		})
+
+	case *types.CryptoSpecNoOp,
+		*types.CryptoSpecRegister:
+
+		// No-op
+	}
+
+	return nil
+}
+
 func (vm *VirtualMachine) configureDevices(ctx *Context, spec *types.VirtualMachineConfigSpec) types.BaseMethodFault {
+	var changes []types.PropertyChange
+	field := mo.Field{Path: "config.hardware.device"}
 	devices := object.VirtualDeviceList(vm.Config.Hardware.Device)
 
 	var err types.BaseMethodFault
@@ -1580,6 +1812,7 @@ func (vm *VirtualMachine) configureDevices(ctx *Context, spec *types.VirtualMach
 		dspec := change.GetVirtualDeviceConfigSpec()
 		device := dspec.Device.GetVirtualDevice()
 		invalid := &types.InvalidDeviceSpec{DeviceIndex: int32(i)}
+		change := types.PropertyChange{}
 
 		switch dspec.FileOperation {
 		case types.VirtualDeviceConfigSpecFileOperationCreate:
@@ -1593,6 +1826,8 @@ func (vm *VirtualMachine) configureDevices(ctx *Context, spec *types.VirtualMach
 
 		switch dspec.Operation {
 		case types.VirtualDeviceConfigSpecOperationAdd:
+			change.Op = types.PropertyChangeOpAdd
+
 			if devices.FindByKey(device.Key) != nil && device.ControllerKey == 0 {
 				// Note: real ESX does not allow adding base controllers (ControllerKey = 0)
 				// after VM is created (returns success but device is not added).
@@ -1618,6 +1853,7 @@ func (vm *VirtualMachine) configureDevices(ctx *Context, spec *types.VirtualMach
 			}
 
 			devices = append(devices, dspec.Device)
+			change.Val = dspec.Device
 			if key != device.Key {
 				// Update ControllerKey refs
 				for i := range spec.DeviceChange {
@@ -1645,14 +1881,22 @@ func (vm *VirtualMachine) configureDevices(ctx *Context, spec *types.VirtualMach
 			}
 
 			devices = append(devices, dspec.Device)
+			change.Val = dspec.Device
 		case types.VirtualDeviceConfigSpecOperationRemove:
+			change.Op = types.PropertyChangeOpRemove
+
 			devices = vm.removeDevice(ctx, devices, dspec)
 		}
+
+		field.Key = device.Key
+		change.Name = field.String()
+		changes = append(changes, change)
 	}
 
-	ctx.Map.Update(vm, []types.PropertyChange{
-		{Name: "config.hardware.device", Val: []types.BaseVirtualDevice(devices)},
-	})
+	if len(changes) != 0 {
+		change := types.PropertyChange{Name: field.Path, Val: []types.BaseVirtualDevice(devices)}
+		ctx.Update(vm, append(changes, change))
+	}
 
 	err = vm.updateDiskLayouts()
 	if err != nil {
@@ -1750,7 +1994,7 @@ func (c *powerVMTask) Run(task *Task) (types.AnyType, types.BaseMethodFault) {
 		}
 	}
 
-	c.ctx.Map.Update(c.VirtualMachine, []types.PropertyChange{
+	c.ctx.Update(c.VirtualMachine, []types.PropertyChange{
 		{Name: "runtime.powerState", Val: c.state},
 		{Name: "summary.runtime.powerState", Val: c.state},
 		{Name: "summary.runtime.bootTime", Val: boot},
@@ -1877,11 +2121,122 @@ func (vm *VirtualMachine) UpgradeVMTask(ctx *Context, req *types.UpgradeVM_Task)
 	body := &methods.UpgradeVM_TaskBody{}
 
 	task := CreateTask(vm, "upgradeVm", func(t *Task) (types.AnyType, types.BaseMethodFault) {
-		if vm.Config.Version != esx.HardwareVersion {
-			ctx.Map.Update(vm, []types.PropertyChange{{
-				Name: "config.version", Val: esx.HardwareVersion,
-			}})
+
+		// InvalidPowerState
+		//
+		// 1. Is VM's power state anything other than powered off?
+		if vm.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOff {
+			return nil, &types.InvalidPowerStateFault{
+				ExistingState:  vm.Runtime.PowerState,
+				RequestedState: types.VirtualMachinePowerStatePoweredOff,
+			}
 		}
+
+		// InvalidState
+		//
+		// 1. Is host on which VM is scheduled in maintenance mode?
+		// 2. Is VM a template?
+		// 3. Is VM already the latest hardware version?
+		var (
+			ebRef                     *types.ManagedObjectReference
+			latestHardwareVersion     string
+			hostRef                   = vm.Runtime.Host
+			supportedHardwareVersions = map[string]struct{}{}
+			vmHardwareVersionString   = vm.Config.Version
+		)
+		if hostRef != nil {
+			var hostInMaintenanceMode bool
+			ctx.WithLock(*hostRef, func() {
+				host := ctx.Map.Get(*hostRef).(*HostSystem)
+				hostInMaintenanceMode = host.Runtime.InMaintenanceMode
+				switch host.Parent.Type {
+				case "ClusterComputeResource":
+					obj := ctx.Map.Get(*host.Parent).(*ClusterComputeResource)
+					ebRef = obj.EnvironmentBrowser
+				case "ComputeResource":
+					obj := ctx.Map.Get(*host.Parent).(*mo.ComputeResource)
+					ebRef = obj.EnvironmentBrowser
+				}
+			})
+			if hostInMaintenanceMode {
+				return nil, newInvalidStateFault("%s in maintenance mode", hostRef.Value)
+			}
+		}
+		if vm.Config.Template {
+			return nil, newInvalidStateFault("%s is template", vm.Reference().Value)
+		}
+		if ebRef != nil {
+			ctx.WithLock(*ebRef, func() {
+				eb := ctx.Map.Get(*ebRef).(*EnvironmentBrowser)
+				for i := range eb.QueryConfigOptionDescriptorResponse.Returnval {
+					cod := eb.QueryConfigOptionDescriptorResponse.Returnval[i]
+					for j := range cod.Host {
+						if cod.Host[j].Value == hostRef.Value {
+							supportedHardwareVersions[cod.Key] = struct{}{}
+						}
+						if latestHardwareVersion == "" {
+							if def := cod.DefaultConfigOption; def != nil && *def {
+								latestHardwareVersion = cod.Key
+							}
+						}
+					}
+				}
+			})
+		}
+
+		if latestHardwareVersion == "" {
+			latestHardwareVersion = esx.HardwareVersion
+		}
+		if vmHardwareVersionString == latestHardwareVersion {
+			return nil, newInvalidStateFault("%s is latest version", vm.Reference().Value)
+		}
+		if req.Version == "" {
+			req.Version = latestHardwareVersion
+		}
+
+		// NotSupported
+		targetVersion, _ := types.ParseHardwareVersion(req.Version)
+		if targetVersion.IsValid() {
+			req.Version = targetVersion.String()
+		}
+		if _, ok := supportedHardwareVersions[req.Version]; !ok {
+			msg := fmt.Sprintf("%s not supported", req.Version)
+			return nil, &types.NotSupported{
+				RuntimeFault: types.RuntimeFault{
+					MethodFault: types.MethodFault{
+						FaultCause: &types.LocalizedMethodFault{
+							Fault: &types.SystemErrorFault{
+								Reason: msg,
+							},
+							LocalizedMessage: msg,
+						},
+					},
+				},
+			}
+		}
+
+		// AlreadyUpgraded
+		vmHardwareVersion, _ := types.ParseHardwareVersion(vmHardwareVersionString)
+		if targetVersion.IsValid() && vmHardwareVersion.IsValid() &&
+			targetVersion <= vmHardwareVersion {
+
+			return nil, &types.AlreadyUpgradedFault{}
+		}
+
+		// InvalidArgument
+		if targetVersion < types.VMX3 {
+			return nil, &types.InvalidArgument{}
+		}
+
+		ctx.Update(vm, []types.PropertyChange{
+			{
+				Name: "config.version", Val: targetVersion.String(),
+			},
+			{
+				Name: "summary.config.hwVersion", Val: targetVersion.String(),
+			},
+		})
+
 		return nil, nil
 	})
 
@@ -1998,6 +2353,10 @@ func (vm *VirtualMachine) cloneDevice() []types.BaseVirtualDevice {
 	return dst.VirtualDevice
 }
 
+func (vm *VirtualMachine) worldID() int {
+	return int(binary.BigEndian.Uint32(vm.uid[0:4]))
+}
+
 func (vm *VirtualMachine) CloneVMTask(ctx *Context, req *types.CloneVM_Task) soap.HasFault {
 	pool := req.Spec.Location.Pool
 	if pool == nil {
@@ -2050,10 +2409,6 @@ func (vm *VirtualMachine) CloneVMTask(ctx *Context, req *types.CloneVM_Task) soa
 				VmPathName: vmx.String(),
 			},
 		}
-		if req.Spec.Config != nil {
-			config.ExtraConfig = req.Spec.Config.ExtraConfig
-			config.InstanceUuid = req.Spec.Config.InstanceUuid
-		}
 
 		// Copying hardware properties
 		config.NumCPUs = vm.Config.Hardware.NumCPU
@@ -2088,6 +2443,14 @@ func (vm *VirtualMachine) CloneVMTask(ctx *Context, req *types.CloneVM_Task) soa
 				Device:        device,
 				FileOperation: fop,
 			})
+		}
+
+		if dst, src := config, req.Spec.Config; src != nil {
+			dst.ExtraConfig = src.ExtraConfig
+			copyNonEmptyValue(&dst.Uuid, &src.Uuid)
+			copyNonEmptyValue(&dst.InstanceUuid, &src.InstanceUuid)
+			copyNonEmptyValue(&dst.NumCPUs, &src.NumCPUs)
+			copyNonEmptyValue(&dst.MemoryMB, &src.MemoryMB)
 		}
 
 		res := ctx.Map.Get(req.Folder).(vmFolder).CreateVMTask(ctx, &types.CreateVM_Task{
@@ -2130,6 +2493,17 @@ func (vm *VirtualMachine) CloneVMTask(ctx *Context, req *types.CloneVM_Task) soa
 	}
 }
 
+func copyNonEmptyValue[T comparable](dst, src *T) {
+	if dst == nil || src == nil {
+		return
+	}
+	var t T
+	if *src == t {
+		return
+	}
+	*dst = *src
+}
+
 func (vm *VirtualMachine) RelocateVMTask(ctx *Context, req *types.RelocateVM_Task) soap.HasFault {
 	task := CreateTask(vm, "relocateVm", func(t *Task) (types.AnyType, types.BaseMethodFault) {
 		var changes []types.PropertyChange
@@ -2162,9 +2536,18 @@ func (vm *VirtualMachine) RelocateVMTask(ctx *Context, req *types.RelocateVM_Tas
 
 		if ref := req.Spec.Folder; ref != nil {
 			folder := ctx.Map.Get(*ref).(*Folder)
-			folder.MoveIntoFolderTask(ctx, &types.MoveIntoFolder_Task{
-				List: []types.ManagedObjectReference{vm.Self},
+			ctx.WithLock(folder, func() {
+				res := folder.MoveIntoFolderTask(ctx, &types.MoveIntoFolder_Task{
+					List: []types.ManagedObjectReference{vm.Self},
+				}).(*methods.MoveIntoFolder_TaskBody).Res
+				// Wait for task to complete while we hold the Folder lock
+				ctx.Map.Get(res.Returnval).(*Task).Wait()
 			})
+		}
+
+		cspec := &types.VirtualMachineConfigSpec{DeviceChange: req.Spec.DeviceChange}
+		if err := vm.configureDevices(ctx, cspec); err != nil {
+			return nil, err
 		}
 
 		ctx.postEvent(&types.VmMigratedEvent{
@@ -2174,7 +2557,7 @@ func (vm *VirtualMachine) RelocateVMTask(ctx *Context, req *types.RelocateVM_Tas
 			SourceDatastore:  ctx.Map.Get(vm.Datastore[0]).(*Datastore).eventArgument(),
 		})
 
-		ctx.Map.Update(vm, changes)
+		ctx.Update(vm, changes)
 
 		return nil, nil
 	})
@@ -2265,7 +2648,7 @@ func (vm *VirtualMachine) customize(ctx *Context) {
 	}
 
 	vm.imc = nil
-	ctx.Map.Update(vm, changes)
+	ctx.Update(vm, changes)
 	ctx.postEvent(&types.CustomizationSucceeded{CustomizationEvent: event})
 }
 
@@ -2353,7 +2736,7 @@ func (vm *VirtualMachine) CreateSnapshotTask(ctx *Context, req *types.CreateSnap
 		snapshot.createSnapshotFiles()
 
 		changes = append(changes, types.PropertyChange{Name: "snapshot.currentSnapshot", Val: snapshot.Self})
-		ctx.Map.Update(vm, changes)
+		ctx.Update(vm, changes)
 
 		return snapshot.Self, nil
 	})
@@ -2395,7 +2778,7 @@ func (vm *VirtualMachine) RemoveAllSnapshotsTask(ctx *Context, req *types.Remove
 
 		refs := allSnapshotsInTree(vm.Snapshot.RootSnapshotList)
 
-		ctx.Map.Update(vm, []types.PropertyChange{
+		ctx.Update(vm, []types.PropertyChange{
 			{Name: "snapshot", Val: nil},
 			{Name: "rootSnapshot", Val: nil},
 		})
@@ -2410,6 +2793,63 @@ func (vm *VirtualMachine) RemoveAllSnapshotsTask(ctx *Context, req *types.Remove
 
 	return &methods.RemoveAllSnapshots_TaskBody{
 		Res: &types.RemoveAllSnapshots_TaskResponse{
+			Returnval: task.Run(ctx),
+		},
+	}
+}
+
+func (vm *VirtualMachine) fcd(ctx *Context, ds types.ManagedObjectReference, id types.ID) *VStorageObject {
+	m := ctx.Map.Get(*ctx.Map.content().VStorageObjectManager).(*VcenterVStorageObjectManager)
+	if ds.Value != "" {
+		return m.objects[ds][id]
+	}
+	for _, set := range m.objects {
+		for key, val := range set {
+			if key == id {
+				return val
+			}
+		}
+	}
+	return nil
+}
+
+func (vm *VirtualMachine) AttachDiskTask(ctx *Context, req *types.AttachDisk_Task) soap.HasFault {
+	task := CreateTask(vm, "attachDisk", func(t *Task) (types.AnyType, types.BaseMethodFault) {
+		fcd := vm.fcd(ctx, req.Datastore, req.DiskId)
+		if fcd == nil {
+			return nil, new(types.InvalidArgument)
+		}
+
+		fcd.Config.ConsumerId = []types.ID{{Id: vm.Config.Uuid}}
+
+		// TODO: add device
+
+		return nil, nil
+	})
+
+	return &methods.AttachDisk_TaskBody{
+		Res: &types.AttachDisk_TaskResponse{
+			Returnval: task.Run(ctx),
+		},
+	}
+}
+
+func (vm *VirtualMachine) DetachDiskTask(ctx *Context, req *types.DetachDisk_Task) soap.HasFault {
+	task := CreateTask(vm, "detachDisk", func(t *Task) (types.AnyType, types.BaseMethodFault) {
+		fcd := vm.fcd(ctx, types.ManagedObjectReference{}, req.DiskId)
+		if fcd == nil {
+			return nil, new(types.InvalidArgument)
+		}
+
+		fcd.Config.ConsumerId = nil
+
+		// TODO: remove device
+
+		return nil, nil
+	})
+
+	return &methods.DetachDisk_TaskBody{
+		Res: &types.DetachDisk_TaskResponse{
 			Returnval: task.Run(ctx),
 		},
 	}
@@ -2433,7 +2873,7 @@ func (vm *VirtualMachine) ShutdownGuest(ctx *Context, c *types.ShutdownGuest) so
 	_ = CreateTask(vm, "shutdownGuest", func(*Task) (types.AnyType, types.BaseMethodFault) {
 		vm.svm.stop(ctx)
 
-		ctx.Map.Update(vm, []types.PropertyChange{
+		ctx.Update(vm, []types.PropertyChange{
 			{Name: "runtime.powerState", Val: types.VirtualMachinePowerStatePoweredOff},
 			{Name: "summary.runtime.powerState", Val: types.VirtualMachinePowerStatePoweredOff},
 		})
@@ -2466,7 +2906,7 @@ func (vm *VirtualMachine) StandbyGuest(ctx *Context, c *types.StandbyGuest) soap
 	_ = CreateTask(vm, "standbyGuest", func(*Task) (types.AnyType, types.BaseMethodFault) {
 		vm.svm.pause(ctx)
 
-		ctx.Map.Update(vm, []types.PropertyChange{
+		ctx.Update(vm, []types.PropertyChange{
 			{Name: "runtime.powerState", Val: types.VirtualMachinePowerStateSuspended},
 			{Name: "summary.runtime.powerState", Val: types.VirtualMachinePowerStateSuspended},
 		})
@@ -2637,4 +3077,20 @@ func changeTrackingSupported(spec *types.VirtualMachineConfigSpec) bool {
 		}
 	}
 	return false
+}
+
+func (vm *VirtualMachine) updateLastModifiedAndChangeVersion(ctx *Context) {
+	modified := time.Now()
+	ctx.Update(vm, []types.PropertyChange{
+		{
+			Name: "config.changeVersion",
+			Val:  fmt.Sprintf("%d", modified.UnixNano()),
+			Op:   types.PropertyChangeOpAssign,
+		},
+		{
+			Name: "config.modified",
+			Val:  modified,
+			Op:   types.PropertyChangeOpAssign,
+		},
+	})
 }

@@ -25,7 +25,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
 )
 
 // Cloud alias for cloud.Cloud interface.
@@ -46,6 +45,7 @@ type ReconcilerWithResult interface {
 // Client is an interface which can get cloud client.
 type Client interface {
 	Cloud() Cloud
+	NetworkCloud() Cloud
 }
 
 // ClusterGetter is an interface which can get cluster information.
@@ -56,6 +56,8 @@ type ClusterGetter interface {
 	Name() string
 	Namespace() string
 	NetworkName() string
+	NetworkProject() string
+	IsSharedVpc() bool
 	Network() *infrav1.Network
 	AdditionalLabels() infrav1.Labels
 	FailureDomains() clusterv1.FailureDomains
@@ -96,7 +98,7 @@ type MachineSetter interface {
 	SetProviderID()
 	SetInstanceStatus(v infrav1.InstanceStatus)
 	SetFailureMessage(v error)
-	SetFailureReason(v capierrors.MachineStatusError)
+	SetFailureReason(v string)
 	SetAnnotation(key, value string)
 	SetAddresses(addressList []corev1.NodeAddress)
 }

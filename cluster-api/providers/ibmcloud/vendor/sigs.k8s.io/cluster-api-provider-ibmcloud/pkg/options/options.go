@@ -20,11 +20,6 @@ package options
 type ProviderIDFormatType string
 
 const (
-	// ProviderIDFormatV1 will set provider id to machine as follows
-	// For VPC machines: ibmvpc://<cluster_name>/<vm_hostname>
-	// For Power VS machines: ibmpowervs://<cluster_name>/<vm_hostname>
-	ProviderIDFormatV1 ProviderIDFormatType = "v1"
-
 	// ProviderIDFormatV2 will set provider id to machine as follows
 	// For VPC machines: ibm://<account_id>///<cluster_id>/<vpc_machine_id>
 	// For Power VS machines: ibmpowervs://<region>/<zone>/<service_instance_id>/<powervs_machine_id>

@@ -1,6 +1,8 @@
 package common
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -19,7 +21,7 @@ func (a *InfraEnvID) Dependencies() []asset.Asset {
 }
 
 // Generate generates the InfraEnvID for agent installer.
-func (a *InfraEnvID) Generate(dependencies asset.Parents) error {
+func (a *InfraEnvID) Generate(_ context.Context, dependencies asset.Parents) error {
 	a.ID = uuid.New().String()
 	return nil
 }

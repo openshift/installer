@@ -27,7 +27,7 @@ type StorageTier struct {
 	Name string `json:"name,omitempty"`
 
 	// State of the storage tier (active or inactive)
-	// Enum: [active inactive]
+	// Enum: ["active","inactive"]
 	State *string `json:"state,omitempty"`
 }
 

@@ -15,9 +15,16 @@
 _artifacts/
 
 # E2E test templates
-test/e2e/data/infrastructure-vsphere/**/cluster-template*.yaml
-test/e2e/data/infrastructure-vsphere/main/**/clusterclass-quick-start.yaml
-test/e2e/data/infrastructure-vsphere/*/clusterclass-quick-start.yaml
+#!test/e2e/data/infrastructure-vsphere-govmomi/v*/base/cluster-template.yaml
+test/e2e/data/infrastructure-vsphere-govmomi/main/**/clusterclass-quick-start.yaml
+test/e2e/data/infrastructure-vsphere-govmomi/main/**/cluster-template*.yaml
+test/e2e/data/infrastructure-vsphere-govmomi/*/cluster-template*.yaml
+test/e2e/data/infrastructure-vsphere-govmomi/*/clusterclass-quick-start*.yaml
+
+test/e2e/data/infrastructure-vsphere-supervisor/main/**/clusterclass-quick-start-supervisor.yaml
+test/e2e/data/infrastructure-vsphere-supervisor/main/**/cluster-template*.yaml
+test/e2e/data/infrastructure-vsphere-supervisor/*/cluster-template*.yaml
+test/e2e/data/infrastructure-vsphere-supervisor/*/clusterclass-quick-start-supervisor*.yaml
 
 # env vars file used in getting-started.md and manifests generation
 envvars.txt

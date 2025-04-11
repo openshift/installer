@@ -1,10 +1,11 @@
 run:
   timeout: 10m
-  go: "1.21"
+  go: "1.23"
   skip-files:
     - "zz_generated.*\\.go$"
     - "_conversion\\.go$"
     - "vendored_cluster_api\\.go$"
+    - "^internal/apis/topology/v1alpha1"
   allow-parallel-runners: true
 
 linters:
@@ -56,6 +57,10 @@ linters:
   - whitespace
 
 linters-settings:
+  gosec:
+    excludes:
+      # integer overflow conversion int -> int32
+      - G115
   gci:
     sections:
       - standard # Standard section: captures all standard packages.
@@ -120,9 +125,12 @@ linters-settings:
       - pkg: sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1
         alias: vmwarev1
       # VMware Operator
-      - pkg: "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
-        alias: vmoprv1 
-      # CABPK
+      - pkg: "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
+        alias: vmoprv1
+      # NSX Operator
+      - pkg: "github.com/vmware-tanzu/nsx-operator/pkg/apis/vpc/v1alpha1"
+        alias: nsxvpcv1
+    # CABPK
       - pkg: sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1
         alias: bootstrapv1
       # KCP
@@ -137,6 +145,9 @@ linters-settings:
       # CAPI exp addons
       - pkg: sigs.k8s.io/cluster-api/exp/addons/api/v1beta1
         alias: addonsv1
+      # CAPI IPAM 
+      - pkg: sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1
+        alias: ipamv1
   nolintlint:
     allow-unused: false
     allow-leading-space: false
@@ -188,12 +199,26 @@ issues:
   exclude-rules:
   # Specific exclude rules for deprecated items that are still part of the codebase. These
   # should be removed as the referenced deprecated item is removed from the project.
+  # Deprecations for AutoConfigure
   - linters:
     - staticcheck
-    text: "SA1019: .* is deprecated: This package will be removed in one of the next releases."
+    text: "SA1019: .*AutoConfigure is deprecated"
+  # Deprecations for PreferredAPIServerCIDR
   - linters:
     - staticcheck
-    text: "SA1019: .* is deprecated: This field is going to be removed in a future release."
+    text: "SA1019: .*PreferredAPIServerCIDR is deprecated"
+  # Deprecations for FailureReason
+  - linters:
+    - staticcheck
+    text: "SA1019: \"sigs.k8s.io/cluster-api/errors\" is deprecated:"
+  # Deprecations for old api groups
+  - linters:
+    - staticcheck
+    text: "SA1019: \"sigs.k8s.io/cluster-api-provider-vsphere/apis/(v1alpha3|v1alpha4)\" is deprecated: This package will be removed in one of the next releases."
+  # Deprecations for Cluster API's predicates.ClusterUnpausedAndInfrastructureReady
+  - linters:
+    - staticcheck
+    text: "SA1019: predicates.ClusterUnpausedAndInfrastructureReady is deprecated: This predicate is deprecated and will be removed in a future version, use ClusterPausedTransitionsOrInfrastructureReady instead."
   - linters:
     - revive
     text: "exported: exported method .*\\.(Reconcile|SetupWithManager|SetupWebhookWithManager) should have comment or be unexported"
@@ -229,6 +254,11 @@ issues:
     - revive
     - stylecheck
     path: test/e2e/.*.go
+    text: should not use dot imports
+  - linters:
+      - revive
+      - stylecheck
+    path: test/framework/.*.go
     text: should not use dot imports
   - linters:
     - revive
@@ -298,3 +328,6 @@ issues:
     - stylecheck
     text: ST1021|ST1020
     path: ^(apis/(v1alpha3|v1alpha4)\/.*)\.go$
+  - linters:
+      - govet
+    text: "non-constant format string in call to sigs\\.k8s\\.io\\/cluster-api\\/util\\/conditions\\."

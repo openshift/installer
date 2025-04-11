@@ -45,6 +45,7 @@ func ResourceIBMAppDomainPrivate() *schema.Resource {
 				Set:      schema.HashString,
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 

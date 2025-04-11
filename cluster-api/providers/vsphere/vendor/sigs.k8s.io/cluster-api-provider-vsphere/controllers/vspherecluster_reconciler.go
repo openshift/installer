@@ -91,7 +91,7 @@ func (r *clusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 	// Create the patch helper.
 	patchHelper, err := patch.NewHelper(vsphereCluster, r.Client)
 	if err != nil {
-		return reconcile.Result{}, pkgerrors.Wrap(err, "failed to initialize patch helper")
+		return reconcile.Result{}, err
 	}
 
 	// Create the cluster context for this request.
@@ -165,14 +165,14 @@ func (r *clusterReconciler) reconcileDelete(ctx context.Context, clusterCtx *cap
 		if ctrlutil.RemoveFinalizer(secret, infrav1.SecretIdentitySetFinalizer) {
 			log.Info(fmt.Sprintf("Removing finalizer %s", infrav1.SecretIdentitySetFinalizer), "Secret", klog.KObj(secret))
 			if err := r.Client.Update(ctx, secret); err != nil {
-				return reconcile.Result{}, pkgerrors.Wrapf(err, fmt.Sprintf("failed to update Secret %s", klog.KObj(secret)))
+				return reconcile.Result{}, pkgerrors.Wrapf(err, "failed to update Secret %s", klog.KObj(secret))
 			}
 		}
 
 		if secret.DeletionTimestamp.IsZero() {
 			log.Info("Deleting Secret", "Secret", klog.KObj(secret))
 			if err := r.Client.Delete(ctx, secret); err != nil {
-				return reconcile.Result{}, pkgerrors.Wrapf(err, fmt.Sprintf("failed to delete Secret %s", klog.KObj(secret)))
+				return reconcile.Result{}, pkgerrors.Wrapf(err, "failed to delete Secret %s", klog.KObj(secret))
 			}
 		}
 	}
@@ -264,22 +264,14 @@ func (r *clusterReconciler) reconcileIdentitySecret(ctx context.Context, cluster
 	if !ctrlutil.ContainsFinalizer(secret, infrav1.SecretIdentitySetFinalizer) {
 		ctrlutil.AddFinalizer(secret, infrav1.SecretIdentitySetFinalizer)
 	}
-	err = helper.Patch(ctx, secret)
-	if err != nil {
-		return pkgerrors.Wrapf(err, "Failed to patch secret %s", klog.KObj(secret))
-	}
 
-	return nil
+	return helper.Patch(ctx, secret)
 }
 
 func (r *clusterReconciler) reconcileVCenterConnectivity(ctx context.Context, clusterCtx *capvcontext.ClusterContext) (*session.Session, error) {
 	params := session.NewParams().
 		WithServer(clusterCtx.VSphereCluster.Spec.Server).
-		WithThumbprint(clusterCtx.VSphereCluster.Spec.Thumbprint).
-		WithFeatures(session.Feature{
-			EnableKeepAlive:   r.ControllerManagerContext.EnableKeepAlive,
-			KeepAliveDuration: r.ControllerManagerContext.KeepAliveDuration,
-		})
+		WithThumbprint(clusterCtx.VSphereCluster.Spec.Thumbprint)
 
 	if clusterCtx.VSphereCluster.Spec.IdentityRef != nil {
 		creds, err := identity.GetCredentials(ctx, r.Client, clusterCtx.VSphereCluster, r.ControllerManagerContext.Namespace)
@@ -367,7 +359,7 @@ func (r *clusterReconciler) reconcileDeploymentZones(ctx context.Context, cluste
 }
 
 func (r *clusterReconciler) reconcileClusterModules(ctx context.Context, clusterCtx *capvcontext.ClusterContext) (reconcile.Result, error) {
-	if feature.Gates.Enabled(feature.NodeAntiAffinity) {
+	if feature.Gates.Enabled(feature.NodeAntiAffinity) && !clusterCtx.VSphereCluster.Spec.DisableClusterModule {
 		return r.clusterModuleReconciler.Reconcile(ctx, clusterCtx)
 	}
 	return reconcile.Result{}, nil

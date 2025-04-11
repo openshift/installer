@@ -4,6 +4,10 @@ import (
 	"bytes"
 	"strings"
 	"text/template"
+
+	"github.com/sirupsen/logrus"
+
+	configv1 "github.com/openshift/api/config/v1"
 )
 
 // https://github.com/kubernetes/kubernetes/blob/368ee4bb8ee7a0c18431cd87ee49f0c890aa53e5/staging/src/k8s.io/legacy-cloud-providers/gce/gce.go#L188
@@ -31,14 +35,40 @@ type provider struct {
 	G2VPCName                string `gcfg:"g2VpcName"`
 	G2WorkerServiceAccountID string `gcfg:"g2workerServiceAccountID"`
 	G2VPCSubnetNames         string `gcfg:"g2VpcSubnetNames"`
+	G2EndpointOverride       string `gcfg:"g2EndpointOverride"`
 	PowerVSCloudInstanceID   string `gcfg:"powerVSCloudInstanceID"`
 	PowerVSCloudInstanceName string `gcfg:"powerVSCloudInstanceName"`
 	PowerVSRegion            string `gcfg:"powerVSRegion"`
 	PowerVSZone              string `gcfg:"powerVSZone"`
+	IamEndpointOverride      string `gcfg:"iamEndpointOverride"`
+	PowerVSEndpointOverride  string `gcfg:"powerVSEndpointOverride"`
+	RcEndpointOverride       string `gcfg:"rcEndpointOverride"`
+	RmEndpointOverride       string `gcfg:"rmEndpointOverride"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBM Power VS platform.
-func CloudProviderConfig(infraID string, accountID string, vpcName string, region string, resourceGroupName string, subnets []string, cloudInstGUID string, cloudInstName string, pvsRegion string, pvsZone string) (string, error) {
+func CloudProviderConfig(infraID string, accountID string, vpcName string, region string, resourceGroupName string, subnets []string, cloudInstGUID string, cloudInstName string, pvsRegion string, pvsZone string, endpointOverrides []configv1.PowerVSServiceEndpoint) (string, error) {
+	iamEndpointOverride := ""
+	rcEndpointOverride := ""
+	powerVSEndpointOverride := ""
+	vpcEndpointOverride := ""
+	rmEndpointOverride := ""
+	for _, endpoint := range endpointOverrides {
+		switch endpoint.Name {
+		case string(configv1.IBMCloudServiceIAM):
+			iamEndpointOverride = endpoint.URL
+		case string(configv1.IBMCloudServiceResourceController):
+			rcEndpointOverride = endpoint.URL
+		case string(configv1.IBMCloudServiceResourceManager):
+			rmEndpointOverride = endpoint.URL
+		case "Power": // FIXME configv1.IBMCloudServicePower?
+			powerVSEndpointOverride = endpoint.URL
+		case string(configv1.IBMCloudServiceVPC):
+			vpcEndpointOverride = endpoint.URL
+		default:
+			logrus.Debugf("Ignoring unrecognized endpoint override for cloud provider config: %s", endpoint.Name)
+		}
+	}
 	config := &config{
 		Global: global{
 			Version: "1.1.0",
@@ -60,6 +90,11 @@ func CloudProviderConfig(infraID string, accountID string, vpcName string, regio
 			PowerVSCloudInstanceName: cloudInstName,
 			PowerVSRegion:            pvsRegion,
 			PowerVSZone:              pvsZone,
+			G2EndpointOverride:       vpcEndpointOverride,
+			IamEndpointOverride:      iamEndpointOverride,
+			PowerVSEndpointOverride:  powerVSEndpointOverride,
+			RcEndpointOverride:       rcEndpointOverride,
+			RmEndpointOverride:       rmEndpointOverride,
 		},
 	}
 	buf := &bytes.Buffer{}
@@ -88,4 +123,9 @@ powerVSCloudInstanceID = {{.Provider.PowerVSCloudInstanceID}}
 powerVSCloudInstanceName = {{.Provider.PowerVSCloudInstanceName}}
 powerVSRegion = {{.Provider.PowerVSRegion}}
 powerVSZone = {{.Provider.PowerVSZone}}
+g2EndpointOverride = {{.Provider.G2EndpointOverride}}
+iamEndpointOverride = {{.Provider.IamEndpointOverride}}
+powerVSEndpointOverride = {{.Provider.PowerVSEndpointOverride}}
+rcEndpointOverride = {{.Provider.RcEndpointOverride}}
+rmEndpointOverride = {{.Provider.RmEndpointOverride}}
 `

@@ -28,7 +28,7 @@ type PvmInstanceDeployment struct {
 
 	// Processor mode (dedicated, shared, capped)
 	// Required: true
-	// Enum: [dedicated shared capped]
+	// Enum: ["dedicated","shared","capped"]
 	ProcessorMode *string `json:"processorMode"`
 
 	// Type of Deployment [SAP-RISE, EPIC]

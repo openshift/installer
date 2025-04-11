@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
+ */
 
 package mqcloud
 
@@ -27,6 +31,11 @@ func ResourceIbmMqcloudQueueManager() *schema.Resource {
 		UpdateContext: resourceIbmMqcloudQueueManagerUpdate,
 		DeleteContext: resourceIbmMqcloudQueueManagerDelete,
 		Importer:      &schema.ResourceImporter{},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(15 * time.Minute),
+			Update: schema.DefaultTimeout(5 * time.Minute),
+			Delete: schema.DefaultTimeout(5 * time.Minute),
+		},
 
 		Schema: map[string]*schema.Schema{
 			"service_instance_guid": {
@@ -34,7 +43,7 @@ func ResourceIbmMqcloudQueueManager() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_mqcloud_queue_manager", "service_instance_guid"),
-				Description:  "The GUID that uniquely identifies the MQ on Cloud service instance.",
+				Description:  "The GUID that uniquely identifies the MQaaS service instance.",
 			},
 			"name": {
 				Type:         schema.TypeString,
@@ -62,7 +71,7 @@ func ResourceIbmMqcloudQueueManager() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_mqcloud_queue_manager", "size"),
-				Description:  "The queue manager sizes of deployment available. Deployment of lite queue managers for aws_us_east_1 and aws_eu_west_1 locations is not available.",
+				Description:  "The queue manager sizes of deployment available.",
 			},
 			"version": {
 				Type:         schema.TypeString,
@@ -122,11 +131,6 @@ func ResourceIbmMqcloudQueueManager() *schema.Resource {
 				Description: "The ID of the queue manager which was allocated on creation, and can be used for delete calls.",
 			},
 		},
-		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(15 * time.Minute),
-			Delete: schema.DefaultTimeout(5 * time.Minute),
-			Update: schema.DefaultTimeout(5 * time.Minute),
-		},
 	}
 }
 
@@ -174,7 +178,7 @@ func ResourceIbmMqcloudQueueManagerValidator() *validate.ResourceValidator {
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
 			Required:                   true,
-			AllowedValues:              "large, lite, medium, small, xsmall",
+			AllowedValues:              "large, medium, small, xsmall",
 		},
 		validate.ValidateSchema{
 			Identifier:                 "version",
@@ -194,12 +198,17 @@ func ResourceIbmMqcloudQueueManagerValidator() *validate.ResourceValidator {
 func resourceIbmMqcloudQueueManagerCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mqcloudClient, err := meta.(conns.ClientSession).MqcloudV1()
 	if err != nil {
-		return diag.FromErr(err)
+		// Error is coming from SDK client, so it doesn't need to be discriminated.
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	err = checkSIPlan(d, meta)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Create Queue Manager failed %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Create Queue Manager failed: %s", err.Error()), "ibm_mqcloud_queue_manager", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createQueueManagerOptions := &mqcloudv1.CreateQueueManagerOptions{}
@@ -215,20 +224,21 @@ func resourceIbmMqcloudQueueManagerCreate(context context.Context, d *schema.Res
 		createQueueManagerOptions.SetVersion(d.Get("version").(string))
 	}
 
-	queueManagerTaskStatus, response, err := mqcloudClient.CreateQueueManagerWithContext(context, createQueueManagerOptions)
+	queueManagerTaskStatus, _, err := mqcloudClient.CreateQueueManagerWithContext(context, createQueueManagerOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateQueueManagerWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateQueueManagerWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateQueueManagerWithContext failed: %s", err.Error()), "ibm_mqcloud_queue_manager", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *createQueueManagerOptions.ServiceInstanceGuid, *queueManagerTaskStatus.QueueManagerID))
+
 	if waitForQmStatus {
 		_, err = waitForQmStatusUpdate(context, d, meta)
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error waiting for Queue Manager (%s) to be in running state: %s", *queueManagerTaskStatus.QueueManagerID, err))
 		}
 	}
-	d.SetId(fmt.Sprintf("%s/%s", *createQueueManagerOptions.ServiceInstanceGuid, *queueManagerTaskStatus.QueueManagerID))
 
 	return resourceIbmMqcloudQueueManagerRead(context, d, meta)
 }
@@ -236,14 +246,16 @@ func resourceIbmMqcloudQueueManagerCreate(context context.Context, d *schema.Res
 func resourceIbmMqcloudQueueManagerRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mqcloudClient, err := meta.(conns.ClientSession).MqcloudV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getQueueManagerOptions := &mqcloudv1.GetQueueManagerOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "sep-id-parts").GetDiag()
 	}
 
 	getQueueManagerOptions.SetServiceInstanceGuid(parts[0])
@@ -263,67 +275,83 @@ func resourceIbmMqcloudQueueManagerRead(context context.Context, d *schema.Resou
 
 		return nil
 	})
-
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetQueueManagerWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetQueueManagerWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetQueueManagerWithContext failed: %s", err.Error()), "ibm_mqcloud_queue_manager", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("service_instance_guid", parts[0]); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting service_instance_guid: %s", err))
+		err = fmt.Errorf("Error setting service_instance_guid: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-service_instance_guid").GetDiag()
 	}
 	if err = d.Set("name", queueManagerDetails.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		err = fmt.Errorf("Error setting name: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-name").GetDiag()
 	}
 	if !core.IsNil(queueManagerDetails.DisplayName) {
 		if err = d.Set("display_name", queueManagerDetails.DisplayName); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting display_name: %s", err))
+			err = fmt.Errorf("Error setting display_name: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-display_name").GetDiag()
 		}
 	}
 	if err = d.Set("location", queueManagerDetails.Location); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting location: %s", err))
+		err = fmt.Errorf("Error setting location: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-location").GetDiag()
 	}
 	if err = d.Set("size", queueManagerDetails.Size); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting size: %s", err))
+		err = fmt.Errorf("Error setting size: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-size").GetDiag()
 	}
 	if !core.IsNil(queueManagerDetails.Version) {
 		if err = d.Set("version", queueManagerDetails.Version); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting version: %s", err))
+			err = fmt.Errorf("Error setting version: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-version").GetDiag()
 		}
 	}
 	if err = d.Set("status_uri", queueManagerDetails.StatusURI); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting status_uri: %s", err))
+		err = fmt.Errorf("Error setting status_uri: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-status_uri").GetDiag()
 	}
 	if err = d.Set("web_console_url", queueManagerDetails.WebConsoleURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting web_console_url: %s", err))
+		err = fmt.Errorf("Error setting web_console_url: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-web_console_url").GetDiag()
 	}
 	if err = d.Set("rest_api_endpoint_url", queueManagerDetails.RestApiEndpointURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rest_api_endpoint_url: %s", err))
+		err = fmt.Errorf("Error setting rest_api_endpoint_url: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-rest_api_endpoint_url").GetDiag()
 	}
 	if err = d.Set("administrator_api_endpoint_url", queueManagerDetails.AdministratorApiEndpointURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting administrator_api_endpoint_url: %s", err))
+		err = fmt.Errorf("Error setting administrator_api_endpoint_url: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-administrator_api_endpoint_url").GetDiag()
 	}
 	if err = d.Set("connection_info_uri", queueManagerDetails.ConnectionInfoURI); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting connection_info_uri: %s", err))
+		err = fmt.Errorf("Error setting connection_info_uri: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-connection_info_uri").GetDiag()
 	}
 	if err = d.Set("date_created", flex.DateTimeToString(queueManagerDetails.DateCreated)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting date_created: %s", err))
+		err = fmt.Errorf("Error setting date_created: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-date_created").GetDiag()
 	}
 	if err = d.Set("upgrade_available", queueManagerDetails.UpgradeAvailable); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting upgrade_available: %s", err))
+		err = fmt.Errorf("Error setting upgrade_available: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-upgrade_available").GetDiag()
 	}
 	if err = d.Set("available_upgrade_versions_uri", queueManagerDetails.AvailableUpgradeVersionsURI); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting available_upgrade_versions_uri: %s", err))
+		err = fmt.Errorf("Error setting available_upgrade_versions_uri: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-available_upgrade_versions_uri").GetDiag()
 	}
 	if err = d.Set("href", queueManagerDetails.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		err = fmt.Errorf("Error setting href: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-href").GetDiag()
 	}
 	if err = d.Set("queue_manager_id", queueManagerDetails.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting queue_manager_id: %s", err))
+		err = fmt.Errorf("Error setting queue_manager_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "read", "set-queue_manager_id").GetDiag()
 	}
 
 	return nil
@@ -332,19 +360,23 @@ func resourceIbmMqcloudQueueManagerRead(context context.Context, d *schema.Resou
 func resourceIbmMqcloudQueueManagerUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mqcloudClient, err := meta.(conns.ClientSession).MqcloudV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	err = checkSIPlan(d, meta)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Update Queue Manager failed %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Update Queue Manager failed: %s", err.Error()), "ibm_mqcloud_queue_manager", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	setQueueManagerVersionOptions := &mqcloudv1.SetQueueManagerVersionOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "update", "sep-id-parts").GetDiag()
 	}
 
 	setQueueManagerVersionOptions.SetServiceInstanceGuid(parts[0])
@@ -352,6 +384,11 @@ func resourceIbmMqcloudQueueManagerUpdate(context context.Context, d *schema.Res
 
 	hasChange := false
 
+	if d.HasChange("service_instance_guid") {
+		errMsg := fmt.Sprintf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+			" The resource must be re-created to update this property.", "service_instance_guid")
+		return flex.DiscriminatedTerraformErrorf(nil, errMsg, "ibm_mqcloud_queue_manager", "update", "service_instance_guid-forces-new").GetDiag()
+	}
 	if d.HasChange("version") {
 		oldVersion, newVersion := d.GetChange("version")
 		if IsVersionDowngrade(oldVersion.(string), newVersion.(string)) {
@@ -362,10 +399,11 @@ func resourceIbmMqcloudQueueManagerUpdate(context context.Context, d *schema.Res
 	}
 
 	if hasChange {
-		_, response, err := mqcloudClient.SetQueueManagerVersionWithContext(context, setQueueManagerVersionOptions)
+		_, _, err = mqcloudClient.SetQueueManagerVersionWithContext(context, setQueueManagerVersionOptions)
 		if err != nil {
-			log.Printf("[DEBUG] SetQueueManagerVersionWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("SetQueueManagerVersionWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("SetQueueManagerVersionWithContext failed: %s", err.Error()), "ibm_mqcloud_queue_manager", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if waitForQmStatus {
 			_, err = waitForQmStatusUpdate(context, d, meta)
@@ -381,28 +419,33 @@ func resourceIbmMqcloudQueueManagerUpdate(context context.Context, d *schema.Res
 func resourceIbmMqcloudQueueManagerDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mqcloudClient, err := meta.(conns.ClientSession).MqcloudV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	err = checkSIPlan(d, meta)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Delete Queue Manager failed %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Delete Queue Manager failed: %s", err.Error()), "ibm_mqcloud_queue_manager", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteQueueManagerOptions := &mqcloudv1.DeleteQueueManagerOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_queue_manager", "delete", "sep-id-parts").GetDiag()
 	}
 
 	deleteQueueManagerOptions.SetServiceInstanceGuid(parts[0])
 	deleteQueueManagerOptions.SetQueueManagerID(parts[1])
 
-	_, response, err := mqcloudClient.DeleteQueueManagerWithContext(context, deleteQueueManagerOptions)
+	_, _, err = mqcloudClient.DeleteQueueManagerWithContext(context, deleteQueueManagerOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteQueueManagerWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteQueueManagerWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteQueueManagerWithContext failed: %s", err.Error()), "ibm_mqcloud_queue_manager", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if waitForQmStatus {
 		_, err = waitForQueueManagerToDelete(context, d, meta)

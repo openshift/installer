@@ -37,8 +37,14 @@ type NetworkScope interface {
 	CNIIngressRules() infrav1.CNIIngressRules
 	// SecurityGroups returns the cluster security groups as a map, it creates the map if empty.
 	SecurityGroups() map[infrav1.SecurityGroupRole]infrav1.SecurityGroup
-	// SecondaryCidrBlock returns the optional secondary CIDR block to use for pod IPs
+	// SecondaryCidrBlock returns the optional secondary CIDR block to use for pod IPs. This may later be renamed since
+	// it should not be confused with SecondaryCidrBlocks.
 	SecondaryCidrBlock() *string
+	// SecondaryCidrBlocks returns the additional CIDR blocks to be associated with the managed VPC.
+	SecondaryCidrBlocks() []infrav1.VpcCidrBlock
+	// AllSecondaryCidrBlocks returns a unique list of all secondary CIDR blocks (combining `SecondaryCidrBlock` and
+	// `SecondaryCidrBlocks`).
+	AllSecondaryCidrBlocks() []infrav1.VpcCidrBlock
 
 	// Bastion returns the bastion details for the cluster.
 	Bastion() *infrav1.Bastion

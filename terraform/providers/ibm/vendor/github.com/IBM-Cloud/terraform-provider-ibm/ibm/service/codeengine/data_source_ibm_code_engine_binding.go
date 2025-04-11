@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.94.1-71478489-20240820-161623
+ */
 
 package codeengine
 
@@ -8,11 +12,12 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM/code-engine-go-sdk/codeenginev2"
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
-	"github.com/IBM/code-engine-go-sdk/codeenginev2"
 )
 
 func DataSourceIbmCodeEngineBinding() *schema.Resource {
@@ -57,7 +62,7 @@ func DataSourceIbmCodeEngineBinding() *schema.Resource {
 			"prefix": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The value that is set as prefix in the component that is bound.",
+				Description: "The value that is set as a prefix in the component that is bound.",
 			},
 			"resource_type": {
 				Type:        schema.TypeString,
@@ -81,7 +86,9 @@ func DataSourceIbmCodeEngineBinding() *schema.Resource {
 func dataSourceIbmCodeEngineBindingRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	codeEngineClient, err := meta.(conns.ClientSession).CodeEngineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_binding", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getBindingOptions := &codeenginev2.GetBindingOptions{}
@@ -89,54 +96,57 @@ func dataSourceIbmCodeEngineBindingRead(context context.Context, d *schema.Resou
 	getBindingOptions.SetProjectID(d.Get("project_id").(string))
 	getBindingOptions.SetID(d.Get("binding_id").(string))
 
-	binding, response, err := codeEngineClient.GetBindingWithContext(context, getBindingOptions)
+	binding, _, err := codeEngineClient.GetBindingWithContext(context, getBindingOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetBindingWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetBindingWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetBindingWithContext failed: %s", err.Error()), "(Data) ibm_code_engine_binding", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *getBindingOptions.ProjectID, *getBindingOptions.ID))
 
 	component := []map[string]interface{}{}
-	if binding.Component != nil {
-		modelMap, err := dataSourceIbmCodeEngineBindingComponentRefToMap(binding.Component)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		component = append(component, modelMap)
+	componentMap, err := DataSourceIbmCodeEngineBindingComponentRefToMap(binding.Component)
+	if err != nil {
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "(Data) ibm_code_engine_binding", "read", "component-to-map").GetDiag()
 	}
-
-	errString := "Error setting %s %s"
+	component = append(component, componentMap)
 	if err = d.Set("component", component); err != nil {
-		return diag.FromErr(fmt.Errorf(errString, "component", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting component: %s", err), "(Data) ibm_code_engine_binding", "read", "set-component").GetDiag()
 	}
 
-	if err = d.Set("href", binding.Href); err != nil {
-		return diag.FromErr(fmt.Errorf(errString, "href", err))
+	if !core.IsNil(binding.Href) {
+		if err = d.Set("href", binding.Href); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting href: %s", err), "(Data) ibm_code_engine_binding", "read", "set-href").GetDiag()
+		}
 	}
 
 	if err = d.Set("prefix", binding.Prefix); err != nil {
-		return diag.FromErr(fmt.Errorf(errString, "prefix", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting prefix: %s", err), "(Data) ibm_code_engine_binding", "read", "set-prefix").GetDiag()
 	}
 
-	if err = d.Set("resource_type", binding.ResourceType); err != nil {
-		return diag.FromErr(fmt.Errorf(errString, "resource_type", err))
+	if !core.IsNil(binding.ResourceType) {
+		if err = d.Set("resource_type", binding.ResourceType); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting resource_type: %s", err), "(Data) ibm_code_engine_binding", "read", "set-resource_type").GetDiag()
+		}
 	}
 
 	if err = d.Set("secret_name", binding.SecretName); err != nil {
-		return diag.FromErr(fmt.Errorf(errString, "secret_name", err))
+		return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting secret_name: %s", err), "(Data) ibm_code_engine_binding", "read", "set-secret_name").GetDiag()
 	}
 
-	if err = d.Set("status", binding.Status); err != nil {
-		return diag.FromErr(fmt.Errorf(errString, "status", err))
+	if !core.IsNil(binding.Status) {
+		if err = d.Set("status", binding.Status); err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, fmt.Sprintf("Error setting status: %s", err), "(Data) ibm_code_engine_binding", "read", "set-status").GetDiag()
+		}
 	}
 
 	return nil
 }
 
-func dataSourceIbmCodeEngineBindingComponentRefToMap(model *codeenginev2.ComponentRef) (map[string]interface{}, error) {
+func DataSourceIbmCodeEngineBindingComponentRefToMap(model *codeenginev2.ComponentRef) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["name"] = model.Name
-	modelMap["resource_type"] = model.ResourceType
+	modelMap["name"] = *model.Name
+	modelMap["resource_type"] = *model.ResourceType
 	return modelMap, nil
 }

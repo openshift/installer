@@ -1,6 +1,7 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -37,6 +38,55 @@ func (o *ClusterUninstaller) listResourceGroups() (cloudResources, error) {
 	return cloudResources{}.insert(result...), nil
 }
 
+func (o *ClusterUninstaller) getBlockingServiceInstances(item cloudResource) ([]string, error) {
+	o.Logger.Debugf("Collecting remaining service-instances in %s", item.name)
+	ctx, cancel := o.contextWithTimeout()
+	defer cancel()
+
+	// Find the Resource Group Id first
+	listRGOptions := o.managementSvc.NewListResourceGroupsOptions()
+	listRGOptions = listRGOptions.SetName(item.name)
+	listRGOptions = listRGOptions.SetAccountID(o.AccountID)
+
+	result, response, err := o.managementSvc.ListResourceGroupsWithContext(ctx, listRGOptions)
+	if err != nil {
+		if response != nil && response.StatusCode == http.StatusNotFound {
+			// The resource group is gone
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to list existing resource groups: %w", err)
+	}
+
+	if len(result.Resources) != 1 {
+		return nil, fmt.Errorf("unexpected number of Resource Groups found for %s: %d", item.name, len(result.Resources))
+	}
+	resourceGroupID := *result.Resources[0].ID
+
+	// Get existing service-instances for Resource Group
+	listRIOptions := o.controllerSvc.NewListResourceInstancesOptions()
+	listRIOptions = listRIOptions.SetResourceGroupID(resourceGroupID)
+
+	instancesResult, instancesResponse, err := o.controllerSvc.ListResourceInstancesWithContext(ctx, listRIOptions)
+	if err != nil {
+		if instancesResponse != nil && instancesResponse.StatusCode == http.StatusNotFound {
+			// No service-instances or resource group could not be found; potentially ready to be or being deleted
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to list service-instances in %s: %w", item.name, err)
+	}
+
+	if len(instancesResult.Resources) < 1 {
+		return nil, fmt.Errorf("no service instances found for %s: unknown failure deleting Resource Group", item.name)
+	}
+
+	instanceCRNS := []string{}
+
+	for _, instance := range instancesResult.Resources {
+		instanceCRNS = append(instanceCRNS, *instance.CRN)
+	}
+	return instanceCRNS, nil
+}
+
 func (o *ClusterUninstaller) deleteResourceGroup(item cloudResource) error {
 	o.Logger.Debugf("Deleting resource group %q", item.name)
 	ctx, cancel := o.contextWithTimeout()
@@ -53,7 +103,14 @@ func (o *ClusterUninstaller) deleteResourceGroup(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete resource group %s", item.name)
+		serviceInstances, siErr := o.getBlockingServiceInstances(item)
+		if err != nil { // nolint: gocritic
+			return fmt.Errorf("failed attempting to identify instances blocking resource group deletion: %s: %w", item.name, siErr)
+		} else if serviceInstances != nil {
+			o.Logger.Warnf("resource group contains existing service instances: %s", serviceInstances)
+			return fmt.Errorf("failed to delete resource group %s due to existing service instances", item.name)
+		}
+		return fmt.Errorf("failed to delete resource group, another attempt may be successful: %s", item.name)
 	}
 
 	return nil

@@ -17,13 +17,11 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"flag"
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -45,8 +43,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	orcv1alpha1 "github.com/k-orc/openstack-resource-controller/api/v1alpha1"
+
 	infrav1alpha1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1"
-	infrav1alpha5 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha5"
 	infrav1alpha6 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha6"
 	infrav1alpha7 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
@@ -71,13 +70,11 @@ type TLSOptions struct {
 }
 
 var (
-	scheme               = runtime.NewScheme()
-	setupLog             = ctrl.Log.WithName("setup")
-	tlsOptions           = TLSOptions{}
-	tlsSupportedVersions = []string{TLSVersion12, TLSVersion13}
+	scheme   = runtime.NewScheme()
+	setupLog = ctrl.Log.WithName("setup")
 
 	// flags.
-	diagnosticsOptions          = flags.DiagnosticsOptions{}
+	managerOptions              = flags.ManagerOptions{}
 	enableLeaderElection        bool
 	leaderElectionLeaseDuration time.Duration
 	leaderElectionRenewDeadline time.Duration
@@ -105,10 +102,10 @@ func init() {
 	_ = clusterv1.AddToScheme(scheme)
 	_ = ipamv1.AddToScheme(scheme)
 	_ = infrav1.AddToScheme(scheme)
-	_ = infrav1alpha5.AddToScheme(scheme)
 	_ = infrav1alpha6.AddToScheme(scheme)
 	_ = infrav1alpha7.AddToScheme(scheme)
 	_ = infrav1alpha1.AddToScheme(scheme)
+	_ = orcv1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 
 	metrics.RegisterAPIPrometheusMetrics()
@@ -119,7 +116,7 @@ func InitFlags(fs *pflag.FlagSet) {
 	logs.AddFlags(fs, logs.SkipLoggingConfigurationFlags())
 	logsv1.AddFlags(logOptions, fs)
 
-	flags.AddDiagnosticsOptions(fs, &diagnosticsOptions)
+	flags.AddManagerOptions(fs, &managerOptions)
 
 	fs.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
@@ -174,24 +171,6 @@ func InitFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&scopeCacheMaxSize, "scope-cache-max-size", 10, "The maximum credentials count the operator should keep in cache. Setting this value to 0 means no cache.")
 
 	fs.BoolVar(&showVersion, "version", false, "Show current version and exit.")
-
-	fs.StringVar(&tlsOptions.TLSMinVersion, "tls-min-version", TLSVersion12,
-		"The minimum TLS version in use by the webhook server.\n"+
-			fmt.Sprintf("Possible values are %s.", strings.Join(tlsSupportedVersions, ", ")),
-	)
-
-	fs.StringVar(&tlsOptions.TLSMaxVersion, "tls-max-version", TLSVersion13,
-		"The maximum TLS version in use by the webhook server.\n"+
-			fmt.Sprintf("Possible values are %s.", strings.Join(tlsSupportedVersions, ", ")),
-	)
-
-	tlsCipherPreferredValues := cliflag.PreferredTLSCipherNames()
-	tlsCipherInsecureValues := cliflag.InsecureTLSCipherNames()
-	fs.StringVar(&tlsOptions.TLSCipherSuites, "tls-cipher-suites", "",
-		"Comma-separated list of cipher suites for the webhook server. "+
-			"If omitted, the default Go cipher suites will be used. \n"+
-			"Preferred values: "+strings.Join(tlsCipherPreferredValues, ", ")+". \n"+
-			"Insecure values: "+strings.Join(tlsCipherInsecureValues, ", ")+".")
 }
 
 // Add RBAC for the authorized diagnostics endpoint.
@@ -224,15 +203,10 @@ func main() {
 		}()
 	}
 
-	tlsOptionOverrides, err := GetTLSOptionOverrideFuncs(tlsOptions)
-	if err != nil {
-		setupLog.Error(err, "unable to add TLS settings to the webhook server")
-		os.Exit(1)
-	}
-
 	cfg, err := config.GetConfigWithContext(os.Getenv("KUBECONTEXT"))
 	if err != nil {
 		setupLog.Error(err, "unable to get kubeconfig")
+		os.Exit(1)
 	}
 	cfg.QPS = restConfigQPS
 	cfg.Burst = restConfigBurst
@@ -246,7 +220,11 @@ func main() {
 		}
 	}
 
-	diagnosticsOpts := flags.GetDiagnosticsOptions(diagnosticsOptions)
+	tlsOpts, metricsOpts, err := flags.GetManagerOptions(managerOptions)
+	if err != nil {
+		setupLog.Error(err, "unable to get manager options")
+		os.Exit(1)
+	}
 
 	var watchNamespaces map[string]cache.Config
 	if watchNamespace != "" {
@@ -257,7 +235,7 @@ func main() {
 
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:           scheme,
-		Metrics:          diagnosticsOpts,
+		Metrics:          *metricsOpts,
 		LeaderElection:   enableLeaderElection,
 		LeaderElectionID: "controller-leader-election-capo",
 		LeaseDuration:    &leaderElectionLeaseDuration,
@@ -279,10 +257,11 @@ func main() {
 			webhook.Options{
 				Port:    webhookPort,
 				CertDir: webhookCertDir,
-				TLSOpts: tlsOptionOverrides,
+				TLSOpts: tlsOpts,
 			},
 		),
-		HealthProbeBindAddress: healthAddr,
+		HealthProbeBindAddress:        healthAddr,
+		LeaderElectionReleaseOnCancel: true,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -351,6 +330,27 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, caCerts []byte, sco
 		setupLog.Error(err, "unable to create controller", "controller", "FloatingIPPool")
 		os.Exit(1)
 	}
+	if err := (&controllers.OpenStackServerReconciler{
+		Client:           mgr.GetClient(),
+		Recorder:         mgr.GetEventRecorderFor("openstackserver-controller"),
+		WatchFilterValue: watchFilterValue,
+		ScopeFactory:     scopeFactory,
+		CaCertificates:   caCerts,
+		Scheme:           mgr.GetScheme(),
+	}).SetupWithManager(ctx, mgr, concurrency(openStackMachineConcurrency)); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "OpenStackServer")
+		os.Exit(1)
+	}
+	if err := controllers.ImageController(
+		mgr.GetClient(),
+		mgr.GetEventRecorderFor("orc-image-controller"),
+		watchFilterValue,
+		scopeFactory,
+		caCerts,
+	).SetupWithManager(ctx, mgr, concurrency(openStackMachineConcurrency)); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ORCImage")
+		os.Exit(1)
+	}
 }
 
 func setupWebhooks(mgr ctrl.Manager) {
@@ -365,64 +365,4 @@ func setupWebhooks(mgr ctrl.Manager) {
 
 func concurrency(c int) controller.Options {
 	return controller.Options{MaxConcurrentReconciles: c}
-}
-
-// GetTLSOptionOverrideFuncs returns a list of TLS configuration overrides to be used
-// by the webhook server.
-func GetTLSOptionOverrideFuncs(options TLSOptions) ([]func(*tls.Config), error) {
-	var tlsOptions []func(config *tls.Config)
-
-	// To make a static analyzer happy, this block ensures there is no code
-	// path that sets a TLS version outside the acceptable values, even in
-	// case of unexpected user input.
-	var tlsMinVersion, tlsMaxVersion uint16
-	for version, option := range map[*uint16]string{&tlsMinVersion: options.TLSMinVersion, &tlsMaxVersion: options.TLSMaxVersion} {
-		switch option {
-		case TLSVersion12:
-			*version = tls.VersionTLS12
-		case TLSVersion13:
-			*version = tls.VersionTLS13
-		default:
-			return nil, fmt.Errorf("unexpected TLS version %q (must be one of: %s)", option, strings.Join(tlsSupportedVersions, ", "))
-		}
-	}
-
-	if tlsMaxVersion != 0 && tlsMinVersion > tlsMaxVersion {
-		return nil, fmt.Errorf("TLS version flag min version (%s) is greater than max version (%s)",
-			options.TLSMinVersion, options.TLSMaxVersion)
-	}
-
-	tlsOptions = append(tlsOptions, func(cfg *tls.Config) {
-		cfg.MinVersion = tlsMinVersion
-		cfg.MaxVersion = tlsMaxVersion
-	})
-
-	// Cipher suites should not be set if empty.
-	if tlsMinVersion >= tls.VersionTLS13 &&
-		options.TLSCipherSuites != "" {
-		setupLog.Info("warning: Cipher suites should not be set for TLS version 1.3. Ignoring ciphers")
-		options.TLSCipherSuites = ""
-	}
-
-	if options.TLSCipherSuites != "" {
-		tlsCipherSuites := strings.Split(options.TLSCipherSuites, ",")
-		suites, err := cliflag.TLSCipherSuites(tlsCipherSuites)
-		if err != nil {
-			return nil, err
-		}
-
-		insecureCipherValues := cliflag.InsecureTLSCipherNames()
-		for _, cipher := range tlsCipherSuites {
-			for _, insecureCipherName := range insecureCipherValues {
-				if insecureCipherName == cipher {
-					setupLog.Info(fmt.Sprintf("warning: use of insecure cipher '%s' detected.", cipher))
-				}
-			}
-		}
-		tlsOptions = append(tlsOptions, func(cfg *tls.Config) {
-			cfg.CipherSuites = suites
-		})
-	}
-
-	return tlsOptions, nil
 }

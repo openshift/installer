@@ -21,11 +21,10 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/golang/mock/gomock"
-	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
+	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/tokens"
+	"go.uber.org/mock/gomock"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1"
 	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/clients"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/clients/mock"
@@ -65,21 +64,7 @@ func (f *MockScopeFactory) SetClientScopeCreateError(err error) {
 	f.clientScopeCreateError = err
 }
 
-func (f *MockScopeFactory) NewClientScopeFromMachine(_ context.Context, _ client.Client, _ *infrav1.OpenStackMachine, _ *infrav1.OpenStackCluster, _ []byte, _ logr.Logger) (Scope, error) {
-	if f.clientScopeCreateError != nil {
-		return nil, f.clientScopeCreateError
-	}
-	return f, nil
-}
-
-func (f *MockScopeFactory) NewClientScopeFromCluster(_ context.Context, _ client.Client, _ *infrav1.OpenStackCluster, _ []byte, _ logr.Logger) (Scope, error) {
-	if f.clientScopeCreateError != nil {
-		return nil, f.clientScopeCreateError
-	}
-	return f, nil
-}
-
-func (f *MockScopeFactory) NewClientScopeFromFloatingIPPool(_ context.Context, _ client.Client, _ *v1alpha1.OpenStackFloatingIPPool, _ []byte, _ logr.Logger) (Scope, error) {
+func (f *MockScopeFactory) NewClientScopeFromObject(_ context.Context, _ client.Client, _ []byte, _ logr.Logger, _ ...infrav1.IdentityRefProvider) (Scope, error) {
 	if f.clientScopeCreateError != nil {
 		return nil, f.clientScopeCreateError
 	}

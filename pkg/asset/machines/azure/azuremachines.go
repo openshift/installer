@@ -23,16 +23,29 @@ const (
 	genV2Suffix string = "-gen2"
 )
 
+// MachineInput defines the inputs needed to generate a machine asset.
+type MachineInput struct {
+	Subnet          string
+	Role            string
+	UserDataSecret  string
+	HyperVGen       string
+	UseImageGallery bool
+	Private         bool
+	UserTags        map[string]string
+	Platform        *azure.Platform
+	Pool            *types.MachinePool
+}
+
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
-func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDataSecret string, clusterID string, role string, capabilities map[string]string, useImageGallery bool, userTags map[string]string, hyperVGen string, subnet string, resourceGroup string, subscriptionID string) ([]*asset.RuntimeFile, error) {
-	if poolPlatform := pool.Platform.Name(); poolPlatform != azure.Name {
+func GenerateMachines(clusterID, resourceGroup, subscriptionID string, in *MachineInput) ([]*asset.RuntimeFile, error) {
+	if poolPlatform := in.Pool.Platform.Name(); poolPlatform != azure.Name {
 		return nil, fmt.Errorf("non-Azure machine-pool: %q", poolPlatform)
 	}
-	mpool := pool.Platform.Azure
+	mpool := in.Pool.Platform.Azure
 
 	total := int64(1)
-	if pool.Replicas != nil {
-		total = *pool.Replicas
+	if in.Pool.Replicas != nil {
+		total = *in.Pool.Replicas
 	}
 
 	if len(mpool.Zones) == 0 {
@@ -40,7 +53,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 		// It means no-zoned for the machine API
 		mpool.Zones = []string{""}
 	}
-	tags, err := CapzTagsFromUserTags(clusterID, userTags)
+	tags, err := CapzTagsFromUserTags(clusterID, in.UserTags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create machineapi.TagSpecifications from UserTags: %w", err)
 	}
@@ -58,25 +71,27 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 					Offer:     osImage.Offer,
 					SKU:       osImage.SKU,
 				},
-				Version: osImage.Version,
+				Version:         osImage.Version,
+				ThirdPartyImage: osImage.Plan != azure.ImageNoPurchasePlan,
 			},
 		}
-	case useImageGallery:
+	case in.UseImageGallery:
 		// image gallery names cannot have dashes
 		id := clusterID
-		if hyperVGen == "V2" {
+		if in.HyperVGen == "V2" {
 			id += genV2Suffix
 		}
 		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/latest", resourceGroup, galleryName, id)
 		image = &capz.Image{ID: &imageID}
 	default:
 		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s", subscriptionID, resourceGroup, galleryName, clusterID)
-		if hyperVGen == "V2" && platform.CloudName != azure.StackCloud {
+		if in.HyperVGen == "V2" && in.Platform.CloudName != azure.StackCloud {
 			imageID += genV2Suffix
 		}
 		image = &capz.Image{ID: &imageID}
 	}
 
+	// Set up OSDisk
 	osDisk := capz.OSDisk{
 		OSType:     "Linux",
 		DiskSizeGB: &mpool.DiskSizeGB,
@@ -85,14 +100,29 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 		},
 		CachingType: "ReadWrite",
 	}
-	ultrassd := mpool.UltraSSDCapability == "Enabled"
-	additionalCapabilities := &capz.AdditionalCapabilities{
-		UltraSSDEnabled: &ultrassd,
-	}
-	if pool.Platform.Azure.DiskEncryptionSet != nil {
+	if in.Pool.Platform.Azure.DiskEncryptionSet != nil {
 		osDisk.ManagedDisk.DiskEncryptionSet = &capz.DiskEncryptionSetParameters{
 			ID: mpool.OSDisk.DiskEncryptionSet.ToID(),
 		}
+	}
+
+	var diskSecurityProfile capz.VMDiskSecurityProfile
+	if mpool.OSDisk.SecurityProfile != nil && mpool.OSDisk.SecurityProfile.SecurityEncryptionType != "" {
+		diskSecurityProfile = capz.VMDiskSecurityProfile{
+			SecurityEncryptionType: capz.SecurityEncryptionType(mpool.OSDisk.SecurityProfile.SecurityEncryptionType),
+		}
+
+		if mpool.OSDisk.SecurityProfile.DiskEncryptionSet != nil {
+			diskSecurityProfile.DiskEncryptionSet = &capz.DiskEncryptionSetParameters{
+				ID: mpool.OSDisk.SecurityProfile.DiskEncryptionSet.ToID(),
+			}
+		}
+		osDisk.ManagedDisk.SecurityProfile = &diskSecurityProfile
+	}
+
+	ultrassd := mpool.UltraSSDCapability == "Enabled"
+	additionalCapabilities := &capz.AdditionalCapabilities{
+		UltraSSDEnabled: &ultrassd,
 	}
 
 	machineProfile := generateSecurityProfile(mpool)
@@ -112,27 +142,41 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 		}
 	}
 
+	userAssignedIdentities := make([]capz.UserAssignedIdentity, len(mpool.Identity.UserAssignedIdentities))
+	for i, id := range mpool.Identity.UserAssignedIdentities {
+		userAssignedIdentities[i] = capz.UserAssignedIdentity{ProviderID: id.ProviderID()}
+	}
+
 	var result []*asset.RuntimeFile
 	for idx := int64(0); idx < total; idx++ {
 		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
 		azureMachine := &capz.AzureMachine{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
+				Name: fmt.Sprintf("%s-%s-%d", clusterID, in.Pool.Name, idx),
 				Labels: map[string]string{
 					"cluster.x-k8s.io/control-plane": "",
 					"cluster.x-k8s.io/cluster-name":  clusterID,
 				},
 			},
 			Spec: capz.AzureMachineSpec{
-				VMSize:                 mpool.InstanceType,
-				FailureDomain:          ptr.To(zone),
-				Image:                  image,
-				OSDisk:                 osDisk, // required
-				AdditionalTags:         tags,
-				AdditionalCapabilities: additionalCapabilities,
-				AllocatePublicIP:       false,
-				EnableIPForwarding:     false,
-				SecurityProfile:        securityProfile,
+				VMSize:                     mpool.InstanceType,
+				FailureDomain:              ptr.To(zone),
+				Image:                      image,
+				OSDisk:                     osDisk, // required
+				AdditionalTags:             tags,
+				AdditionalCapabilities:     additionalCapabilities,
+				DisableExtensionOperations: ptr.To(true),
+				AllocatePublicIP:           false,
+				EnableIPForwarding:         false,
+				SecurityProfile:            securityProfile,
+				NetworkInterfaces: []capz.NetworkInterface{
+					{
+						SubnetName:            in.Subnet,
+						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(azure.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(azure.AcceleratedNetworkingEnabled)),
+					},
+				},
+				Identity:               mpool.Identity.Type,
+				UserAssignedIdentities: userAssignedIdentities,
 			},
 		}
 		azureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
@@ -151,7 +195,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 			Spec: capi.MachineSpec{
 				ClusterName: clusterID,
 				Bootstrap: capi.Bootstrap{
-					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
+					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, in.Role)),
 				},
 				InfrastructureRef: v1.ObjectReference{
 					APIVersion: capz.GroupVersion.String(),
@@ -168,7 +212,6 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 		})
 	}
 
-	osDisk.ManagedDisk.DiskEncryptionSet = nil
 	bootstrapAzureMachine := &capz.AzureMachine{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: capiutils.GenerateBoostrapMachineName(clusterID),
@@ -179,20 +222,17 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 			},
 		},
 		Spec: capz.AzureMachineSpec{
-			VMSize:         mpool.InstanceType,
-			Image:          image,
-			FailureDomain:  ptr.To(mpool.Zones[0]),
-			OSDisk:         osDisk,
-			AdditionalTags: tags,
-			// Do not allocate a public IP since it isn't
-			// accessible as we are using an outbound LB for the
-			// control plane. This is temporary until we have a
-			// workaround for accessing SSH	(Most likely port
-			// forwarding SSH off the LB until the bootstrap node
-			// is destroyed).
-			AllocatePublicIP:       false,
-			AdditionalCapabilities: additionalCapabilities,
-			SecurityProfile:        securityProfile,
+			VMSize:                     mpool.InstanceType,
+			Image:                      image,
+			FailureDomain:              ptr.To(mpool.Zones[0]),
+			OSDisk:                     osDisk,
+			AdditionalTags:             tags,
+			DisableExtensionOperations: ptr.To(true),
+			AllocatePublicIP:           !in.Private,
+			AdditionalCapabilities:     additionalCapabilities,
+			SecurityProfile:            securityProfile,
+			Identity:                   mpool.Identity.Type,
+			UserAssignedIdentities:     userAssignedIdentities,
 		},
 	}
 	bootstrapAzureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))

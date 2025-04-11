@@ -7,57 +7,57 @@ import (
 	"context"
 	"log"
 
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/power-go-client/power/models"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
-	"github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
-	"github.com/IBM-Cloud/power-go-client/power/models"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 )
 
 func DataSourceIBMPIVolumeOnboardings() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIVolumeOnboardingsReads,
 		Schema: map[string]*schema.Schema{
-			helpers.PICloudInstanceId: {
-				Type:         schema.TypeString,
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
 
-			// Computed Attributes
-			"onboardings": {
-				Type:        schema.TypeList,
+			// Attributes
+			Attr_Onboardings: {
 				Computed:    true,
-				Description: "The list of volume onboardings",
+				Description: "List of volume onboardings.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"description": {
+						Attr_Description: {
+							Computed:    true,
+							Description: "The description of the volume onboarding operation.",
 							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "Description of the volume onboarding operation",
 						},
-						"id": {
+						Attr_ID: {
+							Computed:    true,
+							Description: "The type of cycling mode used.",
 							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "Indicates the volume onboarding operation id",
 						},
-						"input_volumes": {
-							Type:        schema.TypeList,
+						Attr_InputVolumes: {
 							Computed:    true,
-							Description: "List of volumes requested to be onboarded",
+							Description: "List of volumes requested to be onboarded.",
 							Elem:        &schema.Schema{Type: schema.TypeString},
+							Type:        schema.TypeList,
 						},
-						"status": {
-							Type:        schema.TypeString,
+						Attr_Status: {
 							Computed:    true,
-							Description: "Indicates the status of volume onboarding operation",
+							Description: "The status of volume onboarding operation.",
+							Type:        schema.TypeString,
 						},
 					},
 				},
+				Type: schema.TypeList,
 			},
 		},
 	}
@@ -69,7 +69,7 @@ func dataSourceIBMPIVolumeOnboardingsReads(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 	volOnboardClient := instance.NewIBMPIVolumeOnboardingClient(ctx, sess, cloudInstanceID)
 	volOnboardings, err := volOnboardClient.GetAll()
 	if err != nil {
@@ -78,7 +78,7 @@ func dataSourceIBMPIVolumeOnboardingsReads(ctx context.Context, d *schema.Resour
 
 	var clientgenU, _ = uuid.GenerateUUID()
 	d.SetId(clientgenU)
-	d.Set("onboardings", flattenVolumeOnboardings(volOnboardings.Onboardings))
+	d.Set(Attr_Onboardings, flattenVolumeOnboardings(volOnboardings.Onboardings))
 
 	return nil
 }
@@ -88,14 +88,12 @@ func flattenVolumeOnboardings(list []*models.VolumeOnboardingCommon) (networks [
 	result := make([]map[string]interface{}, 0, len(list))
 	for _, i := range list {
 		l := map[string]interface{}{
-			"id":            *i.ID,
-			"description":   i.Description,
-			"input_volumes": i.InputVolumes,
-			"status":        i.Status,
+			Attr_ID:           *i.ID,
+			Attr_Description:  i.Description,
+			Attr_InputVolumes: i.InputVolumes,
+			Attr_Status:       i.Status,
 		}
-
 		result = append(result, l)
 	}
-
 	return result
 }

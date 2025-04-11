@@ -117,6 +117,7 @@ func ResourceIBMServiceInstance() *schema.Resource {
 				Computed:    true,
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 

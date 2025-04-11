@@ -1,6 +1,8 @@
 package tls
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
@@ -31,9 +33,9 @@ func (a *BootstrapSSHKeyPair) Name() string {
 }
 
 // Generate generates the key pair based on its dependencies.
-func (a *BootstrapSSHKeyPair) Generate(dependencies asset.Parents) error {
+func (a *BootstrapSSHKeyPair) Generate(ctx context.Context, dependencies asset.Parents) error {
 	kp := KeyPair{}
-	if err := kp.Generate(bootstrapSSHKeyPairFilenameBase); err != nil {
+	if err := kp.Generate(ctx, bootstrapSSHKeyPairFilenameBase); err != nil {
 		return errors.Wrap(err, "failed to generate key pair")
 	}
 

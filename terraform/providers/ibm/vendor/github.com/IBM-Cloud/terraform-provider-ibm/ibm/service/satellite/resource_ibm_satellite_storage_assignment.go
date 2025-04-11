@@ -45,7 +45,8 @@ func ResourceIBMSatelliteStorageAssignment() *schema.Resource {
 				Type:          schema.TypeList,
 				Optional:      true,
 				Elem:          &schema.Schema{Type: schema.TypeString},
-				ConflictsWith: []string{"cluster", "controller"},
+				ConflictsWith: []string{"cluster"},
+				RequiredWith:  []string{"controller"},
 				Description:   "One or more cluster groups on which you want to apply the configuration. Note that at least one cluster group is required. ",
 			},
 			"cluster": {
@@ -119,11 +120,9 @@ func ResourceIBMSatelliteStorageAssignment() *schema.Resource {
 				Description: "Updating an assignment to the latest available storage configuration version.",
 			},
 			"controller": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "The Name or ID of the Satellite Location.",
-				ConflictsWith: []string{"groups"},
-				RequiredWith:  []string{"cluster"},
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The Name or ID of the Satellite Location.",
 			},
 		},
 	}
@@ -276,8 +275,10 @@ func resourceIBMContainerStorageAssignmentUpdate(d *schema.ResourceData, meta in
 
 func resourceIBMContainerStorageAssignmentDelete(d *schema.ResourceData, meta interface{}) error {
 	uuid := d.Get("uuid").(string)
+	controller := d.Get("controller").(string)
 	removeAssignmentOptions := &kubernetesserviceapiv1.RemoveAssignmentOptions{}
 	removeAssignmentOptions.UUID = &uuid
+	removeAssignmentOptions.Controller = &controller
 
 	_, err := waitForAssignmentDeletionStatus(removeAssignmentOptions, meta, d)
 	if err != nil {

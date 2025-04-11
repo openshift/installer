@@ -98,7 +98,7 @@ func DataSourceIBMAtrackerTargets() *schema.Resource {
 									"service_to_service_enabled": {
 										Type:        schema.TypeBool,
 										Computed:    true,
-										Description: "ATracker service is enabled to support service to service authentication. If service to service is enabled then set this flag is true and do not supply apikey.",
+										Description: "Determines if IBM Cloud Activity Tracker Event Routing has service to service authentication enabled. Set this flag to true if service to service is enabled and do not supply an apikey.",
 									},
 								},
 							},
@@ -151,7 +151,26 @@ func DataSourceIBMAtrackerTargets() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 										Sensitive:   true,
-										Description: "The user password (api key) for the message hub topic in the Event Streams instance.",
+										Description: "The user password (api key) for the message hub topic in the Event Streams instance. This is required if service_to_service is not enabled.",
+									},
+									"service_to_service_enabled": &schema.Schema{
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Determines if IBM Cloud Activity Tracker Event Routing has service to service authentication enabled. Set this flag to true if service to service is enabled and do not supply an apikey.",
+									},
+								},
+							},
+						},
+						"cloudlogs_endpoint": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "Property values for the IBM Cloud Logs endpoint in responses.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"target_crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN of the IBM Cloud Logs instance",
 									},
 								},
 							},
@@ -340,6 +359,13 @@ func DataSourceIBMAtrackerTargetsTargetToMap(model *atrackerv2.Target) (map[stri
 		}
 		modelMap["eventstreams_endpoint"] = []map[string]interface{}{eventstreamsEndpointMap}
 	}
+	if model.CloudlogsEndpoint != nil {
+		cloudlogsEndpointMap, err := DataSourceIBMAtrackerTargetsCloudlogsEndpointToMap(model.CloudlogsEndpoint)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["cloudlogs_endpoint"] = []map[string]interface{}{cloudlogsEndpointMap}
+	}
 	if model.WriteStatus != nil {
 		writeStatusMap, err := DataSourceIBMAtrackerTargetsWriteStatusToMap(model.WriteStatus)
 		if err != nil {
@@ -399,6 +425,17 @@ func DataSourceIBMAtrackerTargetsEventstreamsEndpointToMap(model *atrackerv2.Eve
 	}
 	if model.APIKey != nil {
 		modelMap["api_key"] = *model.APIKey // pragma: allowlist secret
+	}
+	if model.ServiceToServiceEnabled != nil {
+		modelMap["service_to_service_enabled"] = *model.ServiceToServiceEnabled
+	}
+	return modelMap, nil
+}
+
+func DataSourceIBMAtrackerTargetsCloudlogsEndpointToMap(model *atrackerv2.CloudLogsEndpoint) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.TargetCRN != nil {
+		modelMap["target_crn"] = *model.TargetCRN
 	}
 	return modelMap, nil
 }

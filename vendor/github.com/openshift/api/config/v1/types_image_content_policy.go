@@ -16,6 +16,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=imagecontentpolicies,scope=Cluster
 // +kubebuilder:subresource:status
+// +kubebuilder:metadata:annotations=release.openshift.io/bootstrap-required=true
 type ImageContentPolicy struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -24,7 +25,6 @@ type ImageContentPolicy struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec holds user settable values for configuration
-	// +kubebuilder:validation:Required
 	// +required
 	Spec ImageContentPolicySpec `json:"spec"`
 }
@@ -75,7 +75,6 @@ type ImageContentPolicyList struct {
 type RepositoryDigestMirrors struct {
 	// source is the repository that users refer to, e.g. in image pull specifications.
 	// +required
-	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Pattern=`^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])(:[0-9]+)?(\/[^\/:\n]+)*(\/[^\/:\n]+((:[^\/:\n]+)|(@[^\n]+)))?$`
 	Source string `json:"source"`
 	// allowMirrorByTags if true, the mirrors can be used to pull the images that are referenced by their tags. Default is false, the mirrors only work when pulling the images that are referenced by their digests.

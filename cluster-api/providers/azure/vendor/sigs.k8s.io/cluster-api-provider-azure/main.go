@@ -20,15 +20,17 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"net/http"
-	"net/http/pprof"
 	"os"
 	"time"
 
 	// +kubebuilder:scaffold:imports
+	asocontainerservicev1api20210501 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20210501"
+	asocontainerservicev1api20230201 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201"
 	asocontainerservicev1api20230202preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview"
 	asocontainerservicev1api20230315preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview"
-	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
+	asocontainerservicev1api20231001 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
+	asocontainerservicev1api20231102preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview"
+	asocontainerservicev1api20240402preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240402preview"
 	asokubernetesconfigurationv1 "github.com/Azure/azure-service-operator/v2/api/kubernetesconfiguration/v1api20230501"
 	asonetworkv1api20201101 "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101"
 	asonetworkv1api20220701 "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701"
@@ -36,12 +38,11 @@ import (
 	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/server/routes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	cgrecord "k8s.io/client-go/tools/record"
-	"k8s.io/component-base/logs"
 	"k8s.io/klog/v2"
+	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/controllers"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
@@ -53,16 +54,16 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/version"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	"sigs.k8s.io/cluster-api/controllers/remote"
 	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	capifeature "sigs.k8s.io/cluster-api/feature"
+	"sigs.k8s.io/cluster-api/util/flags"
 	"sigs.k8s.io/cluster-api/util/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
-	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
@@ -75,15 +76,20 @@ func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = infrav1.AddToScheme(scheme)
 	_ = infrav1exp.AddToScheme(scheme)
+	_ = infrav1alpha.AddToScheme(scheme)
 	_ = clusterv1.AddToScheme(scheme)
 	_ = expv1.AddToScheme(scheme)
 	_ = kubeadmv1.AddToScheme(scheme)
 	_ = asoresourcesv1.AddToScheme(scheme)
-	_ = asocontainerservicev1.AddToScheme(scheme)
+	_ = asocontainerservicev1api20210501.AddToScheme(scheme)
+	_ = asocontainerservicev1api20230201.AddToScheme(scheme)
+	_ = asocontainerservicev1api20231001.AddToScheme(scheme)
 	_ = asonetworkv1api20220701.AddToScheme(scheme)
 	_ = asonetworkv1api20201101.AddToScheme(scheme)
 	_ = asocontainerservicev1api20230202preview.AddToScheme(scheme)
 	_ = asocontainerservicev1api20230315preview.AddToScheme(scheme)
+	_ = asocontainerservicev1api20231102preview.AddToScheme(scheme)
+	_ = asocontainerservicev1api20240402preview.AddToScheme(scheme)
 	_ = asokubernetesconfigurationv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
@@ -101,12 +107,13 @@ var (
 	azureMachineConcurrency            int
 	azureMachinePoolConcurrency        int
 	azureMachinePoolMachineConcurrency int
+	azureBootrapConfigGVK              string
 	debouncingTimer                    time.Duration
 	syncPeriod                         time.Duration
 	healthAddr                         string
 	webhookPort                        int
 	webhookCertDir                     string
-	diagnosticsOptions                 = DiagnosticsOptions{}
+	managerOptions                     = flags.ManagerOptions{}
 	timeouts                           reconciler.Timeouts
 	enableTracing                      bool
 )
@@ -249,7 +256,13 @@ func InitFlags(fs *pflag.FlagSet) {
 		"Enable tracing to the opentelemetry-collector service in the same namespace.",
 	)
 
-	AddDiagnosticsOptions(fs, &diagnosticsOptions)
+	fs.StringVar(&azureBootrapConfigGVK,
+		"bootstrap-config-gvk",
+		"",
+		"Provide fully qualified GVK string to override default kubeadm config watch source, in the form of Kind.version.group (default: KubeadmConfig.v1beta1.bootstrap.cluster.x-k8s.io)",
+	)
+
+	flags.AddManagerOptions(fs, &managerOptions)
 
 	feature.MutableGates.AddFlag(fs)
 }
@@ -273,7 +286,11 @@ func main() {
 		BurstSize: 100,
 	})
 
-	diagnosticsOpts := GetDiagnosticsOptions(diagnosticsOptions)
+	tlsOptions, metricsOptions, err := flags.GetManagerOptions(managerOptions)
+	if err != nil {
+		setupLog.Error(err, "Unable to start manager: invalid flags")
+		os.Exit(1)
+	}
 
 	var watchNamespaces map[string]cache.Config
 	if watchNamespace != "" {
@@ -296,7 +313,7 @@ func main() {
 		LeaderElectionResourceLock: resourcelock.LeasesResourceLock,
 		HealthProbeBindAddress:     healthAddr,
 		PprofBindAddress:           profilerAddress,
-		Metrics:                    diagnosticsOpts,
+		Metrics:                    *metricsOptions,
 		Cache: cache.Options{
 			DefaultNamespaces: watchNamespaces,
 			SyncPeriod:        &syncPeriod,
@@ -312,6 +329,7 @@ func main() {
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Port:    webhookPort,
 			CertDir: webhookCertDir,
+			TLSOpts: tlsOptions,
 		}),
 		EventBroadcaster: broadcaster,
 	})
@@ -422,6 +440,7 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 			mgr.GetEventRecorderFor("azuremachinepool-reconciler"),
 			timeouts,
 			watchFilterValue,
+			azureBootrapConfigGVK,
 		).SetupWithManager(ctx, mgr, controllers.Options{Options: controller.Options{MaxConcurrentReconciles: azureMachinePoolConcurrency}, Cache: mpCache}); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "AzureMachinePool")
 			os.Exit(1)
@@ -497,6 +516,71 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 			os.Exit(1)
 		}
 	}
+
+	if feature.Gates.Enabled(feature.ASOAPI) {
+		if err := (&controllers.AzureASOManagedClusterReconciler{
+			Client:           mgr.GetClient(),
+			WatchFilterValue: watchFilterValue,
+		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureClusterConcurrency}); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "AzureASOManagedCluster")
+			os.Exit(1)
+		}
+
+		if err := (&controllers.AzureASOManagedControlPlaneReconciler{
+			Client:           mgr.GetClient(),
+			WatchFilterValue: watchFilterValue,
+		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureClusterConcurrency}); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "AzureASOManagedControlPlane")
+			os.Exit(1)
+		}
+
+		// The AzureASOManagedMachinePool controller reads the nodes in clusters to set provider IDs.
+		secretCachingClient, err := client.New(mgr.GetConfig(), client.Options{
+			HTTPClient: mgr.GetHTTPClient(),
+			Cache: &client.CacheOptions{
+				Reader: mgr.GetCache(),
+			},
+		})
+		if err != nil {
+			setupLog.Error(err, "unable to create secret caching client")
+			os.Exit(1)
+		}
+		tracker, err := remote.NewClusterCacheTracker(
+			mgr,
+			remote.ClusterCacheTrackerOptions{
+				SecretCachingClient: secretCachingClient,
+				Log:                 &ctrl.Log,
+				Indexes:             []remote.Index{remote.NodeProviderIDIndex},
+			},
+		)
+		if err != nil {
+			setupLog.Error(err, "unable to create cluster cache tracker")
+			os.Exit(1)
+		}
+
+		if err := (&controllers.AzureASOManagedMachinePoolReconciler{
+			Client:           mgr.GetClient(),
+			WatchFilterValue: watchFilterValue,
+			Tracker:          tracker,
+		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureMachinePoolConcurrency}); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "AzureASOManagedMachinePool")
+			os.Exit(1)
+		}
+
+		if err := (&controllers.ManagedClusterAdoptReconciler{
+			Client: mgr.GetClient(),
+		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureClusterConcurrency}); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "ManagedCluster")
+			os.Exit(1)
+		}
+
+		if err := (&controllers.AgentPoolAdoptReconciler{
+			Client: mgr.GetClient(),
+		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureMachinePoolConcurrency}); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "AgentPool")
+			os.Exit(1)
+		}
+	}
 }
 
 func registerWebhooks(mgr manager.Manager) {
@@ -567,6 +651,21 @@ func registerWebhooks(mgr manager.Manager) {
 		os.Exit(1)
 	}
 
+	if err := infrav1alpha.SetupAzureASOManagedClusterWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "AzureASOManagedCluster")
+		os.Exit(1)
+	}
+
+	if err := infrav1alpha.SetupAzureASOManagedControlPlaneWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "AzureASOManagedControlPlane")
+		os.Exit(1)
+	}
+
+	if err := infrav1alpha.SetupAzureASOManagedMachinePoolWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "AzureASOManagedMachinePool")
+		os.Exit(1)
+	}
+
 	if err := mgr.AddReadyzCheck("webhook", mgr.GetWebhookServer().StartedChecker()); err != nil {
 		setupLog.Error(err, "unable to create ready check")
 		os.Exit(1)
@@ -575,70 +674,5 @@ func registerWebhooks(mgr manager.Manager) {
 	if err := mgr.AddHealthzCheck("webhook", mgr.GetWebhookServer().StartedChecker()); err != nil {
 		setupLog.Error(err, "unable to create health check")
 		os.Exit(1)
-	}
-}
-
-// DiagnosticsOptions is CAPI 1.6's (util/flags).DiagnosticsOptions.
-type DiagnosticsOptions struct {
-	// MetricsBindAddr
-	//
-	// Deprecated: This field will be removed in an upcoming release.
-	MetricsBindAddr     string
-	DiagnosticsAddress  string
-	InsecureDiagnostics bool
-}
-
-// AddDiagnosticsOptions is CAPI 1.6's (util/flags).AddDiagnosticsOptions.
-func AddDiagnosticsOptions(fs *pflag.FlagSet, options *DiagnosticsOptions) {
-	fs.StringVar(&options.MetricsBindAddr, "metrics-bind-addr", "",
-		"The address the metrics endpoint binds to.")
-	_ = fs.MarkDeprecated("metrics-bind-addr", "Please use --diagnostics-address instead. To continue to serve"+
-		"metrics via http and without authentication/authorization set --insecure-diagnostics as well.")
-
-	fs.StringVar(&options.DiagnosticsAddress, "diagnostics-address", ":8443",
-		"The address the diagnostics endpoint binds to. Per default metrics are served via https and with"+
-			"authentication/authorization. To serve via http and without authentication/authorization set --insecure-diagnostics."+
-			"If --insecure-diagnostics is not set the diagnostics endpoint also serves pprof endpoints and an endpoint to change the log level.")
-
-	fs.BoolVar(&options.InsecureDiagnostics, "insecure-diagnostics", false,
-		"Enable insecure diagnostics serving. For more details see the description of --diagnostics-address.")
-}
-
-// GetDiagnosticsOptions is CAPI 1.6's (util/flags).GetDiagnosticsOptions.
-func GetDiagnosticsOptions(options DiagnosticsOptions) metricsserver.Options {
-	// If the deprecated "--metrics-bind-addr" flag is set, continue to serve metrics via http
-	// and without authentication/authorization.
-	if options.MetricsBindAddr != "" {
-		return metricsserver.Options{
-			BindAddress: options.MetricsBindAddr,
-		}
-	}
-
-	// If "--insecure-diagnostics" is set, serve metrics via http
-	// and without authentication/authorization.
-	if options.InsecureDiagnostics {
-		return metricsserver.Options{
-			BindAddress:   options.DiagnosticsAddress,
-			SecureServing: false,
-		}
-	}
-
-	// If "--insecure-diagnostics" is not set, serve metrics via https
-	// and with authentication/authorization. As the endpoint is protected,
-	// we also serve pprof endpoints and an endpoint to change the log level.
-	return metricsserver.Options{
-		BindAddress:    options.DiagnosticsAddress,
-		SecureServing:  true,
-		FilterProvider: filters.WithAuthenticationAndAuthorization,
-		ExtraHandlers: map[string]http.Handler{
-			// Add handler to dynamically change log level.
-			"/debug/flags/v": routes.StringFlagPutHandler(logs.GlogSetter),
-			// Add pprof handler.
-			"/debug/pprof/":        http.HandlerFunc(pprof.Index),
-			"/debug/pprof/cmdline": http.HandlerFunc(pprof.Cmdline),
-			"/debug/pprof/profile": http.HandlerFunc(pprof.Profile),
-			"/debug/pprof/symbol":  http.HandlerFunc(pprof.Symbol),
-			"/debug/pprof/trace":   http.HandlerFunc(pprof.Trace),
-		},
 	}
 }

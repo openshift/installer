@@ -146,7 +146,7 @@ kubernetes.tar.gz
 # generated files in any directory
 # TODO(thockin): uncomment this when we stop committing the generated files.
 #zz_generated.*
-zz_generated.openapi.go
+#zz_generated.openapi.go
 
 # make-related metadata
 /.make/
@@ -181,10 +181,5 @@ docs/book/book/
 # Development container files (https://containers.dev/)
 .devcontainer
 
-# Don't ignore anything in vendor directories
-!/vendor/**
-!/hack/tools/vendor/**
-
-# Ignore go workspaces
-go.work
-go.work.sum
+# CAPO doesn't use vendorings
+vendor/

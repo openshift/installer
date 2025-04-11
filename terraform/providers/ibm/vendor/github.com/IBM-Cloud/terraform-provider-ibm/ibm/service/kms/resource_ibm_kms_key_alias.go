@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	kp "github.com/IBM/keyprotect-go-client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -75,11 +76,11 @@ func resourceIBMKmsKeyAliasCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 	stkey, err := kpAPI.CreateKeyAlias(context.Background(), aliasName, id)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error while creating alias name for the key: %s", err)
+		return flex.FmtErrorf("[ERROR] Error while creating alias name for the key: %s", err)
 	}
 	key, err := kpAPI.GetKey(context.Background(), stkey.KeyID)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Get Key failed with error: %s", err)
+		return flex.FmtErrorf("[ERROR] Get Key failed with error: %s", err)
 	}
 	d.SetId(fmt.Sprintf("%s:alias:%s", stkey.Alias, key.CRN))
 
@@ -89,7 +90,7 @@ func resourceIBMKmsKeyAliasCreate(d *schema.ResourceData, meta interface{}) erro
 func resourceIBMKmsKeyAliasRead(d *schema.ResourceData, meta interface{}) error {
 	id := strings.Split(d.Id(), ":alias:")
 	if len(id) < 2 {
-		return fmt.Errorf("[ERROR] Incorrect ID %s: Id should be a combination of keyAlias:alias:keyCRN", d.Id())
+		return flex.FmtErrorf("[ERROR] Incorrect ID %s: Id should be a combination of keyAlias:alias:keyCRN", d.Id())
 	}
 	_, instanceID, keyid := getInstanceAndKeyDataFromCRN(id[1])
 	kpAPI, _, err := populateKPClient(d, meta, instanceID)
@@ -98,12 +99,13 @@ func resourceIBMKmsKeyAliasRead(d *schema.ResourceData, meta interface{}) error 
 	}
 	key, err := kpAPI.GetKey(context.Background(), keyid)
 	if err != nil {
-		kpError := err.(*kp.Error)
-		if kpError.StatusCode == 404 || kpError.StatusCode == 409 {
-			d.SetId("")
-			return nil
+		if kpError, ok := err.(*kp.Error); ok {
+			if kpError.StatusCode == 404 || kpError.StatusCode == 409 {
+				d.SetId("")
+				return nil
+			}
 		}
-		return fmt.Errorf("[ERROR] Get Key failed with error while reading policies: %s", err)
+		return flex.FmtErrorf("[ERROR] Get Key failed with error while reading policies: %s", err)
 	} else if key.State == 5 { //Refers to Deleted state of the Key
 		d.SetId("")
 		return nil
@@ -129,12 +131,12 @@ func resourceIBMKmsKeyAliasDelete(d *schema.ResourceData, meta interface{}) erro
 	}
 	err1 := kpAPI.DeleteKeyAlias(context.Background(), id[0], keyid)
 	if err1 != nil {
-		kpError := err1.(*kp.Error)
-		if kpError.StatusCode == 404 {
-			return nil
-		} else {
-			return fmt.Errorf(" failed to Destroy alias with error: %s", err1)
+		if kpError, ok := err1.(*kp.Error); ok {
+			if kpError.StatusCode == 404 {
+				return nil
+			}
 		}
+		return flex.FmtErrorf(" failed to Destroy alias with error: %s", err1)
 	}
 	return nil
 }

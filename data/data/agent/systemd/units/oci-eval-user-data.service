@@ -1,0 +1,16 @@
+[Unit]
+Description=Pull a script passed in OCI user data and execute it
+After=NetworkManager.service
+
+[Service]
+StandardOutput=syslog
+StandardError=syslog
+Environment="ASSISTED_INSTALLER_DISCOVERY_ENV=1"
+ExecStart=/usr/local/bin/oci-eval-user-data.sh
+Type=oneshot
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

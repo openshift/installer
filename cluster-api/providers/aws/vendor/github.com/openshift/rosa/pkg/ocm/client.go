@@ -118,7 +118,16 @@ func (b *ClientBuilder) Build() (result *Client, err error) {
 	// values in the configuration, so that default values won't be overridden:
 	builder := sdk.NewConnectionBuilder()
 	builder.Logger(logger)
-	builder.Agent(info.UserAgent + "/" + info.Version + " " + sdk.DefaultAgent)
+
+	userAgent := info.DefaultUserAgent
+	version := info.DefaultVersion
+	if b.cfg.UserAgent != "" {
+		userAgent = b.cfg.UserAgent
+	}
+	if b.cfg.Version != "" {
+		version = b.cfg.Version
+	}
+	builder.Agent(userAgent + "/" + version + " " + sdk.DefaultAgent)
 	if b.cfg.TokenURL != "" {
 		builder.TokenURL(b.cfg.TokenURL)
 	}
@@ -148,7 +157,7 @@ func (b *ClientBuilder) Build() (result *Client, err error) {
 	if err != nil {
 		return
 	}
-	_, _, err = conn.Tokens(10 * time.Minute)
+	accessToken, refreshToken, err := conn.Tokens(10 * time.Minute)
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid_grant") {
 			return nil, fmt.Errorf("your authorization token needs to be updated. " +
@@ -156,6 +165,13 @@ func (b *ClientBuilder) Build() (result *Client, err error) {
 		}
 		return nil, fmt.Errorf("error creating connection. Not able to get authentication token: %s", err)
 	}
+
+	// Persist tokens in the configuration file, the SDK may have refreshed them
+	err = config.PersistTokens(b.cfg, accessToken, refreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("error creating connection. Can't persist tokens to config: %s", err)
+	}
+
 	return &Client{
 		ocm: conn,
 	}, nil
@@ -171,4 +187,22 @@ func (c *Client) GetConnectionURL() string {
 
 func (c *Client) GetConnectionTokens(expiresIn ...time.Duration) (string, string, error) {
 	return c.ocm.Tokens(expiresIn...)
+}
+
+func (c *Client) KeepTokensAlive() error {
+	if c.ocm == nil {
+		return fmt.Errorf("Connection is nil")
+	}
+
+	accessToken, refreshToken, err := c.GetConnectionTokens(10 * time.Minute)
+	if err != nil {
+		return fmt.Errorf("Can't get new tokens: %v", err)
+	}
+
+	err = config.PersistTokens(nil, accessToken, refreshToken)
+	if err != nil {
+		return fmt.Errorf("Can't persist tokens to config: %v", err)
+	}
+
+	return nil
 }

@@ -22,9 +22,9 @@ import (
 	"fmt"
 	"net"
 
-	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview"
 	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
 	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +38,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	"sigs.k8s.io/cluster-api-provider-azure/util/versions"
 	"sigs.k8s.io/cluster-api/util/secret"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
 // ManagedClusterSpec contains properties to create a managed cluster.
@@ -339,12 +340,12 @@ type AzureKeyVaultKms struct {
 }
 
 // buildAutoScalerProfile builds the AutoScalerProfile for the ManagedClusterProperties.
-func buildAutoScalerProfile(autoScalerProfile *AutoScalerProfile) *asocontainerservicev1.ManagedClusterProperties_AutoScalerProfile {
+func buildAutoScalerProfile(autoScalerProfile *AutoScalerProfile) *asocontainerservicev1hub.ManagedClusterProperties_AutoScalerProfile {
 	if autoScalerProfile == nil {
 		return nil
 	}
 
-	mcAutoScalerProfile := &asocontainerservicev1.ManagedClusterProperties_AutoScalerProfile{
+	mcAutoScalerProfile := &asocontainerservicev1hub.ManagedClusterProperties_AutoScalerProfile{
 		BalanceSimilarNodeGroups:      autoScalerProfile.BalanceSimilarNodeGroups,
 		MaxEmptyBulkDelete:            autoScalerProfile.MaxEmptyBulkDelete,
 		MaxGracefulTerminationSec:     autoScalerProfile.MaxGracefulTerminationSec,
@@ -363,7 +364,7 @@ func buildAutoScalerProfile(autoScalerProfile *AutoScalerProfile) *asocontainers
 		SkipNodesWithSystemPods:       autoScalerProfile.SkipNodesWithSystemPods,
 	}
 	if autoScalerProfile.Expander != nil {
-		mcAutoScalerProfile.Expander = ptr.To(asocontainerservicev1.ManagedClusterProperties_AutoScalerProfile_Expander(*autoScalerProfile.Expander))
+		mcAutoScalerProfile.Expander = ptr.To(string(asocontainerservicev1.ManagedClusterProperties_AutoScalerProfile_Expander(*autoScalerProfile.Expander)))
 	}
 
 	return mcAutoScalerProfile
@@ -373,7 +374,7 @@ func buildAutoScalerProfile(autoScalerProfile *AutoScalerProfile) *asocontainers
 // If autoupgrade channels is set to patch, stable or rapid, clusters can be upgraded to higher version by AKS.
 // If autoupgrade is triggered, existing kubernetes version will be higher than the user desired kubernetes version.
 // CAPZ should honour the upgrade and it should not downgrade to the lower desired version.
-func (s *ManagedClusterSpec) getManagedClusterVersion(existing *asocontainerservicev1.ManagedCluster) string {
+func (s *ManagedClusterSpec) getManagedClusterVersion(existing *asocontainerservicev1hub.ManagedCluster) string {
 	if existing == nil || existing.Status.CurrentKubernetesVersion == nil {
 		return s.Version
 	}
@@ -385,13 +386,13 @@ func (s *ManagedClusterSpec) ResourceRef() genruntime.MetaObject {
 	if s.Preview {
 		return &asocontainerservicev1preview.ManagedCluster{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: s.Name,
+				Name: azure.GetNormalizedKubernetesName(s.Name),
 			},
 		}
 	}
 	return &asocontainerservicev1.ManagedCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: s.Name,
+			Name: azure.GetNormalizedKubernetesName(s.Name),
 		},
 	}
 }
@@ -404,30 +405,20 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 	defer done()
 
 	// If existing is preview, convert to stable then back to preview at the end of the function.
-	var existing *asocontainerservicev1.ManagedCluster
+	var existing *asocontainerservicev1hub.ManagedCluster
 	var existingStatus asocontainerservicev1preview.ManagedCluster_STATUS
 	if existingObj != nil {
-		if s.Preview {
-			existingPreview := existingObj.(*asocontainerservicev1preview.ManagedCluster)
-			existingStatus = existingPreview.Status
-			hub := &asocontainerservicev1hub.ManagedCluster{}
-			if err := existingPreview.ConvertTo(hub); err != nil {
-				return nil, err
-			}
-			stable := &asocontainerservicev1.ManagedCluster{}
-			if err := stable.ConvertFrom(hub); err != nil {
-				return nil, err
-			}
-			existing = stable.DeepCopy()
-		} else {
-			existing = existingObj.(*asocontainerservicev1.ManagedCluster)
+		hub := &asocontainerservicev1hub.ManagedCluster{}
+		if err := existingObj.(conversion.Convertible).ConvertTo(hub); err != nil {
+			return nil, err
 		}
+		existing = hub
 	}
 
 	managedCluster := existing
 	if managedCluster == nil {
-		managedCluster = &asocontainerservicev1.ManagedCluster{
-			Spec: asocontainerservicev1.ManagedCluster_Spec{
+		managedCluster = &asocontainerservicev1hub.ManagedCluster{
+			Spec: asocontainerservicev1hub.ManagedCluster_Spec{
 				Tags: infrav1.Build(infrav1.BuildParams{
 					Lifecycle:   infrav1.ResourceLifecycleOwned,
 					ClusterName: s.ClusterName,
@@ -441,10 +432,10 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 
 	managedCluster.Spec.AzureName = s.Name
 	managedCluster.Spec.Owner = &genruntime.KnownResourceReference{
-		Name: s.ResourceGroup,
+		Name: azure.GetNormalizedKubernetesName(s.ResourceGroup),
 	}
-	managedCluster.Spec.Identity = &asocontainerservicev1.ManagedClusterIdentity{
-		Type: ptr.To(asocontainerservicev1.ManagedClusterIdentity_Type_SystemAssigned),
+	managedCluster.Spec.Identity = &asocontainerservicev1hub.ManagedClusterIdentity{
+		Type: ptr.To(string(asocontainerservicev1.ManagedClusterIdentity_Type_SystemAssigned)),
 	}
 	managedCluster.Spec.Location = &s.Location
 	managedCluster.Spec.NodeResourceGroup = &s.NodeResourceGroup
@@ -455,16 +446,16 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 		managedCluster.Spec.KubernetesVersion = &kubernetesVersion
 	}
 
-	managedCluster.Spec.ServicePrincipalProfile = &asocontainerservicev1.ManagedClusterServicePrincipalProfile{
+	managedCluster.Spec.ServicePrincipalProfile = &asocontainerservicev1hub.ManagedClusterServicePrincipalProfile{
 		ClientId: ptr.To("msi"),
 	}
-	managedCluster.Spec.NetworkProfile = &asocontainerservicev1.ContainerServiceNetworkProfile{
-		NetworkPlugin:   azure.AliasOrNil[asocontainerservicev1.NetworkPlugin](&s.NetworkPlugin),
-		LoadBalancerSku: azure.AliasOrNil[asocontainerservicev1.ContainerServiceNetworkProfile_LoadBalancerSku](&s.LoadBalancerSKU),
-		NetworkPolicy:   azure.AliasOrNil[asocontainerservicev1.ContainerServiceNetworkProfile_NetworkPolicy](&s.NetworkPolicy),
+	managedCluster.Spec.NetworkProfile = &asocontainerservicev1hub.ContainerServiceNetworkProfile{
+		NetworkPlugin:   azure.AliasOrNil[string](ptr.To(s.NetworkPlugin)),
+		LoadBalancerSku: azure.AliasOrNil[string](ptr.To(s.LoadBalancerSKU)),
+		NetworkPolicy:   azure.AliasOrNil[string](ptr.To(s.NetworkPolicy)),
 	}
 	if s.NetworkDataplane != nil {
-		managedCluster.Spec.NetworkProfile.NetworkDataplane = ptr.To(asocontainerservicev1.ContainerServiceNetworkProfile_NetworkDataplane(*s.NetworkDataplane))
+		managedCluster.Spec.NetworkProfile.NetworkDataplane = ptr.To(string(asocontainerservicev1.ContainerServiceNetworkProfile_NetworkDataplane(*s.NetworkDataplane)))
 	}
 	managedCluster.Spec.AutoScalerProfile = buildAutoScalerProfile(s.AutoScalerProfile)
 
@@ -477,10 +468,10 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 	}
 
 	if decodedSSHPublicKey != nil {
-		managedCluster.Spec.LinuxProfile = &asocontainerservicev1.ContainerServiceLinuxProfile{
+		managedCluster.Spec.LinuxProfile = &asocontainerservicev1hub.ContainerServiceLinuxProfile{
 			AdminUsername: ptr.To(azure.DefaultAKSUserName),
-			Ssh: &asocontainerservicev1.ContainerServiceSshConfiguration{
-				PublicKeys: []asocontainerservicev1.ContainerServiceSshPublicKey{
+			Ssh: &asocontainerservicev1hub.ContainerServiceSshConfiguration{
+				PublicKeys: []asocontainerservicev1hub.ContainerServiceSshPublicKey{
 					{
 						KeyData: ptr.To(string(decodedSSHPublicKey)),
 					},
@@ -490,7 +481,7 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 	}
 
 	if s.NetworkPluginMode != nil {
-		managedCluster.Spec.NetworkProfile.NetworkPluginMode = ptr.To(asocontainerservicev1.ContainerServiceNetworkProfile_NetworkPluginMode(*s.NetworkPluginMode))
+		managedCluster.Spec.NetworkProfile.NetworkPluginMode = ptr.To(string(asocontainerservicev1.ContainerServiceNetworkProfile_NetworkPluginMode(*s.NetworkPluginMode)))
 	}
 
 	if s.PodCIDR != "" {
@@ -517,8 +508,8 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 
 	// OperatorSpec defines how the Secrets generated by ASO should look for the AKS cluster kubeconfigs.
 	// There is no prescribed naming convention that must be followed.
-	managedCluster.Spec.OperatorSpec = &asocontainerservicev1.ManagedClusterOperatorSpec{
-		Secrets: &asocontainerservicev1.ManagedClusterOperatorSecrets{
+	managedCluster.Spec.OperatorSpec = &asocontainerservicev1hub.ManagedClusterOperatorSpec{
+		Secrets: &asocontainerservicev1hub.ManagedClusterOperatorSecrets{
 			AdminCredentials: &genruntime.SecretDestination{
 				Name: adminKubeconfigSecretName(s.ClusterName),
 				Key:  secret.KubeconfigDataName,
@@ -527,7 +518,7 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 	}
 
 	if s.AADProfile != nil {
-		managedCluster.Spec.AadProfile = &asocontainerservicev1.ManagedClusterAADProfile{
+		managedCluster.Spec.AadProfile = &asocontainerservicev1hub.ManagedClusterAADProfile{
 			Managed:             &s.AADProfile.Managed,
 			EnableAzureRBAC:     &s.AADProfile.EnableAzureRBAC,
 			AdminGroupObjectIDs: s.AADProfile.AdminGroupObjectIDs,
@@ -550,10 +541,10 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 
 	for i := range s.AddonProfiles {
 		if managedCluster.Spec.AddonProfiles == nil {
-			managedCluster.Spec.AddonProfiles = map[string]asocontainerservicev1.ManagedClusterAddonProfile{}
+			managedCluster.Spec.AddonProfiles = map[string]asocontainerservicev1hub.ManagedClusterAddonProfile{}
 		}
 		item := s.AddonProfiles[i]
-		addonProfile := asocontainerservicev1.ManagedClusterAddonProfile{
+		addonProfile := asocontainerservicev1hub.ManagedClusterAddonProfile{
 			Enabled: &item.Enabled,
 		}
 		if item.Config != nil {
@@ -564,9 +555,9 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 
 	if s.SKU != nil {
 		tierName := asocontainerservicev1.ManagedClusterSKU_Tier(s.SKU.Tier)
-		managedCluster.Spec.Sku = &asocontainerservicev1.ManagedClusterSKU{
-			Name: ptr.To(asocontainerservicev1.ManagedClusterSKU_Name("Base")),
-			Tier: ptr.To(tierName),
+		managedCluster.Spec.Sku = &asocontainerservicev1hub.ManagedClusterSKU{
+			Name: ptr.To(string(asocontainerservicev1.ManagedClusterSKU_Name("Base"))),
+			Tier: ptr.To(string(tierName)),
 		}
 	}
 
@@ -575,7 +566,7 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 	}
 
 	if s.APIServerAccessProfile != nil {
-		managedCluster.Spec.ApiServerAccessProfile = &asocontainerservicev1.ManagedClusterAPIServerAccessProfile{
+		managedCluster.Spec.ApiServerAccessProfile = &asocontainerservicev1hub.ManagedClusterAPIServerAccessProfile{
 			EnablePrivateCluster:           s.APIServerAccessProfile.EnablePrivateCluster,
 			PrivateDNSZone:                 s.APIServerAccessProfile.PrivateDNSZone,
 			EnablePrivateClusterPublicFQDN: s.APIServerAccessProfile.EnablePrivateClusterPublicFQDN,
@@ -587,7 +578,7 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 	}
 
 	if s.OutboundType != nil {
-		managedCluster.Spec.NetworkProfile.OutboundType = ptr.To(asocontainerservicev1.ContainerServiceNetworkProfile_OutboundType(*s.OutboundType))
+		managedCluster.Spec.NetworkProfile.OutboundType = ptr.To(string(asocontainerservicev1.ContainerServiceNetworkProfile_OutboundType(*s.OutboundType)))
 	}
 
 	if s.Identity != nil {
@@ -598,7 +589,7 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 	}
 
 	if s.KubeletUserAssignedIdentity != "" {
-		managedCluster.Spec.IdentityProfile = map[string]asocontainerservicev1.UserAssignedIdentity{
+		managedCluster.Spec.IdentityProfile = map[string]asocontainerservicev1hub.UserAssignedIdentity{
 			kubeletIdentityKey: {
 				ResourceReference: &genruntime.ResourceReference{
 					ARMID: s.KubeletUserAssignedIdentity,
@@ -608,7 +599,7 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 	}
 
 	if s.HTTPProxyConfig != nil {
-		managedCluster.Spec.HttpProxyConfig = &asocontainerservicev1.ManagedClusterHTTPProxyConfig{
+		managedCluster.Spec.HttpProxyConfig = &asocontainerservicev1hub.ManagedClusterHTTPProxyConfig{
 			HttpProxy:  s.HTTPProxyConfig.HTTPProxy,
 			HttpsProxy: s.HTTPProxyConfig.HTTPSProxy,
 			TrustedCa:  s.HTTPProxyConfig.TrustedCA,
@@ -620,11 +611,11 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 	}
 
 	if s.OIDCIssuerProfile != nil {
-		managedCluster.Spec.OidcIssuerProfile = &asocontainerservicev1.ManagedClusterOIDCIssuerProfile{
+		managedCluster.Spec.OidcIssuerProfile = &asocontainerservicev1hub.ManagedClusterOIDCIssuerProfile{
 			Enabled: s.OIDCIssuerProfile.Enabled,
 		}
 		if ptr.Deref(s.OIDCIssuerProfile.Enabled, false) {
-			managedCluster.Spec.OperatorSpec.ConfigMaps = &asocontainerservicev1.ManagedClusterOperatorConfigMaps{
+			managedCluster.Spec.OperatorSpec.ConfigMaps = &asocontainerservicev1hub.ManagedClusterOperatorConfigMaps{
 				OIDCIssuerProfile: &genruntime.ConfigMapDestination{
 					Name: oidcIssuerURLConfigMapName(s.ClusterName),
 					Key:  oidcIssuerProfileURL,
@@ -634,21 +625,21 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 	}
 
 	if s.AutoUpgradeProfile != nil {
-		managedCluster.Spec.AutoUpgradeProfile = &asocontainerservicev1.ManagedClusterAutoUpgradeProfile{
-			UpgradeChannel: (*asocontainerservicev1.ManagedClusterAutoUpgradeProfile_UpgradeChannel)(s.AutoUpgradeProfile.UpgradeChannel),
+		managedCluster.Spec.AutoUpgradeProfile = &asocontainerservicev1hub.ManagedClusterAutoUpgradeProfile{
+			UpgradeChannel: (*string)(s.AutoUpgradeProfile.UpgradeChannel),
 		}
 	}
 
 	if s.SecurityProfile != nil {
-		securityProfile := &asocontainerservicev1.ManagedClusterSecurityProfile{}
+		securityProfile := &asocontainerservicev1hub.ManagedClusterSecurityProfile{}
 		if s.SecurityProfile.AzureKeyVaultKms != nil {
-			securityProfile.AzureKeyVaultKms = &asocontainerservicev1.AzureKeyVaultKms{
+			securityProfile.AzureKeyVaultKms = &asocontainerservicev1hub.AzureKeyVaultKms{
 				Enabled: s.SecurityProfile.AzureKeyVaultKms.Enabled,
 				KeyId:   s.SecurityProfile.AzureKeyVaultKms.KeyID,
 			}
 			if s.SecurityProfile.AzureKeyVaultKms.KeyVaultNetworkAccess != nil {
 				keyVaultNetworkAccess := string(*s.SecurityProfile.AzureKeyVaultKms.KeyVaultNetworkAccess)
-				securityProfile.AzureKeyVaultKms.KeyVaultNetworkAccess = ptr.To(asocontainerservicev1.AzureKeyVaultKms_KeyVaultNetworkAccess(keyVaultNetworkAccess))
+				securityProfile.AzureKeyVaultKms.KeyVaultNetworkAccess = ptr.To(string(asocontainerservicev1.AzureKeyVaultKms_KeyVaultNetworkAccess(keyVaultNetworkAccess)))
 			}
 			if s.SecurityProfile.AzureKeyVaultKms.KeyVaultResourceID != nil {
 				securityProfile.AzureKeyVaultKms.KeyVaultResourceReference = &genruntime.ResourceReference{
@@ -657,25 +648,25 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 			}
 		}
 		if s.SecurityProfile.Defender != nil {
-			securityProfile.Defender = &asocontainerservicev1.ManagedClusterSecurityProfileDefender{
+			securityProfile.Defender = &asocontainerservicev1hub.ManagedClusterSecurityProfileDefender{
 				LogAnalyticsWorkspaceResourceReference: &genruntime.ResourceReference{
 					ARMID: *s.SecurityProfile.Defender.LogAnalyticsWorkspaceResourceID,
 				},
 			}
 			if s.SecurityProfile.Defender.SecurityMonitoring != nil {
-				securityProfile.Defender.SecurityMonitoring = &asocontainerservicev1.ManagedClusterSecurityProfileDefenderSecurityMonitoring{
+				securityProfile.Defender.SecurityMonitoring = &asocontainerservicev1hub.ManagedClusterSecurityProfileDefenderSecurityMonitoring{
 					Enabled: s.SecurityProfile.Defender.SecurityMonitoring.Enabled,
 				}
 			}
 		}
 		if s.SecurityProfile.ImageCleaner != nil {
-			securityProfile.ImageCleaner = &asocontainerservicev1.ManagedClusterSecurityProfileImageCleaner{
+			securityProfile.ImageCleaner = &asocontainerservicev1hub.ManagedClusterSecurityProfileImageCleaner{
 				Enabled:       s.SecurityProfile.ImageCleaner.Enabled,
 				IntervalHours: s.SecurityProfile.ImageCleaner.IntervalHours,
 			}
 		}
 		if s.SecurityProfile.WorkloadIdentity != nil {
-			securityProfile.WorkloadIdentity = &asocontainerservicev1.ManagedClusterSecurityProfileWorkloadIdentity{
+			securityProfile.WorkloadIdentity = &asocontainerservicev1hub.ManagedClusterSecurityProfileWorkloadIdentity{
 				Enabled: s.SecurityProfile.WorkloadIdentity.Enabled,
 			}
 		}
@@ -684,7 +675,7 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 
 	// Only include AgentPoolProfiles during initial cluster creation. Agent pools are managed solely by the
 	// AzureManagedMachinePool controller thereafter.
-	var prevAgentPoolProfiles []asocontainerservicev1preview.ManagedClusterAgentPoolProfile
+	var prevAgentPoolProfiles []asocontainerservicev1hub.ManagedClusterAgentPoolProfile
 	managedCluster.Spec.AgentPoolProfiles = nil
 	if managedCluster.Status.AgentPoolProfiles == nil {
 		// Add all agent pools to cluster spec that will be submitted to the API
@@ -706,68 +697,72 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existingObj genrunt
 				return nil, errors.Wrapf(err, "failed to get agent pool parameters for managed cluster %s", s.Name)
 			}
 			agentPoolSpecTyped := agentPoolSpec.(*agentpools.AgentPoolSpec)
+			hubAgentPool := &asocontainerservicev1hub.ManagedClustersAgentPool{}
 			if s.Preview {
 				agentPoolTyped := agentPool.(*asocontainerservicev1preview.ManagedClustersAgentPool)
-				agentPoolTyped.Spec.AzureName = agentPoolSpecTyped.AzureName
-				profile := converters.AgentPoolToManagedClusterAgentPoolPreviewProfile(agentPoolTyped)
-				prevAgentPoolProfiles = append(prevAgentPoolProfiles, profile)
+				if err := agentPoolTyped.ConvertTo(hubAgentPool); err != nil {
+					return nil, err
+				}
 			} else {
 				agentPoolTyped := agentPool.(*asocontainerservicev1.ManagedClustersAgentPool)
-				agentPoolTyped.Spec.AzureName = agentPoolSpecTyped.AzureName
-				profile := converters.AgentPoolToManagedClusterAgentPoolProfile(agentPoolTyped)
-				managedCluster.Spec.AgentPoolProfiles = append(managedCluster.Spec.AgentPoolProfiles, profile)
+				if err := agentPoolTyped.ConvertTo(hubAgentPool); err != nil {
+					return nil, err
+				}
 			}
+			hubAgentPool.Spec.AzureName = agentPoolSpecTyped.AzureName
+			profile := converters.AgentPoolToManagedClusterAgentPoolProfile(hubAgentPool)
+			prevAgentPoolProfiles = append(prevAgentPoolProfiles, profile)
 		}
 	}
 
+	managedCluster.Spec.AgentPoolProfiles = prevAgentPoolProfiles
+
 	if s.Preview {
-		hub := &asocontainerservicev1hub.ManagedCluster{}
-		if err := managedCluster.ConvertTo(hub); err != nil {
-			return nil, err
-		}
 		prev := &asocontainerservicev1preview.ManagedCluster{}
-		if err := prev.ConvertFrom(hub); err != nil {
+		if err := prev.ConvertFrom(managedCluster); err != nil {
 			return nil, err
 		}
 		if existing != nil {
 			prev.Status = existingStatus
 		}
-		if prevAgentPoolProfiles != nil {
-			prev.Spec.AgentPoolProfiles = prevAgentPoolProfiles
-		}
 		return prev, nil
 	}
 
-	return managedCluster, nil
+	stable := &asocontainerservicev1.ManagedCluster{}
+	if err := stable.ConvertFrom(managedCluster); err != nil {
+		return nil, err
+	}
+
+	return stable, nil
 }
 
 // GetLoadBalancerProfile returns an asocontainerservicev1.ManagedClusterLoadBalancerProfile from the
 // information present in ManagedClusterSpec.LoadBalancerProfile.
-func (s *ManagedClusterSpec) GetLoadBalancerProfile() (loadBalancerProfile *asocontainerservicev1.ManagedClusterLoadBalancerProfile) {
-	loadBalancerProfile = &asocontainerservicev1.ManagedClusterLoadBalancerProfile{
+func (s *ManagedClusterSpec) GetLoadBalancerProfile() (loadBalancerProfile *asocontainerservicev1hub.ManagedClusterLoadBalancerProfile) {
+	loadBalancerProfile = &asocontainerservicev1hub.ManagedClusterLoadBalancerProfile{
 		AllocatedOutboundPorts: s.LoadBalancerProfile.AllocatedOutboundPorts,
 		IdleTimeoutInMinutes:   s.LoadBalancerProfile.IdleTimeoutInMinutes,
 	}
 	if s.LoadBalancerProfile.ManagedOutboundIPs != nil {
-		loadBalancerProfile.ManagedOutboundIPs = &asocontainerservicev1.ManagedClusterLoadBalancerProfile_ManagedOutboundIPs{Count: s.LoadBalancerProfile.ManagedOutboundIPs}
+		loadBalancerProfile.ManagedOutboundIPs = &asocontainerservicev1hub.ManagedClusterLoadBalancerProfile_ManagedOutboundIPs{Count: s.LoadBalancerProfile.ManagedOutboundIPs}
 	}
 	if len(s.LoadBalancerProfile.OutboundIPPrefixes) > 0 {
-		loadBalancerProfile.OutboundIPPrefixes = &asocontainerservicev1.ManagedClusterLoadBalancerProfile_OutboundIPPrefixes{
+		loadBalancerProfile.OutboundIPPrefixes = &asocontainerservicev1hub.ManagedClusterLoadBalancerProfile_OutboundIPPrefixes{
 			PublicIPPrefixes: convertToResourceReferences(s.LoadBalancerProfile.OutboundIPPrefixes),
 		}
 	}
 	if len(s.LoadBalancerProfile.OutboundIPs) > 0 {
-		loadBalancerProfile.OutboundIPs = &asocontainerservicev1.ManagedClusterLoadBalancerProfile_OutboundIPs{
+		loadBalancerProfile.OutboundIPs = &asocontainerservicev1hub.ManagedClusterLoadBalancerProfile_OutboundIPs{
 			PublicIPs: convertToResourceReferences(s.LoadBalancerProfile.OutboundIPs),
 		}
 	}
 	return
 }
 
-func convertToResourceReferences(resources []string) []asocontainerservicev1.ResourceReference {
-	resourceReferences := make([]asocontainerservicev1.ResourceReference, len(resources))
+func convertToResourceReferences(resources []string) []asocontainerservicev1hub.ResourceReference {
+	resourceReferences := make([]asocontainerservicev1hub.ResourceReference, len(resources))
 	for i := range resources {
-		resourceReferences[i] = asocontainerservicev1.ResourceReference{
+		resourceReferences[i] = asocontainerservicev1hub.ResourceReference{
 			Reference: &genruntime.ResourceReference{
 				ARMID: resources[i],
 			},
@@ -776,20 +771,20 @@ func convertToResourceReferences(resources []string) []asocontainerservicev1.Res
 	return resourceReferences
 }
 
-func getIdentity(identity *infrav1.Identity) (managedClusterIdentity *asocontainerservicev1.ManagedClusterIdentity, err error) {
+func getIdentity(identity *infrav1.Identity) (managedClusterIdentity *asocontainerservicev1hub.ManagedClusterIdentity, err error) {
 	if identity.Type == "" {
 		return
 	}
 
-	managedClusterIdentity = &asocontainerservicev1.ManagedClusterIdentity{
-		Type: ptr.To(asocontainerservicev1.ManagedClusterIdentity_Type(identity.Type)),
+	managedClusterIdentity = &asocontainerservicev1hub.ManagedClusterIdentity{
+		Type: ptr.To(string(asocontainerservicev1.ManagedClusterIdentity_Type(identity.Type))),
 	}
-	if ptr.Deref(managedClusterIdentity.Type, "") == asocontainerservicev1.ManagedClusterIdentity_Type_UserAssigned {
+	if ptr.Deref(managedClusterIdentity.Type, "") == string(asocontainerservicev1.ManagedClusterIdentity_Type_UserAssigned) {
 		if identity.UserAssignedIdentityResourceID == "" {
 			err = errors.Errorf("Identity is set to \"UserAssigned\" but no UserAssignedIdentityResourceID is present")
 			return
 		}
-		managedClusterIdentity.UserAssignedIdentities = []asocontainerservicev1.UserAssignedIdentityDetails{
+		managedClusterIdentity.UserAssignedIdentities = []asocontainerservicev1hub.UserAssignedIdentityDetails{
 			{
 				Reference: genruntime.ResourceReference{
 					ARMID: identity.UserAssignedIdentityResourceID,

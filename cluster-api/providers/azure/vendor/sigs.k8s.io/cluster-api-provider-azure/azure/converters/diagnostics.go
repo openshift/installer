@@ -39,11 +39,13 @@ func GetDiagnosticsProfile(diagnostics *infrav1.Diagnostics) *armcompute.Diagnos
 				},
 			}
 		case infrav1.UserManagedDiagnosticsStorage:
-			return &armcompute.DiagnosticsProfile{
-				BootDiagnostics: &armcompute.BootDiagnostics{
-					Enabled:    ptr.To(true),
-					StorageURI: &diagnostics.Boot.UserManaged.StorageAccountURI,
-				},
+			if diagnostics.Boot.UserManaged != nil {
+				return &armcompute.DiagnosticsProfile{
+					BootDiagnostics: &armcompute.BootDiagnostics{
+						Enabled:    ptr.To(true),
+						StorageURI: &diagnostics.Boot.UserManaged.StorageAccountURI,
+					},
+				}
 			}
 		}
 	}

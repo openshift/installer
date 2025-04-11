@@ -2,6 +2,7 @@ package ibmcloud
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -14,6 +15,18 @@ type Subnet struct {
 	Name string
 	VPC  string
 	Zone string
+}
+
+// CreateSubnetName will build a subnet name based on the clusterID, subnet role, and subnet zone.
+func CreateSubnetName(clusterID string, role string, zone string) (string, error) {
+	switch role {
+	case "master":
+		return fmt.Sprintf("%s-subnet-control-plane-%s", clusterID, zone), nil
+	case "worker":
+		return fmt.Sprintf("%s-subnet-compute-%s", clusterID, zone), nil
+	default:
+		return "", fmt.Errorf("invalid role: %s", role)
+	}
 }
 
 func getSubnets(ctx context.Context, client API, region string, subnetNames []string) (map[string]Subnet, error) {

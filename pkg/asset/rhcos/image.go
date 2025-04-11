@@ -21,7 +21,6 @@ import (
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
-	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -33,7 +32,10 @@ import (
 // Image is location of RHCOS image.
 // This stores the location of the image based on the platform.
 // eg. on AWS this contains ami-id, on Livirt this can be the URI for QEMU image etc.
-type Image string
+type Image struct {
+	ControlPlane string
+	Compute      string
+}
 
 var _ asset.Asset = (*Image)(nil)
 
@@ -50,29 +52,38 @@ func (i *Image) Dependencies() []asset.Asset {
 }
 
 // Generate the RHCOS image location.
-func (i *Image) Generate(p asset.Parents) error {
+func (i *Image) Generate(ctx context.Context, p asset.Parents) error {
 	if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE"); ok && oi != "" {
 		logrus.Warn("Found override for OS Image. Please be warned, this is not advised")
-		*i = Image(oi)
+		*i = *MakeAsset(oi)
 		return nil
 	}
 
 	ic := &installconfig.InstallConfig{}
 	p.Get(ic)
 	config := ic.Config
-	osimage, err := osImage(config)
+	osimageControlPlane, err := osImage(ctx, config, config.ControlPlane.Architecture)
 	if err != nil {
 		return err
 	}
-	*i = Image(osimage)
+	arch := config.ControlPlane.Architecture
+	if len(config.Compute) > 0 {
+		arch = config.Compute[0].Architecture
+	}
+	osimageCompute, err := osImage(ctx, config, arch)
+	if err != nil {
+		return err
+	}
+	*i = Image{osimageControlPlane, osimageCompute}
 	return nil
 }
 
-func osImage(config *types.InstallConfig) (string, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+//nolint:gocyclo
+func osImage(ctx context.Context, config *types.InstallConfig, nodeArch types.Architecture) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	archName := arch.RpmArch(string(config.ControlPlane.Architecture))
+	archName := arch.RpmArch(string(nodeArch))
 
 	st, err := rhcos.FetchCoreOSBuild(ctx)
 	if err != nil {
@@ -84,11 +95,8 @@ func osImage(config *types.InstallConfig) (string, error) {
 	}
 	switch config.Platform.Name() {
 	case aws.Name:
-		if len(config.Platform.AWS.AMIID) > 0 {
-			return config.Platform.AWS.AMIID, nil
-		}
 		region := config.Platform.AWS.Region
-		if !rhcos.AMIRegions(config.ControlPlane.Architecture).Has(region) {
+		if !rhcos.AMIRegions(nodeArch).Has(region) {
 			const globalResourceRegion = "us-east-1"
 			logrus.Debugf("No AMI found in %s. Using AMI from %s.", region, globalResourceRegion)
 			region = globalResourceRegion
@@ -112,12 +120,6 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return rhcos.FindArtifactURL(a)
 		}
 		return "", fmt.Errorf("%s: No ibmcloud build found", st.FormatPrefix(archName))
-	case libvirt.Name:
-		// 𝅘𝅥𝅮 Everything's going to be a-ok 𝅘𝅥𝅮
-		if a, ok := streamArch.Artifacts["qemu"]; ok {
-			return rhcos.FindArtifactURL(a)
-		}
-		return "", fmt.Errorf("%s: No qemu build found", st.FormatPrefix(archName))
 	case ovirt.Name, openstack.Name:
 		op := config.Platform.OpenStack
 		if op != nil {
@@ -161,7 +163,6 @@ func osImage(config *types.InstallConfig) (string, error) {
 			// FindArtifactURL just create the URL here.
 			artifact := a.Formats["ova"].Disk
 			u, err := url.Parse(artifact.Location)
-
 			if err != nil {
 				return "", err
 			}
@@ -216,5 +217,13 @@ func osImage(config *types.InstallConfig) (string, error) {
 		return "", fmt.Errorf("%s: No nutanix build found", st.FormatPrefix(archName))
 	default:
 		return "", fmt.Errorf("invalid platform %v", config.Platform.Name())
+	}
+}
+
+// MakeAsset returns an Image asset with the given os image.
+func MakeAsset(osImage string) *Image {
+	return &Image{
+		ControlPlane: osImage,
+		Compute:      osImage,
 	}
 }

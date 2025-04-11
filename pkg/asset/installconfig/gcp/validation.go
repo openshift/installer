@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -16,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/validate"
 	mapiutil "github.com/openshift/machine-api-provider-gcp/pkg/cloud/gcp/actuators/util"
@@ -60,11 +63,13 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateRegion(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateZones(client, ic)...)
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
+	allErrs = append(allErrs, validateServiceEndpoints(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
 	allErrs = append(allErrs, ValidateCredentialMode(client, ic)...)
-	allErrs = append(allErrs, validatePreexistingServiceAccountXpn(client, ic)...)
+	allErrs = append(allErrs, validatePreexistingServiceAccount(client, ic)...)
 	allErrs = append(allErrs, validateServiceAccountPresent(client, ic)...)
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
+	allErrs = append(allErrs, validatePlatformKMSKeys(client, ic, field.NewPath("platform").Child("gcp"))...)
 
 	if err := validateUserTags(client, ic.Platform.GCP.ProjectID, ic.Platform.GCP.UserTags); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("platform").Child("gcp").Child("userTags"), ic.Platform.GCP.UserTags, err.Error()))
@@ -73,8 +78,40 @@ func Validate(client API, ic *types.InstallConfig) error {
 	return allErrs.ToAggregate()
 }
 
+func validateInstanceAndDiskType(fldPath *field.Path, diskType, instanceType, arch string) *field.Error {
+	if instanceType == "" {
+		// nothing to validate
+		return nil
+	}
+
+	family, _, _ := strings.Cut(instanceType, "-")
+	if family == "custom" {
+		family = gcp.DefaultCustomInstanceType
+	}
+	diskTypes, ok := gcp.InstanceTypeToDiskTypeMap[family]
+	if !ok {
+		return field.NotFound(fldPath.Child("type"), family)
+	}
+
+	acceptedArmFamilies := sets.New("c4a", "t2a")
+	if arch == types.ArchitectureARM64 && !acceptedArmFamilies.Has(family) {
+		return field.NotSupported(fldPath.Child("type"), family, sets.List(acceptedArmFamilies))
+	}
+
+	if diskType != "" {
+		if !sets.New(diskTypes...).Has(diskType) {
+			return field.Invalid(
+				fldPath.Child("diskType"),
+				diskType,
+				fmt.Sprintf("%s instance requires one of the following disk types: %v", instanceType, diskTypes),
+			)
+		}
+	}
+	return nil
+}
+
 // ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
-func ValidateInstanceType(client API, fieldPath *field.Path, project, region string, zones []string, instanceType string, req resourceRequirements, arch string) field.ErrorList {
+func ValidateInstanceType(client API, fieldPath *field.Path, project, region string, zones []string, diskType string, instanceType string, req resourceRequirements, arch string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	typeMeta, typeZones, err := client.GetMachineTypeWithZones(context.TODO(), project, region, instanceType)
@@ -83,6 +120,10 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, region str
 			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
 		}
 		return append(allErrs, field.InternalError(nil, err))
+	}
+
+	if fieldErr := validateInstanceAndDiskType(fieldPath, diskType, instanceType, arch); fieldErr != nil {
+		return append(allErrs, fieldErr)
 	}
 
 	userZones := sets.New(zones...)
@@ -141,6 +182,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	allErrs := field.ErrorList{}
 
 	defaultInstanceType := ""
+	defaultDiskType := gcp.PDSSD
 	defaultZones := []string{}
 
 	// Default requirements need to be sufficient to support Control Plane instances.
@@ -153,6 +195,10 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	if ic.GCP.DefaultMachinePlatform != nil {
 		defaultZones = ic.GCP.DefaultMachinePlatform.Zones
 		defaultInstanceType = ic.GCP.DefaultMachinePlatform.InstanceType
+		if ic.GCP.DefaultMachinePlatform.DiskType != "" {
+			defaultDiskType = ic.GCP.DefaultMachinePlatform.DiskType
+		}
+
 		if ic.GCP.DefaultMachinePlatform.InstanceType != "" {
 			allErrs = append(allErrs,
 				ValidateInstanceType(
@@ -161,6 +207,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 					ic.GCP.ProjectID,
 					ic.GCP.Region,
 					ic.GCP.DefaultMachinePlatform.Zones,
+					defaultDiskType,
 					ic.GCP.DefaultMachinePlatform.InstanceType,
 					defaultInstanceReq,
 					unknownArchitecture,
@@ -171,6 +218,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	zones := defaultZones
 	instanceType := defaultInstanceType
 	arch := types.ArchitectureAMD64
+	cpDiskType := defaultDiskType
 	if ic.ControlPlane != nil {
 		arch = string(ic.ControlPlane.Architecture)
 		if instanceType == "" {
@@ -183,26 +231,44 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			if len(ic.ControlPlane.Platform.GCP.Zones) > 0 {
 				zones = ic.ControlPlane.Platform.GCP.Zones
 			}
+			if ic.ControlPlane.Platform.GCP.DiskType != "" {
+				cpDiskType = ic.ControlPlane.Platform.GCP.DiskType
+			}
 		}
 	}
-	allErrs = append(allErrs,
-		ValidateInstanceType(
-			client,
-			field.NewPath("controlPlane", "platform", "gcp"),
-			ic.GCP.ProjectID,
-			ic.GCP.Region,
-			zones,
-			instanceType,
-			controlPlaneReq,
-			arch,
-		)...)
+
+	// The IOPS minimum Control plane requirements are not met for pd-standard machines.
+	if cpDiskType == "pd-standard" {
+		allErrs = append(allErrs,
+			field.NotSupported(field.NewPath("controlPlane", "type"),
+				cpDiskType,
+				sets.List(gcp.ControlPlaneSupportedDisks)),
+		)
+	} else {
+		allErrs = append(allErrs,
+			ValidateInstanceType(
+				client,
+				field.NewPath("controlPlane", "platform", "gcp"),
+				ic.GCP.ProjectID,
+				ic.GCP.Region,
+				zones,
+				cpDiskType,
+				instanceType,
+				controlPlaneReq,
+				arch,
+			)...)
+	}
 
 	for idx, compute := range ic.Compute {
 		fieldPath := field.NewPath("compute").Index(idx)
 		zones := defaultZones
 		instanceType := defaultInstanceType
+		diskType := defaultDiskType
 		if instanceType == "" {
 			instanceType = DefaultInstanceTypeForArch(compute.Architecture)
+		}
+		if diskType == "" {
+			diskType = gcp.PDSSD
 		}
 		arch := compute.Architecture
 		if compute.Platform.GCP != nil {
@@ -213,6 +279,11 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 				zones = compute.Platform.GCP.Zones
 			}
 		}
+
+		if compute.Platform.GCP != nil && compute.Platform.GCP.DiskType != "" {
+			diskType = compute.Platform.GCP.DiskType
+		}
+
 		allErrs = append(allErrs,
 			ValidateInstanceType(
 				client,
@@ -220,6 +291,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 				ic.GCP.ProjectID,
 				ic.GCP.Region,
 				zones,
+				diskType,
 				instanceType,
 				computeReq,
 				string(arch),
@@ -229,21 +301,19 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	return allErrs
 }
 
-func validatePreexistingServiceAccountXpn(client API, ic *types.InstallConfig) field.ErrorList {
+func validatePreexistingServiceAccount(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if ic.GCP.NetworkProjectID != "" {
-		if ic.ControlPlane.Platform.GCP != nil && ic.ControlPlane.Platform.GCP.ServiceAccount != "" {
-			fldPath := field.NewPath("controlPlane").Child("platform").Child("gcp").Child("serviceAccount")
+	if ic.ControlPlane.Platform.GCP != nil && ic.ControlPlane.Platform.GCP.ServiceAccount != "" {
+		fldPath := field.NewPath("controlPlane").Child("platform").Child("gcp").Child("serviceAccount")
 
-			// The service account is required for resources in the host project.
-			serviceAccount, err := client.GetServiceAccount(context.Background(), ic.GCP.ProjectID, ic.ControlPlane.Platform.GCP.ServiceAccount)
-			if err != nil {
-				return append(allErrs, field.InternalError(fldPath, err))
-			}
-			if serviceAccount == "" {
-				return append(allErrs, field.NotFound(fldPath, ic.ControlPlane.Platform.GCP.ServiceAccount))
-			}
+		// The service account is required for resources in the host project.
+		serviceAccount, err := client.GetServiceAccount(context.Background(), ic.GCP.ProjectID, ic.ControlPlane.Platform.GCP.ServiceAccount)
+		if err != nil {
+			return append(allErrs, field.InternalError(fldPath, err))
+		}
+		if serviceAccount == "" {
+			return append(allErrs, field.NotFound(fldPath, ic.ControlPlane.Platform.GCP.ServiceAccount))
 		}
 	}
 
@@ -314,7 +384,7 @@ func checkRecordSets(client API, ic *types.InstallConfig, zone *dns.ManagedZone,
 
 // ValidateForProvisioning validates that the install config is valid for provisioning the cluster.
 func ValidateForProvisioning(ic *types.InstallConfig) error {
-	if ic.Platform.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled {
+	if ic.Platform.GCP.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled {
 		return nil
 	}
 
@@ -395,6 +465,21 @@ func validateNetworks(client API, ic *types.InstallConfig, fieldPath *field.Path
 	return allErrs
 }
 
+func validateServiceEndpoints(_ API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// attempt to resolve all the custom (overridden) endpoints. If any are not reachable,
+	// then the installation should fail not skip the endpoint use.
+	for id, serviceEndpoint := range ic.GCP.ServiceEndpoints {
+		if _, err := url.Parse(serviceEndpoint.URL); err != nil {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("serviceEndpoints").Index(id), serviceEndpoint.URL, fmt.Sprintf("failed to parse service endpoint url: %v", err)))
+		} else if _, err := http.Head(serviceEndpoint.URL); err != nil {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("serviceEndpoints").Index(id), serviceEndpoint.URL, fmt.Sprintf("error connecting to endpoint: %v", err)))
+		}
+	}
+	return allErrs
+}
+
 func validateSubnet(client API, ic *types.InstallConfig, fieldPath *field.Path, subnets []*compute.Subnetwork, name string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -444,7 +529,8 @@ func ValidateEnabledServices(ctx context.Context, client API, project string) er
 		"servicemanagement.googleapis.com",
 		"deploymentmanager.googleapis.com",
 		"storage-api.googleapis.com",
-		"storage-component.googleapis.com")
+		"storage-component.googleapis.com",
+		"file.googleapis.com")
 	projectServices, err := client.GetEnabledServices(ctx, project)
 	if err != nil {
 		if IsForbidden(err) {
@@ -523,7 +609,7 @@ func ValidateCredentialMode(client API, ic *types.InstallConfig) field.ErrorList
 func validateZones(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	zones, err := client.GetZones(context.TODO(), ic.GCP.ProjectID, fmt.Sprintf("region eq .*%s", ic.GCP.Region))
+	zones, err := client.GetZones(context.TODO(), ic.GCP.ProjectID, ic.GCP.Region)
 	if err != nil {
 		return append(allErrs, field.InternalError(nil, err))
 	} else if len(zones) == 0 {
@@ -642,4 +728,52 @@ func checkArchitecture(imageArch string, icArch types.Architecture, role string)
 // validated tags in-memory.
 func validateUserTags(client API, projectID string, userTags []gcp.UserTag) error {
 	return NewTagManager(client).validateAndPersistUserTags(context.Background(), projectID, userTags)
+}
+
+// validatePlatformKMSKeys checks for encryption keys for all the machine pools. The encryption key rings are
+// checked against the API for validity/availability.
+func validatePlatformKMSKeys(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	cp := ic.ControlPlane
+	validatedControlPlaneKey := false
+	if cp != nil && cp.Platform.GCP != nil && cp.Platform.GCP.EncryptionKey != nil && cp.Platform.GCP.EncryptionKey.KMSKey != nil {
+		if _, err := client.GetKeyRing(context.TODO(), cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey.KeyRing); err != nil {
+			return append(allErrs, field.Invalid(fieldPath.Child("controlPlane").Child("encryptionKey").Child("kmsKey").Child("keyRing"),
+				cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey.KeyRing,
+				err.Error(),
+			))
+		}
+		validatedControlPlaneKey = true
+	}
+
+	validatedComputeKeys := false
+	for _, mp := range ic.Compute {
+		if mp.Platform.GCP != nil && mp.Platform.GCP.EncryptionKey != nil && mp.Platform.GCP.EncryptionKey.KMSKey != nil {
+			if _, err := client.GetKeyRing(context.TODO(), mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey.KeyRing); err != nil {
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("compute").Child("encryptionKey").Child("kmsKey").Child("keyRing"),
+					mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey.KeyRing,
+					err.Error(),
+				))
+			} else {
+				validatedComputeKeys = true
+			}
+		}
+	}
+
+	defaultMp := ic.GCP.DefaultMachinePlatform
+	if defaultMp != nil && defaultMp.EncryptionKey != nil && defaultMp.EncryptionKey.KMSKey != nil {
+		if _, err := client.GetKeyRing(context.TODO(), defaultMp.EncryptionKey.KMSKey.KeyRing); err != nil {
+			if validatedControlPlaneKey && (validatedComputeKeys && len(allErrs) == 0) {
+				logrus.Warn("defaultMachinePool.encryptionKey.KMSKey.KeyRing is not valid, but compute and control plane key rings are valid")
+			} else {
+				return append(allErrs, field.Invalid(fieldPath.Child("defaultMachinePool").Child("encryptionKey").Child("kmsKey").Child("keyRing"),
+					defaultMp.EncryptionKey.KMSKey.KeyRing,
+					err.Error(),
+				))
+			}
+		}
+	}
+
+	return allErrs
 }

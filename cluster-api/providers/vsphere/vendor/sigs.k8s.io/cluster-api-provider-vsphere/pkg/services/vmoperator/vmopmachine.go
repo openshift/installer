@@ -22,9 +22,11 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
+	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
+	vmoprv1common "github.com/vmware-tanzu/vm-operator/api/v1alpha2/common"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -43,7 +45,8 @@ import (
 
 // VmopMachineService reconciles VM Operator VM.
 type VmopMachineService struct {
-	Client client.Client
+	Client                                client.Client
+	ConfigureControlPlaneVMReadinessProbe bool
 }
 
 // GetMachinesInCluster returns a list of VSphereMachine objects belonging to the cluster.
@@ -114,7 +117,11 @@ func (v *VmopMachineService) ReconcileDelete(ctx context.Context, machineCtx cap
 
 	// First, check to see if it's already deleted
 	vmopVM := vmoprv1.VirtualMachine{}
-	if err := v.Client.Get(ctx, apitypes.NamespacedName{Namespace: supervisorMachineCtx.Machine.Namespace, Name: supervisorMachineCtx.Machine.Name}, &vmopVM); err != nil {
+	key, err := virtualMachineObjectKey(supervisorMachineCtx.Machine.Name, supervisorMachineCtx.Machine.Namespace, supervisorMachineCtx.VSphereMachine.Spec.NamingStrategy)
+	if err != nil {
+		return err
+	}
+	if err := v.Client.Get(ctx, *key, &vmopVM); err != nil {
 		// If debug logging is enabled, report the number of vms in the cluster before and after the reconcile
 		if apierrors.IsNotFound(err) {
 			supervisorMachineCtx.VSphereMachine.Status.VMStatus = vmwarev1.VirtualMachineStateNotFound
@@ -178,15 +185,21 @@ func (v *VmopMachineService) ReconcileNormal(ctx context.Context, machineCtx cap
 
 	// Check for the presence of an existing object
 	vmOperatorVM := &vmoprv1.VirtualMachine{}
-	if err := v.Client.Get(ctx, client.ObjectKey{
-		Namespace: supervisorMachineCtx.Machine.Namespace,
-		Name:      supervisorMachineCtx.Machine.Name,
-	}, vmOperatorVM); err != nil {
+	key, err := virtualMachineObjectKey(supervisorMachineCtx.Machine.Name, supervisorMachineCtx.Machine.Namespace, supervisorMachineCtx.VSphereMachine.Spec.NamingStrategy)
+	if err != nil {
+		return false, err
+	}
+	if err := v.Client.Get(ctx, *key, vmOperatorVM); err != nil {
 		if !apierrors.IsNotFound(err) {
 			return false, err
 		}
 		// Define the VM Operator VirtualMachine resource to reconcile.
-		vmOperatorVM = v.newVMOperatorVM(supervisorMachineCtx)
+		vmOperatorVM = &vmoprv1.VirtualMachine{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      key.Name,
+				Namespace: key.Namespace,
+			},
+		}
 	}
 
 	// Reconcile the VM Operator VirtualMachine.
@@ -200,23 +213,37 @@ func (v *VmopMachineService) ReconcileNormal(ctx context.Context, machineCtx cap
 	// Update the VM's state to Pending
 	supervisorMachineCtx.VSphereMachine.Status.VMStatus = vmwarev1.VirtualMachineStatePending
 
-	// Since vm operator only has one condition for now, we can't set vspheremachine's condition fully based on virtualmachine's
-	// condition. Once vm operator surfaces enough conditions in virtualmachine, we could simply mirror the conditions in vspheremachine.
-	// For now, we set conditions based on the whole virtualmachine status.
-	// TODO: vm-operator does not use the cluster-api condition type. so can't use cluster-api util functions to fetch the condition
-	for _, cond := range vmOperatorVM.Status.Conditions {
-		if cond.Type == vmoprv1.VirtualMachinePrereqReadyCondition && cond.Severity == vmoprv1.ConditionSeverityError {
-			conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, cond.Reason, clusterv1.ConditionSeverityError, cond.Message)
-			return false, errors.Errorf("vm prerequisites check fails: %s", supervisorMachineCtx)
-		}
-	}
-
 	// Requeue until the VM Operator VirtualMachine has:
 	// * Been created
 	// * Been powered on
 	// * An IP address
 	// * A BIOS UUID
-	if vmOperatorVM.Status.Phase != vmoprv1.Created {
+
+	if !meta.IsStatusConditionTrue(vmOperatorVM.Status.Conditions, vmoprv1.VirtualMachineConditionCreated) {
+		// VM operator has conditions which indicate pre-requirements for creation are done.
+		// If one of them is set to false then it hit an error case and the information must bubble up
+		// to the VMProvisionedCondition in CAPV.
+		// NOTE: Following conditions do not get surfaced in any capacity unless they are relevant; if they show up at all,
+		// they become pre-reqs and must be true to proceed with VirtualMachine creation.
+		for _, condition := range []string{
+			vmoprv1.VirtualMachineConditionClassReady,
+			vmoprv1.VirtualMachineConditionImageReady,
+			vmoprv1.VirtualMachineConditionVMSetResourcePolicyReady,
+			vmoprv1.VirtualMachineConditionBootstrapReady,
+			vmoprv1.VirtualMachineConditionStorageReady,
+			vmoprv1.VirtualMachineConditionNetworkReady,
+			vmoprv1.VirtualMachineConditionPlacementReady,
+		} {
+			c := meta.FindStatusCondition(vmOperatorVM.Status.Conditions, condition)
+			// If the condition is not set to false then VM is still getting provisioned and the condition gets added at a later stage.
+			if c == nil || c.Status != metav1.ConditionFalse {
+				continue
+			}
+			conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, c.Reason, clusterv1.ConditionSeverityError, c.Message)
+			return false, errors.Errorf("vm prerequisites check failed for condition %s: %s", condition, supervisorMachineCtx)
+		}
+
+		// All the pre-requisites are in place but the machines is not yet created, report it.
 		conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, vmwarev1.VMProvisionStartedReason, clusterv1.ConditionSeverityInfo, "")
 		log.Info(fmt.Sprintf("VM is not yet created: %s", supervisorMachineCtx))
 		return true, nil
@@ -224,7 +251,7 @@ func (v *VmopMachineService) ReconcileNormal(ctx context.Context, machineCtx cap
 	// Mark the VM as created
 	supervisorMachineCtx.VSphereMachine.Status.VMStatus = vmwarev1.VirtualMachineStateCreated
 
-	if vmOperatorVM.Status.PowerState != vmoprv1.VirtualMachinePoweredOn {
+	if vmOperatorVM.Status.PowerState != vmoprv1.VirtualMachinePowerStateOn {
 		conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, vmwarev1.PoweringOnReason, clusterv1.ConditionSeverityInfo, "")
 		log.Info(fmt.Sprintf("VM is not yet powered on: %s", supervisorMachineCtx))
 		return true, nil
@@ -232,7 +259,7 @@ func (v *VmopMachineService) ReconcileNormal(ctx context.Context, machineCtx cap
 	// Mark the VM as poweredOn
 	supervisorMachineCtx.VSphereMachine.Status.VMStatus = vmwarev1.VirtualMachineStatePoweredOn
 
-	if vmOperatorVM.Status.VmIp == "" {
+	if vmOperatorVM.Status.Network == nil || (vmOperatorVM.Status.Network.PrimaryIP4 == "" && vmOperatorVM.Status.Network.PrimaryIP6 == "") {
 		conditions.MarkFalse(supervisorMachineCtx.VSphereMachine, infrav1.VMProvisionedCondition, vmwarev1.WaitingForNetworkAddressReason, clusterv1.ConditionSeverityInfo, "")
 		log.Info(fmt.Sprintf("VM does not have an IP address: %s", supervisorMachineCtx))
 		return true, nil
@@ -260,6 +287,36 @@ func (v *VmopMachineService) ReconcileNormal(ctx context.Context, machineCtx cap
 	return false, nil
 }
 
+// virtualMachineObjectKey returns the object key of the VirtualMachine.
+// Part of this is generating the name of the VirtualMachine based on the naming strategy.
+func virtualMachineObjectKey(machineName, machineNamespace string, namingStrategy *vmwarev1.VirtualMachineNamingStrategy) (*client.ObjectKey, error) {
+	name, err := GenerateVirtualMachineName(machineName, namingStrategy)
+	if err != nil {
+		return nil, err
+	}
+
+	return &client.ObjectKey{
+		Namespace: machineNamespace,
+		Name:      name,
+	}, nil
+}
+
+// GenerateVirtualMachineName generates the name of a VirtualMachine based on the naming strategy.
+func GenerateVirtualMachineName(machineName string, namingStrategy *vmwarev1.VirtualMachineNamingStrategy) (string, error) {
+	// Per default the name of the VirtualMachine should be equal to the Machine name (this is the same as "{{ .machine.name }}")
+	if namingStrategy == nil || namingStrategy.Template == nil {
+		// Note: No need to trim to max length in this case as valid Machine names will also be valid VirtualMachine names.
+		return machineName, nil
+	}
+
+	name, err := infrautilv1.GenerateMachineNameFromTemplate(machineName, namingStrategy.Template)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to generate name for VirtualMachine")
+	}
+
+	return name, nil
+}
+
 // GetHostInfo returns the hostname or IP address of the infrastructure host for the VM Operator VM.
 func (v *VmopMachineService) GetHostInfo(ctx context.Context, machineCtx capvcontext.MachineContext) (string, error) {
 	supervisorMachineCtx, ok := machineCtx.(*vmware.SupervisorMachineContext)
@@ -268,23 +325,15 @@ func (v *VmopMachineService) GetHostInfo(ctx context.Context, machineCtx capvcon
 	}
 
 	vmOperatorVM := &vmoprv1.VirtualMachine{}
-	if err := v.Client.Get(ctx, client.ObjectKey{
-		Name:      supervisorMachineCtx.Machine.Name,
-		Namespace: supervisorMachineCtx.Machine.Namespace,
-	}, vmOperatorVM); err != nil {
+	key, err := virtualMachineObjectKey(supervisorMachineCtx.Machine.Name, supervisorMachineCtx.Machine.Namespace, supervisorMachineCtx.VSphereMachine.Spec.NamingStrategy)
+	if err != nil {
+		return "", err
+	}
+	if err := v.Client.Get(ctx, *key, vmOperatorVM); err != nil {
 		return "", err
 	}
 
 	return vmOperatorVM.Status.Host, nil
-}
-
-func (v *VmopMachineService) newVMOperatorVM(supervisorMachineCtx *vmware.SupervisorMachineContext) *vmoprv1.VirtualMachine {
-	return &vmoprv1.VirtualMachine{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      supervisorMachineCtx.Machine.Name,
-			Namespace: supervisorMachineCtx.Machine.Namespace,
-		},
-	}
 }
 
 func (v *VmopMachineService) reconcileVMOperatorVM(ctx context.Context, supervisorMachineCtx *vmware.SupervisorMachineContext, vmOperatorVM *vmoprv1.VirtualMachine) error {
@@ -324,15 +373,39 @@ func (v *VmopMachineService) reconcileVMOperatorVM(ctx context.Context, supervis
 		if vmOperatorVM.Spec.StorageClass == "" {
 			vmOperatorVM.Spec.StorageClass = supervisorMachineCtx.VSphereMachine.Spec.StorageClass
 		}
-		vmOperatorVM.Spec.PowerState = vmoprv1.VirtualMachinePoweredOn
-		if vmOperatorVM.Spec.ResourcePolicyName == "" {
-			vmOperatorVM.Spec.ResourcePolicyName = supervisorMachineCtx.VSphereCluster.Status.ResourcePolicyName
+		vmOperatorVM.Spec.PowerState = vmoprv1.VirtualMachinePowerStateOn
+		if supervisorMachineCtx.VSphereCluster.Status.ResourcePolicyName != "" {
+			if vmOperatorVM.Spec.Reserved == nil {
+				vmOperatorVM.Spec.Reserved = &vmoprv1.VirtualMachineReservedSpec{}
+			}
+			if vmOperatorVM.Spec.Reserved.ResourcePolicyName == "" {
+				vmOperatorVM.Spec.Reserved.ResourcePolicyName = supervisorMachineCtx.VSphereCluster.Status.ResourcePolicyName
+			}
 		}
-		vmOperatorVM.Spec.VmMetadata = &vmoprv1.VirtualMachineMetadata{
-			SecretName: dataSecretName,
-			Transport:  vmoprv1.VirtualMachineMetadataCloudInitTransport,
+		if vmOperatorVM.Spec.Bootstrap == nil {
+			vmOperatorVM.Spec.Bootstrap = &vmoprv1.VirtualMachineBootstrapSpec{}
 		}
-		vmOperatorVM.Spec.PowerOffMode = vmoprv1.VirtualMachinePowerOpMode(supervisorMachineCtx.VSphereMachine.Spec.PowerOffMode)
+		vmOperatorVM.Spec.Bootstrap.CloudInit = &vmoprv1.VirtualMachineBootstrapCloudInitSpec{
+			RawCloudConfig: &vmoprv1common.SecretKeySelector{
+				Name: dataSecretName,
+				Key:  "user-data",
+			},
+		}
+		if supervisorMachineCtx.VSphereMachine.Spec.PowerOffMode != "" {
+			var powerOffMode vmoprv1.VirtualMachinePowerOpMode
+			switch supervisorMachineCtx.VSphereMachine.Spec.PowerOffMode {
+			case vmwarev1.VirtualMachinePowerOpModeHard:
+				powerOffMode = vmoprv1.VirtualMachinePowerOpModeHard
+			case vmwarev1.VirtualMachinePowerOpModeSoft:
+				powerOffMode = vmoprv1.VirtualMachinePowerOpModeSoft
+			case vmwarev1.VirtualMachinePowerOpModeTrySoft:
+				powerOffMode = vmoprv1.VirtualMachinePowerOpModeTrySoft
+			default:
+				return fmt.Errorf("unable to map PowerOffMode %q to vm-operator equivalent", supervisorMachineCtx.VSphereMachine.Spec.PowerOffMode)
+			}
+			vmOperatorVM.Spec.PowerOffMode = powerOffMode
+		}
+
 		if vmOperatorVM.Spec.MinHardwareVersion == 0 {
 			vmOperatorVM.Spec.MinHardwareVersion = minHardwareVersion
 		}
@@ -345,8 +418,11 @@ func (v *VmopMachineService) reconcileVMOperatorVM(ctx context.Context, supervis
 		// Once the initial control plane node is ready, we can re-add the probe so
 		// that subsequent machines do not attempt to speak to a kube-apiserver
 		// that is not yet ready.
-		if infrautilv1.IsControlPlaneMachine(supervisorMachineCtx.Machine) && supervisorMachineCtx.Cluster.Status.ControlPlaneReady {
-			vmOperatorVM.Spec.ReadinessProbe = &vmoprv1.Probe{
+		// Not all network providers (for example, NSX-VPC) provide support for VM
+		// readiness probes. The flag PerformsVMReadinessProbe is used to determine
+		// whether a VM readiness probe should be conducted.
+		if v.ConfigureControlPlaneVMReadinessProbe && infrautilv1.IsControlPlaneMachine(supervisorMachineCtx.Machine) && supervisorMachineCtx.Cluster.Status.ControlPlaneReady {
+			vmOperatorVM.Spec.ReadinessProbe = &vmoprv1.VirtualMachineReadinessProbeSpec{
 				TCPSocket: &vmoprv1.TCPSocketAction{
 					Port: intstr.FromInt(defaultAPIBindPort),
 				},
@@ -393,11 +469,14 @@ func (v *VmopMachineService) reconcileVMOperatorVM(ctx context.Context, supervis
 }
 
 func (v *VmopMachineService) reconcileNetwork(supervisorMachineCtx *vmware.SupervisorMachineContext, vm *vmoprv1.VirtualMachine) bool {
-	if vm.Status.VmIp == "" {
+	if vm.Status.Network.PrimaryIP4 == "" && vm.Status.Network.PrimaryIP6 == "" {
 		return false
 	}
 
-	supervisorMachineCtx.VSphereMachine.Status.IPAddr = vm.Status.VmIp
+	supervisorMachineCtx.VSphereMachine.Status.IPAddr = vm.Status.Network.PrimaryIP4
+	if supervisorMachineCtx.VSphereMachine.Status.IPAddr == "" {
+		supervisorMachineCtx.VSphereMachine.Status.IPAddr = vm.Status.Network.PrimaryIP6
+	}
 
 	return true
 }
@@ -490,10 +569,12 @@ func addVolume(vm *vmoprv1.VirtualMachine, name string) {
 
 	vm.Spec.Volumes = append(vm.Spec.Volumes, vmoprv1.VirtualMachineVolume{
 		Name: name,
-		PersistentVolumeClaim: &vmoprv1.PersistentVolumeClaimVolumeSource{
-			PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
-				ClaimName: name,
-				ReadOnly:  false,
+		VirtualMachineVolumeSource: vmoprv1.VirtualMachineVolumeSource{
+			PersistentVolumeClaim: &vmoprv1.PersistentVolumeClaimVolumeSource{
+				PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: name,
+					ReadOnly:  false,
+				},
 			},
 		},
 	})
@@ -520,7 +601,7 @@ func (v *VmopMachineService) addVolumes(ctx context.Context, supervisorMachineCt
 				AccessModes: []corev1.PersistentVolumeAccessMode{
 					corev1.ReadWriteOnce,
 				},
-				Resources: corev1.ResourceRequirements{
+				Resources: corev1.VolumeResourceRequirements{
 					Requests: volume.Capacity,
 				},
 				StorageClassName: &storageClassName,

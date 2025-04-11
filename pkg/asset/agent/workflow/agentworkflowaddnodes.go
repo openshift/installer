@@ -1,6 +1,10 @@
 package workflow
 
-import "github.com/openshift/installer/pkg/asset"
+import (
+	"context"
+
+	"github.com/openshift/installer/pkg/asset"
+)
 
 // AgentWorkflowAddNodes is meant just to define
 // the add nodes workflow.
@@ -16,7 +20,7 @@ func (*AgentWorkflowAddNodes) Name() string {
 }
 
 // Generate generates the AgentWorkflow asset.
-func (a *AgentWorkflowAddNodes) Generate(dependencies asset.Parents) error {
+func (a *AgentWorkflowAddNodes) Generate(_ context.Context, dependencies asset.Parents) error {
 	a.Workflow = AgentWorkflowTypeAddNodes
 	a.File = &asset.File{
 		Filename: agentWorkflowFilename,

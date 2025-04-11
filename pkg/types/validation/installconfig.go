@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	dockerref "github.com/containers/image/docker/reference"
+	dockerref "github.com/containers/image/v5/docker/reference"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
@@ -31,14 +31,14 @@ import (
 	azurevalidation "github.com/openshift/installer/pkg/types/azure/validation"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	baremetalvalidation "github.com/openshift/installer/pkg/types/baremetal/validation"
+	"github.com/openshift/installer/pkg/types/common"
+	defaultsvalidation "github.com/openshift/installer/pkg/types/defaults/validation"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/featuregates"
 	"github.com/openshift/installer/pkg/types/gcp"
 	gcpvalidation "github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	ibmcloudvalidation "github.com/openshift/installer/pkg/types/ibmcloud/validation"
-	"github.com/openshift/installer/pkg/types/libvirt"
-	libvirtvalidation "github.com/openshift/installer/pkg/types/libvirt/validation"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	nutanixvalidation "github.com/openshift/installer/pkg/types/nutanix/validation"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -50,6 +50,7 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 	vspherevalidation "github.com/openshift/installer/pkg/types/vsphere/validation"
 	"github.com/openshift/installer/pkg/validate"
+	"github.com/openshift/installer/pkg/version"
 )
 
 // hostCryptBypassedAnnotation is set if the host crypt check was bypassed via environment variable.
@@ -112,21 +113,38 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		}
 	}
 	if c.Networking != nil {
-		allErrs = append(allErrs, validateNetworking(c.Networking, c.IsSingleNodeOpenShift(), field.NewPath("networking"))...)
+		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"))...)
 		allErrs = append(allErrs, validateNetworkingIPVersion(c.Networking, &c.Platform)...)
-		allErrs = append(allErrs, validateNetworkingForPlatform(c.Networking, &c.Platform, field.NewPath("networking"))...)
 		allErrs = append(allErrs, validateNetworkingClusterNetworkMTU(c, field.NewPath("networking", "clusterNetworkMTU"))...)
-		allErrs = append(allErrs, validateVIPsForPlatform(c.Networking, &c.Platform, field.NewPath("platform"))...)
+		allErrs = append(allErrs, validateVIPsForPlatform(c.Networking, &c.Platform, usingAgentMethod, field.NewPath("platform"))...)
+		allErrs = append(allErrs, validateOVNKubernetesConfig(c.Networking, field.NewPath("networking"))...)
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
 	}
 	allErrs = append(allErrs, validatePlatform(&c.Platform, usingAgentMethod, field.NewPath("platform"), c.Networking, c)...)
 	if c.ControlPlane != nil {
-		allErrs = append(allErrs, validateControlPlane(&c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
+		allErrs = append(allErrs, validateControlPlane(c, field.NewPath("controlPlane"))...)
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("controlPlane"), "controlPlane is required"))
 	}
-	allErrs = append(allErrs, validateCompute(&c.Platform, c.ControlPlane, c.Compute, field.NewPath("compute"))...)
+
+	if c.Arbiter != nil {
+		if c.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
+			allErrs = append(allErrs, validateArbiter(&c.Platform, c.Arbiter, c.ControlPlane, field.NewPath("arbiter"))...)
+		} else {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("arbiter"), fmt.Sprintf("%s feature must be enabled in order to use arbiter cluster deployment", features.FeatureGateHighlyAvailableArbiter)))
+		}
+	}
+	multiArchEnabled := types.MultiArchFeatureGateEnabled(c.Platform.Name(), c.EnabledFeatureGates())
+	allErrs = append(allErrs, validateCompute(&c.Platform, c.ControlPlane, c.Compute, field.NewPath("compute"), multiArchEnabled)...)
+
+	releaseArch, err := version.ReleaseArchitecture()
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(nil, err))
+	} else {
+		allErrs = append(allErrs, validateReleaseArchitecture(c.ControlPlane, c.Compute, types.Architecture(releaseArch))...)
+	}
+
 	if err := validate.ImagePullSecret(c.PullSecret); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("pullSecret"), c.PullSecret, err.Error()))
 	}
@@ -145,7 +163,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		allErrs = append(allErrs, field.Invalid(field.NewPath("imageContentSources"), c.Publish, "cannot set imageContentSources and imageDigestSources at the same time"))
 	}
 	if len(c.DeprecatedImageContentSources) != 0 {
-		logrus.Warningln("imageContentSources is deprecated, please use ImageDigestSource")
+		logrus.Warningln("imageContentSources is deprecated, please use ImageDigestSources")
 	}
 	allErrs = append(allErrs, validateCloudCredentialsMode(c.CredentialsMode, field.NewPath("credentialsMode"), c.Platform)...)
 	if c.Capabilities != nil {
@@ -202,10 +220,6 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 
 		if c.Capabilities.BaselineCapabilitySet == configv1.ClusterVersionCapabilitySetNone {
 			enabledCaps := sets.New[configv1.ClusterVersionCapability](c.Capabilities.AdditionalEnabledCapabilities...)
-			if enabledCaps.Has(configv1.ClusterVersionCapabilityBaremetal) && !enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("additionalEnabledCapabilities"), c.Capabilities.AdditionalEnabledCapabilities,
-					"the baremetal capability requires the MachineAPI capability"))
-			}
 			if enabledCaps.Has(configv1.ClusterVersionCapabilityMarketplace) && !enabledCaps.Has(configv1.ClusterVersionCapabilityOperatorLifecycleManager) {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("additionalEnabledCapabilities"), c.Capabilities.AdditionalEnabledCapabilities,
 					"the marketplace capability requires the OperatorLifecycleManager capability"))
@@ -214,6 +228,11 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 				allErrs = append(allErrs, field.Invalid(field.NewPath("additionalEnabledCapabilities"), c.Capabilities.AdditionalEnabledCapabilities,
 					"platform baremetal requires the baremetal capability"))
 			}
+		}
+
+		if enabledCaps.Has(configv1.ClusterVersionCapabilityMarketplace) && !enabledCaps.Has(configv1.ClusterVersionCapabilityOperatorLifecycleManager) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("additionalEnabledCapabilities"), c.Capabilities.AdditionalEnabledCapabilities,
+				"the marketplace capability requires the OperatorLifecycleManager capability"))
 		}
 
 		if !enabledCaps.Has(configv1.ClusterVersionCapabilityCloudCredential) {
@@ -233,6 +252,11 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 				allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
 					"disabling CloudControllerManager on External platform supported only with cloudControllerManager value none"))
 			}
+		}
+
+		if !enabledCaps.Has(configv1.ClusterVersionCapabilityIngress) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
+				"the Ingress capability is required"))
 		}
 	}
 
@@ -382,101 +406,92 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 	return allErrs
 }
 
-func validateNetworking(n *types.Networking, singleNodeOpenShift bool, fldPath *field.Path) field.ErrorList {
+func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if n.NetworkType == "" {
+
+	if len(n.NetworkType) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("networkType"), "network provider type required"))
 	}
 
 	// NOTE(dulek): We're hardcoding "Kuryr" here as the plan is to remove it from the API very soon. We can remove
 	//              this check once some more general validation of the supported NetworkTypes is in place.
-	if n.NetworkType == "Kuryr" {
+	if strings.EqualFold(n.NetworkType, "Kuryr") {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType Kuryr is not supported on OpenShift later than 4.14"))
 	}
 
-	if n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+	if strings.EqualFold(n.NetworkType, string(operv1.NetworkTypeOpenShiftSDN)) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType OpenShiftSDN is not supported, please use OVNKubernetes"))
 	}
 
-	if len(n.MachineNetwork) > 0 {
-		for i, network := range n.MachineNetwork {
-			if err := validate.SubnetCIDR(&network.CIDR.IPNet); err != nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("machineNetwork").Index(i), network.CIDR.String(), err.Error()))
-			}
-			for j, subNetwork := range n.MachineNetwork[0:i] {
-				if validate.DoCIDRsOverlap(&network.CIDR.IPNet, &subNetwork.CIDR.IPNet) {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("machineNetwork").Index(i), network.CIDR.String(), fmt.Sprintf("machine network must not overlap with machine network %d", j)))
-				}
-			}
-		}
-	} else {
+	if len(n.MachineNetwork) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("machineNetwork"), "at least one machine network is required"))
 	}
-
-	for i, sn := range n.ServiceNetwork {
-		if err := validate.ServiceSubnetCIDR(&sn.IPNet); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(i), sn.String(), err.Error()))
-		}
-		for _, network := range n.MachineNetwork {
-			if validate.DoCIDRsOverlap(&sn.IPNet, &network.CIDR.IPNet) {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(i), sn.String(), "service network must not overlap with any of the machine networks"))
-			}
-		}
-		for j, snn := range n.ServiceNetwork[0:i] {
-			if validate.DoCIDRsOverlap(&sn.IPNet, &snn.IPNet) {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(i), sn.String(), fmt.Sprintf("service network must not overlap with service network %d", j)))
-			}
-		}
+	for i, mn := range n.MachineNetwork {
+		allErrs = append(allErrs, validateMachineNetwork(n, &mn, i, fldPath.Child("machineNetwork").Index(i))...)
 	}
+
 	if len(n.ServiceNetwork) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("serviceNetwork"), "a service network is required"))
 	}
-
-	for i, cn := range n.ClusterNetwork {
-		allErrs = append(allErrs, validateClusterNetwork(n, &cn, i, fldPath.Child("clusterNetwork").Index(i))...)
+	for i, sn := range n.ServiceNetwork {
+		allErrs = append(allErrs, validateServiceNetwork(n, &sn, i, fldPath.Child("serviceNetwork").Index(i))...)
 	}
+
 	if len(n.ClusterNetwork) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("clusterNetwork"), "cluster network required"))
 	}
+	for i, cn := range n.ClusterNetwork {
+		allErrs = append(allErrs, validateClusterNetwork(n, &cn, i, fldPath.Child("clusterNetwork").Index(i))...)
+	}
+
 	return allErrs
 }
 
-func validateNetworkingForPlatform(n *types.Networking, platform *types.Platform, fldPath *field.Path) field.ErrorList {
+func validateMachineNetwork(n *types.Networking, mn *types.MachineNetworkEntry, idx int, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	switch {
-	case platform.Libvirt != nil:
-		errMsg := "overlaps with default Docker Bridge subnet"
-		for idx, mn := range n.MachineNetwork {
-			if validate.DoCIDRsOverlap(&mn.CIDR.IPNet, validate.DockerBridgeCIDR) {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("machineNewtork").Index(idx), mn.CIDR.String(), errMsg))
-			}
+
+	if err := validate.SubnetCIDR(&mn.CIDR.IPNet); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, mn.CIDR.String(), err.Error()))
+		return allErrs // CIDR value is invalid, so no further validation.
+	}
+
+	if validate.DoCIDRsOverlap(&mn.CIDR.IPNet, validate.DockerBridgeSubnet) {
+		logrus.Warnf("%s: %s overlaps with default Docker Bridge subnet", fldPath, mn.CIDR.String())
+	}
+
+	allErrs = append(allErrs, validateNetworkNotOverlapDefaultOVNSubnets(n, &mn.CIDR.IPNet, fldPath)...)
+
+	for i, subNetwork := range n.MachineNetwork[0:idx] {
+		if validate.DoCIDRsOverlap(&mn.CIDR.IPNet, &subNetwork.CIDR.IPNet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, mn.CIDR.String(), fmt.Sprintf("machine network must not overlap with machine network %d", i)))
 		}
-		for idx, sn := range n.ServiceNetwork {
-			if validate.DoCIDRsOverlap(&sn.IPNet, validate.DockerBridgeCIDR) {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceNetwork").Index(idx), sn.String(), errMsg))
-			}
+	}
+
+	return allErrs
+}
+
+func validateServiceNetwork(n *types.Networking, sn *ipnet.IPNet, idx int, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if err := validate.ServiceSubnetCIDR(&sn.IPNet); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, sn.String(), err.Error()))
+		return allErrs // CIDR value is invalid, so no further validation.
+	}
+
+	if validate.DoCIDRsOverlap(&sn.IPNet, validate.DockerBridgeSubnet) {
+		logrus.Warnf("%s: %s overlaps with default Docker Bridge subnet", fldPath, sn.String())
+	}
+
+	allErrs = append(allErrs, validateNetworkNotOverlapDefaultOVNSubnets(n, &sn.IPNet, fldPath)...)
+
+	for _, mn := range n.MachineNetwork {
+		if validate.DoCIDRsOverlap(&sn.IPNet, &mn.CIDR.IPNet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, sn.String(), "service network must not overlap with any of the machine networks"))
 		}
-		for idx, cn := range n.ClusterNetwork {
-			if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, validate.DockerBridgeCIDR) {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterNetwork").Index(idx), cn.CIDR.String(), errMsg))
-			}
-		}
-	default:
-		warningMsgFmt := "%s: %s overlaps with default Docker Bridge subnet"
-		for idx, mn := range n.MachineNetwork {
-			if validate.DoCIDRsOverlap(&mn.CIDR.IPNet, validate.DockerBridgeCIDR) {
-				logrus.Warnf(warningMsgFmt, fldPath.Child("machineNetwork").Index(idx), mn.CIDR.String())
-			}
-		}
-		for idx, sn := range n.ServiceNetwork {
-			if validate.DoCIDRsOverlap(&sn.IPNet, validate.DockerBridgeCIDR) {
-				logrus.Warnf(warningMsgFmt, fldPath.Child("serviceNetwork").Index(idx), sn.String())
-			}
-		}
-		for idx, cn := range n.ClusterNetwork {
-			if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, validate.DockerBridgeCIDR) {
-				logrus.Warnf(warningMsgFmt, fldPath.Child("clusterNetwork").Index(idx), cn.CIDR.String())
-			}
+	}
+	for i, snn := range n.ServiceNetwork[0:idx] {
+		if validate.DoCIDRsOverlap(&sn.IPNet, &snn.IPNet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, sn.String(), fmt.Sprintf("service network must not overlap with service network %d", i)))
 		}
 	}
 	return allErrs
@@ -484,9 +499,18 @@ func validateNetworkingForPlatform(n *types.Networking, platform *types.Platform
 
 func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, idx int, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+
 	if err := validate.SubnetCIDR(&cn.CIDR.IPNet); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.IPNet.String(), err.Error()))
+		return allErrs // CIDR value is invalid, so no further validation.
 	}
+
+	if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, validate.DockerBridgeSubnet) {
+		logrus.Warnf("%s: %s overlaps with default Docker Bridge subnet", fldPath.Index(idx), cn.CIDR.String())
+	}
+
+	allErrs = append(allErrs, validateNetworkNotOverlapDefaultOVNSubnets(n, &cn.CIDR.IPNet, fldPath.Child("cidr"))...)
+
 	for _, network := range n.MachineNetwork {
 		if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, &network.CIDR.IPNet) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.String(), "cluster network must not overlap with any of the machine networks"))
@@ -502,17 +526,82 @@ func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, 
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.String(), fmt.Sprintf("cluster network must not overlap with cluster network %d", i)))
 		}
 	}
-	if cn.HostPrefix < 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "hostPrefix must be positive"))
-	}
+
 	// ignore hostPrefix if the plugin does not use it and has it unset
 	if pluginsUsingHostPrefix.Has(n.NetworkType) || (cn.HostPrefix != 0) {
-		if ones, bits := cn.CIDR.Mask.Size(); cn.HostPrefix < int32(ones) {
+		if cn.HostPrefix < 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "hostPrefix must be positive"))
+		} else if ones, bits := cn.CIDR.Mask.Size(); cn.HostPrefix < int32(ones) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must not be larger size than CIDR "+cn.CIDR.String()))
+		} else if bits == 32 {
+			// setting different value for clusternetwork CIDR host prefix is not allowed
+			// we only need to check IPv4 as IPv6 prefix must be 64
+			for _, acn := range n.ClusterNetwork[0:idx] {
+				if acn.CIDR.IP.To4() != nil && cn.HostPrefix != acn.HostPrefix {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must be the same value for IPv4 networks"))
+					break
+				}
+			}
 		} else if bits == 128 && cn.HostPrefix != 64 {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must be 64 for IPv6 networks"))
 		}
 	}
+	return allErrs
+}
+
+func validateNetworkNotOverlapDefaultOVNSubnets(n *types.Networking, network *net.IPNet, fldPath *field.Path) field.ErrorList {
+	if !strings.EqualFold(n.NetworkType, string(operv1.NetworkTypeOVNKubernetes)) {
+		return nil
+	}
+
+	allErrs := field.ErrorList{}
+
+	// getOVNSubnet returns the *net.IPNet for each type of subnet that will be used by OVNKubernetes
+	// and whether it is user-defined in the install-config.
+	getOVNSubnet := func(defaultSubnet *net.IPNet) (*net.IPNet, bool) {
+		if n.OVNKubernetesConfig == nil {
+			return defaultSubnet, false
+		}
+
+		ovnConfig := n.OVNKubernetesConfig
+
+		// Since each subnet has a unique non-overlapping CIDR,
+		// we can use that to distinguish the type of subnet without having to define extra constants.
+		switch defaultSubnet.String() {
+		case validate.OVNIPv4JoinSubnet.String():
+			if ovnConfig.IPv4 != nil && ovnConfig.IPv4.InternalJoinSubnet != nil {
+				return &ovnConfig.IPv4.InternalJoinSubnet.IPNet, true
+			}
+		default:
+		}
+		return defaultSubnet, false
+	}
+
+	// We only check against OVNKubernetes default subnets.
+	// Any overrides of default subnets is validated in func validateOVNKubernetesConfig.
+	subnetsCheck := func(joinSubnet, transitSubnet, masqueradeSubnet *net.IPNet) {
+		// Join subnet
+		if ovnsubnet, configured := getOVNSubnet(joinSubnet); !configured && validate.DoCIDRsOverlap(network, ovnsubnet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default internal subnet %s", ovnsubnet.String())))
+		}
+
+		// Transit subnet
+		if ovnsubnet, configured := getOVNSubnet(transitSubnet); !configured && validate.DoCIDRsOverlap(network, ovnsubnet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default transit subnet %s", ovnsubnet.String())))
+		}
+
+		// Masquerade subnet
+		if ovnsubnet, configured := getOVNSubnet(masqueradeSubnet); !configured && validate.DoCIDRsOverlap(network, ovnsubnet) {
+			allErrs = append(allErrs, field.Invalid(fldPath, network.String(), fmt.Sprintf("must not overlap with OVNKubernetes default masquerade subnet %s", ovnsubnet.String())))
+		}
+	}
+
+	if network.IP.To4() != nil {
+		subnetsCheck(validate.OVNIPv4JoinSubnet, validate.OVNIPv4TransitSubnet, validate.OVNIPv4MasqueradeSubnet)
+	} else {
+		subnetsCheck(validate.OVNIPv6JoinSubnet, validate.OVNIPv6TransitSubnet, validate.OVNIPv6MasqueradeSubnet)
+	}
+
 	return allErrs
 }
 
@@ -598,8 +687,69 @@ func validateNetworkingClusterNetworkMTU(c *types.InstallConfig, fldPath *field.
 	return allErrs
 }
 
-func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+func validateOVNKubernetesConfig(n *types.Networking, fldPath *field.Path) field.ErrorList {
+	if n.OVNKubernetesConfig == nil {
+		return nil
+	}
+
 	allErrs := field.ErrorList{}
+
+	if !strings.EqualFold(n.NetworkType, string(operv1.NetworkTypeOVNKubernetes)) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "ovnKubernetesConfig may only be specified with the OVNKubernetes networkType"))
+	}
+
+	allErrs = append(allErrs, validateOVNIPv4InternalJoinSubnet(n, fldPath.Child("ovnKubernetesConfig", "ipv4", "internalJoinSubnet"))...)
+	return allErrs
+}
+
+func validateOVNIPv4InternalJoinSubnet(n *types.Networking, fldPath *field.Path) field.ErrorList {
+	if ipv4 := n.OVNKubernetesConfig.IPv4; ipv4 == nil || ipv4.InternalJoinSubnet == nil {
+		return nil
+	}
+
+	allErrs := field.ErrorList{}
+	ipv4JoinNet := n.OVNKubernetesConfig.IPv4.InternalJoinSubnet
+
+	if err := validate.SubnetCIDR(&ipv4JoinNet.IPNet); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, ipv4JoinNet.IPNet.String(), err.Error()))
+		return allErrs // CIDR value is invalid, so we cannot perform further validation.
+	}
+
+	for _, net := range n.ClusterNetwork {
+		if validate.DoCIDRsOverlap(&ipv4JoinNet.IPNet, &net.CIDR.IPNet) {
+			errMsg := fmt.Sprintf("must not overlap with clusterNetwork %s", net.CIDR.String())
+			allErrs = append(allErrs, field.Invalid(fldPath, ipv4JoinNet.String(), errMsg))
+		}
+	}
+
+	for _, net := range n.MachineNetwork {
+		if validate.DoCIDRsOverlap(&ipv4JoinNet.IPNet, &net.CIDR.IPNet) {
+			errMsg := fmt.Sprintf("must not overlap with machineNetwork %s", net.CIDR.String())
+			allErrs = append(allErrs, field.Invalid(fldPath, ipv4JoinNet.String(), errMsg))
+		}
+	}
+
+	for _, net := range n.ServiceNetwork {
+		if validate.DoCIDRsOverlap(&ipv4JoinNet.IPNet, &net.IPNet) {
+			errMsg := fmt.Sprintf("must not overlap with serviceNetwork %s", net.String())
+			allErrs = append(allErrs, field.Invalid(fldPath, ipv4JoinNet.String(), errMsg))
+		}
+	}
+
+	if largeEnough, err := isV4NodeSubnetLargeEnough(n.ClusterNetwork, ipv4JoinNet); err == nil && !largeEnough {
+		errMsg := `ipv4InternalJoinSubnet is not large enough for the maximum number of nodes which can be supported by ClusterNetwork`
+		allErrs = append(allErrs, field.Invalid(fldPath, ipv4JoinNet.String(), errMsg))
+	} else if err != nil {
+		allErrs = append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	return allErrs
+}
+
+func validateControlPlane(installConfig *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	platform := &installConfig.Platform
+	pool := installConfig.ControlPlane
 	if pool.Name != types.MachinePoolControlPlaneRoleName {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), pool.Name, []string{types.MachinePoolControlPlaneRoleName}))
 	}
@@ -607,6 +757,25 @@ func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fld
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
 	}
 	allErrs = append(allErrs, ValidateMachinePool(platform, pool, fldPath)...)
+	allErrs = append(allErrs, validateFencingCredentials(installConfig)...)
+	return allErrs
+}
+
+func validateArbiter(platform *types.Platform, arbiterPool, masterPool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if platform != nil && platform.BareMetal == nil {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("platform"), platform.Name(), []string{baremetal.Name}))
+	}
+	if arbiterPool.Name != types.MachinePoolArbiterRoleName {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), arbiterPool.Name, []string{types.MachinePoolArbiterRoleName}))
+	}
+	if arbiterPool.Replicas != nil && *arbiterPool.Replicas == 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), arbiterPool.Replicas, "number of arbiter replicas must be positive"))
+	}
+	if masterPool.Replicas == nil || *masterPool.Replicas < 2 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), masterPool.Replicas, "number of controlPlane replicas must be at least 2 for arbiter deployments"))
+	}
+	allErrs = append(allErrs, ValidateMachinePool(platform, arbiterPool, fldPath)...)
 	return allErrs
 }
 
@@ -619,7 +788,7 @@ func validateComputeEdge(platform *types.Platform, pName string, fldPath *field.
 	return allErrs
 }
 
-func validateCompute(platform *types.Platform, control *types.MachinePool, pools []types.MachinePool, fldPath *field.Path) field.ErrorList {
+func validateCompute(platform *types.Platform, control *types.MachinePool, pools []types.MachinePool, fldPath *field.Path, isMultiArchEnabled bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 	poolNames := map[string]bool{}
 	for i, p := range pools {
@@ -636,10 +805,14 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 			allErrs = append(allErrs, field.Duplicate(poolFldPath.Child("name"), p.Name))
 		}
 		poolNames[p.Name] = true
-		if control != nil && control.Architecture != p.Architecture {
+		if control != nil && control.Architecture != p.Architecture && !isMultiArchEnabled {
 			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "heteregeneous multi-arch is not supported; compute pool architecture must match control plane"))
 		}
 		allErrs = append(allErrs, ValidateMachinePool(platform, &p, poolFldPath)...)
+
+		if p.Fencing != nil {
+			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("fencing"), p.Fencing, "fencing is only valid for control plane"))
+		}
 	}
 	return allErrs
 }
@@ -659,7 +832,7 @@ type vipFields struct {
 
 // validateVIPsForPlatform validates the VIPs (for API and Ingress) for the
 // given platform
-func validateVIPsForPlatform(network *types.Networking, platform *types.Platform, fldPath *field.Path) field.ErrorList {
+func validateVIPsForPlatform(network *types.Networking, platform *types.Platform, usingAgentMethod bool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	virtualIPs := vips{}
@@ -695,7 +868,8 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			lbType = platform.Nutanix.LoadBalancer.Type
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, lbType, network, fldPath.Child(nutanix.Name))...)
+		vipIsRequired, reqVIPinMachineCIDR := usingAgentMethod, usingAgentMethod
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, vipIsRequired, reqVIPinMachineCIDR, lbType, network, fldPath.Child(nutanix.Name))...)
 	case platform.OpenStack != nil:
 		virtualIPs = vips{
 			API:     platform.OpenStack.APIVIPs,
@@ -717,7 +891,8 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			lbType = platform.VSphere.LoadBalancer.Type
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, lbType, network, fldPath.Child(vsphere.Name))...)
+		vipIsRequired, reqVIPinMachineCIDR := usingAgentMethod, usingAgentMethod
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, vipIsRequired, reqVIPinMachineCIDR, lbType, network, fldPath.Child(vsphere.Name))...)
 	case platform.Ovirt != nil:
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.APIVIPs, fldPath.Child(ovirt.Name, newVIPsFields.APIVIPs))...)
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.IngressVIPs, fldPath.Child(ovirt.Name, newVIPsFields.IngressVIPs))...)
@@ -787,8 +962,7 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired, r
 				for _, ingressVIP := range vips.Ingress {
 					apiVIPNet := net.ParseIP(vip)
 					ingressVIPNet := net.ParseIP(ingressVIP)
-
-					if apiVIPNet.Equal(ingressVIPNet) {
+					if apiVIPNet != nil && apiVIPNet.Equal(ingressVIPNet) {
 						allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, "VIP for API must not be one of the Ingress VIPs"))
 					}
 				}
@@ -902,7 +1076,7 @@ func validatePlatform(platform *types.Platform, usingAgentMethod bool, fldPath *
 	}
 	if platform.AWS != nil {
 		validate(aws.Name, platform.AWS, func(f *field.Path) field.ErrorList {
-			return awsvalidation.ValidatePlatform(platform.AWS, c.CredentialsMode, f)
+			return awsvalidation.ValidatePlatform(platform.AWS, c.Publish, c.CredentialsMode, f)
 		})
 	}
 	if platform.Azure != nil {
@@ -915,9 +1089,6 @@ func validatePlatform(platform *types.Platform, usingAgentMethod bool, fldPath *
 	}
 	if platform.IBMCloud != nil {
 		validate(ibmcloud.Name, platform.IBMCloud, func(f *field.Path) field.ErrorList { return ibmcloudvalidation.ValidatePlatform(platform.IBMCloud, f) })
-	}
-	if platform.Libvirt != nil {
-		validate(libvirt.Name, platform.Libvirt, func(f *field.Path) field.ErrorList { return libvirtvalidation.ValidatePlatform(platform.Libvirt, f) })
 	}
 	if platform.OpenStack != nil {
 		validate(openstack.Name, platform.OpenStack, func(f *field.Path) field.ErrorList {
@@ -949,7 +1120,7 @@ func validatePlatform(platform *types.Platform, usingAgentMethod bool, fldPath *
 	}
 	if platform.Nutanix != nil {
 		validate(nutanix.Name, platform.Nutanix, func(f *field.Path) field.ErrorList {
-			return nutanixvalidation.ValidatePlatform(platform.Nutanix, f, c)
+			return nutanixvalidation.ValidatePlatform(platform.Nutanix, f, c, false)
 		})
 	}
 	return allErrs
@@ -1153,6 +1324,10 @@ func validateIPProxy(proxy string, n *types.Networking, fldPath *field.Path) fie
 			break
 		}
 	}
+
+	if ovnCfg := n.OVNKubernetesConfig; ovnCfg != nil && ovnCfg.IPv4 != nil && ovnCfg.IPv4.InternalJoinSubnet != nil && ovnCfg.IPv4.InternalJoinSubnet.Contains(proxyIP) {
+		allErrs = append(allErrs, field.Invalid(fldPath, proxy, "proxy value is part of the ovn-kubernetes IPv4 InternalJoinSubnet"))
+	}
 	return allErrs
 }
 
@@ -1295,6 +1470,14 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 		gatedFeatures = append(gatedFeatures, gcpvalidation.GatedFeatures(c)...)
 	case c.VSphere != nil:
 		gatedFeatures = append(gatedFeatures, vspherevalidation.GatedFeatures(c)...)
+	case c.AWS != nil:
+		gatedFeatures = append(gatedFeatures, awsvalidation.GatedFeatures(c)...)
+	case c.Azure != nil:
+		gatedFeatures = append(gatedFeatures, azurevalidation.GatedFeatures(c)...)
+	}
+
+	if c.ControlPlane != nil {
+		gatedFeatures = append(gatedFeatures, defaultsvalidation.GatedFeatures(c)...)
 	}
 
 	fg := c.EnabledFeatureGates()
@@ -1312,4 +1495,118 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 	}
 
 	return allErrs
+}
+
+// validateReleaseArchitecture ensures a compatible payload is used according to the desired architecture of the cluster.
+func validateReleaseArchitecture(controlPlanePool *types.MachinePool, computePool []types.MachinePool, releaseArch types.Architecture) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	clusterArch := version.DefaultArch()
+	if controlPlanePool != nil && controlPlanePool.Architecture != "" {
+		clusterArch = controlPlanePool.Architecture
+	}
+
+	switch releaseArch {
+	case "multi":
+		// All good
+	case "unknown":
+		for _, p := range computePool {
+			if p.Architecture != "" && clusterArch != p.Architecture {
+				// Overriding release architecture is a must during dev/CI so just log a warning instead of erroring out
+				logrus.Warnln("Could not determine release architecture for multi arch cluster configuration. Make sure the release is a multi architecture payload.")
+				break
+			}
+		}
+	default:
+		if clusterArch != releaseArch {
+			errMsg := fmt.Sprintf("cannot create %s controlPlane node from a single architecture %s release payload", clusterArch, releaseArch)
+			allErrs = append(allErrs, field.Invalid(field.NewPath("controlPlane", "architecture"), clusterArch, errMsg))
+		}
+		for i, p := range computePool {
+			poolFldPath := field.NewPath("compute").Index(i)
+			if p.Architecture != "" && p.Architecture != releaseArch {
+				errMsg := fmt.Sprintf("cannot create %s compute node from a single architecture %s release payload", p.Architecture, releaseArch)
+				allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, errMsg))
+			}
+		}
+	}
+
+	return allErrs
+}
+
+// isV4NodeSubnetLargeEnough ensures the subnet is large enough for the maximum number of nodes supported by ClusterNetwork.
+// This validation is performed by the cluster network operator: https://github.com/openshift/cluster-network-operator/blob/6b615be1447aa79252ddc73b10675b4638ae13f7/pkg/network/ovn_kubernetes.go#L1761.
+// We need to duplicate it here to catch any issues with network customization prior to install.
+func isV4NodeSubnetLargeEnough(cn []types.ClusterNetworkEntry, nodeSubnet *ipnet.IPNet) (bool, error) {
+	var maxNodesNum int
+	addrLen := 32
+	for i, n := range cn {
+		if utilsnet.IsIPv6CIDRString(n.CIDR.String()) {
+			continue
+		}
+
+		mask, _ := n.CIDR.Mask.Size()
+		if int(n.HostPrefix) < mask {
+			return false, fmt.Errorf("cannot determine the number of nodes supported by cluster network %d due to invalid hostPrefix", i)
+		}
+		nodesNum := 1 << (int(n.HostPrefix) - mask)
+		maxNodesNum += nodesNum
+	}
+	// We need to ensure each node can be assigned an IP address from the internal subnet
+	intSubnetMask, _ := nodeSubnet.Mask.Size()
+
+	// reserve one IP for the gw, one IP for network and one for broadcasting
+	return maxNodesNum < (1<<(addrLen-intSubnetMask) - 3), nil
+}
+
+// validateCredentialsNumber in case fencing credentials exists validates there are exactly 2.
+func validateCredentialsNumber(installConfig *types.InstallConfig, fencing *types.Fencing, fldPath *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	controlPlane := installConfig.ControlPlane
+	if controlPlane == nil || controlPlane.Replicas == nil || installConfig.IsArbiterEnabled() {
+		// invalid use case covered by a different validation.
+		return errs
+	}
+	numOfCpReplicas := *controlPlane.Replicas
+	var numOfCredentials int
+	if fencing != nil {
+		numOfCredentials = len(fencing.Credentials)
+	}
+	if numOfCpReplicas == 2 {
+		if numOfCredentials != 2 {
+			errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("there should be exactly two fencing credentials to support the two node cluster, instead %d credentials were found", numOfCredentials)))
+		}
+	} else {
+		if numOfCredentials != 0 {
+			errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("there should not be any fencing credentials configured for a non dual replica control plane (Two Nodes Fencing) cluster, instead %d credentials were found", numOfCredentials)))
+		}
+	}
+	return errs
+}
+
+func validateFencingCredentials(installConfig *types.InstallConfig) (errors field.ErrorList) {
+	fldPath := field.NewPath("controlPlane", "fencing")
+	fencingCredentials := installConfig.ControlPlane.Fencing
+	allErrs := field.ErrorList{}
+	if fencingCredentials != nil {
+		allErrs = append(allErrs, common.ValidateUniqueAndRequiredFields(fencingCredentials.Credentials, fldPath.Child("credentials"), func([]byte) bool { return false })...)
+		allErrs = append(allErrs, validateFencingForPlatform(installConfig, fldPath)...)
+	}
+	allErrs = append(allErrs, validateCredentialsNumber(installConfig, fencingCredentials, fldPath.Child("credentials"))...)
+
+	return allErrs
+}
+
+func validateFencingForPlatform(config *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	switch {
+	case config.None != nil, config.External != nil:
+	case config.BareMetal != nil:
+		if len(config.Platform.BareMetal.Hosts) > 0 {
+			errs = append(errs, field.Forbidden(fldPath, "fencing is mutually exclusive with hosts, please remove either of them"))
+		}
+	default:
+		errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("fencing is only supported on baremetal, external or none platforms, instead %s platform was found", config.Platform.Name())))
+	}
+	return errs
 }

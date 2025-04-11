@@ -1,13 +1,14 @@
 package openstack
 
 import (
+	"context"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/utils/openstack/clientconfig"
-	networkutils "github.com/gophercloud/utils/openstack/networking/v2/networks"
+	"github.com/gophercloud/gophercloud/v2"
+	"github.com/gophercloud/utils/v2/openstack/clientconfig"
+	networkutils "github.com/gophercloud/utils/v2/openstack/networking/v2/networks"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/types"
@@ -26,6 +27,7 @@ func (e Error) Unwrap() error { return e.err }
 
 // CloudProviderConfigSecret generates the cloud provider config for the OpenStack
 // platform, that will be stored in the system secret.
+// TODO: I think this is crud for the legacy cloud-provider and is no longer needed. Burn it with fire?
 func CloudProviderConfigSecret(cloud *clientconfig.Cloud) ([]byte, error) {
 	domainID := cloud.AuthInfo.DomainID
 	if domainID == "" {
@@ -76,7 +78,7 @@ func CloudProviderConfigSecret(cloud *clientconfig.Cloud) ([]byte, error) {
 	return []byte(res.String()), nil
 }
 
-func generateCloudProviderConfig(networkClient *gophercloud.ServiceClient, cloudConfig *clientconfig.Cloud, installConfig types.InstallConfig) (cloudProviderConfigData, cloudProviderConfigCABundleData string, err error) {
+func generateCloudProviderConfig(ctx context.Context, networkClient *gophercloud.ServiceClient, cloudConfig *clientconfig.Cloud, installConfig types.InstallConfig) (cloudProviderConfigData, cloudProviderConfigCABundleData string, err error) {
 	cloudProviderConfigData = `[Global]
 secret-name = openstack-credentials
 secret-namespace = kube-system
@@ -96,7 +98,7 @@ secret-namespace = kube-system
 
 	if installConfig.OpenStack.ExternalNetwork != "" {
 		networkName := installConfig.OpenStack.ExternalNetwork // Yes, we use a name in install-config.yaml :/
-		networkID, err := networkutils.IDFromName(networkClient, networkName)
+		networkID, err := networkutils.IDFromName(ctx, networkClient, networkName)
 		if err != nil {
 			return "", "", Error{err, "failed to fetch external network " + networkName}
 		}
@@ -110,16 +112,16 @@ secret-namespace = kube-system
 
 // GenerateCloudProviderConfig adds the cloud provider config for the OpenStack
 // platform in the provided configmap.
-func GenerateCloudProviderConfig(installConfig types.InstallConfig) (cloudProviderConfigData, cloudProviderConfigCABundleData string, err error) {
+func GenerateCloudProviderConfig(ctx context.Context, installConfig types.InstallConfig) (cloudProviderConfigData, cloudProviderConfigCABundleData string, err error) {
 	session, err := openstack.GetSession(installConfig.Platform.OpenStack.Cloud)
 	if err != nil {
 		return "", "", Error{err, "failed to get cloud config for openstack"}
 	}
 
-	networkClient, err := openstackdefaults.NewServiceClient("network", session.ClientOpts)
+	networkClient, err := openstackdefaults.NewServiceClient(ctx, "network", session.ClientOpts)
 	if err != nil {
 		return "", "", Error{err, "failed to create a network client"}
 	}
 
-	return generateCloudProviderConfig(networkClient, session.CloudConfig, installConfig)
+	return generateCloudProviderConfig(ctx, networkClient, session.CloudConfig, installConfig)
 }

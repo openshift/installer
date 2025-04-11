@@ -25,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
 )
 
 // PrivateLinkServiceConnection defines the specification for a private link service connection associated with a private endpoint.
@@ -54,7 +55,7 @@ type PrivateEndpointSpec struct {
 func (s *PrivateEndpointSpec) ResourceRef() *asonetworkv1.PrivateEndpoint {
 	return &asonetworkv1.PrivateEndpoint{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: s.Name,
+			Name: azure.GetNormalizedKubernetesName(s.Name),
 		},
 	}
 }
@@ -129,7 +130,7 @@ func (s *PrivateEndpointSpec) Parameters(ctx context.Context, existingPrivateEnd
 	}
 
 	privateEndpoint.Spec.Owner = &genruntime.KnownResourceReference{
-		Name: s.ResourceGroup,
+		Name: azure.GetNormalizedKubernetesName(s.ResourceGroup),
 	}
 
 	privateEndpoint.Spec.Subnet = &asonetworkv1.Subnet_PrivateEndpoint_SubResourceEmbedded{

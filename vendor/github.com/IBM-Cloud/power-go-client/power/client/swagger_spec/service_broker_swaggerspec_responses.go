@@ -6,6 +6,7 @@ package swagger_spec
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -103,11 +104,13 @@ func (o *ServiceBrokerSwaggerspecOK) Code() int {
 }
 
 func (o *ServiceBrokerSwaggerspecOK) Error() string {
-	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerSwaggerspecOK) String() string {
-	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerSwaggerspecOK) GetPayload() models.Object {
@@ -169,11 +172,13 @@ func (o *ServiceBrokerSwaggerspecBadRequest) Code() int {
 }
 
 func (o *ServiceBrokerSwaggerspecBadRequest) Error() string {
-	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerSwaggerspecBadRequest) String() string {
-	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerSwaggerspecBadRequest) GetPayload() *models.Error {
@@ -237,11 +242,13 @@ func (o *ServiceBrokerSwaggerspecUnauthorized) Code() int {
 }
 
 func (o *ServiceBrokerSwaggerspecUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerSwaggerspecUnauthorized) String() string {
-	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerSwaggerspecUnauthorized) GetPayload() *models.Error {
@@ -305,11 +312,13 @@ func (o *ServiceBrokerSwaggerspecForbidden) Code() int {
 }
 
 func (o *ServiceBrokerSwaggerspecForbidden) Error() string {
-	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerSwaggerspecForbidden) String() string {
-	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerSwaggerspecForbidden) GetPayload() *models.Error {
@@ -373,11 +382,13 @@ func (o *ServiceBrokerSwaggerspecNotFound) Code() int {
 }
 
 func (o *ServiceBrokerSwaggerspecNotFound) Error() string {
-	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerSwaggerspecNotFound) String() string {
-	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerSwaggerspecNotFound) GetPayload() *models.Error {

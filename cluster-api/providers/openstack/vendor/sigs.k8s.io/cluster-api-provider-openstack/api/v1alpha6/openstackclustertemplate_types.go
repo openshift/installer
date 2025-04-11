@@ -31,8 +31,8 @@ type OpenStackClusterTemplateSpec struct {
 }
 
 // +genclient
-// +genclient:Namespaced
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:deprecatedversion:warning="The v1alpha6 version of OpenStackClusterTemplate has been deprecated and will be removed in a future release of the API. Please upgrade."
 // +kubebuilder:resource:path=openstackclustertemplates,scope=Namespaced,categories=cluster-api,shortName=osct
 
@@ -47,6 +47,7 @@ type OpenStackClusterTemplate struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 
 // OpenStackClusterTemplateList contains a list of OpenStackClusterTemplate.
 //

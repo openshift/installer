@@ -1,6 +1,10 @@
 package ocm
 
-import cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+import (
+	"slices"
+
+	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+)
 
 func (c *Client) CreateNodePool(clusterID string, nodePool *cmv1.NodePool) (*cmv1.NodePool, error) {
 	response, err := c.ocm.ClustersMgmt().V1().
@@ -12,6 +16,28 @@ func (c *Client) CreateNodePool(clusterID string, nodePool *cmv1.NodePool) (*cmv
 		return nil, handleErr(response.Error(), err)
 	}
 	return response.Body(), nil
+}
+
+func (c *Client) FindNodePoolsUsingKubeletConfig(
+	clusterId string,
+	kubeletName string) ([]*cmv1.NodePool, error) {
+
+	nodePools, err := c.GetNodePools(clusterId)
+	if err != nil {
+		return []*cmv1.NodePool{}, err
+	}
+
+	var found []*cmv1.NodePool
+
+	for _, n := range nodePools {
+		if len(n.KubeletConfigs()) != 0 {
+			if slices.Contains(n.KubeletConfigs(), kubeletName) {
+				found = append(found, n)
+			}
+		}
+	}
+
+	return found, nil
 }
 
 func (c *Client) GetNodePools(clusterID string) ([]*cmv1.NodePool, error) {

@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/ignition
 
-go 1.20
+go 1.22
 
 require github.com/community-terraform-providers/terraform-provider-ignition/v2 v2.1.2
 

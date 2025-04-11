@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2017, 2021 All Rights Reserved.
+// Copyright IBM Corp. 2017, 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package satellite
@@ -9,11 +9,12 @@ import (
 	"time"
 
 	"github.com/IBM-Cloud/container-services-go-sdk/kubernetesserviceapiv1"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 )
 
 func DataSourceIBMSatelliteLocation() *schema.Resource {
@@ -30,6 +31,18 @@ func DataSourceIBMSatelliteLocation() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The IBM Cloud metro from which the Satellite location is managed",
+			},
+			"physical_address": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "An optional physical address of the new Satellite location which is deployed on premise",
+			},
+			"capabilities": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Description: "The satellite capabilities attached to the location",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -138,6 +151,16 @@ func DataSourceIBMSatelliteLocation() *schema.Resource {
 					},
 				},
 			},
+			"service_subnet": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Custom subnet CIDR to provide private IP addresses for services",
+			},
+			"pod_subnet": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Custom subnet CIDR to provide private IP addresses for pods",
+			},
 		},
 	}
 }
@@ -156,6 +179,8 @@ func dataSourceIBMSatelliteLocationRead(d *schema.ResourceData, meta interface{}
 
 	var instance *kubernetesserviceapiv1.MultishiftGetController
 	var response *core.DetailedResponse
+	// TO-DO: resource.Retry, resource.RetryError, resource.RetryableError and resource.NonRetryableError
+	// seem to be deprecated. This shall be replaced.
 	err = resource.Retry(1*time.Minute, func() *resource.RetryError {
 		instance, response, err = satClient.GetSatelliteLocation(getSatLocOptions)
 		if err != nil || instance == nil {
@@ -177,6 +202,12 @@ func dataSourceIBMSatelliteLocationRead(d *schema.ResourceData, meta interface{}
 	d.SetId(*instance.ID)
 	d.Set("location", location)
 	d.Set("description", *instance.Description)
+	if instance.PhysicalAddress != nil {
+		d.Set("physical_address", *instance.PhysicalAddress)
+	}
+	if instance.CapabilitiesManagedBySatellite != nil {
+		d.Set("capabilities", instance.CapabilitiesManagedBySatellite)
+	}
 	if instance.CoreosEnabled != nil {
 		d.Set("coreos_enabled", *instance.CoreosEnabled)
 	}
@@ -214,6 +245,13 @@ func dataSourceIBMSatelliteLocationRead(d *schema.ResourceData, meta interface{}
 			"An error occured during reading of instance (%s) tags : %s", d.Id(), err)
 	}
 	d.Set("tags", tags)
+
+	if instance.PodSubnet != nil {
+		d.Set("pod_subnet", *instance.PodSubnet)
+	}
+	if instance.ServiceSubnet != nil {
+		d.Set("service_subnet", *instance.ServiceSubnet)
+	}
 
 	return nil
 }

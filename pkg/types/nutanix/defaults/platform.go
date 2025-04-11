@@ -5,4 +5,6 @@ import (
 )
 
 // SetPlatformDefaults sets the defaults for the platform.
-func SetPlatformDefaults(p *nutanix.Platform) {}
+func SetPlatformDefaults(p *nutanix.Platform) {
+
+}

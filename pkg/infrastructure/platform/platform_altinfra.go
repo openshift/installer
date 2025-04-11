@@ -34,37 +34,22 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case awstypes.Name:
 		return clusterapi.InitializeProvider(&awscapi.Provider{}), nil
 	case azuretypes.Name:
-		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
-			return clusterapi.InitializeProvider(&azurecapi.Provider{}), nil
-		}
-		return nil, nil
+		return clusterapi.InitializeProvider(&azurecapi.Provider{}), nil
 	case gcptypes.Name:
-		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
-			return clusterapi.InitializeProvider(gcpcapi.Provider{}), nil
-		}
-		return nil, nil
+		return clusterapi.InitializeProvider(gcpcapi.Provider{}), nil
 	case ibmcloudtypes.Name:
 		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
 			return clusterapi.InitializeProvider(ibmcloudcapi.Provider{}), nil
 		}
 		return nil, nil
 	case vspheretypes.Name:
-		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
-			return clusterapi.InitializeProvider(vspherecapi.Provider{}), nil
-		}
+		return clusterapi.InitializeProvider(vspherecapi.Provider{}), nil
 	case powervstypes.Name:
-		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
-			return clusterapi.InitializeProvider(powervscapi.Provider{}), nil
-		}
-		return nil, nil
+		return clusterapi.InitializeProvider(powervscapi.Provider{}), nil
 	case openstacktypes.Name:
-		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
-			return clusterapi.InitializeProvider(openstackcapi.Provider{}), nil
-		}
+		return clusterapi.InitializeProvider(openstackcapi.Provider{}), nil
 	case nutanixtypes.Name:
-		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
-			return clusterapi.InitializeProvider(nutanixcapi.Provider{}), nil
-		}
+		return clusterapi.InitializeProvider(nutanixcapi.Provider{}), nil
 	}
 	return nil, fmt.Errorf("platform %q is not supported in the altinfra Installer build", platform)
 }

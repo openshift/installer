@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017-2023 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -94,6 +94,17 @@ func (m *SessionManager) getSession(id string) (Session, bool) {
 	defer sessionMutex.Unlock()
 	s, ok := m.sessions[id]
 	return s, ok
+}
+
+func (m *SessionManager) findSession(user string) (Session, bool) {
+	sessionMutex.Lock()
+	defer sessionMutex.Unlock()
+	for _, session := range m.sessions {
+		if session.UserName == user {
+			return session, true
+		}
+	}
+	return Session{}, false
 }
 
 func (m *SessionManager) delSession(id string) {
@@ -273,6 +284,25 @@ func (s *SessionManager) CloneSession(ctx *Context, ticket *types.CloneSession) 
 	return body
 }
 
+func (s *SessionManager) ImpersonateUser(ctx *Context, req *types.ImpersonateUser) soap.HasFault {
+	body := new(methods.ImpersonateUserBody)
+
+	session, exists := s.findSession(req.UserName)
+
+	if exists {
+		session.Key = uuid.New().String()
+		ctx.SetSession(session, true)
+
+		body.Res = &types.ImpersonateUserResponse{
+			Returnval: session.UserSession,
+		}
+	} else {
+		body.Fault_ = invalidLogin
+	}
+
+	return body
+}
+
 func (s *SessionManager) AcquireGenericServiceTicket(ticket *types.AcquireGenericServiceTicket) soap.HasFault {
 	return &methods.AcquireGenericServiceTicketBody{
 		Res: &types.AcquireGenericServiceTicketResponse{
@@ -299,12 +329,29 @@ type Context struct {
 	Map     *Registry
 }
 
+func SOAPCookie(ctx *Context) string {
+	if cookie := ctx.Header.Cookie; cookie != nil {
+		return cookie.Value
+	}
+	return ""
+}
+
+func HTTPCookie(ctx *Context) string {
+	if cookie, err := ctx.req.Cookie(soap.SessionCookieName); err == nil {
+		return cookie.Value
+	}
+	return ""
+}
+
 // mapSession maps an HTTP cookie to a Session.
 func (c *Context) mapSession() {
-	if cookie, err := c.req.Cookie(soap.SessionCookieName); err == nil {
-		if val, ok := c.svc.sm.getSession(cookie.Value); ok {
-			c.SetSession(val, false)
-		}
+	cookie := c.Map.Cookie
+	if cookie == nil {
+		cookie = HTTPCookie
+	}
+
+	if val, ok := c.svc.sm.getSession(cookie(c)); ok {
+		c.SetSession(val, false)
 	}
 }
 
@@ -383,6 +430,10 @@ func (c *Context) WithLock(obj mo.Reference, f func()) {
 	// Basic mutex locking will work even if obj doesn't belong to Map, but
 	// if obj implements sync.Locker, that custom locking will not be used.
 	c.Map.WithLock(c, obj, f)
+}
+
+func (c *Context) Update(obj mo.Reference, changes []types.PropertyChange) {
+	c.Map.Update(c, obj, changes)
 }
 
 // postEvent wraps EventManager.PostEvent for internal use, with a lock on the EventManager.

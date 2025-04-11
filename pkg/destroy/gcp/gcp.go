@@ -7,12 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v3"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/dns/v1"
+	"google.golang.org/api/file/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
@@ -33,20 +34,15 @@ var (
 	longTimeout    = 10 * time.Minute
 )
 
-type resourceScope string
-
 const (
 	// capgProviderOwnedLabelFmt is the format string for the label
 	// used for resources created by the Cluster API GCP provider.
 	capgProviderOwnedLabelFmt = "capg-cluster-%s"
 
-	// gcpGlobalResource is an identifier to indicate that the resource(s)
-	// that are being deleted are globally scoped.
-	gcpGlobalResource resourceScope = "global"
+	ownedLabelValue = "owned"
 
-	// gcpRegionalResource is an identifier to indicate that the resource(s)
-	// that are being deleted are regionally scoped.
-	gcpRegionalResource resourceScope = "regional"
+	// DONE represents the done status for a compute service operation.
+	DONE = "DONE"
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete
@@ -58,11 +54,15 @@ type ClusterUninstaller struct {
 	PrivateZoneDomain string
 	ClusterID         string
 
-	computeSvc *compute.Service
-	iamSvc     *iam.Service
-	dnsSvc     *dns.Service
-	storageSvc *storage.Service
-	rmSvc      *resourcemanager.Service
+	computeSvc  *compute.Service
+	iamSvc      *iam.Service
+	dnsSvc      *dns.Service
+	storageSvc  *storage.Service
+	rmSvc       *resourcemanager.Service
+	fileSvc     *file.Service
+	regionOpSvc *compute.RegionOperationsService
+	globalOpSvc *compute.GlobalOperationsService
+	zonalOpSvc  *compute.ZoneOperationsService
 
 	// cpusByMachineType caches the number of CPUs per machine type, used in quota
 	// calculations on deletion
@@ -111,6 +111,10 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		return nil, errors.Wrap(err, "failed to create compute service")
 	}
 
+	o.regionOpSvc = compute.NewRegionOperationsService(o.computeSvc)
+	o.globalOpSvc = compute.NewGlobalOperationsService(o.computeSvc)
+	o.zonalOpSvc = compute.NewZoneOperationsService(o.computeSvc)
+
 	cctx, cancel := context.WithTimeout(ctx, longTimeout)
 	defer cancel()
 
@@ -145,6 +149,11 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	o.rmSvc, err = resourcemanager.NewService(ctx, options...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create resourcemanager service")
+	}
+
+	o.fileSvc, err = file.NewService(ctx, options...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create filestore service: %w", err)
 	}
 
 	err = wait.PollImmediateInfinite(
@@ -187,6 +196,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		{name: "Routers", execute: o.destroyRouters},
 		{name: "Subnetworks", execute: o.destroySubnetworks},
 		{name: "Networks", execute: o.destroyNetworks},
+		{name: "Filestores", execute: o.destroyFilestores},
 	}}
 
 	// create the main Context, so all stages can accept and make context children
@@ -233,7 +243,7 @@ func getRegionFromZone(zoneName string) string {
 // projects/project/zones/zone/diskTypes/pd-standard -> "ssd_total_storage"
 func getDiskLimit(typeURL string) string {
 	switch getNameFromURL("diskTypes", typeURL) {
-	case "pd-balanced", "pd-ssd":
+	case "pd-balanced", "pd-ssd", "hyperdisk-balanced":
 		return "ssd_total_storage"
 	case "pd-standard":
 		return "disks_total_storage"
@@ -251,12 +261,26 @@ func (o *ClusterUninstaller) clusterIDFilter() string {
 }
 
 func (o *ClusterUninstaller) clusterLabelFilter() string {
-	return fmt.Sprintf("(labels.%s = \"owned\") OR (labels.%s = \"owned\")",
-		fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.ClusterID), fmt.Sprintf(capgProviderOwnedLabelFmt, o.ClusterID))
+	return fmt.Sprintf("(labels.%s = \"%s\") OR (labels.%s = \"%s\")",
+		fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.ClusterID), ownedLabelValue,
+		fmt.Sprintf(capgProviderOwnedLabelFmt, o.ClusterID), ownedLabelValue,
+	)
 }
 
 func (o *ClusterUninstaller) clusterLabelOrClusterIDFilter() string {
 	return fmt.Sprintf("(%s) OR (%s)", o.clusterIDFilter(), o.clusterLabelFilter())
+}
+
+func isForbidden(err error) bool {
+	if err == nil {
+		return false
+	}
+	var ae *googleapi.Error
+	if errors.As(err, &ae) {
+		return ae.Code == http.StatusForbidden
+	}
+
+	return false
 }
 
 func isNoOp(err error) bool {
@@ -298,7 +322,7 @@ func (t requestIDTracker) requestID(identifier ...string) string {
 	key := strings.Join(identifier, "/")
 	id, exists := t.requestIDs[key]
 	if !exists {
-		id = uuid.New()
+		id = uuid.NewString()
 		t.requestIDs[key] = id
 	}
 	return id
@@ -384,4 +408,43 @@ func operationErrorMessage(op *compute.Operation) string {
 		return op.HttpErrorMessage
 	}
 	return strings.Join(errs, ", ")
+}
+
+func (o *ClusterUninstaller) handleOperation(ctx context.Context, op *compute.Operation, err error, item cloudResource, resourceType string) error {
+	identifier := []string{item.typeName, item.name}
+	if item.zone != "" {
+		identifier = []string{item.typeName, item.zone, item.name}
+	}
+
+	if err != nil && !isNoOp(err) {
+		o.resetRequestID(identifier...)
+		return fmt.Errorf("failed to delete %s %s: %w", resourceType, item.name, err)
+	}
+
+	// wait for operation to complete before checking any further
+	op, err = o.waitFor(ctx, op, item)
+
+	if op != nil && op.Status == DONE && isErrorStatus(op.HttpErrorStatusCode) {
+		o.resetRequestID(identifier...)
+		return fmt.Errorf("failed to delete %s %s with error: %s", resourceType, item.name, operationErrorMessage(op))
+	}
+	if (err != nil && isNoOp(err)) || (op != nil && op.Status == DONE) {
+		o.resetRequestID(identifier...)
+		o.deletePendingItems(item.typeName, []cloudResource{item})
+		o.Logger.Infof("Deleted %s %s", resourceType, item.name)
+	}
+	return nil
+}
+
+func (o *ClusterUninstaller) waitFor(ctx context.Context, op *compute.Operation, item cloudResource) (*compute.Operation, error) {
+	switch item.scope {
+	case zonal:
+		return o.zonalOpSvc.Wait(o.ProjectID, item.zone, op.Name).Context(ctx).Do()
+	case regional:
+		return o.regionOpSvc.Wait(o.ProjectID, o.Region, op.Name).Context(ctx).Do()
+	case global:
+		return o.globalOpSvc.Wait(o.ProjectID, op.Name).Context(ctx).Do()
+	default:
+		return nil, fmt.Errorf("unrecognized scope %q for %s", item.scope, item.name)
+	}
 }

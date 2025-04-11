@@ -1,6 +1,7 @@
 package kubeconfig
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -29,7 +30,7 @@ func (k *AdminInternalClient) Dependencies() []asset.Asset {
 }
 
 // Generate generates the kubeconfig.
-func (k *AdminInternalClient) Generate(parents asset.Parents) error {
+func (k *AdminInternalClient) Generate(_ context.Context, parents asset.Parents) error {
 	ca := &tls.KubeAPIServerCompleteCABundle{}
 	clientCertKey := &tls.AdminKubeConfigClientCertKey{}
 	installConfig := &installconfig.InstallConfig{}

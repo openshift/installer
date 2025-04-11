@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/openshift/hive/apis/hive/v1/alibabacloud"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -15,7 +16,7 @@ import (
 
 const (
 	// MachinePoolImageIDOverrideAnnotation can be applied to MachinePools to control the precise image ID to be used
-	// for the MachineSets we reconcile for this pool. This feature is presently only implemented for AWS, and
+	// for the MachineSets we reconcile for this pool. This feature is presently only implemented for AWS and GCP, and
 	// is intended for very limited use cases we do not recommend pursuing regularly. As such it is not currently
 	// part of our official API.
 	MachinePoolImageIDOverrideAnnotation = "hive.openshift.io/image-id-override"
@@ -53,6 +54,9 @@ type MachinePoolSpec struct {
 
 	// List of taints that will be applied to the created MachineSet's MachineSpec.
 	// This list will overwrite any modifications made to Node taints on an ongoing basis.
+	// In case of duplicate entries, first encountered taint Value will be preserved,
+	// and the rest collapsed on the corresponding MachineSets.
+	// Note that taints are uniquely identified based on key+effect, not just key.
 	// +optional
 	Taints []corev1.Taint `json:"taints,omitempty"`
 }
@@ -69,6 +73,8 @@ type MachinePoolAutoscaling struct {
 // MachinePoolPlatform is the platform-specific configuration for a machine
 // pool. Only one of the platforms should be set.
 type MachinePoolPlatform struct {
+	// AlibabaCloud is the configuration used when installing on Alibaba Cloud.
+	AlibabaCloud *alibabacloud.MachinePool `json:"alibabacloud,omitempty"`
 	// AWS is the configuration used when installing on AWS.
 	AWS *aws.MachinePoolPlatform `json:"aws,omitempty"`
 	// Azure is the configuration used when installing on Azure.
@@ -97,6 +103,26 @@ type MachinePoolStatus struct {
 	// Conditions includes more detailed status for the cluster deployment
 	// +optional
 	Conditions []MachinePoolCondition `json:"conditions,omitempty"`
+
+	// OwnedLabels lists the keys of labels this MachinePool created on the remote MachineSet.
+	// Used to identify labels to remove from the remote MachineSet when they are absent from
+	// the MachinePool's spec.labels.
+	// +optional
+	OwnedLabels []string `json:"ownedLabels,omitempty"`
+	// OwnedTaints lists identifiers of taints this MachinePool created on the remote MachineSet.
+	// Used to identify taints to remove from the remote MachineSet when they are absent from
+	// the MachinePool's spec.taints.
+	// +optional
+	OwnedTaints []TaintIdentifier `json:"ownedTaints,omitempty"`
+}
+
+// TaintIdentifier uniquely identifies a Taint. (It turns out taints are mutually exclusive by
+// key+effect, not simply by key.)
+type TaintIdentifier struct {
+	// Key matches corev1.Taint.Key.
+	Key string `json:"key,omitempty"`
+	// Effect matches corev1.Taint.Effect.
+	Effect corev1.TaintEffect `json:"effect,omitempty"`
 }
 
 // MachineSetStatus is the status of a machineset in the remote cluster.
@@ -152,6 +178,16 @@ type MachinePoolCondition struct {
 
 // MachinePoolConditionType is a valid value for MachinePoolCondition.Type
 type MachinePoolConditionType string
+
+// ConditionType satisfies the conditions.Condition interface
+func (c MachinePoolCondition) ConditionType() ConditionType {
+	return c.Type
+}
+
+// String satisfies the conditions.ConditionType interface
+func (t MachinePoolConditionType) String() string {
+	return string(t)
+}
 
 const (
 	// NotEnoughReplicasMachinePoolCondition is true when the minReplicas field

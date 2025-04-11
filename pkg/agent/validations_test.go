@@ -179,8 +179,9 @@ func TestUpdateValidationHistory(t *testing.T) {
 				Hooks:     make(logrus.LevelHooks),
 				Level:     logrus.DebugLevel,
 			}
-			actualResult, _ := updateValidationResultHistory(testLogPrefix, tt.validationsInfo, tt.inputHistory, logger)
+			actualResult, err := updateValidationResultHistory(testLogPrefix, tt.validationsInfo, tt.inputHistory, logger, nil)
 			assert.Equal(t, tt.expectedResult, actualResult)
+			assert.Nil(t, err)
 		})
 	}
 }
@@ -299,7 +300,7 @@ func TestLogValidationHistory(t *testing.T) {
 			}
 			var hook = test.NewLocal(logger)
 
-			logValidationHistory(testLogPrefix, tt.inputHistory, logger)
+			logValidationHistory(testLogPrefix, tt.inputHistory, logger, nil)
 			actualResult := hook.LastEntry()
 
 			if actualResult == nil {

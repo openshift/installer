@@ -116,6 +116,8 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 			}
 
 			emptyAssets := map[string]bool{
+				"Arbiter Ignition Config":       true, // no files for non arbiter cluster
+				"Arbiter Machines":              true, // no files for the 'none' platform
 				"Master Machines":               true, // no files for the 'none' platform
 				"Worker Machines":               true, // no files for the 'none' platform
 				"Cluster API Manifests":         true, // no files for the 'none' platform and ClusterAPIInstall feature gate not set

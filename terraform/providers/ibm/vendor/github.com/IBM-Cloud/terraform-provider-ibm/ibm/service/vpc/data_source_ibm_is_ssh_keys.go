@@ -109,6 +109,13 @@ func DataSourceIBMIsSshKeys() *schema.Resource {
 							Computed:    true,
 							Description: "The crypto-system used by this key.",
 						},
+						"tags": {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "User Tags for the ssh",
+						},
 						isKeyAccessTags: {
 							Type:        schema.TypeSet,
 							Computed:    true,
@@ -154,7 +161,6 @@ func dataSourceIBMIsSshKeysRead(context context.Context, d *schema.ResourceData,
 	}
 
 	d.SetId(dataSourceIBMIsSshKeysID(d))
-
 	err = d.Set(isKeys, dataSourceKeyCollectionFlattenKeys(allrecs, d, meta))
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting keys %s", err))
@@ -212,6 +218,12 @@ func dataSourceKeyCollectionKeysToMap(keysItem vpcv1.Key, d *schema.ResourceData
 	if keysItem.Type != nil {
 		keysMap[isKeyType] = keysItem.Type
 	}
+	tags, err := flex.GetGlobalTagsUsingCRN(meta, *keysItem.CRN, "", isUserTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource vpc SSH Key (%s) user tags: %s", d.Id(), err)
+	}
+	keysMap["tags"] = tags
 	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *keysItem.CRN, "", isKeyAccessTagType)
 	if err != nil {
 		log.Printf(

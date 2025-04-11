@@ -9,12 +9,38 @@ import (
 	"fmt"
 
 	"github.com/go-openapi/runtime"
+	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 )
 
 // New creates a new p cloud networks API client.
 func New(transport runtime.ClientTransport, formats strfmt.Registry) ClientService {
 	return &Client{transport: transport, formats: formats}
+}
+
+// New creates a new p cloud networks API client with basic auth credentials.
+// It takes the following parameters:
+// - host: http host (github.com).
+// - basePath: any base path for the API client ("/v1", "/v3").
+// - scheme: http scheme ("http", "https").
+// - user: user for basic authentication header.
+// - password: password for basic authentication header.
+func NewClientWithBasicAuth(host, basePath, scheme, user, password string) ClientService {
+	transport := httptransport.New(host, basePath, []string{scheme})
+	transport.DefaultAuthentication = httptransport.BasicAuth(user, password)
+	return &Client{transport: transport, formats: strfmt.Default}
+}
+
+// New creates a new p cloud networks API client with a bearer token for authentication.
+// It takes the following parameters:
+// - host: http host (github.com).
+// - basePath: any base path for the API client ("/v1", "/v3").
+// - scheme: http scheme ("http", "https").
+// - bearerToken: bearer token for Bearer authentication header.
+func NewClientWithBearerToken(host, basePath, scheme, bearerToken string) ClientService {
+	transport := httptransport.New(host, basePath, []string{scheme})
+	transport.DefaultAuthentication = httptransport.BearerToken(bearerToken)
+	return &Client{transport: transport, formats: strfmt.Default}
 }
 
 /*
@@ -25,7 +51,7 @@ type Client struct {
 	formats   strfmt.Registry
 }
 
-// ClientOption is the option for Client methods
+// ClientOption may be used to customize the behavior of Client methods.
 type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
@@ -172,6 +198,8 @@ func (a *Client) PcloudNetworksGetall(params *PcloudNetworksGetallParams, authIn
 
 /*
 PcloudNetworksPortsDelete deletes a network port
+
+This API is deprecated for /v1/networks/{network_id}/network-interfaces/{network_interface_id}.
 */
 func (a *Client) PcloudNetworksPortsDelete(params *PcloudNetworksPortsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudNetworksPortsDeleteOK, error) {
 	// TODO: Validate the params before sending
@@ -211,6 +239,8 @@ func (a *Client) PcloudNetworksPortsDelete(params *PcloudNetworksPortsDeletePara
 
 /*
 PcloudNetworksPortsGet gets a port s information
+
+This API is deprecated for /v1/networks/{network_id}/network-interfaces/{network_interface_id}.
 */
 func (a *Client) PcloudNetworksPortsGet(params *PcloudNetworksPortsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudNetworksPortsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -250,6 +280,8 @@ func (a *Client) PcloudNetworksPortsGet(params *PcloudNetworksPortsGetParams, au
 
 /*
 PcloudNetworksPortsGetall gets all ports for this network
+
+This API is deprecated for /v1/networks/{network_id}/network-interfaces.
 */
 func (a *Client) PcloudNetworksPortsGetall(params *PcloudNetworksPortsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudNetworksPortsGetallOK, error) {
 	// TODO: Validate the params before sending
@@ -289,6 +321,8 @@ func (a *Client) PcloudNetworksPortsGetall(params *PcloudNetworksPortsGetallPara
 
 /*
 PcloudNetworksPortsPost performs port addition deletion and listing
+
+This API is deprecated for /v1/networks/{network_id}/network-interfaces.
 */
 func (a *Client) PcloudNetworksPortsPost(params *PcloudNetworksPortsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudNetworksPortsPostCreated, error) {
 	// TODO: Validate the params before sending
@@ -328,6 +362,8 @@ func (a *Client) PcloudNetworksPortsPost(params *PcloudNetworksPortsPostParams, 
 
 /*
 PcloudNetworksPortsPut updates a port s information
+
+This API is deprecated for /v1/networks/{network_id}/network-interfaces/{network_interface_id}.
 */
 func (a *Client) PcloudNetworksPortsPut(params *PcloudNetworksPortsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudNetworksPortsPutOK, error) {
 	// TODO: Validate the params before sending

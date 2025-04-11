@@ -1,6 +1,7 @@
 package machine
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -37,7 +38,7 @@ func (a *WorkerIgnitionCustomizations) Dependencies() []asset.Asset {
 }
 
 // Generate queries for input from the user.
-func (a *WorkerIgnitionCustomizations) Generate(dependencies asset.Parents) error {
+func (a *WorkerIgnitionCustomizations) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	rootCA := &tls.RootCA{}
 	worker := &Worker{}

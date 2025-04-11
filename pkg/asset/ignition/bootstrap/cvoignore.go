@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -41,7 +42,7 @@ func (a *CVOIgnore) Dependencies() []asset.Asset {
 }
 
 // Generate generates the respective operator config.yml files
-func (a *CVOIgnore) Generate(dependencies asset.Parents) error {
+func (a *CVOIgnore) Generate(_ context.Context, dependencies asset.Parents) error {
 	operators := &manifests.Manifests{}
 	openshiftManifests := &manifests.Openshift{}
 	dependencies.Get(operators, openshiftManifests)

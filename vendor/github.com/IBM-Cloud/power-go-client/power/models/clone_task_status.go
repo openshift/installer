@@ -33,7 +33,7 @@ type CloneTaskStatus struct {
 
 	// Status of the clone volumes task
 	// Required: true
-	// Enum: [running completed failed unknown]
+	// Enum: ["running","completed","failed","unknown"]
 	Status *string `json:"status"`
 }
 

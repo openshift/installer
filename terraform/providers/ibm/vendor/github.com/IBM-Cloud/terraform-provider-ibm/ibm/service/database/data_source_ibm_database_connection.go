@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2022 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package database
@@ -1641,7 +1641,9 @@ func DataSourceIBMDatabaseConnectionValidator() *validate.ResourceValidator {
 func DataSourceIBMDatabaseConnectionRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cloudDatabasesClient, err := meta.(conns.ClientSession).CloudDatabasesV5()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getConnectionOptions := &clouddatabasesv5.GetConnectionOptions{}
@@ -1657,8 +1659,9 @@ func DataSourceIBMDatabaseConnectionRead(context context.Context, d *schema.Reso
 
 	connection, response, err := cloudDatabasesClient.GetConnectionWithContext(context, getConnectionOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetConnectionWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetConnectionWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetConnectionWithContext failed:  %s\n%s", err.Error(), response), "(Data) ibm_database_connection", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(DataSourceIBMDatabaseConnectionID(d))
@@ -1668,180 +1671,202 @@ func DataSourceIBMDatabaseConnectionRead(context context.Context, d *schema.Reso
 	if conn.Postgres != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionPostgreSQLConnectionURIToMap(conn.Postgres)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		postgres = append(postgres, modelMap)
 	}
 	if err = d.Set("postgres", postgres); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting postgres %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting postgres: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	cli := []map[string]interface{}{}
 	if conn.Cli != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionConnectionCliToMap(conn.Cli)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		cli = append(cli, modelMap)
 	}
 	if err = d.Set("cli", cli); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting cli %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting cli: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	rediss := []map[string]interface{}{}
 	if conn.Rediss != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionRedisConnectionURIToMap(conn.Rediss)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		rediss = append(rediss, modelMap)
 	}
 	if err = d.Set("rediss", rediss); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rediss %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting rediss: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	https := []map[string]interface{}{}
 	if conn.HTTPS != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionConnectionURIToMap(conn.HTTPS)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		https = append(https, modelMap)
 	}
 	if err = d.Set("https", https); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting https %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting https: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	amqps := []map[string]interface{}{}
 	if conn.Amqps != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionConnectionURIToMap(conn.Amqps)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		amqps = append(amqps, modelMap)
 	}
 	if err = d.Set("amqps", amqps); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting amqps %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting amqps: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	mqtts := []map[string]interface{}{}
 	if conn.Mqtts != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionConnectionURIToMap(conn.Mqtts)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		mqtts = append(mqtts, modelMap)
 	}
 	if err = d.Set("mqtts", mqtts); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting mqtts %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting mqtts: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	stompSsl := []map[string]interface{}{}
 	if conn.StompSsl != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionConnectionURIToMap(conn.StompSsl)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		stompSsl = append(stompSsl, modelMap)
 	}
 	if err = d.Set("stomp_ssl", stompSsl); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting stomp_ssl %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting stomp_ssl: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	grpc := []map[string]interface{}{}
 	if conn.Grpc != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionConnectionURIToMap(conn.Grpc)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		grpc = append(grpc, modelMap)
 	}
 	if err = d.Set("grpc", grpc); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting grpc %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting grpc: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	mongodb := []map[string]interface{}{}
 	if conn.Mongodb != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionMongoDbConnectionURIToMap(conn.Mongodb)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		mongodb = append(mongodb, modelMap)
 	}
 	if err = d.Set("mongodb", mongodb); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting mongodb %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting mongodb: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	biConnector := []map[string]interface{}{}
 	if conn.BiConnector != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionConnectionURIToMap(conn.BiConnector)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		biConnector = append(biConnector, modelMap)
 	}
 	if err = d.Set("bi_connector", biConnector); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting bi_connector %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting bi_connector: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	analytics := []map[string]interface{}{}
 	if conn.Analytics != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionConnectionURIToMap(conn.Analytics)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		analytics = append(analytics, modelMap)
 	}
 	if err = d.Set("analytics", analytics); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting analytics %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting analytics: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	opsManager := []map[string]interface{}{}
 	if conn.OpsManager != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionConnectionURIToMap(conn.OpsManager)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		opsManager = append(opsManager, modelMap)
 	}
 	if err = d.Set("ops_manager", opsManager); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting ops_manager %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting ops_manager: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	mysql := []map[string]interface{}{}
 	if conn.Mysql != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionMySQLConnectionURIToMap(conn.Mysql)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		mysql = append(mysql, modelMap)
 	}
 	if err = d.Set("mysql", mysql); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting mysql %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting mysql: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	secure := []map[string]interface{}{}
-	if conn.Secure != nil {
-		modelMap, err := DataSourceIBMDatabaseConnectionDataStaxConnectionURIToMap(conn.Secure)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		secure = append(secure, modelMap)
-	}
 	if err = d.Set("secure", secure); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secure %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secure: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	emp := []map[string]interface{}{}
 	if conn.Emp != nil {
 		modelMap, err := DataSourceIBMDatabaseConnectionConnectionURIToMap(conn.Emp)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_connection", "read")
+			return tfErr.GetDiag()
 		}
 		emp = append(emp, modelMap)
 	}
 	if err = d.Set("emp", emp); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting emp %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting emp: %s", err), "(Data) ibm_database_connection", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -2198,47 +2223,6 @@ func DataSourceIBMDatabaseConnectionMySQLConnectionURIToMap(model *clouddatabase
 	}
 	if model.Database != nil {
 		modelMap["database"] = *model.Database
-	}
-	return modelMap, nil
-}
-
-func DataSourceIBMDatabaseConnectionDataStaxConnectionURIToMap(model *clouddatabasesv5.DataStaxConnectionURI) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Hosts != nil {
-		hosts := []map[string]interface{}{}
-		for _, hostsItem := range model.Hosts {
-			hostsItemMap, err := DataSourceIBMDatabaseConnectionConnectionHostToMap(&hostsItem)
-			if err != nil {
-				return modelMap, err
-			}
-			hosts = append(hosts, hostsItemMap)
-		}
-		modelMap["hosts"] = hosts
-	}
-	if model.Authentication != nil {
-		authenticationMap, err := DataSourceIBMDatabaseConnectionConnectionAuthenticationToMap(model.Authentication)
-		if err != nil {
-			return modelMap, err
-		}
-		modelMap["authentication"] = []map[string]interface{}{authenticationMap}
-	}
-	if model.Bundle != nil {
-		bundleMap, err := DataSourceIBMDatabaseConnectionConnectionBundleToMap(model.Bundle)
-		if err != nil {
-			return modelMap, err
-		}
-		modelMap["bundle"] = []map[string]interface{}{bundleMap}
-	}
-	return modelMap, nil
-}
-
-func DataSourceIBMDatabaseConnectionConnectionBundleToMap(model *clouddatabasesv5.ConnectionBundle) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Name != nil {
-		modelMap["name"] = *model.Name
-	}
-	if model.BundleBase64 != nil {
-		modelMap["bundle_base64"] = *model.BundleBase64
 	}
 	return modelMap, nil
 }

@@ -1,6 +1,8 @@
 package configimage
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,17 +14,20 @@ import (
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/image"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
 const (
-	configImageFilename = "agentconfig.noarch.iso"
-	configImageLabel    = "agent_configimage"
-	configCpioArchive   = "config.gz"
+	configImageFilename        = "agentconfig.noarch.iso"
+	nodeAddConfigImageFilename = "node-config.noarch.iso"
+	configImageLabel           = "agent_configimage"
+	configCpioArchive          = "config.gz"
 )
 
 // ConfigImage is an asset that generates a configuration ISO that can be used configure hosts.
 type ConfigImage struct {
-	tmpPath string
+	tmpPath  string
+	filename string
 }
 
 var _ asset.WritableAsset = (*ConfigImage)(nil)
@@ -31,14 +36,25 @@ var _ asset.WritableAsset = (*ConfigImage)(nil)
 func (a *ConfigImage) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&image.Ignition{},
+		&workflow.AgentWorkflow{},
 	}
 }
 
 // Generate generates the configuration image file.
-func (a *ConfigImage) Generate(dependencies asset.Parents) error {
+func (a *ConfigImage) Generate(_ context.Context, dependencies asset.Parents) error {
 	ignition := &image.Ignition{}
+	agentWorkflow := &workflow.AgentWorkflow{}
 
-	dependencies.Get(ignition)
+	dependencies.Get(ignition, agentWorkflow)
+
+	switch agentWorkflow.Workflow {
+	case workflow.AgentWorkflowTypeInstall:
+		a.filename = configImageFilename
+	case workflow.AgentWorkflowTypeAddNodes:
+		a.filename = nodeAddConfigImageFilename
+	default:
+		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
+	}
 
 	ca := image.NewCpioArchive()
 
@@ -92,7 +108,7 @@ func (a *ConfigImage) PersistToFile(directory string) error {
 		return errors.New("cannot generate Config image due to configuration errors")
 	}
 
-	configImageFile := filepath.Join(directory, configImageFilename)
+	configImageFile := filepath.Join(directory, a.filename)
 
 	// Remove symlink if it exists
 	os.Remove(configImageFile)

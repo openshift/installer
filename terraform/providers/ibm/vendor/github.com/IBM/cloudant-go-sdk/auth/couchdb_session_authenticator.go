@@ -1,5 +1,5 @@
 /**
- * © Copyright IBM Corporation 2020. All Rights Reserved.
+ * © Copyright IBM Corporation 2020, 2024. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,11 @@ package auth
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"fmt"
 	"net/http"
 	"sync"
-	"time"
 
+	"github.com/IBM/cloudant-go-sdk/common"
 	"github.com/IBM/go-sdk-core/v5/core"
 )
 
@@ -38,11 +37,10 @@ type CouchDbSessionAuthenticator struct {
 	// [Required] The username and password used to access CouchDB session end-point
 	Username, Password string
 
-	// [Optional] The http.Client object used to to obtain CouchDB authentication cookie.
-	// If not specified by the user, a suitable default Client will be constructed.
-	Client *http.Client
+	// HTTP client used to to obtain CouchDB authentication cookie.
+	client *http.Client
 
-	// CouchDB URL inherited from the service config.
+	// CouchDB URL inherited from the service request.
 	URL string
 
 	// Client's headers inherited from the service request.
@@ -51,7 +49,7 @@ type CouchDbSessionAuthenticator struct {
 	// Context inherited from from the service request.
 	ctx context.Context
 
-	// A flag that indicates whether verification of the server's SSL certificate should be disabled; INherired from the service config
+	// A flag that indicates whether verification of the server's SSL certificate should be disabled
 	DisableSSLVerification bool
 
 	// A session instance that stores and manages the authentication cookie.
@@ -74,13 +72,15 @@ func NewCouchDbSessionAuthenticator(username, password string) (*CouchDbSessionA
 	if err := authenticator.Validate(); err != nil {
 		return nil, err
 	}
+	client := core.DefaultHTTPClient()
+	authenticator.SetClient(client)
 	return authenticator, nil
 }
 
 // NewCouchDbSessionAuthenticatorFromMap constructs a new NewCouchDbSessionAuthenticator instance from a map.
 func NewCouchDbSessionAuthenticatorFromMap(props map[string]string) (*CouchDbSessionAuthenticator, error) {
 	if props == nil {
-		return nil, fmt.Errorf(core.ERRORMSG_PROPS_MAP_NIL)
+		return nil, core.SDKErrorf(nil, core.ERRORMSG_PROPS_MAP_NIL, "missing-props", common.GetComponentInfo())
 	}
 	username := props[core.PROPNAME_USERNAME]
 	password := props[core.PROPNAME_PASSWORD]
@@ -96,19 +96,19 @@ func (a *CouchDbSessionAuthenticator) AuthenticationType() string {
 // Ensures the service url, username and password are valid and not nil.
 func (a *CouchDbSessionAuthenticator) Validate() error {
 	if a.Username == "" {
-		return fmt.Errorf(core.ERRORMSG_PROP_MISSING, "Username")
+		return core.SDKErrorf(nil, fmt.Sprintf(core.ERRORMSG_PROP_MISSING, "Username"), "no-user", common.GetComponentInfo())
 	}
 
 	if a.Password == "" {
-		return fmt.Errorf(core.ERRORMSG_PROP_MISSING, "Password")
+		return core.SDKErrorf(nil, fmt.Sprintf(core.ERRORMSG_PROP_MISSING, "Password"), "no-pass", common.GetComponentInfo())
 	}
 
 	if core.HasBadFirstOrLastChar(a.Username) {
-		return fmt.Errorf(core.ERRORMSG_PROP_INVALID, "Username")
+		return core.SDKErrorf(nil, fmt.Sprintf(core.ERRORMSG_PROP_INVALID, "Username"), "bad-user", common.GetComponentInfo())
 	}
 
 	if core.HasBadFirstOrLastChar(a.Password) {
-		return fmt.Errorf(core.ERRORMSG_PROP_INVALID, "Password")
+		return core.SDKErrorf(nil, fmt.Sprintf(core.ERRORMSG_PROP_INVALID, "Password"), "bad-pass", common.GetComponentInfo())
 	}
 
 	return nil
@@ -116,23 +116,31 @@ func (a *CouchDbSessionAuthenticator) Validate() error {
 
 // Authenticate adds session authentication cookie to a request.
 func (a *CouchDbSessionAuthenticator) Authenticate(request *http.Request) error {
-
 	a.URL = request.URL.Scheme + "://" + request.URL.Host
 	a.header = request.Header
 	a.ctx = request.Context()
 
-	cookie, err := a.getCookie()
+	cookie, err := a.refreshCookie()
 	if err != nil {
 		return err
 	}
 
-	request.AddCookie(cookie)
-	return nil
+	if a.client.Jar == nil && a.session != nil {
+		request.AddCookie(cookie)
+	}
+
+	return err
 }
 
-// getCookie returns an AuthSession cookie to be used in a request.
-// A new cookie will be fetched from the session end-point when needed.
-func (a *CouchDbSessionAuthenticator) getCookie() (*http.Cookie, error) {
+// SetClient sets the http client for the authenticator.
+func (a *CouchDbSessionAuthenticator) SetClient(client *http.Client) {
+	a.client = client
+}
+
+// refreshCookie checks if an AuthSession cookie needs to be refreshed.
+// A new cookie will be fetched and returned from the session end-point
+// when needed.
+func (a *CouchDbSessionAuthenticator) refreshCookie() (*http.Cookie, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -200,18 +208,9 @@ func (a *CouchDbSessionAuthenticator) requestSession() (*session, error) {
 
 	req.SetBasicAuth(a.Username, a.Password)
 
-	if a.Client == nil {
-		a.Client = &http.Client{
-			Timeout: time.Second * 30,
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: a.DisableSSLVerification},
-			},
-		}
-	}
-
-	resp, err := a.Client.Do(req)
+	resp, err := a.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, core.SDKErrorf(err, "", "auth-session-request-fail", common.GetComponentInfo())
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -224,7 +223,20 @@ func (a *CouchDbSessionAuthenticator) requestSession() (*session, error) {
 			RawResult:  buff.Bytes(),
 		}
 		err := fmt.Errorf(buff.String())
-		return nil, core.NewAuthenticationError(detailedResponse, err)
+
+		cInfo := common.GetComponentInfo()
+		component := core.NewProblemComponent(cInfo.Name, cInfo.Version)
+
+		discriminator := "auth-session-failed"
+
+		problem := &core.HTTPProblem{
+			IBMProblem: core.IBMErrorf(err, component, "", discriminator),
+			Response:   detailedResponse,
+		}
+
+		summary := fmt.Sprintf(core.ERRORMSG_AUTHENTICATE_ERROR, err.Error())
+
+		return nil, core.SDKErrorf(problem, summary, discriminator, cInfo)
 	}
 
 	var session *session
@@ -239,7 +251,8 @@ func (a *CouchDbSessionAuthenticator) requestSession() (*session, error) {
 	}
 
 	if session == nil {
-		return nil, fmt.Errorf("Missing AuthSession cookie in the response")
+		err := fmt.Errorf("missing AuthSession cookie in the response")
+		return nil, core.SDKErrorf(err, "", "missing-auth-cookie", common.GetComponentInfo())
 	}
 
 	return session, nil

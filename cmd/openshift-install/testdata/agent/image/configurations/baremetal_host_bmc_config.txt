@@ -157,6 +157,7 @@ spec:
     networkType: OVNKubernetes
     serviceNetwork:
     - 172.30.0.0/16
+    userManagedNetworking: false
   platformType: BareMetal
   provisionRequirements:
     controlPlaneAgents: 3

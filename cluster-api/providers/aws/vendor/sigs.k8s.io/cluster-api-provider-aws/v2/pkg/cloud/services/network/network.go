@@ -37,8 +37,8 @@ func (s *Service) ReconcileNetwork() (err error) {
 	}
 	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.VpcReadyCondition)
 
-	// Secondary CIDR
-	if err := s.associateSecondaryCidr(); err != nil {
+	// Secondary CIDRs
+	if err := s.associateSecondaryCidrs(); err != nil {
 		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SecondaryCidrsReadyCondition, infrav1.SecondaryCidrReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), err.Error())
 		return err
 	}
@@ -199,7 +199,7 @@ func (s *Service) DeleteNetwork() (err error) {
 
 	// Secondary CIDR.
 	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SecondaryCidrsReadyCondition, clusterv1.DeletingReason, clusterv1.ConditionSeverityInfo, "")
-	if err := s.disassociateSecondaryCidr(); err != nil {
+	if err := s.disassociateSecondaryCidrs(); err != nil {
 		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SecondaryCidrsReadyCondition, "DisassociateFailed", clusterv1.ConditionSeverityWarning, err.Error())
 		return err
 	}

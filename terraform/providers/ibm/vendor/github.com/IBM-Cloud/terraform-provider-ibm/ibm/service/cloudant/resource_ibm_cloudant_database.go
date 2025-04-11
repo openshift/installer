@@ -60,12 +60,14 @@ func resourceIBMCloudantDatabaseCreate(context context.Context, d *schema.Resour
 	instanceCRN := d.Get("instance_crn").(string)
 	cUrl, err := GetCloudantInstanceUrl(instanceCRN, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "create", "get-instance-url")
+		return tfErr.GetDiag()
 	}
 
 	cloudantClient, err := GetCloudantClientForUrl(cUrl, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "create", "get-client")
+		return tfErr.GetDiag()
 	}
 
 	dbName := d.Get("db").(string)
@@ -80,7 +82,8 @@ func resourceIBMCloudantDatabaseCreate(context context.Context, d *schema.Resour
 	_, response, err := cloudantClient.PutDatabaseWithContext(context, putDatabaseOptions)
 	if err != nil {
 		log.Printf("[DEBUG] PutDatabaseWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("PutDatabaseWithContext failed %s\n%s", err, response))
+		tfErr := flex.DiscriminatedTerraformErrorf(err, response.String(), "ibm_cloudant_database", "create", "create-database")
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", instanceCRN, dbName))
@@ -91,18 +94,21 @@ func resourceIBMCloudantDatabaseCreate(context context.Context, d *schema.Resour
 func resourceIBMCloudantDatabaseRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	parts, err := flex.IdParts(d.Id())
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "read", "id-parts")
+		return tfErr.GetDiag()
 	}
 
 	instanceCRN, dbName := strings.Join(parts[:len(parts)-1], "/"), parts[len(parts)-1]
 	cUrl, err := GetCloudantInstanceUrl(instanceCRN, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "read", "get-instance-url")
+		return tfErr.GetDiag()
 	}
 
 	cloudantClient, err := GetCloudantClientForUrl(cUrl, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "read", "get-client")
+		return tfErr.GetDiag()
 	}
 
 	getDatabaseInformationOptions := cloudantClient.NewGetDatabaseInformationOptions(dbName)
@@ -114,21 +120,25 @@ func resourceIBMCloudantDatabaseRead(context context.Context, d *schema.Resource
 			return nil
 		}
 		log.Printf("[DEBUG] GetDatabaseInformationWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetDatabaseInformationWithContext failed %s\n%s", err, response))
+		tfErr := flex.DiscriminatedTerraformErrorf(err, response.String(), "ibm_cloudant_database", "read", "get-database-information")
+		return tfErr.GetDiag()
 	}
 
 	d.Set("instance_crn", instanceCRN)
 
 	if err = d.Set("db", *databaseInformation.DbName); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting db: %s", err))
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "read", "set-db-property")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("partitioned", databaseInformation.Props.Partitioned != nil); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting partitioned: %s", err))
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "read", "set-partitioned-property")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("shards", int(*databaseInformation.Cluster.Q)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting shards: %s", err))
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "read", "set-shards-property")
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -137,18 +147,21 @@ func resourceIBMCloudantDatabaseRead(context context.Context, d *schema.Resource
 func resourceIBMCloudantDatabaseDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	parts, err := flex.IdParts(d.Id())
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "delete", "id-parts")
+		return tfErr.GetDiag()
 	}
 
 	instanceCRN, dbName := strings.Join(parts[:len(parts)-1], "/"), parts[len(parts)-1]
 	cUrl, err := GetCloudantInstanceUrl(instanceCRN, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "delete", "get-instance-url")
+		return tfErr.GetDiag()
 	}
 
 	cloudantClient, err := GetCloudantClientForUrl(cUrl, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "delete", "get-client")
+		return tfErr.GetDiag()
 	}
 
 	deleteDatabaseOptions := cloudantClient.NewDeleteDatabaseOptions(dbName)
@@ -156,7 +169,8 @@ func resourceIBMCloudantDatabaseDelete(context context.Context, d *schema.Resour
 	_, response, err := cloudantClient.DeleteDatabaseWithContext(context, deleteDatabaseOptions)
 	if err != nil {
 		log.Printf("[DEBUG] DeleteDatabaseWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteDatabaseWithContext failed %s\n%s", err, response))
+		tfErr := flex.DiscriminatedTerraformErrorf(err, response.String(), "ibm_cloudant_database", "delete", "delete-database")
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

@@ -38,7 +38,7 @@ func ResourceTagBinding(ctx context.Context, client *resourcemanager.TagBindings
 		req := &rmpb.CreateTagBindingRequest{
 			TagBinding: &rmpb.TagBinding{
 				Parent:   fmt.Sprintf("//container.googleapis.com/projects/%s/locations/%s/clusters/%s", tag.ParentID, spec.Region, name),
-				TagValue: tagValue.Name,
+				TagValue: tagValue.GetName(),
 			},
 		}
 		op, err := client.CreateTagBinding(ctx, req)
@@ -71,7 +71,7 @@ func ResourceTagConvert(ctx context.Context, t infrav1.ResourceManagerTags) infr
 			log.Error(err, "failed to retrieve tag value")
 			continue
 		}
-		tagValueList[tagValue.Parent] = tagValue.Name
+		tagValueList[tagValue.GetParent()] = tagValue.GetName()
 	}
 
 	return tagValueList

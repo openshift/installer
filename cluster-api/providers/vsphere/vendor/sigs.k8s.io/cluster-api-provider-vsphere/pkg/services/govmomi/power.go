@@ -44,7 +44,7 @@ func (vms *VMService) getPowerState(ctx context.Context, virtualMachineCtx *virt
 	case types.VirtualMachinePowerStateSuspended:
 		return infrav1.VirtualMachinePowerStateSuspended, nil
 	default:
-		return "", errors.Errorf("unexpected power state %q for vm %s", powerState, ctx)
+		return "", errors.Errorf("unexpected power state %q for vm %s", powerState, virtualMachineCtx)
 	}
 }
 

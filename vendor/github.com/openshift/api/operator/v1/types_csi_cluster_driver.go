@@ -20,7 +20,7 @@ import (
 // +kubebuilder:resource:path=clustercsidrivers,scope=Cluster
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/701
-// +openshift:file-pattern=cvoRunLevel=0000_90,operatorName=csi-driver,operatorOrdering=01
+// +openshift:file-pattern=cvoRunLevel=0000_50,operatorName=csi-driver,operatorOrdering=01
 
 // ClusterCSIDriver object allows management and configuration of a CSI driver operator
 // installed by default in OpenShift. Name of the object must be name of the CSI driver
@@ -36,7 +36,6 @@ type ClusterCSIDriver struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec holds user settable values for configuration
-	// +kubebuilder:validation:Required
 	// +required
 	Spec ClusterCSIDriverSpec `json:"spec"`
 
@@ -71,7 +70,7 @@ const (
 	RemovedStorageClass StorageClassStateName = "Removed"
 )
 
-// If you are adding a new driver name here, ensure that 0000_90_cluster_csi_driver_01_config.crd.yaml-merge-patch file is also updated with new driver name.
+// If you are adding a new driver name here, ensure that 0000_50_cluster_csi_driver_01_config.crd.yaml-merge-patch file is also updated with new driver name.
 const (
 	AWSEBSCSIDriver          CSIDriverName = "ebs.csi.aws.com"
 	AWSEFSCSIDriver          CSIDriverName = "efs.csi.aws.com"
@@ -95,7 +94,7 @@ const (
 // ClusterCSIDriverSpec is the desired behavior of CSI driver operator
 type ClusterCSIDriverSpec struct {
 	OperatorSpec `json:",inline"`
-	// StorageClassState determines if CSI operator should create and manage storage classes.
+	// storageClassState determines if CSI operator should create and manage storage classes.
 	// If this field value is empty or Managed - CSI operator will continuously reconcile
 	// storage class and create if necessary.
 	// If this field value is Unmanaged - CSI operator will not reconcile any previously created
@@ -135,7 +134,7 @@ type CSIDriverConfigSpec struct {
 	// driverConfig is being applied to.
 	// Valid values are: AWS, Azure, GCP, IBMCloud, vSphere and omitted.
 	// Consumers should treat unknown values as a NO-OP.
-	// +kubebuilder:validation:Required
+	// +required
 	// +unionDiscriminator
 	DriverType CSIDriverType `json:"driverType"`
 
@@ -155,7 +154,7 @@ type CSIDriverConfigSpec struct {
 	// +optional
 	IBMCloud *IBMCloudCSIDriverConfigSpec `json:"ibmcloud,omitempty"`
 
-	// vsphere is used to configure the vsphere CSI driver.
+	// vSphere is used to configure the vsphere CSI driver.
 	// +optional
 	VSphere *VSphereCSIDriverConfigSpec `json:"vSphere,omitempty"`
 }
@@ -168,6 +167,65 @@ type AWSCSIDriverConfigSpec struct {
 	// +kubebuilder:validation:Pattern:=`^arn:(aws|aws-cn|aws-us-gov|aws-iso|aws-iso-b|aws-iso-e|aws-iso-f):kms:[a-z0-9-]+:[0-9]{12}:(key|alias)\/.*$`
 	// +optional
 	KMSKeyARN string `json:"kmsKeyARN,omitempty"`
+
+	// efsVolumeMetrics sets the configuration for collecting metrics from EFS volumes used by the EFS CSI Driver.
+	// +openshift:enable:FeatureGate=AWSEFSDriverVolumeMetrics
+	// +optional
+	EFSVolumeMetrics *AWSEFSVolumeMetrics `json:"efsVolumeMetrics,omitempty"`
+}
+
+// AWSEFSVolumeMetricsState defines the modes for collecting volume metrics in the AWS EFS CSI Driver.
+// This can either enable recursive collection of volume metrics or disable metric collection entirely.
+// +kubebuilder:validation:Enum:="RecursiveWalk";"Disabled"
+type AWSEFSVolumeMetricsState string
+
+const (
+	// AWSEFSVolumeMetricsRecursiveWalk indicates that volume metrics collection in the AWS EFS CSI Driver
+	// is performed by recursively walking through the files in the volume.
+	AWSEFSVolumeMetricsRecursiveWalk AWSEFSVolumeMetricsState = "RecursiveWalk"
+
+	// AWSEFSVolumeMetricsDisabled indicates that volume metrics collection in the AWS EFS CSI Driver is disabled.
+	AWSEFSVolumeMetricsDisabled AWSEFSVolumeMetricsState = "Disabled"
+)
+
+// AWSEFSVolumeMetrics defines the configuration for volume metrics in the EFS CSI Driver.
+// +union
+type AWSEFSVolumeMetrics struct {
+	// state defines the state of metric collection in the AWS EFS CSI Driver.
+	// This field is required and must be set to one of the following values: Disabled or RecursiveWalk.
+	// Disabled means no metrics collection will be performed. This is the default value.
+	// RecursiveWalk means the AWS EFS CSI Driver will recursively scan volumes to collect metrics.
+	// This process may result in high CPU and memory usage, depending on the volume size.
+	// +unionDiscriminator
+	// +required
+	State AWSEFSVolumeMetricsState `json:"state"`
+
+	// recursiveWalk provides additional configuration for collecting volume metrics in the AWS EFS CSI Driver
+	// when the state is set to RecursiveWalk.
+	// +unionMember
+	// +optional
+	RecursiveWalk *AWSEFSVolumeMetricsRecursiveWalkConfig `json:"recursiveWalk,omitempty"`
+}
+
+// AWSEFSVolumeMetricsRecursiveWalkConfig defines options for volume metrics in the EFS CSI Driver.
+type AWSEFSVolumeMetricsRecursiveWalkConfig struct {
+	// refreshPeriodMinutes specifies the frequency, in minutes, at which volume metrics are refreshed.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable
+	// default, which is subject to change over time. The current default is 240.
+	// The valid range is from 1 to 43200 minutes (30 days).
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=43200
+	// +optional
+	RefreshPeriodMinutes int32 `json:"refreshPeriodMinutes,omitempty"`
+
+	// fsRateLimit defines the rate limit, in goroutines per file system, for processing volume metrics.
+	// When omitted, this means no opinion and the platform is left to choose a reasonable
+	// default, which is subject to change over time. The current default is 5.
+	// The valid range is from 1 to 100 goroutines.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=100
+	// +optional
+	FSRateLimit int32 `json:"fsRateLimit,omitempty"`
 }
 
 // AzureDiskEncryptionSet defines the configuration for a disk encryption set.
@@ -181,7 +239,7 @@ type AzureDiskEncryptionSet struct {
 	// 5. The second, third, and fourth groups should be 4 characters long.
 	// 6. The fifth group should be 12 characters long.
 	// An Example SubscrionID: f2007bbf-f802-4a47-9336-cf7c6b89b378
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MaxLength:=36
 	// +kubebuilder:validation:Pattern:=`^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$`
 	SubscriptionID string `json:"subscriptionID"`
@@ -191,7 +249,7 @@ type AzureDiskEncryptionSet struct {
 	// underscores (_), parentheses, hyphens and periods.
 	// The value should not end in a period and be at most 90 characters in
 	// length.
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MaxLength:=90
 	// +kubebuilder:validation:Pattern:=`^[\w\.\-\(\)]*[\w\-\(\)]$`
 	ResourceGroup string `json:"resourceGroup"`
@@ -199,7 +257,7 @@ type AzureDiskEncryptionSet struct {
 	// name is the name of the disk encryption set that will be set on the default storage class.
 	// The value should consist of only alphanumberic characters,
 	// underscores (_), hyphens, and be at most 80 characters in length.
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MaxLength:=80
 	// +kubebuilder:validation:Pattern:=`^[a-zA-Z0-9\_-]+$`
 	Name string `json:"name"`
@@ -222,7 +280,7 @@ type GCPKMSKeyReference struct {
 	// +kubebuilder:validation:Pattern:=`^[a-zA-Z0-9\_-]+$`
 	// +kubebuilder:validation:MinLength:=1
 	// +kubebuilder:validation:MaxLength:=63
-	// +kubebuilder:validation:Required
+	// +required
 	Name string `json:"name"`
 
 	// keyRing is the name of the KMS Key Ring which the KMS Key belongs to.
@@ -232,7 +290,7 @@ type GCPKMSKeyReference struct {
 	// +kubebuilder:validation:Pattern:=`^[a-zA-Z0-9\_-]+$`
 	// +kubebuilder:validation:MinLength:=1
 	// +kubebuilder:validation:MaxLength:=63
-	// +kubebuilder:validation:Required
+	// +required
 	KeyRing string `json:"keyRing"`
 
 	// projectID is the ID of the Project in which the KMS Key Ring exists.
@@ -241,7 +299,7 @@ type GCPKMSKeyReference struct {
 	// +kubebuilder:validation:Pattern:=`^[a-z][a-z0-9-]+[a-z0-9]$`
 	// +kubebuilder:validation:MinLength:=6
 	// +kubebuilder:validation:MaxLength:=30
-	// +kubebuilder:validation:Required
+	// +required
 	ProjectID string `json:"projectID"`
 
 	// location is the GCP location in which the Key Ring exists.
@@ -264,7 +322,7 @@ type GCPCSIDriverConfigSpec struct {
 type IBMCloudCSIDriverConfigSpec struct {
 	// encryptionKeyCRN is the IBM Cloud CRN of the customer-managed root key to use
 	// for disk encryption of volumes for the default storage classes.
-	// +kubebuilder:validation:Required
+	// +required
 	// +kubebuilder:validation:MaxLength:=154
 	// +kubebuilder:validation:MinLength:=144
 	// +kubebuilder:validation:Pattern:=`^crn:v[0-9]+:bluemix:(public|private):(kms|hs-crypto):[a-z-]+:a/[0-9a-f]+:[0-9a-f-]{36}:key:[0-9a-f-]{36}$`
@@ -279,6 +337,7 @@ type VSphereCSIDriverConfigSpec struct {
 	// If cluster Infrastructure object has a topology, values specified in
 	// Infrastructure object will be used and modifications to topologyCategories
 	// will be rejected.
+	// +listType=atomic
 	// +optional
 	TopologyCategories []string `json:"topologyCategories,omitempty"`
 

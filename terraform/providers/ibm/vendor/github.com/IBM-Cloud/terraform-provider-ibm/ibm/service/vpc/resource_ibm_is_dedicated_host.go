@@ -635,7 +635,7 @@ func resourceIbmIsDedicatedHostInstanceReferenceToMap(instanceReference vpcv1.In
 	return instanceReferenceMap
 }
 
-func resourceIbmIsDedicatedHostInstanceReferenceDeletedToMap(instanceReferenceDeleted vpcv1.InstanceReferenceDeleted) map[string]interface{} {
+func resourceIbmIsDedicatedHostInstanceReferenceDeletedToMap(instanceReferenceDeleted vpcv1.Deleted) map[string]interface{} {
 	instanceReferenceDeletedMap := map[string]interface{}{}
 
 	instanceReferenceDeletedMap["more_info"] = instanceReferenceDeleted.MoreInfo
@@ -866,7 +866,7 @@ func resourceIbmIsDedicatedHostInstanceDiskReferenceToMap(instanceDiskReference 
 	return instanceDiskReferenceMap
 }
 
-func resourceIbmIsDedicatedHostInstanceDiskReferenceDeletedToMap(instanceDiskReferenceDeleted vpcv1.InstanceDiskReferenceDeleted) map[string]interface{} {
+func resourceIbmIsDedicatedHostInstanceDiskReferenceDeletedToMap(instanceDiskReferenceDeleted vpcv1.Deleted) map[string]interface{} {
 	instanceDiskReferenceDeletedMap := map[string]interface{}{}
 
 	instanceDiskReferenceDeletedMap["more_info"] = instanceDiskReferenceDeleted.MoreInfo

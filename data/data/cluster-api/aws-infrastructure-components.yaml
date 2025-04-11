@@ -117,11 +117,13 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - key
                           - operator
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       matchLabels:
                         additionalProperties:
                           type: string
@@ -211,11 +213,13 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - key
                           - operator
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       matchLabels:
                         additionalProperties:
                           type: string
@@ -344,11 +348,13 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - key
                           - operator
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       matchLabels:
                         additionalProperties:
                           type: string
@@ -497,11 +503,13 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - key
                           - operator
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       matchLabels:
                         additionalProperties:
                           type: string
@@ -1760,6 +1768,10 @@ spec:
                           items:
                             type: string
                           type: array
+                        natGatewaysIPsSource:
+                          description: NatGatewaysIPsSource use the NAT gateways IPs
+                            as the source for the ingress rule.
+                          type: boolean
                         protocol:
                           description: Protocol is the protocol for the ingress rule.
                             Accepted values are "-1" (all), "4" (IP in IP),"tcp",
@@ -1925,6 +1937,10 @@ spec:
                           items:
                             type: string
                           type: array
+                        natGatewaysIPsSource:
+                          description: NatGatewaysIPsSource use the NAT gateways IPs
+                            as the source for the ingress rule.
+                          type: boolean
                         protocol:
                           description: Protocol is the protocol for the ingress rule.
                             Accepted values are "-1" (all), "4" (IP in IP),"tcp",
@@ -2002,6 +2018,13 @@ spec:
                           type: object
                         type: array
                     type: object
+                  nodePortIngressRuleCidrBlocks:
+                    description: |-
+                      NodePortIngressRuleCidrBlocks is an optional set of CIDR blocks to allow traffic to nodes' NodePort services.
+                      If none are specified here, all IPs are allowed to connect.
+                    items:
+                      type: string
+                    type: array
                   securityGroupOverrides:
                     additionalProperties:
                       type: string
@@ -2160,6 +2183,39 @@ spec:
                           Defaults to 10.0.0.0/16.
                           Mutually exclusive with IPAMPool.
                         type: string
+                      elasticIpPool:
+                        description: |-
+                          ElasticIPPool contains specific configuration to allocate Public IPv4 address (Elastic IP) from user-defined pool
+                          brought to AWS for core infrastructure resources, like NAT Gateways and Public Network Load Balancers for
+                          the API Server.
+                        properties:
+                          publicIpv4Pool:
+                            description: |-
+                              PublicIpv4Pool sets a custom Public IPv4 Pool used to create Elastic IP address for resources
+                              created in public IPv4 subnets. Every IPv4 address, Elastic IP, will be allocated from the custom
+                              Public IPv4 pool that you brought to AWS, instead of Amazon-provided pool. The public IPv4 pool
+                              resource ID starts with 'ipv4pool-ec2'.
+                            maxLength: 30
+                            type: string
+                          publicIpv4PoolFallbackOrder:
+                            description: |-
+                              PublicIpv4PoolFallBackOrder defines the fallback action when the Public IPv4 Pool has been exhausted,
+                              no more IPv4 address available in the pool.
+
+
+                              When set to 'amazon-pool', the controller check if the pool has available IPv4 address, when pool has reached the
+                              IPv4 limit, the address will be claimed from Amazon-pool (default).
+
+
+                              When set to 'none', the controller will fail the Elastic IP allocation when the publicIpv4Pool is exhausted.
+                            enum:
+                            - amazon-pool
+                            - none
+                            type: string
+                            x-kubernetes-validations:
+                            - message: allowed values are 'none' and 'amazon-pool'
+                              rule: self in ['none','amazon-pool']
+                        type: object
                       emptyRoutesDefaultVPCSecurityGroup:
                         description: |-
                           EmptyRoutesDefaultVPCSecurityGroup specifies whether the default VPC security group ingress
@@ -2253,6 +2309,37 @@ spec:
                         enum:
                         - ip-name
                         - resource-name
+                        type: string
+                      secondaryCidrBlocks:
+                        description: |-
+                          SecondaryCidrBlocks are additional CIDR blocks to be associated when the provider creates a managed VPC.
+                          Defaults to none. Mutually exclusive with IPAMPool. This makes sense to use if, for example, you want to use
+                          a separate IP range for pods (e.g. Cilium ENI mode).
+                        items:
+                          description: VpcCidrBlock defines the CIDR block and settings
+                            to associate with the managed VPC. Currently, only IPv4
+                            is supported.
+                          properties:
+                            ipv4CidrBlock:
+                              description: IPv4CidrBlock is the IPv4 CIDR block to
+                                associate with the managed VPC.
+                              minLength: 1
+                              type: string
+                          required:
+                          - ipv4CidrBlock
+                          type: object
+                        type: array
+                      subnetSchema:
+                        default: PreferPrivate
+                        description: |-
+                          SubnetSchema specifies how CidrBlock should be divided on subnets in the VPC depending on the number of AZs.
+                          PreferPrivate - one private subnet for each AZ plus one other subnet that will be further sub-divided for the public subnets.
+                          PreferPublic - have the reverse logic of PreferPrivate, one public subnet for each AZ plus one other subnet
+                          that will be further sub-divided for the private subnets.
+                          Defaults to PreferPrivate
+                        enum:
+                        - PreferPrivate
+                        - PreferPublic
                         type: string
                       tags:
                         additionalProperties:
@@ -2506,6 +2593,10 @@ spec:
                           items:
                             type: string
                           type: array
+                        natGatewaysIPsSource:
+                          description: NatGatewaysIPsSource use the NAT gateways IPs
+                            as the source for the ingress rule.
+                          type: boolean
                         protocol:
                           description: Protocol is the protocol for the ingress rule.
                             Accepted values are "-1" (all), "4" (IP in IP),"tcp",
@@ -2625,6 +2716,10 @@ spec:
                     type: array
                   availabilityZone:
                     description: Availability zone of instance
+                    type: string
+                  capacityReservationId:
+                    description: CapacityReservationID specifies the target Capacity
+                      Reservation into which the instance should be launched.
                     type: string
                   ebsOptimized:
                     description: Indicates whether the instance is optimized for Amazon
@@ -3429,6 +3524,10 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              natGatewaysIPsSource:
+                                description: NatGatewaysIPsSource use the NAT gateways
+                                  IPs as the source for the ingress rule.
+                                type: boolean
                               protocol:
                                 description: Protocol is the protocol for the ingress
                                   rule. Accepted values are "-1" (all), "4" (IP in
@@ -3604,11 +3703,13 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - key
                           - operator
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       matchLabels:
                         additionalProperties:
                           type: string
@@ -3708,11 +3809,13 @@ spec:
                               items:
                                 type: string
                               type: array
+                              x-kubernetes-list-type: atomic
                           required:
                           - key
                           - operator
                           type: object
                         type: array
+                        x-kubernetes-list-type: atomic
                       matchLabels:
                         additionalProperties:
                           type: string
@@ -4514,6 +4617,10 @@ spec:
                                   items:
                                     type: string
                                   type: array
+                                natGatewaysIPsSource:
+                                  description: NatGatewaysIPsSource use the NAT gateways
+                                    IPs as the source for the ingress rule.
+                                  type: boolean
                                 protocol:
                                   description: Protocol is the protocol for the ingress
                                     rule. Accepted values are "-1" (all), "4" (IP
@@ -4683,6 +4790,10 @@ spec:
                                   items:
                                     type: string
                                   type: array
+                                natGatewaysIPsSource:
+                                  description: NatGatewaysIPsSource use the NAT gateways
+                                    IPs as the source for the ingress rule.
+                                  type: boolean
                                 protocol:
                                   description: Protocol is the protocol for the ingress
                                     rule. Accepted values are "-1" (all), "4" (IP
@@ -4761,6 +4872,13 @@ spec:
                                   type: object
                                 type: array
                             type: object
+                          nodePortIngressRuleCidrBlocks:
+                            description: |-
+                              NodePortIngressRuleCidrBlocks is an optional set of CIDR blocks to allow traffic to nodes' NodePort services.
+                              If none are specified here, all IPs are allowed to connect.
+                            items:
+                              type: string
+                            type: array
                           securityGroupOverrides:
                             additionalProperties:
                               type: string
@@ -4920,6 +5038,39 @@ spec:
                                   Defaults to 10.0.0.0/16.
                                   Mutually exclusive with IPAMPool.
                                 type: string
+                              elasticIpPool:
+                                description: |-
+                                  ElasticIPPool contains specific configuration to allocate Public IPv4 address (Elastic IP) from user-defined pool
+                                  brought to AWS for core infrastructure resources, like NAT Gateways and Public Network Load Balancers for
+                                  the API Server.
+                                properties:
+                                  publicIpv4Pool:
+                                    description: |-
+                                      PublicIpv4Pool sets a custom Public IPv4 Pool used to create Elastic IP address for resources
+                                      created in public IPv4 subnets. Every IPv4 address, Elastic IP, will be allocated from the custom
+                                      Public IPv4 pool that you brought to AWS, instead of Amazon-provided pool. The public IPv4 pool
+                                      resource ID starts with 'ipv4pool-ec2'.
+                                    maxLength: 30
+                                    type: string
+                                  publicIpv4PoolFallbackOrder:
+                                    description: |-
+                                      PublicIpv4PoolFallBackOrder defines the fallback action when the Public IPv4 Pool has been exhausted,
+                                      no more IPv4 address available in the pool.
+
+
+                                      When set to 'amazon-pool', the controller check if the pool has available IPv4 address, when pool has reached the
+                                      IPv4 limit, the address will be claimed from Amazon-pool (default).
+
+
+                                      When set to 'none', the controller will fail the Elastic IP allocation when the publicIpv4Pool is exhausted.
+                                    enum:
+                                    - amazon-pool
+                                    - none
+                                    type: string
+                                    x-kubernetes-validations:
+                                    - message: allowed values are 'none' and 'amazon-pool'
+                                      rule: self in ['none','amazon-pool']
+                                type: object
                               emptyRoutesDefaultVPCSecurityGroup:
                                 description: |-
                                   EmptyRoutesDefaultVPCSecurityGroup specifies whether the default VPC security group ingress
@@ -5014,6 +5165,37 @@ spec:
                                 enum:
                                 - ip-name
                                 - resource-name
+                                type: string
+                              secondaryCidrBlocks:
+                                description: |-
+                                  SecondaryCidrBlocks are additional CIDR blocks to be associated when the provider creates a managed VPC.
+                                  Defaults to none. Mutually exclusive with IPAMPool. This makes sense to use if, for example, you want to use
+                                  a separate IP range for pods (e.g. Cilium ENI mode).
+                                items:
+                                  description: VpcCidrBlock defines the CIDR block
+                                    and settings to associate with the managed VPC.
+                                    Currently, only IPv4 is supported.
+                                  properties:
+                                    ipv4CidrBlock:
+                                      description: IPv4CidrBlock is the IPv4 CIDR
+                                        block to associate with the managed VPC.
+                                      minLength: 1
+                                      type: string
+                                  required:
+                                  - ipv4CidrBlock
+                                  type: object
+                                type: array
+                              subnetSchema:
+                                default: PreferPrivate
+                                description: |-
+                                  SubnetSchema specifies how CidrBlock should be divided on subnets in the VPC depending on the number of AZs.
+                                  PreferPrivate - one private subnet for each AZ plus one other subnet that will be further sub-divided for the public subnets.
+                                  PreferPublic - have the reverse logic of PreferPrivate, one public subnet for each AZ plus one other subnet
+                                  that will be further sub-divided for the private subnets.
+                                  Defaults to PreferPrivate
+                                enum:
+                                - PreferPrivate
+                                - PreferPublic
                                 type: string
                               tags:
                                 additionalProperties:
@@ -5269,6 +5451,10 @@ spec:
                                   items:
                                     type: string
                                   type: array
+                                natGatewaysIPsSource:
+                                  description: NatGatewaysIPsSource use the NAT gateways
+                                    IPs as the source for the ingress rule.
+                                  type: boolean
                                 protocol:
                                   description: Protocol is the protocol for the ingress
                                     rule. Accepted values are "-1" (all), "4" (IP
@@ -6525,6 +6711,50 @@ spec:
                   name:
                     description: The name of the launch template.
                     type: string
+                  nonRootVolumes:
+                    description: Configuration options for the non root storage volumes.
+                    items:
+                      description: Volume encapsulates the configuration options for
+                        the storage device.
+                      properties:
+                        deviceName:
+                          description: Device name
+                          type: string
+                        encrypted:
+                          description: Encrypted is whether the volume should be encrypted
+                            or not.
+                          type: boolean
+                        encryptionKey:
+                          description: |-
+                            EncryptionKey is the KMS key to use to encrypt the volume. Can be either a KMS key ID or ARN.
+                            If Encrypted is set and this is omitted, the default AWS key will be used.
+                            The key must already exist and be accessible by the controller.
+                          type: string
+                        iops:
+                          description: IOPS is the number of IOPS requested for the
+                            disk. Not applicable to all types.
+                          format: int64
+                          type: integer
+                        size:
+                          description: |-
+                            Size specifies size (in Gi) of the storage device.
+                            Must be greater than the image snapshot size or 8 (whichever is greater).
+                          format: int64
+                          minimum: 8
+                          type: integer
+                        throughput:
+                          description: Throughput to provision in MiB/s supported
+                            for the volume type. Not applicable to all types.
+                          format: int64
+                          type: integer
+                        type:
+                          description: Type is the type of the volume (e.g. gp2, io1,
+                            etc...).
+                          type: string
+                      required:
+                      - size
+                      type: object
+                    type: array
                   privateDnsName:
                     description: PrivateDNSName is the options for the instance hostname.
                     properties:
@@ -6711,6 +6941,18 @@ spec:
                       to use. During this time, the next replacement will not be initiated.
                       The default is to use the value for the health check grace period defined for the group.
                     format: int64
+                    type: integer
+                  maxHealthyPercentage:
+                    description: |-
+                      The amount of capacity as a percentage in ASG that can be in service and healthy, or pending,
+                      to support your workload when replacing instances.
+                      The value is expressed as a percentage of the desired capacity of the ASG. Value range is 100 to 200.
+                      If you specify MaxHealthyPercentage , you must also specify MinHealthyPercentage , and the difference between
+                      them cannot be greater than 100.
+                      A larger range increases the number of instances that can be replaced at the same time.
+                    format: int64
+                    maximum: 200
+                    minimum: 100
                     type: integer
                   minHealthyPercentage:
                     description: |-
@@ -7570,6 +7812,10 @@ spec:
                     description: ID of resource
                     type: string
                 type: object
+              capacityReservationId:
+                description: CapacityReservationID specifies the target Capacity Reservation
+                  into which the instance should be launched.
+                type: string
               cloudInit:
                 description: |-
                   CloudInit defines options related to the bootstrapping systems where
@@ -7602,6 +7848,37 @@ spec:
                     - secrets-manager
                     - ssm-parameter-store
                     type: string
+                type: object
+              elasticIpPool:
+                description: ElasticIPPool is the configuration to allocate Public
+                  IPv4 address (Elastic IP/EIP) from user-defined pool.
+                properties:
+                  publicIpv4Pool:
+                    description: |-
+                      PublicIpv4Pool sets a custom Public IPv4 Pool used to create Elastic IP address for resources
+                      created in public IPv4 subnets. Every IPv4 address, Elastic IP, will be allocated from the custom
+                      Public IPv4 pool that you brought to AWS, instead of Amazon-provided pool. The public IPv4 pool
+                      resource ID starts with 'ipv4pool-ec2'.
+                    maxLength: 30
+                    type: string
+                  publicIpv4PoolFallbackOrder:
+                    description: |-
+                      PublicIpv4PoolFallBackOrder defines the fallback action when the Public IPv4 Pool has been exhausted,
+                      no more IPv4 address available in the pool.
+
+
+                      When set to 'amazon-pool', the controller check if the pool has available IPv4 address, when pool has reached the
+                      IPv4 limit, the address will be claimed from Amazon-pool (default).
+
+
+                      When set to 'none', the controller will fail the Elastic IP allocation when the publicIpv4Pool is exhausted.
+                    enum:
+                    - amazon-pool
+                    - none
+                    type: string
+                    x-kubernetes-validations:
+                    - message: allowed values are 'none' and 'amazon-pool'
+                      rule: self in ['none','amazon-pool']
                 type: object
               iamInstanceProfile:
                 description: IAMInstanceProfile is a name of an IAM instance profile
@@ -8712,6 +8989,10 @@ spec:
                             description: ID of resource
                             type: string
                         type: object
+                      capacityReservationId:
+                        description: CapacityReservationID specifies the target Capacity
+                          Reservation into which the instance should be launched.
+                        type: string
                       cloudInit:
                         description: |-
                           CloudInit defines options related to the bootstrapping systems where
@@ -8744,6 +9025,37 @@ spec:
                             - secrets-manager
                             - ssm-parameter-store
                             type: string
+                        type: object
+                      elasticIpPool:
+                        description: ElasticIPPool is the configuration to allocate
+                          Public IPv4 address (Elastic IP/EIP) from user-defined pool.
+                        properties:
+                          publicIpv4Pool:
+                            description: |-
+                              PublicIpv4Pool sets a custom Public IPv4 Pool used to create Elastic IP address for resources
+                              created in public IPv4 subnets. Every IPv4 address, Elastic IP, will be allocated from the custom
+                              Public IPv4 pool that you brought to AWS, instead of Amazon-provided pool. The public IPv4 pool
+                              resource ID starts with 'ipv4pool-ec2'.
+                            maxLength: 30
+                            type: string
+                          publicIpv4PoolFallbackOrder:
+                            description: |-
+                              PublicIpv4PoolFallBackOrder defines the fallback action when the Public IPv4 Pool has been exhausted,
+                              no more IPv4 address available in the pool.
+
+
+                              When set to 'amazon-pool', the controller check if the pool has available IPv4 address, when pool has reached the
+                              IPv4 limit, the address will be claimed from Amazon-pool (default).
+
+
+                              When set to 'none', the controller will fail the Elastic IP allocation when the publicIpv4Pool is exhausted.
+                            enum:
+                            - amazon-pool
+                            - none
+                            type: string
+                            x-kubernetes-validations:
+                            - message: allowed values are 'none' and 'amazon-pool'
+                              rule: self in ['none','amazon-pool']
                         type: object
                       iamInstanceProfile:
                         description: IAMInstanceProfile is a name of an IAM instance
@@ -9713,6 +10025,10 @@ spec:
                           items:
                             type: string
                           type: array
+                        natGatewaysIPsSource:
+                          description: NatGatewaysIPsSource use the NAT gateways IPs
+                            as the source for the ingress rule.
+                          type: boolean
                         protocol:
                           description: Protocol is the protocol for the ingress rule.
                             Accepted values are "-1" (all), "4" (IP in IP),"tcp",
@@ -9790,6 +10106,13 @@ spec:
                           type: object
                         type: array
                     type: object
+                  nodePortIngressRuleCidrBlocks:
+                    description: |-
+                      NodePortIngressRuleCidrBlocks is an optional set of CIDR blocks to allow traffic to nodes' NodePort services.
+                      If none are specified here, all IPs are allowed to connect.
+                    items:
+                      type: string
+                    type: array
                   securityGroupOverrides:
                     additionalProperties:
                       type: string
@@ -9948,6 +10271,39 @@ spec:
                           Defaults to 10.0.0.0/16.
                           Mutually exclusive with IPAMPool.
                         type: string
+                      elasticIpPool:
+                        description: |-
+                          ElasticIPPool contains specific configuration to allocate Public IPv4 address (Elastic IP) from user-defined pool
+                          brought to AWS for core infrastructure resources, like NAT Gateways and Public Network Load Balancers for
+                          the API Server.
+                        properties:
+                          publicIpv4Pool:
+                            description: |-
+                              PublicIpv4Pool sets a custom Public IPv4 Pool used to create Elastic IP address for resources
+                              created in public IPv4 subnets. Every IPv4 address, Elastic IP, will be allocated from the custom
+                              Public IPv4 pool that you brought to AWS, instead of Amazon-provided pool. The public IPv4 pool
+                              resource ID starts with 'ipv4pool-ec2'.
+                            maxLength: 30
+                            type: string
+                          publicIpv4PoolFallbackOrder:
+                            description: |-
+                              PublicIpv4PoolFallBackOrder defines the fallback action when the Public IPv4 Pool has been exhausted,
+                              no more IPv4 address available in the pool.
+
+
+                              When set to 'amazon-pool', the controller check if the pool has available IPv4 address, when pool has reached the
+                              IPv4 limit, the address will be claimed from Amazon-pool (default).
+
+
+                              When set to 'none', the controller will fail the Elastic IP allocation when the publicIpv4Pool is exhausted.
+                            enum:
+                            - amazon-pool
+                            - none
+                            type: string
+                            x-kubernetes-validations:
+                            - message: allowed values are 'none' and 'amazon-pool'
+                              rule: self in ['none','amazon-pool']
+                        type: object
                       emptyRoutesDefaultVPCSecurityGroup:
                         description: |-
                           EmptyRoutesDefaultVPCSecurityGroup specifies whether the default VPC security group ingress
@@ -10041,6 +10397,37 @@ spec:
                         enum:
                         - ip-name
                         - resource-name
+                        type: string
+                      secondaryCidrBlocks:
+                        description: |-
+                          SecondaryCidrBlocks are additional CIDR blocks to be associated when the provider creates a managed VPC.
+                          Defaults to none. Mutually exclusive with IPAMPool. This makes sense to use if, for example, you want to use
+                          a separate IP range for pods (e.g. Cilium ENI mode).
+                        items:
+                          description: VpcCidrBlock defines the CIDR block and settings
+                            to associate with the managed VPC. Currently, only IPv4
+                            is supported.
+                          properties:
+                            ipv4CidrBlock:
+                              description: IPv4CidrBlock is the IPv4 CIDR block to
+                                associate with the managed VPC.
+                              minLength: 1
+                              type: string
+                          required:
+                          - ipv4CidrBlock
+                          type: object
+                        type: array
+                      subnetSchema:
+                        default: PreferPrivate
+                        description: |-
+                          SubnetSchema specifies how CidrBlock should be divided on subnets in the VPC depending on the number of AZs.
+                          PreferPrivate - one private subnet for each AZ plus one other subnet that will be further sub-divided for the public subnets.
+                          PreferPublic - have the reverse logic of PreferPrivate, one public subnet for each AZ plus one other subnet
+                          that will be further sub-divided for the private subnets.
+                          Defaults to PreferPrivate
+                        enum:
+                        - PreferPrivate
+                        - PreferPublic
                         type: string
                       tags:
                         additionalProperties:
@@ -10204,10 +10591,15 @@ spec:
                                   description: The key to select.
                                   type: string
                                 name:
+                                  default: ""
                                   description: |-
                                     Name of the referent.
-                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
                                     TODO: Add other useful fields. apiVersion, kind, uid?
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the ConfigMap or its
@@ -10267,10 +10659,15 @@ spec:
                                     be a valid secret key.
                                   type: string
                                 name:
+                                  default: ""
                                   description: |-
                                     Name of the referent.
-                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
                                     TODO: Add other useful fields. apiVersion, kind, uid?
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the Secret or its key
@@ -10372,6 +10769,10 @@ spec:
                     type: array
                   availabilityZone:
                     description: Availability zone of instance
+                    type: string
+                  capacityReservationId:
+                    description: CapacityReservationID specifies the target Capacity
+                      Reservation into which the instance should be launched.
                     type: string
                   ebsOptimized:
                     description: Indicates whether the instance is optimized for Amazon
@@ -11207,6 +11608,10 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              natGatewaysIPsSource:
+                                description: NatGatewaysIPsSource use the NAT gateways
+                                  IPs as the source for the ingress rule.
+                                type: boolean
                               protocol:
                                 description: Protocol is the protocol for the ingress
                                   rule. Accepted values are "-1" (all), "4" (IP in
@@ -11663,6 +12068,10 @@ spec:
                           items:
                             type: string
                           type: array
+                        natGatewaysIPsSource:
+                          description: NatGatewaysIPsSource use the NAT gateways IPs
+                            as the source for the ingress rule.
+                          type: boolean
                         protocol:
                           description: Protocol is the protocol for the ingress rule.
                             Accepted values are "-1" (all), "4" (IP in IP),"tcp",
@@ -11740,6 +12149,13 @@ spec:
                           type: object
                         type: array
                     type: object
+                  nodePortIngressRuleCidrBlocks:
+                    description: |-
+                      NodePortIngressRuleCidrBlocks is an optional set of CIDR blocks to allow traffic to nodes' NodePort services.
+                      If none are specified here, all IPs are allowed to connect.
+                    items:
+                      type: string
+                    type: array
                   securityGroupOverrides:
                     additionalProperties:
                       type: string
@@ -11898,6 +12314,39 @@ spec:
                           Defaults to 10.0.0.0/16.
                           Mutually exclusive with IPAMPool.
                         type: string
+                      elasticIpPool:
+                        description: |-
+                          ElasticIPPool contains specific configuration to allocate Public IPv4 address (Elastic IP) from user-defined pool
+                          brought to AWS for core infrastructure resources, like NAT Gateways and Public Network Load Balancers for
+                          the API Server.
+                        properties:
+                          publicIpv4Pool:
+                            description: |-
+                              PublicIpv4Pool sets a custom Public IPv4 Pool used to create Elastic IP address for resources
+                              created in public IPv4 subnets. Every IPv4 address, Elastic IP, will be allocated from the custom
+                              Public IPv4 pool that you brought to AWS, instead of Amazon-provided pool. The public IPv4 pool
+                              resource ID starts with 'ipv4pool-ec2'.
+                            maxLength: 30
+                            type: string
+                          publicIpv4PoolFallbackOrder:
+                            description: |-
+                              PublicIpv4PoolFallBackOrder defines the fallback action when the Public IPv4 Pool has been exhausted,
+                              no more IPv4 address available in the pool.
+
+
+                              When set to 'amazon-pool', the controller check if the pool has available IPv4 address, when pool has reached the
+                              IPv4 limit, the address will be claimed from Amazon-pool (default).
+
+
+                              When set to 'none', the controller will fail the Elastic IP allocation when the publicIpv4Pool is exhausted.
+                            enum:
+                            - amazon-pool
+                            - none
+                            type: string
+                            x-kubernetes-validations:
+                            - message: allowed values are 'none' and 'amazon-pool'
+                              rule: self in ['none','amazon-pool']
+                        type: object
                       emptyRoutesDefaultVPCSecurityGroup:
                         description: |-
                           EmptyRoutesDefaultVPCSecurityGroup specifies whether the default VPC security group ingress
@@ -11992,6 +12441,37 @@ spec:
                         - ip-name
                         - resource-name
                         type: string
+                      secondaryCidrBlocks:
+                        description: |-
+                          SecondaryCidrBlocks are additional CIDR blocks to be associated when the provider creates a managed VPC.
+                          Defaults to none. Mutually exclusive with IPAMPool. This makes sense to use if, for example, you want to use
+                          a separate IP range for pods (e.g. Cilium ENI mode).
+                        items:
+                          description: VpcCidrBlock defines the CIDR block and settings
+                            to associate with the managed VPC. Currently, only IPv4
+                            is supported.
+                          properties:
+                            ipv4CidrBlock:
+                              description: IPv4CidrBlock is the IPv4 CIDR block to
+                                associate with the managed VPC.
+                              minLength: 1
+                              type: string
+                          required:
+                          - ipv4CidrBlock
+                          type: object
+                        type: array
+                      subnetSchema:
+                        default: PreferPrivate
+                        description: |-
+                          SubnetSchema specifies how CidrBlock should be divided on subnets in the VPC depending on the number of AZs.
+                          PreferPrivate - one private subnet for each AZ plus one other subnet that will be further sub-divided for the public subnets.
+                          PreferPublic - have the reverse logic of PreferPrivate, one public subnet for each AZ plus one other subnet
+                          that will be further sub-divided for the private subnets.
+                          Defaults to PreferPrivate
+                        enum:
+                        - PreferPrivate
+                        - PreferPublic
+                        type: string
                       tags:
                         additionalProperties:
                           type: string
@@ -12074,6 +12554,11 @@ spec:
               region:
                 description: The AWS Region the cluster lives in.
                 type: string
+              restrictPrivateSubnets:
+                default: false
+                description: RestrictPrivateSubnets indicates that the EKS control
+                  plane should only use private subnets.
+                type: boolean
               roleAdditionalPolicies:
                 description: |-
                   RoleAdditionalPolicies allows you to attach additional polices to
@@ -12167,10 +12652,15 @@ spec:
                                   description: The key to select.
                                   type: string
                                 name:
+                                  default: ""
                                   description: |-
                                     Name of the referent.
-                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
                                     TODO: Add other useful fields. apiVersion, kind, uid?
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the ConfigMap or its
@@ -12230,10 +12720,15 @@ spec:
                                     be a valid secret key.
                                   type: string
                                 name:
+                                  default: ""
                                   description: |-
                                     Name of the referent.
-                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
                                     TODO: Add other useful fields. apiVersion, kind, uid?
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                                   type: string
                                 optional:
                                   description: Specify whether the Secret or its key
@@ -12335,6 +12830,10 @@ spec:
                     type: array
                   availabilityZone:
                     description: Availability zone of instance
+                    type: string
+                  capacityReservationId:
+                    description: CapacityReservationID specifies the target Capacity
+                      Reservation into which the instance should be launched.
                     type: string
                   ebsOptimized:
                     description: Indicates whether the instance is optimized for Amazon
@@ -13170,6 +13669,10 @@ spec:
                                 items:
                                   type: string
                                 type: array
+                              natGatewaysIPsSource:
+                                description: NatGatewaysIPsSource use the NAT gateways
+                                  IPs as the source for the ingress rule.
+                                type: boolean
                               protocol:
                                 description: Protocol is the protocol for the ingress
                                   rule. Accepted values are "-1" (all), "4" (IP in
@@ -13334,6 +13837,8 @@ spec:
                 - AL2_x86_64
                 - AL2_x86_64_GPU
                 - AL2_ARM_64
+                - AL2023_x86_64_STANDARD
+                - AL2023_ARM_64_STANDARD
                 - CUSTOM
                 type: string
               amiVersion:
@@ -13808,6 +14313,8 @@ spec:
                 - AL2_x86_64
                 - AL2_x86_64_GPU
                 - AL2_ARM_64
+                - AL2023_x86_64_STANDARD
+                - AL2023_ARM_64_STANDARD
                 - CUSTOM
                 type: string
               amiVersion:
@@ -13997,6 +14504,50 @@ spec:
                   name:
                     description: The name of the launch template.
                     type: string
+                  nonRootVolumes:
+                    description: Configuration options for the non root storage volumes.
+                    items:
+                      description: Volume encapsulates the configuration options for
+                        the storage device.
+                      properties:
+                        deviceName:
+                          description: Device name
+                          type: string
+                        encrypted:
+                          description: Encrypted is whether the volume should be encrypted
+                            or not.
+                          type: boolean
+                        encryptionKey:
+                          description: |-
+                            EncryptionKey is the KMS key to use to encrypt the volume. Can be either a KMS key ID or ARN.
+                            If Encrypted is set and this is omitted, the default AWS key will be used.
+                            The key must already exist and be accessible by the controller.
+                          type: string
+                        iops:
+                          description: IOPS is the number of IOPS requested for the
+                            disk. Not applicable to all types.
+                          format: int64
+                          type: integer
+                        size:
+                          description: |-
+                            Size specifies size (in Gi) of the storage device.
+                            Must be greater than the image snapshot size or 8 (whichever is greater).
+                          format: int64
+                          minimum: 8
+                          type: integer
+                        throughput:
+                          description: Throughput to provision in MiB/s supported
+                            for the volume type. Not applicable to all types.
+                          format: int64
+                          type: integer
+                        type:
+                          description: Type is the type of the volume (e.g. gp2, io1,
+                            etc...).
+                          type: string
+                      required:
+                      - size
+                      type: object
+                    type: array
                   privateDnsName:
                     description: PrivateDNSName is the options for the instance hostname.
                     properties:
@@ -15597,6 +16148,75 @@ spec:
                   rule: self == oldSelf
                 - message: billingAccount must be a valid AWS account ID
                   rule: self.matches('^[0-9]{12}$')
+              clusterRegistryConfig:
+                description: ClusterRegistryConfig represents registry config used
+                  with the cluster.
+                properties:
+                  additionalTrustedCAs:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      AdditionalTrustedCAs containing the registry hostname as the key, and the PEM-encoded certificate as the value,
+                      for each additional registry CA to trust.
+                    type: object
+                  allowedRegistriesForImport:
+                    description: |-
+                      AllowedRegistriesForImport limits the container image registries that normal users may import
+                      images from. Set this list to the registries that you trust to contain valid Docker
+                      images and that you want applications to be able to import from.
+                    items:
+                      description: RegistryLocation contains a location of the registry
+                        specified by the registry domain name.
+                      properties:
+                        domainName:
+                          description: |-
+                            domainName specifies a domain name for the registry. The domain name might include wildcards, like '*' or '??'.
+                            In case the registry use non-standard (80 or 443) port, the port should be included in the domain name as well.
+                          type: string
+                        insecure:
+                          default: false
+                          description: insecure indicates whether the registry is
+                            secure (https) or insecure (http), default is secured.
+                          type: boolean
+                      type: object
+                    type: array
+                  registrySources:
+                    description: |-
+                      RegistrySources contains configuration that determines how the container runtime
+                      should treat individual registries when accessing images. It does not contain configuration
+                      for the internal cluster registry. AllowedRegistries, BlockedRegistries are mutually exclusive.
+                    properties:
+                      allowedRegistries:
+                        description: |-
+                          AllowedRegistries are the registries for which image pull and push actions are allowed.
+                          To specify all subdomains, add the asterisk (*) wildcard character as a prefix to the domain name,
+                          For example, *.example.com.
+                          You can specify an individual repository within a registry, For example: reg1.io/myrepo/myapp:latest.
+                          All other registries are blocked.
+                        items:
+                          type: string
+                        type: array
+                      blockedRegistries:
+                        description: |-
+                          BlockedRegistries are the registries for which image pull and push actions are denied.
+                          To specify all subdomains, add the asterisk (*) wildcard character as a prefix to the domain name,
+                          For example, *.example.com.
+                          You can specify an individual repository within a registry, For example: reg1.io/myrepo/myapp:latest.
+                          All other registries are allowed.
+                        items:
+                          type: string
+                        type: array
+                      insecureRegistries:
+                        description: |-
+                          InsecureRegistries are registries which do not have a valid TLS certificate or only support HTTP connections.
+                          To specify all subdomains, add the asterisk (*) wildcard character as a prefix to the domain name,
+                          For example, *.example.com.
+                          You can specify an individual repository within a registry, For example: reg1.io/myrepo/myapp:latest.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                type: object
               controlPlaneEndpoint:
                 description: ControlPlaneEndpoint represents the endpoint used to
                   communicate with the control plane.
@@ -15620,10 +16240,15 @@ spec:
                   - ocmApiUrl: Optional, defaults to 'https://api.openshift.com'
                 properties:
                   name:
+                    default: ""
                     description: |-
                       Name of the referent.
-                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      This field is effectively required, but due to backwards compatibility is
+                      allowed to be empty. Instances of this type with an empty value here are
+                      almost certainly wrong.
                       TODO: Add other useful fields. apiVersion, kind, uid?
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
@@ -16228,6 +16853,19 @@ spec:
               version:
                 description: OpenShift semantic version, for example "4.14.5".
                 type: string
+              versionGate:
+                default: WaitForAcknowledge
+                description: |-
+                  VersionGate requires acknowledgment when upgrading ROSA-HCP y-stream versions (e.g., from 4.15 to 4.16).
+                  Default is WaitForAcknowledge.
+                  WaitForAcknowledge: If acknowledgment is required, the upgrade will not proceed until VersionGate is set to Acknowledge or AlwaysAcknowledge.
+                  Acknowledge: If acknowledgment is required, apply it for the upgrade. After upgrade is done set the version gate to WaitForAcknowledge.
+                  AlwaysAcknowledge: If acknowledgment is required, apply it and proceed with the upgrade.
+                enum:
+                - Acknowledge
+                - WaitForAcknowledge
+                - AlwaysAcknowledge
+                type: string
               workerRoleARN:
                 description: WorkerRoleARN is an AWS IAM role that will be attached
                   to worker instances.
@@ -16242,11 +16880,17 @@ spec:
             - subnets
             - supportRoleARN
             - version
+            - versionGate
             - workerRoleARN
             type: object
           status:
             description: RosaControlPlaneStatus defines the observed state of ROSAControlPlane.
             properties:
+              availableUpgrades:
+                description: Available upgrades for the ROSA hosted control plane.
+                items:
+                  type: string
+                type: array
               conditions:
                 description: Conditions specifies the conditions for the managed control
                   plane
@@ -16412,10 +17056,10 @@ spec:
                   underlying EC2 instances associated with this machine pool.
                 type: object
               autoRepair:
-                default: false
+                default: true
                 description: |-
                   AutoRepair specifies whether health checks should be enabled for machines
-                  in the NodePool. The default is false.
+                  in the NodePool. The default is true.
                 type: boolean
               autoscaling:
                 description: |-
@@ -16507,6 +17151,59 @@ spec:
                 items:
                   type: string
                 type: array
+              updateConfig:
+                description: UpdateConfig specifies update configurations.
+                properties:
+                  rollingUpdate:
+                    description: RollingUpdate specifies MaxUnavailable & MaxSurge
+                      number of nodes during update.
+                    properties:
+                      maxSurge:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        default: 1
+                        description: |-
+                          MaxSurge is the maximum number of nodes that can be provisioned above the desired number of nodes.
+                          Value can be an absolute number (ex: 5) or a percentage of desired nodes (ex: 10%).
+                          Absolute number is calculated from percentage by rounding up.
+
+
+                          MaxSurge can not be 0 if MaxUnavailable is 0, default is 1.
+                          Both MaxSurge & MaxUnavailable must use the same units (absolute value or percentage).
+
+
+                          Example: when MaxSurge is set to 30%, new nodes can be provisioned immediately
+                          when the rolling update starts, such that the total number of old and new
+                          nodes do not exceed 130% of desired nodes. Once old nodes have been
+                          deleted, new nodes can be provisioned, ensuring that total number of nodes
+                          running at any time during the update is at most 130% of desired nodes.
+                        pattern: ^((100|[0-9]{1,2})%|[0-9]+)$
+                        x-kubernetes-int-or-string: true
+                      maxUnavailable:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        default: 0
+                        description: |-
+                          MaxUnavailable is the maximum number of nodes that can be unavailable during the update.
+                          Value can be an absolute number (ex: 5) or a percentage of desired nodes (ex: 10%).
+                          Absolute number is calculated from percentage by rounding down.
+
+
+                          MaxUnavailable can not be 0 if MaxSurge is 0, default is 0.
+                          Both MaxUnavailable & MaxSurge must use the same units (absolute value or percentage).
+
+
+                          Example: when MaxUnavailable is set to 30%, old nodes can be deleted down to 70% of
+                          desired nodes immediately when the rolling update starts. Once new nodes
+                          are ready, more old nodes be deleted, followed by provisioning new nodes,
+                          ensuring that the total number of nodes available at all times during the
+                          update is at least 70% of desired nodes.
+                        pattern: ^((100|[0-9]{1,2})%|[0-9]+)$
+                        x-kubernetes-int-or-string: true
+                    type: object
+                type: object
               version:
                 description: |-
                   Version specifies the OpenShift version of the nodes associated with this machinepool.
@@ -17219,7 +17916,7 @@ spec:
         env:
         - name: AWS_SHARED_CREDENTIALS_FILE
           value: /home/.aws/credentials
-        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:latest
+        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:v2.6.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
@@ -17249,6 +17946,7 @@ spec:
             - ALL
           runAsGroup: 65532
           runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert

@@ -1,13 +1,14 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
@@ -61,7 +62,7 @@ func TestClusterImageSet_Generate(t *testing.T) {
 				getValidOptionalInstallConfig(),
 				&releaseimage.Image{},
 			},
-			expectedError: "invalid ClusterImageSet configuration: Spec.ReleaseImage: Forbidden: value must be equal to " + currentRelease,
+			expectedError: "invalid ClusterImageSet configuration: spec.releaseImage: Invalid value: \"\": value must be equal to " + currentRelease,
 		},
 		{
 			name: "valid configuration",
@@ -121,7 +122,7 @@ func TestClusterImageSet_Generate(t *testing.T) {
 			parents.Add(tc.dependencies...)
 
 			asset := &ClusterImageSet{}
-			err := asset.Generate(parents)
+			err := asset.Generate(context.Background(), parents)
 
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())
@@ -181,7 +182,7 @@ metadata:
   name: openshift-v4.10.0
 spec:
   releaseImage: 99.999`,
-			expectedError: fmt.Sprintf("invalid ClusterImageSet configuration: Spec.ReleaseImage: Forbidden: value must be equal to %s", currentRelease),
+			expectedError: fmt.Sprintf("invalid ClusterImageSet configuration: spec.releaseImage: Invalid value: \"99.999\": value must be equal to %s", currentRelease),
 		},
 		{
 			name:          "not-yaml",
@@ -191,7 +192,7 @@ spec:
 		{
 			name:          "empty",
 			data:          "",
-			expectedError: fmt.Sprintf("invalid ClusterImageSet configuration: Spec.ReleaseImage: Forbidden: value must be equal to %s", currentRelease),
+			expectedError: fmt.Sprintf("invalid ClusterImageSet configuration: spec.releaseImage: Invalid value: \"\": value must be equal to %s", currentRelease),
 		},
 		{
 			name:       "file-not-found",

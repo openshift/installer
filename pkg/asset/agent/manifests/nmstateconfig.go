@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -39,21 +40,6 @@ type NMStateConfig struct {
 	Config              []*aiv1beta1.NMStateConfig
 }
 
-type nmStateConfig struct {
-	Interfaces []struct {
-		IPV4 struct {
-			Address []struct {
-				IP string `yaml:"ip,omitempty"`
-			} `yaml:"address,omitempty"`
-		} `yaml:"ipv4,omitempty"`
-		IPV6 struct {
-			Address []struct {
-				IP string `yaml:"ip,omitempty"`
-			} `yaml:"address,omitempty"`
-		} `yaml:"ipv6,omitempty"`
-	} `yaml:"interfaces,omitempty"`
-}
-
 var _ asset.WritableAsset = (*NMStateConfig)(nil)
 
 // Name returns a human friendly name for the asset.
@@ -73,7 +59,7 @@ func (*NMStateConfig) Dependencies() []asset.Asset {
 }
 
 // Generate generates the NMStateConfig manifest.
-func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
+func (n *NMStateConfig) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	clusterInfo := &joiner.ClusterInfo{}
 	agentHosts := &agentconfig.AgentHosts{}
@@ -99,6 +85,9 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 		clusterNamespace = installConfig.ClusterNamespace()
 
 	case workflow.AgentWorkflowTypeAddNodes:
+		if err := validateHostHostnameAndIPs(agentHosts, clusterInfo.Nodes); err != nil {
+			return err
+		}
 		clusterName = clusterInfo.ClusterName
 		clusterNamespace = clusterInfo.Namespace
 
@@ -249,7 +238,7 @@ func (n *NMStateConfig) validateNMStateLabels() field.ErrorList {
 
 	var allErrs field.ErrorList
 
-	fieldPath := field.NewPath("ObjectMeta", "Labels")
+	fieldPath := field.NewPath("labels")
 
 	for _, nmStateConfig := range n.Config {
 		if len(nmStateConfig.ObjectMeta.Labels) == 0 {
@@ -258,29 +247,6 @@ func (n *NMStateConfig) validateNMStateLabels() field.ErrorList {
 	}
 
 	return allErrs
-}
-
-func getFirstIP(nmstateRaw []byte) (string, error) {
-	var nmStateConfig nmStateConfig
-	err := yaml.Unmarshal(nmstateRaw, &nmStateConfig)
-	if err != nil {
-		return "", fmt.Errorf("error unmarshalling NMStateConfig: %w", err)
-	}
-
-	for _, intf := range nmStateConfig.Interfaces {
-		for _, addr4 := range intf.IPV4.Address {
-			if addr4.IP != "" {
-				return addr4.IP, nil
-			}
-		}
-		for _, addr6 := range intf.IPV6.Address {
-			if addr6.IP != "" {
-				return addr6.IP, nil
-			}
-		}
-	}
-
-	return "", nil
 }
 
 // GetNodeZeroIP retrieves the first IP to be set as the node0 IP.
@@ -315,7 +281,7 @@ func GetNodeZeroIP(hosts []agenttype.Host, nmStateConfigs []*aiv1beta1.NMStateCo
 
 	// Try to look for an eligible IP
 	for _, raw := range rawConfigs {
-		nodeZeroIP, err := getFirstIP(raw)
+		nodeZeroIP, err := agent.GetFirstIP(raw)
 		if err != nil {
 			return "", fmt.Errorf("error unmarshalling NMStateConfig: %w", err)
 		}
@@ -434,5 +400,26 @@ func validateHostCount(installConfig *types.InstallConfig, agentHosts *agentconf
 		return fmt.Errorf("the number of worker hosts defined (%v) exceeds the configured Compute replicas (%v)", numWorkers, numRequiredWorkers)
 	}
 
+	return nil
+}
+
+func validateHostHostnameAndIPs(agentHosts *agentconfig.AgentHosts, nodes *corev1.NodeList) error {
+	for _, host := range agentHosts.Hosts {
+		hostIPs, err := agent.GetAllHostIPs(host.NetworkConfig)
+		if err != nil {
+			return err
+		}
+
+		for _, node := range nodes.Items {
+			for _, addr := range node.Status.Addresses {
+				if _, found := hostIPs[addr.Address]; found {
+					return fmt.Errorf("address conflict found. The configured address %s is already used by the cluster node %s", addr.Address, node.GetName())
+				}
+				if host.Hostname != "" && host.Hostname == addr.Address {
+					return fmt.Errorf("hostname conflict found. The configured hostname %s is already used in the cluster", addr.Address)
+				}
+			}
+		}
+	}
 	return nil
 }

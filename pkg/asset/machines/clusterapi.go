@@ -13,6 +13,7 @@ import (
 	"github.com/vmware/govmomi/vim25/soap"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -20,9 +21,11 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
+	"github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	nutanixcapi "github.com/openshift/installer/pkg/asset/machines/nutanix"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/machines/powervs"
@@ -37,6 +40,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
@@ -70,7 +74,7 @@ func (c *ClusterAPI) Dependencies() []asset.Asset {
 // Generate generates Cluster API machine manifests.
 //
 //nolint:gocyclo
-func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
+func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	rhcosImage := new(rhcos.Image)
@@ -86,13 +90,12 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 	var err error
 	ic := installConfig.Config
 	pool := *ic.ControlPlane
-	ctx := context.TODO()
 
 	switch ic.Platform.Name() {
 	case awstypes.Name:
 		subnets := map[string]string{}
 		bootstrapSubnets := map[string]string{}
-		if len(ic.Platform.AWS.Subnets) > 0 {
+		if len(ic.Platform.AWS.VPC.Subnets) > 0 {
 			// fetch private subnets to master nodes.
 			subnetMeta, err := installConfig.AWS.PrivateSubnets(ctx)
 			if err != nil {
@@ -117,7 +120,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 
 		mpool := defaultAWSMachinePoolPlatform("master")
 
-		osImage := strings.SplitN(string(*rhcosImage), ",", 2)
+		osImage := strings.SplitN(rhcosImage.ControlPlane, ",", 2)
 		osImageID := osImage[0]
 		if len(osImage) == 2 {
 			osImageID = "" // the AMI will be generated later on
@@ -166,10 +169,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			return fmt.Errorf("failed to create CAPA tags from UserTags: %w", err)
 		}
 
-		ignition, err := aws.CapaIgnitionWithCertBundleAndProxy(installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
-		if err != nil {
-			return fmt.Errorf("failed to generation CAPA ignition: %w", err)
-		}
+		publicOnlySubnets := awstypes.IsPublicOnlySubnetsEnabled()
 
 		pool.Platform.AWS = &mpool
 		awsMachines, err := aws.GenerateMachines(clusterID.InfraID, &aws.MachineInput{
@@ -177,25 +177,36 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			Pool:     &pool,
 			Subnets:  subnets,
 			Tags:     tags,
-			PublicIP: false,
-			Ignition: ignition,
+			PublicIP: publicOnlySubnets,
+			Ignition: &v1beta2.Ignition{
+				Version: "3.2",
+				// master machines should get ignition from the MCS on the bootstrap node
+				StorageType: v1beta2.IgnitionStorageTypeOptionUnencryptedUserData,
+			},
 		})
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		c.FileList = append(c.FileList, awsMachines...)
 
+		ignition, err := aws.CapaIgnitionWithCertBundleAndProxy(installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
+		if err != nil {
+			return fmt.Errorf("failed to generation CAPA ignition: %w", err)
+		}
+		ignition.StorageType = v1beta2.IgnitionStorageTypeOptionClusterObjectStore
+
 		pool := *ic.ControlPlane
 		pool.Name = "bootstrap"
 		pool.Replicas = ptr.To[int64](1)
 		pool.Platform.AWS = &mpool
 		bootstrapAWSMachine, err := aws.GenerateMachines(clusterID.InfraID, &aws.MachineInput{
-			Role:     "bootstrap",
-			Subnets:  bootstrapSubnets,
-			Pool:     &pool,
-			Tags:     tags,
-			PublicIP: installConfig.Config.Publish == types.ExternalPublishingStrategy,
-			Ignition: ignition,
+			Role:           "bootstrap",
+			Subnets:        bootstrapSubnets,
+			Pool:           &pool,
+			Tags:           tags,
+			PublicIP:       publicOnlySubnets || (installConfig.Config.Publish == types.ExternalPublishingStrategy),
+			PublicIpv4Pool: ic.Platform.AWS.PublicIpv4Pool,
+			Ignition:       ignition,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create bootstrap machine object: %w", err)
@@ -215,33 +226,26 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Azure)
 
-		session, err := installConfig.Azure.Session()
+		client, err := installConfig.Azure.Client()
 		if err != nil {
-			return fmt.Errorf("failed to fetch session: %w", err)
+			return err
 		}
-		client := icazure.NewClient(session)
 
+		if len(mpool.Zones) == 0 {
+			azs, err := client.GetAvailabilityZones(ctx, ic.Platform.Azure.Region, mpool.InstanceType)
+			if err != nil {
+				return fmt.Errorf("failed to fetch availability zones: %w", err)
+			}
+			mpool.Zones = azs
+		}
 		if len(mpool.Zones) == 0 {
 			// if no azs are given we set to []string{""} for convenience over later operations.
 			// It means no-zoned for the machine API
 			mpool.Zones = []string{""}
 		}
-		if len(mpool.Zones) == 0 {
-			azs, err := client.GetAvailabilityZones(context.TODO(), ic.Platform.Azure.Region, mpool.InstanceType)
-			if err != nil {
-				return fmt.Errorf("failed to fetch availability zones: %w", err)
-			}
-			mpool.Zones = azs
-			if len(azs) == 0 {
-				// if no azs are given we set to []string{""} for convenience over later operations.
-				// It means no-zoned for the machine API
-				mpool.Zones = []string{""}
-			}
-		}
-		// client.GetControlPlaneSubnet(context.TODO(), ic.Platform.Azure.ResourceGroupName, ic.Platform.Azure.VirtualNetwork, )
 
 		if mpool.OSImage.Publisher != "" {
-			img, ierr := client.GetMarketplaceImage(context.TODO(), ic.Platform.Azure.Region, mpool.OSImage.Publisher, mpool.OSImage.Offer, mpool.OSImage.SKU, mpool.OSImage.Version)
+			img, ierr := client.GetMarketplaceImage(ctx, ic.Platform.Azure.Region, mpool.OSImage.Publisher, mpool.OSImage.Offer, mpool.OSImage.SKU, mpool.OSImage.Version)
 			if ierr != nil {
 				return fmt.Errorf("failed to fetch marketplace image: %w", ierr)
 			}
@@ -252,23 +256,46 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 				mpool.OSImage.Publisher = *img.Plan.Publisher
 			}
 		}
-		pool.Platform.Azure = &mpool
-		subnet := ic.Azure.ControlPlaneSubnet
-
-		capabilities, err := client.GetVMCapabilities(context.TODO(), mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+		capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
 		if err != nil {
 			return err
 		}
+		if mpool.VMNetworkingType == "" {
+			isAccelerated := icazure.GetVMNetworkingCapability(capabilities)
+			if isAccelerated {
+				mpool.VMNetworkingType = string(azuretypes.VMnetworkingTypeAccelerated)
+			} else {
+				logrus.Infof("Instance type %s does not support Accelerated Networking. Using Basic Networking instead.", mpool.InstanceType)
+			}
+		}
+		pool.Platform.Azure = &mpool
+		subnet := ic.Azure.ControlPlaneSubnet
+
 		hyperVGen, err := icazure.GetHyperVGenerationVersion(capabilities, "")
 		if err != nil {
 			return err
 		}
-		// useImageGallery := installConfig.Azure.CloudName != azuretypes.StackCloud
-		useImageGallery := false
-		masterUserDataSecretName := "master-user-data"
-		resourceGroupName := installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID)
 
-		azureMachines, err := azure.GenerateMachines(installConfig.Config.Platform.Azure, &pool, masterUserDataSecretName, clusterID.InfraID, "master", capabilities, useImageGallery, installConfig.Config.Platform.Azure.UserTags, hyperVGen, subnet, resourceGroupName, session.Credentials.SubscriptionID)
+		session, err := installConfig.Azure.Session()
+		if err != nil {
+			return err
+		}
+
+		azureMachines, err := azure.GenerateMachines(clusterID.InfraID,
+			installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID),
+			session.Credentials.SubscriptionID,
+			&azure.MachineInput{
+				Subnet:          subnet,
+				Role:            "master",
+				UserDataSecret:  "master-user-data",
+				HyperVGen:       hyperVGen,
+				UseImageGallery: false,
+				Private:         installConfig.Config.Publish == types.InternalPublishingStrategy,
+				UserTags:        installConfig.Config.Platform.Azure.UserTags,
+				Platform:        installConfig.Config.Platform.Azure,
+				Pool:            &pool,
+			},
+		)
 		if err != nil {
 			return fmt.Errorf("failed to create master machine objects: %w", err)
 		}
@@ -292,7 +319,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			installConfig,
 			clusterID.InfraID,
 			&pool,
-			string(*rhcosImage),
+			rhcosImage.ControlPlane,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create master machine objects %w", err)
@@ -305,7 +332,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			installConfig,
 			clusterID.InfraID,
 			&pool,
-			string(*rhcosImage),
+			rhcosImage.ControlPlane,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create bootstrap machine objects %w", err)
@@ -330,7 +357,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			// that the installer's install-config has been provided with bogus values.
 
 			// Timeout context for Lookup
-			ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 			defer cancel()
 
 			_, err := resolver.LookupHost(ctx, v.Server)
@@ -342,7 +369,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			// Timeout context for Networks
 			// vCenter APIs can be unreliable in performance, extended this context
 			// timeout to 60 seconds.
-			ctx, cancel = context.WithTimeout(context.TODO(), 60*time.Second)
+			ctx, cancel = context.WithTimeout(ctx, 60*time.Second)
 			defer cancel()
 
 			err = installConfig.VSphere.Networks(ctx, v, platform.FailureDomains)
@@ -376,9 +403,8 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		}
 
 		pool.Platform.VSphere = &mpool
-		templateName := clusterID.InfraID + "-rhcos"
 
-		c.FileList, err = vspherecapi.GenerateMachines(ctx, clusterID.InfraID, ic, &pool, templateName, "master", installConfig.VSphere)
+		c.FileList, err = vspherecapi.GenerateMachines(ctx, clusterID.InfraID, ic, &pool, "master", installConfig.VSphere)
 		if err != nil {
 			return fmt.Errorf("unable to generate CAPI machines for vSphere %w", err)
 		}
@@ -388,15 +414,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		mpool.Set(pool.Platform.OpenStack)
 		pool.Platform.OpenStack = &mpool
 
-		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
-		trunkSupport, err := openstack.CheckNetworkExtensionAvailability(
-			ic.Platform.OpenStack.Cloud,
-			"trunk",
-			nil,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to check for trunk support: %w", err)
-		}
+		imageName, _ := rhcosutils.GenerateOpenStackImageName(rhcosImage.ControlPlane, clusterID.InfraID)
 
 		for _, role := range []string{"master", "bootstrap"} {
 			openStackMachines, err := openstack.GenerateMachines(
@@ -405,7 +423,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 				&pool,
 				imageName,
 				role,
-				trunkSupport,
 			)
 			if err != nil {
 				return fmt.Errorf("failed to create machine objects: %w", err)
@@ -435,15 +452,52 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		mpool.NumCPUs = 8
 		mpool.Set(ic.Platform.Nutanix.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Nutanix)
-		if err = mpool.ValidateConfig(ic.Platform.Nutanix); err != nil {
+		if err = mpool.ValidateConfig(ic.Platform.Nutanix, "master"); err != nil {
 			return fmt.Errorf("failed to generate Cluster API machine manifests for control-plane: %w", err)
 		}
 		pool.Platform.Nutanix = &mpool
-		templateName := nutanixtypes.RHCOSImageName(clusterID.InfraID)
+		templateName := nutanixtypes.RHCOSImageName(ic.Platform.Nutanix, clusterID.InfraID)
 
 		c.FileList, err = nutanixcapi.GenerateMachines(clusterID.InfraID, ic, &pool, templateName, "master")
 		if err != nil {
 			return fmt.Errorf("unable to generate CAPI machines for Nutanix %w", err)
+		}
+	case ibmcloudtypes.Name:
+		mpool := defaultIBMCloudMachinePoolPlatform()
+		mpool.Set(ic.Platform.IBMCloud.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.IBMCloud)
+		if len(mpool.Zones) == 0 {
+			azs, err := ibmcloud.AvailabilityZones(ic.Platform.IBMCloud.Region, ic.Platform.IBMCloud.ServiceEndpoints)
+			if err != nil {
+				return fmt.Errorf("failed to fetch availability zones: %w", err)
+			}
+			mpool.Zones = azs
+		}
+
+		subnets := make(map[string]string)
+		if len(ic.Platform.IBMCloud.ControlPlaneSubnets) > 0 {
+			subnetMetas, err := installConfig.IBMCloud.ControlPlaneSubnets(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to collect subnets for machines: %w", err)
+			}
+			for _, subnet := range subnetMetas {
+				subnets[subnet.Zone] = subnet.Name
+			}
+		}
+		pool.Platform.IBMCloud = &mpool
+		imageName := ibmcloudic.VSIImageName(clusterID.InfraID)
+
+		c.FileList, err = ibmcloud.GenerateMachines(
+			ctx,
+			clusterID.InfraID,
+			ic,
+			subnets,
+			&pool,
+			imageName,
+			"master",
+		)
+		if err != nil {
+			return fmt.Errorf("failed to generate IBM Cloud VPC machine manifests: %w", err)
 		}
 	default:
 		// TODO: support other platforms
@@ -471,7 +525,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 func (c *ClusterAPI) Files() []*asset.File {
 	files := []*asset.File{}
 	for _, f := range c.FileList {
-		f := f // TODO: remove with golang 1.22
 		files = append(files, &f.File)
 	}
 	return files

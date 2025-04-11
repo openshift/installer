@@ -6,6 +6,7 @@ package hardware_platforms
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -109,11 +110,13 @@ func (o *ServiceBrokerHardwareplatformsGetOK) Code() int {
 }
 
 func (o *ServiceBrokerHardwareplatformsGetOK) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerHardwareplatformsGetOK) String() string {
-	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetOK %s", 200, payload)
 }
 
 func (o *ServiceBrokerHardwareplatformsGetOK) GetPayload() models.HardwarePlatforms {
@@ -175,11 +178,13 @@ func (o *ServiceBrokerHardwareplatformsGetBadRequest) Code() int {
 }
 
 func (o *ServiceBrokerHardwareplatformsGetBadRequest) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerHardwareplatformsGetBadRequest) String() string {
-	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetBadRequest %s", 400, payload)
 }
 
 func (o *ServiceBrokerHardwareplatformsGetBadRequest) GetPayload() *models.Error {
@@ -243,11 +248,13 @@ func (o *ServiceBrokerHardwareplatformsGetUnauthorized) Code() int {
 }
 
 func (o *ServiceBrokerHardwareplatformsGetUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerHardwareplatformsGetUnauthorized) String() string {
-	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetUnauthorized %s", 401, payload)
 }
 
 func (o *ServiceBrokerHardwareplatformsGetUnauthorized) GetPayload() *models.Error {
@@ -311,11 +318,13 @@ func (o *ServiceBrokerHardwareplatformsGetForbidden) Code() int {
 }
 
 func (o *ServiceBrokerHardwareplatformsGetForbidden) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerHardwareplatformsGetForbidden) String() string {
-	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetForbidden %s", 403, payload)
 }
 
 func (o *ServiceBrokerHardwareplatformsGetForbidden) GetPayload() *models.Error {
@@ -379,11 +388,13 @@ func (o *ServiceBrokerHardwareplatformsGetNotFound) Code() int {
 }
 
 func (o *ServiceBrokerHardwareplatformsGetNotFound) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerHardwareplatformsGetNotFound) String() string {
-	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetNotFound %s", 404, payload)
 }
 
 func (o *ServiceBrokerHardwareplatformsGetNotFound) GetPayload() *models.Error {
@@ -447,11 +458,13 @@ func (o *ServiceBrokerHardwareplatformsGetInternalServerError) Code() int {
 }
 
 func (o *ServiceBrokerHardwareplatformsGetInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerHardwareplatformsGetInternalServerError) String() string {
-	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /broker/v1/hardware-platforms][%d] serviceBrokerHardwareplatformsGetInternalServerError %s", 500, payload)
 }
 
 func (o *ServiceBrokerHardwareplatformsGetInternalServerError) GetPayload() *models.Error {

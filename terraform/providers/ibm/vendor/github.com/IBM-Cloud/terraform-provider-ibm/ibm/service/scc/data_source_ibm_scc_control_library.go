@@ -281,71 +281,71 @@ func dataSourceIbmSccControlLibraryRead(context context.Context, d *schema.Resou
 
 	getControlLibraryOptions := &securityandcompliancecenterapiv3.GetControlLibraryOptions{}
 
-	getControlLibraryOptions.SetControlLibrariesID(d.Get("control_library_id").(string))
+	getControlLibraryOptions.SetControlLibraryID(d.Get("control_library_id").(string))
 	getControlLibraryOptions.SetInstanceID(d.Get("instance_id").(string))
 
 	controlLibrary, response, err := securityandcompliancecenterapiClient.GetControlLibraryWithContext(context, getControlLibraryOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetControlLibraryWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetControlLibraryWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetControlLibraryWithContext failed %s\n%s", err, response))
 	}
 
-	d.SetId(fmt.Sprintf("%s", *getControlLibraryOptions.ControlLibrariesID))
+	d.SetId(fmt.Sprintf("%s", *getControlLibraryOptions.ControlLibraryID))
 
 	if err = d.Set("account_id", controlLibrary.AccountID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting account_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting account_id: %s", err))
 	}
 
 	if err = d.Set("control_library_name", controlLibrary.ControlLibraryName); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting control_library_name: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting control_library_name: %s", err))
 	}
 
 	if err = d.Set("control_library_description", controlLibrary.ControlLibraryDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting control_library_description: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting control_library_description: %s", err))
 	}
 
 	if err = d.Set("control_library_type", controlLibrary.ControlLibraryType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting control_library_type: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting control_library_type: %s", err))
 	}
 
 	if err = d.Set("version_group_label", controlLibrary.VersionGroupLabel); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting version_group_label: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting version_group_label: %s", err))
 	}
 
 	if err = d.Set("control_library_version", controlLibrary.ControlLibraryVersion); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting control_library_version: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting control_library_version: %s", err))
 	}
 
 	if err = d.Set("created_on", flex.DateTimeToString(controlLibrary.CreatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_on: %s", err))
 	}
 
 	if err = d.Set("created_by", controlLibrary.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_by: %s", err))
 	}
 
 	if err = d.Set("updated_on", flex.DateTimeToString(controlLibrary.UpdatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_on: %s", err))
 	}
 
 	if err = d.Set("updated_by", controlLibrary.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_by: %s", err))
 	}
 
 	if err = d.Set("latest", controlLibrary.Latest); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting latest: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting latest: %s", err))
 	}
 
 	if err = d.Set("hierarchy_enabled", controlLibrary.HierarchyEnabled); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting hierarchy_enabled: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting hierarchy_enabled: %s", err))
 	}
 
 	if err = d.Set("controls_count", flex.IntValue(controlLibrary.ControlsCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting controls_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting controls_count: %s", err))
 	}
 
 	if err = d.Set("control_parents_count", flex.IntValue(controlLibrary.ControlParentsCount)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting control_parents_count: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting control_parents_count: %s", err))
 	}
 
 	controls := []map[string]interface{}{}
@@ -359,13 +359,13 @@ func dataSourceIbmSccControlLibraryRead(context context.Context, d *schema.Resou
 		}
 	}
 	if err = d.Set("controls", controls); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting controls %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting controls %s", err))
 	}
 
 	return nil
 }
 
-func dataSourceIbmSccControlLibraryControlsInControlLibToMap(model *securityandcompliancecenterapiv3.ControlsInControlLib) (map[string]interface{}, error) {
+func dataSourceIbmSccControlLibraryControlsInControlLibToMap(model *securityandcompliancecenterapiv3.Control) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ControlName != nil {
 		modelMap["control_name"] = model.ControlName
@@ -412,10 +412,10 @@ func dataSourceIbmSccControlLibraryControlsInControlLibToMap(model *securityandc
 	return modelMap, nil
 }
 
-func dataSourceIbmSccControlLibraryControlSpecificationsToMap(model *securityandcompliancecenterapiv3.ControlSpecifications) (map[string]interface{}, error) {
+func dataSourceIbmSccControlLibraryControlSpecificationsToMap(model *securityandcompliancecenterapiv3.ControlSpecification) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	if model.ControlSpecificationID != nil {
-		modelMap["control_specification_id"] = model.ControlSpecificationID
+	if model.ID != nil {
+		modelMap["control_specification_id"] = model.ID
 	}
 	if model.Responsibility != nil {
 		modelMap["responsibility"] = model.Responsibility
@@ -429,8 +429,8 @@ func dataSourceIbmSccControlLibraryControlSpecificationsToMap(model *securityand
 	if model.Environment != nil {
 		modelMap["environment"] = model.Environment
 	}
-	if model.ControlSpecificationDescription != nil {
-		modelMap["control_specification_description"] = model.ControlSpecificationDescription
+	if model.Description != nil {
+		modelMap["control_specification_description"] = model.Description
 	}
 	if model.AssessmentsCount != nil {
 		modelMap["assessments_count"] = flex.IntValue(model.AssessmentsCount)
@@ -449,7 +449,7 @@ func dataSourceIbmSccControlLibraryControlSpecificationsToMap(model *securityand
 	return modelMap, nil
 }
 
-func dataSourceIbmSccControlLibraryImplementationToMap(model *securityandcompliancecenterapiv3.Implementation) (map[string]interface{}, error) {
+func dataSourceIbmSccControlLibraryImplementationToMap(model *securityandcompliancecenterapiv3.Assessment) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AssessmentID != nil {
 		modelMap["assessment_id"] = model.AssessmentID
@@ -480,7 +480,7 @@ func dataSourceIbmSccControlLibraryImplementationToMap(model *securityandcomplia
 	return modelMap, nil
 }
 
-func dataSourceIbmSccControlLibraryParameterInfoToMap(model *securityandcompliancecenterapiv3.ParameterInfo) (map[string]interface{}, error) {
+func dataSourceIbmSccControlLibraryParameterInfoToMap(model *securityandcompliancecenterapiv3.Parameter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ParameterName != nil {
 		modelMap["parameter_name"] = model.ParameterName
@@ -494,7 +494,7 @@ func dataSourceIbmSccControlLibraryParameterInfoToMap(model *securityandcomplian
 	return modelMap, nil
 }
 
-func dataSourceIbmSccControlLibraryControlDocsToMap(model *securityandcompliancecenterapiv3.ControlDocs) (map[string]interface{}, error) {
+func dataSourceIbmSccControlLibraryControlDocsToMap(model *securityandcompliancecenterapiv3.ControlDoc) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ControlDocsID != nil {
 		modelMap["control_docs_id"] = model.ControlDocsID

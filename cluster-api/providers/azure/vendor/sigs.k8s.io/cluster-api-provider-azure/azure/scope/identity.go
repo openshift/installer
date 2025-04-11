@@ -19,13 +19,10 @@ package scope
 import (
 	"context"
 	"reflect"
-	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/go-autorest/autorest"
-	"github.com/jongio/azidext/go/azidext"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,11 +37,11 @@ const AzureSecretKey = "clientSecret"
 
 // CredentialsProvider defines the behavior for azure identity based credential providers.
 type CredentialsProvider interface {
-	GetAuthorizer(ctx context.Context, tokenCredential azcore.TokenCredential, tokenAudience string) (autorest.Authorizer, error)
 	GetClientID() string
 	GetClientSecret(ctx context.Context) (string, error)
 	GetTenantID() string
 	GetTokenCredential(ctx context.Context, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience string) (azcore.TokenCredential, error)
+	Type() infrav1.IdentityType
 }
 
 // AzureCredentialsProvider represents a credential provider with azure cluster identity.
@@ -53,97 +50,31 @@ type AzureCredentialsProvider struct {
 	Identity *infrav1.AzureClusterIdentity
 }
 
-// AzureClusterCredentialsProvider wraps AzureCredentialsProvider with AzureCluster.
-type AzureClusterCredentialsProvider struct {
-	AzureCredentialsProvider
-	AzureCluster *infrav1.AzureCluster
-}
-
-// ManagedControlPlaneCredentialsProvider wraps AzureCredentialsProvider with AzureManagedControlPlane.
-type ManagedControlPlaneCredentialsProvider struct {
-	AzureCredentialsProvider
-	AzureManagedControlPlane *infrav1.AzureManagedControlPlane
-}
-
-var _ CredentialsProvider = (*AzureClusterCredentialsProvider)(nil)
-var _ CredentialsProvider = (*ManagedControlPlaneCredentialsProvider)(nil)
-
-// NewAzureClusterCredentialsProvider creates a new AzureClusterCredentialsProvider from the supplied inputs.
-func NewAzureClusterCredentialsProvider(ctx context.Context, kubeClient client.Client, azureCluster *infrav1.AzureCluster) (*AzureClusterCredentialsProvider, error) {
-	if azureCluster.Spec.IdentityRef == nil {
+// NewAzureCredentialsProvider creates a new AzureClusterCredentialsProvider from the supplied inputs.
+func NewAzureCredentialsProvider(ctx context.Context, kubeClient client.Client, identityRef *corev1.ObjectReference, defaultNamespace string) (*AzureCredentialsProvider, error) {
+	if identityRef == nil {
 		return nil, errors.New("failed to generate new AzureClusterCredentialsProvider from empty identityName")
 	}
 
-	ref := azureCluster.Spec.IdentityRef
 	// if the namespace isn't specified then assume it's in the same namespace as the AzureCluster
-	namespace := ref.Namespace
+	namespace := identityRef.Namespace
 	if namespace == "" {
-		namespace = azureCluster.Namespace
+		namespace = defaultNamespace
 	}
 	identity := &infrav1.AzureClusterIdentity{}
-	key := client.ObjectKey{Name: ref.Name, Namespace: namespace}
+	key := client.ObjectKey{Name: identityRef.Name, Namespace: namespace}
 	if err := kubeClient.Get(ctx, key, identity); err != nil {
 		return nil, errors.Errorf("failed to retrieve AzureClusterIdentity external object %q/%q: %v", key.Namespace, key.Name, err)
 	}
 
-	return &AzureClusterCredentialsProvider{
-		AzureCredentialsProvider{
-			Client:   kubeClient,
-			Identity: identity,
-		},
-		azureCluster,
+	return &AzureCredentialsProvider{
+		Client:   kubeClient,
+		Identity: identity,
 	}, nil
 }
 
-// GetAuthorizer returns an Azure authorizer based on the provided azure identity. It delegates to AzureCredentialsProvider with AzureCluster metadata.
-func (p *AzureClusterCredentialsProvider) GetAuthorizer(ctx context.Context, tokenCredential azcore.TokenCredential, tokenAudience string) (autorest.Authorizer, error) {
-	return p.AzureCredentialsProvider.GetAuthorizer(ctx, tokenCredential, tokenAudience)
-}
-
 // GetTokenCredential returns an Azure TokenCredential based on the provided azure identity.
-func (p *AzureClusterCredentialsProvider) GetTokenCredential(ctx context.Context, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience string) (azcore.TokenCredential, error) {
-	return p.AzureCredentialsProvider.GetTokenCredential(ctx, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience, p.AzureCluster.ObjectMeta)
-}
-
-// NewManagedControlPlaneCredentialsProvider creates a new ManagedControlPlaneCredentialsProvider from the supplied inputs.
-func NewManagedControlPlaneCredentialsProvider(ctx context.Context, kubeClient client.Client, managedControlPlane *infrav1.AzureManagedControlPlane) (*ManagedControlPlaneCredentialsProvider, error) {
-	if managedControlPlane.Spec.IdentityRef == nil {
-		return nil, errors.New("failed to generate new ManagedControlPlaneCredentialsProvider from empty identityName")
-	}
-
-	ref := managedControlPlane.Spec.IdentityRef
-	// if the namespace isn't specified then assume it's in the same namespace as the AzureManagedControlPlane
-	namespace := ref.Namespace
-	if namespace == "" {
-		namespace = managedControlPlane.Namespace
-	}
-	identity := &infrav1.AzureClusterIdentity{}
-	key := client.ObjectKey{Name: ref.Name, Namespace: namespace}
-	if err := kubeClient.Get(ctx, key, identity); err != nil {
-		return nil, errors.Errorf("failed to retrieve AzureClusterIdentity external object %q/%q: %v", key.Namespace, key.Name, err)
-	}
-
-	return &ManagedControlPlaneCredentialsProvider{
-		AzureCredentialsProvider{
-			Client:   kubeClient,
-			Identity: identity,
-		},
-		managedControlPlane,
-	}, nil
-}
-
-// GetAuthorizer returns an Azure authorizer based on the provided azure identity. It delegates to AzureCredentialsProvider with AzureManagedControlPlane metadata.
-func (p *ManagedControlPlaneCredentialsProvider) GetAuthorizer(ctx context.Context, tokenCredential azcore.TokenCredential, tokenAudience string) (autorest.Authorizer, error) {
-	return p.AzureCredentialsProvider.GetAuthorizer(ctx, tokenCredential, tokenAudience)
-}
-
-// GetTokenCredential returns an Azure TokenCredential based on the provided azure identity.
-func (p *ManagedControlPlaneCredentialsProvider) GetTokenCredential(ctx context.Context, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience string) (azcore.TokenCredential, error) {
-	return p.AzureCredentialsProvider.GetTokenCredential(ctx, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience, p.AzureManagedControlPlane.ObjectMeta)
-}
-
-// GetTokenCredential returns an Azure TokenCredential based on the provided azure identity.
-func (p *AzureCredentialsProvider) GetTokenCredential(ctx context.Context, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience string, clusterMeta metav1.ObjectMeta) (azcore.TokenCredential, error) {
+func (p *AzureCredentialsProvider) GetTokenCredential(ctx context.Context, resourceManagerEndpoint, activeDirectoryEndpoint, tokenAudience string) (azcore.TokenCredential, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "azure.scope.AzureCredentialsProvider.GetTokenCredential")
 	defer done()
 
@@ -212,18 +143,6 @@ func (p *AzureCredentialsProvider) GetTokenCredential(ctx context.Context, resou
 	return cred, nil
 }
 
-// GetAuthorizer returns an Azure authorizer based on the provided azure identity, cluster metadata, and tokenCredential.
-func (p *AzureCredentialsProvider) GetAuthorizer(ctx context.Context, cred azcore.TokenCredential, tokenAudience string) (autorest.Authorizer, error) {
-	// We must use TokenAudience for StackCloud, otherwise we get an
-	// AADSTS500011 error from the API
-	scope := tokenAudience
-	if !strings.HasSuffix(scope, "/.default") {
-		scope += "/.default"
-	}
-	authorizer := azidext.NewTokenCredentialAdapter(cred, []string{scope})
-	return authorizer, nil
-}
-
 // GetClientID returns the Client ID associated with the AzureCredentialsProvider's Identity.
 func (p *AzureCredentialsProvider) GetClientID() string {
 	return p.Identity.Spec.ClientID
@@ -252,6 +171,11 @@ func (p *AzureCredentialsProvider) GetClientSecret(ctx context.Context) (string,
 // GetTenantID returns the Tenant ID associated with the AzureCredentialsProvider's Identity.
 func (p *AzureCredentialsProvider) GetTenantID() string {
 	return p.Identity.Spec.TenantID
+}
+
+// Type returns the auth mechanism used.
+func (p *AzureCredentialsProvider) Type() infrav1.IdentityType {
+	return p.Identity.Spec.Type
 }
 
 // hasClientSecret returns true if the identity has a Service Principal Client Secret.

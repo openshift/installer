@@ -25,28 +25,9 @@ import (
 	"github.com/openshift/rosa/pkg/debug"
 )
 
-// Builder contains the information and logic needed to create a new reporter.
-type Builder struct {
-	// Empty on purpose.
-}
-
 // Object is the reported object used by the tool. It prints the messages to the standard output or
 // error streams.
 type Object struct {
-	errors int
-}
-
-// New creates a builder that can then be used to configure and build a reporter.
-func New() *Builder {
-	return &Builder{}
-}
-
-// Build uses the information contained in the builder to create a new reporter.
-func (b *Builder) Build() (result *Object, err error) {
-	// Create and populate the object:
-	result = &Object{}
-
-	return
 }
 
 // Debugf prints a debug message with the given format and arguments.
@@ -61,9 +42,9 @@ func (r *Object) Debugf(format string, args ...interface{}) {
 func (r *Object) Infof(format string, args ...interface{}) {
 	message := fmt.Sprintf(format, args...)
 	if color.UseColor() {
-		_, _ = fmt.Fprintf(os.Stdout, "%s%s\n", infoPrefix, message)
+		_, _ = fmt.Fprintf(os.Stdout, "%s%s\n", infoColorPrefix, message)
 	} else {
-		_, _ = fmt.Fprintf(os.Stdout, "%s%s\n", "INFO: ", message)
+		_, _ = fmt.Fprintf(os.Stdout, "%s%s\n", infoPrefix, message)
 	}
 }
 
@@ -71,9 +52,9 @@ func (r *Object) Infof(format string, args ...interface{}) {
 func (r *Object) Warnf(format string, args ...interface{}) {
 	message := fmt.Sprintf(format, args...)
 	if color.UseColor() {
-		_, _ = fmt.Fprintf(os.Stderr, "%s%s\n", warnPrefix, message)
+		_, _ = fmt.Fprintf(os.Stderr, "%s%s\n", warnColorPrefix, message)
 	} else {
-		_, _ = fmt.Fprintf(os.Stderr, "%s%s\n", "WARN: ", message)
+		_, _ = fmt.Fprintf(os.Stderr, "%s%s\n", warnPrefix, message)
 	}
 }
 
@@ -83,24 +64,21 @@ func (r *Object) Warnf(format string, args ...interface{}) {
 func (r *Object) Errorf(format string, args ...interface{}) error {
 	message := fmt.Sprintf(format, args...)
 	if color.UseColor() {
-		_, _ = fmt.Fprintf(os.Stderr, "%s%s\n", errorPrefix, message)
+		_, _ = fmt.Fprintf(os.Stderr, "%s%s\n", errorColorPrefix, message)
 	} else {
-		_, _ = fmt.Fprintf(os.Stderr, "%s%s\n", "ERR: ", message)
+		_, _ = fmt.Fprintf(os.Stderr, "%s%s\n", errorPrefix, message)
 	}
-	r.errors++
 	return errors.New(message)
-}
-
-// Errors returns the number of errors that have been reported via this reporter.
-func (r *Object) Errors() int {
-	return r.errors
 }
 
 // Message prefix using ANSI scape sequences to set colors:
 const (
-	infoPrefix  = "\033[0;36mI:\033[m "
-	warnPrefix  = "\033[0;33mW:\033[m "
-	errorPrefix = "\033[0;31mE:\033[m "
+	infoColorPrefix  = "\033[0;36mI:\033[m "
+	infoPrefix       = "INFO: "
+	warnColorPrefix  = "\033[0;33mW:\033[m "
+	warnPrefix       = "WARN: "
+	errorColorPrefix = "\033[0;31mE:\033[m "
+	errorPrefix      = "ERR: "
 )
 
 // Determine whether the reporter output is meant for the terminal
@@ -113,15 +91,7 @@ func (r *Object) IsTerminal() bool {
 	return (stdout.Mode()&os.ModeDevice != 0) && (stdout.Mode()&os.ModeNamedPipe == 0)
 }
 
-// CreateReporterOrExit creates the reportor instance or exits to the console
-// noting the error on failure.
-func CreateReporterOrExit() *Object {
-	// Create the reporter:
-	reporter, err := New().
-		Build()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create reporter: %v\n", err)
-		os.Exit(1)
-	}
-	return reporter
+// CreateReporter returns a new reporter
+func CreateReporter() *Object {
+	return &Object{}
 }

@@ -26,7 +26,7 @@ import (
 	"github.com/openshift/rosa/pkg/helper"
 )
 
-// AddFlag adds the debug flag to the given set of command line flags.
+// AddFlag adds the region flag to the given set of command line flags.
 func AddFlag(flags *pflag.FlagSet) {
 	flags.StringVar(
 		&region,

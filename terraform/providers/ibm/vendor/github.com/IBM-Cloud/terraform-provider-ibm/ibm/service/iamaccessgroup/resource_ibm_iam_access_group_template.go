@@ -238,7 +238,7 @@ func ResourceIBMIAMAccessGroupTemplate() *schema.Resource {
 				},
 			},
 			"policy_template_references": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "References to policy templates assigned to the access group template.",
@@ -367,7 +367,7 @@ func resourceIBMIAMAccessGroupTemplateCreate(context context.Context, d *schema.
 	}
 	if _, ok := d.GetOk("policy_template_references"); ok {
 		var policyTemplateReferences []iamaccessgroupsv2.PolicyTemplates
-		for _, v := range d.Get("policy_template_references").([]interface{}) {
+		for _, v := range d.Get("policy_template_references").(*schema.Set).List() {
 			value := v.(map[string]interface{})
 			policyTemplateReferencesItem, err := resourceIBMIAMAccessGroupTemplateMapToPolicyTemplates(value)
 			if err != nil {
@@ -388,6 +388,17 @@ func resourceIBMIAMAccessGroupTemplateCreate(context context.Context, d *schema.
 	}
 	version, _ := strconv.Atoi(*templateResponse.Version)
 
+	if d.Get("committed").(bool) {
+		commitTemplateOptions := &iamaccessgroupsv2.CommitTemplateOptions{}
+		commitTemplateOptions.SetTemplateID(*templateResponse.ID)
+		commitTemplateOptions.SetVersionNum(*templateResponse.Version)
+		commitTemplateOptions.SetIfMatch(response.Headers.Get("ETag"))
+		response, err = iamAccessGroupsClient.CommitTemplateWithContext(context, commitTemplateOptions)
+		if err != nil {
+			log.Printf("[DEBUG] CommitTemplateWithContext failed %s\n%s", err, response)
+			return diag.FromErr(fmt.Errorf("CommitTemplateWithContext failed %s\n%s", err, response))
+		}
+	}
 	d.SetId(fmt.Sprintf("%s/%d", *templateResponse.ID, version))
 
 	return resourceIBMIAMAccessGroupTemplateVersionRead(context, d, meta)

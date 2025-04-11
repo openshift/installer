@@ -7,10 +7,15 @@ stderr 'The rendezvous host IP \(node0 IP\) is 192.168.111.20'
 exists $WORK/agent.x86_64.iso
 exists $WORK/auth/kubeconfig
 exists $WORK/auth/kubeadmin-password
+isocmp agent.x86_64.iso /etc/systemd/system.conf.d/10-default-env.conf expected/10-default-env.conf
 
 -- install-config.yaml --
 apiVersion: v1
 baseDomain: test.metalkube.org
+proxy:
+  httpProxy: http://192.168.111.1:8215
+  httpsProxy: http://192.168.111.1:8215
+  noProxy: 172.22.0.0/24,virthost.ostest.test.metalkube.org
 controlPlane: 
   name: master
   replicas: 3
@@ -44,3 +49,9 @@ metadata:
   name: ostest
   namespace: cluster0
 rendezvousIP: 192.168.111.20
+
+-- expected/10-default-env.conf --
+[Manager]
+DefaultEnvironment=HTTP_PROXY="http://192.168.111.1:8215"
+DefaultEnvironment=HTTPS_PROXY="http://192.168.111.1:8215"
+DefaultEnvironment=NO_PROXY="172.22.0.0/24,virthost.ostest.test.metalkube.org,192.168.111.0/24"

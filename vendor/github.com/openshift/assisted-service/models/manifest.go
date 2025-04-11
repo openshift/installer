@@ -26,6 +26,10 @@ type Manifest struct {
 	// The folder that contains the files. Manifests can be placed in 'manifests' or 'openshift' directories.
 	// Enum: [manifests openshift]
 	Folder string `json:"folder,omitempty"`
+
+	// Describes whether manifest is sourced from a user or created by the system.
+	// Enum: [user system]
+	ManifestSource string `json:"manifest_source,omitempty"`
 }
 
 // Validate validates this manifest
@@ -33,6 +37,10 @@ func (m *Manifest) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateFolder(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateManifestSource(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -78,6 +86,48 @@ func (m *Manifest) validateFolder(formats strfmt.Registry) error {
 
 	// value enum
 	if err := m.validateFolderEnum("folder", "body", m.Folder); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var manifestTypeManifestSourcePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["user","system"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		manifestTypeManifestSourcePropEnum = append(manifestTypeManifestSourcePropEnum, v)
+	}
+}
+
+const (
+
+	// ManifestManifestSourceUser captures enum value "user"
+	ManifestManifestSourceUser string = "user"
+
+	// ManifestManifestSourceSystem captures enum value "system"
+	ManifestManifestSourceSystem string = "system"
+)
+
+// prop value enum
+func (m *Manifest) validateManifestSourceEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, manifestTypeManifestSourcePropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Manifest) validateManifestSource(formats strfmt.Registry) error {
+	if swag.IsZero(m.ManifestSource) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateManifestSourceEnum("manifest_source", "body", m.ManifestSource); err != nil {
 		return err
 	}
 

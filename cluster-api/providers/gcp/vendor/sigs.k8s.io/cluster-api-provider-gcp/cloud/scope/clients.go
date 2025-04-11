@@ -89,10 +89,14 @@ func defaultClientOptions(ctx context.Context, credentialsRef *infrav1.ObjectRef
 	return opts, nil
 }
 
-func newComputeService(ctx context.Context, credentialsRef *infrav1.ObjectReference, crClient client.Client) (*compute.Service, error) {
+func newComputeService(ctx context.Context, credentialsRef *infrav1.ObjectReference, crClient client.Client, endpoints *infrav1.ServiceEndpoints) (*compute.Service, error) {
 	opts, err := defaultClientOptions(ctx, credentialsRef, crClient)
 	if err != nil {
 		return nil, fmt.Errorf("getting default gcp client options: %w", err)
+	}
+
+	if endpoints != nil && endpoints.ComputeServiceEndpoint != "" {
+		opts = append(opts, option.WithEndpoint(endpoints.ComputeServiceEndpoint))
 	}
 
 	computeSvc, err := compute.NewService(ctx, opts...)
@@ -103,10 +107,14 @@ func newComputeService(ctx context.Context, credentialsRef *infrav1.ObjectRefere
 	return computeSvc, nil
 }
 
-func newClusterManagerClient(ctx context.Context, credentialsRef *infrav1.ObjectReference, crClient client.Client) (*container.ClusterManagerClient, error) {
+func newClusterManagerClient(ctx context.Context, credentialsRef *infrav1.ObjectReference, crClient client.Client, endpoints *infrav1.ServiceEndpoints) (*container.ClusterManagerClient, error) {
 	opts, err := defaultClientOptions(ctx, credentialsRef, crClient)
 	if err != nil {
 		return nil, fmt.Errorf("getting default gcp client options: %w", err)
+	}
+
+	if endpoints != nil && endpoints.ContainerServiceEndpoint != "" {
+		opts = append(opts, option.WithEndpoint(endpoints.ContainerServiceEndpoint))
 	}
 
 	managedClusterClient, err := container.NewClusterManagerClient(ctx, opts...)
@@ -117,10 +125,14 @@ func newClusterManagerClient(ctx context.Context, credentialsRef *infrav1.Object
 	return managedClusterClient, nil
 }
 
-func newIamCredentialsClient(ctx context.Context, credentialsRef *infrav1.ObjectReference, crClient client.Client) (*credentials.IamCredentialsClient, error) {
+func newIamCredentialsClient(ctx context.Context, credentialsRef *infrav1.ObjectReference, crClient client.Client, endpoints *infrav1.ServiceEndpoints) (*credentials.IamCredentialsClient, error) {
 	opts, err := defaultClientOptions(ctx, credentialsRef, crClient)
 	if err != nil {
 		return nil, fmt.Errorf("getting default gcp client options: %w", err)
+	}
+
+	if endpoints != nil && endpoints.IAMServiceEndpoint != "" {
+		opts = append(opts, option.WithEndpoint(endpoints.IAMServiceEndpoint))
 	}
 
 	credentialsClient, err := credentials.NewIamCredentialsClient(ctx, opts...)
@@ -131,10 +143,14 @@ func newIamCredentialsClient(ctx context.Context, credentialsRef *infrav1.Object
 	return credentialsClient, nil
 }
 
-func newInstanceGroupManagerClient(ctx context.Context, credentialsRef *infrav1.ObjectReference, crClient client.Client) (*computerest.InstanceGroupManagersClient, error) {
+func newInstanceGroupManagerClient(ctx context.Context, credentialsRef *infrav1.ObjectReference, crClient client.Client, endpoints *infrav1.ServiceEndpoints) (*computerest.InstanceGroupManagersClient, error) {
 	opts, err := defaultClientOptions(ctx, credentialsRef, crClient)
 	if err != nil {
 		return nil, fmt.Errorf("getting default gcp client options: %w", err)
+	}
+
+	if endpoints != nil && endpoints.ComputeServiceEndpoint != "" {
+		opts = append(opts, option.WithEndpoint(endpoints.ComputeServiceEndpoint))
 	}
 
 	instanceGroupManagersClient, err := computerest.NewInstanceGroupManagersRESTClient(ctx, opts...)
@@ -145,10 +161,16 @@ func newInstanceGroupManagerClient(ctx context.Context, credentialsRef *infrav1.
 	return instanceGroupManagersClient, nil
 }
 
-func newTagBindingsClient(ctx context.Context, credentialsRef *infrav1.ObjectReference, crClient client.Client, location string) (*resourcemanager.TagBindingsClient, error) {
+func newTagBindingsClient(ctx context.Context, credentialsRef *infrav1.ObjectReference, crClient client.Client, location string, endpoints *infrav1.ServiceEndpoints) (*resourcemanager.TagBindingsClient, error) {
 	opts, err := defaultClientOptions(ctx, credentialsRef, crClient)
-	endpoint := fmt.Sprintf("%s-cloudresourcemanager.googleapis.com:443", location)
-	opts = append(opts, option.WithEndpoint(endpoint))
+
+	if endpoints != nil && endpoints.ResourceManagerServiceEndpoint != "" {
+		opts = append(opts, option.WithEndpoint(endpoints.ResourceManagerServiceEndpoint))
+	} else {
+		endpoint := location + "-cloudresourcemanager.googleapis.com:443"
+		opts = append(opts, option.WithEndpoint(endpoint))
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("getting default gcp client options: %w", err)
 	}

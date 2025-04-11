@@ -37,11 +37,11 @@ import (
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // AzureManagedMachinePoolReconciler reconciles an AzureManagedMachinePool object.
@@ -89,7 +89,12 @@ func (ammpr *AzureManagedMachinePoolReconciler) SetupWithManager(ctx context.Con
 		return errors.Wrap(err, "failed to create AzureManagedControlPlane to AzureManagedMachinePools mapper")
 	}
 
-	c, err := ctrl.NewControllerManagedBy(mgr).
+	azureManagedMachinePoolMapper, err := util.ClusterToTypedObjectsMapper(ammpr.Client, &infrav1.AzureManagedMachinePoolList{}, mgr.GetScheme())
+	if err != nil {
+		return errors.Wrap(err, "failed to create mapper for Cluster to AzureManagedMachinePools")
+	}
+
+	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options.Options).
 		For(azManagedMachinePool).
 		WithEventFilter(predicates.ResourceHasFilterLabel(log, ammpr.WatchFilterValue)).
@@ -103,27 +108,16 @@ func (ammpr *AzureManagedMachinePoolReconciler) SetupWithManager(ctx context.Con
 			&infrav1.AzureManagedControlPlane{},
 			handler.EnqueueRequestsFromMapFunc(azureManagedControlPlaneMapper),
 		).
-		Build(r)
-	if err != nil {
-		return errors.Wrap(err, "error creating controller")
-	}
-
-	azureManagedMachinePoolMapper, err := util.ClusterToTypedObjectsMapper(ammpr.Client, &infrav1.AzureManagedMachinePoolList{}, mgr.GetScheme())
-	if err != nil {
-		return errors.Wrap(err, "failed to create mapper for Cluster to AzureManagedMachinePools")
-	}
-
-	// Add a watch on clusterv1.Cluster object for pause/unpause & ready notifications.
-	if err = c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(azureManagedMachinePoolMapper),
-		ClusterPauseChangeAndInfrastructureReady(log),
-		predicates.ResourceHasFilterLabel(log, ammpr.WatchFilterValue),
-	); err != nil {
-		return errors.Wrap(err, "failed adding a watch for ready clusters")
-	}
-
-	return nil
+		// Add a watch on clusterv1.Cluster object for pause/unpause & ready notifications.
+		Watches(
+			&clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(azureManagedMachinePoolMapper),
+			builder.WithPredicates(
+				ClusterPauseChangeAndInfrastructureReady(log),
+				predicates.ResourceHasFilterLabel(log, ammpr.WatchFilterValue),
+			),
+		).
+		Complete(r)
 }
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=azuremanagedmachinepools,verbs=get;list;watch;create;update;patch;delete

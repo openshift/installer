@@ -4,12 +4,13 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"regexp"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,7 +19,7 @@ import (
 // then the name of the service is "release-image".
 // In case the log-bundle is from bootstrap-in-place installation the file name is:
 // "log-bundle-20210329190553/log-bundle-bootstrap/bootstrap/services/release-image.json"
-var serviceEntriesFilePathRegex = regexp.MustCompile(`^[^\/]+(?:\/log-bundle-bootstrap)?\/bootstrap\/services\/([^.]+)\.json$`)
+var serviceEntriesFilePathRegex = regexp.MustCompile(`\/bootstrap\/services\/([^.]+)\.json$`)
 
 // AnalyzeGatherBundle will analyze the bootstrap gather bundle at the specified path.
 // Analysis will be logged.
@@ -27,7 +28,7 @@ func AnalyzeGatherBundle(bundlePath string) error {
 	// open the bundle file for reading
 	bundleFile, err := os.Open(bundlePath)
 	if err != nil {
-		return errors.Wrap(err, "could not open the gather bundle")
+		return fmt.Errorf("could not open the gather bundle: %w", err)
 	}
 	defer bundleFile.Close()
 	return analyzeGatherBundle(bundleFile)
@@ -37,20 +38,21 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 	// decompress the bundle
 	uncompressedStream, err := gzip.NewReader(bundleFile)
 	if err != nil {
-		return errors.Wrap(err, "could not decompress the gather bundle")
+		return fmt.Errorf("could not decompress the gather bundle: %w", err)
 	}
 	defer uncompressedStream.Close()
 
 	// read through the tar for relevant files
 	tarReader := tar.NewReader(uncompressedStream)
 	serviceAnalyses := make(map[string]analysis)
+	servicesFound := make([]string, 0)
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			return errors.Wrap(err, "encountered an error reading from the gather bundle")
+			return fmt.Errorf("encountered an error reading from the gather bundle: %w", err)
 		}
 		if header.Typeflag != tar.TypeReg {
 			continue
@@ -61,6 +63,7 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 			continue
 		}
 		serviceName := serviceEntriesFileSubmatch[1]
+		servicesFound = append(servicesFound, serviceName)
 
 		serviceAnalysis, err := analyzeService(tarReader)
 		if err != nil {
@@ -69,6 +72,11 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 		}
 
 		serviceAnalyses[serviceName] = serviceAnalysis
+	}
+
+	if len(servicesFound) == 0 {
+		logrus.Error("Invalid log bundle or the bootstrap machine could not be reached and bootstrap logs were not collected")
+		return nil
 	}
 
 	analysisChecks := []struct {
@@ -138,7 +146,7 @@ func analyzeService(r io.Reader) (analysis, error) {
 	decoder := json.NewDecoder(r)
 	t, err := decoder.Token()
 	if err != nil {
-		return a, errors.Wrap(err, "service entries file does not begin with a token")
+		return a, fmt.Errorf("service entries file does not begin with a token: %w", err)
 	}
 	delim, isDelim := t.(json.Delim)
 	if !isDelim {
@@ -151,7 +159,7 @@ func analyzeService(r io.Reader) (analysis, error) {
 	for decoder.More() {
 		entry := &Entry{}
 		if err := decoder.Decode(entry); err != nil {
-			return a, errors.Wrap(err, "could not decode an entry in the service entries file")
+			return a, fmt.Errorf("could not decode an entry in the service entries file: %w", err)
 		}
 
 		// record a new start of the service

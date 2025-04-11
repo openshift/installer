@@ -1,6 +1,7 @@
 package password
 
 import (
+	"context"
 	"crypto/rand"
 	"math/big"
 	"os"
@@ -31,7 +32,7 @@ func (a *KubeadminPassword) Dependencies() []asset.Asset {
 }
 
 // Generate the kubeadmin password
-func (a *KubeadminPassword) Generate(asset.Parents) error {
+func (a *KubeadminPassword) Generate(context.Context, asset.Parents) error {
 	err := a.generateRandomPasswordHash(23)
 	if err != nil {
 		return err

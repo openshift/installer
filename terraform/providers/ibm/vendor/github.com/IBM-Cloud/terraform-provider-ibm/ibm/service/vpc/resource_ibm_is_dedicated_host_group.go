@@ -366,7 +366,7 @@ func resourceIbmIsDedicatedHostGroupDedicatedHostReferenceToMap(dedicatedHostRef
 	return dedicatedHostReferenceMap
 }
 
-func resourceIbmIsDedicatedHostGroupDedicatedHostReferenceDeletedToMap(dedicatedHostReferenceDeleted vpcv1.DedicatedHostReferenceDeleted) map[string]interface{} {
+func resourceIbmIsDedicatedHostGroupDedicatedHostReferenceDeletedToMap(dedicatedHostReferenceDeleted vpcv1.Deleted) map[string]interface{} {
 	dedicatedHostReferenceDeletedMap := map[string]interface{}{}
 
 	dedicatedHostReferenceDeletedMap["more_info"] = dedicatedHostReferenceDeleted.MoreInfo

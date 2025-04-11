@@ -142,23 +142,67 @@ func getSGControlPlaneHTTPS() []resolvedSecurityGroupRuleSpec {
 }
 
 // Allow all traffic, including from outside the cluster, to access node port services.
-func getSGWorkerNodePort() []resolvedSecurityGroupRuleSpec {
+func getSGWorkerNodePort(secWorkerGroupID string, secControlPlaneGroupID string) []resolvedSecurityGroupRuleSpec {
 	return []resolvedSecurityGroupRuleSpec{
 		{
-			Description:  "Node Port Services",
-			Direction:    "ingress",
-			EtherType:    "IPv4",
-			PortRangeMin: 30000,
-			PortRangeMax: 32767,
-			Protocol:     "tcp",
+			Description:   "Node Port Services",
+			Direction:     "ingress",
+			EtherType:     "IPv4",
+			PortRangeMin:  30000,
+			PortRangeMax:  32767,
+			Protocol:      "tcp",
+			RemoteGroupID: secWorkerGroupID,
 		},
 		{
-			Description:  "Node Port Services",
-			Direction:    "ingress",
-			EtherType:    "IPv4",
-			PortRangeMin: 30000,
-			PortRangeMax: 32767,
-			Protocol:     "udp",
+			Description:   "Node Port Services",
+			Direction:     "ingress",
+			EtherType:     "IPv4",
+			PortRangeMin:  30000,
+			PortRangeMax:  32767,
+			Protocol:      "udp",
+			RemoteGroupID: secWorkerGroupID,
+		},
+		{
+			Description:   "Node Port Services",
+			Direction:     "ingress",
+			EtherType:     "IPv4",
+			PortRangeMin:  30000,
+			PortRangeMax:  32767,
+			Protocol:      "tcp",
+			RemoteGroupID: secControlPlaneGroupID,
+		},
+		{
+			Description:   "Node Port Services",
+			Direction:     "ingress",
+			EtherType:     "IPv4",
+			PortRangeMin:  30000,
+			PortRangeMax:  32767,
+			Protocol:      "udp",
+			RemoteGroupID: secControlPlaneGroupID,
+		},
+	}
+}
+
+// Allow all traffic from a specific CIDR to access node port services.
+func getSGWorkerNodePortCIDR(cidr string) []resolvedSecurityGroupRuleSpec {
+	return []resolvedSecurityGroupRuleSpec{
+		{
+			Description:    "Node Port Services",
+			Direction:      "ingress",
+			EtherType:      "IPv4",
+			PortRangeMin:   30000,
+			PortRangeMax:   32767,
+			Protocol:       "tcp",
+			RemoteIPPrefix: cidr,
+		},
+		{
+			Description:    "Node Port Services",
+			Direction:      "ingress",
+			EtherType:      "IPv4",
+			PortRangeMin:   30000,
+			PortRangeMax:   32767,
+			Protocol:       "udp",
+			RemoteIPPrefix: cidr,
 		},
 	}
 }

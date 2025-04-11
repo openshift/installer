@@ -49,7 +49,7 @@ func (s *SubnetSpec) ResourceRef() *asonetworkv1.VirtualNetworksSubnet {
 		ObjectMeta: metav1.ObjectMeta{
 			// s.Name isn't unique per-cluster, so combine with vnet name to avoid collisions.
 			// ToLower makes the name compatible with standard Kubernetes name requirements.
-			Name: s.VNetName + "-" + strings.ToLower(s.Name),
+			Name: azure.GetNormalizedKubernetesName(s.VNetName + "-" + strings.ToLower(s.Name)),
 		},
 	}
 }
@@ -64,7 +64,7 @@ func (s *SubnetSpec) Parameters(ctx context.Context, existing *asonetworkv1.Virt
 	subnet.Spec = asonetworkv1.VirtualNetworks_Subnet_Spec{
 		AzureName: s.Name,
 		Owner: &genruntime.KnownResourceReference{
-			Name: s.VNetName,
+			Name: azure.GetNormalizedKubernetesName(s.VNetName),
 		},
 		AddressPrefixes: s.CIDRs,
 	}
@@ -97,8 +97,6 @@ func (s *SubnetSpec) Parameters(ctx context.Context, existing *asonetworkv1.Virt
 		}
 	}
 
-	//nolint:prealloc // pre-allocating this slice isn't going to make any meaningful performance difference
-	// and makes it harder to keep this value nil when s.ServiceEndpoints is empty as is necessary.
 	var serviceEndpoints []asonetworkv1.ServiceEndpointPropertiesFormat
 	for _, se := range s.ServiceEndpoints {
 		serviceEndpoints = append(serviceEndpoints, asonetworkv1.ServiceEndpointPropertiesFormat{Service: ptr.To(se.Service), Locations: se.Locations})

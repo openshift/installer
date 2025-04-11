@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2021.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,9 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/IBM-Cloud/container-services-go-sdk/common"
 	"github.com/IBM/go-sdk-core/v5/core"
+
+	"github.com/IBM-Cloud/container-services-go-sdk/common"
 )
 
 // KubernetesServiceApiV1 : With IBM Cloud Kubernetes Service, you can deploy highly available apps in containers that
@@ -9766,6 +9767,9 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateSatelliteClusterWithCo
 	if createSatelliteClusterOptions.InfrastructureTopology != nil {
 		body["infrastructureTopology"] = createSatelliteClusterOptions.InfrastructureTopology
 	}
+	if createSatelliteClusterOptions.CalicoIPAutodetectionMethods != nil {
+		body["calicoIPAutodetection"] = createSatelliteClusterOptions.CalicoIPAutodetectionMethods
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
@@ -10405,6 +10409,12 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateSatelliteLocationWithC
 	if createSatelliteLocationOptions.Description != nil {
 		body["description"] = createSatelliteLocationOptions.Description
 	}
+	if createSatelliteLocationOptions.PhysicalAddress != nil {
+		body["physicalAddress"] = createSatelliteLocationOptions.PhysicalAddress
+	}
+	if createSatelliteLocationOptions.CapabilitiesManagedBySatellite != nil {
+		body["capabilitiesManagedBySatellite"] = createSatelliteLocationOptions.CapabilitiesManagedBySatellite
+	}
 	if createSatelliteLocationOptions.Iaas != nil {
 		body["iaas"] = createSatelliteLocationOptions.Iaas
 	}
@@ -10419,6 +10429,12 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateSatelliteLocationWithC
 	}
 	if createSatelliteLocationOptions.Zones != nil {
 		body["zones"] = createSatelliteLocationOptions.Zones
+	}
+	if createSatelliteLocationOptions.PodSubnet != nil {
+		body["multishiftPodSubnet"] = createSatelliteLocationOptions.PodSubnet
+	}
+	if createSatelliteLocationOptions.ServiceSubnet != nil {
+		body["multishiftServiceSubnet"] = createSatelliteLocationOptions.ServiceSubnet
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -11213,6 +11229,9 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateAssignmentWithContext(
 	if createAssignmentOptions.Name != nil {
 		body["name"] = createAssignmentOptions.Name
 	}
+	if createAssignmentOptions.Controller != nil {
+		body["controller"] = createAssignmentOptions.Controller
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
@@ -11996,6 +12015,7 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) RemoveAssignmentWithContext(
 	builder.AddHeader("Accept", "application/json")
 
 	builder.AddQuery("uuid", fmt.Sprint(*removeAssignmentOptions.UUID))
+	builder.AddQuery("controller", fmt.Sprint(*removeAssignmentOptions.Controller))
 
 	request, err := builder.Build()
 	if err != nil {
@@ -12053,6 +12073,10 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) RemoveStorageConfigurationWi
 	builder.AddHeader("Accept", "application/json")
 
 	builder.AddQuery("uuid", fmt.Sprint(*removeStorageConfigurationOptions.UUID))
+	builder.AddQuery("controller", fmt.Sprint(*removeStorageConfigurationOptions.Controller))
+	if removeStorageConfigurationOptions.RemoveAssignments != nil {
+		builder.AddQuery("removeAssignments", fmt.Sprint(*removeStorageConfigurationOptions.RemoveAssignments))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -14941,12 +14965,12 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) VpcCreateWorkerPoolZoneWithC
 
 // VpcGetCluster : Get details of a VPC cluster
 // Get details of a VPC cluster.
-func (kubernetesServiceApi *KubernetesServiceApiV1) VpcGetCluster(vpcGetClusterOptions *VpcGetClusterOptions) (result []GetClusterResponse, response *core.DetailedResponse, err error) {
+func (kubernetesServiceApi *KubernetesServiceApiV1) VpcGetCluster(vpcGetClusterOptions *VpcGetClusterOptions) (result *GetClusterResponse, response *core.DetailedResponse, err error) {
 	return kubernetesServiceApi.VpcGetClusterWithContext(context.Background(), vpcGetClusterOptions)
 }
 
 // VpcGetClusterWithContext is an alternate form of the VpcGetCluster method which supports a Context parameter
-func (kubernetesServiceApi *KubernetesServiceApiV1) VpcGetClusterWithContext(ctx context.Context, vpcGetClusterOptions *VpcGetClusterOptions) (result []GetClusterResponse, response *core.DetailedResponse, err error) {
+func (kubernetesServiceApi *KubernetesServiceApiV1) VpcGetClusterWithContext(ctx context.Context, vpcGetClusterOptions *VpcGetClusterOptions) (result *GetClusterResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(vpcGetClusterOptions, "vpcGetClusterOptions cannot be nil")
 	if err != nil {
 		return
@@ -14987,11 +15011,12 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) VpcGetClusterWithContext(ctx
 		return
 	}
 
-	var rawResponse []json.RawMessage
+	var rawResponse map[string]json.RawMessage
 	response, err = kubernetesServiceApi.Service.Request(request, &rawResponse)
 	if err != nil {
 		return
 	}
+
 	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGetClusterResponse)
 	if err != nil {
 		return
@@ -17318,6 +17343,15 @@ func UnmarshalBoundService(m map[string]json.RawMessage, result interface{}) (er
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
+
+// CapabilityManagedBySatellite is a custom type for satellite capabilities
+type CapabilityManagedBySatellite string
+
+// Supported satellite capabilities
+const (
+	//OnPrem indicates that the location is on the premises of the customer
+	OnPrem CapabilityManagedBySatellite = "on-prem"
+)
 
 // COSAuthorization : COSAuthorization Optional: IBM Cloud Object Storage authorization keys.
 type COSAuthorization struct {
@@ -20237,6 +20271,9 @@ type CreateSatelliteClusterOptions struct {
 
 	// User provided value for single node option.
 	InfrastructureTopology *string
+
+	// Set IP autodetection to use correct interface for Calico
+	CalicoIPAutodetectionMethods map[string]string
 }
 
 // NewCreateSatelliteClusterOptions : Instantiate CreateSatelliteClusterOptions
@@ -20331,6 +20368,12 @@ func (options *CreateSatelliteClusterOptions) SetXAuthResourceGroup(xAuthResourc
 // SetHeaders : Allow user to set Headers
 func (options *CreateSatelliteClusterOptions) SetHeaders(param map[string]string) *CreateSatelliteClusterOptions {
 	options.Headers = param
+	return options
+}
+
+// SetCalicoIPAutodetectionMethods : Set IP autodetection to use correct interface for Calico
+func (options *CreateSatelliteClusterOptions) SetCalicoIPAutodetectionMethods(calicoIPAutodetectionMethods map[string]string) *CreateSatelliteClusterOptions {
+	options.CalicoIPAutodetectionMethods = calicoIPAutodetectionMethods
 	return options
 }
 
@@ -20497,6 +20540,12 @@ type CreateSatelliteLocationOptions struct {
 	// A description of the new Satellite location.
 	Description *string
 
+	// An optional physical address of the new Satellite location which is deployed on premise
+	PhysicalAddress *string
+
+	//Satellite capabilities attached to the satellite location
+	CapabilitiesManagedBySatellite []CapabilityManagedBySatellite
+
 	Iaas *IAAS
 
 	// The IBM Cloud metro from which the Satellite location is managed.
@@ -20518,6 +20567,12 @@ type CreateSatelliteLocationOptions struct {
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
+
+	// Optional: User provided value for service subnet CIDR to provide private IP addresses for pods.
+	PodSubnet *string
+
+	// Optional: User provided value for the pod subnet CIDR to provide private IP addresses for services.
+	ServiceSubnet *string
 }
 
 // NewCreateSatelliteLocationOptions : Instantiate CreateSatelliteLocationOptions
@@ -20546,6 +20601,18 @@ func (options *CreateSatelliteLocationOptions) SetCosCredentials(cosCredentials 
 // SetDescription : Allow user to set Description
 func (options *CreateSatelliteLocationOptions) SetDescription(description string) *CreateSatelliteLocationOptions {
 	options.Description = core.StringPtr(description)
+	return options
+}
+
+// SetPhysicalAddress : Allow user to set PhysicalAddress
+func (options *CreateSatelliteLocationOptions) SetPhysicalAddress(physicalAddress string) *CreateSatelliteLocationOptions {
+	options.PhysicalAddress = core.StringPtr(physicalAddress)
+	return options
+}
+
+// SetCapabilitiesManagedBySatellite : Allow user to set CapabilitiesManagedBySatellite
+func (options *CreateSatelliteLocationOptions) SetCapabilities(capabilitiesManagedBySatellite []CapabilityManagedBySatellite) *CreateSatelliteLocationOptions {
+	options.CapabilitiesManagedBySatellite = capabilitiesManagedBySatellite
 	return options
 }
 
@@ -20588,6 +20655,18 @@ func (options *CreateSatelliteLocationOptions) SetXAuthResourceGroup(xAuthResour
 // SetHeaders : Allow user to set Headers
 func (options *CreateSatelliteLocationOptions) SetHeaders(param map[string]string) *CreateSatelliteLocationOptions {
 	options.Headers = param
+	return options
+}
+
+// SetPodSubnet : Allow user to set PodSubnet
+func (options *CreateSatelliteLocationOptions) SetPodSubnet(podSubnet string) *CreateSatelliteLocationOptions {
+	options.PodSubnet = core.StringPtr(podSubnet)
+	return options
+}
+
+// SetServiceSubnet : Allow user to set ServiceSubnet
+func (options *CreateSatelliteLocationOptions) SetServiceSubnet(serviceSubnet string) *CreateSatelliteLocationOptions {
+	options.ServiceSubnet = core.StringPtr(serviceSubnet)
 	return options
 }
 
@@ -28237,6 +28316,9 @@ type MultishiftController struct {
 	// Deployments reports status of deployments on the IBM Cloud Satellite location.
 	Deployments *Deployments `json:"deployments,omitempty"`
 
+	//CapabilitiesManagedBySatellite attached to the satellite location
+	CapabilitiesManagedBySatellite []CapabilityManagedBySatellite
+
 	// Hosts lists the hosts belonging to the IBM Cloud Satellite location.
 	Hosts *Hosts `json:"hosts,omitempty"`
 
@@ -28279,6 +28361,10 @@ func UnmarshalMultishiftController(m map[string]json.RawMessage, result interfac
 		return
 	}
 	err = core.UnmarshalModel(m, "deployments", &obj.Deployments, UnmarshalDeployments)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "capabilitiesManagedBySatellite", &obj.CapabilitiesManagedBySatellite)
 	if err != nil {
 		return
 	}
@@ -28410,6 +28496,12 @@ type MultishiftGetController struct {
 
 	Description *string `json:"description,omitempty"`
 
+	// An optional physical address of the new Satellite location which is deployed on premise
+	PhysicalAddress *string `json:"physicalAddress,omitempty"`
+
+	//Satellite capabilities attached to the satellite location
+	CapabilitiesManagedBySatellite []CapabilityManagedBySatellite
+
 	DisableAutoUpdate *bool `json:"disableAutoUpdate,omitempty"`
 
 	Entitlement *string `json:"entitlement,omitempty"`
@@ -28510,7 +28602,15 @@ func UnmarshalMultishiftGetController(m map[string]json.RawMessage, result inter
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "capabilitiesManagedBySatellite", &obj.CapabilitiesManagedBySatellite)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "physicalAddress", &obj.PhysicalAddress)
 	if err != nil {
 		return
 	}
@@ -29847,7 +29947,10 @@ func UnmarshalRemoteResourcesSearchableData(m map[string]json.RawMessage, result
 type RemoveAssignmentOptions struct {
 	// The UUID of the assignment. To list the assignments that you have access to, run `ibmcloud sat storage assignment
 	// ls`.
-	UUID *string `validate:"required"`
+	UUID *string `json:"uuid,omitempty"`
+
+	// The name or ID of the Satellite location. To list the Satellite locations that you have access to, run `ibmcloud sat location ls`
+	Controller *string `json:"controller,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -29863,6 +29966,12 @@ func (*KubernetesServiceApiV1) NewRemoveAssignmentOptions(uuid string) *RemoveAs
 // SetUUID : Allow user to set UUID
 func (options *RemoveAssignmentOptions) SetUUID(uuid string) *RemoveAssignmentOptions {
 	options.UUID = core.StringPtr(uuid)
+	return options
+}
+
+// SetController : Allow user to set the Controller
+func (options *RemoveAssignmentOptions) SetController(controller string) *RemoveAssignmentOptions {
+	options.Controller = core.StringPtr(controller)
 	return options
 }
 
@@ -30328,7 +30437,13 @@ type RemoveStorageConfigurationOptions struct {
 	// The UUID of the storage configuration. To list the storage configurations that you have access to, run `ibmcloud sat
 	// storage config ls`. To view the storage assignments associated with a given storage configuration and the storage
 	// configuration UUID, run `ibmcloud sat config get --config=<storage-configuration-name>`.
-	UUID *string `validate:"required"`
+	UUID *string `json:"uuid,omitempty"`
+
+	// The name or ID of the Satellite location. To list the Satellite locations that you have access to, run `ibmcloud sat location ls`
+	Controller *string `json:"controller,omitempty"`
+
+	// Specify true to remove the storage configuration along with the associated assignments. If unspecified, the default value is false.
+	RemoveAssignments *bool `json:"removeAssignments,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -30344,6 +30459,18 @@ func (*KubernetesServiceApiV1) NewRemoveStorageConfigurationOptions(uuid string)
 // SetUUID : Allow user to set UUID
 func (options *RemoveStorageConfigurationOptions) SetUUID(uuid string) *RemoveStorageConfigurationOptions {
 	options.UUID = core.StringPtr(uuid)
+	return options
+}
+
+// SetController : Allow user to set the Controller/Location
+func (options *RemoveStorageConfigurationOptions) SetController(controller string) *RemoveStorageConfigurationOptions {
+	options.Controller = core.StringPtr(controller)
+	return options
+}
+
+// SetRemoveAssignments : Specify true to remove the storage configuration along with the associated assignments.
+func (options *RemoveStorageConfigurationOptions) SetRemoveAssignments(removeAssignments bool) *RemoveStorageConfigurationOptions {
+	options.RemoveAssignments = core.BoolPtr(removeAssignments)
 	return options
 }
 

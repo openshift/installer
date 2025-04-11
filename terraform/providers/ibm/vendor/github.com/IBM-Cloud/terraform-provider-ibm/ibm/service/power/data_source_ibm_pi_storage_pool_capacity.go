@@ -6,58 +6,53 @@ package power
 import (
 	"context"
 	"fmt"
-
 	"log"
 
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
-
-	"github.com/IBM-Cloud/power-go-client/helpers"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-)
-
-const (
-	PIPoolName = "pi_storage_pool"
 )
 
 func DataSourceIBMPIStoragePoolCapacity() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIStoragePoolCapacityRead,
 		Schema: map[string]*schema.Schema{
-			helpers.PICloudInstanceId: {
-				Type:         schema.TypeString,
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
-			PIPoolName: {
-				Type:         schema.TypeString,
+			Arg_StoragePool: {
+				Description:  "The storage pool name.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
-				Description:  "Storage pool name",
 			},
-			// Computed Attributes
-			MaxAllocationSize: {
+
+			// Attributes
+			Attr_MaxAllocationSize: {
+				Computed:    true,
+				Description: "Maximum allocation storage size (GB).",
 				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "Maximum allocation storage size (GB)",
 			},
-			StorageType: {
-				Type:        schema.TypeString,
+			Attr_ReplicationEnabled: {
 				Computed:    true,
-				Description: "Storage type of the storage pool",
-			},
-			TotalCapacity: {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "Total pool capacity (GB)",
-			},
-			ReplicationEnabled: {
+				Description: "Replication status of the storage pool.",
 				Type:        schema.TypeBool,
+			},
+			Attr_StorageType: {
 				Computed:    true,
-				Description: "Replication status of the storage pool",
+				Description: "Storage type of the storage pool.",
+				Type:        schema.TypeString,
+			},
+			Attr_TotalCapacity: {
+				Computed:    true,
+				Description: "Total pool capacity (GB).",
+				Type:        schema.TypeInt,
 			},
 		},
 	}
@@ -69,10 +64,10 @@ func dataSourceIBMPIStoragePoolCapacityRead(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
-	storagePool := d.Get(PIPoolName).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
+	storagePool := d.Get(Arg_StoragePool).(string)
 
-	client := st.NewIBMPIStorageCapacityClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPIStorageCapacityClient(ctx, sess, cloudInstanceID)
 	sp, err := client.GetStoragePoolCapacity(storagePool)
 	if err != nil {
 		log.Printf("[ERROR] get storage pool capacity failed %v", err)
@@ -80,9 +75,9 @@ func dataSourceIBMPIStoragePoolCapacityRead(ctx context.Context, d *schema.Resou
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", cloudInstanceID, storagePool))
-	d.Set(MaxAllocationSize, *sp.MaxAllocationSize)
-	d.Set(StorageType, sp.StorageType)
-	d.Set(TotalCapacity, sp.TotalCapacity)
-	d.Set(ReplicationEnabled, *sp.ReplicationEnabled)
+	d.Set(Attr_MaxAllocationSize, *sp.MaxAllocationSize)
+	d.Set(Attr_ReplicationEnabled, *sp.ReplicationEnabled)
+	d.Set(Attr_StorageType, sp.StorageType)
+	d.Set(Attr_TotalCapacity, sp.TotalCapacity)
 	return nil
 }

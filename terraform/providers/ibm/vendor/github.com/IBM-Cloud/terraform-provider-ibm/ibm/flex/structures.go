@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2017, 2021 All Rights Reserved.
+// Copyright IBM Corp. 2017, 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package flex
@@ -19,36 +19,37 @@ import (
 	"strings"
 	"time"
 
-	"github.com/IBM-Cloud/bluemix-go/bmxerror"
-	"github.com/IBM-Cloud/bluemix-go/models"
-	"github.com/IBM-Cloud/container-services-go-sdk/kubernetesserviceapiv1"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
-	"github.com/IBM/cloud-databases-go-sdk/clouddatabasesv5"
-	"github.com/IBM/go-sdk-core/v5/core"
-	"github.com/IBM/ibm-cos-sdk-go-config/resourceconfigurationv1"
-	"github.com/IBM/ibm-cos-sdk-go/aws"
-	"github.com/IBM/ibm-cos-sdk-go/service/s3"
-	kp "github.com/IBM/keyprotect-go-client"
-	"github.com/IBM/platform-services-go-sdk/globalsearchv2"
-	"github.com/IBM/platform-services-go-sdk/globaltaggingv1"
-	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
-	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
-	rg "github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
-	"github.com/apache/openwhisk-client-go/whisk"
-	"github.com/go-openapi/strfmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/softlayer/softlayer-go/datatypes"
-	"github.com/softlayer/softlayer-go/sl"
-
 	"github.com/IBM-Cloud/bluemix-go/api/container/containerv1"
 	"github.com/IBM-Cloud/bluemix-go/api/container/containerv2"
 	"github.com/IBM-Cloud/bluemix-go/api/icd/icdv4"
 	"github.com/IBM-Cloud/bluemix-go/api/mccp/mccpv2"
 	"github.com/IBM-Cloud/bluemix-go/api/schematics"
 	"github.com/IBM-Cloud/bluemix-go/api/usermanagement/usermanagementv2"
+	"github.com/IBM-Cloud/bluemix-go/bmxerror"
+	"github.com/IBM-Cloud/bluemix-go/models"
+	"github.com/IBM-Cloud/container-services-go-sdk/kubernetesserviceapiv1"
+	"github.com/IBM/cloud-databases-go-sdk/clouddatabasesv5"
+	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/IBM/ibm-cos-sdk-go-config/v2/resourceconfigurationv1"
+	"github.com/IBM/ibm-cos-sdk-go/aws"
+	"github.com/IBM/ibm-cos-sdk-go/service/s3"
+	kp "github.com/IBM/keyprotect-go-client"
+	"github.com/IBM/platform-services-go-sdk/globalsearchv2"
+	"github.com/IBM/platform-services-go-sdk/globaltaggingv1"
 	"github.com/IBM/platform-services-go-sdk/iamaccessgroupsv2"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
+	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
+	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
+	rg "github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
+	"github.com/apache/openwhisk-client-go/whisk"
+	"github.com/go-openapi/strfmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/softlayer/softlayer-go/datatypes"
+	"github.com/softlayer/softlayer-go/sl"
+
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 )
 
 const (
@@ -64,6 +65,8 @@ const (
 	ResourceStatus = "resource_status"
 	//ResourceGroupName ...
 	ResourceGroupName = "resource_group_name"
+	//DeletionProtection ...
+	DeletionProtection = "deletion_protection"
 	//RelatedCRN ...
 	RelatedCRN                                = "related_crn"
 	SystemIBMLabelPrefix                      = "ibm-cloud.kubernetes.io/"
@@ -119,6 +122,22 @@ func ExpandIntList(input []interface{}) []int {
 }
 
 func FlattenIntList(list []int) []interface{} {
+	vs := make([]interface{}, len(list))
+	for i, v := range list {
+		vs[i] = v
+	}
+	return vs
+}
+
+func ExpandInt64List(input []interface{}) []int64 {
+	vs := make([]int64, len(input))
+	for i, v := range input {
+		vs[i] = v.(int64)
+	}
+	return vs
+}
+
+func FlattenInt64List(list []int64) []interface{} {
 	vs := make([]interface{}, len(list))
 	for i, v := range list {
 		vs[i] = v
@@ -249,6 +268,15 @@ func FlattenUsersSet(userList *schema.Set) []string {
 		users = append(users, user.(string))
 	}
 	return users
+}
+
+func FlattenSet(set *schema.Set) []string {
+	setList := set.List()
+	elems := make([]string, 0, len(setList))
+	for _, elem := range setList {
+		elems = append(elems, elem.(string))
+	}
+	return elems
 }
 
 func ExpandMembers(configured []interface{}) []datatypes.Network_LBaaS_LoadBalancerServerInstanceInfo {
@@ -429,6 +457,19 @@ func FlattenZones(list []containerv1.WorkerPoolZoneResponse) []map[string]interf
 	return zones
 }
 
+func FlattenZonesv2(list []containerv2.ZoneResp) []map[string]interface{} {
+	zones := make([]map[string]interface{}, len(list))
+	for i, zone := range list {
+		l := map[string]interface{}{
+			"zone":         zone.ID,
+			"subnets":      zone.Subnets,
+			"worker_count": zone.WorkerCount,
+		}
+		zones[i] = l
+	}
+	return zones
+}
+
 func FlattenWorkerPools(list []containerv1.WorkerPoolResponse) []map[string]interface{} {
 	workerPools := make([]map[string]interface{}, len(list))
 	for i, workerPool := range list {
@@ -539,9 +580,9 @@ func FlattenVlans(list []containerv1.Vlan) []map[string]interface{} {
 	return vlans
 }
 
-func FlattenIcdGroups(grouplist icdv4.GroupList) []map[string]interface{} {
-	groups := make([]map[string]interface{}, len(grouplist.Groups))
-	for i, group := range grouplist.Groups {
+func FlattenIcdGroups(groupResponse *clouddatabasesv5.ListDeploymentScalingGroupsResponse) []map[string]interface{} {
+	groups := make([]map[string]interface{}, len(groupResponse.Groups))
+	for i, group := range groupResponse.Groups {
 		memorys := make([]map[string]interface{}, 1)
 		memory := make(map[string]interface{})
 		memory["units"] = group.Memory.Units
@@ -554,12 +595,12 @@ func FlattenIcdGroups(grouplist icdv4.GroupList) []map[string]interface{} {
 
 		cpus := make([]map[string]interface{}, 1)
 		cpu := make(map[string]interface{})
-		cpu["units"] = group.Cpu.Units
-		cpu["allocation_count"] = group.Cpu.AllocationCount
-		cpu["minimum_count"] = group.Cpu.MinimumCount
-		cpu["step_size_count"] = group.Cpu.StepSizeCount
-		cpu["is_adjustable"] = group.Cpu.IsAdjustable
-		cpu["can_scale_down"] = group.Cpu.CanScaleDown
+		cpu["units"] = group.CPU.Units
+		cpu["allocation_count"] = group.CPU.AllocationCount
+		cpu["minimum_count"] = group.CPU.MinimumCount
+		cpu["step_size_count"] = group.CPU.StepSizeCount
+		cpu["is_adjustable"] = group.CPU.IsAdjustable
+		cpu["can_scale_down"] = group.CPU.CanScaleDown
 		cpus[0] = cpu
 
 		disks := make([]map[string]interface{}, 1)
@@ -572,12 +613,23 @@ func FlattenIcdGroups(grouplist icdv4.GroupList) []map[string]interface{} {
 		disk["can_scale_down"] = group.Disk.CanScaleDown
 		disks[0] = disk
 
+		hostflavors := make([]map[string]interface{}, 0)
+		if group.HostFlavor != nil {
+			hostflavors = make([]map[string]interface{}, 1)
+			hostflavor := make(map[string]interface{})
+			hostflavor["id"] = group.HostFlavor.ID
+			hostflavor["name"] = group.HostFlavor.Name
+			hostflavor["hosting_size"] = group.HostFlavor.HostingSize
+			hostflavors[0] = hostflavor
+		}
+
 		l := map[string]interface{}{
-			"group_id": group.Id,
-			"count":    group.Count,
-			"memory":   memorys,
-			"cpu":      cpus,
-			"disk":     disks,
+			"group_id":    group.ID,
+			"count":       group.Count,
+			"memory":      memorys,
+			"cpu":         cpus,
+			"disk":        disks,
+			"host_flavor": hostflavors,
 		}
 		groups[i] = l
 	}
@@ -655,6 +707,9 @@ func FlattenActivityTrack(in *resourceconfigurationv1.ActivityTracking) []interf
 		}
 		if in.WriteDataEvents != nil {
 			att["write_data_events"] = *in.WriteDataEvents
+		}
+		if in.ManagementEvents != nil {
+			att["management_events"] = *in.ManagementEvents
 		}
 		if in.ActivityTrackerCrn != nil {
 			att["activity_tracker_crn"] = *in.ActivityTrackerCrn
@@ -893,6 +948,192 @@ func ReplicationRuleGet(in *s3.ReplicationConfiguration) []map[string]interface{
 	return rules
 }
 
+func flattenLifecycleExpiration(expiration *s3.LifecycleExpiration) []interface{} {
+	if expiration == nil {
+		return []interface{}{}
+	}
+	m := make(map[string]interface{})
+	if expiration.Date != nil {
+		m["date"] = expiration.Date.Format(time.RFC3339)
+	}
+	if expiration.Days != nil {
+		m["days"] = int(aws.Int64Value(expiration.Days))
+	}
+	if expiration.ExpiredObjectDeleteMarker != nil {
+		m["expired_object_delete_marker"] = aws.Bool(*expiration.ExpiredObjectDeleteMarker)
+	}
+	return []interface{}{m}
+}
+
+func flattenNoncurrentVersionExpiration(expiration *s3.NoncurrentVersionExpiration) []interface{} {
+	if expiration == nil {
+		return []interface{}{}
+	}
+	m := make(map[string]interface{})
+	if expiration.NoncurrentDays != nil {
+		m["noncurrent_days"] = int(aws.Int64Value(expiration.NoncurrentDays))
+	}
+	return []interface{}{m}
+}
+func flattenTransitions(transitions []*s3.Transition) []interface{} {
+	if len(transitions) == 0 {
+		return []interface{}{}
+	}
+	var results []interface{}
+	for _, transition := range transitions {
+		m := make(map[string]interface{})
+		if transition.StorageClass != nil {
+			m["storage_class"] = transition.StorageClass
+		}
+		if transition.Date != nil {
+			m["date"] = transition.Date.Format(time.RFC3339)
+		}
+		if transition.Days != nil {
+			m["days"] = int(aws.Int64Value(transition.Days))
+		}
+		results = append(results, m)
+	}
+	return results
+}
+
+func flattenLifecycleRuleFilter(filter *s3.LifecycleRuleFilter) []interface{} {
+	if filter == nil {
+		return []interface{}{}
+	}
+	m := make(map[string]interface{})
+	if filter.And != nil {
+		m["and"] = flattenLifecycleRuleFilterMemberAnd(filter.And)
+
+	}
+	if filter.ObjectSizeGreaterThan != nil && int(aws.Int64Value(filter.ObjectSizeGreaterThan)) > 0 {
+
+		m["object_size_greater_than"] = int(aws.Int64Value(filter.ObjectSizeGreaterThan))
+
+	}
+	if filter.ObjectSizeLessThan != nil && int(aws.Int64Value(filter.ObjectSizeLessThan)) > 0 {
+
+		m["object_size_less_than"] = int(aws.Int64Value(filter.ObjectSizeLessThan))
+
+	}
+	if filter.Tag != nil {
+		m["tag"] = flattenLifecycleRuleFilterMemberTag(filter.Tag)
+
+	}
+	if filter.Prefix != nil {
+		m["prefix"] = aws.String(*filter.Prefix)
+	}
+	return []interface{}{m}
+}
+func flattenLifecycleRuleFilterMemberAnd(andOp *s3.LifecycleRuleAndOperator) []interface{} {
+	if andOp == nil {
+		return []interface{}{}
+	}
+	m := map[string]interface{}{
+		"object_size_greater_than": andOp.ObjectSizeGreaterThan,
+		"object_size_less_than":    andOp.ObjectSizeLessThan,
+	}
+
+	if v := andOp.Prefix; v != nil {
+		m["prefix"] = aws.StringValue(v)
+	}
+
+	if v := andOp.Tags; v != nil {
+		m["tags"] = flattenMultipleTags(v)
+	}
+
+	return []interface{}{m}
+}
+
+func flattenMultipleTags(in []*s3.Tag) []map[string]interface{} {
+
+	tagSet := make([]map[string]interface{}, 0, len(in))
+	if in != nil {
+		for _, tagSetValue := range in {
+			tag := make(map[string]interface{})
+			if tagSetValue.Key != nil {
+				tag["key"] = *tagSetValue.Key
+			}
+			if tagSetValue.Value != nil {
+				tag["value"] = *tagSetValue.Value
+			}
+
+			tagSet = append(tagSet, tag)
+
+		}
+
+	}
+
+	return tagSet
+}
+
+func flattenLifecycleRuleFilterMemberTag(op *s3.Tag) []interface{} {
+	if op == nil {
+		return nil
+	}
+
+	m := make(map[string]interface{})
+
+	if v := op.Key; v != nil {
+		m["key"] = aws.StringValue(v)
+	}
+
+	if v := op.Value; v != nil {
+		m["value"] = aws.StringValue(v)
+	}
+
+	return []interface{}{m}
+}
+
+func flattenAbortIncompleteMultipartUpload(abortIncompleteMultipartUploadInput *s3.AbortIncompleteMultipartUpload) []interface{} {
+	if abortIncompleteMultipartUploadInput == nil {
+		return []interface{}{}
+	}
+
+	abortIncompleteMultipartUploadMap := make(map[string]interface{})
+
+	if abortIncompleteMultipartUploadInput.DaysAfterInitiation != nil {
+		abortIncompleteMultipartUploadMap["days_after_initiation"] = int(aws.Int64Value(abortIncompleteMultipartUploadInput.DaysAfterInitiation))
+	}
+
+	return []interface{}{abortIncompleteMultipartUploadMap}
+}
+
+func LifecylceRuleGet(lifecycleRuleInput []*s3.LifecycleRule) []map[string]interface{} {
+	rules := make([]map[string]interface{}, 0, len(lifecycleRuleInput))
+	if lifecycleRuleInput != nil {
+		for _, lifecyclerule := range lifecycleRuleInput {
+			lifecycleRuleConfig := make(map[string]interface{})
+			if lifecyclerule.Status != nil {
+				if *lifecyclerule.Status == "Enabled" {
+					lifecycleRuleConfig["status"] = "enable"
+				} else if *lifecyclerule.Status == "Disabled" {
+					lifecycleRuleConfig["status"] = "disable"
+
+				}
+			}
+			if lifecyclerule.ID != nil {
+				lifecycleRuleConfig["rule_id"] = *lifecyclerule.ID
+			}
+			if lifecyclerule.Expiration != nil {
+				lifecycleRuleConfig["expiration"] = flattenLifecycleExpiration(lifecyclerule.Expiration)
+			}
+			if lifecyclerule.Transitions != nil {
+				lifecycleRuleConfig["transition"] = flattenTransitions(lifecyclerule.Transitions)
+			}
+			if lifecyclerule.AbortIncompleteMultipartUpload != nil {
+				lifecycleRuleConfig["abort_incomplete_multipart_upload"] = flattenAbortIncompleteMultipartUpload(lifecyclerule.AbortIncompleteMultipartUpload)
+			}
+			if lifecyclerule.NoncurrentVersionExpiration != nil {
+				lifecycleRuleConfig["noncurrent_version_expiration"] = flattenNoncurrentVersionExpiration(lifecyclerule.NoncurrentVersionExpiration)
+			}
+			if lifecyclerule.Filter != nil {
+				lifecycleRuleConfig["filter"] = flattenLifecycleRuleFilter(lifecyclerule.Filter)
+			}
+			rules = append(rules, lifecycleRuleConfig)
+		}
+	}
+	return rules
+}
 func ObjectLockConfigurationGet(in *s3.ObjectLockConfiguration) []map[string]interface{} {
 	configuration := make([]map[string]interface{}, 0, 1)
 	if in != nil {
@@ -1171,6 +1412,10 @@ func PtrToString(s string) *string {
 	return &s
 }
 
+func PtrToBool(b bool) *bool {
+	return &b
+}
+
 func IntValue(i64 *int64) (i int) {
 	if i64 != nil {
 		i = int(*i64)
@@ -1178,9 +1423,16 @@ func IntValue(i64 *int64) (i int) {
 	return
 }
 
-func float64Value(f32 *float32) (f float64) {
+func Float64Value(f32 *float32) (f float64) {
 	if f32 != nil {
 		f = float64(*f32)
+	}
+	return
+}
+
+func StringValue(strPtr *string) (_ string) {
+	if strPtr != nil {
+		return *strPtr
 	}
 	return
 }
@@ -1602,7 +1854,11 @@ func FlattenV2PolicyResource(resource iampolicymanagementv1.V2PolicyResource) []
 	if len(customAttributes) > 0 {
 		out := make(map[string]string)
 		for _, a := range customAttributes {
-			out[*a.Key] = fmt.Sprint(a.Value)
+			if *a.Operator == "stringExists" && a.Value == true {
+				out[*a.Key] = fmt.Sprint("*")
+			} else if *a.Operator == "stringMatch" || *a.Operator == "stringEquals" {
+				out[*a.Key] = fmt.Sprint(a.Value)
+			}
 		}
 		l["attributes"] = out
 	}
@@ -1698,6 +1954,120 @@ func FlattenRuleConditions(rule iampolicymanagementv1.V2PolicyRule) []map[string
 		result = append(result, condition)
 	}
 	return result
+}
+
+func FlattenAMSettingsExternalIdentityInteraction(amAccountSettings *iampolicymanagementv1.AccountSettingsAccessManagement) []map[string]interface{} {
+	identityTypes := make([]map[string]interface{}, 0)
+	if amAccountSettings.ExternalAccountIdentityInteraction != nil && amAccountSettings.ExternalAccountIdentityInteraction.IdentityTypes != nil {
+		iTypes := amAccountSettings.ExternalAccountIdentityInteraction.IdentityTypes
+		user := make([]map[string]interface{}, 0)
+		if iTypes.User != nil {
+			u := map[string]interface{}{
+				"state":                     iTypes.User.State,
+				"external_allowed_accounts": iTypes.User.ExternalAllowedAccounts,
+			}
+			user = append(user, u)
+		}
+		serviceId := make([]map[string]interface{}, 0)
+		if iTypes.ServiceID != nil {
+			sid := map[string]interface{}{
+				"state":                     iTypes.ServiceID.State,
+				"external_allowed_accounts": iTypes.ServiceID.ExternalAllowedAccounts,
+			}
+			serviceId = append(serviceId, sid)
+		}
+		service := make([]map[string]interface{}, 0)
+		if iTypes.Service != nil {
+			s := map[string]interface{}{
+				"state":                     iTypes.Service.State,
+				"external_allowed_accounts": iTypes.Service.ExternalAllowedAccounts,
+			}
+			service = append(service, s)
+		}
+		identityTypes = append(identityTypes, map[string]interface{}{
+			"user":       user,
+			"service_id": serviceId,
+			"service":    service,
+		})
+	}
+	externalIdentityInteraction := make([]map[string]interface{}, 0)
+	externalIdentityInteraction = append(externalIdentityInteraction, map[string]interface{}{
+		"identity_types": identityTypes,
+	})
+	return externalIdentityInteraction
+}
+
+func GenerateExternalAccountIdentityInteraction(d *schema.ResourceData) iampolicymanagementv1.ExternalAccountIdentityInteractionPatch {
+	interaction := getElementFromResource(d, "external_account_identity_interaction")
+	if interaction != nil {
+		identityTypes := getFirstElementFromSet(interaction["identity_types"])
+		if identityTypes != nil {
+			identityTypesPatch := iampolicymanagementv1.IdentityTypesPatch{}
+			user := getFirstElementFromSet(identityTypes["user"])
+			if user != nil {
+				state := user["state"].(string)
+				accounts := user["external_allowed_accounts"].([]interface{})
+				userPatch := iampolicymanagementv1.IdentityTypesBase{
+					State:                   &state,
+					ExternalAllowedAccounts: interfaceSliceToStringSlice(accounts),
+				}
+				identityTypesPatch.User = &userPatch
+			}
+
+			serviceId := getFirstElementFromSet(identityTypes["service_id"])
+			if serviceId != nil {
+				state := serviceId["state"].(string)
+				accounts := serviceId["external_allowed_accounts"].([]interface{})
+				serviceIdPatch := iampolicymanagementv1.IdentityTypesBase{
+					State:                   &state,
+					ExternalAllowedAccounts: interfaceSliceToStringSlice(accounts),
+				}
+				identityTypesPatch.ServiceID = &serviceIdPatch
+			}
+
+			service := getFirstElementFromSet(identityTypes["service"])
+			if service != nil {
+				state := service["state"].(string)
+				accounts := service["external_allowed_accounts"].([]interface{})
+				servicePatch := iampolicymanagementv1.IdentityTypesBase{
+					State:                   &state,
+					ExternalAllowedAccounts: interfaceSliceToStringSlice(accounts),
+				}
+				identityTypesPatch.Service = &servicePatch
+			}
+			return iampolicymanagementv1.ExternalAccountIdentityInteractionPatch{
+				IdentityTypes: &identityTypesPatch,
+			}
+		}
+	}
+	return iampolicymanagementv1.ExternalAccountIdentityInteractionPatch{}
+}
+
+func getFirstElementFromSet(elem interface{}) map[string]interface{} {
+	set, ok := elem.(*schema.Set)
+	if ok && len(set.List()) != 0 {
+		return set.List()[0].(map[string]interface{})
+	}
+	return nil
+}
+
+func getElementFromResource(d *schema.ResourceData, key string) map[string]interface{} {
+	if elem, ok := d.GetOk(key); ok {
+		return getFirstElementFromSet(elem)
+	}
+	return nil
+}
+
+func interfaceSliceToStringSlice(interfaceSlice []interface{}) []string {
+	stringSlice := make([]string, 0, len(interfaceSlice))
+	for _, element := range interfaceSlice {
+		if str, ok := element.(string); ok {
+			stringSlice = append(stringSlice, str)
+		} else {
+			stringSlice = append(stringSlice, fmt.Sprintf("%v", element))
+		}
+	}
+	return stringSlice
 }
 
 // Cloud Internet Services
@@ -2356,25 +2726,6 @@ func GetTags(d *schema.ResourceData, meta interface{}) error {
 // }
 
 func GetGlobalTagsUsingCRN(meta interface{}, resourceID, resourceType, tagType string) (*schema.Set, error) {
-	userDetails, err := meta.(conns.ClientSession).BluemixUserDetails()
-	if err != nil {
-		return nil, err
-	}
-	accountID := userDetails.UserAccount
-	ListTagsOptions := &globaltaggingv1.ListTagsOptions{}
-	if resourceID != "" {
-		ListTagsOptions.AttachedTo = &resourceID
-	}
-	if strings.HasPrefix(resourceType, "Softlayer_") {
-		ListTagsOptions.Providers = []string{"ims"}
-	}
-	if len(tagType) > 0 {
-		ListTagsOptions.TagType = PtrToString(tagType)
-
-		if tagType == "service" {
-			ListTagsOptions.AccountID = PtrToString(accountID)
-		}
-	}
 	taggingResult, err := GetGlobalTagsUsingSearchAPI(meta, resourceID, resourceType, tagType)
 	if err != nil {
 		return nil, err
@@ -2382,8 +2733,39 @@ func GetGlobalTagsUsingCRN(meta interface{}, resourceID, resourceType, tagType s
 	return taggingResult, nil
 }
 
-func GetGlobalTagsUsingSearchAPI(meta interface{}, resourceID, resourceType, tagType string) (*schema.Set, error) {
+func GetTagsUsingResourceCRNFromTaggingApi(meta interface{}, resourceID, resourceType, tagType string) (*schema.Set, error) {
+	gtClient, err := meta.(conns.ClientSession).GlobalTaggingAPIv1()
+	if err != nil {
+		return nil, fmt.Errorf("[ERROR] Error getting global tagging client settings: %s", err)
+	}
+	userDetails, err := meta.(conns.ClientSession).BluemixUserDetails()
+	if err != nil {
+		return nil, err
+	}
+	accountID := userDetails.UserAccount
+	ListTagsOptions := &globaltaggingv1.ListTagsOptions{}
+	ListTagsOptions.AttachedTo = &resourceID
+	if strings.HasPrefix(resourceType, "Softlayer_") {
+		ListTagsOptions.Providers = []string{"ims"}
+	}
+	if len(tagType) > 0 {
+		ListTagsOptions.TagType = PtrToString(tagType)
+		if tagType == "service" {
+			ListTagsOptions.AccountID = PtrToString(accountID)
+		}
+	}
+	taggingResult, _, err := gtClient.ListTags(ListTagsOptions)
+	if err != nil {
+		return nil, err
+	}
+	var taglist []string
+	for _, item := range taggingResult.Items {
+		taglist = append(taglist, *item.Name)
+	}
+	return NewStringSet(ResourceIBMVPCHash, taglist), nil
+}
 
+func GetGlobalTagsUsingSearchAPI(meta interface{}, resourceID, resourceType, tagType string) (*schema.Set, error) {
 	gsClient, err := meta.(conns.ClientSession).GlobalSearchAPIV2()
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] Error getting global search client settings: %s", err)
@@ -2486,18 +2868,20 @@ func UpdateGlobalTagsUsingCRN(oldList, newList interface{}, meta interface{}, re
 				detachTagOptions.AccountID = PtrToString(acctID)
 			}
 		}
-
-		_, resp, err := gtClient.DetachTag(detachTagOptions)
+		results, fullResponse, err := gtClient.DetachTag(detachTagOptions)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error detaching database tags %v: %s\n%s", remove, err, resp)
+			return fmt.Errorf("[ERROR] Error detaching tags calling api %v: %s\n%s", remove, err, fullResponse)
 		}
-		for _, v := range remove {
-			delTagOptions := &globaltaggingv1.DeleteTagOptions{
-				TagName: PtrToString(v),
+		if results != nil {
+			errMap := make([]globaltaggingv1.TagResultsItem, 0)
+			for _, res := range results.Results {
+				if res.IsError != nil && *res.IsError {
+					errMap = append(errMap, res)
+				}
 			}
-			_, resp, err := gtClient.DeleteTag(delTagOptions)
-			if err != nil {
-				return fmt.Errorf("[ERROR] Error deleting database tag %v: %s\n%s", v, err, resp)
+			if len(errMap) > 0 {
+				output, _ := json.MarshalIndent(errMap, "", "    ")
+				return fmt.Errorf("[ERROR] Error detaching tag in results %v: %s\n%s", remove, string(output), fullResponse)
 			}
 		}
 	}
@@ -2517,9 +2901,42 @@ func UpdateGlobalTagsUsingCRN(oldList, newList interface{}, meta interface{}, re
 		if err != nil {
 			return fmt.Errorf("[ERROR] Error updating database tags %v : %s\n%s", add, err, resp)
 		}
+		response, errored := WaitForTagsAvailable(meta, resourceID, resourceType, tagType, news, 30*time.Second)
+		if errored != nil {
+			log.Printf(`[ERROR] Error waiting for resource tags %s : %v
+%v`, resourceID, errored, response)
+		}
 	}
 
 	return nil
+}
+
+func WaitForTagsAvailable(meta interface{}, resourceID, resourceType, tagType string, desired *schema.Set, timeout time.Duration) (interface{}, error) {
+	log.Printf("Waiting for tag attachment (%s) to be successful.", resourceID)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"pending"},
+		Target:     []string{"success", "error"},
+		Refresh:    tagsRefreshFunc(meta, resourceID, resourceType, tagType, desired),
+		Timeout:    timeout,
+		Delay:      3 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+	return stateConf.WaitForState()
+}
+
+func tagsRefreshFunc(meta interface{}, resourceID, resourceType, tagType string, desired *schema.Set) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		tags, err := GetGlobalTagsUsingCRN(meta, resourceID, resourceType, tagType)
+		if err != nil {
+			return tags, "error", fmt.Errorf("[ERROR] Error on get of resource tags (%s) tags: %s", resourceID, err)
+		}
+		if tags.Equal(desired) {
+			return tags, "success", nil
+		} else {
+			return tags, "pending", nil
+		}
+	}
 }
 
 func ResourceIBMVPCHash(v interface{}) int {
@@ -2536,6 +2953,19 @@ func ApplyOnce(k, o, n string, d *schema.ResourceData) bool {
 	}
 	return true
 }
+
+func ApplyOnlyOnce(k, o, n string, d *schema.ResourceData) bool {
+	// For new resources, allow the first value to be set
+	if len(d.Id()) == 0 {
+		return false
+	}
+
+	// For existing resources, don't allow changes (keep the original value)
+	if o == "" {
+		return false
+	}
+	return true
+}
 func GetTagsUsingCRN(meta interface{}, resourceCRN string) (*schema.Set, error) {
 	// Move the API to use globalsearch API instead of globalTags API due to rate limit
 	taggingResult, err := GetGlobalTagsUsingSearchAPI(meta, resourceCRN, "", "user")
@@ -2546,7 +2976,7 @@ func GetTagsUsingCRN(meta interface{}, resourceCRN string) (*schema.Set, error) 
 }
 
 func UpdateTagsUsingCRN(oldList, newList interface{}, meta interface{}, resourceCRN string) error {
-	gtClient, err := meta.(conns.ClientSession).GlobalTaggingAPI()
+	gtClient, err := meta.(conns.ClientSession).GlobalTaggingAPIv1()
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error getting global tagging client settings: %s", err)
 	}
@@ -2576,23 +3006,74 @@ func UpdateTagsUsingCRN(oldList, newList interface{}, meta interface{}, resource
 		add = append(add, envTags...)
 	}
 
+	resources := []globaltaggingv1.Resource{}
+	r := globaltaggingv1.Resource{ResourceID: &resourceCRN}
+	resources = append(resources, r)
+
 	if len(remove) > 0 {
-		_, err := gtClient.Tags().DetachTags(resourceCRN, remove)
+		detachTagOptions := &globaltaggingv1.DetachTagOptions{}
+		detachTagOptions.Resources = resources
+		detachTagOptions.TagNames = remove
+
+		results, fullResponse, err := gtClient.DetachTag(detachTagOptions)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error detaching database tags %v: %s", remove, err)
+			return fmt.Errorf("[ERROR] Error detaching tags %v: %s", remove, err)
+		}
+		if results != nil {
+			errMap := make([]globaltaggingv1.TagResultsItem, 0)
+			for _, res := range results.Results {
+				if res.IsError != nil && *res.IsError {
+					errMap = append(errMap, res)
+				}
+			}
+			if len(errMap) > 0 {
+				output, _ := json.MarshalIndent(errMap, "", "    ")
+				return fmt.Errorf("[ERROR] Error detaching tag %v: %s\n%s", remove, string(output), fullResponse)
+			}
 		}
 		for _, v := range remove {
-			_, err := gtClient.Tags().DeleteTag(v)
+			delTagOptions := &globaltaggingv1.DeleteTagOptions{
+				TagName: PtrToString(v),
+			}
+			results, fullResponse, err := gtClient.DeleteTag(delTagOptions)
 			if err != nil {
-				return fmt.Errorf("[ERROR] Error deleting database tag %v: %s", v, err)
+				return fmt.Errorf("[ERROR] Error deleting tag %v: %s\n%s", v, err, fullResponse)
+			}
+
+			if results != nil {
+				errMap := make([]globaltaggingv1.DeleteTagResultsItem, 0)
+				for _, res := range results.Results {
+					if res.IsError != nil && *res.IsError {
+						errMap = append(errMap, res)
+					}
+				}
+				if len(errMap) > 0 {
+					output, _ := json.MarshalIndent(errMap, "", "    ")
+					return fmt.Errorf("[ERROR] Error deleting tag %s: %s\n%s", v, string(output), fullResponse)
+				}
 			}
 		}
 	}
 
 	if len(add) > 0 {
-		_, err := gtClient.Tags().AttachTags(resourceCRN, add)
+		AttachTagOptions := &globaltaggingv1.AttachTagOptions{}
+		AttachTagOptions.Resources = resources
+		AttachTagOptions.TagNames = add
+		results, fullResponse, err := gtClient.AttachTag(AttachTagOptions)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error updating database tags %v : %s", add, err)
+			return fmt.Errorf("[ERROR] Error updating tags %v : %s", add, err)
+		}
+		if results != nil {
+			errMap := make([]globaltaggingv1.TagResultsItem, 0)
+			for _, res := range results.Results {
+				if res.IsError != nil && *res.IsError {
+					errMap = append(errMap, res)
+				}
+			}
+			if len(errMap) > 0 {
+				output, _ := json.MarshalIndent(errMap, "", "    ")
+				return fmt.Errorf("Error while updating tag: %s - Full response: %s", string(output), fullResponse)
+			}
 		}
 	}
 
@@ -2636,6 +3117,33 @@ func ResourceTagsCustomizeDiff(diff *schema.ResourceDiff) error {
 	}
 	return nil
 }
+func ResourcePowerUserTagsCustomizeDiff(diff *schema.ResourceDiff) error {
+
+	if diff.Id() != "" && diff.HasChange("pi_user_tags") {
+		// power tags
+		o, n := diff.GetChange("pi_user_tags")
+		oldSet := o.(*schema.Set)
+		newSet := n.(*schema.Set)
+		removeInt := oldSet.Difference(newSet).List()
+		addInt := newSet.Difference(oldSet).List()
+		if v := os.Getenv("IC_ENV_TAGS"); v != "" {
+			s := strings.Split(v, ",")
+			if len(removeInt) == len(s) && len(addInt) == 0 {
+				fmt.Println("Suppresing the TAG diff ")
+				return diff.Clear("pi_user_tags")
+			}
+		}
+	}
+	return nil
+}
+func OnlyInUpdateDiff(resources []string, diff *schema.ResourceDiff) error {
+	for _, r := range resources {
+		if diff.HasChange(r) && diff.Id() == "" {
+			return fmt.Errorf("the %s can't be used at create time", r)
+		}
+	}
+	return nil
+}
 
 func ResourceValidateAccessTags(diff *schema.ResourceDiff, meta interface{}) error {
 
@@ -2670,43 +3178,6 @@ func ResourceValidateAccessTags(diff *schema.ResourceDiff, meta interface{}) err
 			return fmt.Errorf("[ERROR] Error : Access tag(s) %s does not exist", errStatement)
 		}
 	}
-	return nil
-}
-
-func ResourceLBListenerPolicyCustomizeDiff(diff *schema.ResourceDiff) error {
-	policyActionIntf, _ := diff.GetOk(isLBListenerPolicyAction)
-	policyAction := policyActionIntf.(string)
-
-	if policyAction == "forward" {
-		_, policyTargetIDSet := diff.GetOk(isLBListenerPolicyTargetID)
-
-		if !policyTargetIDSet && diff.NewValueKnown(isLBListenerPolicyTargetID) {
-			return fmt.Errorf("Load balancer listener policy: When action is forward please specify target_id")
-		}
-	} else if policyAction == "redirect" {
-		_, httpsStatusCodeSet := diff.GetOk(isLBListenerPolicyTargetHTTPStatusCode)
-		_, targetURLSet := diff.GetOk(isLBListenerPolicyTargetURL)
-
-		if !httpsStatusCodeSet && diff.NewValueKnown(isLBListenerPolicyTargetHTTPStatusCode) {
-			return fmt.Errorf("Load balancer listener policy: When action is redirect please specify target_http_status_code")
-		}
-
-		if !targetURLSet && diff.NewValueKnown(isLBListenerPolicyTargetURL) {
-			return fmt.Errorf("Load balancer listener policy: When action is redirect please specify target_url")
-		}
-	} else if policyAction == "https_redirect" {
-		_, listenerSet := diff.GetOk(isLBListenerPolicyHTTPSRedirectListener)
-		_, httpsStatusSet := diff.GetOk(isLBListenerPolicyHTTPSRedirectStatusCode)
-
-		if !listenerSet && diff.NewValueKnown(isLBListenerPolicyHTTPSRedirectListener) {
-			return fmt.Errorf("Load balancer listener policy: When action is https_redirect please specify target_https_redirect_listener")
-		}
-
-		if !httpsStatusSet && diff.NewValueKnown(isLBListenerPolicyHTTPSRedirectStatusCode) {
-			return fmt.Errorf("When action is https_redirect please specify target_https_redirect_status_code")
-		}
-	}
-
 	return nil
 }
 
@@ -2810,11 +3281,11 @@ func ResourceVolumeValidate(diff *schema.ResourceDiff) error {
 		}
 	}
 
-	if profile != "custom" {
+	if profile != "custom" && profile != "sdp" {
 		if iops != 0 && diff.NewValueKnown("iops") && diff.HasChange("iops") {
-			return fmt.Errorf("VolumeError : iops is applicable for only custom volume profiles")
+			return fmt.Errorf("VolumeError : iops is applicable for only custom/sdp volume profiles")
 		}
-	} else {
+	} else if profile != "sdp" {
 		if capacity == 0 {
 			capacity = int64(100)
 		}
@@ -3119,12 +3590,25 @@ func FlattenInstancePolicy(policyType string, policies []kp.InstancePolicy) []ma
 			metricsMap = append(metricsMap, policyInstance)
 		}
 		if policy.PolicyType == "keyCreateImportAccess" {
-			policyInstance["enabled"] = policy.PolicyData.Enabled
-			policyInstance["create_root_key"] = policy.PolicyData.Attributes.CreateRootKey
-			policyInstance["create_standard_key"] = policy.PolicyData.Attributes.CreateStandardKey
-			policyInstance["import_root_key"] = policy.PolicyData.Attributes.ImportRootKey
-			policyInstance["import_standard_key"] = policy.PolicyData.Attributes.ImportStandardKey
-			policyInstance["enforce_token"] = policy.PolicyData.Attributes.EnforceToken
+			if policy.PolicyData.Enabled != nil {
+				policyInstance["enabled"] = *policy.PolicyData.Enabled
+			}
+			if policy.PolicyData.Attributes.CreateRootKey != nil {
+				policyInstance["create_root_key"] = *policy.PolicyData.Attributes.CreateRootKey
+			}
+			if policy.PolicyData.Attributes.CreateStandardKey != nil {
+				policyInstance["create_standard_key"] = *policy.PolicyData.Attributes.CreateStandardKey
+			}
+			if policy.PolicyData.Attributes.ImportRootKey != nil {
+				policyInstance["import_root_key"] = *policy.PolicyData.Attributes.ImportRootKey
+			}
+			if policy.PolicyData.Attributes.ImportStandardKey != nil {
+				policyInstance["import_standard_key"] = *policy.PolicyData.Attributes.ImportStandardKey
+			}
+			if policy.PolicyData.Attributes.EnforceToken != nil {
+				policyInstance["enforce_token"] = *policy.PolicyData.Attributes.EnforceToken
+			}
+
 			keyCreateImportAccessMap = append(keyCreateImportAccessMap, policyInstance)
 		}
 	}
@@ -3242,13 +3726,13 @@ func FlattenOpaqueSecret(fields containerv2.Fields) []map[string]interface{} {
 	return flattenedOpaqueSecret
 }
 
-// flattenHostLabels ..
-func FlattenHostLabels(hostLabels []interface{}) map[string]string {
+// flatten the provided key-value pairs
+func FlattenKeyValues(keyValues []interface{}) map[string]string {
 	labels := make(map[string]string)
-	for _, v := range hostLabels {
+	for _, v := range keyValues {
 		parts := strings.Split(v.(string), ":")
 		if len(parts) != 2 {
-			log.Fatal("Entered label " + v.(string) + "is in incorrect format.")
+			log.Fatal("Entered key-value " + v.(string) + "is in incorrect format.")
 		}
 		labels[parts[0]] = parts[1]
 	}
@@ -3270,6 +3754,7 @@ type ServiceErrorResponse struct {
 	Message    string
 	StatusCode int
 	Result     interface{}
+	Error      error
 }
 
 func BeautifyError(err error, response *core.DetailedResponse) *ServiceErrorResponse {
@@ -3285,6 +3770,7 @@ func BeautifyError(err error, response *core.DetailedResponse) *ServiceErrorResp
 		Message:    err.Error(),
 		StatusCode: statusCode,
 		Result:     result,
+		Error:      err,
 	}
 }
 
@@ -3308,10 +3794,12 @@ func GetResourceAttribute(name string, r iampolicymanagementv1.PolicyResource) *
 
 func GetV2PolicyResourceAttribute(key string, r iampolicymanagementv1.V2PolicyResource) string {
 	for _, a := range r.Attributes {
-		if *a.Key == key &&
-			(*a.Operator == "stringMatch" ||
-				*a.Operator == "stringEquals") {
-			return a.Value.(string)
+		if *a.Key == key {
+			if *a.Operator == "stringExists" && a.Value == true {
+				return fmt.Sprint("*")
+			} else if *a.Operator == "stringMatch" || *a.Operator == "stringEquals" {
+				return a.Value.(string)
+			}
 		}
 	}
 	return *core.StringPtr("")
@@ -3326,7 +3814,7 @@ func GetSubjectAttribute(name string, s iampolicymanagementv1.PolicySubject) *st
 	return core.StringPtr("")
 }
 
-func GetV2PolicySubjectAttribute(key string, s iampolicymanagementv1.V2PolicySubject) *string {
+func GetV2PolicySubjectAttribute(key string, s iampolicymanagementv1.V2PolicySubject) interface{} {
 	for _, a := range s.Attributes {
 		if *a.Key == key &&
 			(*a.Operator == "stringMatch" ||
@@ -3334,7 +3822,7 @@ func GetV2PolicySubjectAttribute(key string, s iampolicymanagementv1.V2PolicySub
 			return a.Value
 		}
 	}
-	return core.StringPtr("")
+	return interface{}(core.StringPtr(""))
 }
 
 func SetResourceAttribute(name *string, value *string, r []iampolicymanagementv1.ResourceAttribute) []iampolicymanagementv1.ResourceAttribute {
@@ -3376,6 +3864,14 @@ func FindRoleByName(supported []iampolicymanagementv1.PolicyRole, name string) (
 			}
 		}
 	}
+	if name == "NONE" {
+		name := "NONE"
+		r := iampolicymanagementv1.PolicyRole{
+			DisplayName: &name,
+			RoleID:      &name,
+		}
+		return r, nil
+	}
 	supportedRoles := getSupportedRolesStr(supported)
 	return iampolicymanagementv1.PolicyRole{}, bmxerror.New("RoleDoesnotExist",
 		fmt.Sprintf("%s was not found. Valid roles are %s", name, supportedRoles))
@@ -3398,7 +3894,7 @@ func FindRoleByCRN(supported []iampolicymanagementv1.PolicyRole, crn string) (ia
 }
 
 func getSupportedRolesStr(supported []iampolicymanagementv1.PolicyRole) string {
-	rolesStr := ""
+	rolesStr := "NONE, "
 	for index, role := range supported {
 		if index != 0 {
 			rolesStr += ", "
@@ -3475,6 +3971,7 @@ func GetRoleNamesFromPolicyResponse(policy iampolicymanagementv1.V2PolicyTemplat
 	controlResponse := policy.Control.(*iampolicymanagementv1.ControlResponse)
 	policyRoles := MapRolesToPolicyRoles(controlResponse.Grant.Roles)
 	resourceAttributes := policy.Resource.Attributes
+	subjectAttributes := policy.Subject.Attributes
 
 	userDetails, err := meta.(conns.ClientSession).BluemixUserDetails()
 	if err != nil {
@@ -3482,10 +3979,19 @@ func GetRoleNamesFromPolicyResponse(policy iampolicymanagementv1.V2PolicyTemplat
 	}
 
 	var (
-		serviceName    string
-		resourceType   string
-		serviceGroupID string
+		serviceName       string
+		sourceServiceName string
+		resourceType      string
+		serviceGroupID    string
 	)
+
+	for _, a := range subjectAttributes {
+		if *a.Key == "serviceName" &&
+			(*a.Operator == "stringMatch" ||
+				*a.Operator == "stringEquals") {
+			sourceServiceName = a.Value.(string)
+		}
+	}
 
 	for _, a := range resourceAttributes {
 		if *a.Key == "serviceName" &&
@@ -3513,6 +4019,11 @@ func GetRoleNamesFromPolicyResponse(policy iampolicymanagementv1.V2PolicyTemplat
 	if accountManagement, ok := d.GetOk("account_management"); ok {
 		isAccountManagementPolicy = accountManagement.(bool)
 	}
+
+	if serviceName == "" && resourceType == "resource-group" {
+		serviceName = "resource-controller"
+	}
+
 	if serviceName == "" && // no specific service specified
 		!isAccountManagementPolicy && // not all account management services
 		resourceType != "resource-group" && // not to a resource group
@@ -3526,6 +4037,14 @@ func GetRoleNamesFromPolicyResponse(policy iampolicymanagementv1.V2PolicyTemplat
 
 	if serviceGroupID != "" {
 		listRoleOptions.ServiceGroupID = &serviceGroupID
+	}
+
+	if sourceServiceName != "" {
+		listRoleOptions.SourceServiceName = &sourceServiceName
+	}
+
+	if *policy.Type != "" {
+		listRoleOptions.PolicyType = policy.Type
 	}
 
 	roleList, _, err := iamPolicyManagementClient.ListRoles(listRoleOptions)
@@ -4150,6 +4669,15 @@ func FlattenSatelliteHosts(hostList []kubernetesserviceapiv1.MultishiftQueueNode
 	return hosts
 }
 
+func FlattenSatelliteCapabilities(capabilities *schema.Set) []kubernetesserviceapiv1.CapabilityManagedBySatellite {
+	result := make([]kubernetesserviceapiv1.CapabilityManagedBySatellite, capabilities.Len())
+	for i, v := range capabilities.List() {
+		result[i] = kubernetesserviceapiv1.CapabilityManagedBySatellite(v.(string))
+	}
+
+	return result
+}
+
 func FlattenWorkerPoolHostLabels(hostLabels map[string]string) *schema.Set {
 	mapped := make([]string, 0)
 	for k, v := range hostLabels {
@@ -4261,4 +4789,28 @@ func Listdifference(a, b []string) []string {
 		}
 	}
 	return ab
+}
+
+// Stringify returns the stringified form of value "v".
+// If "v" is a string-based type (string, strfmt.Date, strfmt.DateTime, strfmt.UUID, etc.),
+// then it is returned unchanged (e.g. `this is a string`, `foo`, `2025-06-03`).
+// Otherwise, json.Marshal() is used to serialze "v" and the resulting string is returned
+// (e.g. `32`, `true`, `[true, false, true]`, `{"foo": "bar"}`).
+// Note: the backticks in the comments above are not part of the returned strings.
+func Stringify(v interface{}) string {
+	if !core.IsNil(v) {
+		if s, ok := v.(string); ok {
+			return s
+		} else if s, ok := v.(interface{ String() string }); ok {
+			return s.String()
+		} else {
+			bytes, err := json.Marshal(v)
+			if err != nil {
+				log.Printf("[ERROR] Error marshaling 'any type' value as string: %s", err.Error())
+				return ""
+			}
+			return string(bytes)
+		}
+	}
+	return ""
 }

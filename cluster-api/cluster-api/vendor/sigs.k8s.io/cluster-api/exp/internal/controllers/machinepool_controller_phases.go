@@ -49,6 +49,7 @@ import (
 	"sigs.k8s.io/cluster-api/util/labels"
 	"sigs.k8s.io/cluster-api/util/labels/format"
 	"sigs.k8s.io/cluster-api/util/patch"
+	"sigs.k8s.io/cluster-api/util/predicates"
 )
 
 func (r *MachinePoolReconciler) reconcilePhase(mp *expv1.MachinePool) {
@@ -68,12 +69,12 @@ func (r *MachinePoolReconciler) reconcilePhase(mp *expv1.MachinePool) {
 	}
 
 	// Set the phase to "running" if the number of ready replicas is equal to desired replicas.
-	if mp.Status.InfrastructureReady && *mp.Spec.Replicas == mp.Status.ReadyReplicas {
+	if mp.Status.InfrastructureReady && mp.Spec.Replicas != nil && *mp.Spec.Replicas == mp.Status.ReadyReplicas {
 		mp.Status.SetTypedPhase(expv1.MachinePoolPhaseRunning)
 	}
 
 	// Set the appropriate phase in response to the MachinePool replica count being greater than the observed infrastructure replicas.
-	if mp.Status.InfrastructureReady && *mp.Spec.Replicas > mp.Status.ReadyReplicas {
+	if mp.Status.InfrastructureReady && mp.Spec.Replicas != nil && *mp.Spec.Replicas > mp.Status.ReadyReplicas {
 		// If we are being managed by an external autoscaler and can't predict scaling direction, set to "Scaling".
 		if annotations.ReplicasManagedByExternalAutoscaler(mp) {
 			mp.Status.SetTypedPhase(expv1.MachinePoolPhaseScaling)
@@ -84,7 +85,7 @@ func (r *MachinePoolReconciler) reconcilePhase(mp *expv1.MachinePool) {
 	}
 
 	// Set the appropriate phase in response to the MachinePool replica count being less than the observed infrastructure replicas.
-	if mp.Status.InfrastructureReady && *mp.Spec.Replicas < mp.Status.ReadyReplicas {
+	if mp.Status.InfrastructureReady && mp.Spec.Replicas != nil && *mp.Spec.Replicas < mp.Status.ReadyReplicas {
 		// If we are being managed by an external autoscaler and can't predict scaling direction, set to "Scaling".
 		if annotations.ReplicasManagedByExternalAutoscaler(mp) {
 			mp.Status.SetTypedPhase(expv1.MachinePoolPhaseScaling)
@@ -106,31 +107,25 @@ func (r *MachinePoolReconciler) reconcilePhase(mp *expv1.MachinePool) {
 }
 
 // reconcileExternal handles generic unstructured objects referenced by a MachinePool.
-func (r *MachinePoolReconciler) reconcileExternal(ctx context.Context, cluster *clusterv1.Cluster, m *expv1.MachinePool, ref *corev1.ObjectReference) (external.ReconcileOutput, error) {
+func (r *MachinePoolReconciler) reconcileExternal(ctx context.Context, m *expv1.MachinePool, ref *corev1.ObjectReference) (external.ReconcileOutput, error) {
 	log := ctrl.LoggerFrom(ctx)
 
 	if err := utilconversion.UpdateReferenceAPIContract(ctx, r.Client, ref); err != nil {
 		return external.ReconcileOutput{}, err
 	}
 
-	obj, err := external.Get(ctx, r.Client, ref, m.Namespace)
+	obj, err := external.Get(ctx, r.Client, ref)
 	if err != nil {
 		if apierrors.IsNotFound(errors.Cause(err)) {
 			return external.ReconcileOutput{}, errors.Wrapf(err, "could not find %v %q for MachinePool %q in namespace %q, requeuing",
-				ref.GroupVersionKind(), ref.Name, m.Name, m.Namespace)
+				ref.GroupVersionKind(), ref.Name, m.Name, ref.Namespace)
 		}
 		return external.ReconcileOutput{}, err
 	}
 
 	// Ensure we add a watch to the external object, if there isn't one already.
-	if err := r.externalTracker.Watch(log, obj, handler.EnqueueRequestForOwner(r.Client.Scheme(), r.Client.RESTMapper(), &expv1.MachinePool{})); err != nil {
+	if err := r.externalTracker.Watch(log, obj, handler.EnqueueRequestForOwner(r.Client.Scheme(), r.Client.RESTMapper(), &expv1.MachinePool{}), predicates.ResourceIsChanged(r.Client.Scheme(), *r.externalTracker.PredicateLogger)); err != nil {
 		return external.ReconcileOutput{}, err
-	}
-
-	// if external ref is paused, return error.
-	if annotations.IsPaused(cluster, obj) {
-		log.V(3).Info("External object referenced is paused")
-		return external.ReconcileOutput{Paused: true}, nil
 	}
 
 	// Initialize the patch helper.
@@ -177,19 +172,15 @@ func (r *MachinePoolReconciler) reconcileExternal(ctx context.Context, cluster *
 }
 
 // reconcileBootstrap reconciles the Spec.Bootstrap.ConfigRef object on a MachinePool.
-func (r *MachinePoolReconciler) reconcileBootstrap(ctx context.Context, cluster *clusterv1.Cluster, m *expv1.MachinePool) (ctrl.Result, error) {
+func (r *MachinePoolReconciler) reconcileBootstrap(ctx context.Context, s *scope) (ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx)
-
+	m := s.machinePool
 	// Call generic external reconciler if we have an external reference.
 	var bootstrapConfig *unstructured.Unstructured
 	if m.Spec.Template.Spec.Bootstrap.ConfigRef != nil {
-		bootstrapReconcileResult, err := r.reconcileExternal(ctx, cluster, m, m.Spec.Template.Spec.Bootstrap.ConfigRef)
+		bootstrapReconcileResult, err := r.reconcileExternal(ctx, m, m.Spec.Template.Spec.Bootstrap.ConfigRef)
 		if err != nil {
 			return ctrl.Result{}, err
-		}
-		// if the external object is paused, return without any further processing
-		if bootstrapReconcileResult.Paused {
-			return ctrl.Result{}, nil
 		}
 		bootstrapConfig = bootstrapReconcileResult.Result
 
@@ -241,11 +232,12 @@ func (r *MachinePoolReconciler) reconcileBootstrap(ctx context.Context, cluster 
 }
 
 // reconcileInfrastructure reconciles the Spec.InfrastructureRef object on a MachinePool.
-func (r *MachinePoolReconciler) reconcileInfrastructure(ctx context.Context, cluster *clusterv1.Cluster, mp *expv1.MachinePool) (ctrl.Result, error) {
+func (r *MachinePoolReconciler) reconcileInfrastructure(ctx context.Context, s *scope) (ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx)
-
+	cluster := s.cluster
+	mp := s.machinePool
 	// Call generic external reconciler.
-	infraReconcileResult, err := r.reconcileExternal(ctx, cluster, mp, &mp.Spec.Template.Spec.InfrastructureRef)
+	infraReconcileResult, err := r.reconcileExternal(ctx, mp, &mp.Spec.Template.Spec.InfrastructureRef)
 	if err != nil {
 		if apierrors.IsNotFound(errors.Cause(err)) {
 			log.Error(err, "infrastructure reference could not be found")
@@ -259,10 +251,6 @@ func (r *MachinePoolReconciler) reconcileInfrastructure(ctx context.Context, clu
 			conditions.MarkFalse(mp, clusterv1.InfrastructureReadyCondition, clusterv1.IncorrectExternalRefReason, clusterv1.ConditionSeverityError, fmt.Sprintf("could not find infra reference of kind %s with name %s", mp.Spec.Template.Spec.InfrastructureRef.Kind, mp.Spec.Template.Spec.InfrastructureRef.Name))
 		}
 		return ctrl.Result{}, err
-	}
-	// if the external object is paused, return without any further processing
-	if infraReconcileResult.Paused {
-		return ctrl.Result{}, nil
 	}
 	infraConfig := infraReconcileResult.Result
 
@@ -283,8 +271,19 @@ func (r *MachinePoolReconciler) reconcileInfrastructure(ctx context.Context, clu
 		conditions.WithFallbackValue(ready, clusterv1.WaitingForInfrastructureFallbackReason, clusterv1.ConditionSeverityInfo, ""),
 	)
 
-	if err := r.reconcileMachines(ctx, mp, infraConfig); err != nil {
-		return ctrl.Result{}, errors.Wrapf(err, "failed to reconcile Machines for MachinePool %s", klog.KObj(mp))
+	clusterClient, err := r.ClusterCache.GetClient(ctx, util.ObjectKey(cluster))
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	var getNodeRefsErr error
+	// Get the nodeRefsMap from the cluster.
+	s.nodeRefMap, getNodeRefsErr = r.getNodeRefMap(ctx, clusterClient)
+
+	err = r.reconcileMachines(ctx, s, infraConfig)
+
+	if err != nil || getNodeRefsErr != nil {
+		return ctrl.Result{}, kerrors.NewAggregate([]error{errors.Wrapf(err, "failed to reconcile Machines for MachinePool %s", klog.KObj(mp)), errors.Wrapf(getNodeRefsErr, "failed to get nodeRefs for MachinePool %s", klog.KObj(mp))})
 	}
 
 	if !mp.Status.InfrastructureReady {
@@ -328,8 +327,9 @@ func (r *MachinePoolReconciler) reconcileInfrastructure(ctx context.Context, clu
 // infrastructure is created accordingly.
 // Note: When supported by the cloud provider implementation of the MachinePool, machines will provide a means to interact
 // with the corresponding infrastructure (e.g. delete a specific machine in case MachineHealthCheck detects it is unhealthy).
-func (r *MachinePoolReconciler) reconcileMachines(ctx context.Context, mp *expv1.MachinePool, infraMachinePool *unstructured.Unstructured) error {
+func (r *MachinePoolReconciler) reconcileMachines(ctx context.Context, s *scope, infraMachinePool *unstructured.Unstructured) error {
 	log := ctrl.LoggerFrom(ctx)
+	mp := s.machinePool
 
 	var infraMachineKind string
 	if err := util.UnstructuredUnmarshalField(infraMachinePool, &infraMachineKind, "status", "infrastructureMachineKind"); err != nil {
@@ -365,7 +365,7 @@ func (r *MachinePoolReconciler) reconcileMachines(ctx context.Context, mp *expv1
 	sampleInfraMachine.SetKind(infraMachineKind)
 
 	// Add watcher for infraMachine, if there isn't one already.
-	if err := r.externalTracker.Watch(log, sampleInfraMachine, handler.EnqueueRequestsFromMapFunc(r.infraMachineToMachinePoolMapper)); err != nil {
+	if err := r.externalTracker.Watch(log, sampleInfraMachine, handler.EnqueueRequestsFromMapFunc(r.infraMachineToMachinePoolMapper), predicates.ResourceIsChanged(r.Client.Scheme(), *r.externalTracker.PredicateLogger)); err != nil {
 		return err
 	}
 
@@ -376,7 +376,7 @@ func (r *MachinePoolReconciler) reconcileMachines(ctx context.Context, mp *expv1
 		return err
 	}
 
-	if err := r.createOrUpdateMachines(ctx, mp, machineList.Items, infraMachineList.Items); err != nil {
+	if err := r.createOrUpdateMachines(ctx, s, machineList.Items, infraMachineList.Items); err != nil {
 		return errors.Wrapf(err, "failed to create machines for MachinePool %q in namespace %q", mp.Name, mp.Namespace)
 	}
 
@@ -384,7 +384,7 @@ func (r *MachinePoolReconciler) reconcileMachines(ctx context.Context, mp *expv1
 }
 
 // createOrUpdateMachines creates a MachinePool Machine for each infraMachine if it doesn't already exist and sets the owner reference and infraRef.
-func (r *MachinePoolReconciler) createOrUpdateMachines(ctx context.Context, mp *expv1.MachinePool, machines []clusterv1.Machine, infraMachines []unstructured.Unstructured) error {
+func (r *MachinePoolReconciler) createOrUpdateMachines(ctx context.Context, s *scope, machines []clusterv1.Machine, infraMachines []unstructured.Unstructured) error {
 	log := ctrl.LoggerFrom(ctx)
 
 	// Construct a set of names of infraMachines that already have a Machine.
@@ -398,11 +398,22 @@ func (r *MachinePoolReconciler) createOrUpdateMachines(ctx context.Context, mp *
 	var errs []error
 	for i := range infraMachines {
 		infraMachine := &infraMachines[i]
+
+		// Get Spec.ProviderID from the infraMachine.
+		var providerID string
+		var node *corev1.Node
+		if err := util.UnstructuredUnmarshalField(infraMachine, &providerID, "spec", "providerID"); err != nil {
+			log.V(4).Info("could not retrieve providerID for infraMachine", "infraMachine", klog.KObj(infraMachine))
+		} else {
+			// Retrieve the Node for the infraMachine from the nodeRefsMap using the providerID.
+			node = s.nodeRefMap[providerID]
+		}
+
 		// If infraMachine already has a Machine, update it if needed.
 		if existingMachine, ok := infraMachineToMachine[infraMachine.GetName()]; ok {
-			log.V(2).Info("Patching existing Machine for infraMachine", "infraMachine", klog.KObj(infraMachine), "machine", klog.KObj(&existingMachine))
+			log.V(2).Info("Patching existing Machine for infraMachine", infraMachine.GetKind(), klog.KObj(infraMachine), "Machine", klog.KObj(&existingMachine))
 
-			desiredMachine := computeDesiredMachine(mp, infraMachine, &existingMachine)
+			desiredMachine := r.computeDesiredMachine(s.machinePool, infraMachine, &existingMachine, node)
 			if err := ssa.Patch(ctx, r.Client, MachinePoolControllerName, desiredMachine, ssa.WithCachingProxy{Cache: r.ssaCache, Original: &existingMachine}); err != nil {
 				log.Error(err, "failed to update Machine", "Machine", klog.KObj(desiredMachine))
 				errs = append(errs, errors.Wrapf(err, "failed to update Machine %q", klog.KObj(desiredMachine)))
@@ -410,7 +421,7 @@ func (r *MachinePoolReconciler) createOrUpdateMachines(ctx context.Context, mp *
 		} else {
 			// Otherwise create a new Machine for the infraMachine.
 			log.Info("Creating new Machine for infraMachine", "infraMachine", klog.KObj(infraMachine))
-			machine := computeDesiredMachine(mp, infraMachine, nil)
+			machine := r.computeDesiredMachine(s.machinePool, infraMachine, nil, node)
 
 			if err := ssa.Patch(ctx, r.Client, MachinePoolControllerName, machine); err != nil {
 				errs = append(errs, errors.Wrapf(err, "failed to create new Machine for infraMachine %q in namespace %q", infraMachine.GetName(), infraMachine.GetNamespace()))
@@ -432,12 +443,17 @@ func (r *MachinePoolReconciler) createOrUpdateMachines(ctx context.Context, mp *
 
 // computeDesiredMachine constructs the desired Machine for an infraMachine.
 // If the Machine exists, it ensures the Machine always owned by the MachinePool.
-func computeDesiredMachine(mp *expv1.MachinePool, infraMachine *unstructured.Unstructured, existingMachine *clusterv1.Machine) *clusterv1.Machine {
+func (r *MachinePoolReconciler) computeDesiredMachine(mp *expv1.MachinePool, infraMachine *unstructured.Unstructured, existingMachine *clusterv1.Machine, existingNode *corev1.Node) *clusterv1.Machine {
 	infraRef := corev1.ObjectReference{
 		APIVersion: infraMachine.GetAPIVersion(),
 		Kind:       infraMachine.GetKind(),
 		Name:       infraMachine.GetName(),
 		Namespace:  infraMachine.GetNamespace(),
+	}
+
+	var kubernetesVersion *string
+	if existingNode != nil && existingNode.Status.NodeInfo.KubeletVersion != "" {
+		kubernetesVersion = &existingNode.Status.NodeInfo.KubeletVersion
 	}
 
 	machine := &clusterv1.Machine{
@@ -452,6 +468,7 @@ func computeDesiredMachine(mp *expv1.MachinePool, infraMachine *unstructured.Uns
 		Spec: clusterv1.MachineSpec{
 			ClusterName:       mp.Spec.ClusterName,
 			InfrastructureRef: infraRef,
+			Version:           kubernetesVersion,
 		},
 	}
 
@@ -488,7 +505,7 @@ func (r *MachinePoolReconciler) infraMachineToMachinePoolMapper(ctx context.Cont
 	if labels.IsMachinePoolOwned(o) {
 		machinePool, err := utilexp.GetMachinePoolByLabels(ctx, r.Client, o.GetNamespace(), o.GetLabels())
 		if err != nil {
-			log.Error(err, "failed to get MachinePool for InfraMachine", "infraMachine", klog.KObj(o), "labels", o.GetLabels())
+			log.Error(err, "Failed to get MachinePool for InfraMachine", o.GetObjectKind().GroupVersionKind().Kind, klog.KObj(o), "labels", o.GetLabels())
 			return nil
 		}
 		if machinePool != nil {
@@ -516,7 +533,7 @@ func (r *MachinePoolReconciler) waitForMachineCreation(ctx context.Context, mach
 	// The polling is against a local memory cache.
 	const waitForCacheUpdateInterval = 100 * time.Millisecond
 
-	for i := 0; i < len(machineList); i++ {
+	for i := range len(machineList) {
 		machine := machineList[i]
 		pollErr := wait.PollUntilContextTimeout(ctx, waitForCacheUpdateInterval, waitForCacheUpdateTimeout, true, func(ctx context.Context) (bool, error) {
 			key := client.ObjectKey{Namespace: machine.Namespace, Name: machine.Name}
@@ -536,4 +553,30 @@ func (r *MachinePoolReconciler) waitForMachineCreation(ctx context.Context, mach
 	}
 
 	return nil
+}
+
+func (r *MachinePoolReconciler) getNodeRefMap(ctx context.Context, c client.Client) (map[string]*corev1.Node, error) {
+	log := ctrl.LoggerFrom(ctx)
+	nodeRefsMap := make(map[string]*corev1.Node)
+	nodeList := corev1.NodeList{}
+	for {
+		if err := c.List(ctx, &nodeList, client.Continue(nodeList.Continue)); err != nil {
+			return nil, err
+		}
+
+		for _, node := range nodeList.Items {
+			if node.Spec.ProviderID == "" {
+				log.V(2).Info("No ProviderID detected, skipping", "providerID", node.Spec.ProviderID)
+				continue
+			}
+
+			nodeRefsMap[node.Spec.ProviderID] = &node
+		}
+
+		if nodeList.Continue == "" {
+			break
+		}
+	}
+
+	return nodeRefsMap, nil
 }

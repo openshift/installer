@@ -19,7 +19,7 @@ package compute
 import (
 	"fmt"
 
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/availabilityzones"
+	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/availabilityzones"
 )
 
 func (s *Service) GetAvailabilityZones() ([]availabilityzones.AvailabilityZone, error) {

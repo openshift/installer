@@ -5,7 +5,7 @@ package v1api20220701
 
 import (
 	"fmt"
-	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
@@ -49,7 +49,7 @@ var _ conversion.Convertible = &PrivateEndpointsPrivateDnsZoneGroup{}
 
 // ConvertFrom populates our PrivateEndpointsPrivateDnsZoneGroup from the provided hub PrivateEndpointsPrivateDnsZoneGroup
 func (group *PrivateEndpointsPrivateDnsZoneGroup) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220701s.PrivateEndpointsPrivateDnsZoneGroup)
+	source, ok := hub.(*storage.PrivateEndpointsPrivateDnsZoneGroup)
 	if !ok {
 		return fmt.Errorf("expected network/v1api20220701/storage/PrivateEndpointsPrivateDnsZoneGroup but received %T instead", hub)
 	}
@@ -59,7 +59,7 @@ func (group *PrivateEndpointsPrivateDnsZoneGroup) ConvertFrom(hub conversion.Hub
 
 // ConvertTo populates the provided hub PrivateEndpointsPrivateDnsZoneGroup from our PrivateEndpointsPrivateDnsZoneGroup
 func (group *PrivateEndpointsPrivateDnsZoneGroup) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220701s.PrivateEndpointsPrivateDnsZoneGroup)
+	destination, ok := hub.(*storage.PrivateEndpointsPrivateDnsZoneGroup)
 	if !ok {
 		return fmt.Errorf("expected network/v1api20220701/storage/PrivateEndpointsPrivateDnsZoneGroup but received %T instead", hub)
 	}
@@ -254,7 +254,7 @@ func (group *PrivateEndpointsPrivateDnsZoneGroup) validateWriteOnceProperties(ol
 }
 
 // AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup populates our PrivateEndpointsPrivateDnsZoneGroup from the provided source PrivateEndpointsPrivateDnsZoneGroup
-func (group *PrivateEndpointsPrivateDnsZoneGroup) AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup(source *v20220701s.PrivateEndpointsPrivateDnsZoneGroup) error {
+func (group *PrivateEndpointsPrivateDnsZoneGroup) AssignProperties_From_PrivateEndpointsPrivateDnsZoneGroup(source *storage.PrivateEndpointsPrivateDnsZoneGroup) error {
 
 	// ObjectMeta
 	group.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -280,13 +280,13 @@ func (group *PrivateEndpointsPrivateDnsZoneGroup) AssignProperties_From_PrivateE
 }
 
 // AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup populates the provided destination PrivateEndpointsPrivateDnsZoneGroup from our PrivateEndpointsPrivateDnsZoneGroup
-func (group *PrivateEndpointsPrivateDnsZoneGroup) AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup(destination *v20220701s.PrivateEndpointsPrivateDnsZoneGroup) error {
+func (group *PrivateEndpointsPrivateDnsZoneGroup) AssignProperties_To_PrivateEndpointsPrivateDnsZoneGroup(destination *storage.PrivateEndpointsPrivateDnsZoneGroup) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *group.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_Spec
+	var spec storage.PrivateEndpoints_PrivateDnsZoneGroup_Spec
 	err := group.Spec.AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_Spec() to populate field Spec")
@@ -294,7 +294,7 @@ func (group *PrivateEndpointsPrivateDnsZoneGroup) AssignProperties_To_PrivateEnd
 	destination.Spec = spec
 
 	// Status
-	var status v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_STATUS
+	var status storage.PrivateEndpoints_PrivateDnsZoneGroup_STATUS
 	err = group.Status.AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_STATUS() to populate field Status")
@@ -407,14 +407,14 @@ var _ genruntime.ConvertibleSpec = &PrivateEndpoints_PrivateDnsZoneGroup_Spec{}
 
 // ConvertSpecFrom populates our PrivateEndpoints_PrivateDnsZoneGroup_Spec from the provided source
 func (group *PrivateEndpoints_PrivateDnsZoneGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_Spec)
+	src, ok := source.(*storage.PrivateEndpoints_PrivateDnsZoneGroup_Spec)
 	if ok {
 		// Populate our instance from source
 		return group.AssignProperties_From_PrivateEndpoints_PrivateDnsZoneGroup_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_Spec{}
+	src = &storage.PrivateEndpoints_PrivateDnsZoneGroup_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -431,14 +431,14 @@ func (group *PrivateEndpoints_PrivateDnsZoneGroup_Spec) ConvertSpecFrom(source g
 
 // ConvertSpecTo populates the provided destination from our PrivateEndpoints_PrivateDnsZoneGroup_Spec
 func (group *PrivateEndpoints_PrivateDnsZoneGroup_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_Spec)
+	dst, ok := destination.(*storage.PrivateEndpoints_PrivateDnsZoneGroup_Spec)
 	if ok {
 		// Populate destination from our instance
 		return group.AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_Spec{}
+	dst = &storage.PrivateEndpoints_PrivateDnsZoneGroup_Spec{}
 	err := group.AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -454,7 +454,7 @@ func (group *PrivateEndpoints_PrivateDnsZoneGroup_Spec) ConvertSpecTo(destinatio
 }
 
 // AssignProperties_From_PrivateEndpoints_PrivateDnsZoneGroup_Spec populates our PrivateEndpoints_PrivateDnsZoneGroup_Spec from the provided source PrivateEndpoints_PrivateDnsZoneGroup_Spec
-func (group *PrivateEndpoints_PrivateDnsZoneGroup_Spec) AssignProperties_From_PrivateEndpoints_PrivateDnsZoneGroup_Spec(source *v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_Spec) error {
+func (group *PrivateEndpoints_PrivateDnsZoneGroup_Spec) AssignProperties_From_PrivateEndpoints_PrivateDnsZoneGroup_Spec(source *storage.PrivateEndpoints_PrivateDnsZoneGroup_Spec) error {
 
 	// AzureName
 	group.AzureName = source.AzureName
@@ -490,7 +490,7 @@ func (group *PrivateEndpoints_PrivateDnsZoneGroup_Spec) AssignProperties_From_Pr
 }
 
 // AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_Spec populates the provided destination PrivateEndpoints_PrivateDnsZoneGroup_Spec from our PrivateEndpoints_PrivateDnsZoneGroup_Spec
-func (group *PrivateEndpoints_PrivateDnsZoneGroup_Spec) AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_Spec(destination *v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_Spec) error {
+func (group *PrivateEndpoints_PrivateDnsZoneGroup_Spec) AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_Spec(destination *storage.PrivateEndpoints_PrivateDnsZoneGroup_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -510,11 +510,11 @@ func (group *PrivateEndpoints_PrivateDnsZoneGroup_Spec) AssignProperties_To_Priv
 
 	// PrivateDnsZoneConfigs
 	if group.PrivateDnsZoneConfigs != nil {
-		privateDnsZoneConfigList := make([]v20220701s.PrivateDnsZoneConfig, len(group.PrivateDnsZoneConfigs))
+		privateDnsZoneConfigList := make([]storage.PrivateDnsZoneConfig, len(group.PrivateDnsZoneConfigs))
 		for privateDnsZoneConfigIndex, privateDnsZoneConfigItem := range group.PrivateDnsZoneConfigs {
 			// Shadow the loop variable to avoid aliasing
 			privateDnsZoneConfigItem := privateDnsZoneConfigItem
-			var privateDnsZoneConfig v20220701s.PrivateDnsZoneConfig
+			var privateDnsZoneConfig storage.PrivateDnsZoneConfig
 			err := privateDnsZoneConfigItem.AssignProperties_To_PrivateDnsZoneConfig(&privateDnsZoneConfig)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_PrivateDnsZoneConfig() to populate field PrivateDnsZoneConfigs")
@@ -596,14 +596,14 @@ var _ genruntime.ConvertibleStatus = &PrivateEndpoints_PrivateDnsZoneGroup_STATU
 
 // ConvertStatusFrom populates our PrivateEndpoints_PrivateDnsZoneGroup_STATUS from the provided source
 func (group *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_STATUS)
+	src, ok := source.(*storage.PrivateEndpoints_PrivateDnsZoneGroup_STATUS)
 	if ok {
 		// Populate our instance from source
 		return group.AssignProperties_From_PrivateEndpoints_PrivateDnsZoneGroup_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_STATUS{}
+	src = &storage.PrivateEndpoints_PrivateDnsZoneGroup_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -620,14 +620,14 @@ func (group *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) ConvertStatusFrom(sour
 
 // ConvertStatusTo populates the provided destination from our PrivateEndpoints_PrivateDnsZoneGroup_STATUS
 func (group *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_STATUS)
+	dst, ok := destination.(*storage.PrivateEndpoints_PrivateDnsZoneGroup_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return group.AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_STATUS{}
+	dst = &storage.PrivateEndpoints_PrivateDnsZoneGroup_STATUS{}
 	err := group.AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -703,7 +703,7 @@ func (group *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) PopulateFromARM(owner 
 }
 
 // AssignProperties_From_PrivateEndpoints_PrivateDnsZoneGroup_STATUS populates our PrivateEndpoints_PrivateDnsZoneGroup_STATUS from the provided source PrivateEndpoints_PrivateDnsZoneGroup_STATUS
-func (group *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) AssignProperties_From_PrivateEndpoints_PrivateDnsZoneGroup_STATUS(source *v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_STATUS) error {
+func (group *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) AssignProperties_From_PrivateEndpoints_PrivateDnsZoneGroup_STATUS(source *storage.PrivateEndpoints_PrivateDnsZoneGroup_STATUS) error {
 
 	// Conditions
 	group.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -737,8 +737,9 @@ func (group *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) AssignProperties_From_
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := PrivateEndpointProvisioningState_STATUS(*source.ProvisioningState)
-		group.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, privateEndpointProvisioningState_STATUS_Values)
+		group.ProvisioningState = &provisioningStateTemp
 	} else {
 		group.ProvisioningState = nil
 	}
@@ -748,7 +749,7 @@ func (group *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) AssignProperties_From_
 }
 
 // AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_STATUS populates the provided destination PrivateEndpoints_PrivateDnsZoneGroup_STATUS from our PrivateEndpoints_PrivateDnsZoneGroup_STATUS
-func (group *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_STATUS(destination *v20220701s.PrivateEndpoints_PrivateDnsZoneGroup_STATUS) error {
+func (group *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) AssignProperties_To_PrivateEndpoints_PrivateDnsZoneGroup_STATUS(destination *storage.PrivateEndpoints_PrivateDnsZoneGroup_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -766,11 +767,11 @@ func (group *PrivateEndpoints_PrivateDnsZoneGroup_STATUS) AssignProperties_To_Pr
 
 	// PrivateDnsZoneConfigs
 	if group.PrivateDnsZoneConfigs != nil {
-		privateDnsZoneConfigList := make([]v20220701s.PrivateDnsZoneConfig_STATUS, len(group.PrivateDnsZoneConfigs))
+		privateDnsZoneConfigList := make([]storage.PrivateDnsZoneConfig_STATUS, len(group.PrivateDnsZoneConfigs))
 		for privateDnsZoneConfigIndex, privateDnsZoneConfigItem := range group.PrivateDnsZoneConfigs {
 			// Shadow the loop variable to avoid aliasing
 			privateDnsZoneConfigItem := privateDnsZoneConfigItem
-			var privateDnsZoneConfig v20220701s.PrivateDnsZoneConfig_STATUS
+			var privateDnsZoneConfig storage.PrivateDnsZoneConfig_STATUS
 			err := privateDnsZoneConfigItem.AssignProperties_To_PrivateDnsZoneConfig_STATUS(&privateDnsZoneConfig)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_PrivateDnsZoneConfig_STATUS() to populate field PrivateDnsZoneConfigs")
@@ -865,7 +866,7 @@ func (config *PrivateDnsZoneConfig) PopulateFromARM(owner genruntime.ArbitraryOw
 }
 
 // AssignProperties_From_PrivateDnsZoneConfig populates our PrivateDnsZoneConfig from the provided source PrivateDnsZoneConfig
-func (config *PrivateDnsZoneConfig) AssignProperties_From_PrivateDnsZoneConfig(source *v20220701s.PrivateDnsZoneConfig) error {
+func (config *PrivateDnsZoneConfig) AssignProperties_From_PrivateDnsZoneConfig(source *storage.PrivateDnsZoneConfig) error {
 
 	// Name
 	config.Name = genruntime.ClonePointerToString(source.Name)
@@ -883,7 +884,7 @@ func (config *PrivateDnsZoneConfig) AssignProperties_From_PrivateDnsZoneConfig(s
 }
 
 // AssignProperties_To_PrivateDnsZoneConfig populates the provided destination PrivateDnsZoneConfig from our PrivateDnsZoneConfig
-func (config *PrivateDnsZoneConfig) AssignProperties_To_PrivateDnsZoneConfig(destination *v20220701s.PrivateDnsZoneConfig) error {
+func (config *PrivateDnsZoneConfig) AssignProperties_To_PrivateDnsZoneConfig(destination *storage.PrivateDnsZoneConfig) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -986,7 +987,7 @@ func (config *PrivateDnsZoneConfig_STATUS) PopulateFromARM(owner genruntime.Arbi
 }
 
 // AssignProperties_From_PrivateDnsZoneConfig_STATUS populates our PrivateDnsZoneConfig_STATUS from the provided source PrivateDnsZoneConfig_STATUS
-func (config *PrivateDnsZoneConfig_STATUS) AssignProperties_From_PrivateDnsZoneConfig_STATUS(source *v20220701s.PrivateDnsZoneConfig_STATUS) error {
+func (config *PrivateDnsZoneConfig_STATUS) AssignProperties_From_PrivateDnsZoneConfig_STATUS(source *storage.PrivateDnsZoneConfig_STATUS) error {
 
 	// Name
 	config.Name = genruntime.ClonePointerToString(source.Name)
@@ -1017,7 +1018,7 @@ func (config *PrivateDnsZoneConfig_STATUS) AssignProperties_From_PrivateDnsZoneC
 }
 
 // AssignProperties_To_PrivateDnsZoneConfig_STATUS populates the provided destination PrivateDnsZoneConfig_STATUS from our PrivateDnsZoneConfig_STATUS
-func (config *PrivateDnsZoneConfig_STATUS) AssignProperties_To_PrivateDnsZoneConfig_STATUS(destination *v20220701s.PrivateDnsZoneConfig_STATUS) error {
+func (config *PrivateDnsZoneConfig_STATUS) AssignProperties_To_PrivateDnsZoneConfig_STATUS(destination *storage.PrivateDnsZoneConfig_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1029,11 +1030,11 @@ func (config *PrivateDnsZoneConfig_STATUS) AssignProperties_To_PrivateDnsZoneCon
 
 	// RecordSets
 	if config.RecordSets != nil {
-		recordSetList := make([]v20220701s.RecordSet_STATUS, len(config.RecordSets))
+		recordSetList := make([]storage.RecordSet_STATUS, len(config.RecordSets))
 		for recordSetIndex, recordSetItem := range config.RecordSets {
 			// Shadow the loop variable to avoid aliasing
 			recordSetItem := recordSetItem
-			var recordSet v20220701s.RecordSet_STATUS
+			var recordSet storage.RecordSet_STATUS
 			err := recordSetItem.AssignProperties_To_RecordSet_STATUS(&recordSet)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_RecordSet_STATUS() to populate field RecordSets")
@@ -1065,6 +1066,14 @@ const (
 	PrivateEndpointProvisioningState_STATUS_Succeeded = PrivateEndpointProvisioningState_STATUS("Succeeded")
 	PrivateEndpointProvisioningState_STATUS_Updating  = PrivateEndpointProvisioningState_STATUS("Updating")
 )
+
+// Mapping from string to PrivateEndpointProvisioningState_STATUS
+var privateEndpointProvisioningState_STATUS_Values = map[string]PrivateEndpointProvisioningState_STATUS{
+	"deleting":  PrivateEndpointProvisioningState_STATUS_Deleting,
+	"failed":    PrivateEndpointProvisioningState_STATUS_Failed,
+	"succeeded": PrivateEndpointProvisioningState_STATUS_Succeeded,
+	"updating":  PrivateEndpointProvisioningState_STATUS_Updating,
+}
 
 // A collective group of information about the record set information.
 type RecordSet_STATUS struct {
@@ -1141,7 +1150,7 @@ func (recordSet *RecordSet_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwn
 }
 
 // AssignProperties_From_RecordSet_STATUS populates our RecordSet_STATUS from the provided source RecordSet_STATUS
-func (recordSet *RecordSet_STATUS) AssignProperties_From_RecordSet_STATUS(source *v20220701s.RecordSet_STATUS) error {
+func (recordSet *RecordSet_STATUS) AssignProperties_From_RecordSet_STATUS(source *storage.RecordSet_STATUS) error {
 
 	// Fqdn
 	recordSet.Fqdn = genruntime.ClonePointerToString(source.Fqdn)
@@ -1151,8 +1160,9 @@ func (recordSet *RecordSet_STATUS) AssignProperties_From_RecordSet_STATUS(source
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := PrivateEndpointProvisioningState_STATUS(*source.ProvisioningState)
-		recordSet.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, privateEndpointProvisioningState_STATUS_Values)
+		recordSet.ProvisioningState = &provisioningStateTemp
 	} else {
 		recordSet.ProvisioningState = nil
 	}
@@ -1171,7 +1181,7 @@ func (recordSet *RecordSet_STATUS) AssignProperties_From_RecordSet_STATUS(source
 }
 
 // AssignProperties_To_RecordSet_STATUS populates the provided destination RecordSet_STATUS from our RecordSet_STATUS
-func (recordSet *RecordSet_STATUS) AssignProperties_To_RecordSet_STATUS(destination *v20220701s.RecordSet_STATUS) error {
+func (recordSet *RecordSet_STATUS) AssignProperties_To_RecordSet_STATUS(destination *storage.RecordSet_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 

@@ -113,6 +113,11 @@ type AWSMachineSpec struct {
 	// +optional
 	PublicIP *bool `json:"publicIP,omitempty"`
 
+	// ElasticIPPool is the configuration to allocate Public IPv4 address (Elastic IP/EIP) from user-defined pool.
+	//
+	// +optional
+	ElasticIPPool *ElasticIPPool `json:"elasticIpPool,omitempty"`
+
 	// AdditionalSecurityGroups is an array of references to security groups that should be applied to the
 	// instance. These security groups would be set in addition to any security groups defined
 	// at the cluster level or in the actuator. It is possible to specify either IDs of Filters. Using Filters
@@ -188,6 +193,10 @@ type AWSMachineSpec struct {
 	// PrivateDNSName is the options for the instance hostname.
 	// +optional
 	PrivateDNSName *PrivateDNSName `json:"privateDnsName,omitempty"`
+
+	// CapacityReservationID specifies the target Capacity Reservation into which the instance should be launched.
+	// +optional
+	CapacityReservationID *string `json:"capacityReservationId,omitempty"`
 }
 
 // CloudInit defines options related to the bootstrapping systems where

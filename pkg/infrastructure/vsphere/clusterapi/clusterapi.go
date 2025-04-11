@@ -6,6 +6,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/vmware/govmomi/object"
 	"sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 
@@ -20,12 +21,16 @@ type Provider struct {
 	clusterapi.InfraProvider
 }
 
-var _ clusterapi.PreProvider = Provider{}
+var _ clusterapi.PreProvider = (*Provider)(nil)
 
 // Name returns the vsphere provider name.
 func (p Provider) Name() string {
 	return vsphere.Name
 }
+
+// PublicGatherEndpoint indicates that machine ready checks should NOT wait for an ExternalIP
+// in the status when declaring machines ready.
+func (Provider) PublicGatherEndpoint() clusterapi.GatherEndpoint { return clusterapi.InternalIP }
 
 func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, failureDomain vsphere.FailureDomain, session *session.Session, diskType vsphere.DiskType, clusterID, tagID string) error {
 	finder := session.Finder
@@ -34,12 +39,10 @@ func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, fail
 	if err != nil {
 		return err
 	}
-	dcFolders, err := dc.Folders(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to get datacenter folder: %w", err)
-	}
 
-	folderPath := path.Join(dcFolders.VmFolder.InventoryPath, clusterID)
+	// Upstream govmomi bug, workaround
+	// https://github.com/vmware/govmomi/issues/3523
+	folderPath := path.Join(dc.InventoryPath, "vm", clusterID)
 
 	// we must set the Folder to the infraId somewhere, we will need to remove that.
 	// if we are overwriting folderPath it needs to have a slash (path)
@@ -48,14 +51,26 @@ func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, fail
 		folderPath = folder
 	}
 
-	folderMo, err := createFolder(ctx, folderPath, session)
-	if err != nil {
-		return fmt.Errorf("unable to create folder: %w", err)
+	var folderObj *object.Folder
+
+	// Only createFolder() and attach the tag if the folder does not exist prior to installing
+	if folderObj, err = folderExists(ctx, folderPath, session); folderObj == nil && err == nil {
+		folderObj, err = createFolder(ctx, folderPath, session)
+		if err != nil {
+			return fmt.Errorf("unable to create folder: %w", err)
+		}
+		// attach tag to folder
+		err = session.TagManager.AttachTag(ctx, tagID, folderObj.Reference())
+		if err != nil {
+			return fmt.Errorf("unable to attach tag to folder: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("unable to get folder: %w", err)
 	}
 
 	// if the template is empty, the ova must be imported
 	if len(failureDomain.Topology.Template) == 0 {
-		if err = importRhcosOva(ctx, session, folderMo,
+		if err = importRhcosOva(ctx, session, folderObj,
 			cachedImage, clusterID, tagID, string(diskType), failureDomain); err != nil {
 			return fmt.Errorf("failed to import ova: %w", err)
 		}
@@ -71,13 +86,17 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	 * one folder per datacenter
 	 * one template per region/zone aka failuredomain
 	 */
+
 	installConfig := in.InstallConfig
 	clusterID := &installconfig.ClusterID{InfraID: in.InfraID}
-	var tagID string
+	var tagID, cachedImage string
+	var err error
 
-	cachedImage, err := cache.DownloadImageFile(string(*in.RhcosImage), cache.InstallerApplicationName)
-	if err != nil {
-		return fmt.Errorf("failed to use cached vsphere image: %w", err)
+	if downloadImage(installConfig) {
+		cachedImage, err = cache.DownloadImageFile(in.RhcosImage.ControlPlane, cache.InstallerApplicationName)
+		if err != nil {
+			return fmt.Errorf("failed to use cached vsphere image: %w", err)
+		}
 	}
 
 	for _, vcenter := range installConfig.Config.VSphere.VCenters {
@@ -106,6 +125,20 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 				continue
 			}
 
+			if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
+				vmGroupAndRuleName := fmt.Sprintf("%s-%s", clusterID.InfraID, failureDomain.Name)
+
+				err = createVMGroup(ctx, vctrSession, failureDomain.Topology.ComputeCluster, vmGroupAndRuleName)
+				if err != nil {
+					return err
+				}
+
+				err = createVMHostAffinityRule(ctx, vctrSession, failureDomain.Topology.ComputeCluster, failureDomain.Topology.HostGroup, vmGroupAndRuleName, vmGroupAndRuleName)
+				if err != nil {
+					return err
+				}
+			}
+
 			if err = initializeFoldersAndTemplates(ctx, cachedImage, failureDomain, vctrSession, installConfig.Config.VSphere.DiskType, clusterID.InfraID, tagID); err != nil {
 				return fmt.Errorf("unable to initialize folders and templates: %w", err)
 			}
@@ -113,4 +146,15 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	}
 
 	return nil
+}
+
+// downloadImage if any failure domains don't have a defined template, this function
+// returns true.
+func downloadImage(installConfig *installconfig.InstallConfig) bool {
+	for _, fd := range installConfig.Config.VSphere.FailureDomains {
+		if fd.Topology.Template == "" {
+			return true
+		}
+	}
+	return false
 }

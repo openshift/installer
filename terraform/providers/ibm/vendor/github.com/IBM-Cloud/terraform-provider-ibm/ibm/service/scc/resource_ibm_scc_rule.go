@@ -5,10 +5,7 @@ package scc
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"reflect"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -168,202 +165,7 @@ func ResourceIbmSccRule() *schema.Resource {
 				Required:    true,
 				Description: "The required configurations.",
 				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"description": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The required config description.",
-						},
-						"and": {
-							Type:        schema.TypeList,
-							Optional:    true,
-							Description: "The `AND` required configurations.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"description": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "The required config description.",
-									},
-									"or": {
-										Type:        schema.TypeList,
-										Optional:    true,
-										Description: "The `OR` required configurations.",
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"description": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "The required config description.",
-												},
-												"property": {
-													Type:        schema.TypeString,
-													Required:    true,
-													Description: "The property.",
-												},
-												"operator": {
-													Type:        schema.TypeString,
-													Required:    true,
-													Description: "The operator.",
-												},
-												"value": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "Schema for any JSON type.",
-												},
-											},
-										},
-									},
-									"and": {
-										Type:        schema.TypeList,
-										Optional:    true,
-										Description: "The `AND` required configurations.",
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"description": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "The required config description.",
-												},
-												"property": {
-													Type:        schema.TypeString,
-													Required:    true,
-													Description: "The property.",
-												},
-												"operator": {
-													Type:        schema.TypeString,
-													Required:    true,
-													Description: "The operator.",
-												},
-												"value": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "Schema for any JSON type.",
-												},
-											},
-										},
-									},
-									"property": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "The property.",
-									},
-									"operator": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "The operator.",
-									},
-									"value": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Schema for any JSON type.",
-									},
-								},
-							},
-						},
-						"or": {
-							Type:        schema.TypeList,
-							Optional:    true,
-							Description: "The `OR` required configurations.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"description": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "The required config description.",
-									},
-									"or": {
-										Type:        schema.TypeList,
-										Optional:    true,
-										Description: "The `OR` required configurations.",
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"description": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "The required config description.",
-												},
-												"property": {
-													Type:        schema.TypeString,
-													Required:    true,
-													Description: "The property.",
-												},
-												"operator": {
-													Type:        schema.TypeString,
-													Required:    true,
-													Description: "The operator.",
-												},
-												"value": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "Schema for any JSON type.",
-												},
-											},
-										},
-									},
-									"and": {
-										Type:        schema.TypeList,
-										Optional:    true,
-										Description: "The `AND` required configurations.",
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"description": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "The required config description.",
-												},
-												"property": {
-													Type:        schema.TypeString,
-													Required:    true,
-													Description: "The property.",
-												},
-												"operator": {
-													Type:        schema.TypeString,
-													Required:    true,
-													Description: "The operator.",
-												},
-												"value": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "Schema for any JSON type.",
-												},
-											},
-										},
-									},
-									"property": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "The property.",
-									},
-									"operator": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "The operator.",
-									},
-									"value": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Schema for any JSON type.",
-									},
-								},
-							},
-						},
-						"property": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The property.",
-						},
-						"operator": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The operator.",
-						},
-						"value": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Schema for any JSON type.",
-						},
-					},
+					Schema: getRequiredConfigSchema(0),
 				},
 			},
 			"target": {
@@ -373,58 +175,7 @@ func ResourceIbmSccRule() *schema.Resource {
 				Required:    true,
 				Description: "The rule target.",
 				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"service_name": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The target service name.",
-						},
-						"service_display_name": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The display name of the target service.",
-							// Manual Intervention
-							DiffSuppressFunc: func(_, oldVal, newVal string, d *schema.ResourceData) bool {
-								if newVal == "" {
-									return true
-								}
-								if strings.ToLower(oldVal) == strings.ToLower(newVal) {
-									return true
-								}
-								return false
-							},
-							// End Manual Intervention
-						},
-						"resource_kind": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The target resource kind.",
-						},
-						"additional_target_attributes": {
-							Type:        schema.TypeList,
-							Optional:    true,
-							Description: "The list of targets supported properties.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"name": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "The additional target attribute name.",
-									},
-									"operator": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "The operator.",
-									},
-									"value": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "The value.",
-									},
-								},
-							},
-						},
-					},
+					Schema: getTargetSchema(),
 				},
 			},
 			"type": {
@@ -489,13 +240,13 @@ func resourceIbmSccRuleCreate(context context.Context, d *schema.ResourceData, m
 
 	createRuleOptions.SetDescription(d.Get("description").(string))
 	// Manual Intervention
-	targetModel, err := resourceIbmSccRuleMapToTarget(d.Get("target.0").(map[string]interface{}))
+	targetModel, err := modelMapToTargetPrototype(d.Get("target.0").(map[string]interface{}))
 	// End Manual Intervention
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	createRuleOptions.SetTarget(targetModel)
-	requiredConfigModel, err := resourceIbmSccRuleMapToRequiredConfig(d.Get("required_config.0").(map[string]interface{}))
+	requiredConfigModel, err := modelMapToRequiredConfig(d.Get("required_config.0").(map[string]interface{}))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -524,7 +275,7 @@ func resourceIbmSccRuleCreate(context context.Context, d *schema.ResourceData, m
 	rule, response, err := configManagerClient.CreateRuleWithContext(context, createRuleOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateRuleWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateRuleWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("CreateRuleWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(instance_id + "/" + *rule.ID)
@@ -554,27 +305,27 @@ func resourceIbmSccRuleRead(context context.Context, d *schema.ResourceData, met
 			return nil
 		}
 		log.Printf("[DEBUG] GetRuleWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetRuleWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetRuleWithContext failed %s\n%s", err, response))
 	}
 	// Manual Intervention
 	if err = d.Set("instance_id", parts[0]); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting instance_id: %s", err))
 	}
 	if err = d.Set("rule_id", parts[1]); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting instance_id: %s", err))
 	}
 	if err = d.Set("etag", response.Headers.Get("ETag")); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting etag: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting etag: %s", err))
 	}
 	// End Manual Intervention
 
 	if err = d.Set("description", rule.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting description: %s", err))
 	}
 
 	if !core.IsNil(rule.Version) {
 		if err = d.Set("version", rule.Version); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting version: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting version: %s", err))
 		}
 	}
 
@@ -584,47 +335,46 @@ func resourceIbmSccRuleRead(context context.Context, d *schema.ResourceData, met
 			return diag.FromErr(err)
 		}
 		if err = d.Set("import", []map[string]interface{}{importVarMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting import: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting import: %s", err))
 		}
 	}
 
-	targetMap, err := resourceIbmSccRuleTargetToMap(rule.Target)
+	targetMap, err := targetToModelMap(rule.Target)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	if err = d.Set("target", []map[string]interface{}{targetMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting target: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting target: %s", err))
 	}
-	requiredConfigMap, err := resourceIbmSccRuleRequiredConfigToMap(rule.RequiredConfig)
+	requiredConfigMap, err := requiredConfigToModelMap(rule.RequiredConfig)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	if err = d.Set("required_config", []map[string]interface{}{requiredConfigMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting required_config: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting required_config: %s", err))
 	}
 	if !core.IsNil(rule.Labels) {
-		log.Printf("[INFO] rule.Labels = %v\n", rule.Labels)
 		if err = d.Set("labels", rule.Labels); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting labels: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting labels: %s", err))
 		}
 	}
 	if err = d.Set("created_on", flex.DateTimeToString(rule.CreatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_on: %s", err))
 	}
 	if err = d.Set("created_by", rule.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_by: %s", err))
 	}
 	if err = d.Set("updated_on", flex.DateTimeToString(rule.UpdatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_on: %s", err))
 	}
 	if err = d.Set("updated_by", rule.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_by: %s", err))
 	}
 	if err = d.Set("account_id", rule.AccountID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting account_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting account_id: %s", err))
 	}
 	if err = d.Set("type", rule.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting type: %s", err))
 	}
 
 	return nil
@@ -650,12 +400,12 @@ func resourceIbmSccRuleUpdate(context context.Context, d *schema.ResourceData, m
 
 	if d.HasChange("description") || d.HasChange("target") || d.HasChange("required_config") {
 		replaceRuleOptions.SetDescription(d.Get("description").(string))
-		target, err := resourceIbmSccRuleMapToTarget(d.Get("target.0").(map[string]interface{}))
+		target, err := modelMapToTargetPrototype(d.Get("target.0").(map[string]interface{}))
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		replaceRuleOptions.SetTarget(target)
-		requiredConfig, err := resourceIbmSccRuleMapToRequiredConfig(d.Get("required_config.0").(map[string]interface{}))
+		requiredConfig, err := modelMapToRequiredConfig(d.Get("required_config.0").(map[string]interface{}))
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -697,7 +447,7 @@ func resourceIbmSccRuleUpdate(context context.Context, d *schema.ResourceData, m
 		_, response, err := configManagerClient.ReplaceRuleWithContext(context, replaceRuleOptions)
 		if err != nil {
 			log.Printf("[DEBUG] ReplaceRuleWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("ReplaceRuleWithContext failed %s\n%s", err, response))
+			return diag.FromErr(flex.FmtErrorf("ReplaceRuleWithContext failed %s\n%s", err, response))
 		}
 	}
 
@@ -722,7 +472,7 @@ func resourceIbmSccRuleDelete(context context.Context, d *schema.ResourceData, m
 	response, err := configManagerClient.DeleteRuleWithContext(context, deleteRuleOptions)
 	if err != nil {
 		log.Printf("[DEBUG] DeleteRuleWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteRuleWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("DeleteRuleWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId("")
@@ -730,274 +480,10 @@ func resourceIbmSccRuleDelete(context context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourceIbmSccRuleMapToTarget(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.Target, error) {
-	model := &securityandcompliancecenterapiv3.Target{}
-	model.ServiceName = core.StringPtr(modelMap["service_name"].(string))
-	if modelMap["service_display_name"] != nil && modelMap["service_display_name"].(string) != "" {
-		model.ServiceDisplayName = core.StringPtr(modelMap["service_display_name"].(string))
-	}
-	model.ResourceKind = core.StringPtr(modelMap["resource_kind"].(string))
-	if modelMap["additional_target_attributes"] != nil {
-		additionalTargetAttributes := []securityandcompliancecenterapiv3.AdditionalTargetAttribute{}
-		for _, additionalTargetAttributesItem := range modelMap["additional_target_attributes"].([]interface{}) {
-			additionalTargetAttributesItemModel, err := resourceIbmSccRuleMapToAdditionalTargetAttribute(additionalTargetAttributesItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			additionalTargetAttributes = append(additionalTargetAttributes, *additionalTargetAttributesItemModel)
-		}
-		model.AdditionalTargetAttributes = additionalTargetAttributes
-	}
-	return model, nil
-}
-
-func resourceIbmSccRuleMapToAdditionalTargetAttribute(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.AdditionalTargetAttribute, error) {
-	model := &securityandcompliancecenterapiv3.AdditionalTargetAttribute{}
-	if modelMap["name"] != nil && modelMap["name"].(string) != "" {
-		model.Name = core.StringPtr(modelMap["name"].(string))
-	}
-	if modelMap["operator"] != nil && modelMap["operator"].(string) != "" {
-		model.Operator = core.StringPtr(modelMap["operator"].(string))
-	}
-	if modelMap["value"] != nil && modelMap["value"].(string) != "" {
-		model.Value = core.StringPtr(modelMap["value"].(string))
-	}
-	return model, nil
-}
-
-func resourceIbmSccRuleMapToRequiredConfig(modelMap map[string]interface{}) (securityandcompliancecenterapiv3.RequiredConfigIntf, error) {
-	model := &securityandcompliancecenterapiv3.RequiredConfig{}
-	if modelMap["description"] != nil && modelMap["description"].(string) != "" {
-		model.Description = core.StringPtr(modelMap["description"].(string))
-	}
-	if modelMap["and"] != nil {
-		and := []securityandcompliancecenterapiv3.RequiredConfigItemsIntf{}
-		for _, andItem := range modelMap["and"].([]interface{}) {
-			andItemModel, err := resourceIbmSccRuleMapToRequiredConfigItems(andItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			and = append(and, andItemModel)
-		}
-		model.And = and
-	}
-	if modelMap["or"] != nil {
-		or := []securityandcompliancecenterapiv3.RequiredConfigItemsIntf{}
-		for _, orItem := range modelMap["or"].([]interface{}) {
-			orItemModel, err := resourceIbmSccRuleMapToRequiredConfigItems(orItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			or = append(or, orItemModel)
-		}
-		model.Or = or
-	}
-	if modelMap["property"] != nil && modelMap["property"].(string) != "" {
-		model.Property = core.StringPtr(modelMap["property"].(string))
-	}
-	if modelMap["operator"] != nil && modelMap["operator"].(string) != "" {
-		model.Operator = core.StringPtr(modelMap["operator"].(string))
-	}
-	// Manual Intervention
-	if modelMap["value"] != nil {
-		// model.Value = modelMap["value"].(string)
-		sLit := strings.Trim(modelMap["value"].(string), "[]")
-		sList := strings.Split(sLit, ",")
-		if len(sList) == 1 {
-			model.Value = modelMap["value"].(string)
-		} else {
-			model.Value = sList
-		}
-
-	}
-	// End Manual Intervention
-	return model, nil
-}
-
-func resourceIbmSccRuleMapToRequiredConfigItems(modelMap map[string]interface{}) (securityandcompliancecenterapiv3.RequiredConfigItemsIntf, error) {
-	model := &securityandcompliancecenterapiv3.RequiredConfigItems{}
-	if modelMap["description"] != nil && modelMap["description"].(string) != "" {
-		model.Description = core.StringPtr(modelMap["description"].(string))
-	}
-	if modelMap["or"] != nil {
-		or := []securityandcompliancecenterapiv3.RequiredConfigItemsIntf{}
-		for _, orItem := range modelMap["or"].([]interface{}) {
-			orItemModel, err := resourceIbmSccRuleMapToRequiredConfigItems(orItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			or = append(or, orItemModel)
-		}
-		model.Or = or
-	}
-	if modelMap["and"] != nil {
-		and := []securityandcompliancecenterapiv3.RequiredConfigItemsIntf{}
-		for _, andItem := range modelMap["and"].([]interface{}) {
-			andItemModel, err := resourceIbmSccRuleMapToRequiredConfigItems(andItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			and = append(and, andItemModel)
-		}
-		model.And = and
-	}
-	if modelMap["property"] != nil && modelMap["property"].(string) != "" {
-		model.Property = core.StringPtr(modelMap["property"].(string))
-	}
-	if modelMap["operator"] != nil && modelMap["operator"].(string) != "" {
-		model.Operator = core.StringPtr(modelMap["operator"].(string))
-	}
-	// Manual Intervention
-	if modelMap["value"] != nil && len(modelMap["value"].(string)) > 0 {
-		// model.Value = modelMap["value"].(string)
-		sLit := strings.Trim(modelMap["value"].(string), "[]")
-		sList := strings.Split(sLit, ",")
-		if len(sList) == 1 {
-			model.Value = modelMap["value"].(string)
-		} else {
-			model.Value = sList
-		}
-	}
-	// Manual Intervention
-	return model, nil
-}
-
-func resourceIbmSccRuleMapToRequiredConfigBase(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.RequiredConfigRequiredConfigBase, error) {
-	model := &securityandcompliancecenterapiv3.RequiredConfigRequiredConfigBase{}
-	if modelMap["description"] != nil && modelMap["description"].(string) != "" {
-		model.Description = core.StringPtr(modelMap["description"].(string))
-	}
-	model.Property = core.StringPtr(modelMap["property"].(string))
-	model.Operator = core.StringPtr(modelMap["operator"].(string))
-	if modelMap["value"] != nil {
-		sLit := strings.Trim(modelMap["value"].(string), "[]")
-		sList := strings.Split(sLit, ",")
-		if len(sList) == 1 {
-			model.Value = modelMap["value"].(string)
-		} else {
-			model.Value = sList
-		}
-	}
-	return model, nil
-}
-
-func resourceIbmSccRuleMapToRequiredConfigItemsRequiredConfigOrDepth1(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigOr, error) {
-	model := &securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigOr{}
-	if modelMap["description"] != nil && modelMap["description"].(string) != "" {
-		model.Description = core.StringPtr(modelMap["description"].(string))
-	}
-	if modelMap["or"] != nil {
-		or := []securityandcompliancecenterapiv3.RequiredConfigItemsIntf{}
-		for _, orItem := range modelMap["or"].([]interface{}) {
-			orItemModel, err := resourceIbmSccRuleMapToRequiredConfigItemsRequiredConfigBase(orItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			or = append(or, orItemModel)
-		}
-		model.Or = or
-	}
-	if modelMap["and"] != nil {
-		or := []securityandcompliancecenterapiv3.RequiredConfigItemsIntf{}
-		for _, orItem := range modelMap["and"].([]interface{}) {
-			orItemModel, err := resourceIbmSccRuleMapToRequiredConfigItemsRequiredConfigBase(orItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			or = append(or, orItemModel)
-		}
-		model.Or = or
-	}
-	return model, nil
-}
-
-func resourceIbmSccRuleMapToRequiredConfigItemsRequiredConfigAndDepth1(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigAnd, error) {
-	model := &securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigAnd{}
-	if modelMap["description"] != nil && modelMap["description"].(string) != "" {
-		model.Description = core.StringPtr(modelMap["description"].(string))
-	}
-	if modelMap["and"] != nil {
-		and := []securityandcompliancecenterapiv3.RequiredConfigItemsIntf{}
-		for _, andItem := range modelMap["and"].([]interface{}) {
-			andItemModel, err := resourceIbmSccRuleMapToRequiredConfigItemsRequiredConfigBase(andItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			and = append(and, andItemModel)
-		}
-		model.And = and
-	}
-	return model, nil
-}
-
-func resourceIbmSccRuleMapToRequiredConfigItemsRequiredConfigBase(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigBase, error) {
-	model := &securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigBase{}
-	if modelMap["description"] != nil && modelMap["description"].(string) != "" {
-		model.Description = core.StringPtr(modelMap["description"].(string))
-	}
-	model.Property = core.StringPtr(modelMap["property"].(string))
-	model.Operator = core.StringPtr(modelMap["operator"].(string))
-	if modelMap["value"] != nil {
-		model.Value = modelMap["value"].(string)
-	}
-	return model, nil
-}
-
-func resourceIbmSccRuleMapToRequiredConfigAnd(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.RequiredConfigRequiredConfigAnd, error) {
-	model := &securityandcompliancecenterapiv3.RequiredConfigRequiredConfigAnd{}
-	if modelMap["description"] != nil && modelMap["description"].(string) != "" {
-		model.Description = core.StringPtr(modelMap["description"].(string))
-	}
-	if modelMap["and"] != nil {
-		and := []securityandcompliancecenterapiv3.RequiredConfigItemsIntf{}
-		for _, andItem := range modelMap["and"].([]interface{}) {
-			andItemModel, err := resourceIbmSccRuleMapToRequiredConfigItems(andItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			and = append(and, andItemModel)
-		}
-		model.And = and
-	}
-	return model, nil
-}
-
-func resourceIbmSccRuleMapToRequiredConfigOr(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.RequiredConfigRequiredConfigOr, error) {
-	model := &securityandcompliancecenterapiv3.RequiredConfigRequiredConfigOr{}
-	if modelMap["description"] != nil && modelMap["description"].(string) != "" {
-		model.Description = core.StringPtr(modelMap["description"].(string))
-	}
-	if modelMap["or"] != nil {
-		or := []securityandcompliancecenterapiv3.RequiredConfigItemsIntf{}
-		for _, orItem := range modelMap["or"].([]interface{}) {
-			orItemModel, err := resourceIbmSccRuleMapToRequiredConfigItems(orItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			or = append(or, orItemModel)
-		}
-		model.Or = or
-	}
-	return model, nil
-}
-
-func resourceIbmSccRuleMapToRequiredConfigRequiredConfigBase(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.RequiredConfigRequiredConfigBase, error) {
-	model := &securityandcompliancecenterapiv3.RequiredConfigRequiredConfigBase{}
-	if modelMap["description"] != nil && modelMap["description"].(string) != "" {
-		model.Description = core.StringPtr(modelMap["description"].(string))
-	}
-	model.Property = core.StringPtr(modelMap["property"].(string))
-	model.Operator = core.StringPtr(modelMap["operator"].(string))
-	if modelMap["value"] != nil {
-		model.Value = modelMap["value"].(string)
-	}
-	return model, nil
-}
-
 func resourceIbmSccRuleMapToImport(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.Import, error) {
 	model := &securityandcompliancecenterapiv3.Import{}
 	if modelMap["parameters"] != nil {
-		parameters := []securityandcompliancecenterapiv3.Parameter{}
+		parameters := []securityandcompliancecenterapiv3.RuleParameter{}
 		for _, parametersItem := range modelMap["parameters"].([]interface{}) {
 			parametersItemModel, err := resourceIbmSccRuleMapToParameter(parametersItem.(map[string]interface{}))
 			if err != nil {
@@ -1010,8 +496,8 @@ func resourceIbmSccRuleMapToImport(modelMap map[string]interface{}) (*securityan
 	return model, nil
 }
 
-func resourceIbmSccRuleMapToParameter(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.Parameter, error) {
-	model := &securityandcompliancecenterapiv3.Parameter{}
+func resourceIbmSccRuleMapToParameter(modelMap map[string]interface{}) (*securityandcompliancecenterapiv3.RuleParameter, error) {
+	model := &securityandcompliancecenterapiv3.RuleParameter{}
 	if modelMap["name"] != nil && modelMap["name"].(string) != "" {
 		model.Name = core.StringPtr(modelMap["name"].(string))
 	}
@@ -1043,7 +529,7 @@ func resourceIbmSccRuleImportToMap(model *securityandcompliancecenterapiv3.Impor
 	return modelMap, nil
 }
 
-func resourceIbmSccRuleParameterToMap(model *securityandcompliancecenterapiv3.Parameter) (map[string]interface{}, error) {
+func resourceIbmSccRuleParameterToMap(model *securityandcompliancecenterapiv3.RuleParameter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Name != nil {
 		modelMap["name"] = model.Name
@@ -1057,304 +543,5 @@ func resourceIbmSccRuleParameterToMap(model *securityandcompliancecenterapiv3.Pa
 	if model.Type != nil {
 		modelMap["type"] = model.Type
 	}
-	return modelMap, nil
-}
-
-func resourceIbmSccRuleTargetToMap(model *securityandcompliancecenterapiv3.Target) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	modelMap["service_name"] = model.ServiceName
-	if model.ServiceDisplayName != nil {
-		modelMap["service_display_name"] = model.ServiceDisplayName
-	}
-	modelMap["resource_kind"] = model.ResourceKind
-	if model.AdditionalTargetAttributes != nil {
-		additionalTargetAttributes := []map[string]interface{}{}
-		for _, additionalTargetAttributesItem := range model.AdditionalTargetAttributes {
-			additionalTargetAttributesItemMap, err := resourceIbmSccRuleAdditionalTargetAttributeToMap(&additionalTargetAttributesItem)
-			if err != nil {
-				return modelMap, err
-			}
-			additionalTargetAttributes = append(additionalTargetAttributes, additionalTargetAttributesItemMap)
-		}
-		modelMap["additional_target_attributes"] = additionalTargetAttributes
-	}
-	return modelMap, nil
-}
-
-func resourceIbmSccRuleAdditionalTargetAttributeToMap(model *securityandcompliancecenterapiv3.AdditionalTargetAttribute) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Name != nil {
-		modelMap["name"] = model.Name
-	}
-	if model.Operator != nil {
-		modelMap["operator"] = model.Operator
-	}
-	if model.Value != nil {
-		modelMap["value"] = model.Value
-	}
-	return modelMap, nil
-}
-
-func resourceIbmSccRuleRequiredConfigToMap(model securityandcompliancecenterapiv3.RequiredConfigIntf) (map[string]interface{}, error) {
-	if _, ok := model.(*securityandcompliancecenterapiv3.RequiredConfigRequiredConfigAnd); ok {
-		return resourceIbmSccRuleRequiredConfigAndToMap(model.(*securityandcompliancecenterapiv3.RequiredConfigRequiredConfigAnd))
-	} else if _, ok := model.(*securityandcompliancecenterapiv3.RequiredConfigRequiredConfigOr); ok {
-		return resourceIbmSccRuleRequiredConfigOrToMap(model.(*securityandcompliancecenterapiv3.RequiredConfigRequiredConfigOr))
-	} else if _, ok := model.(*securityandcompliancecenterapiv3.RequiredConfigRequiredConfigBase); ok {
-		return resourceIbmSccRuleRequiredConfigRequiredConfigBaseToMap(model.(*securityandcompliancecenterapiv3.RequiredConfigRequiredConfigBase))
-	} else if _, ok := model.(*securityandcompliancecenterapiv3.RequiredConfig); ok {
-		modelMap := make(map[string]interface{})
-		model := model.(*securityandcompliancecenterapiv3.RequiredConfig)
-		if model.Description != nil {
-			modelMap["description"] = model.Description
-		}
-		if model.And != nil {
-			and := []map[string]interface{}{}
-			for _, andItem := range model.And {
-				andItemMap, err := resourceIbmSccRuleRequiredConfigItemsToMap(andItem)
-				if err != nil {
-					return modelMap, err
-				}
-				and = append(and, andItemMap)
-			}
-			modelMap["and"] = and
-		}
-		if model.Or != nil {
-			or := []map[string]interface{}{}
-			for _, orItem := range model.Or {
-				orItemMap, err := resourceIbmSccRuleRequiredConfigItemsToMap(orItem)
-				if err != nil {
-					return modelMap, err
-				}
-				or = append(or, orItemMap)
-			}
-			modelMap["or"] = or
-		}
-		if model.Property != nil {
-			modelMap["property"] = model.Property
-		}
-		if model.Operator != nil {
-			modelMap["operator"] = model.Operator
-		}
-		// Manual Intervention
-		if model.Value != nil {
-			// model.Value is a schema.TypeString, so it needs to converted to String Type
-			switch v := model.Value.(type) {
-			case string:
-				modelMap["value"] = v
-			case []interface{}:
-				lst := []string{}
-				for _, val := range v {
-					vStr := "'" + val.(string) + "'"
-					lst = append(lst, vStr)
-				}
-				modelMap["value"] = "[" + strings.Join(lst, ",") + "]"
-			}
-		}
-		// End Manual Intervention
-		return modelMap, nil
-	} else {
-		return nil, fmt.Errorf("Unrecognized securityandcompliancecenterapiv3.RequiredConfigIntf subtype encountered")
-	}
-}
-
-func resourceIbmSccRuleRequiredConfigItemsToMap(model securityandcompliancecenterapiv3.RequiredConfigItemsIntf) (map[string]interface{}, error) {
-	if _, ok := model.(*securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigOr); ok {
-		return resourceIbmSccRuleRequiredConfigItemsRequiredConfigOrDepth1ToMap(model.(*securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigOr))
-	} else if _, ok := model.(*securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigAnd); ok {
-		return resourceIbmSccRuleRequiredConfigItemsRequiredConfigAndDepth1ToMap(model.(*securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigAnd))
-	} else if _, ok := model.(*securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigBase); ok {
-		return resourceIbmSccRuleRequiredConfigItemsRequiredConfigBaseToMap(model.(*securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigBase))
-	} else if _, ok := model.(*securityandcompliancecenterapiv3.RequiredConfigItems); ok {
-		modelMap := make(map[string]interface{})
-		model := model.(*securityandcompliancecenterapiv3.RequiredConfigItems)
-		if model.Description != nil {
-			modelMap["description"] = model.Description
-		}
-		if model.Or != nil {
-			or := []map[string]interface{}{}
-			for _, orItem := range model.Or {
-				orItemMap, err := resourceIbmSccRuleRequiredConfigItemsToMap(orItem)
-				if err != nil {
-					return modelMap, err
-				}
-				or = append(or, orItemMap)
-			}
-			modelMap["or"] = or
-		}
-		if model.And != nil {
-			and := []map[string]interface{}{}
-			for _, andItem := range model.And {
-				andItemMap, err := resourceIbmSccRuleRequiredConfigItemsToMap(andItem)
-				if err != nil {
-					return modelMap, err
-				}
-				and = append(and, andItemMap)
-			}
-			modelMap["and"] = and
-		}
-		if model.Property != nil {
-			modelMap["property"] = model.Property
-		}
-		if model.Operator != nil {
-			modelMap["operator"] = model.Operator
-		}
-		// Manual Intervention
-		if model.Value != nil {
-			// modelMap["value"] = model.Value
-			switch v := model.Value.(type) {
-			case string:
-				modelMap["value"] = v
-			case []interface{}:
-				lst := []string{}
-				for _, val := range v {
-					vStr := val.(string)
-					lst = append(lst, vStr)
-				}
-				modelMap["value"] = strings.Join(lst, ",")
-			}
-		}
-		// End Manual Intervention
-		return modelMap, nil
-	} else {
-		return nil, fmt.Errorf("Unrecognized securityandcompliancecenterapiv3.RequiredConfigItemsIntf subtype encountered")
-	}
-}
-
-func resourceIbmSccRuleRequiredConfigBaseToMap(model *securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigBase) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Description != nil {
-		modelMap["description"] = model.Description
-	}
-	modelMap["property"] = model.Property
-	modelMap["operator"] = model.Operator
-	if model.Value != nil {
-		modelMap["value"] = model.Value
-	}
-	return modelMap, nil
-}
-
-func resourceIbmSccRuleRequiredConfigItemsRequiredConfigOrDepth1ToMap(model *securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigOr) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Description != nil {
-		modelMap["description"] = model.Description
-	}
-	if model.Or != nil {
-		or := []map[string]interface{}{}
-		for _, orItem := range model.Or {
-			orItemMap, err := resourceIbmSccRuleRequiredConfigItemsToMap(orItem)
-			if err != nil {
-				return modelMap, err
-			}
-			or = append(or, orItemMap)
-		}
-		modelMap["or"] = or
-	}
-	return modelMap, nil
-}
-
-func resourceIbmSccRuleRequiredConfigItemsRequiredConfigAndDepth1ToMap(model *securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigAnd) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Description != nil {
-		modelMap["description"] = model.Description
-	}
-	if model.And != nil {
-		and := []map[string]interface{}{}
-		for _, andItem := range model.And {
-			andItemMap, err := resourceIbmSccRuleRequiredConfigItemsToMap(andItem)
-			if err != nil {
-				return modelMap, err
-			}
-			and = append(and, andItemMap)
-		}
-		modelMap["and"] = and
-	}
-	return modelMap, nil
-}
-
-func resourceIbmSccRuleRequiredConfigItemsRequiredConfigBaseToMap(model *securityandcompliancecenterapiv3.RequiredConfigItemsRequiredConfigBase) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Description != nil {
-		modelMap["description"] = model.Description
-	}
-	modelMap["property"] = model.Property
-	modelMap["operator"] = model.Operator
-	if model.Value != nil {
-		// modelMap["value"] = model.Value
-		switch v := model.Value.(type) {
-		case string:
-			modelMap["value"] = v
-		case []string:
-			s := strings.Join(v, ",")
-			modelMap["value"] = s
-		default:
-			fmt.Printf("******** the type is %v\n", reflect.TypeOf(v))
-		}
-	}
-	return modelMap, nil
-}
-
-func resourceIbmSccRuleRequiredConfigAndToMap(model *securityandcompliancecenterapiv3.RequiredConfigRequiredConfigAnd) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Description != nil {
-		modelMap["description"] = model.Description
-	}
-	if model.And != nil {
-		and := []map[string]interface{}{}
-		for _, andItem := range model.And {
-			andItemMap, err := resourceIbmSccRuleRequiredConfigItemsToMap(andItem)
-			if err != nil {
-				return modelMap, err
-			}
-			and = append(and, andItemMap)
-		}
-		modelMap["and"] = and
-	}
-	return modelMap, nil
-}
-
-func resourceIbmSccRuleRequiredConfigOrToMap(model *securityandcompliancecenterapiv3.RequiredConfigRequiredConfigOr) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Description != nil {
-		modelMap["description"] = model.Description
-	}
-	if model.Or != nil {
-		or := []map[string]interface{}{}
-		for _, orItem := range model.Or {
-			orItemMap, err := resourceIbmSccRuleRequiredConfigItemsToMap(orItem)
-			if err != nil {
-				return modelMap, err
-			}
-			or = append(or, orItemMap)
-		}
-		modelMap["or"] = or
-	}
-	return modelMap, nil
-}
-
-func resourceIbmSccRuleRequiredConfigRequiredConfigBaseToMap(model *securityandcompliancecenterapiv3.RequiredConfigRequiredConfigBase) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Description != nil {
-		modelMap["description"] = model.Description
-	}
-	modelMap["property"] = model.Property
-	modelMap["operator"] = model.Operator
-	// Manual Intervention
-	if model.Value != nil {
-		// model.Value is a schema.TypeString, so it needs to converted to String Type
-		switch v := model.Value.(type) {
-		case string:
-			modelMap["value"] = v
-		case []interface{}:
-			lst := []string{}
-			for _, val := range v {
-				vStr := "'" + val.(string) + "'"
-				lst = append(lst, vStr)
-			}
-			modelMap["value"] = "[" + "'" + strings.Join(lst, ",") + "'" + "]"
-		}
-	}
-	// End Manual Intervention
-
 	return modelMap, nil
 }

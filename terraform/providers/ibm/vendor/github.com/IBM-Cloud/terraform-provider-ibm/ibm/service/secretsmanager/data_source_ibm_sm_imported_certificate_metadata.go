@@ -80,7 +80,7 @@ func DataSourceIbmSmImportedCertificateMetadata() *schema.Resource {
 			"secret_group_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "A v4 UUID identifier, or `default` secret group.",
+				Description: "A UUID identifier, or `default` secret group.",
 			},
 			"secret_type": &schema.Schema{
 				Type:        schema.TypeString,
@@ -112,14 +112,6 @@ func DataSourceIbmSmImportedCertificateMetadata() *schema.Resource {
 				Computed:    true,
 				Description: "The identifier for the cryptographic algorithm that was used by the issuing certificate authority to sign a certificate.",
 			},
-			"alt_names": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "With the Subject Alternative Name field, you can specify additional host names to be protected by a single SSL certificate.",
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
 			"common_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -144,6 +136,171 @@ func DataSourceIbmSmImportedCertificateMetadata() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The identifier for the cryptographic algorithm used to generate the public key that is associated with the certificate.",
+			},
+			"managed_csr": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The data specified to create the CSR and the private key.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"alt_names": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "With the Subject Alternative Name field, you can specify additional hostnames to be protected by a single SSL certificate.",
+						},
+						"client_flag": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "This field indicates whether certificate is flagged for client use.",
+						},
+						"code_signing_flag": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "This field indicates whether certificate is flagged for code signing use.",
+						},
+						"common_name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The Common Name (CN) represents the server name protected by the SSL certificate.",
+						},
+						"csr": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The certificate signing request.",
+						},
+						"country": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The Country (C) values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"email_protection_flag": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "This field indicates whether certificate is flagged for email protection use.",
+						},
+						"exclude_cn_from_sans": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "This parameter controls whether the common name is excluded from Subject Alternative Names (SANs).",
+						},
+						"ext_key_usage": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The allowed extended key usage constraint on certificate, in a comma-delimited list.",
+						},
+						"ext_key_usage_oids": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A comma-delimited list of extended key usage Object Identifiers (OIDs).",
+						},
+						"ip_sans": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The IP Subject Alternative Names to define for the certificate, in a comma-delimited list.",
+						},
+						"key_bits": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The number of bits to use to generate the private key.",
+						},
+						"key_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type of private key to generate.",
+						},
+						"key_usage": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The allowed key usage constraint to define for certificate, in a comma-delimited list.",
+						},
+						"locality": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The Locality (L) values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"organization": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The Organization (O) values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"other_sans": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The custom Object Identifier (OID) or UTF8-string Subject Alternative Names to define for the certificate, in a comma-delimited list.",
+						},
+						"ou": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The Organizational Unit (OU) values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"policy_identifiers": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A comma-delimited list of policy Object Identifiers (OIDs).",
+						},
+						"postal_code": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The postal code values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"province": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The Province (ST) values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"require_cn": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "If set to false, makes the common_name field optional while generating a certificate.",
+						},
+						"rotate_keys": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "This field indicates whether the private key will be rotated.",
+						},
+						"server_flag": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "This field indicates whether certificate is flagged for server use.",
+						},
+						"street_address": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The street address values to define in the subject field of the resulting certificate.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"uri_sans": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URI Subject Alternative Names to define for the certificate, in a comma-delimited list.",
+						},
+						"user_ids": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Specifies the list of requested User ID (OID 0.9.2342.19200300.100.1.1) Subject values to be placed on the signed certificate.",
+						},
+					},
+				},
 			},
 			"private_key_included": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -181,7 +338,8 @@ func DataSourceIbmSmImportedCertificateMetadata() *schema.Resource {
 func dataSourceIbmSmImportedCertificateMetadataRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, "", fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	region := getRegion(secretsManagerClient, d)
@@ -196,26 +354,31 @@ func dataSourceIbmSmImportedCertificateMetadataRead(context context.Context, d *
 	importedCertificateMetadataIntf, response, err := secretsManagerClient.GetSecretMetadataWithContext(context, getSecretMetadataOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetSecretMetadataWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetSecretMetadataWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetSecretMetadataWithContext failed %s\n%s", err, response), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 	importedCertificateMetadata := importedCertificateMetadataIntf.(*secretsmanagerv2.ImportedCertificateMetadata)
 
 	d.SetId(fmt.Sprintf("%s/%s/%s", region, instanceId, secretId))
 
 	if err = d.Set("region", region); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting region: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting region"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("created_by", importedCertificateMetadata.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_by"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("created_at", DateTimeToRFC3339(importedCertificateMetadata.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created_at"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("crn", importedCertificateMetadata.Crn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting crn"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if importedCertificateMetadata.CustomMetadata != nil {
@@ -225,95 +388,125 @@ func dataSourceIbmSmImportedCertificateMetadataRead(context context.Context, d *
 		}
 
 		if err = d.Set("custom_metadata", flex.Flatten(convertedMap)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting custom_metadata: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting custom_metadata"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+			return tfErr.GetDiag()
 		}
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting custom_metadata %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting custom_metadata"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+			return tfErr.GetDiag()
 		}
 	}
 
 	if err = d.Set("description", importedCertificateMetadata.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting description"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("downloaded", importedCertificateMetadata.Downloaded); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting downloaded: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting downloaded"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("locks_total", flex.IntValue(importedCertificateMetadata.LocksTotal)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting locks_total: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting locks_total"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("name", importedCertificateMetadata.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("secret_group_id", importedCertificateMetadata.SecretGroupID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_group_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_group_id"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("secret_type", importedCertificateMetadata.SecretType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting secret_type: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting secret_type"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("state", flex.IntValue(importedCertificateMetadata.State)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting state"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("state_description", importedCertificateMetadata.StateDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting state_description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting state_description"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("updated_at", DateTimeToRFC3339(importedCertificateMetadata.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated_at"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("versions_total", flex.IntValue(importedCertificateMetadata.VersionsTotal)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting versions_total: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting versions_total"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("signing_algorithm", importedCertificateMetadata.SigningAlgorithm); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting signing_algorithm: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting signing_algorithm"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("common_name", importedCertificateMetadata.CommonName); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting common_name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting common_name"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("expiration_date", DateTimeToRFC3339(importedCertificateMetadata.ExpirationDate)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting expiration_date: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting expiration_date"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("intermediate_included", importedCertificateMetadata.IntermediateIncluded); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting intermediate_included: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting intermediate_included"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("issuer", importedCertificateMetadata.Issuer); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting issuer: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting issuer"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("key_algorithm", importedCertificateMetadata.KeyAlgorithm); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting key_algorithm: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting key_algorithm"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("private_key_included", importedCertificateMetadata.PrivateKeyIncluded); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting private_key_included: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting private_key_included"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("serial_number", importedCertificateMetadata.SerialNumber); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting serial_number: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting serial_number"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
 	}
 
 	validity := []map[string]interface{}{}
 	if importedCertificateMetadata.Validity != nil {
 		modelMap, err := dataSourceIbmSmImportedCertificateMetadataCertificateValidityToMap(importedCertificateMetadata.Validity)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, "", fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+			return tfErr.GetDiag()
 		}
 		validity = append(validity, modelMap)
 	}
 	if err = d.Set("validity", validity); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting validity %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting validity"), fmt.Sprintf("(Data) %s_metadata", ImportedCertSecretResourceName), "read")
+		return tfErr.GetDiag()
+	}
+
+	if importedCertificateMetadata.ManagedCsr != nil {
+		managedCsrMap := managedCsrToMap(importedCertificateMetadata.ManagedCsr)
+		if err = d.Set("managed_csr", []map[string]interface{}{managedCsrMap}); err != nil {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting managed_csr"), ImportedCertSecretResourceName, "read")
+			return tfErr.GetDiag()
+		}
 	}
 
 	return nil

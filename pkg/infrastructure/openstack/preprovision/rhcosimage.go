@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/imagedata"
+	"github.com/gophercloud/gophercloud/v2/openstack/image/v2/images"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/rhcos/cache"
@@ -45,7 +45,7 @@ func UploadBaseImage(ctx context.Context, cloud string, rhcosImage string, image
 	}
 	defer f.Close()
 
-	conn, err := openstackdefaults.NewServiceClient("image", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := openstackdefaults.NewServiceClient(ctx, "image", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func UploadBaseImage(ctx context.Context, cloud string, rhcosImage string, image
 		diskFormat = "raw"
 	}
 
-	img, err := images.Create(conn, images.CreateOpts{
+	img, err := images.Create(ctx, conn, images.CreateOpts{
 		Name:            imageName,
 		ContainerFormat: "bare",
 		DiskFormat:      diskFormat,
@@ -72,7 +72,7 @@ func UploadBaseImage(ctx context.Context, cloud string, rhcosImage string, image
 	// https://github.com/openshift/installer/issues/3403 for a discussion
 	// on web-download)
 	logrus.Debugf("Upload RHCOS to the image %q (%s)", img.Name, img.ID)
-	res := imagedata.Upload(conn, img.ID, f)
+	res := imagedata.Upload(ctx, conn, img.ID, f)
 	if res.Err != nil {
 		return err
 	}

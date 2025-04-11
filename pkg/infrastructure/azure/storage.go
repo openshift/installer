@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
@@ -21,7 +23,13 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
 	"github.com/sirupsen/logrus"
 
+	azic "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
+)
+
+var (
+	vaultsClient *armkeyvault.VaultsClient
+	keysClient   *armkeyvault.KeysClient
 )
 
 // CreateStorageAccountInput contains the input parameters for creating a
@@ -31,7 +39,9 @@ type CreateStorageAccountInput struct {
 	ResourceGroupName  string
 	StorageAccountName string
 	Region             string
+	AuthType           azic.AuthenticationType
 	Tags               map[string]*string
+	CustomerManagedKey *aztypes.CustomerManagedKey
 	CloudName          aztypes.CloudEnvironment
 	TokenCredential    azcore.TokenCredential
 	CloudConfiguration cloud.Configuration
@@ -49,7 +59,7 @@ type CreateStorageAccountOutput struct {
 // CreateStorageAccount creates a new storage account.
 func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*CreateStorageAccountOutput, error) {
 	minimumTLSVersion := armstorage.MinimumTLSVersionTLS10
-	cloudConfiguration := cloud.AzurePublic
+	cloudConfiguration := in.CloudConfiguration
 
 	/* XXX: Do we support other clouds? */
 	switch in.CloudName {
@@ -57,6 +67,11 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		minimumTLSVersion = armstorage.MinimumTLSVersionTLS12
 	case aztypes.USGovernmentCloud:
 		minimumTLSVersion = armstorage.MinimumTLSVersionTLS12
+	}
+
+	allowSharedKeyAccess := true
+	if in.AuthType == azic.ManagedIdentityAuth {
+		allowSharedKeyAccess = false
 	}
 
 	storageClientFactory, err := armstorage.NewClientFactory(
@@ -73,28 +88,70 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 		return nil, fmt.Errorf("failed to get storage account factory %w", err)
 	}
 
+	sku := armstorage.SKU{
+		Name: to.Ptr(armstorage.SKUNameStandardLRS),
+	}
+	accountCreateParameters := armstorage.AccountCreateParameters{
+		Identity: nil,
+		Kind:     to.Ptr(armstorage.KindStorageV2),
+		Location: to.Ptr(in.Region),
+		SKU:      &sku,
+		Properties: &armstorage.AccountPropertiesCreateParameters{
+			AllowBlobPublicAccess:       to.Ptr(false),
+			AllowSharedKeyAccess:        to.Ptr(allowSharedKeyAccess),
+			IsLocalUserEnabled:          to.Ptr(true),
+			LargeFileSharesState:        to.Ptr(armstorage.LargeFileSharesStateEnabled),
+			PublicNetworkAccess:         to.Ptr(armstorage.PublicNetworkAccessEnabled),
+			MinimumTLSVersion:           &minimumTLSVersion,
+			AllowCrossTenantReplication: to.Ptr(false), // must remain false to comply with BAFIN and PCI-DSS regulations
+		},
+		Tags: in.Tags,
+	}
+
+	if in.CustomerManagedKey != nil && in.CustomerManagedKey.KeyVault.Name != "" {
+		// When encryption is enabled, Ignition is is stored as a page blob
+		// (and not a block blob). To support this case, `Kind` can continue to be
+		// `StorageV2` and yhe `SKU` needs to be `Premium_LRS`.
+		//https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal
+		sku = armstorage.SKU{
+			Name: to.Ptr(armstorage.SKUNamePremiumLRS),
+		}
+		identity := armstorage.Identity{
+			Type: to.Ptr(armstorage.IdentityTypeUserAssigned),
+			UserAssignedIdentities: map[string]*armstorage.UserAssignedIdentity{
+				fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s",
+					in.SubscriptionID,
+					in.CustomerManagedKey.KeyVault.ResourceGroup,
+					in.CustomerManagedKey.UserAssignedIdentityKey,
+				): {},
+			},
+		}
+		logrus.Debugf("Generating Encrytption for Storage Account using Customer Managed Key")
+		encryption, err := GenerateStorageAccountEncryption(
+			ctx,
+			&CustomerManagedKeyInput{
+				SubscriptionID:     in.SubscriptionID,
+				ResourceGroupName:  in.ResourceGroupName,
+				CustomerManagedKey: in.CustomerManagedKey,
+				TokenCredential:    in.TokenCredential,
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error generating encryption information for provided customer managed key: %w", err)
+		}
+		accountCreateParameters.Identity = &identity
+		accountCreateParameters.SKU = &sku
+		accountCreateParameters.Properties.Encryption = encryption
+		accountCreateParameters.Properties.AllowBlobPublicAccess = to.Ptr(true)
+	}
+
 	logrus.Debugf("Creating storage account")
 	accountsClient := storageClientFactory.NewAccountsClient()
 	pollerResponse, err := accountsClient.BeginCreate(
 		ctx,
 		in.ResourceGroupName,
 		in.StorageAccountName,
-		armstorage.AccountCreateParameters{
-			Kind:     to.Ptr(armstorage.KindStorageV2),
-			Location: to.Ptr(in.Region),
-			SKU: &armstorage.SKU{
-				Name: to.Ptr(armstorage.SKUNameStandardLRS), // XXX Premium_LRS if disk encryption if used
-			},
-			Properties: &armstorage.AccountPropertiesCreateParameters{
-				AllowBlobPublicAccess: to.Ptr(true), // XXX true if using disk encryption
-				AllowSharedKeyAccess:  to.Ptr(true),
-				IsLocalUserEnabled:    to.Ptr(true),
-				LargeFileSharesState:  to.Ptr(armstorage.LargeFileSharesStateEnabled),
-				PublicNetworkAccess:   to.Ptr(armstorage.PublicNetworkAccessEnabled),
-				MinimumTLSVersion:     &minimumTLSVersion,
-			},
-			Tags: in.Tags,
-		},
+		accountCreateParameters,
 		nil,
 	)
 	if err != nil {
@@ -132,6 +189,7 @@ type CreateBlobContainerInput struct {
 	ResourceGroupName    string
 	StorageAccountName   string
 	ContainerName        string
+	PublicAccess         *armstorage.PublicAccess
 	StorageClientFactory *armstorage.ClientFactory
 }
 
@@ -153,7 +211,7 @@ func CreateBlobContainer(ctx context.Context, in *CreateBlobContainerInput) (*Cr
 		in.ContainerName,
 		armstorage.BlobContainer{
 			ContainerProperties: &armstorage.ContainerProperties{
-				PublicAccess: to.Ptr(armstorage.PublicAccessContainer),
+				PublicAccess: in.PublicAccess,
 			},
 		},
 		nil,
@@ -174,6 +232,7 @@ type CreatePageBlobInput struct {
 	BlobURL            string
 	ImageURL           string
 	StorageAccountName string
+	BootstrapIgnData   []byte
 	ImageLength        int64
 	StorageAccountKeys []armstorage.AccountKey
 	CloudConfiguration cloud.Configuration
@@ -186,13 +245,13 @@ type CreatePageBlobOutput struct {
 }
 
 // CreatePageBlob creates a blob and uploads a file from a URL to it.
-func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (*CreatePageBlobOutput, error) {
+func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (string, error) {
 	logrus.Debugf("Getting page blob credentials")
 
 	// XXX: Should try all of them until one is successful
 	sharedKeyCredential, err := azblob.NewSharedKeyCredential(in.StorageAccountName, *in.StorageAccountKeys[0].Value)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get shared credentials for storage account: %w", err)
+		return "", fmt.Errorf("failed to get shared credentials for storage account: %w", err)
 	}
 
 	logrus.Debugf("Getting page blob client")
@@ -206,30 +265,88 @@ func CreatePageBlob(ctx context.Context, in *CreatePageBlobInput) (*CreatePageBl
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get page blob client: %w", err)
+		return "", fmt.Errorf("failed to get page blob client: %w", err)
 	}
 
-	// This is used in terraform, not sure if it matters
-	metadata := make(map[string]*string, 1)
-	metadata["source_uri"] = to.Ptr(in.ImageURL)
+	logrus.Debugf("Creating Page blob and uploading image to it")
+	if in.ImageURL == "" {
+		_, err = pageBlobClient.Create(ctx, in.ImageLength, nil)
+		if err != nil {
+			return "", fmt.Errorf("failed to create page blob with image contents: %w", err)
+		}
+		// This image (example: ignition shim) needs to be uploaded from a local file.
+		err = doUploadPages(ctx, pageBlobClient, in.BootstrapIgnData, in.ImageLength)
+		if err != nil {
+			return "", fmt.Errorf("failed to upload page blob image contents: %w", err)
+		}
+	} else {
+		// This is used in terraform, not sure if it matters
+		metadata := map[string]*string{
+			"source_uri": to.Ptr(in.ImageURL),
+		}
 
-	logrus.Debugf("Creating blob")
-	_, err = pageBlobClient.Create(ctx, in.ImageLength, &pageblob.CreateOptions{
-		Metadata: metadata,
-	})
+		_, err = pageBlobClient.Create(ctx, in.ImageLength, &pageblob.CreateOptions{
+			Metadata: metadata,
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to create page blob with image URL: %w", err)
+		}
+
+		err = doUploadPagesFromURL(ctx, pageBlobClient, in.ImageURL, in.ImageLength)
+		if err != nil {
+			return "", fmt.Errorf("failed to upload page blob image from URL %s: %w", in.ImageURL, err)
+		}
+	}
+
+	// Is this addition OK for when CreatePageBlob() is called from InfraReady()
+	sasURL, err := pageBlobClient.GetSASURL(sas.BlobPermissions{Read: true}, time.Now().Add(time.Minute*60), &blob.GetSASURLOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create blob: %w", err)
+		return "", fmt.Errorf("failed to get Page Blob SAS URL: %w", err)
 	}
+	return sasURL, nil
+}
 
-	logrus.Debugf("Uploading to blob")
-	err = doUploadPagesFromURL(ctx, pageBlobClient, in.ImageURL, in.ImageLength)
-	if err != nil {
-		return nil, fmt.Errorf("failed to upload blob image %s: %w", in.ImageURL, err)
+func doUploadPages(ctx context.Context, pageBlobClient *pageblob.Client, imageData []byte, imageLength int64) error {
+	logrus.Debugf("Uploading to Page Blob with Image of length :%d", imageLength)
+
+	// Page blobs file size must be a multiple of 512, hence a little padding is needed to push the file.
+	// imageLength has already been adjusted to the next highest size divisible by 512.
+	// So, here we are padding the image to match this size.
+	// Bootstrap Ignition is a json file. For parsing of this file to succeed with the padding, the
+	// file needs to end with a }.
+	logrus.Debugf("Original Image length: %d", int64(len(imageData)))
+	padding := imageLength - int64(len(imageData))
+	paddingString := strings.Repeat(" ", int(padding)) + string(imageData[len(imageData)-1])
+	imageData = append(imageData[0:len(imageData)-1], paddingString...)
+	logrus.Debugf("New Image length (after padding): %d", int64(len(imageData)))
+
+	pageSize := int64(1024 * 1024 * 4)
+	newOffset := int64(0)
+	remainingImageLength := imageLength
+
+	for remainingImageLength > 0 {
+		if remainingImageLength < pageSize {
+			pageSize = remainingImageLength
+		}
+
+		logrus.Debugf("Uploading pages with Offset :%d and Count :%d", newOffset, pageSize)
+
+		_, err := pageBlobClient.UploadPages(
+			ctx,
+			streaming.NopCloser(bytes.NewReader(imageData)),
+			blob.HTTPRange{
+				Offset: newOffset,
+				Count:  pageSize,
+			},
+			nil)
+		if err != nil {
+			return fmt.Errorf("failed uploading Image to page blob: %w", err)
+		}
+		newOffset += pageSize
+		remainingImageLength -= pageSize
+		logrus.Debugf("newOffset :%d and remainingImageLength :%d", newOffset, remainingImageLength)
 	}
-	return &CreatePageBlobOutput{
-		PageBlobClient:      pageBlobClient,
-		SharedKeyCredential: sharedKeyCredential,
-	}, nil
+	return nil
 }
 
 func doUploadPagesFromURL(ctx context.Context, pageBlobClient *pageblob.Client, imageURL string, imageLength int64) error {
@@ -383,4 +500,83 @@ func CreateBlockBlob(ctx context.Context, in *CreateBlockBlobInput) (string, err
 	}
 
 	return sasURL, nil
+}
+
+// CustomerManagedKeyInput contains the input parameters for creating the
+// customer managed key and identity.
+type CustomerManagedKeyInput struct {
+	SubscriptionID     string
+	ResourceGroupName  string
+	CustomerManagedKey *aztypes.CustomerManagedKey
+	TokenCredential    azcore.TokenCredential
+}
+
+// GenerateStorageAccountEncryption generates all the Encryption information for the Storage Account
+// using the Customer Managed Key.
+func GenerateStorageAccountEncryption(ctx context.Context, in *CustomerManagedKeyInput) (*armstorage.Encryption, error) {
+	logrus.Debugf("Generating Encryption for Storage Account")
+
+	if in.CustomerManagedKey == nil {
+		logrus.Debugf("No Customer Managed Key provided. So, Encryption not enabled on storage account.")
+		return &armstorage.Encryption{}, nil
+	}
+
+	keyvaultClientFactory, err := armkeyvault.NewClientFactory(
+		in.SubscriptionID,
+		in.TokenCredential,
+		nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get key vault client factory %w", err)
+	}
+
+	keysClient = keyvaultClientFactory.NewKeysClient()
+
+	_, err = keysClient.Get(
+		ctx,
+		in.CustomerManagedKey.KeyVault.ResourceGroup,
+		in.CustomerManagedKey.KeyVault.Name,
+		in.CustomerManagedKey.KeyVault.KeyName,
+		&armkeyvault.KeysClientGetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get customer managed key %s from key vault %s: %w", in.CustomerManagedKey.KeyVault.KeyName, in.CustomerManagedKey.KeyVault.Name, err)
+	}
+
+	vaultsClient = keyvaultClientFactory.NewVaultsClient()
+
+	keyVault, err := vaultsClient.Get(
+		ctx,
+		in.CustomerManagedKey.KeyVault.ResourceGroup,
+		in.CustomerManagedKey.KeyVault.Name,
+		&armkeyvault.VaultsClientGetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get key vault %s which contains customer managed key: %w", in.CustomerManagedKey.KeyVault.Name, err)
+	}
+
+	encryption := &armstorage.Encryption{
+		Services: &armstorage.EncryptionServices{
+			Blob: &armstorage.EncryptionService{
+				Enabled: to.Ptr(true),
+				KeyType: to.Ptr(armstorage.KeyTypeAccount),
+			},
+			File: &armstorage.EncryptionService{
+				Enabled: to.Ptr(true),
+				KeyType: to.Ptr(armstorage.KeyTypeAccount),
+			},
+		},
+		EncryptionIdentity: &armstorage.EncryptionIdentity{
+			EncryptionUserAssignedIdentity: to.Ptr(fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s",
+				in.SubscriptionID,
+				in.CustomerManagedKey.KeyVault.ResourceGroup,
+				in.CustomerManagedKey.UserAssignedIdentityKey,
+			)),
+		},
+		KeySource: to.Ptr(armstorage.KeySourceMicrosoftKeyvault),
+		KeyVaultProperties: &armstorage.KeyVaultProperties{
+			KeyName:     to.Ptr(in.CustomerManagedKey.KeyVault.KeyName),
+			KeyVersion:  to.Ptr(""),
+			KeyVaultURI: keyVault.Properties.VaultURI,
+		},
+	}
+
+	return encryption, nil
 }

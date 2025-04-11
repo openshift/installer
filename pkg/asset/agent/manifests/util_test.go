@@ -4,6 +4,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/go-openapi/swag"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
@@ -210,6 +211,17 @@ func getProxyValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 	return validIC
 }
 
+// getProxyWithMachineNetworkNoProxy returns a valid optional install config for proxied installation with the machine network in the NoProxy.
+func getProxyWithMachineNetworkNoProxy() *agent.OptionalInstallConfig {
+	validIC := getValidOptionalInstallConfig()
+	validIC.Config.Proxy = &types.Proxy{
+		HTTPProxy:  "http://10.10.10.11:80",
+		HTTPSProxy: "http://my-lab-proxy.org:443",
+		NoProxy:    "internal.com,192.168.0.0/16",
+	}
+	return validIC
+}
+
 // getAdditionalTrustBundleValidOptionalInstallConfig returns a valid optional install config with AdditonalTrustBundle.
 func getAdditionalTrustBundleValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 	validIC := getValidOptionalInstallConfig()
@@ -227,6 +239,7 @@ func getValidOptionalInstallConfigWithProvisioning() *agent.OptionalInstallConfi
 	installConfig.Config.Platform.BareMetal.ProvisioningNetworkInterface = "eth0"
 	installConfig.Config.Platform.BareMetal.ProvisioningNetworkCIDR = ipnet.MustParseCIDR("172.22.0.0/24")
 	installConfig.Config.Platform.BareMetal.ProvisioningDHCPRange = "172.22.0.10,172.22.0.254"
+	installConfig.Config.Platform.BareMetal.AdditionalNTPServers = []string{"10.0.1.1", "10.0.1.2"}
 	return installConfig
 }
 
@@ -240,6 +253,12 @@ func getValidAgentConfig() *agentconfig.AgentConfig {
 			RendezvousIP: "192.168.122.2",
 		},
 	}
+}
+
+func getValidAgentConfigProxy() *agentconfig.AgentConfig {
+	agentConfig := getValidAgentConfig()
+	agentConfig.Config.RendezvousIP = "10.10.11.1"
+	return agentConfig
 }
 
 func getValidAgentHostsConfig() *agentconfig.AgentHosts {
@@ -450,6 +469,39 @@ func getAgentHostsWithBMCConfig() *agentconfig.AgentHosts {
 	}
 }
 
+func getAgentHostsConfigNoInterfaces() *agentconfig.AgentHosts {
+	return &agentconfig.AgentHosts{
+		Hosts: []agenttypes.Host{
+			{
+				Hostname:   "control-0.example.org",
+				Interfaces: []*v1beta1.Interface{},
+				NetworkConfig: v1beta1.NetConfig{
+					Raw: unmarshalJSON([]byte(rawNMStateConfig)),
+				},
+			},
+		},
+	}
+}
+
+func getAgentHostsConfigInvalidMac() *agentconfig.AgentHosts {
+	return &agentconfig.AgentHosts{
+		Hosts: []agenttypes.Host{
+			{
+				Hostname: "control-0.example.org",
+				Interfaces: []*v1beta1.Interface{
+					{
+						Name:       "enp2s0",
+						MacAddress: "98-af-65-a5-8d-02",
+					},
+				},
+				NetworkConfig: v1beta1.NetConfig{
+					Raw: unmarshalJSON([]byte(rawNMStateConfig)),
+				},
+			},
+		},
+	}
+}
+
 func getGoodACI() *hiveext.AgentClusterInstall {
 	goodACI := &hiveext.AgentClusterInstall{
 		TypeMeta: metav1.TypeMeta{
@@ -479,8 +531,9 @@ func getGoodACI() *hiveext.AgentClusterInstall {
 						HostPrefix: 23,
 					},
 				},
-				ServiceNetwork: []string{"172.30.0.0/16"},
-				NetworkType:    "OVNKubernetes",
+				ServiceNetwork:        []string{"172.30.0.0/16"},
+				NetworkType:           "OVNKubernetes",
+				UserManagedNetworking: swag.Bool(false),
 			},
 			SSHPublicKey: strings.Trim(testSSHKey, "|\n\t"),
 			ProvisionRequirements: hiveext.ProvisionRequirements{

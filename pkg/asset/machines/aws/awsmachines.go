@@ -23,12 +23,13 @@ import (
 
 // MachineInput defines the inputs needed to generate a machine asset.
 type MachineInput struct {
-	Role     string
-	Pool     *types.MachinePool
-	Subnets  map[string]string
-	Tags     capa.Tags
-	PublicIP bool
-	Ignition *capa.Ignition
+	Role           string
+	Pool           *types.MachinePool
+	Subnets        map[string]string
+	Tags           capa.Tags
+	PublicIP       bool
+	PublicIpv4Pool string
+	Ignition       *capa.Ignition
 }
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
@@ -46,6 +47,11 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 	imds := capa.HTTPTokensStateOptional
 	if mpool.EC2Metadata.Authentication == "Required" {
 		imds = capa.HTTPTokensStateRequired
+	}
+
+	instanceProfile := in.Pool.Platform.AWS.IAMProfile
+	if len(instanceProfile) == 0 {
+		instanceProfile = fmt.Sprintf("%s-master-profile", clusterID)
 	}
 
 	var result []*asset.RuntimeFile
@@ -90,7 +96,7 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 				InstanceType:         mpool.InstanceType,
 				AMI:                  capa.AMIReference{ID: ptr.To(mpool.AMIID)},
 				SSHKeyName:           ptr.To(""),
-				IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID),
+				IAMInstanceProfile:   instanceProfile,
 				Subnet:               subnet,
 				PublicIP:             ptr.To(in.PublicIP),
 				AdditionalTags:       in.Tags,
@@ -112,6 +118,14 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 		if in.Role == "bootstrap" {
 			awsMachine.Name = capiutils.GenerateBoostrapMachineName(clusterID)
 			awsMachine.Labels["install.openshift.io/bootstrap"] = ""
+
+			// Enable BYO Public IPv4 Pool when defined on install-config.yaml.
+			if len(in.PublicIpv4Pool) > 0 {
+				awsMachine.Spec.ElasticIPPool = &capa.ElasticIPPool{
+					PublicIpv4Pool:              ptr.To(in.PublicIpv4Pool),
+					PublicIpv4PoolFallBackOrder: ptr.To(capa.PublicIpv4PoolFallbackOrderAmazonPool),
+				}
+			}
 		}
 
 		// Handle additional security groups.

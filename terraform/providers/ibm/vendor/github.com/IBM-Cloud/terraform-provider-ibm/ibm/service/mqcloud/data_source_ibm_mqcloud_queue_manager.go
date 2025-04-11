@@ -1,17 +1,23 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
+ */
 
 package mqcloud
 
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/mqcloud-go-sdk/mqcloudv1"
 )
 
@@ -23,7 +29,7 @@ func DataSourceIbmMqcloudQueueManager() *schema.Resource {
 			"service_instance_guid": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The GUID that uniquely identifies the MQ on Cloud service instance.",
+				Description: "The GUID that uniquely identifies the MQaaS service instance.",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -59,7 +65,7 @@ func DataSourceIbmMqcloudQueueManager() *schema.Resource {
 						"size": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The queue manager sizes of deployment available. Deployment of lite queue managers for aws_us_east_1 and aws_eu_west_1 locations is not available.",
+							Description: "The queue manager sizes of deployment available.",
 						},
 						"status_uri": {
 							Type:        schema.TypeString,
@@ -121,50 +127,41 @@ func DataSourceIbmMqcloudQueueManager() *schema.Resource {
 func dataSourceIbmMqcloudQueueManagerRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mqcloudClient, err := meta.(conns.ClientSession).MqcloudV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_mqcloud_queue_manager", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	err = checkSIPlan(d, meta)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Read Queue Manager failed %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Read Queue Manager failed: %s", err.Error()), "(Data) ibm_mqcloud_queue_manager", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
-	serviceInstanceGuid := d.Get("service_instance_guid").(string)
+	listQueueManagersOptions := &mqcloudv1.ListQueueManagersOptions{}
 
-	// Support for pagination
-	offset := int64(0)
-	limit := int64(25)
-	allItems := []mqcloudv1.QueueManagerDetails{}
+	listQueueManagersOptions.SetServiceInstanceGuid(d.Get("service_instance_guid").(string))
 
-	for {
-		listQueueManagersOptions := &mqcloudv1.ListQueueManagersOptions{
-			ServiceInstanceGuid: &serviceInstanceGuid,
-			Limit:               &limit,
-			Offset:              &offset,
-		}
+	var pager *mqcloudv1.QueueManagersPager
+	pager, err = mqcloudClient.NewQueueManagersPager(listQueueManagersOptions)
+	if err != nil {
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_mqcloud_queue_manager", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
+	}
 
-		result, response, err := mqcloudClient.ListQueueManagersWithContext(context, listQueueManagersOptions)
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error Getting QueueManagers %s\n%s", err, response))
-		}
-		if result == nil {
-			return diag.FromErr(fmt.Errorf("List QueueManagers returned nil"))
-		}
-
-		allItems = append(allItems, result.QueueManagers...)
-
-		// Check if the number of returned records is less than the limit
-		if int64(len(result.QueueManagers)) < limit {
-			break
-		}
-
-		offset += limit
+	allItems, err := pager.GetAll()
+	if err != nil {
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("QueueManagersPager.GetAll() failed %s", err), "(Data) ibm_mqcloud_queue_manager", "read")
+		log.Printf("[DEBUG] %s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	// Use the provided filter argument and construct a new list with only the requested resource(s)
 	var matchQueueManagers []mqcloudv1.QueueManagerDetails
-	var name string
 	var suppliedFilter bool
+	var name string
 
 	if v, ok := d.GetOk("name"); ok {
 		name = v.(string)
@@ -192,15 +189,17 @@ func dataSourceIbmMqcloudQueueManagerRead(context context.Context, d *schema.Res
 	mapSlice := []map[string]interface{}{}
 	for _, modelItem := range allItems {
 		modelItem := modelItem
-		modelMap, err := dataSourceIbmMqcloudQueueManagerQueueManagerDetailsToMap(&modelItem)
+		modelMap, err := DataSourceIbmMqcloudQueueManagerQueueManagerDetailsToMap(&modelItem) // #nosec G601
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_mqcloud_queue_manager", "read")
+			return tfErr.GetDiag()
 		}
 		mapSlice = append(mapSlice, modelMap)
 	}
 
 	if err = d.Set("queue_managers", mapSlice); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting queue_managers: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting queue_managers %s", err), "(Data) ibm_mqcloud_queue_manager", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -211,22 +210,22 @@ func dataSourceIbmMqcloudQueueManagerID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceIbmMqcloudQueueManagerQueueManagerDetailsToMap(model *mqcloudv1.QueueManagerDetails) (map[string]interface{}, error) {
+func DataSourceIbmMqcloudQueueManagerQueueManagerDetailsToMap(model *mqcloudv1.QueueManagerDetails) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["id"] = model.ID
-	modelMap["name"] = model.Name
-	modelMap["display_name"] = model.DisplayName
-	modelMap["location"] = model.Location
-	modelMap["size"] = model.Size
-	modelMap["status_uri"] = model.StatusURI
-	modelMap["version"] = model.Version
-	modelMap["web_console_url"] = model.WebConsoleURL
-	modelMap["rest_api_endpoint_url"] = model.RestApiEndpointURL
-	modelMap["administrator_api_endpoint_url"] = model.AdministratorApiEndpointURL
-	modelMap["connection_info_uri"] = model.ConnectionInfoURI
+	modelMap["id"] = *model.ID
+	modelMap["name"] = *model.Name
+	modelMap["display_name"] = *model.DisplayName
+	modelMap["location"] = *model.Location
+	modelMap["size"] = *model.Size
+	modelMap["status_uri"] = *model.StatusURI
+	modelMap["version"] = *model.Version
+	modelMap["web_console_url"] = *model.WebConsoleURL
+	modelMap["rest_api_endpoint_url"] = *model.RestApiEndpointURL
+	modelMap["administrator_api_endpoint_url"] = *model.AdministratorApiEndpointURL
+	modelMap["connection_info_uri"] = *model.ConnectionInfoURI
 	modelMap["date_created"] = model.DateCreated.String()
-	modelMap["upgrade_available"] = model.UpgradeAvailable
-	modelMap["available_upgrade_versions_uri"] = model.AvailableUpgradeVersionsURI
-	modelMap["href"] = model.Href
+	modelMap["upgrade_available"] = *model.UpgradeAvailable
+	modelMap["available_upgrade_versions_uri"] = *model.AvailableUpgradeVersionsURI
+	modelMap["href"] = *model.Href
 	return modelMap, nil
 }

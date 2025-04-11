@@ -29,11 +29,14 @@ const (
 
 	// ProviderServiceAccountFinalizer allows ServiceAccountReconciler to clean up service accounts
 	// resources associated with VSphereCluster from the SERVICE_ACCOUNTS_CM (service accounts ConfigMap).
+	//
+	// Deprecated: ProviderServiceAccountFinalizer will be removed in a future release.
 	ProviderServiceAccountFinalizer = "providerserviceaccount.vmware.infrastructure.cluster.x-k8s.io"
 )
 
 // VSphereClusterSpec defines the desired state of VSphereCluster.
 type VSphereClusterSpec struct {
+	// +optional
 	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
 }
 

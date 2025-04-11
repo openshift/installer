@@ -24,10 +24,13 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
+	stsv2 "github.com/aws/aws-sdk-go-v2/service/sts"
+	sts "github.com/aws/aws-sdk-go/service/sts"
 	"github.com/google/go-cmp/cmp"
 	idputils "github.com/openshift-online/ocm-common/pkg/idp/utils"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -39,6 +42,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apiserver/pkg/storage/names"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -57,6 +61,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/rosa"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/utils"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	capiannotations "sigs.k8s.io/cluster-api/util/annotations"
@@ -102,16 +107,16 @@ func (r *ROSAControlPlaneReconciler) SetupWithManager(ctx context.Context, mgr c
 	}
 
 	if err = c.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-		handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, rosaControlPlane.GroupVersionKind(), mgr.GetClient(), &expinfrav1.ROSACluster{})),
-		predicates.ClusterUnpausedAndInfrastructureReady(log.GetLogger()),
+		source.Kind[client.Object](mgr.GetCache(), &clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, rosaControlPlane.GroupVersionKind(), mgr.GetClient(), &expinfrav1.ROSACluster{})),
+			predicates.ClusterUnpausedAndInfrastructureReady(log.GetLogger())),
 	); err != nil {
 		return fmt.Errorf("failed adding a watch for ready clusters: %w", err)
 	}
 
 	if err = c.Watch(
-		source.Kind(mgr.GetCache(), &expinfrav1.ROSACluster{}),
-		handler.EnqueueRequestsFromMapFunc(r.rosaClusterToROSAControlPlane(log)),
+		source.Kind[client.Object](mgr.GetCache(), &expinfrav1.ROSACluster{},
+			handler.EnqueueRequestsFromMapFunc(r.rosaClusterToROSAControlPlane(log))),
 	); err != nil {
 		return fmt.Errorf("failed adding a watch for ROSACluster")
 	}
@@ -204,7 +209,7 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 		return ctrl.Result{}, fmt.Errorf("failed to create OCM client: %w", err)
 	}
 
-	creator, err := rosaaws.CreatorForCallerIdentity(rosaScope.Identity)
+	creator, err := rosaaws.CreatorForCallerIdentity(convertStsV2(rosaScope.Identity))
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to transform caller identity to creator: %w", err)
 	}
@@ -316,13 +321,23 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 func (r *ROSAControlPlaneReconciler) reconcileDelete(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (res ctrl.Result, reterr error) {
 	rosaScope.Info("Reconciling ROSAControlPlane delete")
 
+	// Deleting MachinePools first.
+	deleted, err := r.deleteMachinePools(ctx, rosaScope)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if !deleted {
+		// Reconcile after 1 min giving time for machinePools to be deleted.
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	}
+
 	ocmClient, err := rosa.NewOCMClient(ctx, rosaScope)
 	if err != nil {
 		// TODO: need to expose in status, as likely the credentials are invalid
 		return ctrl.Result{}, fmt.Errorf("failed to create OCM client: %w", err)
 	}
 
-	creator, err := rosaaws.CreatorForCallerIdentity(rosaScope.Identity)
+	creator, err := rosaaws.CreatorForCallerIdentity(convertStsV2(rosaScope.Identity))
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to transform caller identity to creator: %w", err)
 	}
@@ -332,8 +347,9 @@ func (r *ROSAControlPlaneReconciler) reconcileDelete(ctx context.Context, rosaSc
 		return ctrl.Result{}, err
 	}
 	if cluster == nil {
-		// cluster is fully deleted, remove finalizer.
+		// cluster and machinepools are deleted, removing finalizer.
 		controllerutil.RemoveFinalizer(rosaScope.ControlPlane, ROSAControlPlaneFinalizer)
+
 		return ctrl.Result{}, nil
 	}
 
@@ -366,10 +382,45 @@ func (r *ROSAControlPlaneReconciler) reconcileDelete(ctx context.Context, rosaSc
 	return ctrl.Result{RequeueAfter: time.Second * 60}, nil
 }
 
+// deleteMachinePools check if the controlplane has related machinePools and delete them.
+func (r *ROSAControlPlaneReconciler) deleteMachinePools(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (bool, error) {
+	machinePools, err := utils.GetMachinePools(ctx, rosaScope.Client, rosaScope.Cluster.Name, rosaScope.Cluster.Namespace)
+	if err != nil {
+		return false, err
+	}
+
+	var errs []error
+	for id, mp := range machinePools {
+		if !mp.DeletionTimestamp.IsZero() {
+			continue
+		}
+		if err = rosaScope.Client.Delete(ctx, &machinePools[id]); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) > 0 {
+		return false, kerrors.NewAggregate(errs)
+	}
+
+	return len(machinePools) == 0, nil
+}
+
 func (r *ROSAControlPlaneReconciler) reconcileClusterVersion(rosaScope *scope.ROSAControlPlaneScope, ocmClient *ocm.Client, cluster *cmv1.Cluster) error {
 	version := rosaScope.ControlPlane.Spec.Version
 	if version == rosa.RawVersionID(cluster.Version()) {
 		conditions.MarkFalse(rosaScope.ControlPlane, rosacontrolplanev1.ROSAControlPlaneUpgradingCondition, "upgraded", clusterv1.ConditionSeverityInfo, "")
+
+		if cluster.Version() != nil {
+			rosaScope.ControlPlane.Status.AvailableUpgrades = cluster.Version().AvailableUpgrades()
+		}
+
+		// Set the version gate to WaitForAcknowledge as the previous upgrade is applied.
+		if rosaScope.ControlPlane.Spec.VersionGate == rosacontrolplanev1.Acknowledge {
+			rosaScope.ControlPlane.Spec.VersionGate = rosacontrolplanev1.WaitForAcknowledge
+		}
+
+		// return as there is no upgrade to schedule.
 		return nil
 	}
 
@@ -379,9 +430,18 @@ func (r *ROSAControlPlaneReconciler) reconcileClusterVersion(rosaScope *scope.RO
 	}
 
 	if scheduledUpgrade == nil {
-		scheduledUpgrade, err = rosa.ScheduleControlPlaneUpgrade(ocmClient, cluster, version, time.Now())
+		ack := (rosaScope.ControlPlane.Spec.VersionGate == rosacontrolplanev1.Acknowledge || rosaScope.ControlPlane.Spec.VersionGate == rosacontrolplanev1.AlwaysAcknowledge)
+		scheduledUpgrade, err = rosa.ScheduleControlPlaneUpgrade(ocmClient, cluster, version, time.Now(), ack)
 		if err != nil {
-			return fmt.Errorf("failed to schedule control plane upgrade to version %s: %w", version, err)
+			condition := &clusterv1.Condition{
+				Type:    rosacontrolplanev1.ROSAControlPlaneUpgradingCondition,
+				Status:  corev1.ConditionFalse,
+				Reason:  "failed",
+				Message: fmt.Sprintf("failed to schedule upgrade to version %s: %v", version, err),
+			}
+			conditions.Set(rosaScope.ControlPlane, condition)
+
+			return err
 		}
 	}
 
@@ -402,26 +462,88 @@ func (r *ROSAControlPlaneReconciler) reconcileClusterVersion(rosaScope *scope.RO
 }
 
 func (r *ROSAControlPlaneReconciler) updateOCMCluster(rosaScope *scope.ROSAControlPlaneScope, ocmClient *ocm.Client, cluster *cmv1.Cluster, creator *rosaaws.Creator) error {
-	currentAuditLogRole := cluster.AWS().AuditLog().RoleArn()
-	if currentAuditLogRole == rosaScope.ControlPlane.Spec.AuditLogRoleARN {
-		return nil
-	}
+	ocmClusterSpec, updated := r.updateOCMClusterSpec(rosaScope.ControlPlane, cluster)
 
-	ocmClusterSpec := ocm.Spec{
-		AuditLogRoleARN: ptr.To(rosaScope.ControlPlane.Spec.AuditLogRoleARN),
-	}
-
-	// if this fails, the provided role is likely invalid or it doesn't have the required permissions.
-	if err := ocmClient.UpdateCluster(cluster.ID(), creator, ocmClusterSpec); err != nil {
-		conditions.MarkFalse(rosaScope.ControlPlane,
-			rosacontrolplanev1.ROSAControlPlaneValidCondition,
-			rosacontrolplanev1.ROSAControlPlaneInvalidConfigurationReason,
-			clusterv1.ConditionSeverityError,
-			err.Error())
-		return err
+	if updated {
+		// Update the cluster.
+		rosaScope.Info("Updating cluster")
+		if err := ocmClient.UpdateCluster(cluster.ID(), creator, ocmClusterSpec); err != nil {
+			conditions.MarkFalse(rosaScope.ControlPlane,
+				rosacontrolplanev1.ROSAControlPlaneValidCondition,
+				rosacontrolplanev1.ROSAControlPlaneInvalidConfigurationReason,
+				clusterv1.ConditionSeverityError,
+				err.Error())
+			return err
+		}
 	}
 
 	return nil
+}
+
+func (r *ROSAControlPlaneReconciler) updateOCMClusterSpec(rosaControlPlane *rosacontrolplanev1.ROSAControlPlane, cluster *cmv1.Cluster) (ocm.Spec, bool) {
+	ocmClusterSpec := ocm.Spec{}
+	updated := false
+
+	// Check for audit role arn changes
+	currentAuditLogRole := cluster.AWS().AuditLog().RoleArn()
+	if currentAuditLogRole != rosaControlPlane.Spec.AuditLogRoleARN {
+		ocmClusterSpec.AuditLogRoleARN = ptr.To(rosaControlPlane.Spec.AuditLogRoleARN)
+		updated = true
+	}
+
+	// Check for registry config changes
+	regConfig := &rosacontrolplanev1.RegistryConfig{
+		RegistrySources: &rosacontrolplanev1.RegistrySources{},
+	}
+	if rosaControlPlane.Spec.ClusterRegistryConfig != nil {
+		regConfig.AdditionalTrustedCAs = rosaControlPlane.Spec.ClusterRegistryConfig.AdditionalTrustedCAs
+		regConfig.AllowedRegistriesForImport = rosaControlPlane.Spec.ClusterRegistryConfig.AllowedRegistriesForImport
+
+		if rosaControlPlane.Spec.ClusterRegistryConfig.RegistrySources != nil {
+			regConfig.RegistrySources.AllowedRegistries = rosaControlPlane.Spec.ClusterRegistryConfig.RegistrySources.AllowedRegistries
+			regConfig.RegistrySources.BlockedRegistries = rosaControlPlane.Spec.ClusterRegistryConfig.RegistrySources.BlockedRegistries
+			regConfig.RegistrySources.InsecureRegistries = rosaControlPlane.Spec.ClusterRegistryConfig.RegistrySources.InsecureRegistries
+		}
+	}
+	if !reflect.DeepEqual(regConfig.AdditionalTrustedCAs, cluster.RegistryConfig().AdditionalTrustedCa()) {
+		ocmClusterSpec.AdditionalTrustedCa = regConfig.AdditionalTrustedCAs
+		updated = true
+	}
+	if !reflect.DeepEqual(regConfig.RegistrySources.AllowedRegistries, cluster.RegistryConfig().RegistrySources().AllowedRegistries()) {
+		ocmClusterSpec.AllowedRegistries = regConfig.RegistrySources.AllowedRegistries
+		updated = true
+	}
+	if !reflect.DeepEqual(regConfig.RegistrySources.BlockedRegistries, cluster.RegistryConfig().RegistrySources().BlockedRegistries()) {
+		ocmClusterSpec.BlockedRegistries = regConfig.RegistrySources.BlockedRegistries
+		updated = true
+	}
+	if !reflect.DeepEqual(regConfig.RegistrySources.InsecureRegistries, cluster.RegistryConfig().RegistrySources().InsecureRegistries()) {
+		ocmClusterSpec.InsecureRegistries = regConfig.RegistrySources.InsecureRegistries
+		updated = true
+	}
+
+	var newAllowedRegistries, oldAllowedRegistries []string
+	if len(regConfig.AllowedRegistriesForImport) > 0 {
+		for id := range regConfig.AllowedRegistriesForImport {
+			newAllowedRegistries = append(newAllowedRegistries, regConfig.AllowedRegistriesForImport[id].DomainName+":"+
+				strconv.FormatBool(regConfig.AllowedRegistriesForImport[id].Insecure))
+		}
+	}
+	if len(cluster.RegistryConfig().AllowedRegistriesForImport()) > 0 {
+		for id := range cluster.RegistryConfig().AllowedRegistriesForImport() {
+			oldAllowedRegistries = append(oldAllowedRegistries, cluster.RegistryConfig().AllowedRegistriesForImport()[id].DomainName()+":"+
+				strconv.FormatBool(cluster.RegistryConfig().AllowedRegistriesForImport()[id].Insecure()))
+		}
+	}
+	if !reflect.DeepEqual(newAllowedRegistries, oldAllowedRegistries) {
+		ocmClusterSpec.AllowedRegistriesForImport = strings.Join(newAllowedRegistries, ",")
+		updated = true
+	}
+
+	// TODO: check for cluster AutoScale changes
+	// rosaControlPlane.Spec.DefaultMachinePoolSpec.Autoscaling
+
+	return ocmClusterSpec, updated
 }
 
 func (r *ROSAControlPlaneReconciler) reconcileExternalAuth(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope, cluster *cmv1.Cluster) error {
@@ -609,7 +731,7 @@ func (r *ROSAControlPlaneReconciler) reconcileExternalAuthBootstrapKubeconfig(ct
 
 	// kubeconfig doesn't exist, generate a new one.
 	breakGlassConfig, err := cmv1.NewBreakGlassCredential().
-		Username("capi-admin").
+		Username(names.SimpleNameGenerator.GenerateName("capi-admin-")). // OCM requires unique usernames
 		ExpirationTimestamp(time.Now().Add(time.Hour * 24)).
 		Build()
 	if err != nil {
@@ -851,6 +973,28 @@ func buildOCMClusterSpec(controlPlaneSpec rosacontrolplanev1.RosaControlPlaneSpe
 		}
 	}
 
+	// Set the cluster registry config.
+	if controlPlaneSpec.ClusterRegistryConfig != nil {
+		if len(controlPlaneSpec.ClusterRegistryConfig.AdditionalTrustedCAs) > 0 {
+			ocmClusterSpec.AdditionalTrustedCa = controlPlaneSpec.ClusterRegistryConfig.AdditionalTrustedCAs
+		}
+
+		if len(controlPlaneSpec.ClusterRegistryConfig.AllowedRegistriesForImport) > 0 {
+			registers := make([]string, 0)
+			for id := range controlPlaneSpec.ClusterRegistryConfig.AllowedRegistriesForImport {
+				registers = append(registers, controlPlaneSpec.ClusterRegistryConfig.AllowedRegistriesForImport[id].DomainName+":"+
+					strconv.FormatBool(controlPlaneSpec.ClusterRegistryConfig.AllowedRegistriesForImport[id].Insecure))
+			}
+			ocmClusterSpec.AllowedRegistriesForImport = strings.Join(registers, ",")
+		}
+
+		if controlPlaneSpec.ClusterRegistryConfig.RegistrySources != nil {
+			ocmClusterSpec.BlockedRegistries = controlPlaneSpec.ClusterRegistryConfig.RegistrySources.BlockedRegistries
+			ocmClusterSpec.AllowedRegistries = controlPlaneSpec.ClusterRegistryConfig.RegistrySources.AllowedRegistries
+			ocmClusterSpec.InsecureRegistries = controlPlaneSpec.ClusterRegistryConfig.RegistrySources.InsecureRegistries
+		}
+	}
+
 	return ocmClusterSpec, nil
 }
 
@@ -958,4 +1102,13 @@ func buildAPIEndpoint(cluster *cmv1.Cluster) (*clusterv1.APIEndpoint, error) {
 		Host: host,
 		Port: int32(port), // #nosec G109
 	}, nil
+}
+
+// TODO: Remove this and update the aws-sdk lib to v2.
+func convertStsV2(identity *sts.GetCallerIdentityOutput) *stsv2.GetCallerIdentityOutput {
+	return &stsv2.GetCallerIdentityOutput{
+		Account: identity.Account,
+		Arn:     identity.Arn,
+		UserId:  identity.UserId,
+	}
 }

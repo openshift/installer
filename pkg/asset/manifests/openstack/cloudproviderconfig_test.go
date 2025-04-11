@@ -1,9 +1,10 @@
 package openstack
 
 import (
+	"context"
 	"testing"
 
-	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/types"
@@ -129,7 +130,7 @@ region = my_region
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			actualConfig, _, err := generateCloudProviderConfig(nil, &cloud, *tc.installConfig)
+			actualConfig, _, err := generateCloudProviderConfig(context.Background(), nil, &cloud, *tc.installConfig)
 			assert.NoError(t, err, "unexpected error when generating cloud provider config")
 			assert.Equal(t, tc.expectedConfig, actualConfig, "unexpected cloud provider config")
 		})

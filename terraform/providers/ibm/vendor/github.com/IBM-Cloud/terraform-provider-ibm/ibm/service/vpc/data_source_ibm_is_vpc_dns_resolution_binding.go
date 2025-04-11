@@ -35,6 +35,35 @@ func DataSourceIBMIsVPCDnsResolutionBinding() *schema.Resource {
 				Computed:    true,
 				Description: "The date and time that the DNS resolution binding was created.",
 			},
+			"health_reasons": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current `health_state` (if any).The enumerated reason code values for this property will expand in the future. When processing this property, check for and log unknown values. Optionally halt processing and surface the error, or bypass the resource on which the unexpected reason code was encountered.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the reason for this health state.",
+						},
+						"message": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the reason for this health state.",
+						},
+						"more_info": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about the reason for this health state.",
+						},
+					},
+				},
+			},
+			"health_state": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The health of this resource.- `ok`: No abnormal behavior detected- `degraded`: Experiencing compromised performance, capacity, or connectivity- `faulted`: Completely unreachable, inoperative, or otherwise entirely incapacitated- `inapplicable`: The health state does not apply because of the current lifecycle state. A resource with a lifecycle state of `failed` or `deleting` will have a health state of `inapplicable`. A `pending` resource may also have this state.",
+			},
 			"endpoint_gateways": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -241,7 +270,7 @@ func dataSourceIBMIsVPCDnsResolutionBindingRead(context context.Context, d *sche
 	d.SetId(*vpcdnsResolutionBinding.ID)
 
 	if err = d.Set("created_at", flex.DateTimeToString(vpcdnsResolutionBinding.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_at: %s", err))
 	}
 
 	endpointGateways := []map[string]interface{}{}
@@ -255,23 +284,40 @@ func dataSourceIBMIsVPCDnsResolutionBindingRead(context context.Context, d *sche
 		}
 	}
 	if err = d.Set("endpoint_gateways", endpointGateways); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting endpoint_gateways %s", err))
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting endpoint_gateways %s", err))
 	}
 
 	if err = d.Set("href", vpcdnsResolutionBinding.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting href: %s", err))
 	}
 
 	if err = d.Set("lifecycle_state", vpcdnsResolutionBinding.LifecycleState); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting lifecycle_state: %s", err))
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting lifecycle_state: %s", err))
 	}
 
 	if err = d.Set("name", vpcdnsResolutionBinding.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
 	}
 
 	if err = d.Set("resource_type", vpcdnsResolutionBinding.ResourceType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting resource_type: %s", err))
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting resource_type: %s", err))
+	}
+	healthReasons := []map[string]interface{}{}
+	if vpcdnsResolutionBinding.HealthReasons != nil {
+		for _, modelItem := range vpcdnsResolutionBinding.HealthReasons {
+			modelMap, err := dataSourceIBMIsVPCDnsResolutionBindingVpcdnsResolutionBindingHealthReasonToMap(&modelItem)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			healthReasons = append(healthReasons, modelMap)
+		}
+	}
+	if err = d.Set("health_reasons", healthReasons); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting health_reasons %s", err))
+	}
+
+	if err = d.Set("health_state", vpcdnsResolutionBinding.HealthState); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting health_state: %s", err))
 	}
 
 	vpc := []map[string]interface{}{}
@@ -283,7 +329,7 @@ func dataSourceIBMIsVPCDnsResolutionBindingRead(context context.Context, d *sche
 		vpc = append(vpc, modelMap)
 	}
 	if err = d.Set("vpc", vpc); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting vpc %s", err))
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting vpc %s", err))
 	}
 
 	return nil
@@ -371,6 +417,16 @@ func dataSourceIBMIsVPCDnsResolutionBindingVPCRemoteToMap(model *vpcv1.VPCRemote
 			return modelMap, err
 		}
 		modelMap["region"] = []map[string]interface{}{regionMap}
+	}
+	return modelMap, nil
+}
+
+func dataSourceIBMIsVPCDnsResolutionBindingVpcdnsResolutionBindingHealthReasonToMap(model *vpcv1.VpcdnsResolutionBindingHealthReason) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["code"] = model.Code
+	modelMap["message"] = model.Message
+	if model.MoreInfo != nil {
+		modelMap["more_info"] = model.MoreInfo
 	}
 	return modelMap, nil
 }

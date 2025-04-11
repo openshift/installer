@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2014-2015 VMware, Inc. All Rights Reserved.
+Copyright (c) 2014-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -75,12 +75,19 @@ func ApplyPropertyChange(obj Reference, changes []types.PropertyChange) {
 	v := reflect.ValueOf(obj)
 
 	for _, p := range changes {
-		rv, ok := t.props[p.Name]
-		if !ok {
-			panic(p.Name + " not found")
+		var field Field
+		if !field.FromString(p.Name) {
+			panic(p.Name + ": invalid property path")
 		}
 
-		assignValue(v, rv, reflect.ValueOf(p.Val))
+		rv, ok := t.props[field.Path]
+		if !ok {
+			panic(field.Path + ": property not found")
+		}
+
+		if field.Key == nil { // Key is only used for notifications
+			assignValue(v, rv, reflect.ValueOf(p.Val))
+		}
 	}
 }
 
@@ -154,16 +161,49 @@ func LoadObjectContent(content []types.ObjectContent, dst interface{}) error {
 	return nil
 }
 
+// RetrievePropertiesEx wraps RetrievePropertiesEx and ContinueRetrievePropertiesEx to collect properties in batches.
+func RetrievePropertiesEx(ctx context.Context, r soap.RoundTripper, req types.RetrievePropertiesEx) ([]types.ObjectContent, error) {
+	rx, err := methods.RetrievePropertiesEx(ctx, r, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	if rx.Returnval == nil {
+		return nil, nil
+	}
+
+	objects := rx.Returnval.Objects
+	token := rx.Returnval.Token
+
+	for token != "" {
+		cx, err := methods.ContinueRetrievePropertiesEx(ctx, r, &types.ContinueRetrievePropertiesEx{
+			This:  req.This,
+			Token: token,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		token = cx.Returnval.Token
+		objects = append(objects, cx.Returnval.Objects...)
+	}
+
+	return objects, nil
+}
+
 // RetrievePropertiesForRequest calls the RetrieveProperties method with the
 // specified request and decodes the response struct into the value pointed to
 // by dst.
 func RetrievePropertiesForRequest(ctx context.Context, r soap.RoundTripper, req types.RetrieveProperties, dst interface{}) error {
-	res, err := methods.RetrieveProperties(ctx, r, &req)
+	objects, err := RetrievePropertiesEx(ctx, r, types.RetrievePropertiesEx{
+		This:    req.This,
+		SpecSet: req.SpecSet,
+	})
 	if err != nil {
 		return err
 	}
 
-	return LoadObjectContent(res.Returnval, dst)
+	return LoadObjectContent(objects, dst)
 }
 
 // RetrieveProperties retrieves the properties of the managed object specified

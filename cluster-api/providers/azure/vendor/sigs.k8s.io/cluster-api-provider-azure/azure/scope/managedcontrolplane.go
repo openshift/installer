@@ -90,7 +90,7 @@ func NewManagedControlPlaneScope(ctx context.Context, params ManagedControlPlane
 		return nil, errors.New("failed to generate new scope from nil ControlPlane")
 	}
 
-	credentialsProvider, err := NewManagedControlPlaneCredentialsProvider(ctx, params.Client, params.ControlPlane)
+	credentialsProvider, err := NewAzureCredentialsProvider(ctx, params.Client, params.ControlPlane.Spec.IdentityRef, params.ControlPlane.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init credentials provider")
 	}
@@ -526,11 +526,6 @@ func (s *ManagedControlPlaneScope) SetAutoUpgradeVersionStatus(version string) {
 // IsManagedVersionUpgrade checks if version is auto managed by AKS.
 func (s *ManagedControlPlaneScope) IsManagedVersionUpgrade() bool {
 	return isManagedVersionUpgrade(s.ControlPlane)
-}
-
-// IsPreviewEnabled checks if the preview feature is enabled.
-func (s *ManagedControlPlaneScope) IsPreviewEnabled() bool {
-	return ptr.Deref(s.ControlPlane.Spec.EnablePreviewFeatures, false)
 }
 
 func isManagedVersionUpgrade(managedControlPlane *infrav1.AzureManagedControlPlane) bool {

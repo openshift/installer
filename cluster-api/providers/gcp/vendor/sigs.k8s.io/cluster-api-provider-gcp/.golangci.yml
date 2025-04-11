@@ -1,41 +1,111 @@
+---
 linters:
   disable-all: true
   enable:
-  - asciicheck
-  - bodyclose
-  - depguard
-  - dogsled
-  - errcheck
-  - exportloopref
-  - goconst
-  - gocritic
-  - gocyclo
-  - godot
-  - gofmt
-  - goimports
-  - goprintffuncname
-  - gosec
-  - gosimple
-  - govet
-  - importas
-  - ineffassign
-  - misspell
-  - nakedret
-  - nilerr
-  - noctx
-  - nolintlint
-  - prealloc
-  - predeclared
-  - revive
-  - rowserrcheck
-  - staticcheck
-  - stylecheck
-  - thelper
-  - typecheck
-  - unconvert
-  - unparam
-  - unused
-  - whitespace
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    # - copyloopvar // only on go1.22
+    - decorder
+    - dogsled
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - errname
+    - copyloopvar
+    - fatcontext
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - gochecksumtype
+    - goconst
+    - gocritic
+    - gocyclo
+    - godox
+    - gofmt
+    - gofumpt
+    - goheader
+    - goimports
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - gosmopolitan
+    - govet
+    - grouper
+    - importas
+    - ineffassign
+    # - intrange  // only on go1.22
+    - loggercheck
+    - makezero
+    - mirror
+    - misspell
+    - musttag
+    - nakedret
+    - nolintlint
+    - nosprintfhostport
+    - perfsprint
+    - prealloc
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
+    - revive
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - staticcheck
+    - stylecheck
+    - tagalign
+    - tenv
+    - testableexamples
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+    - zerologlint
+    # - containedctx
+    # - cyclop
+    # - depguard
+    # - dupword
+    # - err113
+    # - errorlint
+    # - exhaustive
+    # - exhaustruct
+    # - forbidigo
+    # - forcetypeassert
+    # - funlen
+    # - gci
+    # - gochecknoglobals
+    # - gochecknoinits
+    # - gocognit
+    # - godot
+    # - inamedparam
+    # - interfacebloat
+    # - ireturn
+    # - lll
+    # - maintidx
+    # - mnd
+    # - nestif
+    # - nilerr
+    # - nilnil
+    # - nlreturn
+    # - noctx
+    # - nonamedreturns
+    # - paralleltest
+    # - tagliatelle
+    # - testifylint
+    # - testpackage
+    # - thelper
+    # - tparallel
+    # - varnamelen
+    # - wrapcheck
+    # - wsl
 
 linters-settings:
   importas:
@@ -55,17 +125,6 @@ linters-settings:
       # Controller Runtime
       - pkg: sigs.k8s.io/controller-runtime
         alias: ctrl
-  staticcheck:
-    go: "1.18"
-  stylecheck:
-    go: "1.18"
-  depguard:
-    rules:
-      main:
-        deny:
-          - pkg: "io/ioutil"
-            desc: "ioutil is deprecated starting with Go 1.16"
-
 
 issues:
   max-same-issues: 0
@@ -73,66 +132,71 @@ issues:
   # We are disabling default golangci exclusions because we want to help reviewers to focus on reviewing the most relevant
   # changes in PRs and avoid nitpicking.
   exclude-use-default: false
+  exclude-files:
+    - "zz_generated.*\\.go$"
+    - ".*conversion.*\\.go$"
+  exclude-dirs:
+    - mock*
   # List of regexps of issue texts to exclude, empty list by default.
   exclude:
-  # The following are being worked on to remove their exclusion. This list should be reduced or go away all together over time.
-  # If it is decided they will not be addressed they should be moved above this comment.
-  - Subprocess launch(ed with variable|ing should be audited)
-  - (Expect directory permissions to be 0750 or less|Expect file permissions to be 0600 or less)
-  - (G104|G307)
+    # The following are being worked on to remove their exclusion. This list should be reduced or go away all together over time.
+    # If it is decided they will not be addressed they should be moved above this comment.
+    - Subprocess launch(ed with variable|ing should be audited)
+    - (Expect directory permissions to be 0750 or less|Expect file permissions to be 0600 or less)
+    - (G104|G307)
   exclude-rules:
-  - linters:
-    - gosec
-    text: "G108: Profiling endpoint is automatically exposed on /debug/pprof"
-  - linters:
-    - revive
-    text: "exported: exported method .*\\.(Reconcile|SetupWithManager|SetupWebhookWithManager) should have comment or be unexported"
-  - linters:
-    - errcheck
-    text: Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*print(f|ln)?|os\.(Un)?Setenv). is not checked
-  # With Go 1.16, the new embed directive can be used with an un-named import,
-  # revive (previously, golint) only allows these to be imported in a main.go, which wouldn't work for us.
-  # This directive allows the embed package to be imported with an underscore everywhere.
-  - linters:
-    - revive
-    source: _ "embed"
-  # Exclude some packages or code to require comments, for example test code, or fake clients.
-  - linters:
-    - revive
-    text: exported (method|function|type|const) (.+) should have comment or be unexported
-    source: (func|type).*Fake.*
-  - linters:
-    - revive
-    text: exported (method|function|type|const) (.+) should have comment or be unexported
-    path: fake_\.go
-  - linters:
-    - revive
-    text: exported (method|function|type|const) (.+) should have comment or be unexported
-    path: "(framework|e2e|infrastructure/docker)/.*.go"
-  # Disable unparam "always receives" which might not be really
-  # useful when building libraries.
-  - linters:
-    - unparam
-    text: always receives
-  # Dot imports for gomega or ginkgo are allowed
-  # within test files.
-  - path: _test\.go
-    text: should not use dot imports
-  - path: (framework|e2e)/.*.go
-    text: should not use dot imports
-  - path: _test\.go
-    text: cyclomatic complexity
-  # Append should be able to assign to a different var/slice.
-  - linters:
-    - gocritic
-    text: "appendAssign: append result not assigned to the same slice"
-
+    - linters:
+        - gosec
+      text: "G108: Profiling endpoint is automatically exposed on /debug/pprof"
+    - linters:
+        - gosec
+      text: "G115: integer overflow conversion int -> int32"
+    - linters:
+        - govet
+      text: "printf: non-constant format string in call to sigs.k8s.io/cluster-api/util/conditions.MarkFalse"
+    - linters:
+        - revive
+      text: "exported: exported method .*\\.(Reconcile|SetupWithManager|SetupWebhookWithManager) should have comment or be unexported"
+    - linters:
+        - errcheck
+      text: Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*print(f|ln)?|os\.(Un)?Setenv). is not checked
+    # With Go 1.16, the new embed directive can be used with an un-named import,
+    # revive (previously, golint) only allows these to be imported in a main.go, which wouldn't work for us.
+    # This directive allows the embed package to be imported with an underscore everywhere.
+    - linters:
+        - revive
+      source: _ "embed"
+    # Exclude some packages or code to require comments, for example test code, or fake clients.
+    - linters:
+        - revive
+      text: exported (method|function|type|const) (.+) should have comment or be unexported
+      source: (func|type).*Fake.*
+    - linters:
+        - revive
+      text: exported (method|function|type|const) (.+) should have comment or be unexported
+      path: fake_\.go
+    - linters:
+        - revive
+      text: exported (method|function|type|const) (.+) should have comment or be unexported
+      path: "(framework|e2e|infrastructure/docker)/.*.go"
+    # Disable unparam "always receives" which might not be really
+    # useful when building libraries.
+    - linters:
+        - unparam
+      text: always receives
+    # Dot imports for gomega or ginkgo are allowed
+    # within test files.
+    - path: _test\.go
+      text: should not use dot imports
+    - path: (framework|e2e)/.*.go
+      text: should not use dot imports
+    - path: _test\.go
+      text: cyclomatic complexity
+    # Append should be able to assign to a different var/slice.
+    - linters:
+        - gocritic
+      text: "appendAssign: append result not assigned to the same slice"
 
 run:
   timeout: 10m
-  skip-files:
-  - "zz_generated.*\\.go$"
-  - ".*conversion.*\\.go$"
-  skip-dirs:
-  - mock*
   allow-parallel-runners: true

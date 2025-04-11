@@ -4,10 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	v1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -18,60 +20,46 @@ func TestFeatureGates(t *testing.T) {
 		expected      string
 	}{
 		{
-			name: "GCP UserTags is allowed with Feature Gates enabled",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.FeatureSet = v1.TechPreviewNoUpgrade
-				c.GCP = validGCPPlatform()
-				c.GCP.UserTags = []gcp.UserTag{{ParentID: "a", Key: "b", Value: "c"}}
-				return c
-			}(),
-		},
-		{
-			name: "GCP UserTags is not allowed without Feature Gates",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.GCP = validGCPPlatform()
-				c.GCP.UserTags = []gcp.UserTag{{ParentID: "a", Key: "b", Value: "c"}}
-				return c
-			}(),
-			expected: `^platform.gcp.userTags: Forbidden: this field is protected by the GCPLabelsTags feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
-		},
-		{
-			name: "GCP UserLabels is allowed with Feature Gates enabled",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.FeatureSet = v1.TechPreviewNoUpgrade
-				c.GCP = validGCPPlatform()
-				c.GCP.UserLabels = []gcp.UserLabel{{Key: "a", Value: "b"}}
-				return c
-			}(),
-		},
-		{
 			name: "GCP UserProvisionedDNS is not allowed without Feature Gates",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.GCP = validGCPPlatform()
-				c.GCP.UserProvisionedDNS = gcp.UserProvisionedDNSEnabled
+				c.GCP.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
 				return c
 			}(),
 			expected: `^platform.gcp.userProvisionedDNS: Forbidden: this field is protected by the GCPClusterHostedDNS feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
-			name: "GCP UserLabels is not allowed without Feature Gates",
+			name: "GCP Custom API Endpoints is not allowed without Feature Gates",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.GCP = validGCPPlatform()
-				c.GCP.UserLabels = []gcp.UserLabel{{Key: "a", Value: "b"}}
+				c.GCP.ServiceEndpoints = []v1.GCPServiceEndpoint{
+					{
+						Name: v1.GCPServiceEndpointNameCompute,
+						URL:  "https://compute.googleapis.com",
+					},
+				}
 				return c
 			}(),
-			expected: `^platform.gcp.userLabels: Forbidden: this field is protected by the GCPLabelsTags feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+			expected: `^platform.gcp.serviceEndpoints: Forbidden: this field is protected by the GCPCustomAPIEndpoints feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
+			name: "AWS UserProvisionedDNS is not allowed without Feature Gates",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = validAWSPlatform()
+				c.AWS.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
+				return c
+			}(),
+			expected: `^platform.aws.userProvisionedDNS: Forbidden: this field is protected by the AWSClusterHostedDNS feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
 		},
 		{
 			name: "vSphere hosts is allowed with Feature Gates enabled",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.FeatureSet = v1.Default
+				c.AWS = nil // validInstallConfig defaults to AWS
 				c.VSphere = validVSpherePlatform()
 				c.VSphere.Hosts = []*vsphere.Host{{Role: "test"}}
 				return c
@@ -82,23 +70,152 @@ func TestFeatureGates(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.FeatureSet = v1.CustomNoUpgrade
-				c.FeatureGates = []string{"VSphereStaticIPs=true"}
 				c.VSphere = validVSpherePlatform()
 				c.VSphere.Hosts = []*vsphere.Host{{Role: "test"}}
 				return c
 			}(),
 		},
 		{
-			name: "vSphere hosts is not allowed with custom Feature Gate disabled",
+			name: "vSphere one vcenter is allowed with default Feature Gates",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.FeatureSet = v1.CustomNoUpgrade
-				c.FeatureGates = []string{"VSphereStaticIPs=false"}
+				c.FeatureSet = v1.Default
 				c.VSphere = validVSpherePlatform()
 				c.VSphere.Hosts = []*vsphere.Host{{Role: "test"}}
 				return c
 			}(),
-			expected: `^platform.vsphere.hosts: Forbidden: this field is protected by the VSphereStaticIPs feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
+			name: "vSphere two vcenters is allowed with default Feature Gates",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.Default
+				c.VSphere = validVSpherePlatform()
+				c.VSphere.VCenters = append(c.VSphere.VCenters, vsphere.VCenter{Server: "additional-vcenter"})
+				return c
+			}(),
+		},
+		{
+			name: "vSphere two vcenters is allowed with custom Feature Gate enabled",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.CustomNoUpgrade
+				c.VSphere = validVSpherePlatform()
+				c.VSphere.VCenters = append(c.VSphere.VCenters, vsphere.VCenter{Server: "additional-vcenter"})
+				return c
+			}(),
+		},
+		{
+			name: "vSphere two vcenters is allowed with TechPreview Feature Set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.TechPreviewNoUpgrade
+				c.VSphere = validVSpherePlatform()
+				c.VSphere.VCenters = append(c.VSphere.VCenters, vsphere.VCenter{Server: "Number2"})
+				return c
+			}(),
+		},
+		{
+			name: "Azure user-assigned identities (control plane) > 1 requires MachineAPIMigration feature gate",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil // validInstallConfig defaults to AWS
+				c.Azure = &azure.Platform{}
+				c.ControlPlane.Platform.Azure = &azure.MachinePool{
+					Identity: &azure.VMIdentity{
+						Type: capz.VMIdentityUserAssigned,
+						UserAssignedIdentities: []azure.UserAssignedIdentity{
+							{
+								Name:          "first-identity",
+								Subscription:  "my-subscription",
+								ResourceGroup: "my-resource-group",
+							},
+							{
+								Name:          "second-identity",
+								Subscription:  "my-subscription",
+								ResourceGroup: "my-resource-group",
+							},
+						},
+					},
+				}
+				return c
+			}(),
+			expected: `^controlPlane.azure.identity.userAssignedIdentities: Forbidden: this field is protected by the MachineAPIMigration feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set`,
+		},
+		{
+			name: "Azure user-assigned identities (default machine platform) > 1 requires MachineAPIMigration feature gate",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil // validInstallConfig defaults to AWS
+				c.Azure = &azure.Platform{}
+				c.Azure.DefaultMachinePlatform = &azure.MachinePool{
+					Identity: &azure.VMIdentity{
+						Type: capz.VMIdentityUserAssigned,
+						UserAssignedIdentities: []azure.UserAssignedIdentity{
+							{
+								Name:          "first-identity",
+								Subscription:  "my-subscription",
+								ResourceGroup: "my-resource-group",
+							},
+							{
+								Name:          "second-identity",
+								Subscription:  "my-subscription",
+								ResourceGroup: "my-resource-group",
+							},
+						},
+					},
+				}
+				return c
+			}(),
+			expected: `^platform.azure.defaultMachinePlatform.identity.userAssignedIdentities: Forbidden: this field is protected by the MachineAPIMigration feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set`,
+		},
+		{
+			name: "Azure user-assigned identities (control plane) == 1 does not require feature gate",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.AWS = nil // validInstallConfig defaults to AWS
+				c.Azure = &azure.Platform{}
+				c.ControlPlane.Platform.Azure = &azure.MachinePool{
+					Identity: &azure.VMIdentity{
+						Type: capz.VMIdentityUserAssigned,
+						UserAssignedIdentities: []azure.UserAssignedIdentity{
+							{
+								Name:          "solo-bolo!",
+								Subscription:  "my-subscription",
+								ResourceGroup: "my-resource-group",
+							},
+						},
+					},
+				}
+				return c
+			}(),
+		},
+		{
+			name: "FencingCredentials is not allowed with Feature Gates disabled",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ControlPlane.Fencing = &types.Fencing{Credentials: []*types.Credential{{HostName: "host1"}, {HostName: "host2"}}}
+				return c
+			}(),
+			expected: `^platform.none.fencingCredentials: Forbidden: this field is protected by the DualReplica feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
+			name: "FencingCredentials is allowed with TechPreviewNoUpgrade Feature Set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.TechPreviewNoUpgrade
+				c.ControlPlane.Fencing = &types.Fencing{Credentials: []*types.Credential{{HostName: "host1"}, {HostName: "host2"}}}
+				return c
+			}(),
+		},
+		{
+			name: "FencingCredentials is allowed with DevPreviewNoUpgrade Feature Set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.DevPreviewNoUpgrade
+				c.ControlPlane.Fencing = &types.Fencing{Credentials: []*types.Credential{{HostName: "host1"}, {HostName: "host2"}}}
+				return c
+			}(),
 		},
 	}
 

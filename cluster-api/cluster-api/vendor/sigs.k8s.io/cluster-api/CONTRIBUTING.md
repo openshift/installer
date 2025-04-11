@@ -16,6 +16,7 @@
 - [Documentation changes](#documentation-changes)
 - [Releases](#releases)
 - [Proposal process (CAEP)](#proposal-process-caep)
+- [Triaging issues](#triaging-issues)
 - [Triaging E2E test failures](#triaging-e2e-test-failures)
 - [Reviewing a Patch](#reviewing-a-patch)
   - [Reviews](#reviews)
@@ -86,38 +87,13 @@ The test module, clusterctl, and experiments do not provide any backward compati
 
 #### Backporting a patch
 
-We generally do not accept PRs directly against release branches, while we might accept backports of fixes/changes already
-merged into the main branch.
+Pull Requests against the main branch can be backported using `/cherry-pick` prow command.
+Any backport MUST NOT be breaking for API or behavioral changes.
 
-Any backport MUST not be breaking for either API or behavioral changes. 
+We usually backport critical bugs or security fixes, changes to support new Kubernetes minor versions (see [supported Kubernetes versions](https://cluster-api.sigs.k8s.io/reference/versions.html#supported-kubernetes-versions)), documentation and test signal improvements. Everything else is considered case by case.
 
-We generally allow backports of following changes to all supported branches:
-- Critical bugs fixes, security issue fixes, or fixes for bugs without easy workarounds.
-- Dependency bumps for CVE (usually limited to CVE resolution; backports of non-CVE related version bumps are considered exceptions to be evaluated case by case)
-- Cert-manager version bumps (to avoid having releases with cert-manager versions that are out of support, when possible)
-- Changes required to support new Kubernetes versions, when possible. See [supported Kubernetes versions](https://cluster-api.sigs.k8s.io/reference/versions.html#supported-kubernetes-versions) for more details.
-- Changes to use the latest Go patch version to build controller images.
-- Changes to bump the Go minor version used to build controller images, if the Go minor version of a supported branch goes out of support (e.g. to pick up bug and CVE fixes). 
-  This has no impact on folks importing Cluster API as we won't modify the version in `go.mod` and the version in the `Makefile` does not affect them.
-
-We generally allow backports of following changes only to the latest supported branch:
-- Improvements to existing docs (the latest supported branch hosts the current version of the book)
-- Improvements to CI signal
-- Improvements to the test framework
-
-While we recommend to target following type of changes to the next minor release, CAPI maintainers will also consider
-exceptions for backport of following changes only to the latest supported branch:
-- Enhancements or additions to experimental Cluster API features, with the goal of allowing faster adoption and iteration;
-  Please note that stability of the branch will always be top priority while evaluating those PRs, and thus approval
-  requires /lgtm from at least two maintainers that, on top of checking that the backport is not introducing any breaking
-  change for either API or behavior, will evaluate if the impact of those backport is limited and well-scoped e.g. 
-  by checking that those changes should not touch non-experimental code paths like utils and/or by applying other 
-  considerations depending on the specific PR.
-
-Like any other activity in the project, backporting a fix/change is a community-driven effort and requires that someone volunteers to own the task. 
-In most cases, the cherry-pick bot can (and should) be used to automate opening a cherry-pick PR.
-
-We generally do not accept backports to Cluster API release branches that are [out of support](https://github.com/kubernetes-sigs/cluster-api/blob/main/CONTRIBUTING.md#support-and-guarantees).
+[Out of support](https://github.com/kubernetes-sigs/cluster-api/blob/main/CONTRIBUTING.md#support-and-guarantees) release branches are usually frozen,
+although maintainers may allow backports in specific situations like CVEs, security, and other critical bug fixes.
 
 ### APIs
 
@@ -160,20 +136,22 @@ Cluster API maintains the most recent release/releases for all supported API and
 - For the current stable API version (v1beta1) we support the two most recent minor releases; older minor releases are immediately unsupported when a new major/minor release is available.
 - For older API versions we only support the most recent minor release until the API version reaches EOL.
 - We will maintain test coverage for all supported minor releases and for one additional release for the current stable API version in case we have to do an emergency patch release.
-  For example, if v1.2 and v1.3 are currently supported, we will also maintain test coverage for v1.1 for one additional release cycle. When v1.4 is released, tests for v1.1 will be removed.
+  For example, if v1.6 and v1.7 are currently supported, we will also maintain test coverage for v1.5 for one additional release cycle. When v1.8 is released, tests for v1.5 will be removed.
 
-| Minor Release | API Version  | Supported Until                                     |
-|---------------|--------------|-----------------------------------------------------|
-| v1.7.x        | **v1beta1**  | when v1.9.0 will be released                        |
-| v1.6.x        | **v1beta1**  | when v1.8.0 will be released                        |
-| v1.5.x        | **v1beta1**  | when v1.7.0 will be released                        |
-| v1.4.x        | **v1beta1**  | EOL since 2023-12-05 - v1.6.0 release date          |
-| v1.3.x        | **v1beta1**  | EOL since 2023-07-25 - v1.5.0 release date          |
-| v1.2.x        | **v1beta1**  | EOL since 2023-03-28 - v1.4.0 release date          |
-| v1.1.x        | **v1beta1**  | EOL since 2022-07-18 - v1.2.0 release date (*)      |
-| v1.0.x        | **v1beta1**  | EOL since 2022-02-02 - v1.1.0 release date (*)      |
-| v0.4.x        | **v1alpha4** | EOL since 2022-04-06 - API version EOL              |
-| v0.3.x        | **v1alpha3** | EOL since 2022-02-23 - API version EOL              |
+| Minor Release | API Version  | Supported Until                                |
+|---------------|--------------|------------------------------------------------|
+| v1.9.x        | **v1beta1**  | when v1.11.0 will be released                  |
+| v1.8.x        | **v1beta1**  | when v1.10.0 will be released                  |
+| v1.7.x        | **v1beta1**  | EOL since 2024-12-10 - v1.9.0 release date     |
+| v1.6.x        | **v1beta1**  | EOL since 2024-08-12 - v1.8.0 release date     |
+| v1.5.x        | **v1beta1**  | EOL since 2024-04-16 - v1.7.0 release date     |
+| v1.4.x        | **v1beta1**  | EOL since 2023-12-05 - v1.6.0 release date     |
+| v1.3.x        | **v1beta1**  | EOL since 2023-07-25 - v1.5.0 release date     |
+| v1.2.x        | **v1beta1**  | EOL since 2023-03-28 - v1.4.0 release date     |
+| v1.1.x        | **v1beta1**  | EOL since 2022-07-18 - v1.2.0 release date (*) |
+| v1.0.x        | **v1beta1**  | EOL since 2022-02-02 - v1.1.0 release date (*) |
+| v0.4.x        | **v1alpha4** | EOL since 2022-04-06 - API version EOL         |
+| v0.3.x        | **v1alpha3** | EOL since 2022-02-23 - API version EOL         |
 
 (*) Previous support policy applies, older minor releases were immediately unsupported when a new major/minor release was available
 
@@ -181,9 +159,9 @@ Cluster API maintains the most recent release/releases for all supported API and
 
 ### Removal of v1alpha3 & v1alpha4 apiVersions
 
-Both v1alpha3 and v1alpha4 have been removed from Cluster API as of release 1.7.
-
-For more details and latest information please see the following issue: [Removing v1alpha3 & v1alpha4 apiVersions](https://github.com/kubernetes-sigs/cluster-api/issues/8038).
+Cluster API stopped to serve v1alpha3 API types from the v1.5 release and v1alpha4 types starting from the v1.6 release.
+Those types still exist in Cluster API while we work to a fix (or a workaround) for https://github.com/kubernetes-sigs/cluster-api/issues/10051.
+IMPORTANT! v1alpha3 and v1alpha4 types only exist for conversion and cannot be used by clients anymore.
 
 Note: Removal of a deprecated APIVersion in Kubernetes [can cause issues with garbage collection by the kube-controller-manager](https://github.com/kubernetes/kubernetes/issues/102641)
 This means that some objects which rely on garbage collection for cleanup - e.g. MachineSets and their descendent objects, like Machines and InfrastructureMachines, may not be cleaned up properly if those
@@ -243,7 +221,7 @@ When submitting the PR remember to label it with the 📖 (:book:) icon.
 
 ## Releases
 
-Cluster API release process is described in [this document](https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/release/release-cycle.md). 
+Cluster API release process is described in [this document](https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/release/release-cycle.md).
 
 ## Proposal process (CAEP)
 
@@ -255,10 +233,66 @@ The [template](https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/pro
   - Issues can be placed on the roadmap during planning if there is one or more folks
     that can dedicate time to writing a CAEP and/or implementing it after approval.
 - A proposal SHOULD be introduced and discussed during the weekly community meetings or on the
- [Kubernetes SIG Cluster Lifecycle mailing list](https://groups.google.com/forum/#!forum/kubernetes-sig-cluster-lifecycle).
-  - Submit and discuss proposals using a collaborative writing platform, preferably Google Docs, share documents with edit permissions with the [Kubernetes SIG Cluster Lifecycle mailing list](https://groups.google.com/forum/#!forum/kubernetes-sig-cluster-lifecycle).
+ [SIG Cluster Lifecycle mailing list](https://groups.google.com/a/kubernetes.io/g/sig-cluster-lifecycle).
+  - Submit and discuss proposals using a collaborative writing platform, preferably Google Docs, share documents with edit permissions with the [SIG Cluster Lifecycle mailing list](https://groups.google.com/a/kubernetes.io/g/sig-cluster-lifecycle).
 - A proposal in a Google Doc MUST turn into a [Pull Request](https://github.com/kubernetes-sigs/cluster-api/pulls).
 - Proposals MUST be merged and in `implementable` state to be considered part of a major or minor release.
+
+## Triaging issues
+
+Issue triage in Cluster API follows the best practices of the Kubernetes project while seeking balance with
+the different size of this project.
+
+While the maintainers play an important role in the triage process described below, the help of the community is crucial
+to ensure that this task is performed timely and be sustainable long term.
+
+| Phase               | Responsible | What is required to move forward                                                                                                                                                                          |
+|---------------------|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Initial triage      | Maintainers | The issue MUST have: <br/> - [priority/*](https://github.com/kubernetes-sigs/cluster-api/labels?q=priority) label<br/>- [kind/*](https://github.com/kubernetes-sigs/cluster-api/labels?q=kind) label<br/> |
+| Triage finalization | Everyone    | There should be consensus on the way forward and enough details for the issue being actionable                                                                                                            |
+| Triage finalization | Maintainers | The issue MUST have: <br/> - `triage/accepted` label<br/> label, plus eventually `help` or `good-first-issue` label                                                                                       |
+| Actionable          | Everyone    | Contributors volunteering time to do the work and reviewers/approvers bandwidth<br/>The issue being fixed                                                                                                 |
+
+Please note that:
+
+- Priority provides an indication to everyone looking at issues.
+  - When assigning priority several factors are taken into consideration, including impact on users, relevance
+    for the upcoming releases, maturity of the issue (consensus + completeness).
+  - `priority/awaiting-more-evidence` is used to mark issue where there is not enough info to take a decision for
+    one of the other [priorities values](https://github.com/kubernetes-sigs/cluster-api/labels?q=priority).
+  - Priority can change over time, and everyone is welcome to provide constructive feedback about updating an issue's priority.
+  - Applying a priority label is not a commitment to execute within a certain time frame, because implementation
+    depends on contributors volunteering time to do the work and on reviewers/approvers bandwidth.
+
+- Closing inactive issues which are stuck in the "triage" phases is a crucial task for maintaining an
+  actionable backlog. Accordingly, the following automation applies to issues in the "triage" or the "refinement" phase:
+  - After 90 days of inactivity, issues will be marked with the `lifecycle/stale` label
+  - After 30 days of inactivity from when `lifecycle/stale` was applied, issues will be marked with the `lifecycle/rotten` label
+  - After 30 days of inactivity from when `lifecycle/rotten` was applied, issues will be closed.
+    With this regard, it is important to notice that closed issues are and will always be a highly valuable part of the
+    knowledge base about the Cluster API project, and they will never go away.
+  - Note:
+    - The automation above does not apply to issues triaged as `priority/critical-urgent`, `priority/important-soon` or `priority/important-longterm`
+    - Maintainers could apply the `lifecycle/frozen` label if they want to exclude an issue from the automation above
+    - Issues excluded from the automation above will be re-triaged periodically
+
+- If you really care about an issue stuck in the "triage" phases, you can engage with the community or
+  try to figure out what is holding back the issue by yourself, e.g.:
+  - Issue too generic or not yet actionable
+  - Lack of consensus or the issue is not relevant for other contributors
+  - Lack of contributors; in this case, finding ways to help and free up maintainers/other contributors time from other tasks
+    can really help to unblock your issues.
+
+- Issues in the "actionable" state are not subject to the stale/rotten/closed process; however, it is required to re-assess
+  them periodically given that the project change quickly. Accordingly, the following automation applies to issues
+  in the "actionable" phase:
+  - After 30 days of inactivity, the `triage/accepted` label will be removed from issues with `priority/critical-urgent`
+  - After 90 days of inactivity the `triage/accepted` label will be removed from issues with `priority/important-soon`
+  - After 1 year of inactivity the `triage/accepted` label will be removed from issues without `priority/critical-urgent` or `priority/important-soon`
+
+- If you really care about an issue stuck in the "actionable" phase, you can try to figure out what is holding back
+  the issue implementation (usually lack of contributors), engage with the community, find ways to help and free up
+  maintainers/other contributors time from other tasks, or `/assign` the issue and send a PR.
 
 ## Triaging E2E test failures
 
@@ -279,7 +313,7 @@ The artifact folder contains:
     - Dump of the Cluster API resources (only if the cluster is a management cluster).
     - Machine logs (only if the cluster is a workload cluster)
 
-In case you want to run E2E test locally, please refer to the [Testing](https://cluster-api.sigs.k8s.io/developer/testing.html#running-unit-and-integration-tests) guide. An overview over our e2e test jobs (and also all our other jobs) can be found in [Jobs](https://cluster-api.sigs.k8s.io/reference/jobs.html).
+In case you want to run E2E test locally, please refer to the [Testing](https://cluster-api.sigs.k8s.io/developer/core/testing#running-unit-and-integration-tests) guide. All our e2e test jobs (and also all our other jobs) can be found in [k8s.io/test-infra](https://github.com/kubernetes/test-infra/tree/master/config/jobs/kubernetes-sigs/cluster-api).
 
 ## Reviewing a Patch
 
@@ -314,14 +348,14 @@ process.
 
 Open [issues](https://github.com/kubernetes-sigs/cluster-api/issues/new/choose) to report bugs, or discuss minor feature implementation.
 
-Each new issue will be automatically labeled as `needs-triage`; after being triaged by the maintainers the label 
+Each new issue will be automatically labeled as `needs-triage`; after being triaged by the maintainers the label
 will be removed and replaced by one of the following:
 
 - `triage/accepted`: Indicates an issue or PR is ready to be actively worked on.
-- `triage/duplicate`: Indicates an issue is a duplicate of another open issue. 
-- `triage/needs-information`: Indicates an issue needs more information in order to work on it. 
-- `triage/not-reproducible`: Indicates an issue can not be reproduced as described. 
-- `triage/unresolved`: Indicates an issue that can not or will not be resolved. 
+- `triage/duplicate`: Indicates an issue is a duplicate of another open issue.
+- `triage/needs-information`: Indicates an issue needs more information in order to work on it.
+- `triage/not-reproducible`: Indicates an issue can not be reproduced as described.
+- `triage/unresolved`: Indicates an issue that can not or will not be resolved.
 
 For big feature, API and contract amendments, we follow the CAEP process as outlined below.
 
@@ -408,8 +442,8 @@ Optional fields have the following properties:
 * Fields SHOULD be pointers if there is a good reason for it, for example:
   * the nil and the zero values (by Go standards) have semantic differences.
     * Note: This doesn't apply to map or slice types as they are assignable to `nil`.
-  * the field is of a struct type, contains only fields with `omitempty` and you want 
-    to prevent that it shows up as an empty object after marshalling (e.g. `kubectl get`) 
+  * the field is of a struct type, contains only fields with `omitempty` and you want
+    to prevent that it shows up as an empty object after marshalling (e.g. `kubectl get`)
 
 #### Example
 
@@ -475,8 +509,7 @@ quick-start-d5ufye   quick-start-ntysk0-md-0   quick-start-ntysk0   1           
 
 To gain viewing permissions to google docs in this project, please join either the
 [kubernetes-dev](https://groups.google.com/forum/#!forum/kubernetes-dev) or
-[kubernetes-sig-cluster-lifecycle](https://groups.google.com/forum/#!forum/kubernetes-sig-cluster-lifecycle) google
-group.
+[sig-cluster-lifecycle](https://groups.google.com/a/kubernetes.io/g/sig-cluster-lifecycle) google group.
 
 ## Issue and Pull Request Management
 

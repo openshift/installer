@@ -317,18 +317,8 @@ variable "openstack_master_flavor_name" {
   description = "Instance size for the master node(s). Example: `m1.medium`."
 }
 
-variable "openstack_trunk_support" {
-  type    = bool
-  default = false
-
-  description = <<EOF
-False if the OpenStack Neutron trunk extension is disabled and True if it is enabled.
-EOF
-
-}
-
 variable "openstack_octavia_support" {
-  type = bool
+  type    = bool
   default = false
 
   description = <<EOF
@@ -338,12 +328,12 @@ EOF
 }
 
 variable "openstack_master_server_group_name" {
-  type        = string
+  type = string
   description = "Name of the server group for the master nodes."
 }
 
 variable "openstack_master_server_group_policy" {
-  type        = string
+  type = string
   description = "Policy of the server group for the master nodes."
 }
 
@@ -351,11 +341,11 @@ variable "openstack_default_machines_port" {
   type = object({
     network_id = string
     fixed_ips = list(object({
-      subnet_id  = string
+      subnet_id = string
       ip_address = string
     }))
   })
-  default     = null
+  default = null
   description = "The masters' default control-plane port. If empty, the installer will create a new network."
 }
 
@@ -363,44 +353,44 @@ variable "openstack_machines_ports" {
   type = list(object({
     network_id = string
     fixed_ips = list(object({
-      subnet_id  = string
+      subnet_id = string
       ip_address = string
     }))
   }))
   description = "The control-plane port for each machine. If null, the default is used."
-  default     = [null, null, null]
+  default = [null, null, null]
 }
 
 variable "openstack_master_availability_zones" {
-  type        = list(string)
-  default     = [""]
+  type = list(string)
+  default = [""]
   description = "List of availability Zones to Schedule the masters on."
 }
 
 variable "openstack_master_root_volume_availability_zones" {
-  type        = list(string)
-  default     = [""]
+  type = list(string)
+  default = [""]
   description = "List of availability Zones to Schedule the masters root volumes on."
 }
 
 variable "openstack_master_root_volume_types" {
-  type        = list(string)
-  default     = [""]
+  type = list(string)
+  default = [""]
   description = "List of volume types used by the masters root volumes."
 }
 
 variable "openstack_worker_server_group_names" {
-  type        = set(string)
-  default     = []
+  type = set(string)
+  default = []
   description = "Names of the server groups for the worker nodes."
 }
 
 variable "openstack_worker_server_group_policy" {
-  type        = string
+  type = string
   description = "Policy of the server groups for the worker nodes."
 }
 
 variable "openstack_user_managed_load_balancer" {
-  type        = bool
+  type = bool
   description = "True if the load balancer that is used for the control plane VIPs is managed by the user."
 }

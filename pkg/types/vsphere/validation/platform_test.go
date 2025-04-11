@@ -2,7 +2,9 @@ package validation
 
 import (
 	"fmt"
+	"path"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -178,6 +180,146 @@ func TestValidatePlatform(t *testing.T) {
 		expectedError string
 	}{
 		{
+			name: "Valid nodeNetworking",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"10.0.0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10.8.0.0/24"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"10.0.0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10.8.0.0/24"},
+					},
+				}
+				return p
+			}(),
+		},
+		{
+			name: "Valid IPv6 nodeNetworking",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"2002::1234:abcd:ffff:c0a8:101/64"},
+						ExcludeNetworkSubnetCIDR: []string{"2008::1234:abcd:ffff:c0a8:101/64"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"2002::1234:abcd:ffff:c0a8:101/64"},
+						ExcludeNetworkSubnetCIDR: []string{"2008::1234:abcd:ffff:c0a8:101/64"},
+					},
+				}
+				return p
+			}(),
+		},
+		{
+			name: "Invalid nodeNetworking -- invalid NetworkSubnetCIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"10..0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10.8.0.0/24"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"10..0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10.8.0.0/24"},
+					},
+				}
+				return p
+			}(),
+			expectedError: `test-path.nodeNetworking.internal.networkSubnetCidr: Invalid value: "10..0.0/24": invalid CIDR address: 10..0.0/24, test-path.nodeNetworking.external.networkSubnetCidr: Invalid value: "10..0.0/24": invalid CIDR address: 10..0.0/24`,
+		},
+		{
+			name: "Invalid nodeNetworking -- invalid IPv6 NetworkSubnetCIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"2T02::1234:abcd:ffff:c0a8:101/64"},
+						ExcludeNetworkSubnetCIDR: []string{"2008::1234:abcd:ffff:c0a8:101/64"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"2T02::1234:abcd:ffff:c0a8:101/64"},
+						ExcludeNetworkSubnetCIDR: []string{"2008::1234:abcd:ffff:c0a8:101/64"},
+					},
+				}
+				return p
+			}(),
+			expectedError: `test-path.nodeNetworking.internal.networkSubnetCidr: Invalid value: "2T02::1234:abcd:ffff:c0a8:101/64": invalid CIDR address: 2T02::1234:abcd:ffff:c0a8:101/64, test-path.nodeNetworking.external.networkSubnetCidr: Invalid value: "2T02::1234:abcd:ffff:c0a8:101/64": invalid CIDR address: 2T02::1234:abcd:ffff:c0a8:101/64`,
+		},
+		{
+			name: "Invalid nodeNetworking -- invalid ExcludeNetworkSubnetCIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"10.0.0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10..0.0/24"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"10.0.0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10..0.0/24"},
+					},
+				}
+				return p
+			}(),
+			expectedError: `test-path.nodeNetworking.internal.excludeNetworkSubnetCidr: Invalid value: "10..0.0/24": invalid CIDR address: 10..0.0/24, test-path.nodeNetworking.external.excludeNetworkSubnetCidr: Invalid value: "10..0.0/24": invalid CIDR address: 10..0.0/24`,
+		},
+		{
+			name: "Invalid nodeNetworking -- invalid IPv6 ExcludeNetworkSubnetCIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"2002::1234:abcd:ffff:c0a8:101/64"},
+						ExcludeNetworkSubnetCIDR: []string{"2T08::1234:abcd:ffff:c0a8:101/64"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup",
+						NetworkSubnetCIDR:        []string{"2002::1234:abcd:ffff:c0a8:101/64"},
+						ExcludeNetworkSubnetCIDR: []string{"2T08::1234:abcd:ffff:c0a8:101/64"},
+					},
+				}
+
+				return p
+			}(),
+			expectedError: `test-path.nodeNetworking.internal.excludeNetworkSubnetCidr: Invalid value: "2T08::1234:abcd:ffff:c0a8:101/64": invalid CIDR address: 2T08::1234:abcd:ffff:c0a8:101/64, test-path.nodeNetworking.external.excludeNetworkSubnetCidr: Invalid value: "2T08::1234:abcd:ffff:c0a8:101/64": invalid CIDR address: 2T08::1234:abcd:ffff:c0a8:101/64`,
+		},
+		{
+			name: "Invalid nodeNetworking -- invalid network name",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.NodeNetworking = &configv1.VSpherePlatformNodeNetworking{
+					External: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup-99",
+						NetworkSubnetCIDR:        []string{"10.0.0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10.8.0.0/24"},
+					},
+					Internal: configv1.VSpherePlatformNodeNetworkingSpec{
+						Network:                  "test-portgroup-99",
+						NetworkSubnetCIDR:        []string{"10.0.0.0/24"},
+						ExcludeNetworkSubnetCIDR: []string{"10.8.0.0/24"},
+					},
+				}
+				return p
+			}(),
+			expectedError: `test-path.nodeNetworking.internal.network: Invalid value: "test-portgroup-99": network must be defined in topology, test-path.nodeNetworking.external.network: Invalid value: "test-portgroup-99": network must be defined in topology`,
+		},
+
+		{
 			name: "Valid diskType",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()
@@ -202,6 +344,30 @@ func TestValidatePlatform(t *testing.T) {
 					"urn:vmomi:InventoryServiceTag:5736bf56-49f5-4667-b38c-b97e09dc9578:GLOBAL",
 					"urn:vmomi:InventoryServiceTag:5736bf56-49f5-4667-b38c-b97e09dc9579:GLOBAL",
 				}
+				return p
+			}(),
+		},
+		{
+			name: "Datacenter as a child of a folder",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+
+				for i, v := range p.VCenters {
+					for j, dc := range v.Datacenters {
+						p.VCenters[i].Datacenters[j] = path.Join("/dcfolder", dc)
+					}
+				}
+
+				for i, fd := range p.FailureDomains {
+					dcAsChild := path.Join("/dcfolder", fd.Topology.Datacenter)
+
+					p.FailureDomains[i].Topology.Datacenter = dcAsChild
+					p.FailureDomains[i].Topology.ResourcePool = strings.ReplaceAll(fd.Topology.ResourcePool, fd.Topology.Datacenter, dcAsChild)
+					p.FailureDomains[i].Topology.Folder = strings.ReplaceAll(fd.Topology.Folder, fd.Topology.Datacenter, dcAsChild)
+					p.FailureDomains[i].Topology.ComputeCluster = strings.ReplaceAll(fd.Topology.ComputeCluster, fd.Topology.Datacenter, dcAsChild)
+					p.FailureDomains[i].Topology.Datastore = strings.ReplaceAll(fd.Topology.Datastore, fd.Topology.Datacenter, dcAsChild)
+				}
+
 				return p
 			}(),
 		},
@@ -238,18 +404,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenters[0].Server = ""
 				return p
 			}(),
-			expectedError: `test-path\.vcenters\.server: Required value: must be the domain name or IP address of the vCenter(.*)`,
-		},
-		{
-			name: "Multi-zone platform more than one vCenter",
-			platform: func() *vsphere.Platform {
-				p := validPlatform()
-				p.VCenters = append(p.VCenters, vsphere.VCenter{
-					Server: "additional-vcenter",
-				})
-				return p
-			}(),
-			expectedError: `^test-path\.vcenters: Too many: 2: must have at most 1 items`,
+			expectedError: `test-path\.vcenters\[0]\.server: Required value: must be the domain name or IP address of the vCenter(.*)`,
 		},
 		{
 			name: "Multi-zone platform Capital letters in vCenter",
@@ -258,7 +413,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenters[0].Server = "tEsT-vCenter"
 				return p
 			}(),
-			expectedError: `(.*)test-path\.vcenters.server: Invalid value: "tEsT-vCenter": must be the domain name or IP address of the vCenter`,
+			expectedError: `(.*)test-path\.vcenters\[0].server: Invalid value: "tEsT-vCenter": must be the domain name or IP address of the vCenter`,
 		},
 		{
 			name: "Multi-zone missing username",
@@ -267,7 +422,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenters[0].Username = ""
 				return p
 			}(),
-			expectedError: `^test-path\.vcenters.username: Required value: must specify the username$`,
+			expectedError: `^test-path\.vcenters\[0].username: Required value: must specify the username$`,
 		},
 		{
 			name: "Multi-zone missing password",
@@ -276,7 +431,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenters[0].Password = ""
 				return p
 			}(),
-			expectedError: `^test-path\.vcenters.password: Required value: must specify the password$`,
+			expectedError: `^test-path\.vcenters\[0].password: Required value: must specify the password$`,
 		},
 		{
 			name: "Multi-zone missing datacenter",
@@ -285,7 +440,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.VCenters[0].Datacenters = []string{}
 				return p
 			}(),
-			expectedError: `^test-path\.vcenters.datacenters: Required value: must specify at least one datacenter$`,
+			expectedError: `^test-path\.vcenters\[0].datacenters: Required value: must specify at least one datacenter$`,
 		},
 		{
 			name: "Multi-zone platform wrong vCenter name in failureDomain zone",
@@ -769,6 +924,24 @@ func TestValidatePlatform(t *testing.T) {
 				},
 			},
 			expectedError: `^\[test-path.hosts: Invalid value: "control-plane": not enough hosts found \(3\) to support all the configured control plane replicas \(4\), test-path.hosts: Invalid value: "compute": not enough hosts found \(3\) to support all the configured compute replicas \(4\)]$`,
+		},
+		{
+			name: "Multi NIC - Too many NICs",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Networks = []string{"vlan_1", "vlan_2", "vlan_3", "vlan_4", "vlan_5", "vlan_6", "vlan_7", "vlan_8", "vlan_9", "vlan_10", "vlan_11"}
+				return p
+			}(),
+			expectedError: `test-path.failureDomains.topology.networks: Too many: 11: must have at most 10 items`,
+		},
+		{
+			name: "Multi NIC - Not enough NICs",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Networks = []string{}
+				return p
+			}(),
+			expectedError: `test-path.failureDomains.topology.networks: Required value: must specify a network`,
 		},
 	}
 	for _, tc := range cases {

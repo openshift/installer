@@ -34,7 +34,6 @@ type ClusterOperator struct {
 	metav1.ObjectMeta `json:"metadata"`
 
 	// spec holds configuration that could apply to any operator.
-	// +kubebuilder:validation:Required
 	// +required
 	Spec ClusterOperatorSpec `json:"spec"`
 
@@ -54,6 +53,8 @@ type ClusterOperatorStatus struct {
 	// conditions describes the state of the operator's managed and monitored components.
 	// +patchMergeKey=type
 	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=type
 	// +optional
 	Conditions []ClusterOperatorStatusCondition `json:"conditions,omitempty"  patchStrategy:"merge" patchMergeKey:"type"`
 
@@ -80,14 +81,12 @@ type ClusterOperatorStatus struct {
 
 type OperandVersion struct {
 	// name is the name of the particular operand this version is for.  It usually matches container images, not operators.
-	// +kubebuilder:validation:Required
 	// +required
 	Name string `json:"name"`
 
 	// version indicates which version of a particular operand is currently being managed.  It must always match the Available
 	// operand.  If 1.0.0 is Available, then this must indicate 1.0.0 even if the operator is trying to rollout
 	// 1.1.0
-	// +kubebuilder:validation:Required
 	// +required
 	Version string `json:"version"`
 }
@@ -95,18 +94,15 @@ type OperandVersion struct {
 // ObjectReference contains enough information to let you inspect or modify the referred object.
 type ObjectReference struct {
 	// group of the referent.
-	// +kubebuilder:validation:Required
 	// +required
 	Group string `json:"group"`
 	// resource of the referent.
-	// +kubebuilder:validation:Required
 	// +required
 	Resource string `json:"resource"`
 	// namespace of the referent.
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
 	// name of the referent.
-	// +kubebuilder:validation:Required
 	// +required
 	Name string `json:"name"`
 }
@@ -128,17 +124,14 @@ const (
 // +k8s:deepcopy-gen=true
 type ClusterOperatorStatusCondition struct {
 	// type specifies the aspect reported by this condition.
-	// +kubebuilder:validation:Required
 	// +required
 	Type ClusterStatusConditionType `json:"type"`
 
 	// status of the condition, one of True, False, Unknown.
-	// +kubebuilder:validation:Required
 	// +required
 	Status ConditionStatus `json:"status"`
 
 	// lastTransitionTime is the time of the last update to the current status property.
-	// +kubebuilder:validation:Required
 	// +required
 	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
 

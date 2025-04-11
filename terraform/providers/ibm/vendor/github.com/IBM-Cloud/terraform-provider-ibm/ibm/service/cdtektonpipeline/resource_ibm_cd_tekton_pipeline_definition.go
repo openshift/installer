@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
+ */
 
 package cdtektonpipeline
 
@@ -14,7 +18,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
-	"github.com/IBM/continuous-delivery-go-sdk/cdtektonpipelinev2"
+	"github.com/IBM/continuous-delivery-go-sdk/v2/cdtektonpipelinev2"
 	"github.com/IBM/go-sdk-core/v5/core"
 )
 
@@ -78,6 +82,7 @@ func ResourceIBMCdTektonPipelineDefinition() *schema.Resource {
 									},
 									"tool": &schema.Schema{
 										Type:        schema.TypeList,
+										Optional:    true,
 										Computed:    true,
 										Description: "Reference to the repository tool in the parent toolchain.",
 										Elem: &schema.Resource{
@@ -131,22 +136,25 @@ func ResourceIBMCdTektonPipelineDefinitionValidator() *validate.ResourceValidato
 func resourceIBMCdTektonPipelineDefinitionCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_definition", "create", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createTektonPipelineDefinitionOptions := &cdtektonpipelinev2.CreateTektonPipelineDefinitionOptions{}
 
 	createTektonPipelineDefinitionOptions.SetPipelineID(d.Get("pipeline_id").(string))
-	sourceModel, err := resourceIBMCdTektonPipelineDefinitionMapToDefinitionSource(d.Get("source.0").(map[string]interface{}))
+	sourceModel, err := ResourceIBMCdTektonPipelineDefinitionMapToDefinitionSource(d.Get("source.0").(map[string]interface{}))
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_definition", "create", "parse-source").GetDiag()
 	}
 	createTektonPipelineDefinitionOptions.SetSource(sourceModel)
 
-	definition, response, err := cdTektonPipelineClient.CreateTektonPipelineDefinitionWithContext(context, createTektonPipelineDefinitionOptions)
+	definition, _, err := cdTektonPipelineClient.CreateTektonPipelineDefinitionWithContext(context, createTektonPipelineDefinitionOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateTektonPipelineDefinitionWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateTektonPipelineDefinitionWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateTektonPipelineDefinitionWithContext failed: %s", err.Error()), "ibm_cd_tekton_pipeline_definition", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *createTektonPipelineDefinitionOptions.PipelineID, *definition.ID))
@@ -157,14 +165,16 @@ func resourceIBMCdTektonPipelineDefinitionCreate(context context.Context, d *sch
 func resourceIBMCdTektonPipelineDefinitionRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_definition", "read", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getTektonPipelineDefinitionOptions := &cdtektonpipelinev2.GetTektonPipelineDefinitionOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_definition", "read", "sep-id-parts").GetDiag()
 	}
 
 	getTektonPipelineDefinitionOptions.SetPipelineID(parts[0])
@@ -176,27 +186,28 @@ func resourceIBMCdTektonPipelineDefinitionRead(context context.Context, d *schem
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetTektonPipelineDefinitionWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetTektonPipelineDefinitionWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetTektonPipelineDefinitionWithContext failed: %s", err.Error()), "ibm_cd_tekton_pipeline_definition", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
-	if err = d.Set("pipeline_id", getTektonPipelineDefinitionOptions.PipelineID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting pipeline_id: %s", err))
-	}
-	sourceMap, err := resourceIBMCdTektonPipelineDefinitionDefinitionSourceToMap(definition.Source)
+	sourceMap, err := ResourceIBMCdTektonPipelineDefinitionDefinitionSourceToMap(definition.Source)
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_definition", "read", "source-to-map").GetDiag()
 	}
 	if err = d.Set("source", []map[string]interface{}{sourceMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting source: %s", err))
+		err = fmt.Errorf("Error setting source: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_definition", "read", "set-source").GetDiag()
 	}
 	if !core.IsNil(definition.Href) {
 		if err = d.Set("href", definition.Href); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+			err = fmt.Errorf("Error setting href: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_definition", "read", "set-href").GetDiag()
 		}
 	}
 	if err = d.Set("definition_id", definition.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting definition_id: %s", err))
+		err = fmt.Errorf("Error setting definition_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_definition", "read", "set-definition_id").GetDiag()
 	}
 
 	return nil
@@ -205,14 +216,16 @@ func resourceIBMCdTektonPipelineDefinitionRead(context context.Context, d *schem
 func resourceIBMCdTektonPipelineDefinitionUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_definition", "update", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	replaceTektonPipelineDefinitionOptions := &cdtektonpipelinev2.ReplaceTektonPipelineDefinitionOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_definition", "update", "sep-id-parts").GetDiag()
 	}
 
 	replaceTektonPipelineDefinitionOptions.SetPipelineID(parts[0])
@@ -221,23 +234,25 @@ func resourceIBMCdTektonPipelineDefinitionUpdate(context context.Context, d *sch
 	hasChange := false
 
 	if d.HasChange("pipeline_id") {
-		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
-			" The resource must be re-created to update this property.", "pipeline_id"))
+		errMsg := fmt.Sprintf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+			" The resource must be re-created to update this property.", "pipeline_id")
+		return flex.DiscriminatedTerraformErrorf(nil, errMsg, "ibm_cd_tekton_pipeline_definition", "update", "pipeline_id-forces-new").GetDiag()
 	}
 	if d.HasChange("source") {
-		source, err := resourceIBMCdTektonPipelineDefinitionMapToDefinitionSource(d.Get("source.0").(map[string]interface{}))
+		source, err := ResourceIBMCdTektonPipelineDefinitionMapToDefinitionSource(d.Get("source.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_definition", "update", "parse-source").GetDiag()
 		}
 		replaceTektonPipelineDefinitionOptions.SetSource(source)
 		hasChange = true
 	}
 
 	if hasChange {
-		_, response, err := cdTektonPipelineClient.ReplaceTektonPipelineDefinitionWithContext(context, replaceTektonPipelineDefinitionOptions)
+		_, _, err = cdTektonPipelineClient.ReplaceTektonPipelineDefinitionWithContext(context, replaceTektonPipelineDefinitionOptions)
 		if err != nil {
-			log.Printf("[DEBUG] ReplaceTektonPipelineDefinitionWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("ReplaceTektonPipelineDefinitionWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ReplaceTektonPipelineDefinitionWithContext failed: %s", err.Error()), "ibm_cd_tekton_pipeline_definition", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -247,23 +262,26 @@ func resourceIBMCdTektonPipelineDefinitionUpdate(context context.Context, d *sch
 func resourceIBMCdTektonPipelineDefinitionDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_definition", "delete", "initialize-client")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteTektonPipelineDefinitionOptions := &cdtektonpipelinev2.DeleteTektonPipelineDefinitionOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cd_tekton_pipeline_definition", "delete", "sep-id-parts").GetDiag()
 	}
 
 	deleteTektonPipelineDefinitionOptions.SetPipelineID(parts[0])
 	deleteTektonPipelineDefinitionOptions.SetDefinitionID(parts[1])
 
-	response, err := cdTektonPipelineClient.DeleteTektonPipelineDefinitionWithContext(context, deleteTektonPipelineDefinitionOptions)
+	_, err = cdTektonPipelineClient.DeleteTektonPipelineDefinitionWithContext(context, deleteTektonPipelineDefinitionOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteTektonPipelineDefinitionWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteTektonPipelineDefinitionWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteTektonPipelineDefinitionWithContext failed: %s", err.Error()), "ibm_cd_tekton_pipeline_definition", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -271,10 +289,10 @@ func resourceIBMCdTektonPipelineDefinitionDelete(context context.Context, d *sch
 	return nil
 }
 
-func resourceIBMCdTektonPipelineDefinitionMapToDefinitionSource(modelMap map[string]interface{}) (*cdtektonpipelinev2.DefinitionSource, error) {
+func ResourceIBMCdTektonPipelineDefinitionMapToDefinitionSource(modelMap map[string]interface{}) (*cdtektonpipelinev2.DefinitionSource, error) {
 	model := &cdtektonpipelinev2.DefinitionSource{}
 	model.Type = core.StringPtr(modelMap["type"].(string))
-	PropertiesModel, err := resourceIBMCdTektonPipelineDefinitionMapToDefinitionSourceProperties(modelMap["properties"].([]interface{})[0].(map[string]interface{}))
+	PropertiesModel, err := ResourceIBMCdTektonPipelineDefinitionMapToDefinitionSourceProperties(modelMap["properties"].([]interface{})[0].(map[string]interface{}))
 	if err != nil {
 		return model, err
 	}
@@ -282,7 +300,7 @@ func resourceIBMCdTektonPipelineDefinitionMapToDefinitionSource(modelMap map[str
 	return model, nil
 }
 
-func resourceIBMCdTektonPipelineDefinitionMapToDefinitionSourceProperties(modelMap map[string]interface{}) (*cdtektonpipelinev2.DefinitionSourceProperties, error) {
+func ResourceIBMCdTektonPipelineDefinitionMapToDefinitionSourceProperties(modelMap map[string]interface{}) (*cdtektonpipelinev2.DefinitionSourceProperties, error) {
 	model := &cdtektonpipelinev2.DefinitionSourceProperties{}
 	model.URL = core.StringPtr(modelMap["url"].(string))
 	if modelMap["branch"] != nil && modelMap["branch"].(string) != "" {
@@ -293,7 +311,7 @@ func resourceIBMCdTektonPipelineDefinitionMapToDefinitionSourceProperties(modelM
 	}
 	model.Path = core.StringPtr(modelMap["path"].(string))
 	if modelMap["tool"] != nil && len(modelMap["tool"].([]interface{})) > 0 {
-		ToolModel, err := resourceIBMCdTektonPipelineDefinitionMapToTool(modelMap["tool"].([]interface{})[0].(map[string]interface{}))
+		ToolModel, err := ResourceIBMCdTektonPipelineDefinitionMapToTool(modelMap["tool"].([]interface{})[0].(map[string]interface{}))
 		if err != nil {
 			return model, err
 		}
@@ -302,16 +320,16 @@ func resourceIBMCdTektonPipelineDefinitionMapToDefinitionSourceProperties(modelM
 	return model, nil
 }
 
-func resourceIBMCdTektonPipelineDefinitionMapToTool(modelMap map[string]interface{}) (*cdtektonpipelinev2.Tool, error) {
+func ResourceIBMCdTektonPipelineDefinitionMapToTool(modelMap map[string]interface{}) (*cdtektonpipelinev2.Tool, error) {
 	model := &cdtektonpipelinev2.Tool{}
 	model.ID = core.StringPtr(modelMap["id"].(string))
 	return model, nil
 }
 
-func resourceIBMCdTektonPipelineDefinitionDefinitionSourceToMap(model *cdtektonpipelinev2.DefinitionSource) (map[string]interface{}, error) {
+func ResourceIBMCdTektonPipelineDefinitionDefinitionSourceToMap(model *cdtektonpipelinev2.DefinitionSource) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["type"] = model.Type
-	propertiesMap, err := resourceIBMCdTektonPipelineDefinitionDefinitionSourcePropertiesToMap(model.Properties)
+	modelMap["type"] = *model.Type
+	propertiesMap, err := ResourceIBMCdTektonPipelineDefinitionDefinitionSourcePropertiesToMap(model.Properties)
 	if err != nil {
 		return modelMap, err
 	}
@@ -319,18 +337,18 @@ func resourceIBMCdTektonPipelineDefinitionDefinitionSourceToMap(model *cdtektonp
 	return modelMap, nil
 }
 
-func resourceIBMCdTektonPipelineDefinitionDefinitionSourcePropertiesToMap(model *cdtektonpipelinev2.DefinitionSourceProperties) (map[string]interface{}, error) {
+func ResourceIBMCdTektonPipelineDefinitionDefinitionSourcePropertiesToMap(model *cdtektonpipelinev2.DefinitionSourceProperties) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["url"] = model.URL
+	modelMap["url"] = *model.URL
 	if model.Branch != nil {
-		modelMap["branch"] = model.Branch
+		modelMap["branch"] = *model.Branch
 	}
 	if model.Tag != nil {
-		modelMap["tag"] = model.Tag
+		modelMap["tag"] = *model.Tag
 	}
-	modelMap["path"] = model.Path
+	modelMap["path"] = *model.Path
 	if model.Tool != nil {
-		toolMap, err := resourceIBMCdTektonPipelineDefinitionToolToMap(model.Tool)
+		toolMap, err := ResourceIBMCdTektonPipelineDefinitionToolToMap(model.Tool)
 		if err != nil {
 			return modelMap, err
 		}
@@ -339,8 +357,8 @@ func resourceIBMCdTektonPipelineDefinitionDefinitionSourcePropertiesToMap(model 
 	return modelMap, nil
 }
 
-func resourceIBMCdTektonPipelineDefinitionToolToMap(model *cdtektonpipelinev2.Tool) (map[string]interface{}, error) {
+func ResourceIBMCdTektonPipelineDefinitionToolToMap(model *cdtektonpipelinev2.Tool) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["id"] = model.ID
+	modelMap["id"] = *model.ID
 	return modelMap, nil
 }

@@ -26,8 +26,14 @@ import (
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils"
 )
 
-// SecurityGroupByNameNotFound returns an appropriate error when security group by name not found.
-var SecurityGroupByNameNotFound = func(name string) error { return fmt.Errorf("failed to find security group by name '%s'", name) }
+// SecurityGroupByNameNotFound represents an error when security group is not found by name.
+type SecurityGroupByNameNotFound struct {
+	Name string
+}
+
+func (s *SecurityGroupByNameNotFound) Error() string {
+	return fmt.Sprintf("failed to find security group by name: %s", s.Name)
+}
 
 // Service holds the VPC Service specific information.
 type Service struct {
@@ -52,6 +58,45 @@ func (s *Service) GetInstance(options *vpcv1.GetInstanceOptions) (*vpcv1.Instanc
 // ListInstances returns list of virtual server instances.
 func (s *Service) ListInstances(options *vpcv1.ListInstancesOptions) (*vpcv1.InstanceCollection, *core.DetailedResponse, error) {
 	return s.vpcService.ListInstances(options)
+}
+
+// GetDedicatedHostByName returns Dedicated Host with given name. If not found, returns nil.
+func (s *Service) GetDedicatedHostByName(dHostName string) (*vpcv1.DedicatedHost, error) {
+	var dHost *vpcv1.DedicatedHost
+	f := func(start string) (bool, string, error) {
+		// check for existing Dedicated Hosts
+		listDedicatedHostsOptions := &vpcv1.ListDedicatedHostsOptions{}
+		if start != "" {
+			listDedicatedHostsOptions.Start = &start
+		}
+
+		dHostsList, _, err := s.vpcService.ListDedicatedHosts(listDedicatedHostsOptions)
+		if err != nil {
+			return false, "", err
+		}
+
+		if dHostsList == nil {
+			return false, "", fmt.Errorf("dedicated hosts list returned is nil")
+		}
+
+		for index, dH := range dHostsList.DedicatedHosts {
+			if *dH.Name == dHostName {
+				dHost = &dHostsList.DedicatedHosts[index]
+				return true, "", nil
+			}
+		}
+
+		if dHostsList.Next != nil && *dHostsList.Next.Href != "" {
+			return false, *dHostsList.Next.Href, nil
+		}
+		return true, "", nil
+	}
+
+	if err := utils.PagingHelper(f); err != nil {
+		return nil, err
+	}
+
+	return dHost, nil
 }
 
 // CreateVPC creates a new VPC.
@@ -159,9 +204,19 @@ func (s *Service) ListKeys(options *vpcv1.ListKeysOptions) (*vpcv1.KeyCollection
 	return s.vpcService.ListKeys(options)
 }
 
+// CreateImage creates a new VPC Custom Image.
+func (s *Service) CreateImage(options *vpcv1.CreateImageOptions) (*vpcv1.Image, *core.DetailedResponse, error) {
+	return s.vpcService.CreateImage(options)
+}
+
 // ListImages returns list of images in a region.
 func (s *Service) ListImages(options *vpcv1.ListImagesOptions) (*vpcv1.ImageCollection, *core.DetailedResponse, error) {
 	return s.vpcService.ListImages(options)
+}
+
+// GetImage returns a VPC Custom image.
+func (s *Service) GetImage(options *vpcv1.GetImageOptions) (*vpcv1.Image, *core.DetailedResponse, error) {
+	return s.vpcService.GetImage(options)
 }
 
 // GetInstanceProfile returns instance profile.
@@ -213,6 +268,84 @@ func (s *Service) GetVPCByName(vpcName string) (*vpcv1.VPC, error) {
 	return vpc, nil
 }
 
+// GetImageByName returns the VPC Custom Image with given name. If not found, returns nil.
+func (s *Service) GetImageByName(imageName string) (*vpcv1.Image, error) {
+	var image *vpcv1.Image
+	f := func(start string) (bool, string, error) {
+		// check for existing images
+		listImagesOptions := &vpcv1.ListImagesOptions{}
+		if start != "" {
+			listImagesOptions.Start = &start
+		}
+
+		imagesList, _, err := s.ListImages(listImagesOptions)
+		if err != nil {
+			return false, "", err
+		}
+
+		if imagesList == nil {
+			return false, "", fmt.Errorf("image list returned is nil")
+		}
+
+		for i, v := range imagesList.Images {
+			if *v.Name == imageName {
+				image = &imagesList.Images[i]
+				return true, "", nil
+			}
+		}
+
+		if imagesList.Next != nil && *imagesList.Next.Href != "" {
+			return false, *imagesList.Next.Href, nil
+		}
+		return true, "", nil
+	}
+
+	if err := utils.PagingHelper(f); err != nil {
+		return nil, err
+	}
+
+	return image, nil
+}
+
+// GetVPCPublicGatewayByName returns the VPC Public Gateway with given name. If not found, returns nil.
+func (s *Service) GetVPCPublicGatewayByName(publicGatewayName string, resourceGroupID string) (*vpcv1.PublicGateway, error) {
+	var publicGateway *vpcv1.PublicGateway
+	f := func(start string) (bool, string, error) {
+		// check for existing public gateways
+		listPublicGatewaysOptions := s.vpcService.NewListPublicGatewaysOptions().SetResourceGroupID(resourceGroupID)
+		if start != "" {
+			listPublicGatewaysOptions.Start = &start
+		}
+
+		publicGatewaysList, _, err := s.vpcService.ListPublicGateways(listPublicGatewaysOptions)
+		if err != nil {
+			return false, "", err
+		}
+
+		if publicGatewaysList == nil {
+			return false, "", fmt.Errorf("public gateways list returned is nil")
+		}
+
+		for index, pg := range publicGatewaysList.PublicGateways {
+			if *pg.Name == publicGatewayName {
+				publicGateway = &publicGatewaysList.PublicGateways[index]
+				return true, "", nil
+			}
+		}
+
+		if publicGatewaysList.Next != nil && *publicGatewaysList.Next.Href != "" {
+			return false, *publicGatewaysList.Next.Href, nil
+		}
+		return true, "", nil
+	}
+
+	if err := utils.PagingHelper(f); err != nil {
+		return nil, err
+	}
+
+	return publicGateway, nil
+}
+
 // GetSubnet return subnet.
 func (s *Service) GetSubnet(options *vpcv1.GetSubnetOptions) (*vpcv1.Subnet, *core.DetailedResponse, error) {
 	return s.vpcService.GetSubnet(options)
@@ -257,6 +390,27 @@ func (s *Service) GetVPCSubnetByName(subnetName string) (*vpcv1.Subnet, error) {
 	return subnet, nil
 }
 
+// GetLoadBalancerPoolByName returns a Load Balancer Pool with the given name, in the provided Load Balancer. If not found, returns nil.
+func (s *Service) GetLoadBalancerPoolByName(loadBalancerID string, poolName string) (*vpcv1.LoadBalancerPool, error) {
+	listLoadBalancerPoolsOptions := &vpcv1.ListLoadBalancerPoolsOptions{}
+	listLoadBalancerPoolsOptions.SetLoadBalancerID(loadBalancerID)
+
+	pools, _, err := s.vpcService.ListLoadBalancerPools(listLoadBalancerPoolsOptions)
+	if err != nil {
+		return nil, fmt.Errorf("error listing pools for load balancer %s: %w", loadBalancerID, err)
+	} else if pools == nil {
+		return nil, fmt.Errorf("error no pools for load balancer: %s", loadBalancerID)
+	}
+
+	for _, pool := range pools.Pools {
+		if pool.Name != nil && *pool.Name == poolName {
+			return &pool, nil
+		}
+	}
+
+	return nil, nil
+}
+
 // GetLoadBalancerByName returns loadBalancer with given name. If not found, returns nil.
 func (s *Service) GetLoadBalancerByName(loadBalancerName string) (*vpcv1.LoadBalancer, error) {
 	var loadBalancer *vpcv1.LoadBalancer
@@ -294,50 +448,6 @@ func (s *Service) GetLoadBalancerByName(loadBalancerName string) (*vpcv1.LoadBal
 	}
 
 	return loadBalancer, nil
-}
-
-// GetSubnetAddrPrefix returns subnets address prefix.
-func (s *Service) GetSubnetAddrPrefix(vpcID, zone string) (string, error) {
-	var addrPrefix *vpcv1.AddressPrefix
-	f := func(start string) (bool, string, error) {
-		// check for existing vpcAddressPrefixes
-		listVPCAddressPrefixesOptions := &vpcv1.ListVPCAddressPrefixesOptions{
-			VPCID: &vpcID,
-		}
-		if start != "" {
-			listVPCAddressPrefixesOptions.Start = &start
-		}
-
-		vpcAddressPrefixesList, _, err := s.ListVPCAddressPrefixes(listVPCAddressPrefixesOptions)
-		if err != nil {
-			return false, "", err
-		}
-
-		if vpcAddressPrefixesList == nil {
-			return false, "", fmt.Errorf("vpcAddressPrefix list returned is nil")
-		}
-
-		for i, addressPrefix := range vpcAddressPrefixesList.AddressPrefixes {
-			if (*addressPrefix.Zone.Name) == zone {
-				addrPrefix = &vpcAddressPrefixesList.AddressPrefixes[i]
-				return true, "", nil
-			}
-		}
-
-		if vpcAddressPrefixesList.Next != nil && *vpcAddressPrefixesList.Next.Href != "" {
-			return false, *vpcAddressPrefixesList.Next.Href, nil
-		}
-		return true, "", nil
-	}
-
-	if err := utils.PagingHelper(f); err != nil {
-		return "", err
-	}
-
-	if addrPrefix != nil {
-		return *addrPrefix.CIDR, nil
-	}
-	return "", fmt.Errorf("not found a valid CIDR for VPC %s in zone %s", vpcID, zone)
 }
 
 // CreateSecurityGroup creates a new security group.
@@ -384,12 +494,31 @@ func (s *Service) GetSecurityGroupByName(name string) (*vpcv1.SecurityGroup, err
 		}
 	}
 
-	return nil, SecurityGroupByNameNotFound(name)
+	return nil, &SecurityGroupByNameNotFound{Name: name}
 }
 
 // GetSecurityGroupRule gets a specific security group rule.
 func (s *Service) GetSecurityGroupRule(options *vpcv1.GetSecurityGroupRuleOptions) (vpcv1.SecurityGroupRuleIntf, *core.DetailedResponse, error) {
 	return s.vpcService.GetSecurityGroupRule(options)
+}
+
+// ListSecurityGroupRules returns a list of security group rules.
+func (s *Service) ListSecurityGroupRules(options *vpcv1.ListSecurityGroupRulesOptions) (*vpcv1.SecurityGroupRuleCollection, *core.DetailedResponse, error) {
+	return s.vpcService.ListSecurityGroupRules(options)
+}
+
+// GetVPCZonesByRegion gets the VPC availability zones for a specific IBM Cloud region.
+func (s *Service) GetVPCZonesByRegion(region string) ([]string, error) {
+	zones := make([]string, 0)
+	options := s.vpcService.NewListRegionZonesOptions(region)
+	result, _, err := s.vpcService.ListRegionZones(options)
+	if err != nil {
+		return zones, err
+	}
+	for _, zone := range result.Zones {
+		zones = append(zones, *zone.Name)
+	}
+	return zones, nil
 }
 
 // NewService returns a new VPC Service.

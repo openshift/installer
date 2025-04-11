@@ -17,9 +17,13 @@ limitations under the License.
 // Package network contains code for configuring network services.
 package network
 
+import (
+	netopv1 "github.com/vmware-tanzu/net-operator-api/api/v1alpha1"
+	nsxvpcv1 "github.com/vmware-tanzu/nsx-operator/pkg/apis/vpc/v1alpha1"
+	ncpv1 "github.com/vmware-tanzu/vm-operator/external/ncp/api/v1alpha1"
+)
+
 const (
-	// NSXTTypeNetwork is the name of the NSX-T network type.
-	NSXTTypeNetwork = "nsx-t"
 	// NSXTVNetSelectorKey is also defined in VM Operator.
 	NSXTVNetSelectorKey = "ncp.vmware.com/virtual-network-name"
 
@@ -35,4 +39,20 @@ const (
 	//
 	// Deprecated: legacyDefaultNetworkLabel will be removed in a future release.
 	legacyDefaultNetworkLabel = "capw.vmware.com/is-default-network"
+
+	// AnnotationEnableEndpointHealthCheckKey is the key of the annotation that is used to enable health check on the
+	// Service endpoint port. vm-operator propagates annotations in VMService to Service and LB providers like NSX-T
+	// will enable health check on the endpoint target port when this annotation is present on the Service.
+	AnnotationEnableEndpointHealthCheckKey = "lb.iaas.vmware.com/enable-endpoint-health-check"
+)
+
+var (
+	// NetworkGVKNetOperator is the GVK used for networks in net-operator mode.
+	NetworkGVKNetOperator = netopv1.SchemeGroupVersion.WithKind("Network")
+
+	// NetworkGVKNSXT is the GVK used for networks in NSX-T mode.
+	NetworkGVKNSXT = ncpv1.SchemeGroupVersion.WithKind("VirtualNetwork")
+
+	// NetworkGVKNSXTVPC is the GVK used for networks in NSX-T VPC mode.
+	NetworkGVKNSXTVPC = nsxvpcv1.SchemeGroupVersion.WithKind("SubnetSet")
 )

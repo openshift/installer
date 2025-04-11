@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -147,7 +148,27 @@ func TestValidatePlatform(t *testing.T) {
 				p.SubnetUUIDs[0] = ""
 				return p
 			}(),
-			expectedError: `^test-path\.subnet: Required value: must specify the subnet$`,
+			expectedError: `^test-path\.subnetUUIDs: Required value: must specify at least one subnet$`,
+		},
+		{
+			name: "too many subnet items",
+			platform: func() *nutanix.Platform {
+				p := validPlatform()
+				for i := 1; i <= 32; i++ {
+					p.SubnetUUIDs = append(p.SubnetUUIDs, fmt.Sprintf("subnet-%v", i))
+				}
+				return p
+			}(),
+			expectedError: `^test-path\.subnetUUIDs: Too many: 33: must have at most 32 items$`,
+		},
+		{
+			name: "duplicate subnet item",
+			platform: func() *nutanix.Platform {
+				p := validPlatform()
+				p.SubnetUUIDs = append(p.SubnetUUIDs, p.SubnetUUIDs[0])
+				return p
+			}(),
+			expectedError: `^test-path\.subnetUUIDs: Invalid value: "b06179c8-dea3-4f8e-818a-b2e88fbc2201": should not configure duplicate value$`,
 		},
 		{
 			name: "Capital letters in Prism Central",
@@ -167,6 +188,16 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			expectedError: `^test-path\.prismCentral\.endpoint\.address: Invalid value: "https://test-pc": must be the domain name or IP address of the Prism Central$`,
 		},
+		{
+			name: "prismAPICallTimeout must be a positive integer",
+			platform: func() *nutanix.Platform {
+				p := validPlatform()
+				timeout := -1
+				p.PrismAPICallTimeout = &timeout
+				return p
+			}(),
+			expectedError: `^test-path\.prismAPICallTimeout: Invalid value: -1: must be a positive integer value$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -175,7 +206,7 @@ func TestValidatePlatform(t *testing.T) {
 				tc.config = installConfig().build()
 				tc.config.Nutanix = tc.platform
 			}
-			err := ValidatePlatform(tc.platform, field.NewPath("test-path"), tc.config).ToAggregate()
+			err := ValidatePlatform(tc.platform, field.NewPath("test-path"), tc.config, false).ToAggregate()
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {

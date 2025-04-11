@@ -216,6 +216,7 @@ func (r *release) extractFileFromImage(image, file, cacheDir string, architectur
 	archName := arch.GoArch(architecture)
 	extractpath := "--path=" + file + ":" + cacheDir
 	filterbyos := "--filter-by-os=linux/" + archName
+	insecure := "--insecure=true"
 
 	var cmd = []string{
 		"oc",
@@ -223,6 +224,7 @@ func (r *release) extractFileFromImage(image, file, cacheDir string, architectur
 		"extract",
 		extractpath,
 		filterbyos,
+		insecure,
 		"--confirm",
 	}
 
@@ -399,7 +401,7 @@ func getIcspContents(mirrorConfig []mirror.RegistriesConfig) ([]byte, error) {
 
 	icsp.Spec.RepositoryDigestMirrors = make([]operatorv1alpha1.RepositoryDigestMirrors, len(mirrorConfig))
 	for i, mirrorRegistries := range mirrorConfig {
-		icsp.Spec.RepositoryDigestMirrors[i] = operatorv1alpha1.RepositoryDigestMirrors{Source: mirrorRegistries.Location, Mirrors: []string{mirrorRegistries.Mirror}}
+		icsp.Spec.RepositoryDigestMirrors[i] = operatorv1alpha1.RepositoryDigestMirrors{Source: mirrorRegistries.Location, Mirrors: mirrorRegistries.Mirrors}
 	}
 
 	// Convert to json first so json tags are handled

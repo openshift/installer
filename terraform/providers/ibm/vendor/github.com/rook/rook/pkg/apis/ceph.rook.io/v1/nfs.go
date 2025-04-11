@@ -21,7 +21,6 @@ import (
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // KerberosEnabled returns true if Kerberos is enabled from the spec.
@@ -50,18 +49,6 @@ func (n *CephNFS) IsHostNetwork(c *ClusterSpec) bool {
 	return c.Network.IsHost()
 }
 
-func (n *CephNFS) ValidateCreate() error {
-	return n.Spec.Security.Validate()
-}
-
-func (n *CephNFS) ValidateUpdate(old runtime.Object) error {
-	return n.ValidateCreate()
-}
-
-func (n *CephNFS) ValidateDelete() error {
-	return nil
-}
-
 func (sec *NFSSecuritySpec) Validate() error {
 	if sec == nil {
 		return nil
@@ -77,7 +64,7 @@ func (sec *NFSSecuritySpec) Validate() error {
 			return errors.New("System Security Services Daemon (SSSD) sidecar is enabled, but no image is specified")
 		}
 
-		if volSourceExistsAndIsEmpty(sidecar.SSSDConfigFile.VolumeSource) {
+		if volSourceExistsAndIsEmpty(sidecar.SSSDConfigFile.VolumeSource.ToKubernetesVolumeSource()) {
 			return errors.New("System Security Services Daemon (SSSD) sidecar is enabled with config from a VolumeSource, but no source is specified")
 		}
 
@@ -88,7 +75,7 @@ func (sec *NFSSecuritySpec) Validate() error {
 				return errors.New("System Security Services Daemon (SSSD) sidecar is enabled with additional file having no subPath specified")
 			}
 
-			if volSourceExistsAndIsEmpty(additionalFile.VolumeSource) {
+			if volSourceExistsAndIsEmpty(additionalFile.VolumeSource.ToKubernetesVolumeSource()) {
 				return errors.Errorf("System Security Services Daemon (SSSD) sidecar is enabled with additional file (subPath %q), but no source is specified", subDir)
 			}
 
@@ -101,11 +88,11 @@ func (sec *NFSSecuritySpec) Validate() error {
 
 	krb := sec.Kerberos
 	if krb != nil {
-		if volSourceExistsAndIsEmpty(krb.ConfigFiles.VolumeSource) {
+		if volSourceExistsAndIsEmpty(krb.ConfigFiles.VolumeSource.ToKubernetesVolumeSource()) {
 			return errors.New("Kerberos is enabled with config from a VolumeSource, but no source is specified")
 		}
 
-		if volSourceExistsAndIsEmpty(krb.KeytabFile.VolumeSource) {
+		if volSourceExistsAndIsEmpty(krb.KeytabFile.VolumeSource.ToKubernetesVolumeSource()) {
 			return errors.New("Kerberos is enabled with keytab from a VolumeSource, but no source is specified")
 		}
 	}

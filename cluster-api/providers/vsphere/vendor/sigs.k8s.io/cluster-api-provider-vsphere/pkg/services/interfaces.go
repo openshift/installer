@@ -19,7 +19,7 @@ package services
 import (
 	"context"
 
-	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
+	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha2"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -70,6 +70,9 @@ type ResourcePolicyService interface {
 type NetworkProvider interface {
 	// HasLoadBalancer indicates whether this provider has a load balancer for Services.
 	HasLoadBalancer() bool
+
+	// SupportsVMReadinessProbe indicates whether this provider support vm readiness probe.
+	SupportsVMReadinessProbe() bool
 
 	// ProvisionClusterNetwork creates network resource for a given cluster
 	// This operation should be idempotent

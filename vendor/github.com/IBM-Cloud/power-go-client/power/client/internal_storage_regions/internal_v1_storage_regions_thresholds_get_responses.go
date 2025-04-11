@@ -6,6 +6,7 @@ package internal_storage_regions
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -103,11 +104,13 @@ func (o *InternalV1StorageRegionsThresholdsGetOK) Code() int {
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetOK) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetOK %s", 200, payload)
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetOK) String() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetOK %s", 200, payload)
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetOK) GetPayload() *models.Thresholds {
@@ -171,11 +174,13 @@ func (o *InternalV1StorageRegionsThresholdsGetUnauthorized) Code() int {
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetUnauthorized %s", 401, payload)
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetUnauthorized) String() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetUnauthorized %s", 401, payload)
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetUnauthorized) GetPayload() *models.Error {
@@ -239,11 +244,13 @@ func (o *InternalV1StorageRegionsThresholdsGetForbidden) Code() int {
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetForbidden) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetForbidden %s", 403, payload)
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetForbidden) String() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetForbidden  %+v", 403, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetForbidden %s", 403, payload)
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetForbidden) GetPayload() *models.Error {
@@ -307,11 +314,13 @@ func (o *InternalV1StorageRegionsThresholdsGetNotFound) Code() int {
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetNotFound) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetNotFound %s", 404, payload)
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetNotFound) String() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetNotFound  %+v", 404, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetNotFound %s", 404, payload)
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetNotFound) GetPayload() *models.Error {
@@ -375,11 +384,13 @@ func (o *InternalV1StorageRegionsThresholdsGetInternalServerError) Code() int {
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetInternalServerError %s", 500, payload)
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetInternalServerError) String() string {
-	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetInternalServerError %s", 500, payload)
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetInternalServerError) GetPayload() *models.Error {

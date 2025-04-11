@@ -1,24 +1,35 @@
 package image
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
-	"github.com/openshift/assisted-service/models"
+	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	config "github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
 )
 
 const (
 	// bootArtifactsPath is the path where boot files are created.
 	// e.g. initrd, kernel and rootfs.
 	bootArtifactsPath = "boot-artifacts"
+	// agentFilePrefix is the prefix used for day 1 images.
+	agentFilePrefix = "agent"
+	// nodeFilePrefix is the prefix used for day 2 images.
+	nodeFilePrefix = "node"
 )
 
 // AgentArtifacts is an asset that generates all the artifacts that could be used
@@ -29,9 +40,10 @@ type AgentArtifacts struct {
 	RendezvousIP         string
 	TmpPath              string
 	IgnitionByte         []byte
-	Kargs                []byte
+	Kargs                string
 	ISOPath              string
 	BootArtifactsBaseURL string
+	MinimalISO           bool
 }
 
 // Dependencies returns the assets on which the AgentArtifacts asset depends.
@@ -44,11 +56,13 @@ func (a *AgentArtifacts) Dependencies() []asset.Asset {
 		&manifests.AgentClusterInstall{},
 		&mirror.RegistriesConf{},
 		&config.AgentConfig{},
+		&workflow.AgentWorkflow{},
+		&joiner.ClusterInfo{},
 	}
 }
 
 // Generate generates the configurations for the agent ISO image and PXE assets.
-func (a *AgentArtifacts) Generate(dependencies asset.Parents) error {
+func (a *AgentArtifacts) Generate(ctx context.Context, dependencies asset.Parents) error {
 	ignition := &Ignition{}
 	kargs := &Kargs{}
 	baseIso := &BaseIso{}
@@ -56,8 +70,12 @@ func (a *AgentArtifacts) Generate(dependencies asset.Parents) error {
 	agentClusterInstall := &manifests.AgentClusterInstall{}
 	registriesConf := &mirror.RegistriesConf{}
 	agentconfig := &config.AgentConfig{}
+	agentWorkflow := &workflow.AgentWorkflow{}
+	dependencies.Get(ignition, kargs, baseIso, agentManifests, agentClusterInstall, registriesConf, agentconfig, agentWorkflow)
 
-	dependencies.Get(ignition, kargs, baseIso, agentManifests, agentClusterInstall, registriesConf, agentconfig)
+	if err := workflowreport.GetReport(ctx).Stage(workflow.StageAgentArtifacts); err != nil {
+		return err
+	}
 
 	ignitionByte, err := json.Marshal(ignition.Config)
 	if err != nil {
@@ -70,16 +88,41 @@ func (a *AgentArtifacts) Generate(dependencies asset.Parents) error {
 	a.ISOPath = baseIso.File.Filename
 	a.Kargs = kargs.KernelCmdLine()
 
-	if agentconfig.Config != nil {
-		a.BootArtifactsBaseURL = strings.Trim(agentconfig.Config.BootArtifactsBaseURL, "/")
+	switch agentWorkflow.Workflow {
+	case workflow.AgentWorkflowTypeInstall:
+		if agentconfig.Config != nil {
+			a.BootArtifactsBaseURL = strings.Trim(agentconfig.Config.BootArtifactsBaseURL, "/")
+			// External platform will always create a minimal ISO
+			a.MinimalISO = agentconfig.Config.MinimalISO || agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType
+			if agentconfig.Config.MinimalISO {
+				logrus.Infof("Minimal ISO will be created based on configuration")
+			} else if agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType {
+				logrus.Infof("Minimal ISO will be created for External platform")
+			}
+		}
+	case workflow.AgentWorkflowTypeAddNodes:
+		clusterInfo := &joiner.ClusterInfo{}
+		dependencies.Get(clusterInfo)
+		if clusterInfo.BootArtifactsBaseURL != "" {
+			a.BootArtifactsBaseURL = strings.Trim(clusterInfo.BootArtifactsBaseURL, "/")
+		}
+	default:
+		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
 	}
 
 	var agentTuiFiles []string
-	if agentClusterInstall.GetExternalPlatformName() != string(models.PlatformTypeOci) {
+	if agentClusterInstall.GetExternalPlatformName() != agent.ExternalPlatformNameOci {
+		if err := workflowreport.GetReport(ctx).SubStage(workflow.StageAgentArtifactsAgentTUI); err != nil {
+			return err
+		}
 		agentTuiFiles, err = a.fetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
 		if err != nil {
 			return err
 		}
+	}
+
+	if err := workflowreport.GetReport(ctx).SubStage(workflow.StageAgentArtifactsPrepare); err != nil {
+		return err
 	}
 	err = a.prepareAgentArtifacts(a.ISOPath, agentTuiFiles)
 	if err != nil {
@@ -202,8 +245,8 @@ func createDir(bootArtifactsFullPath string) error {
 	return nil
 }
 
-func extractRootFS(bootArtifactsFullPath, agentISOPath, arch string) error {
-	agentRootfsimgFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-rootfs.img", arch))
+func extractRootFS(bootArtifactsFullPath, agentISOPath, filePrefix, arch string) error {
+	agentRootfsimgFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("%s.%s-rootfs.img", filePrefix, arch))
 	rootfsReader, err := os.Open(filepath.Join(agentISOPath, "images", "pxeboot", "rootfs.img"))
 	if err != nil {
 		return err

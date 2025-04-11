@@ -29,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/klog/v2"
-	"k8s.io/utils/integer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	clusterutilv1 "sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -198,10 +197,15 @@ func (v *VimMachineService) GetHostInfo(ctx context.Context, machineCtx capvcont
 		return "", errors.New("received unexpected VIMMachineContext type")
 	}
 
+	name, err := generateVMObjectName(vimMachineCtx, vimMachineCtx.Machine.Name)
+	if err != nil {
+		return "", err
+	}
+
 	vsphereVM := &infrav1.VSphereVM{}
 	if err := v.Client.Get(ctx, client.ObjectKey{
 		Namespace: vimMachineCtx.VSphereMachine.Namespace,
-		Name:      generateVMObjectName(vimMachineCtx, vimMachineCtx.Machine.Name),
+		Name:      name,
 	}, vsphereVM); err != nil {
 		return "", err
 	}
@@ -216,9 +220,14 @@ func (v *VimMachineService) GetHostInfo(ctx context.Context, machineCtx capvcont
 func (v *VimMachineService) findVSphereVM(ctx context.Context, vimMachineCtx *capvcontext.VIMMachineContext) (*infrav1.VSphereVM, error) {
 	// Get ready to find the associated VSphereVM resource.
 	vm := &infrav1.VSphereVM{}
+	name, err := generateVMObjectName(vimMachineCtx, vimMachineCtx.Machine.Name)
+	if err != nil {
+		return nil, err
+	}
+
 	vmKey := types.NamespacedName{
 		Namespace: vimMachineCtx.VSphereMachine.Namespace,
-		Name:      generateVMObjectName(vimMachineCtx, vimMachineCtx.Machine.Name),
+		Name:      name,
 	}
 	// Attempt to find the associated VSphereVM resource.
 	if err := v.Client.Get(ctx, vmKey, vm); err != nil {
@@ -302,10 +311,15 @@ func (v *VimMachineService) reconcileNetwork(ctx context.Context, vimMachineCtx 
 func (v *VimMachineService) createOrPatchVSphereVM(ctx context.Context, vimMachineCtx *capvcontext.VIMMachineContext, vsphereVM *infrav1.VSphereVM) (*infrav1.VSphereVM, error) {
 	log := ctrl.LoggerFrom(ctx)
 	// Create or update the VSphereVM resource.
+	name, err := generateVMObjectName(vimMachineCtx, vimMachineCtx.Machine.Name)
+	if err != nil {
+		return nil, err
+	}
+
 	vm := &infrav1.VSphereVM{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: vimMachineCtx.VSphereMachine.Namespace,
-			Name:      generateVMObjectName(vimMachineCtx, vimMachineCtx.Machine.Name),
+			Name:      name,
 		},
 	}
 	mutateFn := func() (err error) {
@@ -394,12 +408,32 @@ func (v *VimMachineService) createOrPatchVSphereVM(ctx context.Context, vimMachi
 
 // generateVMObjectName returns a new VM object name in specific cases, otherwise return the same
 // passed in the parameter.
-func generateVMObjectName(vimMachineCtx *capvcontext.VIMMachineContext, machineName string) string {
+func generateVMObjectName(vimMachineCtx *capvcontext.VIMMachineContext, machineName string) (string, error) {
+	name, err := GenerateVSphereVMName(machineName, vimMachineCtx.VSphereMachine.Spec.NamingStrategy)
+	if err != nil {
+		return "", err
+	}
 	// Windows VM names must have 15 characters length at max.
 	if vimMachineCtx.VSphereMachine.Spec.OS == infrav1.Windows && len(machineName) > 15 {
-		return strings.TrimSuffix(machineName[0:9], "-") + "-" + machineName[len(machineName)-5:]
+		return strings.TrimSuffix(name[0:9], "-") + "-" + name[len(name)-5:], nil
 	}
-	return machineName
+	return name, nil
+}
+
+// GenerateVSphereVMName generates the name of a VSphereVM based on the naming strategy.
+func GenerateVSphereVMName(machineName string, namingStrategy *infrav1.VSphereVMNamingStrategy) (string, error) {
+	// Per default the name of the VSphereVM should be equal to the Machine name (this is the same as "{{ .machine.name }}")
+	if namingStrategy == nil || namingStrategy.Template == nil {
+		// Note: No need to trim to max length in this case as valid Machine names will also be valid VSphereVM names.
+		return machineName, nil
+	}
+
+	name, err := infrautilv1.GenerateMachineNameFromTemplate(machineName, namingStrategy.Template)
+	if err != nil {
+		return name, errors.Wrap(err, "failed to generate name for VSphereVM")
+	}
+
+	return name, nil
 }
 
 // generateOverrideFunc returns a function which can override the values in the VSphereVM Spec
@@ -437,7 +471,10 @@ func (v *VimMachineService) generateOverrideFunc(ctx context.Context, vimMachine
 			vm.Spec.Datastore = vsphereFailureDomain.Spec.Topology.Datastore
 		}
 		if len(vsphereFailureDomain.Spec.Topology.Networks) > 0 {
-			vm.Spec.Network.Devices = overrideNetworkDeviceSpecs(vm.Spec.Network.Devices, vsphereFailureDomain.Spec.Topology.Networks)
+			vm.Spec.Network.Devices = overrideNetworkDeviceSpecs(vm.Spec.Network.Devices, vsphereFailureDomain.Spec.Topology.Networks, mergeFailureDomainNetworkName)
+		}
+		if len(vsphereFailureDomain.Spec.Topology.NetworkConfigurations) > 0 {
+			vm.Spec.Network.Devices = overrideNetworkDeviceSpecs(vm.Spec.Network.Devices, vsphereFailureDomain.Spec.Topology.NetworkConfigurations, mergeNetworkConfigurationInNetworkDeviceSpec)
 		}
 	}
 	return overrideWithFailureDomainFunc, true
@@ -447,25 +484,63 @@ func (v *VimMachineService) generateOverrideFunc(ctx context.Context, vimMachine
 // The substitution is done based on the order in which the network devices have been defined.
 //
 // In case there are more network definitions than the number of network devices specified, the definitions are appended to the list.
-func overrideNetworkDeviceSpecs(deviceSpecs []infrav1.NetworkDeviceSpec, networks []string) []infrav1.NetworkDeviceSpec {
+func overrideNetworkDeviceSpecs[T any](deviceSpecs []infrav1.NetworkDeviceSpec, networks []T, mergeFunc func(device *infrav1.NetworkDeviceSpec, network T)) []infrav1.NetworkDeviceSpec {
 	index, length := 0, len(networks)
 
-	devices := make([]infrav1.NetworkDeviceSpec, 0, integer.IntMax(length, len(deviceSpecs)))
+	devices := make([]infrav1.NetworkDeviceSpec, 0, max(length, len(deviceSpecs)))
 	// override the networks on the VM spec with placement constraint network definitions
 	for i := range deviceSpecs {
 		vmNetworkDeviceSpec := deviceSpecs[i]
 		if i < length {
 			index++
-			vmNetworkDeviceSpec.NetworkName = networks[i]
+			mergeFunc(&vmNetworkDeviceSpec, networks[i])
 		}
 		devices = append(devices, vmNetworkDeviceSpec)
 	}
 	// append the remaining network definitions to the VM spec
 	for ; index < length; index++ {
-		devices = append(devices, infrav1.NetworkDeviceSpec{
-			NetworkName: networks[index],
-		})
+		device := infrav1.NetworkDeviceSpec{}
+		mergeFunc(&device, networks[index])
+		devices = append(devices, device)
 	}
 
 	return devices
+}
+
+func mergeFailureDomainNetworkName(device *infrav1.NetworkDeviceSpec, network string) {
+	device.NetworkName = network
+}
+
+func mergeNetworkConfigurationInNetworkDeviceSpec(device *infrav1.NetworkDeviceSpec, nc infrav1.NetworkConfiguration) {
+	if nc.NetworkName != "" {
+		device.NetworkName = nc.NetworkName
+	}
+	if nc.DHCP4 != nil {
+		device.DHCP4 = *nc.DHCP4
+	}
+	if nc.DHCP6 != nil {
+		device.DHCP6 = *nc.DHCP6
+	}
+	if len(nc.Nameservers) > 0 {
+		device.Nameservers = make([]string, len(nc.Nameservers))
+		copy(device.Nameservers, nc.Nameservers)
+	}
+
+	if len(nc.SearchDomains) > 0 {
+		device.SearchDomains = make([]string, len(nc.SearchDomains))
+		copy(device.SearchDomains, nc.SearchDomains)
+	}
+
+	if nc.DHCP4Overrides != nil {
+		device.DHCP4Overrides = nc.DHCP4Overrides.DeepCopy()
+	}
+
+	if nc.DHCP6Overrides != nil {
+		device.DHCP6Overrides = nc.DHCP6Overrides.DeepCopy()
+	}
+
+	if len(nc.AddressesFromPools) > 0 {
+		device.AddressesFromPools = make([]corev1.TypedLocalObjectReference, len(nc.AddressesFromPools))
+		copy(device.AddressesFromPools, nc.AddressesFromPools)
+	}
 }

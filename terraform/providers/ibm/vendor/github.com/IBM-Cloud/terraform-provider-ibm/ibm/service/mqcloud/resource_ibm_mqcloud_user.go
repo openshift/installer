@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
+ */
 
 package mqcloud
 
@@ -30,7 +34,7 @@ func ResourceIbmMqcloudUser() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_mqcloud_user", "service_instance_guid"),
-				Description:  "The GUID that uniquely identifies the MQ on Cloud service instance.",
+				Description:  "The GUID that uniquely identifies the MQaaS service instance.",
 			},
 			"name": {
 				Type:         schema.TypeString,
@@ -98,22 +102,30 @@ func ResourceIbmMqcloudUserValidator() *validate.ResourceValidator {
 func resourceIbmMqcloudUserCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mqcloudClient, err := meta.(conns.ClientSession).MqcloudV1()
 	if err != nil {
-		return diag.FromErr(err)
+		// Error is coming from SDK client, so it doesn't need to be discriminated.
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_mqcloud_user", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
+
 	err = checkSIPlan(d, meta)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Create User failed %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Create User failed: %s", err.Error()), "ibm_mqcloud_user", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
+
 	createUserOptions := &mqcloudv1.CreateUserOptions{}
 
 	createUserOptions.SetServiceInstanceGuid(d.Get("service_instance_guid").(string))
 	createUserOptions.SetEmail(d.Get("email").(string))
 	createUserOptions.SetName(d.Get("name").(string))
 
-	userDetails, response, err := mqcloudClient.CreateUserWithContext(context, createUserOptions)
+	userDetails, _, err := mqcloudClient.CreateUserWithContext(context, createUserOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateUserWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateUserWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateUserWithContext failed: %s", err.Error()), "ibm_mqcloud_user", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *createUserOptions.ServiceInstanceGuid, *userDetails.ID))
@@ -124,14 +136,16 @@ func resourceIbmMqcloudUserCreate(context context.Context, d *schema.ResourceDat
 func resourceIbmMqcloudUserRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mqcloudClient, err := meta.(conns.ClientSession).MqcloudV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_mqcloud_user", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getUserOptions := &mqcloudv1.GetUserOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_user", "read", "sep-id-parts").GetDiag()
 	}
 
 	getUserOptions.SetServiceInstanceGuid(parts[0])
@@ -143,23 +157,29 @@ func resourceIbmMqcloudUserRead(context context.Context, d *schema.ResourceData,
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetUserWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetUserWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetUserWithContext failed: %s", err.Error()), "ibm_mqcloud_user", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("service_instance_guid", parts[0]); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting service_instance_guid: %s", err))
+		err = fmt.Errorf("Error setting service_instance_guid: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_user", "read", "set-service_instance_guid").GetDiag()
 	}
 	if err = d.Set("name", userDetails.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		err = fmt.Errorf("Error setting name: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_user", "read", "set-name").GetDiag()
 	}
 	if err = d.Set("email", userDetails.Email); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting email: %s", err))
+		err = fmt.Errorf("Error setting email: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_user", "read", "set-email").GetDiag()
 	}
 	if err = d.Set("href", userDetails.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		err = fmt.Errorf("Error setting href: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_user", "read", "set-href").GetDiag()
 	}
 	if err = d.Set("user_id", userDetails.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting user_id: %s", err))
+		err = fmt.Errorf("Error setting user_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_user", "read", "set-user_id").GetDiag()
 	}
 
 	return nil
@@ -168,26 +188,33 @@ func resourceIbmMqcloudUserRead(context context.Context, d *schema.ResourceData,
 func resourceIbmMqcloudUserDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mqcloudClient, err := meta.(conns.ClientSession).MqcloudV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_mqcloud_user", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
+
 	err = checkSIPlan(d, meta)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Delete User failed %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Delete User failed: %s", err.Error()), "ibm_mqcloud_user", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
+
 	deleteUserOptions := &mqcloudv1.DeleteUserOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_user", "delete", "sep-id-parts").GetDiag()
 	}
 
 	deleteUserOptions.SetServiceInstanceGuid(parts[0])
 	deleteUserOptions.SetUserID(parts[1])
 
-	response, err := mqcloudClient.DeleteUserWithContext(context, deleteUserOptions)
+	_, err = mqcloudClient.DeleteUserWithContext(context, deleteUserOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteUserWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteUserWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteUserWithContext failed: %s", err.Error()), "ibm_mqcloud_user", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

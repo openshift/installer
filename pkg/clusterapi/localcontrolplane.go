@@ -54,7 +54,11 @@ type localControlPlane struct {
 	Client         client.Client
 	Cfg            *rest.Config
 	BinDir         string
+	EtcdDataDir    string
 	KubeconfigPath string
+	EtcdLog        *os.File
+	APIServerLog   *os.File
+	APIServerArgs  map[string]string
 }
 
 // Run launches the local control plane.
@@ -67,31 +71,58 @@ func (c *localControlPlane) Run(ctx context.Context) error {
 	if err := UnpackEnvtestBinaries(c.BinDir); err != nil {
 		return fmt.Errorf("failed to unpack envtest binaries: %w", err)
 	}
+	c.EtcdDataDir = filepath.Join(command.RootOpts.Dir, ArtifactsDir, "etcd")
+
+	// Write etcd & kube-apiserver output to log files.
+	var err error
+	if err := os.MkdirAll(filepath.Join(command.RootOpts.Dir, ArtifactsDir), 0750); err != nil {
+		return fmt.Errorf("error creating artifacts dir: %w", err)
+	}
+	if c.EtcdLog, err = os.Create(filepath.Join(command.RootOpts.Dir, ArtifactsDir, "etcd.log")); err != nil {
+		return fmt.Errorf("failed to create etcd log file: %w", err)
+	}
+	if c.APIServerLog, err = os.Create(filepath.Join(command.RootOpts.Dir, ArtifactsDir, "kube-apiserver.log")); err != nil {
+		return fmt.Errorf("failed to create kube-apiserver log file: %w", err)
+	}
 
 	log.SetLogger(klog.NewKlogr())
 	logrus.Info("Started local control plane with envtest")
 	c.Env = &envtest.Environment{
 		Scheme:                   Scheme,
-		AttachControlPlaneOutput: false,
+		AttachControlPlaneOutput: true,
 		BinaryAssetsDirectory:    c.BinDir,
 		ControlPlaneStartTimeout: 10 * time.Second,
 		ControlPlaneStopTimeout:  10 * time.Second,
 		ControlPlane: envtest.ControlPlane{
 			Etcd: &envtest.Etcd{
-				DataDir: c.BinDir,
+				DataDir: c.EtcdDataDir,
+				Out:     c.EtcdLog,
+				Err:     c.EtcdLog,
 			},
 		},
 	}
-	var err error
+	apiServer := &envtest.APIServer{
+		Out: c.APIServerLog,
+		Err: c.APIServerLog,
+	}
+	for key, value := range c.APIServerArgs {
+		apiServer.Configure().Set(key, value)
+	}
+	c.Env.ControlPlane.APIServer = apiServer
 	c.Cfg, err = c.Env.Start()
 	if err != nil {
 		return err
 	}
 
+	artifactsDirPath := filepath.Join(command.RootOpts.Dir, ArtifactsDir)
+	err = os.MkdirAll(artifactsDirPath, 0750)
+	if err != nil {
+		return fmt.Errorf("error creating cluster-api artifacts directory: %w", err)
+	}
+
 	kc := fromEnvTestConfig(c.Cfg)
 	{
-		dir := filepath.Join(command.RootOpts.Dir, "auth")
-		kf, err := os.Create(filepath.Join(dir, "envtest.kubeconfig"))
+		kf, err := os.Create(filepath.Join(artifactsDirPath, "envtest.kubeconfig"))
 		if err != nil {
 			return err
 		}

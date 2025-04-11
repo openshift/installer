@@ -24,15 +24,16 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	awssdk "github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	awssdk "github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	semver "github.com/hashicorp/go-version"
 	common "github.com/openshift-online/ocm-common/pkg/ocm/validations"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -59,6 +60,10 @@ const (
 	Username            = "Username"
 	URL                 = "URL"
 	IsThrottle          = "IsThrottle"
+	Account             = "Account"
+	Organization        = "Organization"
+	RoleName            = "RoleName"
+	PolicyArn           = "PolicyArn"
 
 	OCMRoleLabel  = "sts_ocm_role"
 	USERRoleLabel = "sts_user_role"
@@ -146,6 +151,45 @@ func ValidateHTTPProxy(val interface{}) error {
 	return fmt.Errorf("can only validate strings, got '%v'", val)
 }
 
+func ValidateRegistryAdditionalCa(input map[string]string) error {
+	var caRE = regexp.MustCompile(
+		`(-----BEGIN CERTIFICATE-----\n)([^-----]*)(-----END CERTIFICATE-----)`)
+	for _, ca := range input {
+		if !caRE.MatchString(ca) {
+			return fmt.Errorf("invalid PEM-encoded certificate.' ")
+		}
+	}
+	return nil
+}
+
+func ValidateAllowedRegistriesForImport(input interface{}) error {
+	var idRE = regexp.MustCompile(`^(.+):(true|false)$`)
+	var registries []string
+	inputType := reflect.TypeOf(input).Kind()
+	switch inputType {
+	case reflect.String:
+		if input.(string) == "" {
+			return nil
+		}
+		registries = strings.Split(input.(string), ",")
+		for _, registry := range registries {
+			if !idRE.MatchString(registry) {
+				return fmt.Errorf("invalid identifier '%s' for 'allowed registries for import.' "+
+					"Should be in a <registry>:<boolean> format. "+
+					"The boolean indicates whether the registry is secure or not.", registry)
+			}
+		}
+	case reflect.Slice:
+		if reflect.TypeOf(input).Elem().Kind() != reflect.String {
+			return fmt.Errorf("unable to verify allowed element, incompatible type, expected slice of string got: '%s'",
+				inputType.String())
+		}
+	default:
+		return fmt.Errorf("can only validate string types, got %v", inputType.String())
+	}
+	return nil
+}
+
 func ValidateAdditionalTrustBundle(val interface{}) error {
 	if additionalTrustBundleFile, ok := val.(string); ok {
 		if additionalTrustBundleFile == "" {
@@ -189,16 +233,21 @@ func isCompatible(relatedResource *amsv1.RelatedResource) bool {
 }
 
 func handleErr(res *ocmerrors.Error, err error) error {
-	msg := res.Reason()
-	if msg == "" {
-		msg = err.Error()
+	msg := err.Error()
+	// Need to check nil as .Error will try to access internal values of the pointer
+	if res != nil && res.Reason() != "" {
+		msg = res.Error()
 	}
+	// This works because the following gets return zero value for their type
+	// string->""
+	// int->0
 	// Hack to always display the correct terms and conditions message
 	if res.Code() == "CLUSTERS-MGMT-451" {
 		msg = "You must accept the Terms and Conditions in order to continue.\n" +
 			"Go to https://www.redhat.com/wapps/tnc/ackrequired?site=ocm&event=register\n" +
 			"Once you accept the terms, you will need to retry the action that was blocked."
 	}
+	// The error type set will be No Type though
 	errType := errors.ErrorType(res.Status())
 	return errType.Set(errors.Errorf("%s", msg))
 }
@@ -717,10 +766,10 @@ func ValidateHostedClusterSubnets(awsClient aws.Client, isPrivate bool, subnetID
 		return 0, vpcSubnetsErr
 	}
 
-	var subnets []*ec2.Subnet
+	var subnets []ec2types.Subnet
 	for _, subnet := range vpcSubnets {
 		for _, subnetId := range subnetIDs {
-			if awssdk.StringValue(subnet.SubnetId) == subnetId {
+			if awssdk.ToString(subnet.SubnetId) == subnetId {
 				subnets = append(subnets, subnet)
 				break
 			}
@@ -849,13 +898,15 @@ func (c *Client) GetVersionsList(channelGroup string, defaultFirst bool) ([]stri
 
 func ValidateOperatorRolesMatchOidcProvider(reporter *reporter.Object, awsClient aws.Client,
 	operatorIAMRoleList []OperatorIAMRole, oidcEndpointUrl string,
-	clusterVersion string, expectedOperatorRolePath string, accountRolesHasManagedPolicies bool) error {
+	clusterVersion string, expectedOperatorRolePath string,
+	accountRolesHasManagedPolicies bool, logOperatorRoles bool) error {
 	operatorIAMRoles := operatorIAMRoleList
 	parsedUrl, err := url.Parse(oidcEndpointUrl)
 	if err != nil {
 		return err
 	}
-	if reporter.IsTerminal() && !output.HasFlag() {
+	printInfo := reporter.IsTerminal() && !output.HasFlag() && logOperatorRoles
+	if printInfo {
 		reporter.Infof("Reusable OIDC Configuration detected. Validating trusted relationships to operator roles: ")
 	}
 	for _, operatorIAMRole := range operatorIAMRoles {
@@ -889,6 +940,9 @@ func ValidateOperatorRolesMatchOidcProvider(reporter *reporter.Object, awsClient
 			return errors.Errorf("Operator role '%s' has unmanaged policies and is not compatible with the account "+
 				"role's managed policies.", roleARN)
 		}
+		if printInfo {
+			reporter.Infof("Using '%s'", roleARN)
+		}
 		if hasManagedPolicies {
 			// Managed policies should be compatible with all versions
 			continue
@@ -906,11 +960,12 @@ func ValidateOperatorRolesMatchOidcProvider(reporter *reporter.Object, awsClient
 				return err
 			}
 			if !isCompatible {
-				return errors.Errorf("Operator role '%s' is not compatible with cluster version '%s'", roleARN, clusterVersion)
+				return errors.Errorf(
+					"Operator role '%s' is not compatible with cluster version '%s'",
+					roleARN,
+					clusterVersion,
+				)
 			}
-		}
-		if reporter.IsTerminal() && !output.HasFlag() {
-			reporter.Infof("Using '%s'", *roleObject.Arn)
 		}
 	}
 	return nil
@@ -1037,5 +1092,34 @@ func ValidateBalancingIgnoredLabels(val interface{}) error {
 		}
 	}
 
+	return nil
+}
+
+func ValidateClaimValidationRules(input interface{}) error {
+	var idRE = regexp.MustCompile(`^[0-9a-z]+([:][0-9a-z]+)`)
+	var inputRules []string
+	inputType := reflect.TypeOf(input).Kind()
+	switch inputType {
+	case reflect.String:
+		if input.(string) == "" {
+			return nil
+		}
+		inputRules = strings.Split(input.(string), ",")
+		for _, inputRule := range inputRules {
+			if !idRE.MatchString(inputRule) {
+				return fmt.Errorf("invalid identifier '%s' for 'claim validation rule. '"+
+					"Should be in a <claim>:<required_value> format.", inputRule)
+			}
+		}
+	case reflect.Slice:
+		if reflect.TypeOf(input).Elem().Kind() != reflect.String {
+			return fmt.Errorf(
+				"unable to verify claim validation rules, incompatible type, expected slice of string got: '%s'",
+				inputType.String(),
+			)
+		}
+	default:
+		return fmt.Errorf("can only validate string types, got %v", inputType.String())
+	}
 	return nil
 }

@@ -104,6 +104,25 @@ func DataSourceIBMIsSecurityGroupRule() *schema.Resource {
 					},
 				},
 			},
+			"local": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The local IP address or range of local IP addresses to which this rule will allow inbound traffic (or from which, for outbound traffic). A CIDR block of 0.0.0.0/0 allows traffic to all local IP addresses (or from all local IP addresses, for outbound rules).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"address": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The IP address.This property may add support for IPv6 addresses in the future. When processing a value in this property, verify that the address is in an expected format. If it is not, log an error. Optionally halt processing and surface the error, or bypass the resource on which the unexpected IP address format was encountered.",
+						},
+						"cidr_block": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The CIDR block. This property may add support for IPv6 CIDR blocks in the future. When processing a value in this property, verify that the CIDR block is in an expected format. If it is not, log an error. Optionally halt processing and surface the error, or bypass the resource on which the unexpected CIDR block format was encountered.",
+						},
+					},
+				},
+			},
 			"code": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -173,6 +192,16 @@ func dataSourceIBMIsSecurityGroupRuleRead(context context.Context, d *schema.Res
 					return diag.FromErr(fmt.Errorf("Error setting remote %s", err))
 				}
 			}
+			if securityGroupRule.Local != nil {
+				securityGroupRuleLocal, err := dataSourceSecurityGroupRuleFlattenLocal(securityGroupRule.Local)
+				if err != nil {
+					return diag.FromErr(fmt.Errorf("Error flattening securityGroupRule.Local %s", err))
+				}
+				err = d.Set("local", securityGroupRuleLocal)
+				if err != nil {
+					return diag.FromErr(fmt.Errorf("Error setting local %s", err))
+				}
+			}
 
 		}
 	case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp":
@@ -200,6 +229,16 @@ func dataSourceIBMIsSecurityGroupRuleRead(context context.Context, d *schema.Res
 				err = d.Set("remote", securityGroupRuleRemote)
 				if err != nil {
 					return diag.FromErr(fmt.Errorf("Error setting remote %s", err))
+				}
+			}
+			if securityGroupRule.Local != nil {
+				securityGroupRuleLocal, err := dataSourceSecurityGroupRuleFlattenLocal(securityGroupRule.Local)
+				if err != nil {
+					return diag.FromErr(fmt.Errorf("Error flattening securityGroupRule.Local %s", err))
+				}
+				err = d.Set("local", securityGroupRuleLocal)
+				if err != nil {
+					return diag.FromErr(fmt.Errorf("Error setting local %s", err))
 				}
 			}
 
@@ -235,6 +274,16 @@ func dataSourceIBMIsSecurityGroupRuleRead(context context.Context, d *schema.Res
 				err = d.Set("remote", securityGroupRuleRemote)
 				if err != nil {
 					return diag.FromErr(fmt.Errorf("Error setting remote %s", err))
+				}
+			}
+			if securityGroupRule.Local != nil {
+				securityGroupRuleLocal, err := dataSourceSecurityGroupRuleFlattenLocal(securityGroupRule.Local)
+				if err != nil {
+					return diag.FromErr(fmt.Errorf("Error flattening securityGroupRule.Local %s", err))
+				}
+				err = d.Set("local", securityGroupRuleLocal)
+				if err != nil {
+					return diag.FromErr(fmt.Errorf("Error setting local %s", err))
 				}
 			}
 			if err = d.Set("port_max", flex.IntValue(securityGroupRule.PortMax)); err != nil {
@@ -289,7 +338,25 @@ func dataSourceSecurityGroupRuleRemoteToMap(remoteItem *vpcv1.SecurityGroupRuleR
 	return remoteMap
 }
 
-func dataSourceSecurityGroupRuleRemoteDeletedToMap(deletedItem *vpcv1.SecurityGroupReferenceDeleted) (resultMap map[string]interface{}) {
+func dataSourceSecurityGroupRuleFlattenLocal(m vpcv1.SecurityGroupRuleLocalIntf) ([]map[string]interface{}, error) {
+	var ruleList []map[string]interface{}
+	ruleMap := dataSourceSecurityGroupRuleLocalToMap(m.(*vpcv1.SecurityGroupRuleLocal))
+	ruleList = append(ruleList, ruleMap)
+	return ruleList, nil
+}
+
+func dataSourceSecurityGroupRuleLocalToMap(localItem *vpcv1.SecurityGroupRuleLocal) (localMap map[string]interface{}) {
+	localMap = map[string]interface{}{}
+	if localItem.Address != nil {
+		localMap["address"] = *localItem.Address
+	}
+	if localItem.CIDRBlock != nil {
+		localMap["cidr_block"] = *localItem.CIDRBlock
+	}
+	return localMap
+}
+
+func dataSourceSecurityGroupRuleRemoteDeletedToMap(deletedItem *vpcv1.Deleted) (resultMap map[string]interface{}) {
 	resultMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

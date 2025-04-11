@@ -1,22 +1,24 @@
 package image
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
 )
 
 const (
@@ -36,11 +38,13 @@ type AgentImage struct {
 	bootArtifactsBaseURL string
 	platform             hiveext.PlatformType
 	isoFilename          string
+	imageExpiresAt       string
+	minimalISO           bool
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
 
-// Dependencies returns the assets on which the Bootstrap asset depends.
+// Dependencies returns the assets on which the AgentImage asset depends.
 func (a *AgentImage) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&workflow.AgentWorkflow{},
@@ -48,11 +52,12 @@ func (a *AgentImage) Dependencies() []asset.Asset {
 		&AgentArtifacts{},
 		&manifests.AgentManifests{},
 		&BaseIso{},
+		&gencrypto.AuthConfig{},
 	}
 }
 
-// Generate generates the image file for to ISO asset.
-func (a *AgentImage) Generate(dependencies asset.Parents) error {
+// Generate generates the image file for an AgentImage asset.
+func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	clusterInfo := &joiner.ClusterInfo{}
 	agentArtifacts := &AgentArtifacts{}
@@ -60,14 +65,22 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	baseIso := &BaseIso{}
 	dependencies.Get(agentArtifacts, agentManifests, baseIso, agentWorkflow, clusterInfo)
 
+	if err := workflowreport.GetReport(ctx).Stage(workflow.StageGenerateISO); err != nil {
+		return err
+	}
+
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
 		a.platform = agentManifests.AgentClusterInstall.Spec.PlatformType
 		a.isoFilename = agentISOFilename
 
 	case workflow.AgentWorkflowTypeAddNodes:
+		authConfig := &gencrypto.AuthConfig{}
+		dependencies.Get(authConfig)
+
 		a.platform = clusterInfo.PlatformType
 		a.isoFilename = agentAddNodesISOFilename
+		a.imageExpiresAt = authConfig.AuthTokenExpiry
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
@@ -78,6 +91,7 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	a.tmpPath = agentArtifacts.TmpPath
 	a.isoPath = agentArtifacts.ISOPath
 	a.bootArtifactsBaseURL = agentArtifacts.BootArtifactsBaseURL
+	a.minimalISO = agentArtifacts.MinimalISO
 
 	volumeID, err := isoeditor.VolumeIdentifier(a.isoPath)
 	if err != nil {
@@ -85,14 +99,14 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	}
 	a.volumeID = volumeID
 
-	if a.platform == hiveext.ExternalPlatformType {
+	if a.minimalISO {
 		// when the bootArtifactsBaseURL is specified, construct the custom rootfs URL
 		if a.bootArtifactsBaseURL != "" {
 			a.rootFSURL = fmt.Sprintf("%s/%s", a.bootArtifactsBaseURL, fmt.Sprintf("agent.%s-rootfs.img", a.cpuArch))
 			logrus.Debugf("Using custom rootfs URL: %s", a.rootFSURL)
 		} else {
 			// Default to the URL from the RHCOS streams file
-			defaultRootFSURL, err := baseIso.getRootFSURL(a.cpuArch)
+			defaultRootFSURL, err := baseIso.getRootFSURL(ctx, a.cpuArch)
 			if err != nil {
 				return err
 			}
@@ -124,66 +138,41 @@ func (a *AgentImage) updateIgnitionContent(agentArtifacts *AgentArtifacts) error
 		return err
 	}
 
+	return a.overwriteFileData(fileInfo)
+}
+
+func (a *AgentImage) overwriteFileData(fileInfo []isoeditor.FileData) error {
+	var errs []error
 	for _, fileData := range fileInfo {
+		defer fileData.Data.Close()
+
 		filename := filepath.Join(a.tmpPath, fileData.Filename)
 		file, err := os.Create(filename)
 		if err != nil {
-			return err
+			errs = append(errs, err)
+			continue
 		}
 		defer file.Close()
 
 		_, err = io.Copy(file, fileData.Data)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
-func updateKargsFile(tmpPath, filename string, embedArea *regexp.Regexp, kargs []byte) error {
-	file, err := os.OpenFile(filepath.Join(tmpPath, filename), os.O_RDWR, 0)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	content, err := io.ReadAll(file)
-	if err != nil {
-		return err
-	}
-	indices := embedArea.FindSubmatchIndex(content)
-	if len(indices) != 4 {
-		return fmt.Errorf("failed to find COREOS_KARG_EMBED_AREA in %s", filename)
-	}
-
-	if size := (indices[3] - indices[2]); len(kargs) > size {
-		return fmt.Errorf("kernel args content length (%d) exceeds embed area size (%d)", len(kargs), size)
-	}
-
-	if _, err := file.WriteAt(append(kargs, '\n'), int64(indices[2])); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *AgentImage) appendKargs(kargs []byte) error {
-	if len(kargs) == 0 {
+func (a *AgentImage) appendKargs(kargs string) error {
+	if kargs == "" {
 		return nil
 	}
 
-	kargsFiles, err := isoeditor.KargsFiles(a.isoPath)
+	fileInfo, err := isoeditor.NewKargsReader(a.isoPath, kargs)
 	if err != nil {
 		return err
 	}
-
-	embedArea := regexp.MustCompile(`(\n#*)# COREOS_KARG_EMBED_AREA`)
-	for _, f := range kargsFiles {
-		if err := updateKargsFile(a.tmpPath, f, embedArea, kargs); err != nil {
-			return err
-		}
-	}
-	return nil
+	return a.overwriteFileData(fileInfo)
 }
 
 // normalizeFilesExtension scans the extracted ISO files and trims
@@ -243,16 +232,17 @@ func (a *AgentImage) PersistToFile(directory string) error {
 		return err
 	}
 
-	// For external platform when the bootArtifactsBaseURL is specified,
+	var msg string
+	// For minimal ISO, when the bootArtifactsBaseURL is specified,
 	// output the rootfs file alongside the minimal ISO
-	if a.platform == hiveext.ExternalPlatformType {
+	if a.minimalISO {
 		if a.bootArtifactsBaseURL != "" {
 			bootArtifactsFullPath := filepath.Join(directory, bootArtifactsPath)
 			err := createDir(bootArtifactsFullPath)
 			if err != nil {
 				return err
 			}
-			err = extractRootFS(bootArtifactsFullPath, a.tmpPath, a.cpuArch)
+			err = extractRootFS(bootArtifactsFullPath, a.tmpPath, agentFilePrefix, a.cpuArch)
 			if err != nil {
 				return err
 			}
@@ -262,15 +252,19 @@ func (a *AgentImage) PersistToFile(directory string) error {
 		if err != nil {
 			return err
 		}
-		logrus.Infof("Generated minimal ISO at %s", agentIsoFile)
+		msg = fmt.Sprintf("Generated minimal ISO at %s", agentIsoFile)
 	} else {
 		// Generate full ISO
 		err = isoeditor.Create(agentIsoFile, a.tmpPath, a.volumeID)
 		if err != nil {
 			return err
 		}
-		logrus.Infof("Generated ISO at %s", agentIsoFile)
+		msg = fmt.Sprintf("Generated ISO at %s.", agentIsoFile)
 	}
+	if a.imageExpiresAt != "" {
+		msg = fmt.Sprintf("%s The ISO is valid up to %s", msg, a.imageExpiresAt)
+	}
+	logrus.Info(msg)
 
 	err = os.WriteFile(filepath.Join(directory, "rendezvousIP"), []byte(a.rendezvousIP), 0o644) //nolint:gosec // no sensitive info
 	if err != nil {

@@ -12,7 +12,6 @@ aliases:
     - CecileRobertMichon
     - enxebre
     - fabriziopandini
-    - killianmuldoon
     - sbueringer
     - vincepri
   cluster-api-vsphere-maintainers:
@@ -20,7 +19,6 @@ aliases:
     - srm09
     - yastij
     - fabriziopandini
-    - killianmuldoon
     - sbueringer
     - gab-satchi
     - chrischdi
@@ -29,6 +27,7 @@ aliases:
     - vrabbi
     - zhanggbj
     - rvanderp3
+    - laozc
   cluster-api-vsphere-emeritus-maintainers:
     - akutz
     - andrewsykim
@@ -37,3 +36,5 @@ aliases:
     - ncdc
     - sidharthsurana
     - frapposelli
+    - killianmuldoon
+

@@ -42,7 +42,6 @@ linters:
     - noctx
     - nolintlint
     - nosprintfhostport
-    - prealloc
     - predeclared
     - reassign
     - revive
@@ -124,11 +123,11 @@ linters-settings:
         arguments:
           - disableStutteringCheck
   staticcheck:
-    go: "1.20"
+    go: "1.22"
   stylecheck:
-    go: "1.20"
+    go: "1.22"
   unused:
-    go: "1.20"
+    go: "1.22"
 
 issues:
   exclude-rules:

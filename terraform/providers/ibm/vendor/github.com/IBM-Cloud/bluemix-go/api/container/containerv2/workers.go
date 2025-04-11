@@ -6,7 +6,7 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/client"
 )
 
-//Worker ...
+// Worker ...
 type Worker struct {
 	Billing           string `json:"billing,omitempty"`
 	HostID            string `json:"dedicatedHostId,omitempty"`
@@ -15,7 +15,7 @@ type Worker struct {
 	ID                string `json:"id"`
 	KubeVersion       KubeDetails
 	Location          string          `json:"location"`
-	PoolID            string          `json:"poolid"`
+	PoolID            string          `json:"poolID"`
 	PoolName          string          `json:"poolName"`
 	LifeCycle         WorkerLifeCycle `json:"lifecycle"`
 	Health            HealthStatus    `json:"health"`
@@ -34,14 +34,15 @@ type HealthStatus struct {
 	State   string `json:"state"`
 }
 type WorkerLifeCycle struct {
-	ReasonForDelete    string `json:"reasonForDelete"`
-	ActualState        string `json:"actualState"`
-	DesiredState       string `json:"desiredState"`
-	Message            string `json:"message"`
-	MessageDate        string `json:"messageDate"`
-	MessageDetails     string `json:"messageDetails"`
-	MessageDetailsDate string `json:"messageDetailsDate"`
-	PendingOperation   string `json:"pendingOperation"`
+	ReasonForDelete       string `json:"reasonForDelete"`
+	ActualState           string `json:"actualState"`
+	DesiredState          string `json:"desiredState"`
+	Message               string `json:"message"`
+	MessageDate           string `json:"messageDate"`
+	MessageDetails        string `json:"messageDetails"`
+	MessageDetailsDate    string `json:"messageDetailsDate"`
+	PendingOperation      string `json:"pendingOperation"`
+	ActualOperatingSystem string `json:"actualOperatingSystem"`
 }
 
 type Network struct {
@@ -86,10 +87,11 @@ type VolumeRequest struct {
 	Worker             string `json:"worker"`
 }
 
-//Workers ...
+// Workers ...
 type Workers interface {
 	ListByWorkerPool(clusterIDOrName, workerPoolIDOrName string, showDeleted bool, target ClusterTargetHeader) ([]Worker, error)
 	ListWorkers(clusterIDOrName string, showDeleted bool, target ClusterTargetHeader) ([]Worker, error)
+	ListAllWorkers(clusterIDOrName string, showDeleted bool, target ClusterTargetHeader) ([]Worker, error)
 	Get(clusterIDOrName, workerID string, target ClusterTargetHeader) (Worker, error)
 	ReplaceWokerNode(clusterIDOrName, workerID string, target ClusterTargetHeader) (string, error)
 	ListStorageAttachemnts(clusterIDOrName, workerID string, target ClusterTargetHeader) (VoulemeAttachments, error)
@@ -108,7 +110,7 @@ func newWorkerAPI(c *client.Client) Workers {
 	}
 }
 
-//ListByWorkerPool ...
+// ListByWorkerPool ...
 func (r *worker) ListByWorkerPool(clusterIDOrName, workerPoolIDOrName string, showDeleted bool, target ClusterTargetHeader) ([]Worker, error) {
 	rawURL := fmt.Sprintf("/v2/vpc/getWorkers?cluster=%s&showDeleted=%t", clusterIDOrName, showDeleted)
 	if len(workerPoolIDOrName) > 0 {
@@ -122,7 +124,7 @@ func (r *worker) ListByWorkerPool(clusterIDOrName, workerPoolIDOrName string, sh
 	return workers, err
 }
 
-//ListWorkers ...
+// ListWorkers lists VPC workers
 func (r *worker) ListWorkers(clusterIDOrName string, showDeleted bool, target ClusterTargetHeader) ([]Worker, error) {
 	rawURL := fmt.Sprintf("/v2/vpc/getWorkers?cluster=%s&showDeleted=%t", clusterIDOrName, showDeleted)
 	workers := []Worker{}
@@ -133,7 +135,18 @@ func (r *worker) ListWorkers(clusterIDOrName string, showDeleted bool, target Cl
 	return workers, err
 }
 
-//Get ...
+// ListAllWorkers lists workers of every type
+func (r *worker) ListAllWorkers(clusterIDOrName string, showDeleted bool, target ClusterTargetHeader) ([]Worker, error) {
+	rawURL := fmt.Sprintf("/v2/getWorkers?cluster=%s&showDeleted=%t", clusterIDOrName, showDeleted)
+	workers := []Worker{}
+	_, err := r.client.Get(rawURL, &workers, target.ToMap())
+	if err != nil {
+		return nil, err
+	}
+	return workers, err
+}
+
+// Get ...
 func (r *worker) Get(clusterIDOrName, workerID string, target ClusterTargetHeader) (Worker, error) {
 	rawURL := fmt.Sprintf("/v2/vpc/getWorker?cluster=%s&worker=%s", clusterIDOrName, workerID)
 	worker := Worker{}

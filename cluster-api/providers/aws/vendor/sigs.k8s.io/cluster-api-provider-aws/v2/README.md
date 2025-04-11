@@ -46,8 +46,7 @@ cluster on AWS.
 
 - Native Kubernetes manifests and API
 - Manages the bootstrapping of VPCs, gateways, security groups and instances.
-- Choice of Linux distribution among Amazon Linux 2, CentOS 7, Ubuntu(18.04, 20.04) and Flatcar
-  using [pre-baked AMIs][published_amis].
+- Choice of Linux distribution using [pre-baked AMIs][published_amis].
 - Deploys Kubernetes control planes into private subnets with a separate
   bastion server.
 - Doesn't use SSH for bootstrapping nodes.
@@ -187,10 +186,9 @@ Thank you to all contributors and a special thanks to our current maintainers & 
 | [@richardcase](https://github.com/richardcase) (from 2020-12-04) | [@cnmcavoy](https://github.com/cnmcavoy) (from 2023-10-16)           |
 | [@Ankitasw](https://github.com/Ankitasw) (from 2022-10-19)       | [@AverageMarcus](https://github.com/AverageMarcus) (from 2022-10-19) |
 | [@dlipovetsky](https://github.com/dlipovetsky) (from 2021-10-31) | [@luthermonson](https://github.com/luthermonson ) (from 2023-03-08)  |
-| [@vincepri](https://github.com/vincepri) (og & from 2023-10-16)  | [@nrb](https://github.com/nrb) (from 2023-10-16)                     |
-|                                                                  | [@faiq](https://github.com/faiq) (from 2023-10-16)                   |
-|                                                                  | [@fiunchinho](https://github.com/fiunchinho) (from 2023-11-6)        |
-|                                                                  | [@AndiDog](https://github.com/AndiDog) (from 2023-12-13)             |
+| [@nrb](https://github.com/nrb) (from 2024-05-24)                 | [@faiq](https://github.com/faiq) (from 2023-10-16)                   |
+| [@AndiDog](https://github.com/AndiDog) (from 2023-12-13)         | [@fiunchinho](https://github.com/fiunchinho) (from 2023-11-6)        |
+|                                                                  | [@damdo](https://github.com/damdo) (from 2023-03-01)                 |
 
 and the previous/emeritus maintainers & reviewers:
 
@@ -203,7 +201,7 @@ and the previous/emeritus maintainers & reviewers:
 | [@rudoi](https://github.com/rudoi)                   | [@michaelbeaumont](https://github.com/michaelbeaumont) |
 | [@sedefsavas](https://github.com/sedefsavas)         | [@sethp-nr](https://github.com/sethp-nr)               |
 | [@Skarlso](https://github.com/Skarlso)               | [@shivi28](https://github.com/shivi28)                 |
-|                                                      | [@dthorsen](https://github.com/dthorsen)               |
+| [@vincepri](https://github.com/vincepri)             | [@dthorsen](https://github.com/dthorsen)               |
 |                                                      | [@pydctw](https://github.com/pydctw)                   |
 
 All the CAPA contributors:

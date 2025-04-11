@@ -7,11 +7,11 @@ import (
 	"io"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/govmomi/vim25/mo"
 	vspheretypes "github.com/vmware/govmomi/vim25/types"
+	gomock "go.uber.org/mock/gomock"
 
 	"github.com/openshift/installer/pkg/destroy/vsphere/mock"
 	"github.com/openshift/installer/pkg/types"
@@ -196,7 +196,7 @@ func TestVsphereDeleteFolder(t *testing.T) {
 			for _, edit := range tc.editFuncs {
 				edit(&editedMetadata)
 			}
-			uninstaller := newWithClient(nullLogger, &editedMetadata, vsphereClient)
+			uninstaller := newWithClient(nullLogger, &editedMetadata, []API{vsphereClient})
 			assert.NotNil(t, uninstaller)
 			err := uninstaller.deleteFolder(context.TODO())
 			if tc.errorMsg != "" {
@@ -323,7 +323,7 @@ func TestVsphereStopVirtualMachines(t *testing.T) {
 			for _, edit := range tc.editFuncs {
 				edit(&editedMetadata)
 			}
-			uninstaller := newWithClient(nullLogger, &editedMetadata, vsphereClient)
+			uninstaller := newWithClient(nullLogger, &editedMetadata, []API{vsphereClient})
 			assert.NotNil(t, uninstaller)
 			err := uninstaller.stopVirtualMachines(context.TODO())
 			if tc.errorMsg != "" {
@@ -419,7 +419,7 @@ func TestVsphereDeleteVirtualMachines(t *testing.T) {
 			for _, edit := range tc.editFuncs {
 				edit(&editedMetadata)
 			}
-			uninstaller := newWithClient(nullLogger, &editedMetadata, vsphereClient)
+			uninstaller := newWithClient(nullLogger, &editedMetadata, []API{vsphereClient})
 			assert.NotNil(t, uninstaller)
 			err := uninstaller.deleteVirtualMachines(context.TODO())
 			if tc.errorMsg != "" {
@@ -471,7 +471,7 @@ func TestDeleteStoragePolicy(t *testing.T) {
 			for _, edit := range tc.editFuncs {
 				edit(&editedMetadata)
 			}
-			uninstaller := newWithClient(nullLogger, &editedMetadata, vsphereClient)
+			uninstaller := newWithClient(nullLogger, &editedMetadata, []API{vsphereClient})
 			assert.NotNil(t, uninstaller)
 			err := uninstaller.deleteStoragePolicy(context.TODO())
 			if tc.errorMsg != "" {
@@ -521,7 +521,7 @@ func TestDeleteTag(t *testing.T) {
 			for _, edit := range tc.editFuncs {
 				edit(&editedMetadata)
 			}
-			uninstaller := newWithClient(nullLogger, &editedMetadata, vsphereClient)
+			uninstaller := newWithClient(nullLogger, &editedMetadata, []API{vsphereClient})
 			assert.NotNil(t, uninstaller)
 			err := uninstaller.deleteTag(context.TODO())
 			if tc.errorMsg != "" {
@@ -573,7 +573,7 @@ func TestDeleteTagCategory(t *testing.T) {
 			for _, edit := range tc.editFuncs {
 				edit(&editedMetadata)
 			}
-			uninstaller := newWithClient(nullLogger, &editedMetadata, vsphereClient)
+			uninstaller := newWithClient(nullLogger, &editedMetadata, []API{vsphereClient})
 			assert.NotNil(t, uninstaller)
 			err := uninstaller.deleteTagCategory(context.TODO())
 			if tc.errorMsg != "" {

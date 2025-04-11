@@ -19,8 +19,6 @@ package agentpools
 import (
 	"context"
 
-	asocontainerservicev1preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview"
-	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
 	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"k8s.io/utils/ptr"
@@ -28,6 +26,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
 const serviceName = "agentpools"
@@ -62,22 +61,10 @@ func postCreateOrUpdateResourceHook(ctx context.Context, scope AgentPoolScope, o
 	if err != nil {
 		return err
 	}
-	var existing *asocontainerservicev1.ManagedClustersAgentPool
-	if scope.IsPreviewEnabled() {
-		existingPreview := obj.(*asocontainerservicev1preview.ManagedClustersAgentPool)
-		hub := &asocontainerservicev1hub.ManagedClustersAgentPool{}
-		if err := existingPreview.ConvertTo(hub); err != nil {
-			return err
-		}
-		stable := &asocontainerservicev1.ManagedClustersAgentPool{}
-		if err := stable.ConvertFrom(hub); err != nil {
-			return err
-		}
-		existing = stable
-	} else {
-		existing = obj.(*asocontainerservicev1.ManagedClustersAgentPool)
+	agentPool := &asocontainerservicev1hub.ManagedClustersAgentPool{}
+	if err := obj.(conversion.Convertible).ConvertTo(agentPool); err != nil {
+		return err
 	}
-	agentPool := existing
 
 	// When autoscaling is set, add the annotation to the machine pool and update the replica count.
 	if ptr.Deref(agentPool.Status.EnableAutoScaling, false) {

@@ -1,5 +1,9 @@
-// Copyright IBM Corp. 2023 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
+
+/*
+ * IBM OpenAPI Terraform Generator Version: 3.95.2-120e65bc-20240924-152329
+ */
 
 package mqcloud
 
@@ -33,7 +37,7 @@ func ResourceIbmMqcloudTruststoreCertificate() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_mqcloud_truststore_certificate", "service_instance_guid"),
-				Description:  "The GUID that uniquely identifies the MQ on Cloud service instance.",
+				Description:  "The GUID that uniquely identifies the MQaaS service instance.",
 			},
 			"queue_manager_id": {
 				Type:         schema.TypeString,
@@ -153,11 +157,17 @@ func ResourceIbmMqcloudTruststoreCertificateValidator() *validate.ResourceValida
 func resourceIbmMqcloudTruststoreCertificateCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mqcloudClient, err := meta.(conns.ClientSession).MqcloudV1()
 	if err != nil {
-		return diag.FromErr(err)
+		// Error is coming from SDK client, so it doesn't need to be discriminated.
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
+
 	err = checkSIPlan(d, meta)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Create Truststore Certificate failed %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Create Truststore Certificate failed: %s", err.Error()), "ibm_mqcloud_truststore_certificate", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	createTrustStorePemCertificateOptions := &mqcloudv1.CreateTrustStorePemCertificateOptions{}
@@ -167,14 +177,15 @@ func resourceIbmMqcloudTruststoreCertificateCreate(context context.Context, d *s
 	createTrustStorePemCertificateOptions.SetLabel(d.Get("label").(string))
 	certificateFileBytes, err := base64.StdEncoding.DecodeString(d.Get("certificate_file").(string))
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "create", "parse-certificate_file").GetDiag()
 	}
 	createTrustStorePemCertificateOptions.SetCertificateFile(io.NopCloser(bytes.NewReader(certificateFileBytes)))
 
-	trustStoreCertificateDetails, response, err := mqcloudClient.CreateTrustStorePemCertificateWithContext(context, createTrustStorePemCertificateOptions)
+	trustStoreCertificateDetails, _, err := mqcloudClient.CreateTrustStorePemCertificateWithContext(context, createTrustStorePemCertificateOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateTrustStorePemCertificateWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateTrustStorePemCertificateWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateTrustStorePemCertificateWithContext failed: %s", err.Error()), "ibm_mqcloud_truststore_certificate", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s/%s", *createTrustStorePemCertificateOptions.ServiceInstanceGuid, *createTrustStorePemCertificateOptions.QueueManagerID, *trustStoreCertificateDetails.ID))
@@ -185,14 +196,16 @@ func resourceIbmMqcloudTruststoreCertificateCreate(context context.Context, d *s
 func resourceIbmMqcloudTruststoreCertificateRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mqcloudClient, err := meta.(conns.ClientSession).MqcloudV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getTrustStoreCertificateOptions := &mqcloudv1.GetTrustStoreCertificateOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "sep-id-parts").GetDiag()
 	}
 
 	getTrustStoreCertificateOptions.SetServiceInstanceGuid(parts[0])
@@ -205,51 +218,66 @@ func resourceIbmMqcloudTruststoreCertificateRead(context context.Context, d *sch
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetTrustStoreCertificateWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetTrustStoreCertificateWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetTrustStoreCertificateWithContext failed: %s", err.Error()), "ibm_mqcloud_truststore_certificate", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("service_instance_guid", parts[0]); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting service_instance_guid: %s", err))
+		err = fmt.Errorf("Error setting service_instance_guid: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-service_instance_guid").GetDiag()
 	}
 	if err = d.Set("queue_manager_id", parts[1]); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting queue_manager_id: %s", err))
+		err = fmt.Errorf("Error setting service_instance_guid: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-queue_manager_id").GetDiag()
 	}
 	if err = d.Set("label", trustStoreCertificateDetails.Label); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting label: %s", err))
+		err = fmt.Errorf("Error setting label: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-label").GetDiag()
 	}
 	if err = d.Set("certificate_type", trustStoreCertificateDetails.CertificateType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting certificate_type: %s", err))
+		err = fmt.Errorf("Error setting certificate_type: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-certificate_type").GetDiag()
 	}
 	if err = d.Set("fingerprint_sha256", trustStoreCertificateDetails.FingerprintSha256); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting fingerprint_sha256: %s", err))
+		err = fmt.Errorf("Error setting fingerprint_sha256: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-fingerprint_sha256").GetDiag()
 	}
 	if err = d.Set("subject_dn", trustStoreCertificateDetails.SubjectDn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting subject_dn: %s", err))
+		err = fmt.Errorf("Error setting subject_dn: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-subject_dn").GetDiag()
 	}
 	if err = d.Set("subject_cn", trustStoreCertificateDetails.SubjectCn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting subject_cn: %s", err))
+		err = fmt.Errorf("Error setting subject_cn: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-subject_cn").GetDiag()
 	}
 	if err = d.Set("issuer_dn", trustStoreCertificateDetails.IssuerDn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting issuer_dn: %s", err))
+		err = fmt.Errorf("Error setting issuer_dn: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-issuer_dn").GetDiag()
 	}
 	if err = d.Set("issuer_cn", trustStoreCertificateDetails.IssuerCn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting issuer_cn: %s", err))
+		err = fmt.Errorf("Error setting issuer_cn: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-issuer_cn").GetDiag()
 	}
 	if err = d.Set("issued", flex.DateTimeToString(trustStoreCertificateDetails.Issued)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting issued: %s", err))
+		err = fmt.Errorf("Error setting issued: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-issued").GetDiag()
 	}
 	if err = d.Set("expiry", flex.DateTimeToString(trustStoreCertificateDetails.Expiry)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting expiry: %s", err))
+		err = fmt.Errorf("Error setting expiry: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-expiry").GetDiag()
 	}
 	if err = d.Set("trusted", trustStoreCertificateDetails.Trusted); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting trusted: %s", err))
+		err = fmt.Errorf("Error setting trusted: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-trusted").GetDiag()
 	}
 	if err = d.Set("href", trustStoreCertificateDetails.Href); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		err = fmt.Errorf("Error setting href: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-href").GetDiag()
 	}
 	if err = d.Set("certificate_id", trustStoreCertificateDetails.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting certificate_id: %s", err))
+		err = fmt.Errorf("Error setting certificate_id: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "read", "set-certificate_id").GetDiag()
 	}
 
 	return nil
@@ -258,27 +286,34 @@ func resourceIbmMqcloudTruststoreCertificateRead(context context.Context, d *sch
 func resourceIbmMqcloudTruststoreCertificateDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	mqcloudClient, err := meta.(conns.ClientSession).MqcloudV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
+
 	err = checkSIPlan(d, meta)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Delete Truststore Certificate failed %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Delete Truststore Certificate failed: %s", err.Error()), "ibm_mqcloud_truststore_certificate", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
+
 	deleteTrustStoreCertificateOptions := &mqcloudv1.DeleteTrustStoreCertificateOptions{}
 
 	parts, err := flex.SepIdParts(d.Id(), "/")
 	if err != nil {
-		return diag.FromErr(err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_mqcloud_truststore_certificate", "delete", "sep-id-parts").GetDiag()
 	}
 
 	deleteTrustStoreCertificateOptions.SetServiceInstanceGuid(parts[0])
 	deleteTrustStoreCertificateOptions.SetQueueManagerID(parts[1])
 	deleteTrustStoreCertificateOptions.SetCertificateID(parts[2])
 
-	response, err := mqcloudClient.DeleteTrustStoreCertificateWithContext(context, deleteTrustStoreCertificateOptions)
+	_, err = mqcloudClient.DeleteTrustStoreCertificateWithContext(context, deleteTrustStoreCertificateOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteTrustStoreCertificateWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteTrustStoreCertificateWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteTrustStoreCertificateWithContext failed: %s", err.Error()), "ibm_mqcloud_truststore_certificate", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")

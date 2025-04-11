@@ -22,9 +22,9 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -37,15 +37,16 @@ import (
 type ObjectTracker struct {
 	m sync.Map
 
-	Controller controller.Controller
-	Cache      cache.Cache
+	Controller      controller.Controller
+	Cache           cache.Cache
+	Scheme          *runtime.Scheme
+	PredicateLogger *logr.Logger
 }
 
 // Watch uses the controller to issue a Watch only if the object hasn't been seen before.
-func (o *ObjectTracker) Watch(log logr.Logger, obj runtime.Object, handler handler.EventHandler, p ...predicate.Predicate) error {
-	// Consider this a no-op if the controller isn't present.
-	if o.Controller == nil {
-		return nil
+func (o *ObjectTracker) Watch(log logr.Logger, obj client.Object, handler handler.EventHandler, p ...predicate.Predicate) error {
+	if o.Controller == nil || o.Cache == nil || o.Scheme == nil || o.PredicateLogger == nil {
+		return errors.New("all of Controller, Cache, Scheme and PredicateLogger must be set for object tracker")
 	}
 
 	gvk := obj.GetObjectKind().GroupVersionKind()
@@ -54,15 +55,13 @@ func (o *ObjectTracker) Watch(log logr.Logger, obj runtime.Object, handler handl
 		return nil
 	}
 
-	u := &unstructured.Unstructured{}
-	u.SetGroupVersionKind(gvk)
-
 	log.Info(fmt.Sprintf("Adding watch on external object %q", gvk.String()))
-	err := o.Controller.Watch(
-		source.Kind(o.Cache, u),
+	err := o.Controller.Watch(source.Kind(
+		o.Cache,
+		obj.DeepCopyObject().(client.Object),
 		handler,
-		append(p, predicates.ResourceNotPaused(log))...,
-	)
+		append(p, predicates.ResourceNotPaused(o.Scheme, *o.PredicateLogger))...,
+	))
 	if err != nil {
 		o.m.Delete(key)
 		return errors.Wrapf(err, "failed to add watch on external object %q", gvk.String())

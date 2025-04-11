@@ -32,6 +32,11 @@ func DataSourceIBMISLBS() *schema.Resource {
 				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						isLBAccessMode: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The access mode of this load balancer",
+						},
 						ID: {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -45,6 +50,12 @@ func DataSourceIBMISLBS() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The date and time that this pool was created.",
+						},
+						"failsafe_policy_actions": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The supported `failsafe_policy.action` values for this load balancer's pools.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
 						"dns": {
 							Type:        schema.TypeList,
@@ -74,6 +85,21 @@ func DataSourceIBMISLBS() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Load Balancer name",
+						},
+						isLBAvailability: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The availability of this load balancer",
+						},
+						isLBInstanceGroupsSupported: {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Indicates whether this load balancer supports instance groups.",
+						},
+						isLBSourceIPPersistenceSupported: {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Indicates whether this load balancer supports source IP session persistence.",
 						},
 						isLBUdpSupported: {
 							Type:        schema.TypeBool,
@@ -321,6 +347,18 @@ func getLbs(d *schema.ResourceData, meta interface{}) error {
 		lbInfo := make(map[string]interface{})
 		//	log.Printf("******* lb ******** : (%+v)", lb)
 		lbInfo[ID] = *lb.ID
+		if lb.Availability != nil {
+			lbInfo[isLBAvailability] = *lb.Availability
+		}
+		if lb.AccessMode != nil {
+			lbInfo[isLBAccessMode] = *lb.AccessMode
+		}
+		if lb.InstanceGroupsSupported != nil {
+			lbInfo[isLBInstanceGroupsSupported] = *lb.InstanceGroupsSupported
+		}
+		if lb.SourceIPSessionPersistenceSupported != nil {
+			lbInfo[isLBSourceIPPersistenceSupported] = *lb.SourceIPSessionPersistenceSupported
+		}
 		lbInfo[isLBName] = *lb.Name
 		dnsList := make([]map[string]interface{}, 0)
 		if lb.Dns != nil {
@@ -340,8 +378,10 @@ func getLbs(d *schema.ResourceData, meta interface{}) error {
 		lbInfo[ProvisioningStatus] = *lb.ProvisioningStatus
 
 		lbInfo[CreatedAt] = lb.CreatedAt.String()
-		if *lb.IsPublic {
+		if lb.IsPublic != nil && *lb.IsPublic {
 			lbInfo[isLBType] = "public"
+		} else if lb.IsPrivatePath != nil && *lb.IsPrivatePath {
+			lbInfo[isLBType] = "private_path"
 		} else {
 			lbInfo[isLBType] = "private"
 		}
@@ -399,7 +439,9 @@ func getLbs(d *schema.ResourceData, meta interface{}) error {
 				if subnet.CRN != nil {
 					sub[CRN] = *subnet.CRN
 				}
-				sub[name] = *subnet.Name
+				if subnet.Name != nil && *subnet.Name != "" {
+					sub[name] = *subnet.Name
+				}
 				subnetList = append(subnetList, sub)
 
 			}
@@ -431,11 +473,12 @@ func getLbs(d *schema.ResourceData, meta interface{}) error {
 			}
 			lbInfo[isLBPools] = poolList
 		}
+		lbInfo["failsafe_policy_actions"] = lb.FailsafePolicyActions
 		if lb.Profile != nil {
 			lbProfile := make(map[string]interface{})
 			lbProfile[name] = *lb.Profile.Name
 			lbProfile[href] = *lb.Profile.Href
-			lbProfile["family"] = *lb.Profile.Family
+			lbProfile[family] = *lb.Profile.Family
 			lbInfo[isLbProfile] = lbProfile
 		}
 		lbInfo[isLBResourceGroup] = *lb.ResourceGroup.ID

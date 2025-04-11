@@ -5,13 +5,13 @@ package scc
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/scc-go-sdk/v5/securityandcompliancecenterapiv3"
 )
 
@@ -102,45 +102,45 @@ func dataSourceIbmSccReportRuleRead(context context.Context, d *schema.ResourceD
 	ruleInfo, response, err := resultsClient.GetReportRuleWithContext(context, getReportRuleOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetReportRuleWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetReportRuleWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetReportRuleWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(*ruleInfo.ID)
 
 	if err = d.Set("id", ruleInfo.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting id: %s", err))
 	}
 
 	if err = d.Set("type", ruleInfo.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting type: %s", err))
 	}
 
 	if err = d.Set("description", ruleInfo.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting description: %s", err))
 	}
 
 	if err = d.Set("version", ruleInfo.Version); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting version: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting version: %s", err))
 	}
 
 	if err = d.Set("account_id", ruleInfo.AccountID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting account_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting account_id: %s", err))
 	}
 
-	if err = d.Set("created_on", ruleInfo.CreatedOn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_on: %s", err))
+	if err = d.Set("created_on", flex.DateTimeToString(ruleInfo.CreatedOn)); err != nil {
+		return diag.FromErr(flex.FmtErrorf("Error setting created_on: %s", err))
 	}
 
 	if err = d.Set("created_by", ruleInfo.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_by: %s", err))
 	}
 
-	if err = d.Set("updated_on", ruleInfo.UpdatedOn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_on: %s", err))
+	if err = d.Set("updated_on", flex.DateTimeToString(ruleInfo.UpdatedOn)); err != nil {
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_on: %s", err))
 	}
 
 	if err = d.Set("updated_by", ruleInfo.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_by: %s", err))
 	}
 
 	return nil

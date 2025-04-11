@@ -18,6 +18,7 @@ package internal
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -50,6 +51,7 @@ type InformersOpts struct {
 	Selector              Selector
 	Transform             cache.TransformFunc
 	UnsafeDisableDeepCopy bool
+	EnableWatchBookmarks  bool
 	WatchErrorHandler     cache.WatchErrorHandler
 }
 
@@ -77,6 +79,7 @@ func NewInformers(config *rest.Config, options *InformersOpts) *Informers {
 		selector:              options.Selector,
 		transform:             options.Transform,
 		unsafeDisableDeepCopy: options.UnsafeDisableDeepCopy,
+		enableWatchBookmarks:  options.EnableWatchBookmarks,
 		newInformer:           newInformer,
 		watchErrorHandler:     options.WatchErrorHandler,
 	}
@@ -173,6 +176,7 @@ type Informers struct {
 	selector              Selector
 	transform             cache.TransformFunc
 	unsafeDisableDeepCopy bool
+	enableWatchBookmarks  bool
 
 	// NewInformer allows overriding of the shared index informer constructor for testing.
 	newInformer func(cache.ListerWatcher, runtime.Object, time.Duration, cache.Indexers) cache.SharedIndexInformer
@@ -186,9 +190,13 @@ type Informers struct {
 // Start calls Run on each of the informers and sets started to true. Blocks on the context.
 // It doesn't return start because it can't return an error, and it's not a runnable directly.
 func (ip *Informers) Start(ctx context.Context) error {
-	func() {
+	if err := func() error {
 		ip.mu.Lock()
 		defer ip.mu.Unlock()
+
+		if ip.started {
+			return errors.New("Informer already started") //nolint:stylecheck
+		}
 
 		// Set the context so it can be passed to informers that are added later
 		ip.ctx = ctx
@@ -207,7 +215,11 @@ func (ip *Informers) Start(ctx context.Context) error {
 		// Set started to true so we immediately start any informers added later.
 		ip.started = true
 		close(ip.startWait)
-	}()
+
+		return nil
+	}(); err != nil {
+		return err
+	}
 	<-ctx.Done() // Block until the context is done
 	ip.mu.Lock()
 	ip.stopped = true // Set stopped to true so we don't start any new informers
@@ -352,8 +364,10 @@ func (ip *Informers) addInformerToMap(gvk schema.GroupVersionKind, obj runtime.O
 			return listWatcher.ListFunc(opts)
 		},
 		WatchFunc: func(opts metav1.ListOptions) (watch.Interface, error) {
-			ip.selector.ApplyToList(&opts)
 			opts.Watch = true // Watch needs to be set to true separately
+			opts.AllowWatchBookmarks = ip.enableWatchBookmarks
+
+			ip.selector.ApplyToList(&opts)
 			return listWatcher.WatchFunc(opts)
 		},
 	}, obj, calculateResyncPeriod(ip.resync), cache.Indexers{
@@ -435,6 +449,9 @@ func (ip *Informers) makeListWatcher(gvk schema.GroupVersionKind, obj runtime.Ob
 			},
 			// Setup the watch function
 			WatchFunc: func(opts metav1.ListOptions) (watch.Interface, error) {
+				opts.Watch = true // Watch needs to be set to true separately
+				opts.AllowWatchBookmarks = ip.enableWatchBookmarks
+
 				if namespace != "" {
 					return resources.Namespace(namespace).Watch(ip.ctx, opts)
 				}
@@ -477,6 +494,9 @@ func (ip *Informers) makeListWatcher(gvk schema.GroupVersionKind, obj runtime.Ob
 			},
 			// Setup the watch function
 			WatchFunc: func(opts metav1.ListOptions) (watcher watch.Interface, err error) {
+				opts.Watch = true // Watch needs to be set to true separately
+				opts.AllowWatchBookmarks = ip.enableWatchBookmarks
+
 				if namespace != "" {
 					watcher, err = resources.Namespace(namespace).Watch(ip.ctx, opts)
 				} else {
@@ -518,6 +538,9 @@ func (ip *Informers) makeListWatcher(gvk schema.GroupVersionKind, obj runtime.Ob
 			},
 			// Setup the watch function
 			WatchFunc: func(opts metav1.ListOptions) (watch.Interface, error) {
+				opts.Watch = true // Watch needs to be set to true separately
+				opts.AllowWatchBookmarks = ip.enableWatchBookmarks
+
 				// Build the request.
 				req := client.Get().Resource(mapping.Resource.Resource).VersionedParams(&opts, ip.paramCodec)
 				if namespace != "" {

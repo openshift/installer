@@ -7,26 +7,6 @@ import (
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 )
 
-// PlatformStages are the stages to run to provision the infrastructure in Azure.
-var PlatformStages = []terraform.Stage{
-	stages.NewStage(
-		typesazure.Name,
-		"vnet",
-		[]providers.Provider{providers.AzureRM},
-	),
-	stages.NewStage(
-		typesazure.Name,
-		"bootstrap",
-		[]providers.Provider{providers.AzureRM, providers.Ignition, providers.Local},
-		stages.WithNormalBootstrapDestroy(),
-	),
-	stages.NewStage(
-		typesazure.Name,
-		"cluster",
-		[]providers.Provider{providers.AzureRM, providers.Time},
-	),
-}
-
 // StackPlatformStages are the stages to run to provision the infrastructure in Azure Stack.
 var StackPlatformStages = []terraform.Stage{
 	stages.NewStage(

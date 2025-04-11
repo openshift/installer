@@ -5,7 +5,6 @@ package scc
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -266,8 +265,8 @@ func ResourceIbmSccProfile() *schema.Resource {
 			},
 			"profile_version": {
 				Type:        schema.TypeString,
-				Computed:    true,
 				Optional:    true,
+				Default:     "0.0.0",
 				Description: "The version status of the profile.",
 			},
 			"version_group_label": {
@@ -366,6 +365,8 @@ func resourceIbmSccProfileCreate(context context.Context, d *schema.ResourceData
 	bodyModelMap["profile_name"] = d.Get("profile_name")
 	bodyModelMap["profile_description"] = d.Get("profile_description")
 	bodyModelMap["profile_type"] = "custom"
+	// manual change for profile_version
+	bodyModelMap["profile_version"] = d.Get("profile_version")
 	if _, ok := d.GetOk("controls"); ok {
 		bodyModelMap["controls"] = d.Get("controls")
 	} else {
@@ -386,7 +387,7 @@ func resourceIbmSccProfileCreate(context context.Context, d *schema.ResourceData
 	profile, response, err := securityandcompliancecenterapiClient.CreateProfileWithContext(context, createProfileOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateProfileWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateProfileWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("CreateProfileWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(instance_id + "/" + *profile.ID)
@@ -417,23 +418,23 @@ func resourceIbmSccProfileRead(context context.Context, d *schema.ResourceData, 
 			return nil
 		}
 		log.Printf("[DEBUG] GetProfileWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetProfileWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetProfileWithContext failed %s\n%s", err, response))
 	}
 
 	if err = d.Set("instance_id", parts[0]); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting instance_id: %s", err))
 	}
 	if err = d.Set("profile_id", parts[1]); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting profile_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting profile_id: %s", err))
 	}
 	if err = d.Set("profile_name", profile.ProfileName); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting profile_name: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting profile_name: %s", err))
 	}
 	if err = d.Set("profile_description", profile.ProfileDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting profile_description: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting profile_description: %s", err))
 	}
 	if err = d.Set("profile_type", profile.ProfileType); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting profile_type: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting profile_type: %s", err))
 	}
 	controls := []map[string]interface{}{}
 	for _, controlsItem := range profile.Controls {
@@ -444,7 +445,7 @@ func resourceIbmSccProfileRead(context context.Context, d *schema.ResourceData, 
 		controls = append(controls, controlsItemMap)
 	}
 	if err = d.Set("controls", controls); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting controls: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting controls: %s", err))
 	}
 	if len(profile.DefaultParameters) > 0 {
 		defaultParameters := []map[string]interface{}{}
@@ -456,67 +457,67 @@ func resourceIbmSccProfileRead(context context.Context, d *schema.ResourceData, 
 			defaultParameters = append(defaultParameters, defaultParametersItemMap)
 		}
 		if err = d.Set("default_parameters", defaultParameters); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting default_parameters: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting default_parameters: %s", err))
 		}
 	}
 	if !core.IsNil(profile.ProfileVersion) {
 		if err = d.Set("profile_version", profile.ProfileVersion); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting profile_version: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting profile_version: %s", err))
 		}
 	}
 	if !core.IsNil(profile.VersionGroupLabel) {
 		if err = d.Set("version_group_label", profile.VersionGroupLabel); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting version_group_label: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting version_group_label: %s", err))
 		}
 	}
 	if !core.IsNil(profile.InstanceID) {
 		if err = d.Set("instance_id", profile.InstanceID); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting instance_id: %s", err))
 		}
 	}
 	if !core.IsNil(profile.Latest) {
 		if err = d.Set("latest", profile.Latest); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting latest: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting latest: %s", err))
 		}
 	}
 	if !core.IsNil(profile.HierarchyEnabled) {
 		if err = d.Set("hierarchy_enabled", profile.HierarchyEnabled); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting hierarchy_enabled: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting hierarchy_enabled: %s", err))
 		}
 	}
 	if !core.IsNil(profile.CreatedBy) {
 		if err = d.Set("created_by", profile.CreatedBy); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting created_by: %s", err))
 		}
 	}
 	if !core.IsNil(profile.CreatedOn) {
 		if err = d.Set("created_on", flex.DateTimeToString(profile.CreatedOn)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting created_on: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting created_on: %s", err))
 		}
 	}
 	if !core.IsNil(profile.UpdatedBy) {
 		if err = d.Set("updated_by", profile.UpdatedBy); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting updated_by: %s", err))
 		}
 	}
 	if !core.IsNil(profile.UpdatedOn) {
 		if err = d.Set("updated_on", flex.DateTimeToString(profile.UpdatedOn)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting updated_on: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting updated_on: %s", err))
 		}
 	}
 	if !core.IsNil(profile.ControlsCount) {
 		if err = d.Set("controls_count", flex.IntValue(profile.ControlsCount)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting controls_count: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting controls_count: %s", err))
 		}
 	}
 	if !core.IsNil(profile.ControlParentsCount) {
 		if err = d.Set("control_parents_count", flex.IntValue(profile.ControlParentsCount)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting control_parents_count: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting control_parents_count: %s", err))
 		}
 	}
 	if !core.IsNil(profile.AttachmentsCount) {
 		if err = d.Set("attachments_count", flex.IntValue(profile.AttachmentsCount)); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting attachments_count: %s", err))
+			return diag.FromErr(flex.FmtErrorf("Error setting attachments_count: %s", err))
 		}
 	}
 
@@ -580,7 +581,7 @@ func resourceIbmSccProfileUpdate(context context.Context, d *schema.ResourceData
 		_, response, err := securityandcompliancecenterapiClient.ReplaceProfileWithContext(context, replaceProfileOptions)
 		if err != nil {
 			log.Printf("[DEBUG] ReplaceProfileWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("ReplaceProfileWithContext failed %s\n%s", err, response))
+			return diag.FromErr(flex.FmtErrorf("ReplaceProfileWithContext failed %s\n%s", err, response))
 		}
 	}
 
@@ -605,7 +606,7 @@ func resourceIbmSccProfileDelete(context context.Context, d *schema.ResourceData
 	_, response, err := securityandcompliancecenterapiClient.DeleteCustomProfileWithContext(context, deleteCustomProfileOptions)
 	if err != nil {
 		log.Printf("[DEBUG] DeleteCustomProfileWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteCustomProfileWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("DeleteCustomProfileWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId("")
@@ -651,7 +652,7 @@ func resourceIbmSccProfileMapToProfilePrototype(modelMap map[string]interface{})
 	model := &securityandcompliancecenterapiv3.CreateProfileOptions{}
 	model.ProfileName = core.StringPtr(modelMap["profile_name"].(string))
 	model.ProfileDescription = core.StringPtr(modelMap["profile_description"].(string))
-	model.ProfileType = core.StringPtr(modelMap["profile_type"].(string))
+	model.ProfileVersion = core.StringPtr(modelMap["profile_version"].(string))
 	controls := []securityandcompliancecenterapiv3.ProfileControlsPrototype{}
 	for _, controlsItem := range modelMap["controls"].([]interface{}) {
 		controlsItemModel, err := resourceIbmSccProfileMapToProfileControlsPrototype(controlsItem.(map[string]interface{}))
@@ -706,7 +707,7 @@ func resourceIbmSccProfileMapToReplaceProfileOptions(modelMap map[string]interfa
 	return model, nil
 }
 
-func resourceIbmSccProfileProfileControlsToMap(model *securityandcompliancecenterapiv3.ProfileControls) (map[string]interface{}, error) {
+func resourceIbmSccProfileProfileControlsToMap(model *securityandcompliancecenterapiv3.ProfileControlsInResponse) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ControlLibraryID != nil {
 		modelMap["control_library_id"] = model.ControlLibraryID
@@ -756,7 +757,7 @@ func resourceIbmSccProfileProfileControlsToMap(model *securityandcompliancecente
 	return modelMap, nil
 }
 
-func resourceIbmSccProfileControlDocsToMap(model *securityandcompliancecenterapiv3.ControlDocs) (map[string]interface{}, error) {
+func resourceIbmSccProfileControlDocsToMap(model *securityandcompliancecenterapiv3.ControlDoc) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ControlDocsID != nil {
 		modelMap["control_docs_id"] = model.ControlDocsID
@@ -767,10 +768,10 @@ func resourceIbmSccProfileControlDocsToMap(model *securityandcompliancecenterapi
 	return modelMap, nil
 }
 
-func resourceIbmSccProfileControlSpecificationsToMap(model *securityandcompliancecenterapiv3.ControlSpecifications) (map[string]interface{}, error) {
+func resourceIbmSccProfileControlSpecificationsToMap(model *securityandcompliancecenterapiv3.ControlSpecification) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	if model.ControlSpecificationID != nil {
-		modelMap["control_specification_id"] = model.ControlSpecificationID
+	if model.ID != nil {
+		modelMap["control_specification_id"] = model.ID
 	}
 	if model.Responsibility != nil {
 		modelMap["responsibility"] = model.Responsibility
@@ -784,8 +785,8 @@ func resourceIbmSccProfileControlSpecificationsToMap(model *securityandcomplianc
 	if model.Environment != nil {
 		modelMap["environment"] = model.Environment
 	}
-	if model.ControlSpecificationDescription != nil {
-		modelMap["control_specification_description"] = model.ControlSpecificationDescription
+	if model.Description != nil {
+		modelMap["control_specification_description"] = model.Description
 	}
 	if model.AssessmentsCount != nil {
 		modelMap["assessments_count"] = flex.IntValue(model.AssessmentsCount)
@@ -804,7 +805,7 @@ func resourceIbmSccProfileControlSpecificationsToMap(model *securityandcomplianc
 	return modelMap, nil
 }
 
-func resourceIbmSccProfileImplementationToMap(model *securityandcompliancecenterapiv3.Implementation) (map[string]interface{}, error) {
+func resourceIbmSccProfileImplementationToMap(model *securityandcompliancecenterapiv3.Assessment) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AssessmentID != nil {
 		modelMap["assessment_id"] = model.AssessmentID
@@ -835,7 +836,7 @@ func resourceIbmSccProfileImplementationToMap(model *securityandcompliancecenter
 	return modelMap, nil
 }
 
-func resourceIbmSccProfileParameterInfoToMap(model *securityandcompliancecenterapiv3.ParameterInfo) (map[string]interface{}, error) {
+func resourceIbmSccProfileParameterInfoToMap(model *securityandcompliancecenterapiv3.Parameter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ParameterName != nil {
 		modelMap["parameter_name"] = model.ParameterName
@@ -849,7 +850,7 @@ func resourceIbmSccProfileParameterInfoToMap(model *securityandcompliancecentera
 	return modelMap, nil
 }
 
-func resourceIbmSccProfileDefaultParametersPrototypeToMap(model *securityandcompliancecenterapiv3.DefaultParametersPrototype) (map[string]interface{}, error) {
+func resourceIbmSccProfileDefaultParametersPrototypeToMap(model *securityandcompliancecenterapiv3.DefaultParameters) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AssessmentType != nil {
 		modelMap["assessment_type"] = model.AssessmentType

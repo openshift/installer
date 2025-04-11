@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.82.1-2082d402-20231115-195014
+ * IBM OpenAPI SDK Code Generator Version: 3.96.1-5136e54a-20241108-203028
  */
 
 // Package clouddatabasesv5 : Operations and models for the CloudDatabasesV5 service
@@ -78,22 +78,26 @@ func NewCloudDatabasesV5UsingExternalConfig(options *CloudDatabasesV5Options) (c
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	cloudDatabases, err = NewCloudDatabasesV5(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = cloudDatabases.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = cloudDatabases.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -107,12 +111,14 @@ func NewCloudDatabasesV5(options *CloudDatabasesV5Options) (service *CloudDataba
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -126,7 +132,7 @@ func NewCloudDatabasesV5(options *CloudDatabasesV5Options) (service *CloudDataba
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "cloudDatabases" suitable for processing requests.
@@ -146,7 +152,11 @@ func ConstructServiceURL(providedUrlVariables map[string]string) (string, error)
 
 // SetServiceURL sets the service URL
 func (cloudDatabases *CloudDatabasesV5) SetServiceURL(url string) error {
-	return cloudDatabases.Service.SetServiceURL(url)
+	err := cloudDatabases.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -183,13 +193,16 @@ func (cloudDatabases *CloudDatabasesV5) DisableRetries() {
 // ListDeployables : List all deployable databases
 // Returns a list of all the types and associated major versions of database deployments that can be provisioned.
 func (cloudDatabases *CloudDatabasesV5) ListDeployables(listDeployablesOptions *ListDeployablesOptions) (result *ListDeployablesResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.ListDeployablesWithContext(context.Background(), listDeployablesOptions)
+	result, response, err = cloudDatabases.ListDeployablesWithContext(context.Background(), listDeployablesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListDeployablesWithContext is an alternate form of the ListDeployables method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) ListDeployablesWithContext(ctx context.Context, listDeployablesOptions *ListDeployablesOptions) (result *ListDeployablesResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listDeployablesOptions, "listDeployablesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -198,6 +211,7 @@ func (cloudDatabases *CloudDatabasesV5) ListDeployablesWithContext(ctx context.C
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployables`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -213,17 +227,21 @@ func (cloudDatabases *CloudDatabasesV5) ListDeployablesWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "listDeployables", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListDeployablesResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -236,13 +254,16 @@ func (cloudDatabases *CloudDatabasesV5) ListDeployablesWithContext(ctx context.C
 // Returns a list of all the regions that deployments can be provisioned into from the current region. Used to determine
 // region availability for read-only replicas.
 func (cloudDatabases *CloudDatabasesV5) ListRegions(listRegionsOptions *ListRegionsOptions) (result *ListRegionsResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.ListRegionsWithContext(context.Background(), listRegionsOptions)
+	result, response, err = cloudDatabases.ListRegionsWithContext(context.Background(), listRegionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListRegionsWithContext is an alternate form of the ListRegions method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) ListRegionsWithContext(ctx context.Context, listRegionsOptions *ListRegionsOptions) (result *ListRegionsResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(listRegionsOptions, "listRegionsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -251,6 +272,7 @@ func (cloudDatabases *CloudDatabasesV5) ListRegionsWithContext(ctx context.Conte
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/regions`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -266,17 +288,21 @@ func (cloudDatabases *CloudDatabasesV5) ListRegionsWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "listRegions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListRegionsResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -288,17 +314,21 @@ func (cloudDatabases *CloudDatabasesV5) ListRegionsWithContext(ctx context.Conte
 // GetDeploymentInfo : Get deployment information
 // Gets the full data that is associated with a deployment. This data includes the ID, name, database type, and version.
 func (cloudDatabases *CloudDatabasesV5) GetDeploymentInfo(getDeploymentInfoOptions *GetDeploymentInfoOptions) (result *GetDeploymentInfoResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.GetDeploymentInfoWithContext(context.Background(), getDeploymentInfoOptions)
+	result, response, err = cloudDatabases.GetDeploymentInfoWithContext(context.Background(), getDeploymentInfoOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDeploymentInfoWithContext is an alternate form of the GetDeploymentInfo method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) GetDeploymentInfoWithContext(ctx context.Context, getDeploymentInfoOptions *GetDeploymentInfoOptions) (result *GetDeploymentInfoResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDeploymentInfoOptions, "getDeploymentInfoOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDeploymentInfoOptions, "getDeploymentInfoOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -311,6 +341,7 @@ func (cloudDatabases *CloudDatabasesV5) GetDeploymentInfoWithContext(ctx context
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -326,17 +357,21 @@ func (cloudDatabases *CloudDatabasesV5) GetDeploymentInfoWithContext(ctx context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getDeploymentInfo", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGetDeploymentInfoResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -348,17 +383,21 @@ func (cloudDatabases *CloudDatabasesV5) GetDeploymentInfoWithContext(ctx context
 // CreateDatabaseUser : Creates a user based on user type
 // Creates a user in the database that can access the database through a connection.
 func (cloudDatabases *CloudDatabasesV5) CreateDatabaseUser(createDatabaseUserOptions *CreateDatabaseUserOptions) (result *CreateDatabaseUserResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.CreateDatabaseUserWithContext(context.Background(), createDatabaseUserOptions)
+	result, response, err = cloudDatabases.CreateDatabaseUserWithContext(context.Background(), createDatabaseUserOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateDatabaseUserWithContext is an alternate form of the CreateDatabaseUser method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) CreateDatabaseUserWithContext(ctx context.Context, createDatabaseUserOptions *CreateDatabaseUserOptions) (result *CreateDatabaseUserResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createDatabaseUserOptions, "createDatabaseUserOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createDatabaseUserOptions, "createDatabaseUserOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -372,6 +411,7 @@ func (cloudDatabases *CloudDatabasesV5) CreateDatabaseUserWithContext(ctx contex
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/users/{user_type}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -392,22 +432,27 @@ func (cloudDatabases *CloudDatabasesV5) CreateDatabaseUserWithContext(ctx contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "createDatabaseUser", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateDatabaseUserResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -419,17 +464,21 @@ func (cloudDatabases *CloudDatabasesV5) CreateDatabaseUserWithContext(ctx contex
 // UpdateUser : Update a user's password or role
 // Sets the password or role of a specified user. Updating roles is only supported for Redis 6.0 or greater.
 func (cloudDatabases *CloudDatabasesV5) UpdateUser(updateUserOptions *UpdateUserOptions) (result *UpdateUserResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.UpdateUserWithContext(context.Background(), updateUserOptions)
+	result, response, err = cloudDatabases.UpdateUserWithContext(context.Background(), updateUserOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateUserWithContext is an alternate form of the UpdateUser method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) UpdateUserWithContext(ctx context.Context, updateUserOptions *UpdateUserOptions) (result *UpdateUserResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateUserOptions, "updateUserOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateUserOptions, "updateUserOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -444,6 +493,7 @@ func (cloudDatabases *CloudDatabasesV5) UpdateUserWithContext(ctx context.Contex
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/users/{user_type}/{username}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -464,22 +514,27 @@ func (cloudDatabases *CloudDatabasesV5) UpdateUserWithContext(ctx context.Contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "updateUser", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUpdateUserResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -491,17 +546,21 @@ func (cloudDatabases *CloudDatabasesV5) UpdateUserWithContext(ctx context.Contex
 // DeleteDatabaseUser : Deletes a user based on user type
 // Removes a user from the deployment.
 func (cloudDatabases *CloudDatabasesV5) DeleteDatabaseUser(deleteDatabaseUserOptions *DeleteDatabaseUserOptions) (result *DeleteDatabaseUserResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.DeleteDatabaseUserWithContext(context.Background(), deleteDatabaseUserOptions)
+	result, response, err = cloudDatabases.DeleteDatabaseUserWithContext(context.Background(), deleteDatabaseUserOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteDatabaseUserWithContext is an alternate form of the DeleteDatabaseUser method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) DeleteDatabaseUserWithContext(ctx context.Context, deleteDatabaseUserOptions *DeleteDatabaseUserOptions) (result *DeleteDatabaseUserResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteDatabaseUserOptions, "deleteDatabaseUserOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteDatabaseUserOptions, "deleteDatabaseUserOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -516,6 +575,7 @@ func (cloudDatabases *CloudDatabasesV5) DeleteDatabaseUserWithContext(ctx contex
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/users/{user_type}/{username}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -531,17 +591,21 @@ func (cloudDatabases *CloudDatabasesV5) DeleteDatabaseUserWithContext(ctx contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "deleteDatabaseUser", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDeleteDatabaseUserResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -553,17 +617,21 @@ func (cloudDatabases *CloudDatabasesV5) DeleteDatabaseUserWithContext(ctx contex
 // UpdateDatabaseConfiguration : Change your database configuration
 // Change your database configuration. Available for PostgreSQL, EnterpriseDB, MySQL, RabbitMQ and Redis ONLY.
 func (cloudDatabases *CloudDatabasesV5) UpdateDatabaseConfiguration(updateDatabaseConfigurationOptions *UpdateDatabaseConfigurationOptions) (result *UpdateDatabaseConfigurationResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.UpdateDatabaseConfigurationWithContext(context.Background(), updateDatabaseConfigurationOptions)
+	result, response, err = cloudDatabases.UpdateDatabaseConfigurationWithContext(context.Background(), updateDatabaseConfigurationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateDatabaseConfigurationWithContext is an alternate form of the UpdateDatabaseConfiguration method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) UpdateDatabaseConfigurationWithContext(ctx context.Context, updateDatabaseConfigurationOptions *UpdateDatabaseConfigurationOptions) (result *UpdateDatabaseConfigurationResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateDatabaseConfigurationOptions, "updateDatabaseConfigurationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateDatabaseConfigurationOptions, "updateDatabaseConfigurationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -576,6 +644,7 @@ func (cloudDatabases *CloudDatabasesV5) UpdateDatabaseConfigurationWithContext(c
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/configuration`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -596,22 +665,27 @@ func (cloudDatabases *CloudDatabasesV5) UpdateDatabaseConfigurationWithContext(c
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "updateDatabaseConfiguration", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUpdateDatabaseConfigurationResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -623,17 +697,21 @@ func (cloudDatabases *CloudDatabasesV5) UpdateDatabaseConfigurationWithContext(c
 // ListRemotes : List read-only replica information
 // Get the read-only replicas associated with a deployment. Available for PostgreSQL and EnterpriseDB ONLY.
 func (cloudDatabases *CloudDatabasesV5) ListRemotes(listRemotesOptions *ListRemotesOptions) (result *ListRemotesResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.ListRemotesWithContext(context.Background(), listRemotesOptions)
+	result, response, err = cloudDatabases.ListRemotesWithContext(context.Background(), listRemotesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListRemotesWithContext is an alternate form of the ListRemotes method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) ListRemotesWithContext(ctx context.Context, listRemotesOptions *ListRemotesOptions) (result *ListRemotesResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listRemotesOptions, "listRemotesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listRemotesOptions, "listRemotesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -646,6 +724,7 @@ func (cloudDatabases *CloudDatabasesV5) ListRemotesWithContext(ctx context.Conte
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/remotes`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -661,17 +740,21 @@ func (cloudDatabases *CloudDatabasesV5) ListRemotesWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "listRemotes", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListRemotesResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -683,17 +766,21 @@ func (cloudDatabases *CloudDatabasesV5) ListRemotesWithContext(ctx context.Conte
 // ResyncReplica : Resync read-only replica
 // Reinitialize a read-only replica. Available for PostgreSQL and EnterpriseDB ONLY.
 func (cloudDatabases *CloudDatabasesV5) ResyncReplica(resyncReplicaOptions *ResyncReplicaOptions) (result *ResyncReplicaResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.ResyncReplicaWithContext(context.Background(), resyncReplicaOptions)
+	result, response, err = cloudDatabases.ResyncReplicaWithContext(context.Background(), resyncReplicaOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ResyncReplicaWithContext is an alternate form of the ResyncReplica method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) ResyncReplicaWithContext(ctx context.Context, resyncReplicaOptions *ResyncReplicaOptions) (result *ResyncReplicaResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(resyncReplicaOptions, "resyncReplicaOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(resyncReplicaOptions, "resyncReplicaOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -706,6 +793,7 @@ func (cloudDatabases *CloudDatabasesV5) ResyncReplicaWithContext(ctx context.Con
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/remotes/resync`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -721,17 +809,21 @@ func (cloudDatabases *CloudDatabasesV5) ResyncReplicaWithContext(ctx context.Con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "resyncReplica", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResyncReplicaResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -744,17 +836,21 @@ func (cloudDatabases *CloudDatabasesV5) ResyncReplicaWithContext(ctx context.Con
 // Promote a read-only replica or upgrade and promote a read-only replica. Available for PostgreSQL and EnterpriseDB
 // ONLY.
 func (cloudDatabases *CloudDatabasesV5) PromoteReadOnlyReplica(promoteReadOnlyReplicaOptions *PromoteReadOnlyReplicaOptions) (result *PromoteReadOnlyReplicaResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.PromoteReadOnlyReplicaWithContext(context.Background(), promoteReadOnlyReplicaOptions)
+	result, response, err = cloudDatabases.PromoteReadOnlyReplicaWithContext(context.Background(), promoteReadOnlyReplicaOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PromoteReadOnlyReplicaWithContext is an alternate form of the PromoteReadOnlyReplica method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) PromoteReadOnlyReplicaWithContext(ctx context.Context, promoteReadOnlyReplicaOptions *PromoteReadOnlyReplicaOptions) (result *PromoteReadOnlyReplicaResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(promoteReadOnlyReplicaOptions, "promoteReadOnlyReplicaOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(promoteReadOnlyReplicaOptions, "promoteReadOnlyReplicaOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -767,6 +863,7 @@ func (cloudDatabases *CloudDatabasesV5) PromoteReadOnlyReplicaWithContext(ctx co
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/remotes/promotion`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -787,22 +884,27 @@ func (cloudDatabases *CloudDatabasesV5) PromoteReadOnlyReplicaWithContext(ctx co
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "promoteReadOnlyReplica", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPromoteReadOnlyReplicaResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -815,17 +917,21 @@ func (cloudDatabases *CloudDatabasesV5) PromoteReadOnlyReplicaWithContext(ctx co
 // Obtain a list of tasks currently running or recently run on a deployment. Tasks are ephemeral. Records of successful
 // tasks are shown for 24-48 hours, and unsuccessful tasks are shown for 7-8 days.
 func (cloudDatabases *CloudDatabasesV5) ListDeploymentTasks(listDeploymentTasksOptions *ListDeploymentTasksOptions) (result *Tasks, response *core.DetailedResponse, err error) {
-	return cloudDatabases.ListDeploymentTasksWithContext(context.Background(), listDeploymentTasksOptions)
+	result, response, err = cloudDatabases.ListDeploymentTasksWithContext(context.Background(), listDeploymentTasksOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListDeploymentTasksWithContext is an alternate form of the ListDeploymentTasks method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) ListDeploymentTasksWithContext(ctx context.Context, listDeploymentTasksOptions *ListDeploymentTasksOptions) (result *Tasks, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listDeploymentTasksOptions, "listDeploymentTasksOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listDeploymentTasksOptions, "listDeploymentTasksOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -838,6 +944,7 @@ func (cloudDatabases *CloudDatabasesV5) ListDeploymentTasksWithContext(ctx conte
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/tasks`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -853,17 +960,21 @@ func (cloudDatabases *CloudDatabasesV5) ListDeploymentTasksWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "listDeploymentTasks", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTasks)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -876,17 +987,21 @@ func (cloudDatabases *CloudDatabasesV5) ListDeploymentTasksWithContext(ctx conte
 // Get information about a task and its status. Tasks themselves are persistent so old tasks can be consulted as well as
 // running tasks.
 func (cloudDatabases *CloudDatabasesV5) GetTask(getTaskOptions *GetTaskOptions) (result *GetTaskResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.GetTaskWithContext(context.Background(), getTaskOptions)
+	result, response, err = cloudDatabases.GetTaskWithContext(context.Background(), getTaskOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetTaskWithContext is an alternate form of the GetTask method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) GetTaskWithContext(ctx context.Context, getTaskOptions *GetTaskOptions) (result *GetTaskResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getTaskOptions, "getTaskOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getTaskOptions, "getTaskOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -899,6 +1014,7 @@ func (cloudDatabases *CloudDatabasesV5) GetTaskWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/tasks/{id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -914,17 +1030,21 @@ func (cloudDatabases *CloudDatabasesV5) GetTaskWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getTask", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGetTaskResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -936,17 +1056,21 @@ func (cloudDatabases *CloudDatabasesV5) GetTaskWithContext(ctx context.Context, 
 // GetBackupInfo : Get information about a backup
 // Get information about a backup, such as creation date.
 func (cloudDatabases *CloudDatabasesV5) GetBackupInfo(getBackupInfoOptions *GetBackupInfoOptions) (result *GetBackupInfoResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.GetBackupInfoWithContext(context.Background(), getBackupInfoOptions)
+	result, response, err = cloudDatabases.GetBackupInfoWithContext(context.Background(), getBackupInfoOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetBackupInfoWithContext is an alternate form of the GetBackupInfo method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) GetBackupInfoWithContext(ctx context.Context, getBackupInfoOptions *GetBackupInfoOptions) (result *GetBackupInfoResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getBackupInfoOptions, "getBackupInfoOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getBackupInfoOptions, "getBackupInfoOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -959,6 +1083,7 @@ func (cloudDatabases *CloudDatabasesV5) GetBackupInfoWithContext(ctx context.Con
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/backups/{backup_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -974,17 +1099,21 @@ func (cloudDatabases *CloudDatabasesV5) GetBackupInfoWithContext(ctx context.Con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getBackupInfo", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGetBackupInfoResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -996,17 +1125,21 @@ func (cloudDatabases *CloudDatabasesV5) GetBackupInfoWithContext(ctx context.Con
 // ListDeploymentBackups : List currently available backups from a deployment
 // Get details of all currently available backups from a deployment.
 func (cloudDatabases *CloudDatabasesV5) ListDeploymentBackups(listDeploymentBackupsOptions *ListDeploymentBackupsOptions) (result *Backups, response *core.DetailedResponse, err error) {
-	return cloudDatabases.ListDeploymentBackupsWithContext(context.Background(), listDeploymentBackupsOptions)
+	result, response, err = cloudDatabases.ListDeploymentBackupsWithContext(context.Background(), listDeploymentBackupsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListDeploymentBackupsWithContext is an alternate form of the ListDeploymentBackups method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) ListDeploymentBackupsWithContext(ctx context.Context, listDeploymentBackupsOptions *ListDeploymentBackupsOptions) (result *Backups, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listDeploymentBackupsOptions, "listDeploymentBackupsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listDeploymentBackupsOptions, "listDeploymentBackupsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1019,6 +1152,7 @@ func (cloudDatabases *CloudDatabasesV5) ListDeploymentBackupsWithContext(ctx con
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/backups`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1034,17 +1168,21 @@ func (cloudDatabases *CloudDatabasesV5) ListDeploymentBackupsWithContext(ctx con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "listDeploymentBackups", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBackups)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1057,17 +1195,21 @@ func (cloudDatabases *CloudDatabasesV5) ListDeploymentBackupsWithContext(ctx con
 // Signal the platform to create an on-demand backup for the specified deployment. The returned task can be polled to
 // track progress of the backup as it takes place.
 func (cloudDatabases *CloudDatabasesV5) StartOndemandBackup(startOndemandBackupOptions *StartOndemandBackupOptions) (result *StartOndemandBackupResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.StartOndemandBackupWithContext(context.Background(), startOndemandBackupOptions)
+	result, response, err = cloudDatabases.StartOndemandBackupWithContext(context.Background(), startOndemandBackupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // StartOndemandBackupWithContext is an alternate form of the StartOndemandBackup method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) StartOndemandBackupWithContext(ctx context.Context, startOndemandBackupOptions *StartOndemandBackupOptions) (result *StartOndemandBackupResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(startOndemandBackupOptions, "startOndemandBackupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(startOndemandBackupOptions, "startOndemandBackupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1080,6 +1222,7 @@ func (cloudDatabases *CloudDatabasesV5) StartOndemandBackupWithContext(ctx conte
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/backups`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1095,17 +1238,21 @@ func (cloudDatabases *CloudDatabasesV5) StartOndemandBackupWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "startOndemandBackup", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalStartOndemandBackupResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1118,17 +1265,21 @@ func (cloudDatabases *CloudDatabasesV5) StartOndemandBackupWithContext(ctx conte
 // Returns the earliest available time for point-in-time-recovery in ISO8601 UTC format. PostgreSQL and EnterpriseDB
 // only.
 func (cloudDatabases *CloudDatabasesV5) GetPitrData(getPitrDataOptions *GetPitrDataOptions) (result *GetPitrDataResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.GetPitrDataWithContext(context.Background(), getPitrDataOptions)
+	result, response, err = cloudDatabases.GetPitrDataWithContext(context.Background(), getPitrDataOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetPitrDataWithContext is an alternate form of the GetPitrData method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) GetPitrDataWithContext(ctx context.Context, getPitrDataOptions *GetPitrDataOptions) (result *GetPitrDataResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getPitrDataOptions, "getPitrDataOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getPitrDataOptions, "getPitrDataOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1141,6 +1292,7 @@ func (cloudDatabases *CloudDatabasesV5) GetPitrDataWithContext(ctx context.Conte
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/point_in_time_recovery_data`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1156,17 +1308,21 @@ func (cloudDatabases *CloudDatabasesV5) GetPitrDataWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getPITRData", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGetPitrDataResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1178,17 +1334,21 @@ func (cloudDatabases *CloudDatabasesV5) GetPitrDataWithContext(ctx context.Conte
 // GetConnection : Discover connection information for a deployment for a user with an endpoint type
 // Discover connection information for a deployment for a user with an endpoint type.
 func (cloudDatabases *CloudDatabasesV5) GetConnection(getConnectionOptions *GetConnectionOptions) (result *GetConnectionResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.GetConnectionWithContext(context.Background(), getConnectionOptions)
+	result, response, err = cloudDatabases.GetConnectionWithContext(context.Background(), getConnectionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetConnectionWithContext is an alternate form of the GetConnection method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) GetConnectionWithContext(ctx context.Context, getConnectionOptions *GetConnectionOptions) (result *GetConnectionResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getConnectionOptions, "getConnectionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getConnectionOptions, "getConnectionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1204,6 +1364,7 @@ func (cloudDatabases *CloudDatabasesV5) GetConnectionWithContext(ctx context.Con
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/users/{user_type}/{user_id}/connections/{endpoint_type}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1223,17 +1384,21 @@ func (cloudDatabases *CloudDatabasesV5) GetConnectionWithContext(ctx context.Con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getConnection", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGetConnectionResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1246,17 +1411,21 @@ func (cloudDatabases *CloudDatabasesV5) GetConnectionWithContext(ctx context.Con
 // Discover connection information for a deployment for a user. Behaves the same as the GET method but substitutes the
 // provided password parameter into the returned connection information.
 func (cloudDatabases *CloudDatabasesV5) CompleteConnection(completeConnectionOptions *CompleteConnectionOptions) (result *CompleteConnectionResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.CompleteConnectionWithContext(context.Background(), completeConnectionOptions)
+	result, response, err = cloudDatabases.CompleteConnectionWithContext(context.Background(), completeConnectionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CompleteConnectionWithContext is an alternate form of the CompleteConnection method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) CompleteConnectionWithContext(ctx context.Context, completeConnectionOptions *CompleteConnectionOptions) (result *CompleteConnectionResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(completeConnectionOptions, "completeConnectionOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(completeConnectionOptions, "completeConnectionOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1272,6 +1441,7 @@ func (cloudDatabases *CloudDatabasesV5) CompleteConnectionWithContext(ctx contex
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/users/{user_type}/{user_id}/connections/{endpoint_type}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1295,22 +1465,27 @@ func (cloudDatabases *CloudDatabasesV5) CompleteConnectionWithContext(ctx contex
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "completeConnection", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCompleteConnectionResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1323,17 +1498,21 @@ func (cloudDatabases *CloudDatabasesV5) CompleteConnectionWithContext(ctx contex
 // Scaling groups represent the various resources that are allocated to a deployment. This command allows for the
 // retrieval of all of the groups for a particular deployment.
 func (cloudDatabases *CloudDatabasesV5) ListDeploymentScalingGroups(listDeploymentScalingGroupsOptions *ListDeploymentScalingGroupsOptions) (result *ListDeploymentScalingGroupsResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.ListDeploymentScalingGroupsWithContext(context.Background(), listDeploymentScalingGroupsOptions)
+	result, response, err = cloudDatabases.ListDeploymentScalingGroupsWithContext(context.Background(), listDeploymentScalingGroupsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // ListDeploymentScalingGroupsWithContext is an alternate form of the ListDeploymentScalingGroups method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) ListDeploymentScalingGroupsWithContext(ctx context.Context, listDeploymentScalingGroupsOptions *ListDeploymentScalingGroupsOptions) (result *ListDeploymentScalingGroupsResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listDeploymentScalingGroupsOptions, "listDeploymentScalingGroupsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(listDeploymentScalingGroupsOptions, "listDeploymentScalingGroupsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1346,6 +1525,7 @@ func (cloudDatabases *CloudDatabasesV5) ListDeploymentScalingGroupsWithContext(c
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/groups`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1361,17 +1541,21 @@ func (cloudDatabases *CloudDatabasesV5) ListDeploymentScalingGroupsWithContext(c
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "listDeploymentScalingGroups", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListDeploymentScalingGroupsResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1384,17 +1568,21 @@ func (cloudDatabases *CloudDatabasesV5) ListDeploymentScalingGroupsWithContext(c
 // Scaling groups represent the various resources allocated to a deployment. When a new deployment is created, there are
 // a set of defaults for each database type. This endpoint returns them for a particular database.
 func (cloudDatabases *CloudDatabasesV5) GetDefaultScalingGroups(getDefaultScalingGroupsOptions *GetDefaultScalingGroupsOptions) (result *GetDefaultScalingGroupsResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.GetDefaultScalingGroupsWithContext(context.Background(), getDefaultScalingGroupsOptions)
+	result, response, err = cloudDatabases.GetDefaultScalingGroupsWithContext(context.Background(), getDefaultScalingGroupsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDefaultScalingGroupsWithContext is an alternate form of the GetDefaultScalingGroups method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) GetDefaultScalingGroupsWithContext(ctx context.Context, getDefaultScalingGroupsOptions *GetDefaultScalingGroupsOptions) (result *GetDefaultScalingGroupsResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDefaultScalingGroupsOptions, "getDefaultScalingGroupsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDefaultScalingGroupsOptions, "getDefaultScalingGroupsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1407,6 +1595,7 @@ func (cloudDatabases *CloudDatabasesV5) GetDefaultScalingGroupsWithContext(ctx c
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployables/{type}/groups`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1420,19 +1609,27 @@ func (cloudDatabases *CloudDatabasesV5) GetDefaultScalingGroupsWithContext(ctx c
 	}
 	builder.AddHeader("Accept", "application/json")
 
+	if getDefaultScalingGroupsOptions.HostFlavor != nil {
+		builder.AddQuery("host_flavor", fmt.Sprint(*getDefaultScalingGroupsOptions.HostFlavor))
+	}
+
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getDefaultScalingGroups", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGetDefaultScalingGroupsResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1446,17 +1643,21 @@ func (cloudDatabases *CloudDatabasesV5) GetDefaultScalingGroupsWithContext(ctx c
 // group as a whole and resources are distributed amongst the group. Values must be greater than or equal to the minimum
 // size and must be a multiple of the step size.
 func (cloudDatabases *CloudDatabasesV5) SetDeploymentScalingGroup(setDeploymentScalingGroupOptions *SetDeploymentScalingGroupOptions) (result *SetDeploymentScalingGroupResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.SetDeploymentScalingGroupWithContext(context.Background(), setDeploymentScalingGroupOptions)
+	result, response, err = cloudDatabases.SetDeploymentScalingGroupWithContext(context.Background(), setDeploymentScalingGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SetDeploymentScalingGroupWithContext is an alternate form of the SetDeploymentScalingGroup method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) SetDeploymentScalingGroupWithContext(ctx context.Context, setDeploymentScalingGroupOptions *SetDeploymentScalingGroupOptions) (result *SetDeploymentScalingGroupResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(setDeploymentScalingGroupOptions, "setDeploymentScalingGroupOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(setDeploymentScalingGroupOptions, "setDeploymentScalingGroupOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1470,6 +1671,7 @@ func (cloudDatabases *CloudDatabasesV5) SetDeploymentScalingGroupWithContext(ctx
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/groups/{group_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1490,22 +1692,27 @@ func (cloudDatabases *CloudDatabasesV5) SetDeploymentScalingGroupWithContext(ctx
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "setDeploymentScalingGroup", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSetDeploymentScalingGroupResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1518,17 +1725,21 @@ func (cloudDatabases *CloudDatabasesV5) SetDeploymentScalingGroupWithContext(ctx
 // The Autoscaling configuration represents the various conditions that control autoscaling for a deployment. This
 // command allows for the retrieval of all autoscaling conditions for a particular deployment.
 func (cloudDatabases *CloudDatabasesV5) GetAutoscalingConditions(getAutoscalingConditionsOptions *GetAutoscalingConditionsOptions) (result *AutoscalingGroup, response *core.DetailedResponse, err error) {
-	return cloudDatabases.GetAutoscalingConditionsWithContext(context.Background(), getAutoscalingConditionsOptions)
+	result, response, err = cloudDatabases.GetAutoscalingConditionsWithContext(context.Background(), getAutoscalingConditionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAutoscalingConditionsWithContext is an alternate form of the GetAutoscalingConditions method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) GetAutoscalingConditionsWithContext(ctx context.Context, getAutoscalingConditionsOptions *GetAutoscalingConditionsOptions) (result *AutoscalingGroup, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAutoscalingConditionsOptions, "getAutoscalingConditionsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAutoscalingConditionsOptions, "getAutoscalingConditionsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1542,6 +1753,7 @@ func (cloudDatabases *CloudDatabasesV5) GetAutoscalingConditionsWithContext(ctx 
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/groups/{group_id}/autoscaling`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1557,17 +1769,21 @@ func (cloudDatabases *CloudDatabasesV5) GetAutoscalingConditionsWithContext(ctx 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getAutoscalingConditions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAutoscalingGroup)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1580,17 +1796,21 @@ func (cloudDatabases *CloudDatabasesV5) GetAutoscalingConditionsWithContext(ctx 
 // Enable, disable, or set the conditions for autoscaling on your deployment. Memory, disk, and CPU (if available) can
 // be set separately and are not all required.
 func (cloudDatabases *CloudDatabasesV5) SetAutoscalingConditions(setAutoscalingConditionsOptions *SetAutoscalingConditionsOptions) (result *SetAutoscalingConditionsResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.SetAutoscalingConditionsWithContext(context.Background(), setAutoscalingConditionsOptions)
+	result, response, err = cloudDatabases.SetAutoscalingConditionsWithContext(context.Background(), setAutoscalingConditionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SetAutoscalingConditionsWithContext is an alternate form of the SetAutoscalingConditions method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) SetAutoscalingConditionsWithContext(ctx context.Context, setAutoscalingConditionsOptions *SetAutoscalingConditionsOptions) (result *SetAutoscalingConditionsResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(setAutoscalingConditionsOptions, "setAutoscalingConditionsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(setAutoscalingConditionsOptions, "setAutoscalingConditionsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1604,6 +1824,7 @@ func (cloudDatabases *CloudDatabasesV5) SetAutoscalingConditionsWithContext(ctx 
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/groups/{group_id}/autoscaling`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1624,22 +1845,27 @@ func (cloudDatabases *CloudDatabasesV5) SetAutoscalingConditionsWithContext(ctx 
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "setAutoscalingConditions", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSetAutoscalingConditionsResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1651,17 +1877,21 @@ func (cloudDatabases *CloudDatabasesV5) SetAutoscalingConditionsWithContext(ctx 
 // KillConnections : Kill connections to a PostgreSQL or EnterpriseDB deployment
 // Closes all the connections on a deployment. Available for PostgreSQL and EnterpriseDB ONLY.
 func (cloudDatabases *CloudDatabasesV5) KillConnections(killConnectionsOptions *KillConnectionsOptions) (result *KillConnectionsResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.KillConnectionsWithContext(context.Background(), killConnectionsOptions)
+	result, response, err = cloudDatabases.KillConnectionsWithContext(context.Background(), killConnectionsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // KillConnectionsWithContext is an alternate form of the KillConnections method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) KillConnectionsWithContext(ctx context.Context, killConnectionsOptions *KillConnectionsOptions) (result *KillConnectionsResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(killConnectionsOptions, "killConnectionsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(killConnectionsOptions, "killConnectionsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1674,6 +1904,7 @@ func (cloudDatabases *CloudDatabasesV5) KillConnectionsWithContext(ctx context.C
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/management/database_connections`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1689,17 +1920,21 @@ func (cloudDatabases *CloudDatabasesV5) KillConnectionsWithContext(ctx context.C
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "killConnections", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalKillConnectionsResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1711,17 +1946,21 @@ func (cloudDatabases *CloudDatabasesV5) KillConnectionsWithContext(ctx context.C
 // CreateLogicalReplicationSlot : Create a new logical replication slot
 // Creates a new logical replication slot on the specified database. For use with PostgreSQL and wal2json only.
 func (cloudDatabases *CloudDatabasesV5) CreateLogicalReplicationSlot(createLogicalReplicationSlotOptions *CreateLogicalReplicationSlotOptions) (result *CreateLogicalReplicationSlotResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.CreateLogicalReplicationSlotWithContext(context.Background(), createLogicalReplicationSlotOptions)
+	result, response, err = cloudDatabases.CreateLogicalReplicationSlotWithContext(context.Background(), createLogicalReplicationSlotOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // CreateLogicalReplicationSlotWithContext is an alternate form of the CreateLogicalReplicationSlot method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) CreateLogicalReplicationSlotWithContext(ctx context.Context, createLogicalReplicationSlotOptions *CreateLogicalReplicationSlotOptions) (result *CreateLogicalReplicationSlotResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(createLogicalReplicationSlotOptions, "createLogicalReplicationSlotOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(createLogicalReplicationSlotOptions, "createLogicalReplicationSlotOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1734,6 +1973,7 @@ func (cloudDatabases *CloudDatabasesV5) CreateLogicalReplicationSlotWithContext(
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/postgresql/logical_replication_slots`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1754,22 +1994,27 @@ func (cloudDatabases *CloudDatabasesV5) CreateLogicalReplicationSlotWithContext(
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "createLogicalReplicationSlot", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateLogicalReplicationSlotResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1781,17 +2026,21 @@ func (cloudDatabases *CloudDatabasesV5) CreateLogicalReplicationSlotWithContext(
 // DeleteLogicalReplicationSlot : Delete a logical replication slot
 // Deletes a logical replication slot from a database. For use with PostgreSQL, EnterpriseDB, and wal2json only.
 func (cloudDatabases *CloudDatabasesV5) DeleteLogicalReplicationSlot(deleteLogicalReplicationSlotOptions *DeleteLogicalReplicationSlotOptions) (result *DeleteLogicalReplicationSlotResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.DeleteLogicalReplicationSlotWithContext(context.Background(), deleteLogicalReplicationSlotOptions)
+	result, response, err = cloudDatabases.DeleteLogicalReplicationSlotWithContext(context.Background(), deleteLogicalReplicationSlotOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteLogicalReplicationSlotWithContext is an alternate form of the DeleteLogicalReplicationSlot method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) DeleteLogicalReplicationSlotWithContext(ctx context.Context, deleteLogicalReplicationSlotOptions *DeleteLogicalReplicationSlotOptions) (result *DeleteLogicalReplicationSlotResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteLogicalReplicationSlotOptions, "deleteLogicalReplicationSlotOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteLogicalReplicationSlotOptions, "deleteLogicalReplicationSlotOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1805,6 +2054,7 @@ func (cloudDatabases *CloudDatabasesV5) DeleteLogicalReplicationSlotWithContext(
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/postgresql/logical_replication_slots/{name}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1820,17 +2070,21 @@ func (cloudDatabases *CloudDatabasesV5) DeleteLogicalReplicationSlotWithContext(
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "deleteLogicalReplicationSlot", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDeleteLogicalReplicationSlotResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1842,17 +2096,21 @@ func (cloudDatabases *CloudDatabasesV5) DeleteLogicalReplicationSlotWithContext(
 // GetAllowlist : Retrieve the allowlisted addresses and ranges for a deployment
 // Retrieve the allowlisted addresses and ranges for a deployment.
 func (cloudDatabases *CloudDatabasesV5) GetAllowlist(getAllowlistOptions *GetAllowlistOptions) (result *GetAllowlistResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.GetAllowlistWithContext(context.Background(), getAllowlistOptions)
+	result, response, err = cloudDatabases.GetAllowlistWithContext(context.Background(), getAllowlistOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAllowlistWithContext is an alternate form of the GetAllowlist method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) GetAllowlistWithContext(ctx context.Context, getAllowlistOptions *GetAllowlistOptions) (result *GetAllowlistResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAllowlistOptions, "getAllowlistOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAllowlistOptions, "getAllowlistOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1865,6 +2123,7 @@ func (cloudDatabases *CloudDatabasesV5) GetAllowlistWithContext(ctx context.Cont
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/allowlists/ip_addresses`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1880,17 +2139,21 @@ func (cloudDatabases *CloudDatabasesV5) GetAllowlistWithContext(ctx context.Cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getAllowlist", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGetAllowlistResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1904,17 +2167,21 @@ func (cloudDatabases *CloudDatabasesV5) GetAllowlistWithContext(ctx context.Cont
 // a GET/update/PUT, provide the GET response's ETag header value in this endpoint's If-Match header to ensure that
 // changes that are made by other clients are not accidentally overwritten.
 func (cloudDatabases *CloudDatabasesV5) SetAllowlist(setAllowlistOptions *SetAllowlistOptions) (result *SetAllowlistResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.SetAllowlistWithContext(context.Background(), setAllowlistOptions)
+	result, response, err = cloudDatabases.SetAllowlistWithContext(context.Background(), setAllowlistOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // SetAllowlistWithContext is an alternate form of the SetAllowlist method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) SetAllowlistWithContext(ctx context.Context, setAllowlistOptions *SetAllowlistOptions) (result *SetAllowlistResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(setAllowlistOptions, "setAllowlistOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(setAllowlistOptions, "setAllowlistOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1927,6 +2194,7 @@ func (cloudDatabases *CloudDatabasesV5) SetAllowlistWithContext(ctx context.Cont
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/allowlists/ip_addresses`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1950,22 +2218,27 @@ func (cloudDatabases *CloudDatabasesV5) SetAllowlistWithContext(ctx context.Cont
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "setAllowlist", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSetAllowlistResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1977,17 +2250,21 @@ func (cloudDatabases *CloudDatabasesV5) SetAllowlistWithContext(ctx context.Cont
 // AddAllowlistEntry : Add an address or range to the allowlist for a deployment
 // Add an address or range to the allowlist for a deployment.
 func (cloudDatabases *CloudDatabasesV5) AddAllowlistEntry(addAllowlistEntryOptions *AddAllowlistEntryOptions) (result *AddAllowlistEntryResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.AddAllowlistEntryWithContext(context.Background(), addAllowlistEntryOptions)
+	result, response, err = cloudDatabases.AddAllowlistEntryWithContext(context.Background(), addAllowlistEntryOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // AddAllowlistEntryWithContext is an alternate form of the AddAllowlistEntry method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) AddAllowlistEntryWithContext(ctx context.Context, addAllowlistEntryOptions *AddAllowlistEntryOptions) (result *AddAllowlistEntryResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(addAllowlistEntryOptions, "addAllowlistEntryOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(addAllowlistEntryOptions, "addAllowlistEntryOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2000,6 +2277,7 @@ func (cloudDatabases *CloudDatabasesV5) AddAllowlistEntryWithContext(ctx context
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/allowlists/ip_addresses`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2020,22 +2298,27 @@ func (cloudDatabases *CloudDatabasesV5) AddAllowlistEntryWithContext(ctx context
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "addAllowlistEntry", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAddAllowlistEntryResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2047,17 +2330,21 @@ func (cloudDatabases *CloudDatabasesV5) AddAllowlistEntryWithContext(ctx context
 // DeleteAllowlistEntry : Delete an address or range from the allowlist of a deployment
 // Delete an address or range from the allowlist of a deployment.
 func (cloudDatabases *CloudDatabasesV5) DeleteAllowlistEntry(deleteAllowlistEntryOptions *DeleteAllowlistEntryOptions) (result *DeleteAllowlistEntryResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.DeleteAllowlistEntryWithContext(context.Background(), deleteAllowlistEntryOptions)
+	result, response, err = cloudDatabases.DeleteAllowlistEntryWithContext(context.Background(), deleteAllowlistEntryOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteAllowlistEntryWithContext is an alternate form of the DeleteAllowlistEntry method which supports a Context parameter
 func (cloudDatabases *CloudDatabasesV5) DeleteAllowlistEntryWithContext(ctx context.Context, deleteAllowlistEntryOptions *DeleteAllowlistEntryOptions) (result *DeleteAllowlistEntryResponse, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteAllowlistEntryOptions, "deleteAllowlistEntryOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteAllowlistEntryOptions, "deleteAllowlistEntryOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2071,6 +2358,7 @@ func (cloudDatabases *CloudDatabasesV5) DeleteAllowlistEntryWithContext(ctx cont
 	builder.EnableGzipCompression = cloudDatabases.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudDatabases.Service.Options.URL, `/deployments/{id}/allowlists/ip_addresses/{ipaddress}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2086,23 +2374,30 @@ func (cloudDatabases *CloudDatabasesV5) DeleteAllowlistEntryWithContext(ctx cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudDatabases.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "deleteAllowlistEntry", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDeleteAllowlistEntryResponse)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
 	}
 
 	return
+}
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "5.0.0")
 }
 
 // AddAllowlistEntryOptions : The AddAllowlistEntry options.
@@ -2151,6 +2446,7 @@ func UnmarshalAddAllowlistEntryResponse(m map[string]json.RawMessage, result int
 	obj := new(AddAllowlistEntryResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2171,10 +2467,12 @@ func UnmarshalAllowlistEntry(m map[string]json.RawMessage, result interface{}) (
 	obj := new(AllowlistEntry)
 	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2193,10 +2491,12 @@ func UnmarshalAutoscalingCPUGroupCPU(m map[string]json.RawMessage, result interf
 	obj := new(AutoscalingCPUGroupCPU)
 	err = core.UnmarshalPrimitive(m, "scalers", &obj.Scalers)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "scalers-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rate", &obj.Rate, UnmarshalAutoscalingCPUGroupCPURate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rate-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2219,18 +2519,22 @@ func UnmarshalAutoscalingCPUGroupCPURate(m map[string]json.RawMessage, result in
 	obj := new(AutoscalingCPUGroupCPURate)
 	err = core.UnmarshalPrimitive(m, "increase_percent", &obj.IncreasePercent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "increase_percent-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "period_seconds", &obj.PeriodSeconds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "period_seconds-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit_count_per_member", &obj.LimitCountPerMember)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit_count_per_member-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "units", &obj.Units)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "units-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2249,10 +2553,12 @@ func UnmarshalAutoscalingDiskGroupDisk(m map[string]json.RawMessage, result inte
 	obj := new(AutoscalingDiskGroupDisk)
 	err = core.UnmarshalModel(m, "scalers", &obj.Scalers, UnmarshalAutoscalingDiskGroupDiskScalers)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "scalers-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rate", &obj.Rate, UnmarshalAutoscalingDiskGroupDiskRate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rate-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2275,18 +2581,22 @@ func UnmarshalAutoscalingDiskGroupDiskRate(m map[string]json.RawMessage, result 
 	obj := new(AutoscalingDiskGroupDiskRate)
 	err = core.UnmarshalPrimitive(m, "increase_percent", &obj.IncreasePercent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "increase_percent-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "period_seconds", &obj.PeriodSeconds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "period_seconds-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit_mb_per_member", &obj.LimitMbPerMember)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit_mb_per_member-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "units", &obj.Units)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "units-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2305,10 +2615,12 @@ func UnmarshalAutoscalingDiskGroupDiskScalers(m map[string]json.RawMessage, resu
 	obj := new(AutoscalingDiskGroupDiskScalers)
 	err = core.UnmarshalModel(m, "capacity", &obj.Capacity, UnmarshalAutoscalingDiskGroupDiskScalersCapacity)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "capacity-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "io_utilization", &obj.IoUtilization, UnmarshalAutoscalingDiskGroupDiskScalersIoUtilization)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "io_utilization-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2327,10 +2639,12 @@ func UnmarshalAutoscalingDiskGroupDiskScalersCapacity(m map[string]json.RawMessa
 	obj := new(AutoscalingDiskGroupDiskScalersCapacity)
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "free_space_less_than_percent", &obj.FreeSpaceLessThanPercent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "free_space_less_than_percent-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2351,14 +2665,17 @@ func UnmarshalAutoscalingDiskGroupDiskScalersIoUtilization(m map[string]json.Raw
 	obj := new(AutoscalingDiskGroupDiskScalersIoUtilization)
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "over_period", &obj.OverPeriod)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "over_period-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "above_percent", &obj.AbovePercent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "above_percent-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2375,6 +2692,7 @@ func UnmarshalAutoscalingGroup(m map[string]json.RawMessage, result interface{})
 	obj := new(AutoscalingGroup)
 	err = core.UnmarshalModel(m, "autoscaling", &obj.Autoscaling, UnmarshalAutoscalingGroupAutoscaling)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "autoscaling-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2395,14 +2713,17 @@ func UnmarshalAutoscalingGroupAutoscaling(m map[string]json.RawMessage, result i
 	obj := new(AutoscalingGroupAutoscaling)
 	err = core.UnmarshalModel(m, "disk", &obj.Disk, UnmarshalAutoscalingDiskGroupDisk)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "disk-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "memory", &obj.Memory, UnmarshalAutoscalingMemoryGroupMemory)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "memory-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cpu", &obj.CPU, UnmarshalAutoscalingCPUGroupCPU)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cpu-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2421,10 +2742,12 @@ func UnmarshalAutoscalingMemoryGroupMemory(m map[string]json.RawMessage, result 
 	obj := new(AutoscalingMemoryGroupMemory)
 	err = core.UnmarshalModel(m, "scalers", &obj.Scalers, UnmarshalAutoscalingMemoryGroupMemoryScalers)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "scalers-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rate", &obj.Rate, UnmarshalAutoscalingMemoryGroupMemoryRate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rate-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2447,18 +2770,22 @@ func UnmarshalAutoscalingMemoryGroupMemoryRate(m map[string]json.RawMessage, res
 	obj := new(AutoscalingMemoryGroupMemoryRate)
 	err = core.UnmarshalPrimitive(m, "increase_percent", &obj.IncreasePercent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "increase_percent-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "period_seconds", &obj.PeriodSeconds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "period_seconds-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit_mb_per_member", &obj.LimitMbPerMember)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit_mb_per_member-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "units", &obj.Units)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "units-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2475,6 +2802,7 @@ func UnmarshalAutoscalingMemoryGroupMemoryScalers(m map[string]json.RawMessage, 
 	obj := new(AutoscalingMemoryGroupMemoryScalers)
 	err = core.UnmarshalModel(m, "io_utilization", &obj.IoUtilization, UnmarshalAutoscalingMemoryGroupMemoryScalersIoUtilization)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "io_utilization-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2495,14 +2823,17 @@ func UnmarshalAutoscalingMemoryGroupMemoryScalersIoUtilization(m map[string]json
 	obj := new(AutoscalingMemoryGroupMemoryScalersIoUtilization)
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "over_period", &obj.OverPeriod)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "over_period-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "above_percent", &obj.AbovePercent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "above_percent-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2535,14 +2866,17 @@ func UnmarshalAutoscalingSetGroupAutoscaling(m map[string]json.RawMessage, resul
 	obj := new(AutoscalingSetGroupAutoscaling)
 	err = core.UnmarshalModel(m, "disk", &obj.Disk, UnmarshalAutoscalingDiskGroupDisk)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "disk-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "memory", &obj.Memory, UnmarshalAutoscalingMemoryGroupMemory)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "memory-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cpu", &obj.CPU, UnmarshalAutoscalingCPUGroupCPU)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cpu-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2596,34 +2930,42 @@ func UnmarshalBackup(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Backup)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deployment_id", &obj.DeploymentID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_downloadable", &obj.IsDownloadable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_downloadable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_restorable", &obj.IsRestorable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_restorable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "download_link", &obj.DownloadLink)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "download_link-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2641,6 +2983,7 @@ func UnmarshalBackups(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Backups)
 	err = core.UnmarshalModel(m, "backups", &obj.Backups, UnmarshalBackup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "backups-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2743,6 +3086,7 @@ func UnmarshalCompleteConnectionResponse(m map[string]json.RawMessage, result in
 	obj := new(CompleteConnectionResponse)
 	err = core.UnmarshalModel(m, "connection", &obj.Connection, UnmarshalConnection)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "connection-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -2780,6 +3124,9 @@ type Configuration struct {
 	// Maximum connections allowed.
 	MaxConnections *int64 `json:"max_connections,omitempty"`
 
+	// This parameter limits the average number of object locks used by each transaction.
+	MaxLocksPerTransaction *int64 `json:"max_locks_per_transaction,omitempty"`
+
 	// Max number of transactions that can be in the "prepared" state simultaneously.
 	MaxPreparedTransactions *int64 `json:"max_prepared_transactions,omitempty"`
 
@@ -2807,7 +3154,8 @@ type Configuration struct {
 	// retransmitted.
 	TCPKeepalivesInterval *int64 `json:"tcp_keepalives_interval,omitempty"`
 
-	// WAL level.  Set to logical to use logical decoding or logical replication.
+	// Controls WAL level. Allowed values are replica or logical. Set to logical to use logical decoding. If you are not
+	// using logical decoding, using logical increases the WAL size, which has several disadvantages and no real advantage.
 	WalLevel *string `json:"wal_level,omitempty"`
 
 	// The maximum memory Redis should use, as bytes.
@@ -2902,10 +3250,11 @@ const (
 )
 
 // Constants associated with the Configuration.WalLevel property.
-// WAL level.  Set to logical to use logical decoding or logical replication.
+// Controls WAL level. Allowed values are replica or logical. Set to logical to use logical decoding. If you are not
+// using logical decoding, using logical increases the WAL size, which has several disadvantages and no real advantage.
 const (
-	ConfigurationWalLevelHotStandbyConst = "hot_standby"
-	ConfigurationWalLevelLogicalConst    = "logical"
+	ConfigurationWalLevelLogicalConst = "logical"
+	ConfigurationWalLevelReplicaConst = "replica"
 )
 
 // Constants associated with the Configuration.MaxmemoryPolicy property.
@@ -2955,150 +3304,192 @@ func UnmarshalConfiguration(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(Configuration)
 	err = core.UnmarshalPrimitive(m, "archive_timeout", &obj.ArchiveTimeout)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "archive_timeout-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deadlock_timeout", &obj.DeadlockTimeout)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deadlock_timeout-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "effective_io_concurrency", &obj.EffectiveIoConcurrency)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "effective_io_concurrency-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "log_connections", &obj.LogConnections)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "log_connections-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "log_disconnections", &obj.LogDisconnections)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "log_disconnections-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "log_min_duration_statement", &obj.LogMinDurationStatement)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "log_min_duration_statement-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_connections", &obj.MaxConnections)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_connections-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max_locks_per_transaction", &obj.MaxLocksPerTransaction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max_locks_per_transaction-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_prepared_transactions", &obj.MaxPreparedTransactions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_prepared_transactions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_replication_slots", &obj.MaxReplicationSlots)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_replication_slots-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_wal_senders", &obj.MaxWalSenders)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_wal_senders-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "shared_buffers", &obj.SharedBuffers)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "shared_buffers-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "synchronous_commit", &obj.SynchronousCommit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "synchronous_commit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tcp_keepalives_count", &obj.TCPKeepalivesCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tcp_keepalives_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tcp_keepalives_idle", &obj.TCPKeepalivesIdle)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tcp_keepalives_idle-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tcp_keepalives_interval", &obj.TCPKeepalivesInterval)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tcp_keepalives_interval-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "wal_level", &obj.WalLevel)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "wal_level-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "maxmemory", &obj.Maxmemory)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "maxmemory-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "maxmemory-policy", &obj.MaxmemoryPolicy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "maxmemory-policy-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "appendonly", &obj.Appendonly)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "appendonly-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "maxmemory-samples", &obj.MaxmemorySamples)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "maxmemory-samples-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "stop-writes-on-bgsave-error", &obj.StopWritesOnBgsaveError)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "stop-writes-on-bgsave-error-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "delete_undefined_queues", &obj.DeleteUndefinedQueues)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "delete_undefined_queues-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "default_authentication_plugin", &obj.DefaultAuthenticationPlugin)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "default_authentication_plugin-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_buffer_pool_size_percentage", &obj.InnodbBufferPoolSizePercentage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_buffer_pool_size_percentage-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_flush_log_at_trx_commit", &obj.InnodbFlushLogAtTrxCommit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_flush_log_at_trx_commit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_log_buffer_size", &obj.InnodbLogBufferSize)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_log_buffer_size-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_log_file_size", &obj.InnodbLogFileSize)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_log_file_size-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_lru_scan_depth", &obj.InnodbLruScanDepth)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_lru_scan_depth-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_read_io_threads", &obj.InnodbReadIoThreads)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_read_io_threads-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_write_io_threads", &obj.InnodbWriteIoThreads)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_write_io_threads-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_allowed_packet", &obj.MaxAllowedPacket)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_allowed_packet-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "mysql_max_binlog_age_sec", &obj.MysqlMaxBinlogAgeSec)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mysql_max_binlog_age_sec-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "net_read_timeout", &obj.NetReadTimeout)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "net_read_timeout-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "net_write_timeout", &obj.NetWriteTimeout)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "net_write_timeout-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sql_mode", &obj.SQLMode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sql_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "wait_timeout", &obj.WaitTimeout)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "wait_timeout-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_prepared_stmt_count", &obj.MaxPreparedStmtCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_prepared_stmt_count-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3116,7 +3507,6 @@ func UnmarshalConfiguration(m map[string]json.RawMessage, result interface{}) (e
 // - ConnectionMongoDbeeConnection
 // - ConnectionMongoDbeeOpsManagerConnection
 // - ConnectionMySQLConnection
-// - ConnectionDataStaxConnection
 // - ConnectionEnterpriseDbConnection
 type Connection struct {
 	Postgres *PostgreSQLConnectionURI `json:"postgres,omitempty"`
@@ -3146,8 +3536,6 @@ type Connection struct {
 
 	Mysql *MySQLConnectionURI `json:"mysql,omitempty"`
 
-	Secure *DataStaxConnectionURI `json:"secure,omitempty"`
-
 	Emp *ConnectionURI `json:"emp,omitempty"`
 }
 
@@ -3164,62 +3552,72 @@ func UnmarshalConnection(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(Connection)
 	err = core.UnmarshalModel(m, "postgres", &obj.Postgres, UnmarshalPostgreSQLConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "postgres-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cli", &obj.Cli, UnmarshalConnectionCli)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cli-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rediss", &obj.Rediss, UnmarshalRedisConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rediss-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "https", &obj.HTTPS, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "https-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "amqps", &obj.Amqps, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "amqps-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "mqtts", &obj.Mqtts, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mqtts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "stomp_ssl", &obj.StompSsl, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "stomp_ssl-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "grpc", &obj.Grpc, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "grpc-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "mongodb", &obj.Mongodb, UnmarshalMongoDbConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mongodb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "bi_connector", &obj.BiConnector, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bi_connector-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "analytics", &obj.Analytics, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "analytics-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "ops_manager", &obj.OpsManager, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ops_manager-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "mysql", &obj.Mysql, UnmarshalMySQLConnectionURI)
 	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "secure", &obj.Secure, UnmarshalDataStaxConnectionURI)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "mysql-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "emp", &obj.Emp, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "emp-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3243,38 +3641,17 @@ func UnmarshalConnectionAuthentication(m map[string]json.RawMessage, result inte
 	obj := new(ConnectionAuthentication)
 	err = core.UnmarshalPrimitive(m, "method", &obj.Method)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "method-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "username-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ConnectionBundle : ConnectionBundle struct
-type ConnectionBundle struct {
-	// Name associated with the certificate.
-	Name *string `json:"name,omitempty"`
-
-	// Base64 encoded version of the certificate bundle.
-	BundleBase64 *string `json:"bundle_base64,omitempty"`
-}
-
-// UnmarshalConnectionBundle unmarshals an instance of ConnectionBundle from the specified map of raw messages.
-func UnmarshalConnectionBundle(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ConnectionBundle)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "bundle_base64", &obj.BundleBase64)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3306,26 +3683,32 @@ func UnmarshalConnectionCli(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(ConnectionCli)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "composed", &obj.Composed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "composed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "environment", &obj.Environment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "environment-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "bin", &obj.Bin)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bin-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "arguments", &obj.Arguments)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "arguments-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "certificate", &obj.Certificate, UnmarshalConnectionCertificate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "certificate-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3346,10 +3729,12 @@ func UnmarshalConnectionCertificate(m map[string]json.RawMessage, result interfa
 	obj := new(ConnectionCertificate)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "certificate_base64", &obj.CertificateBase64)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "certificate_base64-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3370,10 +3755,12 @@ func UnmarshalConnectionHost(m map[string]json.RawMessage, result interface{}) (
 	obj := new(ConnectionHost)
 	err = core.UnmarshalPrimitive(m, "hostname", &obj.Hostname)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hostname-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "port", &obj.Port)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "port-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3415,42 +3802,52 @@ func UnmarshalConnectionURI(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(ConnectionURI)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "composed", &obj.Composed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "composed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "scheme", &obj.Scheme)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "scheme-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "hosts", &obj.Hosts, UnmarshalConnectionHost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hosts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "path-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "query_options", &obj.QueryOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "query_options-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "authentication", &obj.Authentication, UnmarshalConnectionAuthentication)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authentication-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "certificate", &obj.Certificate, UnmarshalConnectionCertificate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "certificate-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ssl", &obj.Ssl)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ssl-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "browser_accessible", &obj.BrowserAccessible)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "browser_accessible-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3513,6 +3910,7 @@ func UnmarshalCreateDatabaseUserResponse(m map[string]json.RawMessage, result in
 	obj := new(CreateDatabaseUserResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3565,35 +3963,7 @@ func UnmarshalCreateLogicalReplicationSlotResponse(m map[string]json.RawMessage,
 	obj := new(CreateLogicalReplicationSlotResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// DataStaxConnectionURI : DataStaxConnectionURI struct
-type DataStaxConnectionURI struct {
-	Hosts []ConnectionHost `json:"hosts,omitempty"`
-
-	// Authentication data for Connection String.
-	Authentication *ConnectionAuthentication `json:"authentication,omitempty"`
-
-	Bundle *ConnectionBundle `json:"bundle,omitempty"`
-}
-
-// UnmarshalDataStaxConnectionURI unmarshals an instance of DataStaxConnectionURI from the specified map of raw messages.
-func UnmarshalDataStaxConnectionURI(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DataStaxConnectionURI)
-	err = core.UnmarshalModel(m, "hosts", &obj.Hosts, UnmarshalConnectionHost)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "authentication", &obj.Authentication, UnmarshalConnectionAuthentication)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "bundle", &obj.Bundle, UnmarshalConnectionBundle)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3648,6 +4018,7 @@ func UnmarshalDeleteAllowlistEntryResponse(m map[string]json.RawMessage, result 
 	obj := new(DeleteAllowlistEntryResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3712,6 +4083,7 @@ func UnmarshalDeleteDatabaseUserResponse(m map[string]json.RawMessage, result in
 	obj := new(DeleteDatabaseUserResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3766,6 +4138,7 @@ func UnmarshalDeleteLogicalReplicationSlotResponse(m map[string]json.RawMessage,
 	obj := new(DeleteLogicalReplicationSlotResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3786,10 +4159,12 @@ func UnmarshalDeployables(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(Deployables)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "versions", &obj.Versions, UnmarshalDeployablesVersionsItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "versions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3824,18 +4199,22 @@ func UnmarshalDeployablesVersionsItem(m map[string]json.RawMessage, result inter
 	obj := new(DeployablesVersionsItem)
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_preferred", &obj.IsPreferred)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_preferred-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "transitions", &obj.Transitions, UnmarshalDeployablesVersionsItemTransitionsItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "transitions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3862,18 +4241,22 @@ func UnmarshalDeployablesVersionsItemTransitionsItem(m map[string]json.RawMessag
 	obj := new(DeployablesVersionsItemTransitionsItem)
 	err = core.UnmarshalPrimitive(m, "application", &obj.Application)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "application-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "method", &obj.Method)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "method-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "from_version", &obj.FromVersion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "from_version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "to_version", &obj.ToVersion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "to_version-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3917,38 +4300,47 @@ func UnmarshalDeployment(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(Deployment)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "platform", &obj.Platform)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "platform-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "platform_options", &obj.PlatformOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "platform_options-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "admin_usernames", &obj.AdminUsernames)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "admin_usernames-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enable_public_endpoints", &obj.EnablePublicEndpoints)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enable_public_endpoints-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enable_private_endpoints", &obj.EnablePrivateEndpoints)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enable_private_endpoints-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -3993,6 +4385,7 @@ func UnmarshalGetAllowlistResponse(m map[string]json.RawMessage, result interfac
 	obj := new(GetAllowlistResponse)
 	err = core.UnmarshalModel(m, "ip_addresses", &obj.IPAddresses, UnmarshalAllowlistEntry)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ip_addresses-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4075,6 +4468,7 @@ func UnmarshalGetBackupInfoResponse(m map[string]json.RawMessage, result interfa
 	obj := new(GetBackupInfoResponse)
 	err = core.UnmarshalModel(m, "backup", &obj.Backup, UnmarshalBackup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "backup-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4166,6 +4560,7 @@ func UnmarshalGetConnectionResponse(m map[string]json.RawMessage, result interfa
 	obj := new(GetConnectionResponse)
 	err = core.UnmarshalModel(m, "connection", &obj.Connection, UnmarshalConnection)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "connection-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4176,6 +4571,10 @@ func UnmarshalGetConnectionResponse(m map[string]json.RawMessage, result interfa
 type GetDefaultScalingGroupsOptions struct {
 	// Database type name.
 	Type *string `json:"type" validate:"required,ne="`
+
+	// When a host_flavor of 'multitenant' is included with the request, IBM Cloud Database's new shared compute default
+	// groups will be returned.
+	HostFlavor *string `json:"host_flavor,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -4188,6 +4587,13 @@ const (
 	GetDefaultScalingGroupsOptionsTypePostgresqlConst = "postgresql"
 )
 
+// Constants associated with the GetDefaultScalingGroupsOptions.HostFlavor property.
+// When a host_flavor of 'multitenant' is included with the request, IBM Cloud Database's new shared compute default
+// groups will be returned.
+const (
+	GetDefaultScalingGroupsOptionsHostFlavorMultitenantConst = "multitenant"
+)
+
 // NewGetDefaultScalingGroupsOptions : Instantiate GetDefaultScalingGroupsOptions
 func (*CloudDatabasesV5) NewGetDefaultScalingGroupsOptions(typeVar string) *GetDefaultScalingGroupsOptions {
 	return &GetDefaultScalingGroupsOptions{
@@ -4198,6 +4604,12 @@ func (*CloudDatabasesV5) NewGetDefaultScalingGroupsOptions(typeVar string) *GetD
 // SetType : Allow user to set Type
 func (_options *GetDefaultScalingGroupsOptions) SetType(typeVar string) *GetDefaultScalingGroupsOptions {
 	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetHostFlavor : Allow user to set HostFlavor
+func (_options *GetDefaultScalingGroupsOptions) SetHostFlavor(hostFlavor string) *GetDefaultScalingGroupsOptions {
+	_options.HostFlavor = core.StringPtr(hostFlavor)
 	return _options
 }
 
@@ -4217,6 +4629,7 @@ func UnmarshalGetDefaultScalingGroupsResponse(m map[string]json.RawMessage, resu
 	obj := new(GetDefaultScalingGroupsResponse)
 	err = core.UnmarshalModel(m, "groups", &obj.Groups, UnmarshalGroup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "groups-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4261,6 +4674,7 @@ func UnmarshalGetDeploymentInfoResponse(m map[string]json.RawMessage, result int
 	obj := new(GetDeploymentInfoResponse)
 	err = core.UnmarshalModel(m, "deployment", &obj.Deployment, UnmarshalDeployment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4305,6 +4719,7 @@ func UnmarshalGetPitrDataResponse(m map[string]json.RawMessage, result interface
 	obj := new(GetPitrDataResponse)
 	err = core.UnmarshalModel(m, "point_in_time_recovery_data", &obj.PointInTimeRecoveryData, UnmarshalPointInTimeRecoveryData)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "point_in_time_recovery_data-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4349,6 +4764,7 @@ func UnmarshalGetTaskResponse(m map[string]json.RawMessage, result interface{}) 
 	obj := new(GetTaskResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4370,6 +4786,8 @@ type Group struct {
 	CPU *GroupCPU `json:"cpu,omitempty"`
 
 	Disk *GroupDisk `json:"disk,omitempty"`
+
+	HostFlavor *GroupHostFlavor `json:"host_flavor,omitempty"`
 }
 
 // Constants associated with the Group.ID property.
@@ -4386,26 +4804,37 @@ func UnmarshalGroup(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(Group)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalGroupMembers)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "memory", &obj.Memory, UnmarshalGroupMemory)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "memory-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cpu", &obj.CPU, UnmarshalGroupCPU)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cpu-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "disk", &obj.Disk, UnmarshalGroupDisk)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "disk-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "host_flavor", &obj.HostFlavor, UnmarshalGroupHostFlavor)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "host_flavor-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4444,34 +4873,42 @@ func UnmarshalGroupCPU(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(GroupCPU)
 	err = core.UnmarshalPrimitive(m, "units", &obj.Units)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "units-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "allocation_count", &obj.AllocationCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allocation_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "minimum_count", &obj.MinimumCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "minimum_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "maximum_count", &obj.MaximumCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "maximum_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "step_size_count", &obj.StepSizeCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "step_size_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_adjustable", &obj.IsAdjustable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_adjustable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_optional", &obj.IsOptional)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_optional-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "can_scale_down", &obj.CanScaleDown)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "can_scale_down-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4510,34 +4947,76 @@ func UnmarshalGroupDisk(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(GroupDisk)
 	err = core.UnmarshalPrimitive(m, "units", &obj.Units)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "units-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "allocation_mb", &obj.AllocationMb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allocation_mb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "minimum_mb", &obj.MinimumMb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "minimum_mb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "maximum_mb", &obj.MaximumMb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "maximum_mb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "step_size_mb", &obj.StepSizeMb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "step_size_mb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_adjustable", &obj.IsAdjustable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_adjustable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_optional", &obj.IsOptional)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_optional-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "can_scale_down", &obj.CanScaleDown)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "can_scale_down-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// GroupHostFlavor : GroupHostFlavor struct
+type GroupHostFlavor struct {
+	// Group's host flavor id.
+	ID *string `json:"id,omitempty"`
+
+	// Group's hostflavor name.
+	Name *string `json:"name,omitempty"`
+
+	// Group's host flavor size.
+	HostingSize *string `json:"hosting_size,omitempty"`
+}
+
+// UnmarshalGroupHostFlavor unmarshals an instance of GroupHostFlavor from the specified map of raw messages.
+func UnmarshalGroupHostFlavor(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GroupHostFlavor)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "hosting_size", &obj.HostingSize)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "hosting_size-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4576,34 +5055,42 @@ func UnmarshalGroupMembers(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(GroupMembers)
 	err = core.UnmarshalPrimitive(m, "units", &obj.Units)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "units-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "allocation_count", &obj.AllocationCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allocation_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "minimum_count", &obj.MinimumCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "minimum_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "maximum_count", &obj.MaximumCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "maximum_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "step_size_count", &obj.StepSizeCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "step_size_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_adjustable", &obj.IsAdjustable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_adjustable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_optional", &obj.IsOptional)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_optional-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "can_scale_down", &obj.CanScaleDown)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "can_scale_down-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4635,6 +5122,12 @@ type GroupMemory struct {
 
 	// Can this group's memory scale down?.
 	CanScaleDown *bool `json:"can_scale_down,omitempty"`
+
+	// The amount of memory required before the cpu/memory ratio is no longer enforced. (multitenant only).
+	CPUEnforcementRatioCeilingMb *int64 `json:"cpu_enforcement_ratio_ceiling_mb,omitempty"`
+
+	// The maximum memory allowed per CPU until the ratio ceiling is reached. (multitenant only).
+	CPUEnforcementRatioMb *int64 `json:"cpu_enforcement_ratio_mb,omitempty"`
 }
 
 // UnmarshalGroupMemory unmarshals an instance of GroupMemory from the specified map of raw messages.
@@ -4642,34 +5135,52 @@ func UnmarshalGroupMemory(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(GroupMemory)
 	err = core.UnmarshalPrimitive(m, "units", &obj.Units)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "units-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "allocation_mb", &obj.AllocationMb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allocation_mb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "minimum_mb", &obj.MinimumMb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "minimum_mb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "maximum_mb", &obj.MaximumMb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "maximum_mb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "step_size_mb", &obj.StepSizeMb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "step_size_mb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_adjustable", &obj.IsAdjustable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_adjustable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "is_optional", &obj.IsOptional)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "is_optional-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "can_scale_down", &obj.CanScaleDown)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "can_scale_down-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cpu_enforcement_ratio_ceiling_mb", &obj.CPUEnforcementRatioCeilingMb)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "cpu_enforcement_ratio_ceiling_mb-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cpu_enforcement_ratio_mb", &obj.CPUEnforcementRatioMb)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "cpu_enforcement_ratio_mb-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4685,6 +5196,8 @@ type GroupScaling struct {
 	CPU *GroupScalingCPU `json:"cpu,omitempty"`
 
 	Disk *GroupScalingDisk `json:"disk,omitempty"`
+
+	HostFlavor *GroupScalingHostFlavor `json:"host_flavor,omitempty"`
 }
 
 // UnmarshalGroupScaling unmarshals an instance of GroupScaling from the specified map of raw messages.
@@ -4692,18 +5205,27 @@ func UnmarshalGroupScaling(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(GroupScaling)
 	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalGroupScalingMembers)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "memory", &obj.Memory, UnmarshalGroupScalingMemory)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "memory-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cpu", &obj.CPU, UnmarshalGroupScalingCPU)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cpu-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "disk", &obj.Disk, UnmarshalGroupScalingDisk)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "disk-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "host_flavor", &obj.HostFlavor, UnmarshalGroupScalingHostFlavor)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "host_flavor-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4721,6 +5243,7 @@ func UnmarshalGroupScalingCPU(m map[string]json.RawMessage, result interface{}) 
 	obj := new(GroupScalingCPU)
 	err = core.UnmarshalPrimitive(m, "allocation_count", &obj.AllocationCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allocation_count-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4738,6 +5261,34 @@ func UnmarshalGroupScalingDisk(m map[string]json.RawMessage, result interface{})
 	obj := new(GroupScalingDisk)
 	err = core.UnmarshalPrimitive(m, "allocation_mb", &obj.AllocationMb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allocation_mb-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// GroupScalingHostFlavor : GroupScalingHostFlavor struct
+type GroupScalingHostFlavor struct {
+	// **Beta feature:** The hosting infrastructure identifier. Selecting `multitenant` places your database on a logically
+	// separated, multi-tenant machine. With this identifier, minimum resource configurations apply. Alternatively, setting
+	// the identifier to any of the following host sizes places your database on the specified host size with no other
+	// tenants.
+	// - `b3c.4x16.encrypted`
+	// - `b3c.8x32.encrypted`
+	// - `m3c.8x64.encrypted`
+	// - `b3c.16x64.encrypted`
+	// - `b3c.32x128.encrypted`
+	// - `m3c.30x240.encrypted`.
+	ID *string `json:"id,omitempty"`
+}
+
+// UnmarshalGroupScalingHostFlavor unmarshals an instance of GroupScalingHostFlavor from the specified map of raw messages.
+func UnmarshalGroupScalingHostFlavor(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GroupScalingHostFlavor)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4755,6 +5306,7 @@ func UnmarshalGroupScalingMembers(m map[string]json.RawMessage, result interface
 	obj := new(GroupScalingMembers)
 	err = core.UnmarshalPrimitive(m, "allocation_count", &obj.AllocationCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allocation_count-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4772,6 +5324,7 @@ func UnmarshalGroupScalingMemory(m map[string]json.RawMessage, result interface{
 	obj := new(GroupScalingMemory)
 	err = core.UnmarshalPrimitive(m, "allocation_mb", &obj.AllocationMb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allocation_mb-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4816,6 +5369,7 @@ func UnmarshalKillConnectionsResponse(m map[string]json.RawMessage, result inter
 	obj := new(KillConnectionsResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4850,6 +5404,7 @@ func UnmarshalListDeployablesResponse(m map[string]json.RawMessage, result inter
 	obj := new(ListDeployablesResponse)
 	err = core.UnmarshalModel(m, "deployables", &obj.Deployables, UnmarshalDeployables)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployables-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4922,6 +5477,7 @@ func UnmarshalListDeploymentScalingGroupsResponse(m map[string]json.RawMessage, 
 	obj := new(ListDeploymentScalingGroupsResponse)
 	err = core.UnmarshalModel(m, "groups", &obj.Groups, UnmarshalGroup)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "groups-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4985,6 +5541,7 @@ func UnmarshalListRegionsResponse(m map[string]json.RawMessage, result interface
 	obj := new(ListRegionsResponse)
 	err = core.UnmarshalPrimitive(m, "regions", &obj.Regions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "regions-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5030,6 +5587,7 @@ func UnmarshalListRemotesResponse(m map[string]json.RawMessage, result interface
 	obj := new(ListRemotesResponse)
 	err = core.UnmarshalModel(m, "remotes", &obj.Remotes, UnmarshalRemotes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "remotes-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5056,6 +5614,9 @@ func (*CloudDatabasesV5) NewLogicalReplicationSlot(name string, databaseName str
 		PluginType:   core.StringPtr(pluginType),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -5064,14 +5625,17 @@ func UnmarshalLogicalReplicationSlot(m map[string]json.RawMessage, result interf
 	obj := new(LogicalReplicationSlot)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "database_name", &obj.DatabaseName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "database_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "plugin_type", &obj.PluginType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "plugin_type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5119,50 +5683,62 @@ func UnmarshalMongoDbConnectionURI(m map[string]json.RawMessage, result interfac
 	obj := new(MongoDbConnectionURI)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "composed", &obj.Composed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "composed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "scheme", &obj.Scheme)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "scheme-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "hosts", &obj.Hosts, UnmarshalConnectionHost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hosts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "path-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "query_options", &obj.QueryOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "query_options-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "authentication", &obj.Authentication, UnmarshalConnectionAuthentication)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authentication-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "certificate", &obj.Certificate, UnmarshalConnectionCertificate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "certificate-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ssl", &obj.Ssl)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ssl-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "browser_accessible", &obj.BrowserAccessible)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "browser_accessible-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "database", &obj.Database)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "database-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "replica_set", &obj.ReplicaSet)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "replica_set-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5207,46 +5783,57 @@ func UnmarshalMySQLConnectionURI(m map[string]json.RawMessage, result interface{
 	obj := new(MySQLConnectionURI)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "composed", &obj.Composed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "composed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "scheme", &obj.Scheme)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "scheme-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "hosts", &obj.Hosts, UnmarshalConnectionHost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hosts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "path-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "query_options", &obj.QueryOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "query_options-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "authentication", &obj.Authentication, UnmarshalConnectionAuthentication)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authentication-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "certificate", &obj.Certificate, UnmarshalConnectionCertificate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "certificate-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ssl", &obj.Ssl)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ssl-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "browser_accessible", &obj.BrowserAccessible)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "browser_accessible-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "database", &obj.Database)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "database-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5263,6 +5850,7 @@ func UnmarshalPointInTimeRecoveryData(m map[string]json.RawMessage, result inter
 	obj := new(PointInTimeRecoveryData)
 	err = core.UnmarshalPrimitive(m, "earliest_point_in_time_recovery_time", &obj.EarliestPointInTimeRecoveryTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "earliest_point_in_time_recovery_time-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5307,46 +5895,57 @@ func UnmarshalPostgreSQLConnectionURI(m map[string]json.RawMessage, result inter
 	obj := new(PostgreSQLConnectionURI)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "composed", &obj.Composed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "composed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "scheme", &obj.Scheme)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "scheme-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "hosts", &obj.Hosts, UnmarshalConnectionHost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hosts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "path-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "query_options", &obj.QueryOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "query_options-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "authentication", &obj.Authentication, UnmarshalConnectionAuthentication)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authentication-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "certificate", &obj.Certificate, UnmarshalConnectionCertificate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "certificate-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ssl", &obj.Ssl)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ssl-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "browser_accessible", &obj.BrowserAccessible)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "browser_accessible-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "database", &obj.Database)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "database-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5400,6 +5999,7 @@ func UnmarshalPromoteReadOnlyReplicaResponse(m map[string]json.RawMessage, resul
 	obj := new(PromoteReadOnlyReplicaResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5444,46 +6044,57 @@ func UnmarshalRedisConnectionURI(m map[string]json.RawMessage, result interface{
 	obj := new(RedisConnectionURI)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "composed", &obj.Composed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "composed-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "scheme", &obj.Scheme)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "scheme-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "hosts", &obj.Hosts, UnmarshalConnectionHost)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hosts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "path-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "query_options", &obj.QueryOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "query_options-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "authentication", &obj.Authentication, UnmarshalConnectionAuthentication)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authentication-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "certificate", &obj.Certificate, UnmarshalConnectionCertificate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "certificate-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ssl", &obj.Ssl)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ssl-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "browser_accessible", &obj.BrowserAccessible)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "browser_accessible-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "database", &obj.Database)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "database-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5504,10 +6115,12 @@ func UnmarshalRemotes(m map[string]json.RawMessage, result interface{}) (err err
 	obj := new(Remotes)
 	err = core.UnmarshalPrimitive(m, "leader", &obj.Leader)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "leader-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "replicas", &obj.Replicas)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "replicas-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5552,6 +6165,7 @@ func UnmarshalResyncReplicaResponse(m map[string]json.RawMessage, result interfa
 	obj := new(ResyncReplicaResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5614,6 +6228,7 @@ func UnmarshalSetAllowlistResponse(m map[string]json.RawMessage, result interfac
 	obj := new(SetAllowlistResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5677,6 +6292,7 @@ func UnmarshalSetAutoscalingConditionsResponse(m map[string]json.RawMessage, res
 	obj := new(SetAutoscalingConditionsResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5739,6 +6355,7 @@ func UnmarshalSetDeploymentScalingGroupResponse(m map[string]json.RawMessage, re
 	obj := new(SetDeploymentScalingGroupResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5783,6 +6400,7 @@ func UnmarshalStartOndemandBackupResponse(m map[string]json.RawMessage, result i
 	obj := new(StartOndemandBackupResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5823,26 +6441,32 @@ func UnmarshalTask(m map[string]json.RawMessage, result interface{}) (err error)
 	obj := new(Task)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deployment_id", &obj.DeploymentID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "progress_percent", &obj.ProgressPercent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "progress_percent-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5859,6 +6483,7 @@ func UnmarshalTasks(m map[string]json.RawMessage, result interface{}) (err error
 	obj := new(Tasks)
 	err = core.UnmarshalModel(m, "tasks", &obj.Tasks, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tasks-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5911,6 +6536,7 @@ func UnmarshalUpdateDatabaseConfigurationResponse(m map[string]json.RawMessage, 
 	obj := new(UpdateDatabaseConfigurationResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -5983,6 +6609,7 @@ func UnmarshalUpdateUserResponse(m map[string]json.RawMessage, result interface{
 	obj := new(UpdateUserResponse)
 	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "task-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6019,14 +6646,17 @@ func UnmarshalUser(m map[string]json.RawMessage, result interface{}) (err error)
 	obj := new(User)
 	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "username-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "role", &obj.Role)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "role-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6059,10 +6689,12 @@ func UnmarshalUserUpdate(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(UserUpdate)
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "role", &obj.Role)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "role-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6084,6 +6716,7 @@ func UnmarshalAutoscalingSetGroupAutoscalingAutoscalingCPUGroup(m map[string]jso
 	obj := new(AutoscalingSetGroupAutoscalingAutoscalingCPUGroup)
 	err = core.UnmarshalModel(m, "cpu", &obj.CPU, UnmarshalAutoscalingCPUGroupCPU)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cpu-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6105,6 +6738,7 @@ func UnmarshalAutoscalingSetGroupAutoscalingAutoscalingDiskGroup(m map[string]js
 	obj := new(AutoscalingSetGroupAutoscalingAutoscalingDiskGroup)
 	err = core.UnmarshalModel(m, "disk", &obj.Disk, UnmarshalAutoscalingDiskGroupDisk)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "disk-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6126,6 +6760,7 @@ func UnmarshalAutoscalingSetGroupAutoscalingAutoscalingMemoryGroup(m map[string]
 	obj := new(AutoscalingSetGroupAutoscalingAutoscalingMemoryGroup)
 	err = core.UnmarshalModel(m, "memory", &obj.Memory, UnmarshalAutoscalingMemoryGroupMemory)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "memory-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6205,66 +6840,82 @@ func UnmarshalConfigurationMySQLConfiguration(m map[string]json.RawMessage, resu
 	obj := new(ConfigurationMySQLConfiguration)
 	err = core.UnmarshalPrimitive(m, "default_authentication_plugin", &obj.DefaultAuthenticationPlugin)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "default_authentication_plugin-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_buffer_pool_size_percentage", &obj.InnodbBufferPoolSizePercentage)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_buffer_pool_size_percentage-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_flush_log_at_trx_commit", &obj.InnodbFlushLogAtTrxCommit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_flush_log_at_trx_commit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_log_buffer_size", &obj.InnodbLogBufferSize)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_log_buffer_size-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_log_file_size", &obj.InnodbLogFileSize)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_log_file_size-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_lru_scan_depth", &obj.InnodbLruScanDepth)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_lru_scan_depth-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_read_io_threads", &obj.InnodbReadIoThreads)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_read_io_threads-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "innodb_write_io_threads", &obj.InnodbWriteIoThreads)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "innodb_write_io_threads-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_allowed_packet", &obj.MaxAllowedPacket)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_allowed_packet-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_connections", &obj.MaxConnections)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_connections-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "mysql_max_binlog_age_sec", &obj.MysqlMaxBinlogAgeSec)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mysql_max_binlog_age_sec-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "net_read_timeout", &obj.NetReadTimeout)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "net_read_timeout-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "net_write_timeout", &obj.NetWriteTimeout)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "net_write_timeout-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sql_mode", &obj.SQLMode)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sql_mode-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "wait_timeout", &obj.WaitTimeout)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "wait_timeout-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_prepared_stmt_count", &obj.MaxPreparedStmtCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_prepared_stmt_count-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6298,6 +6949,9 @@ type ConfigurationPgConfiguration struct {
 	// Maximum connections allowed.
 	MaxConnections *int64 `json:"max_connections,omitempty"`
 
+	// This parameter limits the average number of object locks used by each transaction.
+	MaxLocksPerTransaction *int64 `json:"max_locks_per_transaction,omitempty"`
+
 	// Max number of transactions that can be in the "prepared" state simultaneously.
 	MaxPreparedTransactions *int64 `json:"max_prepared_transactions,omitempty"`
 
@@ -6325,7 +6979,8 @@ type ConfigurationPgConfiguration struct {
 	// retransmitted.
 	TCPKeepalivesInterval *int64 `json:"tcp_keepalives_interval,omitempty"`
 
-	// WAL level.  Set to logical to use logical decoding or logical replication.
+	// Controls WAL level. Allowed values are replica or logical. Set to logical to use logical decoding. If you are not
+	// using logical decoding, using logical increases the WAL size, which has several disadvantages and no real advantage.
 	WalLevel *string `json:"wal_level,omitempty"`
 }
 
@@ -6354,10 +7009,11 @@ const (
 )
 
 // Constants associated with the ConfigurationPgConfiguration.WalLevel property.
-// WAL level.  Set to logical to use logical decoding or logical replication.
+// Controls WAL level. Allowed values are replica or logical. Set to logical to use logical decoding. If you are not
+// using logical decoding, using logical increases the WAL size, which has several disadvantages and no real advantage.
 const (
-	ConfigurationPgConfigurationWalLevelHotStandbyConst = "hot_standby"
-	ConfigurationPgConfigurationWalLevelLogicalConst    = "logical"
+	ConfigurationPgConfigurationWalLevelLogicalConst = "logical"
+	ConfigurationPgConfigurationWalLevelReplicaConst = "replica"
 )
 
 func (*ConfigurationPgConfiguration) isaConfiguration() bool {
@@ -6369,66 +7025,87 @@ func UnmarshalConfigurationPgConfiguration(m map[string]json.RawMessage, result 
 	obj := new(ConfigurationPgConfiguration)
 	err = core.UnmarshalPrimitive(m, "archive_timeout", &obj.ArchiveTimeout)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "archive_timeout-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deadlock_timeout", &obj.DeadlockTimeout)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deadlock_timeout-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "effective_io_concurrency", &obj.EffectiveIoConcurrency)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "effective_io_concurrency-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "log_connections", &obj.LogConnections)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "log_connections-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "log_disconnections", &obj.LogDisconnections)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "log_disconnections-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "log_min_duration_statement", &obj.LogMinDurationStatement)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "log_min_duration_statement-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_connections", &obj.MaxConnections)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_connections-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max_locks_per_transaction", &obj.MaxLocksPerTransaction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max_locks_per_transaction-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_prepared_transactions", &obj.MaxPreparedTransactions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_prepared_transactions-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_replication_slots", &obj.MaxReplicationSlots)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_replication_slots-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "max_wal_senders", &obj.MaxWalSenders)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "max_wal_senders-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "shared_buffers", &obj.SharedBuffers)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "shared_buffers-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "synchronous_commit", &obj.SynchronousCommit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "synchronous_commit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tcp_keepalives_count", &obj.TCPKeepalivesCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tcp_keepalives_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tcp_keepalives_idle", &obj.TCPKeepalivesIdle)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tcp_keepalives_idle-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "tcp_keepalives_interval", &obj.TCPKeepalivesInterval)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tcp_keepalives_interval-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "wal_level", &obj.WalLevel)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "wal_level-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6451,6 +7128,7 @@ func UnmarshalConfigurationRabbitMqConfiguration(m map[string]json.RawMessage, r
 	obj := new(ConfigurationRabbitMqConfiguration)
 	err = core.UnmarshalPrimitive(m, "delete_undefined_queues", &obj.DeleteUndefinedQueues)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "delete_undefined_queues-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6510,43 +7188,27 @@ func UnmarshalConfigurationRedisConfiguration(m map[string]json.RawMessage, resu
 	obj := new(ConfigurationRedisConfiguration)
 	err = core.UnmarshalPrimitive(m, "maxmemory", &obj.Maxmemory)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "maxmemory-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "maxmemory-policy", &obj.MaxmemoryPolicy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "maxmemory-policy-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "appendonly", &obj.Appendonly)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "appendonly-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "maxmemory-samples", &obj.MaxmemorySamples)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "maxmemory-samples-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "stop-writes-on-bgsave-error", &obj.StopWritesOnBgsaveError)
 	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ConnectionDataStaxConnection : DataStax Connection Strings.
-// This model "extends" Connection
-type ConnectionDataStaxConnection struct {
-	Secure *DataStaxConnectionURI `json:"secure" validate:"required"`
-}
-
-func (*ConnectionDataStaxConnection) isaConnection() bool {
-	return true
-}
-
-// UnmarshalConnectionDataStaxConnection unmarshals an instance of ConnectionDataStaxConnection from the specified map of raw messages.
-func UnmarshalConnectionDataStaxConnection(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ConnectionDataStaxConnection)
-	err = core.UnmarshalModel(m, "secure", &obj.Secure, UnmarshalDataStaxConnectionURI)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "stop-writes-on-bgsave-error-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6571,10 +7233,12 @@ func UnmarshalConnectionElasticsearchConnection(m map[string]json.RawMessage, re
 	obj := new(ConnectionElasticsearchConnection)
 	err = core.UnmarshalModel(m, "https", &obj.HTTPS, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "https-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cli", &obj.Cli, UnmarshalConnectionCli)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cli-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6601,14 +7265,17 @@ func UnmarshalConnectionEnterpriseDbConnection(m map[string]json.RawMessage, res
 	obj := new(ConnectionEnterpriseDbConnection)
 	err = core.UnmarshalModel(m, "postgres", &obj.Postgres, UnmarshalPostgreSQLConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "postgres-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "emp", &obj.Emp, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "emp-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cli", &obj.Cli, UnmarshalConnectionCli)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cli-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6633,10 +7300,12 @@ func UnmarshalConnectionEtcdConnection(m map[string]json.RawMessage, result inte
 	obj := new(ConnectionEtcdConnection)
 	err = core.UnmarshalModel(m, "grpc", &obj.Grpc, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "grpc-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cli", &obj.Cli, UnmarshalConnectionCli)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cli-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6661,10 +7330,12 @@ func UnmarshalConnectionMongoDbConnection(m map[string]json.RawMessage, result i
 	obj := new(ConnectionMongoDbConnection)
 	err = core.UnmarshalModel(m, "mongodb", &obj.Mongodb, UnmarshalMongoDbConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mongodb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cli", &obj.Cli, UnmarshalConnectionCli)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cli-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6693,18 +7364,22 @@ func UnmarshalConnectionMongoDbeeConnection(m map[string]json.RawMessage, result
 	obj := new(ConnectionMongoDbeeConnection)
 	err = core.UnmarshalModel(m, "mongodb", &obj.Mongodb, UnmarshalMongoDbConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mongodb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cli", &obj.Cli, UnmarshalConnectionCli)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cli-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "bi_connector", &obj.BiConnector, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bi_connector-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "analytics", &obj.Analytics, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "analytics-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6726,6 +7401,7 @@ func UnmarshalConnectionMongoDbeeOpsManagerConnection(m map[string]json.RawMessa
 	obj := new(ConnectionMongoDbeeOpsManagerConnection)
 	err = core.UnmarshalModel(m, "ops_manager", &obj.OpsManager, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ops_manager-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6750,10 +7426,12 @@ func UnmarshalConnectionMySQLConnection(m map[string]json.RawMessage, result int
 	obj := new(ConnectionMySQLConnection)
 	err = core.UnmarshalModel(m, "mysql", &obj.Mysql, UnmarshalMySQLConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mysql-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cli", &obj.Cli, UnmarshalConnectionCli)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cli-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6778,10 +7456,12 @@ func UnmarshalConnectionPostgreSQLConnection(m map[string]json.RawMessage, resul
 	obj := new(ConnectionPostgreSQLConnection)
 	err = core.UnmarshalModel(m, "postgres", &obj.Postgres, UnmarshalPostgreSQLConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "postgres-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cli", &obj.Cli, UnmarshalConnectionCli)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cli-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6812,22 +7492,27 @@ func UnmarshalConnectionRabbitMqConnection(m map[string]json.RawMessage, result 
 	obj := new(ConnectionRabbitMqConnection)
 	err = core.UnmarshalModel(m, "amqps", &obj.Amqps, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "amqps-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "mqtts", &obj.Mqtts, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mqtts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "stomp_ssl", &obj.StompSsl, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "stomp_ssl-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "https", &obj.HTTPS, UnmarshalConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "https-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cli", &obj.Cli, UnmarshalConnectionCli)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cli-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6852,10 +7537,12 @@ func UnmarshalConnectionRedisConnection(m map[string]json.RawMessage, result int
 	obj := new(ConnectionRedisConnection)
 	err = core.UnmarshalModel(m, "rediss", &obj.Rediss, UnmarshalRedisConnectionURI)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rediss-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "cli", &obj.Cli, UnmarshalConnectionCli)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cli-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6875,6 +7562,9 @@ func (*CloudDatabasesV5) NewUserUpdatePasswordSetting(password string) (_model *
 		Password: core.StringPtr(password),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -6887,6 +7577,7 @@ func UnmarshalUserUpdatePasswordSetting(m map[string]json.RawMessage, result int
 	obj := new(UserUpdatePasswordSetting)
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6907,6 +7598,9 @@ func (*CloudDatabasesV5) NewUserUpdateRedisRoleSetting(role string) (_model *Use
 		Role: core.StringPtr(role),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -6919,6 +7613,7 @@ func UnmarshalUserUpdateRedisRoleSetting(m map[string]json.RawMessage, result in
 	obj := new(UserUpdateRedisRoleSetting)
 	err = core.UnmarshalPrimitive(m, "role", &obj.Role)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "role-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6942,6 +7637,9 @@ func (*CloudDatabasesV5) NewUserDatabaseUser(username string, password string) (
 		Password: core.StringPtr(password),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -6954,10 +7652,12 @@ func UnmarshalUserDatabaseUser(m map[string]json.RawMessage, result interface{})
 	obj := new(UserDatabaseUser)
 	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "username-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -6992,6 +7692,9 @@ func (*CloudDatabasesV5) NewUserOpsManagerUser(username string, password string)
 		Password: core.StringPtr(password),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -7004,14 +7707,17 @@ func UnmarshalUserOpsManagerUser(m map[string]json.RawMessage, result interface{
 	obj := new(UserOpsManagerUser)
 	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "username-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "role", &obj.Role)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "role-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7039,6 +7745,9 @@ func (*CloudDatabasesV5) NewUserRedisDatabaseUser(username string, password stri
 		Password: core.StringPtr(password),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -7051,14 +7760,17 @@ func UnmarshalUserRedisDatabaseUser(m map[string]json.RawMessage, result interfa
 	obj := new(UserRedisDatabaseUser)
 	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "username-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "role", &obj.Role)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "role-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))

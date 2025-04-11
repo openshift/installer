@@ -79,21 +79,21 @@ func dataSourceIbmSccProviderTypeInstanceRead(context context.Context, d *schema
 	providerTypeInstanceItem, response, err := securityAndComplianceCenterApIsClient.GetProviderTypeInstanceWithContext(context, getProviderTypeInstanceOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetProviderTypeInstanceWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetProviderTypeInstanceWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetProviderTypeInstanceWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *getProviderTypeInstanceOptions.ProviderTypeID, *getProviderTypeInstanceOptions.ProviderTypeInstanceID))
 
 	if err = d.Set("provider_type_instance_item_id", providerTypeInstanceItem.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting provider_type_instance_item_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting provider_type_instance_item_id: %s", err))
 	}
 
 	if err = d.Set("type", providerTypeInstanceItem.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting type: %s", err))
 	}
 
 	if err = d.Set("name", providerTypeInstanceItem.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting name: %s", err))
 	}
 
 	attributes := map[string]interface{}{}
@@ -101,15 +101,15 @@ func dataSourceIbmSccProviderTypeInstanceRead(context context.Context, d *schema
 		attributes = providerTypeInstanceItem.Attributes
 	}
 	if err = d.Set("attributes", attributes); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting attributes %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting attributes %s", err))
 	}
 
 	if err = d.Set("created_at", flex.DateTimeToString(providerTypeInstanceItem.CreatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_at: %s", err))
 	}
 
 	if err = d.Set("updated_at", flex.DateTimeToString(providerTypeInstanceItem.UpdatedAt)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_at: %s", err))
 	}
 
 	return nil

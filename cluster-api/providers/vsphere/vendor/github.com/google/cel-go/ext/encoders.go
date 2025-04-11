@@ -16,7 +16,6 @@ package ext
 
 import (
 	"encoding/base64"
-	"reflect"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
@@ -37,7 +36,7 @@ import (
 // Examples:
 //
 //	base64.decode('aGVsbG8=')  // return b'hello'
-//	base64.decode('aGVsbG8')   // error
+//	base64.decode('aGVsbG8')   // return b'hello'
 //
 // # Base64.Encode
 //
@@ -80,13 +79,16 @@ func (encoderLib) ProgramOptions() []cel.ProgramOption {
 }
 
 func base64DecodeString(str string) ([]byte, error) {
-	return base64.StdEncoding.DecodeString(str)
+	b, err := base64.StdEncoding.DecodeString(str)
+	if err == nil {
+		return b, nil
+	}
+	if _, tryAltEncoding := err.(base64.CorruptInputError); tryAltEncoding {
+		return base64.RawStdEncoding.DecodeString(str)
+	}
+	return nil, err
 }
 
 func base64EncodeBytes(bytes []byte) (string, error) {
 	return base64.StdEncoding.EncodeToString(bytes), nil
 }
-
-var (
-	bytesListType = reflect.TypeOf([]byte{})
-)

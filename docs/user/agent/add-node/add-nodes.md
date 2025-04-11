@@ -1,5 +1,9 @@
 # Adding a node via the node-joiner tool
 
+## Deprecated
+
+For OpenShift 4.17 and later, the node-joiner.sh and node-joiner-monitor.sh scripts cannot be used. The node-joiner scripts were created for OpenShift 4.16 as a development preview. They have been deprecated and replaced by the "oc adm node-image" command. See [Adding worker nodes to an on-premise cluster](https://docs.openshift.com/container-platform/4.17/nodes/nodes/nodes-nodes-adding-node-iso.html) for more details.
+
 ## Pre-requisites
 1. The `oc` tool must be available in the execution environment (the "user host").
 2. Ensure `oc` is properly configured to manage the cluster to be expanded, i.e. by either:

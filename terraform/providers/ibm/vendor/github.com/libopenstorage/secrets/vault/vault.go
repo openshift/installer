@@ -5,6 +5,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/hashicorp/vault/api"
 	"github.com/libopenstorage/secrets"
@@ -13,15 +14,17 @@ import (
 )
 
 const (
-	Name                = secrets.TypeVault
-	DefaultBackendPath  = "secret/"
-	VaultBackendPathKey = "VAULT_BACKEND_PATH"
-	VaultBackendKey     = "VAULT_BACKEND"
-	kvVersionKey        = "version"
-	kvDataKey           = "data"
-	kvMetadataKey       = "metadata"
-	kvVersion1          = "kv"
-	kvVersion2          = "kv-v2"
+	Name                  = secrets.TypeVault
+	DefaultBackendPath    = "secret/"
+	VaultBackendPathKey   = "VAULT_BACKEND_PATH"
+	VaultBackendKey       = "VAULT_BACKEND"
+	VaultCooldownPeriod   = "VAULT_COOLDOWN_PERIOD"
+	kvVersionKey          = "version"
+	kvDataKey             = "data"
+	kvMetadataKey         = "metadata"
+	kvVersion1            = "kv"
+	kvVersion2            = "kv-v2"
+	defaultCooldownPeriod = 5 * time.Minute
 
 	AuthMethodKubernetes    = utils.AuthMethodKubernetes
 	AuthMethod              = utils.AuthMethod
@@ -52,12 +55,14 @@ type vaultSecrets struct {
 	isKvBackendV2 bool
 	autoAuth      bool
 	config        map[string]interface{}
+	cooldown      time.Time
 }
 
 // These variables are helpful in testing to stub method call from packages
 var (
-	newVaultClient = api.NewClient
-	isKvV2         = isKvBackendV2
+	newVaultClient     = api.NewClient
+	isKvV2             = isKvBackendV2
+	confCooldownPeriod time.Duration
 )
 
 func New(
@@ -109,7 +114,7 @@ func New(
 		authMethod = method
 	}
 
-	logrus.Infof("Authenticated to Vault with %v\n", authMethod)
+	logrus.Infof("Will authenticate to Vault via %v", authMethod)
 
 	backendPath := utils.GetVaultParam(secretConfig, VaultBackendPathKey)
 	if backendPath == "" {
@@ -130,6 +135,20 @@ func New(
 			return nil, err
 		}
 	}
+
+	confCooldownPeriod = defaultCooldownPeriod
+	if cd := utils.GetVaultParam(secretConfig, VaultCooldownPeriod); cd != "" {
+		if cd == "0" {
+			logrus.Warnf("cooldown period is disabled via %s=%s", VaultCooldownPeriod, cd)
+			confCooldownPeriod = 0
+		} else if confCooldownPeriod, err = time.ParseDuration(cd); err == nil && confCooldownPeriod > time.Minute {
+			logrus.Infof("cooldown period is set to %s", confCooldownPeriod)
+		} else {
+			return nil, fmt.Errorf("invalid cooldown period: %s=%s", VaultCooldownPeriod, cd)
+		}
+	}
+	logrus.Infof("cooldown period is set to %s", confCooldownPeriod)
+
 	return &vaultSecrets{
 		endpoint:         config.Address,
 		namespace:        namespace,
@@ -175,25 +194,29 @@ func (v *vaultSecrets) keyPath(secretID string, keyContext map[string]string) ke
 func (v *vaultSecrets) GetSecret(
 	secretID string,
 	keyContext map[string]string,
-) (map[string]interface{}, error) {
+) (map[string]interface{}, secrets.Version, error) {
 	key := v.keyPath(secretID, keyContext)
 	secretValue, err := v.read(key)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get secret: %s: %s", key, err)
+		return nil, secrets.NoVersion, fmt.Errorf("failed to get secret: %s: %s", key, err)
 	}
 	if secretValue == nil {
-		return nil, secrets.ErrInvalidSecretId
+		return nil, secrets.NoVersion, secrets.ErrInvalidSecretId
 	}
 
 	if v.isKvBackendV2 {
 		if data, exists := secretValue.Data[kvDataKey]; exists && data != nil {
 			if data, ok := data.(map[string]interface{}); ok {
-				return data, nil
+				// TODO: Vault does support versioned secrets with KV Backend 2
+				// However it requires clients to invoke a different metadata API call
+				// to fetch the version. Once there is a need for versions from Vault
+				// we can add support for it.
+				return data, secrets.NoVersion, nil
 			}
 		}
-		return nil, secrets.ErrInvalidSecretId
+		return nil, secrets.NoVersion, secrets.ErrInvalidSecretId
 	} else {
-		return secretValue.Data, nil
+		return secretValue.Data, secrets.NoVersion, nil
 	}
 }
 
@@ -201,7 +224,7 @@ func (v *vaultSecrets) PutSecret(
 	secretID string,
 	secretData map[string]interface{},
 	keyContext map[string]string,
-) error {
+) (secrets.Version, error) {
 	if v.isKvBackendV2 {
 		secretData = map[string]interface{}{
 			kvDataKey: secretData,
@@ -210,9 +233,9 @@ func (v *vaultSecrets) PutSecret(
 
 	key := v.keyPath(secretID, keyContext)
 	if _, err := v.write(key, secretData); err != nil {
-		return fmt.Errorf("failed to put secret: %s: %s", key, err)
+		return secrets.NoVersion, fmt.Errorf("failed to put secret: %s: %s", key, err)
 	}
-	return nil
+	return secrets.NoVersion, nil
 }
 
 func (v *vaultSecrets) DeleteSecret(
@@ -257,6 +280,9 @@ func (v *vaultSecrets) ListSecrets() ([]string, error) {
 }
 
 func (v *vaultSecrets) read(path keyPath) (*api.Secret, error) {
+	if v.isInCooldown() {
+		return nil, utils.ErrInCooldown
+	}
 	if v.autoAuth {
 		v.lockClientToken.Lock()
 		defer v.lockClientToken.Unlock()
@@ -268,7 +294,7 @@ func (v *vaultSecrets) read(path keyPath) (*api.Secret, error) {
 
 	secretValue, err := v.lockedRead(path.Path())
 	if v.isTokenExpired(err) {
-		if err = v.renewToken(path.Namespace()); err != nil {
+		if err = v.renewTokenWithCooldown(path.Namespace()); err != nil {
 			return nil, fmt.Errorf("failed to renew token: %s", err)
 		}
 		return v.lockedRead(path.Path())
@@ -277,6 +303,9 @@ func (v *vaultSecrets) read(path keyPath) (*api.Secret, error) {
 }
 
 func (v *vaultSecrets) write(path keyPath, data map[string]interface{}) (*api.Secret, error) {
+	if v.isInCooldown() {
+		return nil, utils.ErrInCooldown
+	}
 	if v.autoAuth {
 		v.lockClientToken.Lock()
 		defer v.lockClientToken.Unlock()
@@ -288,7 +317,7 @@ func (v *vaultSecrets) write(path keyPath, data map[string]interface{}) (*api.Se
 
 	secretValue, err := v.lockedWrite(path.Path(), data)
 	if v.isTokenExpired(err) {
-		if err = v.renewToken(path.Namespace()); err != nil {
+		if err = v.renewTokenWithCooldown(path.Namespace()); err != nil {
 			return nil, fmt.Errorf("failed to renew token: %s", err)
 		}
 		return v.lockedWrite(path.Path(), data)
@@ -297,6 +326,9 @@ func (v *vaultSecrets) write(path keyPath, data map[string]interface{}) (*api.Se
 }
 
 func (v *vaultSecrets) delete(path keyPath) (*api.Secret, error) {
+	if v.isInCooldown() {
+		return nil, utils.ErrInCooldown
+	}
 	if v.autoAuth {
 		v.lockClientToken.Lock()
 		defer v.lockClientToken.Unlock()
@@ -308,7 +340,7 @@ func (v *vaultSecrets) delete(path keyPath) (*api.Secret, error) {
 
 	secretValue, err := v.lockedDelete(path.Path())
 	if v.isTokenExpired(err) {
-		if err = v.renewToken(path.Namespace()); err != nil {
+		if err = v.renewTokenWithCooldown(path.Namespace()); err != nil {
 			return nil, fmt.Errorf("failed to renew token: %s", err)
 		}
 		return v.lockedDelete(path.Path())
@@ -355,6 +387,50 @@ func (v *vaultSecrets) renewToken(namespace string) error {
 	return nil
 }
 
+func (v *vaultSecrets) renewTokenWithCooldown(namespace string) error {
+	if confCooldownPeriod <= 0 { // cooldown is disabled, return immediately
+		return v.renewToken(namespace)
+	} else if v.isInCooldown() {
+		return utils.ErrInCooldown
+	}
+
+	err := v.renewToken(namespace)
+	if v.isTokenExpired(err) {
+		v.setCooldown(confCooldownPeriod)
+	} else if err == nil {
+		v.setCooldown(0) // clear cooldown
+	}
+	return err
+}
+
+func (v *vaultSecrets) isInCooldown() bool {
+	if confCooldownPeriod <= 0 { // cooldown is disabled, return immediately
+		return false
+	}
+	v.mu.RLock()
+	defer v.mu.RUnlock()
+	if v.cooldown.IsZero() {
+		return false
+	}
+	return time.Now().Before(v.cooldown)
+}
+
+func (v *vaultSecrets) setCooldown(dur time.Duration) {
+	if confCooldownPeriod <= 0 { // cooldown is disabled, return immediately
+		return
+	}
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	if dur > 0 {
+		v.cooldown = time.Now().Add(dur)
+		logrus.WithField("nextRetryAt", v.cooldown.Round(100*time.Millisecond)).
+			Warnf("putting vault client in cooldown for %s", confCooldownPeriod)
+	} else {
+		logrus.Debug("clearing vault client cooldown")
+		v.cooldown = time.Time{}
+	}
+}
+
 func (v *vaultSecrets) isTokenExpired(err error) bool {
 	return err != nil && v.autoAuth && strings.Contains(err.Error(), "permission denied")
 }
@@ -369,7 +445,7 @@ func (v *vaultSecrets) setNamespaceToken(namespace string) error {
 		return nil
 	}
 
-	return v.renewToken(namespace)
+	return v.renewTokenWithCooldown(namespace)
 }
 
 func isKvBackendV2(client *api.Client, backendPath string) (bool, error) {
@@ -389,7 +465,7 @@ func isKvBackendV2(client *api.Client, backendPath string) (bool, error) {
 		}
 	}
 
-	return false, fmt.Errorf("Secrets engine with mount path '%s' not found",
+	return false, fmt.Errorf("secrets engine with mount path '%s' not found",
 		backendPath)
 }
 

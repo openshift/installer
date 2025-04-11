@@ -172,6 +172,17 @@ type RefreshPreferences struct {
 	// during an instance refresh. The default is 90.
 	// +optional
 	MinHealthyPercentage *int64 `json:"minHealthyPercentage,omitempty"`
+
+	// The amount of capacity as a percentage in ASG that can be in service and healthy, or pending,
+	// to support your workload when replacing instances.
+	// The value is expressed as a percentage of the desired capacity of the ASG. Value range is 100 to 200.
+	// If you specify MaxHealthyPercentage , you must also specify MinHealthyPercentage , and the difference between
+	// them cannot be greater than 100.
+	// A larger range increases the number of instances that can be replaced at the same time.
+	// +optional
+	// +kubebuilder:validation:Minimum=100
+	// +kubebuilder:validation:Maximum=200
+	MaxHealthyPercentage *int64 `json:"maxHealthyPercentage,omitempty"`
 }
 
 // AWSMachinePoolStatus defines the observed state of AWSMachinePool.

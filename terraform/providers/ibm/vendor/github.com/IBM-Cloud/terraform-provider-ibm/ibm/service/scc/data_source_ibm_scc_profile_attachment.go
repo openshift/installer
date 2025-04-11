@@ -242,27 +242,27 @@ func dataSourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Re
 	attachmentItem, response, err := securityandcompliancecenterapiClient.GetProfileAttachmentWithContext(context, getProfileAttachmentOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetProfileAttachmentWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetProfileAttachmentWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetProfileAttachmentWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *getProfileAttachmentOptions.AttachmentID, *getProfileAttachmentOptions.ProfileID))
 
 	if err = d.Set("attachment_item_id", attachmentItem.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting attachment_item_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting attachment_item_id: %s", err))
 	}
 
 	if err = d.Set("account_id", attachmentItem.AccountID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting account_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting account_id: %s", err))
 	}
 
 	if err = d.Set("instance_id", attachmentItem.InstanceID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting instance_id: %s", err))
 	}
 
 	scope := []map[string]interface{}{}
 	if attachmentItem.Scope != nil {
 		for _, modelItem := range attachmentItem.Scope {
-			modelMap, err := dataSourceIbmSccProfileAttachmentMultiCloudScopeToMap(&modelItem)
+			modelMap, err := dataSourceIbmSccProfileAttachmentMultiCloudScopeToMap(modelItem)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -270,31 +270,31 @@ func dataSourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Re
 		}
 	}
 	if err = d.Set("scope", scope); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting scope %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting scope %s", err))
 	}
 
 	if err = d.Set("created_on", flex.DateTimeToString(attachmentItem.CreatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_on: %s", err))
 	}
 
 	if err = d.Set("created_by", attachmentItem.CreatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting created_by: %s", err))
 	}
 
 	if err = d.Set("updated_on", flex.DateTimeToString(attachmentItem.UpdatedOn)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_on: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_on: %s", err))
 	}
 
 	if err = d.Set("updated_by", attachmentItem.UpdatedBy); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated_by: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting updated_by: %s", err))
 	}
 
 	if err = d.Set("status", attachmentItem.Status); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting status: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting status: %s", err))
 	}
 
 	if err = d.Set("schedule", attachmentItem.Schedule); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting schedule: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting schedule: %s", err))
 	}
 
 	notifications := []map[string]interface{}{}
@@ -306,7 +306,7 @@ func dataSourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Re
 		notifications = append(notifications, modelMap)
 	}
 	if err = d.Set("notifications", notifications); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting notifications %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting notifications %s", err))
 	}
 
 	attachmentParameters := []map[string]interface{}{}
@@ -320,7 +320,7 @@ func dataSourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Re
 		}
 	}
 	if err = d.Set("attachment_parameters", attachmentParameters); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting attachment_parameters %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting attachment_parameters %s", err))
 	}
 
 	lastScan := []map[string]interface{}{}
@@ -332,30 +332,30 @@ func dataSourceIbmSccProfileAttachmentRead(context context.Context, d *schema.Re
 		lastScan = append(lastScan, modelMap)
 	}
 	if err = d.Set("last_scan", lastScan); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting last_scan %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting last_scan %s", err))
 	}
 
 	if err = d.Set("next_scan_time", flex.DateTimeToString(attachmentItem.NextScanTime)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting next_scan_time: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting next_scan_time: %s", err))
 	}
 
 	if err = d.Set("name", attachmentItem.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting name: %s", err))
 	}
 
 	if err = d.Set("description", attachmentItem.Description); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting description: %s", err))
 	}
 
 	return nil
 }
 
-func dataSourceIbmSccProfileAttachmentMultiCloudScopeToMap(model *securityandcompliancecenterapiv3.MultiCloudScope) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileAttachmentMultiCloudScopeToMap(model securityandcompliancecenterapiv3.MultiCloudScopePayload) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["environment"] = model.Environment
 	properties := []map[string]interface{}{}
 	for _, propertiesItem := range model.Properties {
-		propertiesItemMap, err := dataSourceIbmSccProfileAttachmentPropertyItemToMap(&propertiesItem)
+		propertiesItemMap, err := dataSourceIbmSccProfileAttachmentPropertyItemToMap(propertiesItem)
 		if err != nil {
 			return modelMap, err
 		}
@@ -365,18 +365,11 @@ func dataSourceIbmSccProfileAttachmentMultiCloudScopeToMap(model *securityandcom
 	return modelMap, nil
 }
 
-func dataSourceIbmSccProfileAttachmentPropertyItemToMap(model *securityandcompliancecenterapiv3.PropertyItem) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Name != nil {
-		modelMap["name"] = model.Name
-	}
-	if model.Value != nil {
-		modelMap["value"] = model.Value
-	}
-	return modelMap, nil
+func dataSourceIbmSccProfileAttachmentPropertyItemToMap(model securityandcompliancecenterapiv3.ScopePropertyIntf) (map[string]interface{}, error) {
+	return scopePropertiesToMap(model)
 }
 
-func dataSourceIbmSccProfileAttachmentAttachmentsNotificationsPrototypeToMap(model *securityandcompliancecenterapiv3.AttachmentsNotificationsPrototype) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileAttachmentAttachmentsNotificationsPrototypeToMap(model *securityandcompliancecenterapiv3.AttachmentNotifications) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["enabled"] = model.Enabled
 	controlsMap, err := dataSourceIbmSccProfileAttachmentFailedControlsToMap(model.Controls)
@@ -387,7 +380,7 @@ func dataSourceIbmSccProfileAttachmentAttachmentsNotificationsPrototypeToMap(mod
 	return modelMap, nil
 }
 
-func dataSourceIbmSccProfileAttachmentFailedControlsToMap(model *securityandcompliancecenterapiv3.FailedControls) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileAttachmentFailedControlsToMap(model *securityandcompliancecenterapiv3.AttachmentNotificationsControls) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ThresholdLimit != nil {
 		modelMap["threshold_limit"] = flex.IntValue(model.ThresholdLimit)
@@ -398,7 +391,7 @@ func dataSourceIbmSccProfileAttachmentFailedControlsToMap(model *securityandcomp
 	return modelMap, nil
 }
 
-func dataSourceIbmSccProfileAttachmentAttachmentParameterPrototypeToMap(model *securityandcompliancecenterapiv3.AttachmentParameterPrototype) (map[string]interface{}, error) {
+func dataSourceIbmSccProfileAttachmentAttachmentParameterPrototypeToMap(model *securityandcompliancecenterapiv3.Parameter) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AssessmentType != nil {
 		modelMap["assessment_type"] = model.AssessmentType

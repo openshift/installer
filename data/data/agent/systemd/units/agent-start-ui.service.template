@@ -1,0 +1,27 @@
+### This is currently a draft placeholder for running the UI, to be completed
+
+[Unit]
+Description=Service that runs the Agent Installer UI
+Wants=network-online.target assisted-service.service
+Conflicts=agent-register-cluster.service agent-import-cluster.service
+After=network-online.target assisted-service.service
+PartOf=assisted-service-pod.service
+ConditionPathExists=/etc/assisted/node0
+ConditionPathExists=/etc/assisted/interactive-ui
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=/usr/local/share/assisted-service/agent-images.env
+EnvironmentFile=/etc/assisted/rendezvous-host.env
+ExecStartPre=/bin/rm -f %t/%n.ctr-id
+ExecStartPre=/usr/local/bin/wait-for-assisted-service.sh
+ExecStart=/usr/bin/podman run --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --restart=on-failure:10 --pod-id-file=%t/assisted-service-pod.pod-id --replace -d --name=agent-installer-ui --env AIUI_APP_API_URL $INSTALLER_UI_IMAGE
+ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
+ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
+
+KillMode=none
+Type=oneshot
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

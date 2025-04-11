@@ -17,7 +17,7 @@ import (
 )
 
 // NetworkCreate network create
-// Example: {"accessConfig":"internal-only","cidr":"192.168.1.0/24","gateway":"192.168.1.1","ipAddressRanges":[{"endingIPAddress":"192.168.1.254","startingIPAddress":"192.168.1.2"}],"mtu":1450,"name":"sample-network","type":"vlan"}
+// Example: {"cidr":"192.168.1.0/24","gateway":"192.168.1.1","ipAddressRanges":[{"endingIPAddress":"192.168.1.254","startingIPAddress":"192.168.1.2"}],"mtu":1450,"name":"sample-network","type":"vlan"}
 //
 // swagger:model NetworkCreate
 type NetworkCreate struct {
@@ -46,13 +46,18 @@ type NetworkCreate struct {
 	Mtu *int64 `json:"mtu,omitempty"`
 
 	// Network Name
-	// Max Length: 255
 	Name string `json:"name,omitempty"`
+
+	// Network Peer information
+	Peer *NetworkCreatePeer `json:"peer,omitempty"`
 
 	// Type of Network - 'vlan' (private network) 'pub-vlan' (public network) 'dhcp-vlan' (for satellite locations only)
 	// Required: true
-	// Enum: [vlan pub-vlan dhcp-vlan]
+	// Enum: ["vlan","pub-vlan","dhcp-vlan"]
 	Type *string `json:"type"`
+
+	// user tags
+	UserTags Tags `json:"userTags,omitempty"`
 }
 
 // Validate validates this network create
@@ -71,11 +76,15 @@ func (m *NetworkCreate) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateName(formats); err != nil {
+	if err := m.validatePeer(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if err := m.validateType(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateUserTags(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -144,13 +153,20 @@ func (m *NetworkCreate) validateMtu(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *NetworkCreate) validateName(formats strfmt.Registry) error {
-	if swag.IsZero(m.Name) { // not required
+func (m *NetworkCreate) validatePeer(formats strfmt.Registry) error {
+	if swag.IsZero(m.Peer) { // not required
 		return nil
 	}
 
-	if err := validate.MaxLength("name", "body", m.Name, 255); err != nil {
-		return err
+	if m.Peer != nil {
+		if err := m.Peer.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("peer")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("peer")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -202,6 +218,23 @@ func (m *NetworkCreate) validateType(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *NetworkCreate) validateUserTags(formats strfmt.Registry) error {
+	if swag.IsZero(m.UserTags) { // not required
+		return nil
+	}
+
+	if err := m.UserTags.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
+	}
+
+	return nil
+}
+
 // ContextValidate validate this network create based on the context it is used
 func (m *NetworkCreate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
@@ -211,6 +244,14 @@ func (m *NetworkCreate) ContextValidate(ctx context.Context, formats strfmt.Regi
 	}
 
 	if err := m.contextValidateIPAddressRanges(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidatePeer(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateUserTags(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -258,6 +299,41 @@ func (m *NetworkCreate) contextValidateIPAddressRanges(ctx context.Context, form
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *NetworkCreate) contextValidatePeer(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Peer != nil {
+
+		if swag.IsZero(m.Peer) { // not required
+			return nil
+		}
+
+		if err := m.Peer.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("peer")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("peer")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *NetworkCreate) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
 	}
 
 	return nil

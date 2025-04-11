@@ -19,6 +19,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=oauths,scope=Cluster
 // +kubebuilder:subresource:status
+// +kubebuilder:metadata:annotations=release.openshift.io/bootstrap-required=true
 type OAuth struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -26,7 +27,6 @@ type OAuth struct {
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 	// spec holds user settable values for configuration
-	// +kubebuilder:validation:Required
 	// +required
 	Spec OAuthSpec `json:"spec"`
 	// status holds observed values from the cluster. They may not be overridden.

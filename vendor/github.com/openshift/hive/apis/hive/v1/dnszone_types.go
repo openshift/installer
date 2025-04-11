@@ -179,6 +179,16 @@ type DNSZoneCondition struct {
 // DNSZoneConditionType is a valid value for DNSZoneCondition.Type
 type DNSZoneConditionType string
 
+// ConditionType satisfies the conditions.Condition interface
+func (c DNSZoneCondition) ConditionType() ConditionType {
+	return c.Type
+}
+
+// String satisfies the conditions.ConditionType interface
+func (t DNSZoneConditionType) String() string {
+	return string(t)
+}
+
 const (
 	// ZoneAvailableDNSZoneCondition is true if the DNSZone is responding to DNS queries
 	ZoneAvailableDNSZoneCondition DNSZoneConditionType = "ZoneAvailable"

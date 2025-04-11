@@ -330,8 +330,91 @@ func restorev1alpha6Port(previous *PortOpts, dst *PortOpts) {
 	}
 }
 
+func restorev1beta1Port(previous *infrav1.PortOpts, dst *infrav1.PortOpts) {
+	// PropagateUplinkStatus was not present in v1alpha6
+	dst.PropagateUplinkStatus = previous.PropagateUplinkStatus
+
+	optional.RestoreString(&previous.NameSuffix, &dst.NameSuffix)
+	optional.RestoreString(&previous.Description, &dst.Description)
+	optional.RestoreString(&previous.MACAddress, &dst.MACAddress)
+
+	if len(dst.FixedIPs) == len(previous.FixedIPs) {
+		for j := range dst.FixedIPs {
+			prevFixedIP := &previous.FixedIPs[j]
+			dstFixedIP := &dst.FixedIPs[j]
+
+			optional.RestoreString(&prevFixedIP.IPAddress, &dstFixedIP.IPAddress)
+			restorev1beta1SubnetParam(prevFixedIP.Subnet, dstFixedIP.Subnet)
+		}
+	}
+
+	if len(dst.AllowedAddressPairs) == len(previous.AllowedAddressPairs) {
+		for j := range dst.AllowedAddressPairs {
+			prevAAP := &previous.AllowedAddressPairs[j]
+			dstAAP := &dst.AllowedAddressPairs[j]
+
+			optional.RestoreString(&prevAAP.MACAddress, &dstAAP.MACAddress)
+		}
+	}
+
+	optional.RestoreString(&previous.HostID, &dst.HostID)
+	optional.RestoreString(&previous.VNICType, &dst.VNICType)
+
+	if previous.Profile != nil {
+		// A binding profile of {&false, &false} will be converted to a nil map.
+		// We still need to restore it, so substitute an empty BindProfile.
+		var dstProfile *infrav1.BindingProfile
+		if dst.Profile != nil {
+			dstProfile = dst.Profile
+		} else {
+			dstProfile = &infrav1.BindingProfile{}
+			dst.Profile = dstProfile
+		}
+		prevProfile := previous.Profile
+
+		if dstProfile.OVSHWOffload == nil || !*dstProfile.OVSHWOffload {
+			dstProfile.OVSHWOffload = prevProfile.OVSHWOffload
+		}
+
+		if dstProfile.TrustedVF == nil || !*dstProfile.TrustedVF {
+			dstProfile.TrustedVF = prevProfile.TrustedVF
+		}
+	}
+}
+
 func Convert_v1alpha6_PortOpts_To_v1beta1_PortOpts(in *PortOpts, out *infrav1.PortOpts, s apiconversion.Scope) error {
 	if err := autoConvert_v1alpha6_PortOpts_To_v1beta1_PortOpts(in, out, s); err != nil {
+		return err
+	}
+
+	// Copy members of ResolvedPortSpecFields
+	var allowedAddressPairs []infrav1.AddressPair
+	if len(in.AllowedAddressPairs) > 0 {
+		allowedAddressPairs = make([]infrav1.AddressPair, len(in.AllowedAddressPairs))
+		for i := range in.AllowedAddressPairs {
+			aap := &in.AllowedAddressPairs[i]
+			allowedAddressPairs[i] = infrav1.AddressPair{
+				MACAddress: &aap.MACAddress,
+				IPAddress:  aap.IPAddress,
+			}
+		}
+	}
+	var valueSpecs []infrav1.ValueSpec
+	if len(in.ValueSpecs) > 0 {
+		valueSpecs = make([]infrav1.ValueSpec, len(in.ValueSpecs))
+		for i, vs := range in.ValueSpecs {
+			valueSpecs[i] = infrav1.ValueSpec(vs)
+		}
+	}
+	out.AdminStateUp = in.AdminStateUp
+	out.AllowedAddressPairs = allowedAddressPairs
+	out.DisablePortSecurity = in.DisablePortSecurity
+	out.ValueSpecs = valueSpecs
+	if err := errors.Join(
+		optional.Convert_string_To_optional_String(&in.MACAddress, &out.MACAddress, s),
+		optional.Convert_string_To_optional_String(&in.HostID, &out.HostID, s),
+		optional.Convert_string_To_optional_String(&in.VNICType, &out.VNICType, s),
+	); err != nil {
 		return err
 	}
 
@@ -370,6 +453,38 @@ func Convert_v1alpha6_PortOpts_To_v1beta1_PortOpts(in *PortOpts, out *infrav1.Po
 
 func Convert_v1beta1_PortOpts_To_v1alpha6_PortOpts(in *infrav1.PortOpts, out *PortOpts, s apiconversion.Scope) error {
 	if err := autoConvert_v1beta1_PortOpts_To_v1alpha6_PortOpts(in, out, s); err != nil {
+		return err
+	}
+
+	// Copy members of ResolvedPortSpecFields
+	var allowedAddressPairs []AddressPair
+	if len(in.AllowedAddressPairs) > 0 {
+		allowedAddressPairs = make([]AddressPair, len(in.AllowedAddressPairs))
+		for i := range in.AllowedAddressPairs {
+			inAAP := &in.AllowedAddressPairs[i]
+			outAAP := &allowedAddressPairs[i]
+			if err := optional.Convert_optional_String_To_string(&inAAP.MACAddress, &outAAP.MACAddress, s); err != nil {
+				return err
+			}
+			outAAP.IPAddress = inAAP.IPAddress
+		}
+	}
+	var valueSpecs []ValueSpec
+	if len(in.ValueSpecs) > 0 {
+		valueSpecs = make([]ValueSpec, len(in.ValueSpecs))
+		for i, vs := range in.ValueSpecs {
+			valueSpecs[i] = ValueSpec(vs)
+		}
+	}
+	out.AdminStateUp = in.AdminStateUp
+	out.AllowedAddressPairs = allowedAddressPairs
+	out.DisablePortSecurity = in.DisablePortSecurity
+	out.ValueSpecs = valueSpecs
+	if err := errors.Join(
+		optional.Convert_optional_String_To_string(&in.MACAddress, &out.MACAddress, s),
+		optional.Convert_optional_String_To_string(&in.HostID, &out.HostID, s),
+		optional.Convert_optional_String_To_string(&in.VNICType, &out.VNICType, s),
+	); err != nil {
 		return err
 	}
 
@@ -534,6 +649,8 @@ func Convert_v1alpha6_OpenStackIdentityReference_To_v1beta1_OpenStackIdentityRef
 
 func Convert_v1beta1_OpenStackIdentityReference_To_v1alpha6_OpenStackIdentityReference(in *infrav1.OpenStackIdentityReference, out *OpenStackIdentityReference, _ apiconversion.Scope) error {
 	out.Name = in.Name
+	// Kind will be overwritten during restore if it was previously set to some other value, but if not then some value is still required
+	out.Kind = "Secret"
 	return nil
 }
 

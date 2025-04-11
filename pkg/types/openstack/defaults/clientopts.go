@@ -1,7 +1,7 @@
 package defaults
 
 import (
-	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 )
 
 // DefaultClientOpts generates default client opts based on cloud name

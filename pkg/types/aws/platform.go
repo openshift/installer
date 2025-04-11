@@ -1,9 +1,12 @@
 package aws
 
 import (
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/installer/pkg/types/dns"
 )
 
 const (
@@ -16,8 +19,9 @@ const (
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
-	// AMIID is the AMI that should be used to boot machines for the cluster.
-	// If set, the AMI should belong to the same region as the cluster.
+	// The field is deprecated. AMIID is the AMI that should be used to boot
+	// machines for the cluster. If set, the AMI should belong to the same
+	// region as the cluster.
 	//
 	// +optional
 	AMIID string `json:"amiID,omitempty"`
@@ -29,8 +33,15 @@ type Platform struct {
 	// resources will be created.  Leave unset to have the installer
 	// create subnets in a new VPC on your behalf.
 	//
+	// Deprecated: use platform.aws.vpc.subnets
+	//
 	// +optional
-	Subnets []string `json:"subnets,omitempty"`
+	DeprecatedSubnets []string `json:"subnets,omitempty"`
+
+	// VPC specifies the VPC configuration for the cluster.
+	//
+	// +optional
+	VPC VPC `json:"vpc,omitempty"`
 
 	// HostedZone is the ID of an existing hosted zone into which to add DNS
 	// records for the cluster's internal API. An existing hosted zone can
@@ -102,15 +113,27 @@ type Platform struct {
 	// +optional
 	LBType configv1.AWSLBType `json:"lbType,omitempty"`
 
-	// PreserveBootstrapIgnition is an optional field that can be used to make the S3 deletion optional
-	// during bootstrap destroy.
+	// PreserveBootstrapIgnition is deprecated. Use bestEffortDeleteIgnition instead.
 	// +optional
 	PreserveBootstrapIgnition bool `json:"preserveBootstrapIgnition,omitempty"`
+
+	// BestEffortDeleteIgnition is an optional field that can be used to ignore errors from S3 deletion of ignition
+	// objects during cluster bootstrap. The default behavior is to fail the installation if ignition objects cannot be
+	// deleted. Enable this functionality when there are known reasons disallowing their deletion.
+	// +optional
+	BestEffortDeleteIgnition bool `json:"bestEffortDeleteIgnition,omitempty"`
 
 	// PublicIpv4Pool is an optional field that can be used to tell the installation process to use
 	// Public IPv4 address that you bring to your AWS account with BYOIP.
 	// +optional
 	PublicIpv4Pool string `json:"publicIpv4Pool,omitempty"`
+
+	// UserProvisionedDNS indicates if the customer is providing their own DNS solution in place of the default
+	// provisioned by the Installer.
+	// +kubebuilder:default:="Disabled"
+	// +default="Disabled"
+	// +kubebuilder:validation:Enum="Enabled";"Disabled"
+	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to
@@ -128,6 +151,87 @@ type ServiceEndpoint struct {
 	URL string `json:"url"`
 }
 
+// VPC configures the VPC for the cluster.
+type VPC struct {
+	// Subnets defines the subnets in an existing VPC and can optionally specify their intended roles.
+	// If no roles are specified on any subnet, then the subnet roles are decided automatically.
+	// In this case, the VPC must not contain any other non-cluster subnets without the kubernetes.io/cluster/<cluster-id> tag.
+	//
+	// For manually specified subnet role selection, each subnet must have at least one assigned role,
+	// and the ClusterNode, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB roles must be assigned to at least one subnet.
+	// However, if the cluster scope is internal, then ControlPlaneExternalLB is not required.
+	//
+	// Subnets must contain unique IDs, and can include no more than 10 subnets with the IngressController role.
+	//
+	// Leave this field unset to have the installer create subnets in a new VPC on your behalf.
+	//
+	// +listType=atomic
+	// +optional
+	Subnets []Subnet `json:"subnets,omitempty"`
+}
+
+// Subnet specifies a subnet in an existing VPC and can optionally specify their intended roles.
+type Subnet struct {
+	// ID specifies the subnet ID of an existing subnet.
+	// The subnet ID must start with "subnet-", consist only of alphanumeric characters,
+	// and must be exactly 24 characters long.
+	//
+	// +required
+	ID AWSSubnetID `json:"id"`
+
+	// Roles specifies the roles (aka functions) that the subnet will provide in the cluster.
+	// If no roles are specified on any subnet, then the subnet roles are decided automatically.
+	// Each role must be unique.
+	//
+	// +kubebuilder:validation:MaxItems=5
+	// +optional
+	Roles []SubnetRole `json:"roles,omitempty"`
+}
+
+// SubnetRole specifies the role (aka function) that the subnet will provide in the cluster.
+type SubnetRole struct {
+	// Type specifies the type of role (aka function) that the subnet will provide in the cluster.
+	// Role types include ClusterNode, EdgeNode, BootstrapNode, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB.
+	//
+	// +required
+	Type SubnetRoleType `json:"type"`
+}
+
+// AWSSubnetID is a reference to an AWS subnet ID.
+// +kubebuilder:validation:MinLength=24
+// +kubebuilder:validation:MaxLength=24
+// +kubebuilder:validation:Pattern=`^subnet-[0-9A-Za-z]+$`
+type AWSSubnetID string // nolint:revive
+
+// SubnetRoleType defines the type of role (aka function) that the subnet will provide in the cluster.
+// +kubebuilder:validation:Enum:="ClusterNode";"EdgeNode";"BootstrapNode";"IngressControllerLB";"ControlPlaneExternalLB";"ControlPlaneInternalLB"
+type SubnetRoleType string
+
+const (
+	// ClusterNodeSubnetRole specifies subnets that will be used as subnets for the
+	// control plane and compute nodes.
+	ClusterNodeSubnetRole SubnetRoleType = "ClusterNode"
+
+	// EdgeNodeSubnetRole specifies subnets that will be used as edge subnets residing
+	// in Local or Wavelength Zones for edge compute nodes.
+	EdgeNodeSubnetRole SubnetRoleType = "EdgeNode"
+
+	// BootstrapNodeSubnetRole specifies subnets that will be used as subnets for the
+	// bootstrap node used to create the cluster.
+	BootstrapNodeSubnetRole SubnetRoleType = "BootstrapNode"
+
+	// IngressControllerLBSubnetRole specifies subnets used by the default IngressController.
+	IngressControllerLBSubnetRole SubnetRoleType = "IngressControllerLB"
+
+	// ControlPlaneExternalLBSubnetRole specifies subnets used by the external control plane
+	// load balancer that serves the Kubernetes API server.
+	ControlPlaneExternalLBSubnetRole SubnetRoleType = "ControlPlaneExternalLB"
+
+	// ControlPlaneInternalLBSubnetRole specifies subnets used by the internal control plane
+	// load balancer that serves the Kubernetes API server.
+	ControlPlaneInternalLBSubnetRole SubnetRoleType = "ControlPlaneInternalLB"
+)
+
 // IsSecretRegion returns true if the region is part of either the ISO or ISOB partitions.
 func IsSecretRegion(region string) bool {
 	partition, ok := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region)
@@ -139,4 +243,11 @@ func IsSecretRegion(region string) bool {
 		return true
 	}
 	return false
+}
+
+// IsPublicOnlySubnetsEnabled returns whether the public-only subnets feature has been enabled via env var.
+func IsPublicOnlySubnetsEnabled() bool {
+	// Even though this looks too simple for a function, it's better than having to update the logic everywhere it's
+	// used in case we decide to check for specific values set in the env var.
+	return os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY") != ""
 }

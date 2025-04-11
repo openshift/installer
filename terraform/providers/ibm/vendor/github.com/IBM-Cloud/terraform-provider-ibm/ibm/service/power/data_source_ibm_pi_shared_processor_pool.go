@@ -5,144 +5,157 @@ package power
 
 import (
 	"context"
+	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func DataSourceIBMPISharedProcessorPool() *schema.Resource {
-
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPISharedProcessorPoolRead,
 		Schema: map[string]*schema.Schema{
-			Arg_SharedProcessorPoolID: {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-
+			// Arguments
 			Arg_CloudInstanceID: {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "PI cloud instance ID",
+				Description:  "The GUID of the service instance associated with an account.",
+				Required:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validation.NoZeroValues,
+			},
+			Arg_SharedProcessorPoolID: {
+				Description:  "The ID of the shared processor pool.",
+				Required:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validation.NoZeroValues,
 			},
 
-			Attr_SharedProcessorPoolName: {
-				Type:        schema.TypeString,
+			// Attributes
+			Attr_AllocatedCores: {
 				Computed:    true,
-				Description: "Name of the shared processor pool",
-			},
-
-			Attr_SharedProcessorPoolHostID: {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "The host ID where the shared processor pool resides",
-			},
-
-			Attr_SharedProcessorPoolReservedCores: {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "The amount of reserved cores for the shared processor pool",
-			},
-
-			Attr_SharedProcessorPoolAvailableCores: {
+				Description: "The allocated cores in the shared processor pool.",
 				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Shared processor pool available cores",
 			},
-
-			Attr_SharedProcessorPoolAllocatedCores: {
+			Attr_AvailableCores: {
+				Computed:    true,
+				Description: "The available cores in the shared processor pool.",
 				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Shared processor pool allocated cores",
 			},
-
-			Attr_SharedProcessorPoolStatus: {
+			Attr_CRN: {
+				Computed:    true,
+				Description: "The CRN of this resource.",
 				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The status of the shared processor pool",
 			},
-
-			Attr_SharedProcessorPoolStatusDetail: {
+			Attr_DedicatedHostID: {
+				Computed:    true,
+				Description: "The dedicated host ID where the shared processor pool resides.",
 				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The status details of the shared processor pool",
 			},
-
-			Attr_SharedProcessorPoolInstances: {
-				Type:        schema.TypeList,
+			Attr_HostID: {
 				Computed:    true,
-				Description: "List of server instances deployed in the shared processor pool",
+				Description: "The host ID where the shared processor pool resides.",
+				Type:        schema.TypeInt,
+			},
+			Attr_Instances: {
+				Computed:    true,
+				Description: "List of server instances deployed in the shared processor pool.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						Attr_SharedProcessorPoolInstanceCpus: {
-							Type:        schema.TypeInt,
-							Optional:    true,
+						Attr_AvailabilityZone: {
 							Computed:    true,
-							Description: "The amount of cpus for the server instance",
+							Description: "Availability zone for the server instances.",
+							Optional:    true,
+							Type:        schema.TypeString,
 						},
-						Attr_SharedProcessorPoolInstanceUncapped: {
+						Attr_CPUs: {
+							Computed:    true,
+							Description: "The amount of cpus for the server instance.",
+							Optional:    true,
+							Type:        schema.TypeInt,
+						},
+						Attr_ID: {
+							Computed:    true,
+							Description: "The server instance ID.",
+							Optional:    true,
+							Type:        schema.TypeString,
+						},
+						Attr_Memory: {
+							Computed:    true,
+							Description: "The amount of memory for the server instance.",
+							Optional:    true,
+							Type:        schema.TypeInt,
+						},
+						Attr_Name: {
+							Computed:    true,
+							Description: "The server instance name.",
+							Optional:    true,
+							Type:        schema.TypeString,
+						},
+						Attr_Status: {
+							Computed:    true,
+							Description: "Status of the instance.",
+							Optional:    true,
+							Type:        schema.TypeString,
+						},
+						Attr_Uncapped: {
+							Computed:    true,
+							Description: "Identifies if uncapped or not.",
+							Optional:    true,
 							Type:        schema.TypeBool,
-							Optional:    true,
-							Computed:    true,
-							Description: "Identifies if uncapped or not",
 						},
-						Attr_SharedProcessorPoolInstanceAvailabilityZone: {
-							Type:        schema.TypeString,
-							Optional:    true,
+						Attr_VCPUs: {
 							Computed:    true,
-							Description: "Availability zone for the server instances",
-						},
-						Attr_SharedProcessorPoolInstanceId: {
-							Type:        schema.TypeString,
+							Description: "The amout of vcpus for the server instance.",
 							Optional:    true,
-							Computed:    true,
-							Description: "The server instance ID",
-						},
-						Attr_SharedProcessorPoolInstanceMemory: {
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Computed:    true,
-							Description: "The amount of memory for the server instance",
-						},
-						Attr_SharedProcessorPoolInstanceName: {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Computed:    true,
-							Description: "The server instance name",
-						},
-						Attr_SharedProcessorPoolInstanceStatus: {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Computed:    true,
-							Description: "Status of the server",
-						},
-						Attr_SharedProcessorPoolInstanceVcpus: {
 							Type:        schema.TypeFloat,
-							Optional:    true,
-							Computed:    true,
-							Description: "The amout of vcpus for the server instance",
 						},
 					},
 				},
+				Type: schema.TypeList,
+			},
+			Attr_Name: {
+				Computed:    true,
+				Description: "The name of the shared processor pool.",
+				Type:        schema.TypeString,
+			},
+			Attr_ReservedCores: {
+				Computed:    true,
+				Description: "The amount of reserved cores for the shared processor pool.",
+				Type:        schema.TypeInt,
+			},
+			Attr_Status: {
+				Computed:    true,
+				Description: "The status of the shared processor pool.",
+				Type:        schema.TypeString,
+			},
+			Attr_StatusDetail: {
+				Computed:    true,
+				Description: "The status details of the shared processor pool.",
+				Type:        schema.TypeString,
+			},
+			Attr_UserTags: {
+				Computed:    true,
+				Description: "List of user tags attached to the resource.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Type:        schema.TypeSet,
 			},
 		},
 	}
 }
 
 func dataSourceIBMPISharedProcessorPoolRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 	poolID := d.Get(Arg_SharedProcessorPoolID).(string)
-	client := st.NewIBMPISharedProcessorPoolClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPISharedProcessorPoolClient(ctx, sess, cloudInstanceID)
 
 	response, err := client.Get(poolID)
 	if err != nil || response == nil {
@@ -150,33 +163,45 @@ func dataSourceIBMPISharedProcessorPoolRead(ctx context.Context, d *schema.Resou
 	}
 
 	d.SetId(*response.SharedProcessorPool.ID)
-	d.Set(Attr_SharedProcessorPoolName, response.SharedProcessorPool.Name)
-	d.Set(Attr_SharedProcessorPoolReservedCores, response.SharedProcessorPool.ReservedCores)
-	d.Set(Attr_SharedProcessorPoolAllocatedCores, response.SharedProcessorPool.AllocatedCores)
-	d.Set(Attr_SharedProcessorPoolAvailableCores, response.SharedProcessorPool.AvailableCores)
-	d.Set(Attr_SharedProcessorPoolHostID, response.SharedProcessorPool.HostID)
-	d.Set(Attr_SharedProcessorPoolStatus, response.SharedProcessorPool.Status)
-	d.Set(Attr_SharedProcessorPoolStatusDetail, response.SharedProcessorPool.StatusDetail)
+	d.Set(Attr_AllocatedCores, response.SharedProcessorPool.AllocatedCores)
+	d.Set(Attr_AvailableCores, response.SharedProcessorPool.AvailableCores)
+	if response.SharedProcessorPool.Crn != "" {
+		d.Set(Attr_CRN, response.SharedProcessorPool.Crn)
+		if response.SharedProcessorPool.Crn != "" {
+			d.Set(Attr_CRN, response.SharedProcessorPool.Crn)
+			tags, err := flex.GetGlobalTagsUsingCRN(meta, string(response.SharedProcessorPool.Crn), "", UserTagType)
+			if err != nil {
+				log.Printf("Error on get of pi shared_processor_pool (%s) user_tags: %s", *response.SharedProcessorPool.ID, err)
+			}
+			d.Set(Attr_UserTags, tags)
+		}
+	}
+	d.Set(Attr_DedicatedHostID, response.SharedProcessorPool.DedicatedHostID)
+	d.Set(Attr_HostID, response.SharedProcessorPool.HostID)
+	d.Set(Attr_Name, response.SharedProcessorPool.Name)
+	d.Set(Attr_ReservedCores, response.SharedProcessorPool.ReservedCores)
+	d.Set(Attr_Status, response.SharedProcessorPool.Status)
+	d.Set(Attr_StatusDetail, response.SharedProcessorPool.StatusDetail)
 
 	serversMap := []map[string]interface{}{}
 	if response.Servers != nil {
 		for _, s := range response.Servers {
 			if s != nil {
 				v := map[string]interface{}{
-					Attr_SharedProcessorPoolInstanceCpus:             s.Cpus,
-					Attr_SharedProcessorPoolInstanceUncapped:         s.Uncapped,
-					Attr_SharedProcessorPoolInstanceAvailabilityZone: s.AvailabilityZone,
-					Attr_SharedProcessorPoolInstanceId:               s.ID,
-					Attr_SharedProcessorPoolInstanceMemory:           s.Memory,
-					Attr_SharedProcessorPoolInstanceName:             s.Name,
-					Attr_SharedProcessorPoolInstanceStatus:           s.Status,
-					Attr_SharedProcessorPoolInstanceVcpus:            s.Vcpus,
+					Attr_AvailabilityZone: s.AvailabilityZone,
+					Attr_CPUs:             s.Cpus,
+					Attr_ID:               s.ID,
+					Attr_Memory:           s.Memory,
+					Attr_Name:             s.Name,
+					Attr_Status:           s.Status,
+					Attr_Uncapped:         s.Uncapped,
+					Attr_VCPUs:            s.Vcpus,
 				}
 				serversMap = append(serversMap, v)
 			}
 		}
 	}
-	d.Set(Attr_SharedProcessorPoolInstances, serversMap)
+	d.Set(Attr_Instances, serversMap)
 
 	return nil
 }

@@ -12,9 +12,21 @@ type cloudResource struct {
 	url      string
 	zone     string
 	quota    []gcp.QuotaUsage
+	scope    resourceScope
 }
 
 type cloudResources map[string]cloudResource
+
+// resourceScope captures whether a resource is global or regional.
+// Currently this is only used for resources handled by the compute service
+// in order to perform wait operations to ensure they are successfully deleted.
+type resourceScope string
+
+const (
+	global   resourceScope = "global"
+	regional resourceScope = "regional"
+	zonal    resourceScope = "zonal"
+)
 
 func (r cloudResources) insert(resources ...cloudResource) cloudResources {
 	for _, resource := range resources {

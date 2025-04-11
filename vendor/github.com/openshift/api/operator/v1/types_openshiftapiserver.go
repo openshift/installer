@@ -25,7 +25,6 @@ type OpenShiftAPIServer struct {
 	metav1.ObjectMeta `json:"metadata"`
 
 	// spec is the specification of the desired behavior of the OpenShift API Server.
-	// +kubebuilder:validation:Required
 	// +required
 	Spec OpenShiftAPIServerSpec `json:"spec"`
 
@@ -40,13 +39,6 @@ type OpenShiftAPIServerSpec struct {
 
 type OpenShiftAPIServerStatus struct {
 	OperatorStatus `json:",inline"`
-
-	// latestAvailableRevision is the latest revision used as suffix of revisioned
-	// secrets like encryption-config. A new revision causes a new deployment of
-	// pods.
-	// +optional
-	// +kubebuilder:validation:Minimum=0
-	LatestAvailableRevision int32 `json:"latestAvailableRevision,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -62,6 +54,6 @@ type OpenShiftAPIServerList struct {
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata"`
 
-	// Items contains the items
+	// items contains the items
 	Items []OpenShiftAPIServer `json:"items"`
 }

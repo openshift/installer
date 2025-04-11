@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2022.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	base "github.com/IBM/cloudant-go-sdk/base"
 	common "github.com/IBM/cloudant-go-sdk/common"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/go-openapi/strfmt"
@@ -35,11 +36,11 @@ import (
 // CloudantV1 : NoSQL database based on Apache CouchDB
 // See: https://cloud.ibm.com/docs/services/Cloudant/
 type CloudantV1 struct {
-	Service *common.BaseService
+	Service *base.BaseService
 }
 
 // DefaultServiceURL is the default URL to make service requests to.
-const DefaultServiceURL = "http://localhost:5984"
+const DefaultServiceURL = "https://~replace-with-cloudant-host~.cloudantnosqldb.appdomain.cloud"
 
 // DefaultServiceName is the default key used to find external configuration information.
 const DefaultServiceName = "cloudant"
@@ -58,24 +59,28 @@ func NewCloudantV1UsingExternalConfig(options *CloudantV1Options) (cloudant *Clo
 	}
 
 	if options.Authenticator == nil {
-		options.Authenticator, err = common.GetAuthenticatorFromEnvironment(options.ServiceName)
+		options.Authenticator, err = base.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	cloudant, err = NewCloudantV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = cloudant.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = cloudant.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -83,19 +88,21 @@ func NewCloudantV1UsingExternalConfig(options *CloudantV1Options) (cloudant *Clo
 // NewCloudantV1 : constructs an instance of CloudantV1 with passed in options.
 func NewCloudantV1(options *CloudantV1Options) (service *CloudantV1, err error) {
 	serviceOptions := &core.ServiceOptions{
-		URL:           DefaultServiceURL,
-		Authenticator: options.Authenticator,
+		URL:                   DefaultServiceURL,
+		Authenticator:         options.Authenticator,
 		EnableGzipCompression: true,
 	}
 
-	baseService, err := common.NewBaseService(serviceOptions)
+	baseService, err := base.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -109,7 +116,7 @@ func NewCloudantV1(options *CloudantV1Options) (service *CloudantV1, err error) 
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "cloudant" suitable for processing requests.
@@ -124,7 +131,11 @@ func (cloudant *CloudantV1) Clone() *CloudantV1 {
 
 // SetServiceURL sets the service URL
 func (cloudant *CloudantV1) SetServiceURL(url string) error {
-	return cloudant.Service.SetServiceURL(url)
+	err := cloudant.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -162,14 +173,19 @@ func (cloudant *CloudantV1) DisableRetries() {
 // When you access the root of an instance, IBM Cloudant returns meta-information about the instance. The response
 // includes a JSON structure that contains information about the server, including a welcome message and the server's
 // version.
+//
+// **Tip:**  The authentication for this endpoint is only enforced when using IAM.
 func (cloudant *CloudantV1) GetServerInformation(getServerInformationOptions *GetServerInformationOptions) (result *ServerInformation, response *core.DetailedResponse, err error) {
-	return cloudant.GetServerInformationWithContext(context.Background(), getServerInformationOptions)
+	result, response, err = cloudant.GetServerInformationWithContext(context.Background(), getServerInformationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetServerInformationWithContext is an alternate form of the GetServerInformation method which supports a Context parameter
 func (cloudant *CloudantV1) GetServerInformationWithContext(ctx context.Context, getServerInformationOptions *GetServerInformationOptions) (result *ServerInformation, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getServerInformationOptions, "getServerInformationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -178,6 +194,7 @@ func (cloudant *CloudantV1) GetServerInformationWithContext(ctx context.Context,
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -193,17 +210,21 @@ func (cloudant *CloudantV1) GetServerInformationWithContext(ctx context.Context,
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getServerInformation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServerInformation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -216,13 +237,16 @@ func (cloudant *CloudantV1) GetServerInformationWithContext(ctx context.Context,
 // Displays the nodes that are part of the cluster as `cluster_nodes`. The field, `all_nodes`, displays all nodes this
 // node knows about, including the ones that are part of the cluster. This endpoint is useful when you set up a cluster.
 func (cloudant *CloudantV1) GetMembershipInformation(getMembershipInformationOptions *GetMembershipInformationOptions) (result *MembershipInformation, response *core.DetailedResponse, err error) {
-	return cloudant.GetMembershipInformationWithContext(context.Background(), getMembershipInformationOptions)
+	result, response, err = cloudant.GetMembershipInformationWithContext(context.Background(), getMembershipInformationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetMembershipInformationWithContext is an alternate form of the GetMembershipInformation method which supports a Context parameter
 func (cloudant *CloudantV1) GetMembershipInformationWithContext(ctx context.Context, getMembershipInformationOptions *GetMembershipInformationOptions) (result *MembershipInformation, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getMembershipInformationOptions, "getMembershipInformationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -231,6 +255,7 @@ func (cloudant *CloudantV1) GetMembershipInformationWithContext(ctx context.Cont
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_membership`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -246,17 +271,21 @@ func (cloudant *CloudantV1) GetMembershipInformationWithContext(ctx context.Cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getMembershipInformation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMembershipInformation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -268,14 +297,19 @@ func (cloudant *CloudantV1) GetMembershipInformationWithContext(ctx context.Cont
 // GetUuids : Retrieve one or more UUIDs
 // Requests one or more Universally Unique Identifiers (UUIDs) from the instance. The response is a JSON object that
 // provides a list of UUIDs.
+//
+// **Tip:**  The authentication for this endpoint is only enforced when using IAM.
 func (cloudant *CloudantV1) GetUuids(getUuidsOptions *GetUuidsOptions) (result *UuidsResult, response *core.DetailedResponse, err error) {
-	return cloudant.GetUuidsWithContext(context.Background(), getUuidsOptions)
+	result, response, err = cloudant.GetUuidsWithContext(context.Background(), getUuidsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetUuidsWithContext is an alternate form of the GetUuids method which supports a Context parameter
 func (cloudant *CloudantV1) GetUuidsWithContext(ctx context.Context, getUuidsOptions *GetUuidsOptions) (result *UuidsResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getUuidsOptions, "getUuidsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -284,6 +318,7 @@ func (cloudant *CloudantV1) GetUuidsWithContext(ctx context.Context, getUuidsOpt
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_uuids`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -303,17 +338,21 @@ func (cloudant *CloudantV1) GetUuidsWithContext(ctx context.Context, getUuidsOpt
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getUuids", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUuidsResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -326,13 +365,16 @@ func (cloudant *CloudantV1) GetUuidsWithContext(ctx context.Context, getUuidsOpt
 // View the amount of provisioned throughput capacity that is allocated to an IBM Cloudant instance and what is the
 // target provisioned throughput capacity.
 func (cloudant *CloudantV1) GetCapacityThroughputInformation(getCapacityThroughputInformationOptions *GetCapacityThroughputInformationOptions) (result *CapacityThroughputInformation, response *core.DetailedResponse, err error) {
-	return cloudant.GetCapacityThroughputInformationWithContext(context.Background(), getCapacityThroughputInformationOptions)
+	result, response, err = cloudant.GetCapacityThroughputInformationWithContext(context.Background(), getCapacityThroughputInformationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetCapacityThroughputInformationWithContext is an alternate form of the GetCapacityThroughputInformation method which supports a Context parameter
 func (cloudant *CloudantV1) GetCapacityThroughputInformationWithContext(ctx context.Context, getCapacityThroughputInformationOptions *GetCapacityThroughputInformationOptions) (result *CapacityThroughputInformation, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getCapacityThroughputInformationOptions, "getCapacityThroughputInformationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -341,6 +383,7 @@ func (cloudant *CloudantV1) GetCapacityThroughputInformationWithContext(ctx cont
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_api/v2/user/capacity/throughput`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -356,17 +399,21 @@ func (cloudant *CloudantV1) GetCapacityThroughputInformationWithContext(ctx cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getCapacityThroughputInformation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCapacityThroughputInformation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -379,17 +426,21 @@ func (cloudant *CloudantV1) GetCapacityThroughputInformationWithContext(ctx cont
 // Sets the target provisioned throughput capacity for an IBM Cloudant instance. When target capacity is changed, the
 // current capacity asynchronously changes to meet the target capacity.
 func (cloudant *CloudantV1) PutCapacityThroughputConfiguration(putCapacityThroughputConfigurationOptions *PutCapacityThroughputConfigurationOptions) (result *CapacityThroughputInformation, response *core.DetailedResponse, err error) {
-	return cloudant.PutCapacityThroughputConfigurationWithContext(context.Background(), putCapacityThroughputConfigurationOptions)
+	result, response, err = cloudant.PutCapacityThroughputConfigurationWithContext(context.Background(), putCapacityThroughputConfigurationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PutCapacityThroughputConfigurationWithContext is an alternate form of the PutCapacityThroughputConfiguration method which supports a Context parameter
 func (cloudant *CloudantV1) PutCapacityThroughputConfigurationWithContext(ctx context.Context, putCapacityThroughputConfigurationOptions *PutCapacityThroughputConfigurationOptions) (result *CapacityThroughputInformation, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(putCapacityThroughputConfigurationOptions, "putCapacityThroughputConfigurationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(putCapacityThroughputConfigurationOptions, "putCapacityThroughputConfigurationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -398,6 +449,7 @@ func (cloudant *CloudantV1) PutCapacityThroughputConfigurationWithContext(ctx co
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_api/v2/user/capacity/throughput`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -418,22 +470,27 @@ func (cloudant *CloudantV1) PutCapacityThroughputConfigurationWithContext(ctx co
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "putCapacityThroughputConfiguration", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCapacityThroughputInformation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -443,18 +500,25 @@ func (cloudant *CloudantV1) PutCapacityThroughputConfigurationWithContext(ctx co
 }
 
 // GetDbUpdates : Retrieve change events for all databases
+// **This endpoint is not available in IBM Cloudant.**
+//
 // Lists changes to databases, like a global changes feed. Types of changes include updating the database and creating
 // or deleting a database. Like the changes feed, the feed is not guaranteed to return changes in the correct order and
 // might repeat changes. Polling modes for this method work like polling modes for the changes feed.
-// **Note: This endpoint requires _admin or _db_updates role and is only available on dedicated clusters.**.
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (cloudant *CloudantV1) GetDbUpdates(getDbUpdatesOptions *GetDbUpdatesOptions) (result *DbUpdates, response *core.DetailedResponse, err error) {
-	return cloudant.GetDbUpdatesWithContext(context.Background(), getDbUpdatesOptions)
+	result, response, err = cloudant.GetDbUpdatesWithContext(context.Background(), getDbUpdatesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDbUpdatesWithContext is an alternate form of the GetDbUpdates method which supports a Context parameter
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (cloudant *CloudantV1) GetDbUpdatesWithContext(ctx context.Context, getDbUpdatesOptions *GetDbUpdatesOptions) (result *DbUpdates, response *core.DetailedResponse, err error) {
+	core.GetLogger().Warn("A deprecated operation has been invoked: GetDbUpdates")
 	err = core.ValidateStruct(getDbUpdatesOptions, "getDbUpdatesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -463,6 +527,7 @@ func (cloudant *CloudantV1) GetDbUpdatesWithContext(ctx context.Context, getDbUp
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_db_updates`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -476,11 +541,17 @@ func (cloudant *CloudantV1) GetDbUpdatesWithContext(ctx context.Context, getDbUp
 	}
 	builder.AddHeader("Accept", "application/json")
 
+	if getDbUpdatesOptions.Descending != nil {
+		builder.AddQuery("descending", fmt.Sprint(*getDbUpdatesOptions.Descending))
+	}
 	if getDbUpdatesOptions.Feed != nil {
 		builder.AddQuery("feed", fmt.Sprint(*getDbUpdatesOptions.Feed))
 	}
 	if getDbUpdatesOptions.Heartbeat != nil {
 		builder.AddQuery("heartbeat", fmt.Sprint(*getDbUpdatesOptions.Heartbeat))
+	}
+	if getDbUpdatesOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*getDbUpdatesOptions.Limit))
 	}
 	if getDbUpdatesOptions.Timeout != nil {
 		builder.AddQuery("timeout", fmt.Sprint(*getDbUpdatesOptions.Timeout))
@@ -491,17 +562,21 @@ func (cloudant *CloudantV1) GetDbUpdatesWithContext(ctx context.Context, getDbUp
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getDbUpdates", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDbUpdates)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -513,18 +588,32 @@ func (cloudant *CloudantV1) GetDbUpdatesWithContext(ctx context.Context, getDbUp
 // PostChanges : Query the database document changes feed
 // Requests the database changes feed in the same way as `GET /{db}/_changes` does. It is widely used with the `filter`
 // query parameter because it allows one to pass more information to the filter.
+//
+// ### Note
+//
+// Before using the changes feed read the
+// [FAQs](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-faq-using-changes-feed) to understand the limitations and
+// appropriate use cases.
+//
+// If you need to pass parameters to dynamically change the filtered content use the `_selector` filter type for better
+// performance and compatibility. The SDKs have full support for change requests using selector filters, but don't
+// support passing parameters to design document filters.
 func (cloudant *CloudantV1) PostChanges(postChangesOptions *PostChangesOptions) (result *ChangesResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostChangesWithContext(context.Background(), postChangesOptions)
+	result, response, err = cloudant.PostChangesWithContext(context.Background(), postChangesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostChangesWithContext is an alternate form of the PostChanges method which supports a Context parameter
 func (cloudant *CloudantV1) PostChangesWithContext(ctx context.Context, postChangesOptions *PostChangesOptions) (result *ChangesResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postChangesOptions, "postChangesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postChangesOptions, "postChangesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -537,6 +626,7 @@ func (cloudant *CloudantV1) PostChangesWithContext(ctx context.Context, postChan
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_changes`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -609,22 +699,27 @@ func (cloudant *CloudantV1) PostChangesWithContext(ctx context.Context, postChan
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postChanges", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalChangesResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -636,18 +731,32 @@ func (cloudant *CloudantV1) PostChangesWithContext(ctx context.Context, postChan
 // PostChangesAsStream : Query the database document changes feed as stream
 // Requests the database changes feed in the same way as `GET /{db}/_changes` does. It is widely used with the `filter`
 // query parameter because it allows one to pass more information to the filter.
+//
+// ### Note
+//
+// Before using the changes feed read the
+// [FAQs](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-faq-using-changes-feed) to understand the limitations and
+// appropriate use cases.
+//
+// If you need to pass parameters to dynamically change the filtered content use the `_selector` filter type for better
+// performance and compatibility. The SDKs have full support for change requests using selector filters, but don't
+// support passing parameters to design document filters.
 func (cloudant *CloudantV1) PostChangesAsStream(postChangesOptions *PostChangesOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostChangesAsStreamWithContext(context.Background(), postChangesOptions)
+	result, response, err = cloudant.PostChangesAsStreamWithContext(context.Background(), postChangesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostChangesAsStreamWithContext is an alternate form of the PostChangesAsStream method which supports a Context parameter
 func (cloudant *CloudantV1) PostChangesAsStreamWithContext(ctx context.Context, postChangesOptions *PostChangesOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postChangesOptions, "postChangesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postChangesOptions, "postChangesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -660,6 +769,7 @@ func (cloudant *CloudantV1) PostChangesAsStreamWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_changes`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -732,15 +842,22 @@ func (cloudant *CloudantV1) PostChangesAsStreamWithContext(ctx context.Context, 
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postChangesAsStream", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -749,17 +866,21 @@ func (cloudant *CloudantV1) PostChangesAsStreamWithContext(ctx context.Context, 
 // Returns the HTTP headers that contain a minimal amount of information about the specified database. Since the
 // response body is empty, using the HEAD method is a lightweight way to check if the database exists or not.
 func (cloudant *CloudantV1) HeadDatabase(headDatabaseOptions *HeadDatabaseOptions) (response *core.DetailedResponse, err error) {
-	return cloudant.HeadDatabaseWithContext(context.Background(), headDatabaseOptions)
+	response, err = cloudant.HeadDatabaseWithContext(context.Background(), headDatabaseOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // HeadDatabaseWithContext is an alternate form of the HeadDatabase method which supports a Context parameter
 func (cloudant *CloudantV1) HeadDatabaseWithContext(ctx context.Context, headDatabaseOptions *HeadDatabaseOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(headDatabaseOptions, "headDatabaseOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(headDatabaseOptions, "headDatabaseOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -772,6 +893,7 @@ func (cloudant *CloudantV1) HeadDatabaseWithContext(ctx context.Context, headDat
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -786,23 +908,33 @@ func (cloudant *CloudantV1) HeadDatabaseWithContext(ctx context.Context, headDat
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "headDatabase", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
 // GetAllDbs : Query a list of all database names in the instance
+// Query to retrieve a list of database names from the instance.
 func (cloudant *CloudantV1) GetAllDbs(getAllDbsOptions *GetAllDbsOptions) (result []string, response *core.DetailedResponse, err error) {
-	return cloudant.GetAllDbsWithContext(context.Background(), getAllDbsOptions)
+	result, response, err = cloudant.GetAllDbsWithContext(context.Background(), getAllDbsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAllDbsWithContext is an alternate form of the GetAllDbs method which supports a Context parameter
 func (cloudant *CloudantV1) GetAllDbsWithContext(ctx context.Context, getAllDbsOptions *GetAllDbsOptions) (result []string, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getAllDbsOptions, "getAllDbsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -811,6 +943,7 @@ func (cloudant *CloudantV1) GetAllDbsWithContext(ctx context.Context, getAllDbsO
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_all_dbs`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -827,8 +960,8 @@ func (cloudant *CloudantV1) GetAllDbsWithContext(ctx context.Context, getAllDbsO
 	if getAllDbsOptions.Descending != nil {
 		builder.AddQuery("descending", fmt.Sprint(*getAllDbsOptions.Descending))
 	}
-	if getAllDbsOptions.Endkey != nil {
-		builder.AddQuery("endkey", fmt.Sprint(*getAllDbsOptions.Endkey))
+	if getAllDbsOptions.EndKey != nil {
+		builder.AddQuery("end_key", fmt.Sprint(*getAllDbsOptions.EndKey))
 	}
 	if getAllDbsOptions.Limit != nil {
 		builder.AddQuery("limit", fmt.Sprint(*getAllDbsOptions.Limit))
@@ -836,16 +969,22 @@ func (cloudant *CloudantV1) GetAllDbsWithContext(ctx context.Context, getAllDbsO
 	if getAllDbsOptions.Skip != nil {
 		builder.AddQuery("skip", fmt.Sprint(*getAllDbsOptions.Skip))
 	}
-	if getAllDbsOptions.Startkey != nil {
-		builder.AddQuery("startkey", fmt.Sprint(*getAllDbsOptions.Startkey))
+	if getAllDbsOptions.StartKey != nil {
+		builder.AddQuery("start_key", fmt.Sprint(*getAllDbsOptions.StartKey))
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "getAllDbs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -855,17 +994,21 @@ func (cloudant *CloudantV1) GetAllDbsWithContext(ctx context.Context, getAllDbsO
 // multiple `GET /{db}` requests. It returns a list that contains an information object for each database specified in
 // the request.
 func (cloudant *CloudantV1) PostDbsInfo(postDbsInfoOptions *PostDbsInfoOptions) (result []DbsInfoResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostDbsInfoWithContext(context.Background(), postDbsInfoOptions)
+	result, response, err = cloudant.PostDbsInfoWithContext(context.Background(), postDbsInfoOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostDbsInfoWithContext is an alternate form of the PostDbsInfo method which supports a Context parameter
 func (cloudant *CloudantV1) PostDbsInfoWithContext(ctx context.Context, postDbsInfoOptions *PostDbsInfoOptions) (result []DbsInfoResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postDbsInfoOptions, "postDbsInfoOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postDbsInfoOptions, "postDbsInfoOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -874,6 +1017,7 @@ func (cloudant *CloudantV1) PostDbsInfoWithContext(ctx context.Context, postDbsI
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_dbs_info`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -894,22 +1038,27 @@ func (cloudant *CloudantV1) PostDbsInfoWithContext(ctx context.Context, postDbsI
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse []json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postDbsInfo", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDbsInfoResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -923,17 +1072,21 @@ func (cloudant *CloudantV1) PostDbsInfoWithContext(ctx context.Context, postDbsI
 // the server responds with a 400 HTTP status code when the request URL includes a `?rev=` parameter. This response
 // suggests that a user wanted to delete a document but forgot to add the document ID to the URL.
 func (cloudant *CloudantV1) DeleteDatabase(deleteDatabaseOptions *DeleteDatabaseOptions) (result *Ok, response *core.DetailedResponse, err error) {
-	return cloudant.DeleteDatabaseWithContext(context.Background(), deleteDatabaseOptions)
+	result, response, err = cloudant.DeleteDatabaseWithContext(context.Background(), deleteDatabaseOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteDatabaseWithContext is an alternate form of the DeleteDatabase method which supports a Context parameter
 func (cloudant *CloudantV1) DeleteDatabaseWithContext(ctx context.Context, deleteDatabaseOptions *DeleteDatabaseOptions) (result *Ok, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteDatabaseOptions, "deleteDatabaseOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteDatabaseOptions, "deleteDatabaseOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -946,6 +1099,7 @@ func (cloudant *CloudantV1) DeleteDatabaseWithContext(ctx context.Context, delet
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -961,17 +1115,21 @@ func (cloudant *CloudantV1) DeleteDatabaseWithContext(ctx context.Context, delet
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "deleteDatabase", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOk)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -981,18 +1139,23 @@ func (cloudant *CloudantV1) DeleteDatabaseWithContext(ctx context.Context, delet
 }
 
 // GetDatabaseInformation : Retrieve information about a database
+// Retrieve detailed information about the database.
 func (cloudant *CloudantV1) GetDatabaseInformation(getDatabaseInformationOptions *GetDatabaseInformationOptions) (result *DatabaseInformation, response *core.DetailedResponse, err error) {
-	return cloudant.GetDatabaseInformationWithContext(context.Background(), getDatabaseInformationOptions)
+	result, response, err = cloudant.GetDatabaseInformationWithContext(context.Background(), getDatabaseInformationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDatabaseInformationWithContext is an alternate form of the GetDatabaseInformation method which supports a Context parameter
 func (cloudant *CloudantV1) GetDatabaseInformationWithContext(ctx context.Context, getDatabaseInformationOptions *GetDatabaseInformationOptions) (result *DatabaseInformation, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDatabaseInformationOptions, "getDatabaseInformationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDatabaseInformationOptions, "getDatabaseInformationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1005,6 +1168,7 @@ func (cloudant *CloudantV1) GetDatabaseInformationWithContext(ctx context.Contex
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1020,17 +1184,21 @@ func (cloudant *CloudantV1) GetDatabaseInformationWithContext(ctx context.Contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getDatabaseInformation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDatabaseInformation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1040,18 +1208,23 @@ func (cloudant *CloudantV1) GetDatabaseInformationWithContext(ctx context.Contex
 }
 
 // PutDatabase : Create a database
+// Create a new database with the requested properties.
 func (cloudant *CloudantV1) PutDatabase(putDatabaseOptions *PutDatabaseOptions) (result *Ok, response *core.DetailedResponse, err error) {
-	return cloudant.PutDatabaseWithContext(context.Background(), putDatabaseOptions)
+	result, response, err = cloudant.PutDatabaseWithContext(context.Background(), putDatabaseOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PutDatabaseWithContext is an alternate form of the PutDatabase method which supports a Context parameter
 func (cloudant *CloudantV1) PutDatabaseWithContext(ctx context.Context, putDatabaseOptions *PutDatabaseOptions) (result *Ok, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(putDatabaseOptions, "putDatabaseOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(putDatabaseOptions, "putDatabaseOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1064,6 +1237,7 @@ func (cloudant *CloudantV1) PutDatabaseWithContext(ctx context.Context, putDatab
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1086,17 +1260,21 @@ func (cloudant *CloudantV1) PutDatabaseWithContext(ctx context.Context, putDatab
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "putDatabase", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOk)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1111,22 +1289,26 @@ func (cloudant *CloudantV1) PutDatabaseWithContext(ctx context.Context, putDatab
 // requested document, and the Content-Length specifies the length of the data if the document was requested in full.
 // Add any of the query arguments, then the resulting HTTP headers that correspond to it are returned.
 func (cloudant *CloudantV1) HeadDocument(headDocumentOptions *HeadDocumentOptions) (response *core.DetailedResponse, err error) {
-	return cloudant.HeadDocumentWithContext(context.Background(), headDocumentOptions)
+	response, err = cloudant.HeadDocumentWithContext(context.Background(), headDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // HeadDocumentWithContext is an alternate form of the HeadDocument method which supports a Context parameter
 func (cloudant *CloudantV1) HeadDocumentWithContext(ctx context.Context, headDocumentOptions *HeadDocumentOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(headDocumentOptions, "headDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(headDocumentOptions, "headDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *headDocumentOptions.Db,
+		"db":     *headDocumentOptions.Db,
 		"doc_id": *headDocumentOptions.DocID,
 	}
 
@@ -1135,6 +1317,7 @@ func (cloudant *CloudantV1) HeadDocumentWithContext(ctx context.Context, headDoc
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1159,37 +1342,54 @@ func (cloudant *CloudantV1) HeadDocumentWithContext(ctx context.Context, headDoc
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "headDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
 // PostDocument : Create or modify a document in a database
-// Creates or modifies a document in the specified database by using the supplied JSON document. If the JSON document
-// doesn't specify an `_id` field, then the document is created with a new unique ID generated by the UUID algorithm
-// that is configured for the server. If the document includes the `_id` field, then it is created with that `_id` or
-// updated if the `_id` already exists, and an appropriate `_rev` is included in the JSON document. If the `_id`
-// includes the `_local` or `_design` prefix, then this operation is used to create or modify local or design documents
-// respectively.
+// Creates or modifies a document in the specified database by using the supplied JSON document.
+//
+// For creation, you may specify the document ID but you should not specify the revision. If you don't specify the
+// document ID, then the server generates an ID for your document.
+//
+// For modification, you must specify the document ID and a revision identifier in the JSON document.
+//
+// If your document ID includes the `_local/` or `_design/` prefix, then this operation creates or modifies a local or a
+// design document respectively.
 func (cloudant *CloudantV1) PostDocument(postDocumentOptions *PostDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostDocumentWithContext(context.Background(), postDocumentOptions)
+	result, response, err = cloudant.PostDocumentWithContext(context.Background(), postDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostDocumentWithContext is an alternate form of the PostDocument method which supports a Context parameter
 func (cloudant *CloudantV1) PostDocumentWithContext(ctx context.Context, postDocumentOptions *PostDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postDocumentOptions, "postDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postDocumentOptions, "postDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+	if core.IsNil(postDocumentOptions.Document) && core.IsNil(postDocumentOptions.Body) {
+		err = core.SDKErrorf(nil, "one of [postDocumentOptions.Document, postDocumentOptions.Body] must be specified", "condition-not-met", common.GetComponentInfo())
 		return
 	}
 
-	if postDocumentOptions.Document != nil && postDocumentOptions.ContentType == nil {
+	if !core.IsNil(postDocumentOptions.Document) && core.IsNil(postDocumentOptions.ContentType) {
 		postDocumentOptions.SetContentType("application/json")
 	}
 
@@ -1202,6 +1402,7 @@ func (cloudant *CloudantV1) PostDocumentWithContext(ctx context.Context, postDoc
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1224,22 +1425,27 @@ func (cloudant *CloudantV1) PostDocumentWithContext(ctx context.Context, postDoc
 
 	_, err = builder.SetBodyContent(core.StringNilMapper(postDocumentOptions.ContentType), postDocumentOptions.Document, nil, postDocumentOptions.Body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-body-content-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocumentResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1254,17 +1460,21 @@ func (cloudant *CloudantV1) PostDocumentWithContext(ctx context.Context, postDoc
 // body parameters are specified, results for all documents in the database are returned. Optionally, document content
 // or additional metadata can be included in the response.
 func (cloudant *CloudantV1) PostAllDocs(postAllDocsOptions *PostAllDocsOptions) (result *AllDocsResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostAllDocsWithContext(context.Background(), postAllDocsOptions)
+	result, response, err = cloudant.PostAllDocsWithContext(context.Background(), postAllDocsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostAllDocsWithContext is an alternate form of the PostAllDocs method which supports a Context parameter
 func (cloudant *CloudantV1) PostAllDocsWithContext(ctx context.Context, postAllDocsOptions *PostAllDocsOptions) (result *AllDocsResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postAllDocsOptions, "postAllDocsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postAllDocsOptions, "postAllDocsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1277,6 +1487,7 @@ func (cloudant *CloudantV1) PostAllDocsWithContext(ctx context.Context, postAllD
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_all_docs`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1319,8 +1530,8 @@ func (cloudant *CloudantV1) PostAllDocsWithContext(ctx context.Context, postAllD
 	if postAllDocsOptions.UpdateSeq != nil {
 		body["update_seq"] = postAllDocsOptions.UpdateSeq
 	}
-	if postAllDocsOptions.Endkey != nil {
-		body["endkey"] = postAllDocsOptions.Endkey
+	if postAllDocsOptions.EndKey != nil {
+		body["end_key"] = postAllDocsOptions.EndKey
 	}
 	if postAllDocsOptions.Key != nil {
 		body["key"] = postAllDocsOptions.Key
@@ -1328,27 +1539,32 @@ func (cloudant *CloudantV1) PostAllDocsWithContext(ctx context.Context, postAllD
 	if postAllDocsOptions.Keys != nil {
 		body["keys"] = postAllDocsOptions.Keys
 	}
-	if postAllDocsOptions.Startkey != nil {
-		body["startkey"] = postAllDocsOptions.Startkey
+	if postAllDocsOptions.StartKey != nil {
+		body["start_key"] = postAllDocsOptions.StartKey
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postAllDocs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAllDocsResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1363,17 +1579,21 @@ func (cloudant *CloudantV1) PostAllDocsWithContext(ctx context.Context, postAllD
 // body parameters are specified, results for all documents in the database are returned. Optionally, document content
 // or additional metadata can be included in the response.
 func (cloudant *CloudantV1) PostAllDocsAsStream(postAllDocsOptions *PostAllDocsOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostAllDocsAsStreamWithContext(context.Background(), postAllDocsOptions)
+	result, response, err = cloudant.PostAllDocsAsStreamWithContext(context.Background(), postAllDocsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostAllDocsAsStreamWithContext is an alternate form of the PostAllDocsAsStream method which supports a Context parameter
 func (cloudant *CloudantV1) PostAllDocsAsStreamWithContext(ctx context.Context, postAllDocsOptions *PostAllDocsOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postAllDocsOptions, "postAllDocsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postAllDocsOptions, "postAllDocsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1386,6 +1606,7 @@ func (cloudant *CloudantV1) PostAllDocsAsStreamWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_all_docs`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1428,8 +1649,8 @@ func (cloudant *CloudantV1) PostAllDocsAsStreamWithContext(ctx context.Context, 
 	if postAllDocsOptions.UpdateSeq != nil {
 		body["update_seq"] = postAllDocsOptions.UpdateSeq
 	}
-	if postAllDocsOptions.Endkey != nil {
-		body["endkey"] = postAllDocsOptions.Endkey
+	if postAllDocsOptions.EndKey != nil {
+		body["end_key"] = postAllDocsOptions.EndKey
 	}
 	if postAllDocsOptions.Key != nil {
 		body["key"] = postAllDocsOptions.Key
@@ -1437,20 +1658,27 @@ func (cloudant *CloudantV1) PostAllDocsAsStreamWithContext(ctx context.Context, 
 	if postAllDocsOptions.Keys != nil {
 		body["keys"] = postAllDocsOptions.Keys
 	}
-	if postAllDocsOptions.Startkey != nil {
-		body["startkey"] = postAllDocsOptions.Startkey
+	if postAllDocsOptions.StartKey != nil {
+		body["start_key"] = postAllDocsOptions.StartKey
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postAllDocsAsStream", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1460,17 +1688,21 @@ func (cloudant *CloudantV1) PostAllDocsAsStreamWithContext(ctx context.Context, 
 // result objects, one for each query, with a structure equivalent to that of a single `_all_docs` request. This enables
 // you to request multiple queries in a single request, in place of multiple `POST /{db}/_all_docs` requests.
 func (cloudant *CloudantV1) PostAllDocsQueries(postAllDocsQueriesOptions *PostAllDocsQueriesOptions) (result *AllDocsQueriesResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostAllDocsQueriesWithContext(context.Background(), postAllDocsQueriesOptions)
+	result, response, err = cloudant.PostAllDocsQueriesWithContext(context.Background(), postAllDocsQueriesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostAllDocsQueriesWithContext is an alternate form of the PostAllDocsQueries method which supports a Context parameter
 func (cloudant *CloudantV1) PostAllDocsQueriesWithContext(ctx context.Context, postAllDocsQueriesOptions *PostAllDocsQueriesOptions) (result *AllDocsQueriesResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postAllDocsQueriesOptions, "postAllDocsQueriesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postAllDocsQueriesOptions, "postAllDocsQueriesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1483,6 +1715,7 @@ func (cloudant *CloudantV1) PostAllDocsQueriesWithContext(ctx context.Context, p
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_all_docs/queries`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1503,22 +1736,27 @@ func (cloudant *CloudantV1) PostAllDocsQueriesWithContext(ctx context.Context, p
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postAllDocsQueries", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAllDocsQueriesResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1532,17 +1770,21 @@ func (cloudant *CloudantV1) PostAllDocsQueriesWithContext(ctx context.Context, p
 // result objects, one for each query, with a structure equivalent to that of a single `_all_docs` request. This enables
 // you to request multiple queries in a single request, in place of multiple `POST /{db}/_all_docs` requests.
 func (cloudant *CloudantV1) PostAllDocsQueriesAsStream(postAllDocsQueriesOptions *PostAllDocsQueriesOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostAllDocsQueriesAsStreamWithContext(context.Background(), postAllDocsQueriesOptions)
+	result, response, err = cloudant.PostAllDocsQueriesAsStreamWithContext(context.Background(), postAllDocsQueriesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostAllDocsQueriesAsStreamWithContext is an alternate form of the PostAllDocsQueriesAsStream method which supports a Context parameter
 func (cloudant *CloudantV1) PostAllDocsQueriesAsStreamWithContext(ctx context.Context, postAllDocsQueriesOptions *PostAllDocsQueriesOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postAllDocsQueriesOptions, "postAllDocsQueriesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postAllDocsQueriesOptions, "postAllDocsQueriesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1555,6 +1797,7 @@ func (cloudant *CloudantV1) PostAllDocsQueriesAsStreamWithContext(ctx context.Co
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_all_docs/queries`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1575,35 +1818,50 @@ func (cloudant *CloudantV1) PostAllDocsQueriesAsStreamWithContext(ctx context.Co
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postAllDocsQueriesAsStream", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
 // PostBulkDocs : Bulk modify multiple documents in a database
-// The bulk document API allows you to create and update multiple documents at the same time within a single request.
-// The basic operation is similar to creating or updating a single document, except that you batch the document
-// structure and information.
+// The bulk document API allows you to create, update, and delete multiple documents at the same time within a single
+// request. The basic operation is similar to creating, updating, or deleting a single document, except that you batch
+// the document structure and information.
 func (cloudant *CloudantV1) PostBulkDocs(postBulkDocsOptions *PostBulkDocsOptions) (result []DocumentResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostBulkDocsWithContext(context.Background(), postBulkDocsOptions)
+	result, response, err = cloudant.PostBulkDocsWithContext(context.Background(), postBulkDocsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostBulkDocsWithContext is an alternate form of the PostBulkDocs method which supports a Context parameter
 func (cloudant *CloudantV1) PostBulkDocsWithContext(ctx context.Context, postBulkDocsOptions *PostBulkDocsOptions) (result []DocumentResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postBulkDocsOptions, "postBulkDocsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postBulkDocsOptions, "postBulkDocsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+	if core.IsNil(postBulkDocsOptions.BulkDocs) && core.IsNil(postBulkDocsOptions.Body) {
+		err = core.SDKErrorf(nil, "one of [postBulkDocsOptions.BulkDocs, postBulkDocsOptions.Body] must be specified", "condition-not-met", common.GetComponentInfo())
 		return
 	}
 
@@ -1616,6 +1874,7 @@ func (cloudant *CloudantV1) PostBulkDocsWithContext(ctx context.Context, postBul
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_bulk_docs`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1632,22 +1891,27 @@ func (cloudant *CloudantV1) PostBulkDocsWithContext(ctx context.Context, postBul
 
 	_, err = builder.SetBodyContent("application/json", postBulkDocsOptions.BulkDocs, nil, postBulkDocsOptions.Body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-body-content-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse []json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postBulkDocs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocumentResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1659,17 +1923,21 @@ func (cloudant *CloudantV1) PostBulkDocsWithContext(ctx context.Context, postBul
 // PostBulkGet : Bulk query revision information for multiple documents
 // Fetch specific revisions or revision histories for multiple documents in bulk as replicators do.
 func (cloudant *CloudantV1) PostBulkGet(postBulkGetOptions *PostBulkGetOptions) (result *BulkGetResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostBulkGetWithContext(context.Background(), postBulkGetOptions)
+	result, response, err = cloudant.PostBulkGetWithContext(context.Background(), postBulkGetOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostBulkGetWithContext is an alternate form of the PostBulkGet method which supports a Context parameter
 func (cloudant *CloudantV1) PostBulkGetWithContext(ctx context.Context, postBulkGetOptions *PostBulkGetOptions) (result *BulkGetResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postBulkGetOptions, "postBulkGetOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postBulkGetOptions, "postBulkGetOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1682,6 +1950,7 @@ func (cloudant *CloudantV1) PostBulkGetWithContext(ctx context.Context, postBulk
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_bulk_get`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1715,22 +1984,27 @@ func (cloudant *CloudantV1) PostBulkGetWithContext(ctx context.Context, postBulk
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postBulkGet", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBulkGetResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -1742,17 +2016,21 @@ func (cloudant *CloudantV1) PostBulkGetWithContext(ctx context.Context, postBulk
 // PostBulkGetAsMixed : Bulk query revision information for multiple documents as mixed
 // Fetch specific revisions or revision histories for multiple documents in bulk as replicators do.
 func (cloudant *CloudantV1) PostBulkGetAsMixed(postBulkGetOptions *PostBulkGetOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostBulkGetAsMixedWithContext(context.Background(), postBulkGetOptions)
+	result, response, err = cloudant.PostBulkGetAsMixedWithContext(context.Background(), postBulkGetOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostBulkGetAsMixedWithContext is an alternate form of the PostBulkGetAsMixed method which supports a Context parameter
 func (cloudant *CloudantV1) PostBulkGetAsMixedWithContext(ctx context.Context, postBulkGetOptions *PostBulkGetOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postBulkGetOptions, "postBulkGetOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postBulkGetOptions, "postBulkGetOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1765,6 +2043,7 @@ func (cloudant *CloudantV1) PostBulkGetAsMixedWithContext(ctx context.Context, p
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_bulk_get`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1798,15 +2077,22 @@ func (cloudant *CloudantV1) PostBulkGetAsMixedWithContext(ctx context.Context, p
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postBulkGetAsMixed", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1814,17 +2100,21 @@ func (cloudant *CloudantV1) PostBulkGetAsMixedWithContext(ctx context.Context, p
 // PostBulkGetAsRelated : Bulk query revision information for multiple documents as related
 // Fetch specific revisions or revision histories for multiple documents in bulk as replicators do.
 func (cloudant *CloudantV1) PostBulkGetAsRelated(postBulkGetOptions *PostBulkGetOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostBulkGetAsRelatedWithContext(context.Background(), postBulkGetOptions)
+	result, response, err = cloudant.PostBulkGetAsRelatedWithContext(context.Background(), postBulkGetOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostBulkGetAsRelatedWithContext is an alternate form of the PostBulkGetAsRelated method which supports a Context parameter
 func (cloudant *CloudantV1) PostBulkGetAsRelatedWithContext(ctx context.Context, postBulkGetOptions *PostBulkGetOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postBulkGetOptions, "postBulkGetOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postBulkGetOptions, "postBulkGetOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1837,6 +2127,7 @@ func (cloudant *CloudantV1) PostBulkGetAsRelatedWithContext(ctx context.Context,
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_bulk_get`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1870,15 +2161,22 @@ func (cloudant *CloudantV1) PostBulkGetAsRelatedWithContext(ctx context.Context,
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postBulkGetAsRelated", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1886,17 +2184,21 @@ func (cloudant *CloudantV1) PostBulkGetAsRelatedWithContext(ctx context.Context,
 // PostBulkGetAsStream : Bulk query revision information for multiple documents as stream
 // Fetch specific revisions or revision histories for multiple documents in bulk as replicators do.
 func (cloudant *CloudantV1) PostBulkGetAsStream(postBulkGetOptions *PostBulkGetOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostBulkGetAsStreamWithContext(context.Background(), postBulkGetOptions)
+	result, response, err = cloudant.PostBulkGetAsStreamWithContext(context.Background(), postBulkGetOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostBulkGetAsStreamWithContext is an alternate form of the PostBulkGetAsStream method which supports a Context parameter
 func (cloudant *CloudantV1) PostBulkGetAsStreamWithContext(ctx context.Context, postBulkGetOptions *PostBulkGetOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postBulkGetOptions, "postBulkGetOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postBulkGetOptions, "postBulkGetOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1909,6 +2211,7 @@ func (cloudant *CloudantV1) PostBulkGetAsStreamWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_bulk_get`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -1942,15 +2245,22 @@ func (cloudant *CloudantV1) PostBulkGetAsStreamWithContext(ctx context.Context, 
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postBulkGetAsStream", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -1960,22 +2270,26 @@ func (cloudant *CloudantV1) PostBulkGetAsStreamWithContext(ctx context.Context, 
 // are not returned within requests anymore but stay in the database. You must supply the current (latest) revision,
 // either by using the `rev` parameter or by using the `If-Match` header to specify the revision.
 func (cloudant *CloudantV1) DeleteDocument(deleteDocumentOptions *DeleteDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
-	return cloudant.DeleteDocumentWithContext(context.Background(), deleteDocumentOptions)
+	result, response, err = cloudant.DeleteDocumentWithContext(context.Background(), deleteDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteDocumentWithContext is an alternate form of the DeleteDocument method which supports a Context parameter
 func (cloudant *CloudantV1) DeleteDocumentWithContext(ctx context.Context, deleteDocumentOptions *DeleteDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteDocumentOptions, "deleteDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteDocumentOptions, "deleteDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *deleteDocumentOptions.Db,
+		"db":     *deleteDocumentOptions.Db,
 		"doc_id": *deleteDocumentOptions.DocID,
 	}
 
@@ -1984,6 +2298,7 @@ func (cloudant *CloudantV1) DeleteDocumentWithContext(ctx context.Context, delet
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2009,17 +2324,21 @@ func (cloudant *CloudantV1) DeleteDocumentWithContext(ctx context.Context, delet
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "deleteDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocumentResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2032,22 +2351,26 @@ func (cloudant *CloudantV1) DeleteDocumentWithContext(ctx context.Context, delet
 // Returns document with the specified `doc_id` from the specified database. Unless you request a specific revision, the
 // latest revision of the document is always returned.
 func (cloudant *CloudantV1) GetDocument(getDocumentOptions *GetDocumentOptions) (result *Document, response *core.DetailedResponse, err error) {
-	return cloudant.GetDocumentWithContext(context.Background(), getDocumentOptions)
+	result, response, err = cloudant.GetDocumentWithContext(context.Background(), getDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDocumentWithContext is an alternate form of the GetDocument method which supports a Context parameter
 func (cloudant *CloudantV1) GetDocumentWithContext(ctx context.Context, getDocumentOptions *GetDocumentOptions) (result *Document, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDocumentOptions, "getDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDocumentOptions, "getDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *getDocumentOptions.Db,
+		"db":     *getDocumentOptions.Db,
 		"doc_id": *getDocumentOptions.DocID,
 	}
 
@@ -2056,6 +2379,7 @@ func (cloudant *CloudantV1) GetDocumentWithContext(ctx context.Context, getDocum
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2105,17 +2429,21 @@ func (cloudant *CloudantV1) GetDocumentWithContext(ctx context.Context, getDocum
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocument)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2128,22 +2456,26 @@ func (cloudant *CloudantV1) GetDocumentWithContext(ctx context.Context, getDocum
 // Returns document with the specified `doc_id` from the specified database. Unless you request a specific revision, the
 // latest revision of the document is always returned.
 func (cloudant *CloudantV1) GetDocumentAsMixed(getDocumentOptions *GetDocumentOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.GetDocumentAsMixedWithContext(context.Background(), getDocumentOptions)
+	result, response, err = cloudant.GetDocumentAsMixedWithContext(context.Background(), getDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDocumentAsMixedWithContext is an alternate form of the GetDocumentAsMixed method which supports a Context parameter
 func (cloudant *CloudantV1) GetDocumentAsMixedWithContext(ctx context.Context, getDocumentOptions *GetDocumentOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDocumentOptions, "getDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDocumentOptions, "getDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *getDocumentOptions.Db,
+		"db":     *getDocumentOptions.Db,
 		"doc_id": *getDocumentOptions.DocID,
 	}
 
@@ -2152,6 +2484,7 @@ func (cloudant *CloudantV1) GetDocumentAsMixedWithContext(ctx context.Context, g
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2201,10 +2534,16 @@ func (cloudant *CloudantV1) GetDocumentAsMixedWithContext(ctx context.Context, g
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "getDocumentAsMixed", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2213,22 +2552,26 @@ func (cloudant *CloudantV1) GetDocumentAsMixedWithContext(ctx context.Context, g
 // Returns document with the specified `doc_id` from the specified database. Unless you request a specific revision, the
 // latest revision of the document is always returned.
 func (cloudant *CloudantV1) GetDocumentAsRelated(getDocumentOptions *GetDocumentOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.GetDocumentAsRelatedWithContext(context.Background(), getDocumentOptions)
+	result, response, err = cloudant.GetDocumentAsRelatedWithContext(context.Background(), getDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDocumentAsRelatedWithContext is an alternate form of the GetDocumentAsRelated method which supports a Context parameter
 func (cloudant *CloudantV1) GetDocumentAsRelatedWithContext(ctx context.Context, getDocumentOptions *GetDocumentOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDocumentOptions, "getDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDocumentOptions, "getDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *getDocumentOptions.Db,
+		"db":     *getDocumentOptions.Db,
 		"doc_id": *getDocumentOptions.DocID,
 	}
 
@@ -2237,6 +2580,7 @@ func (cloudant *CloudantV1) GetDocumentAsRelatedWithContext(ctx context.Context,
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2286,10 +2630,16 @@ func (cloudant *CloudantV1) GetDocumentAsRelatedWithContext(ctx context.Context,
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "getDocumentAsRelated", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2298,22 +2648,26 @@ func (cloudant *CloudantV1) GetDocumentAsRelatedWithContext(ctx context.Context,
 // Returns document with the specified `doc_id` from the specified database. Unless you request a specific revision, the
 // latest revision of the document is always returned.
 func (cloudant *CloudantV1) GetDocumentAsStream(getDocumentOptions *GetDocumentOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.GetDocumentAsStreamWithContext(context.Background(), getDocumentOptions)
+	result, response, err = cloudant.GetDocumentAsStreamWithContext(context.Background(), getDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDocumentAsStreamWithContext is an alternate form of the GetDocumentAsStream method which supports a Context parameter
 func (cloudant *CloudantV1) GetDocumentAsStreamWithContext(ctx context.Context, getDocumentOptions *GetDocumentOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDocumentOptions, "getDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDocumentOptions, "getDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *getDocumentOptions.Db,
+		"db":     *getDocumentOptions.Db,
 		"doc_id": *getDocumentOptions.DocID,
 	}
 
@@ -2322,6 +2676,7 @@ func (cloudant *CloudantV1) GetDocumentAsStreamWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2371,38 +2726,55 @@ func (cloudant *CloudantV1) GetDocumentAsStreamWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "getDocumentAsStream", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
 // PutDocument : Create or modify a document
-// The PUT method creates a new named document, or creates a new revision of the existing document. Unlike the `POST
-// /{db}` request, you must specify the document ID in the request URL.
+// Creates or modifies a document in the specified database.
+//
+// For creation, you must specify the document ID but you should not specify the revision.
+//
+// For modification, you must specify the document ID and a revision  identifier.
 func (cloudant *CloudantV1) PutDocument(putDocumentOptions *PutDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
-	return cloudant.PutDocumentWithContext(context.Background(), putDocumentOptions)
+	result, response, err = cloudant.PutDocumentWithContext(context.Background(), putDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PutDocumentWithContext is an alternate form of the PutDocument method which supports a Context parameter
 func (cloudant *CloudantV1) PutDocumentWithContext(ctx context.Context, putDocumentOptions *PutDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(putDocumentOptions, "putDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(putDocumentOptions, "putDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+	if core.IsNil(putDocumentOptions.Document) && core.IsNil(putDocumentOptions.Body) {
+		err = core.SDKErrorf(nil, "one of [putDocumentOptions.Document, putDocumentOptions.Body] must be specified", "condition-not-met", common.GetComponentInfo())
 		return
 	}
 
-	if putDocumentOptions.Document != nil && putDocumentOptions.ContentType == nil {
+	if !core.IsNil(putDocumentOptions.Document) && core.IsNil(putDocumentOptions.ContentType) {
 		putDocumentOptions.SetContentType("application/json")
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *putDocumentOptions.Db,
+		"db":     *putDocumentOptions.Db,
 		"doc_id": *putDocumentOptions.DocID,
 	}
 
@@ -2411,6 +2783,7 @@ func (cloudant *CloudantV1) PutDocumentWithContext(ctx context.Context, putDocum
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2442,22 +2815,27 @@ func (cloudant *CloudantV1) PutDocumentWithContext(ctx context.Context, putDocum
 
 	_, err = builder.SetBodyContent(core.StringNilMapper(putDocumentOptions.ContentType), putDocumentOptions.Document, nil, putDocumentOptions.Body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-body-content-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "putDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocumentResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2473,22 +2851,26 @@ func (cloudant *CloudantV1) PutDocumentWithContext(ctx context.Context, putDocum
 // Content-Length specifies the length of the data. If you add any of the query arguments, then the resulting HTTP
 // headers correspond to what is returned for the equivalent GET request.
 func (cloudant *CloudantV1) HeadDesignDocument(headDesignDocumentOptions *HeadDesignDocumentOptions) (response *core.DetailedResponse, err error) {
-	return cloudant.HeadDesignDocumentWithContext(context.Background(), headDesignDocumentOptions)
+	response, err = cloudant.HeadDesignDocumentWithContext(context.Background(), headDesignDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // HeadDesignDocumentWithContext is an alternate form of the HeadDesignDocument method which supports a Context parameter
 func (cloudant *CloudantV1) HeadDesignDocumentWithContext(ctx context.Context, headDesignDocumentOptions *HeadDesignDocumentOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(headDesignDocumentOptions, "headDesignDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(headDesignDocumentOptions, "headDesignDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *headDesignDocumentOptions.Db,
+		"db":   *headDesignDocumentOptions.Db,
 		"ddoc": *headDesignDocumentOptions.Ddoc,
 	}
 
@@ -2497,6 +2879,7 @@ func (cloudant *CloudantV1) HeadDesignDocumentWithContext(ctx context.Context, h
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2514,10 +2897,16 @@ func (cloudant *CloudantV1) HeadDesignDocumentWithContext(ctx context.Context, h
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "headDesignDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -2527,22 +2916,26 @@ func (cloudant *CloudantV1) HeadDesignDocumentWithContext(ctx context.Context, h
 // this field are not returned with requests but stay in the database. You must supply the current (latest) revision,
 // either by using the `rev` parameter or by using the `If-Match` header to specify the revision.
 func (cloudant *CloudantV1) DeleteDesignDocument(deleteDesignDocumentOptions *DeleteDesignDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
-	return cloudant.DeleteDesignDocumentWithContext(context.Background(), deleteDesignDocumentOptions)
+	result, response, err = cloudant.DeleteDesignDocumentWithContext(context.Background(), deleteDesignDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteDesignDocumentWithContext is an alternate form of the DeleteDesignDocument method which supports a Context parameter
 func (cloudant *CloudantV1) DeleteDesignDocumentWithContext(ctx context.Context, deleteDesignDocumentOptions *DeleteDesignDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteDesignDocumentOptions, "deleteDesignDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteDesignDocumentOptions, "deleteDesignDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *deleteDesignDocumentOptions.Db,
+		"db":   *deleteDesignDocumentOptions.Db,
 		"ddoc": *deleteDesignDocumentOptions.Ddoc,
 	}
 
@@ -2551,6 +2944,7 @@ func (cloudant *CloudantV1) DeleteDesignDocumentWithContext(ctx context.Context,
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2576,17 +2970,21 @@ func (cloudant *CloudantV1) DeleteDesignDocumentWithContext(ctx context.Context,
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "deleteDesignDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocumentResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2599,22 +2997,26 @@ func (cloudant *CloudantV1) DeleteDesignDocumentWithContext(ctx context.Context,
 // Returns design document with the specified `doc_id` from the specified database. Unless you request a specific
 // revision, the current revision of the design document is always returned.
 func (cloudant *CloudantV1) GetDesignDocument(getDesignDocumentOptions *GetDesignDocumentOptions) (result *DesignDocument, response *core.DetailedResponse, err error) {
-	return cloudant.GetDesignDocumentWithContext(context.Background(), getDesignDocumentOptions)
+	result, response, err = cloudant.GetDesignDocumentWithContext(context.Background(), getDesignDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDesignDocumentWithContext is an alternate form of the GetDesignDocument method which supports a Context parameter
 func (cloudant *CloudantV1) GetDesignDocumentWithContext(ctx context.Context, getDesignDocumentOptions *GetDesignDocumentOptions) (result *DesignDocument, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDesignDocumentOptions, "getDesignDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDesignDocumentOptions, "getDesignDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *getDesignDocumentOptions.Db,
+		"db":   *getDesignDocumentOptions.Db,
 		"ddoc": *getDesignDocumentOptions.Ddoc,
 	}
 
@@ -2623,6 +3025,7 @@ func (cloudant *CloudantV1) GetDesignDocumentWithContext(ctx context.Context, ge
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2672,17 +3075,21 @@ func (cloudant *CloudantV1) GetDesignDocumentWithContext(ctx context.Context, ge
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getDesignDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDesignDocument)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2694,22 +3101,26 @@ func (cloudant *CloudantV1) GetDesignDocumentWithContext(ctx context.Context, ge
 // PutDesignDocument : Create or modify a design document
 // The PUT method creates a new named design document, or creates a new revision of the existing design document.
 func (cloudant *CloudantV1) PutDesignDocument(putDesignDocumentOptions *PutDesignDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
-	return cloudant.PutDesignDocumentWithContext(context.Background(), putDesignDocumentOptions)
+	result, response, err = cloudant.PutDesignDocumentWithContext(context.Background(), putDesignDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PutDesignDocumentWithContext is an alternate form of the PutDesignDocument method which supports a Context parameter
 func (cloudant *CloudantV1) PutDesignDocumentWithContext(ctx context.Context, putDesignDocumentOptions *PutDesignDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(putDesignDocumentOptions, "putDesignDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(putDesignDocumentOptions, "putDesignDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *putDesignDocumentOptions.Db,
+		"db":   *putDesignDocumentOptions.Db,
 		"ddoc": *putDesignDocumentOptions.Ddoc,
 	}
 
@@ -2718,6 +3129,7 @@ func (cloudant *CloudantV1) PutDesignDocumentWithContext(ctx context.Context, pu
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2747,22 +3159,27 @@ func (cloudant *CloudantV1) PutDesignDocumentWithContext(ctx context.Context, pu
 
 	_, err = builder.SetBodyContentJSON(putDesignDocumentOptions.DesignDocument)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "putDesignDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocumentResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2775,22 +3192,26 @@ func (cloudant *CloudantV1) PutDesignDocumentWithContext(ctx context.Context, pu
 // Retrieves information about the specified design document, including the index, index size, and current status of the
 // design document and associated index information.
 func (cloudant *CloudantV1) GetDesignDocumentInformation(getDesignDocumentInformationOptions *GetDesignDocumentInformationOptions) (result *DesignDocumentInformation, response *core.DetailedResponse, err error) {
-	return cloudant.GetDesignDocumentInformationWithContext(context.Background(), getDesignDocumentInformationOptions)
+	result, response, err = cloudant.GetDesignDocumentInformationWithContext(context.Background(), getDesignDocumentInformationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDesignDocumentInformationWithContext is an alternate form of the GetDesignDocumentInformation method which supports a Context parameter
 func (cloudant *CloudantV1) GetDesignDocumentInformationWithContext(ctx context.Context, getDesignDocumentInformationOptions *GetDesignDocumentInformationOptions) (result *DesignDocumentInformation, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDesignDocumentInformationOptions, "getDesignDocumentInformationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDesignDocumentInformationOptions, "getDesignDocumentInformationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *getDesignDocumentInformationOptions.Db,
+		"db":   *getDesignDocumentInformationOptions.Db,
 		"ddoc": *getDesignDocumentInformationOptions.Ddoc,
 	}
 
@@ -2799,6 +3220,7 @@ func (cloudant *CloudantV1) GetDesignDocumentInformationWithContext(ctx context.
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}/_info`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2814,17 +3236,21 @@ func (cloudant *CloudantV1) GetDesignDocumentInformationWithContext(ctx context.
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getDesignDocumentInformation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDesignDocumentInformation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2839,17 +3265,21 @@ func (cloudant *CloudantV1) GetDesignDocumentInformationWithContext(ctx context.
 // request body parameters are specified, results for all design documents in the database are returned. Optionally, the
 // design document content or additional metadata can be included in the response.
 func (cloudant *CloudantV1) PostDesignDocs(postDesignDocsOptions *PostDesignDocsOptions) (result *AllDocsResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostDesignDocsWithContext(context.Background(), postDesignDocsOptions)
+	result, response, err = cloudant.PostDesignDocsWithContext(context.Background(), postDesignDocsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostDesignDocsWithContext is an alternate form of the PostDesignDocs method which supports a Context parameter
 func (cloudant *CloudantV1) PostDesignDocsWithContext(ctx context.Context, postDesignDocsOptions *PostDesignDocsOptions) (result *AllDocsResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postDesignDocsOptions, "postDesignDocsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postDesignDocsOptions, "postDesignDocsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2862,6 +3292,7 @@ func (cloudant *CloudantV1) PostDesignDocsWithContext(ctx context.Context, postD
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design_docs`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2875,9 +3306,6 @@ func (cloudant *CloudantV1) PostDesignDocsWithContext(ctx context.Context, postD
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
-	if postDesignDocsOptions.Accept != nil {
-		builder.AddHeader("Accept", fmt.Sprint(*postDesignDocsOptions.Accept))
-	}
 
 	body := make(map[string]interface{})
 	if postDesignDocsOptions.AttEncodingInfo != nil {
@@ -2907,8 +3335,8 @@ func (cloudant *CloudantV1) PostDesignDocsWithContext(ctx context.Context, postD
 	if postDesignDocsOptions.UpdateSeq != nil {
 		body["update_seq"] = postDesignDocsOptions.UpdateSeq
 	}
-	if postDesignDocsOptions.Endkey != nil {
-		body["endkey"] = postDesignDocsOptions.Endkey
+	if postDesignDocsOptions.EndKey != nil {
+		body["end_key"] = postDesignDocsOptions.EndKey
 	}
 	if postDesignDocsOptions.Key != nil {
 		body["key"] = postDesignDocsOptions.Key
@@ -2916,27 +3344,32 @@ func (cloudant *CloudantV1) PostDesignDocsWithContext(ctx context.Context, postD
 	if postDesignDocsOptions.Keys != nil {
 		body["keys"] = postDesignDocsOptions.Keys
 	}
-	if postDesignDocsOptions.Startkey != nil {
-		body["startkey"] = postDesignDocsOptions.Startkey
+	if postDesignDocsOptions.StartKey != nil {
+		body["start_key"] = postDesignDocsOptions.StartKey
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postDesignDocs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAllDocsResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -2949,17 +3382,21 @@ func (cloudant *CloudantV1) PostDesignDocsWithContext(ctx context.Context, postD
 // This operation runs multiple view queries of all design documents in the database. This operation enables you to
 // request numerous queries in a single request, in place of multiple POST `/{db}/_design_docs` requests.
 func (cloudant *CloudantV1) PostDesignDocsQueries(postDesignDocsQueriesOptions *PostDesignDocsQueriesOptions) (result *AllDocsQueriesResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostDesignDocsQueriesWithContext(context.Background(), postDesignDocsQueriesOptions)
+	result, response, err = cloudant.PostDesignDocsQueriesWithContext(context.Background(), postDesignDocsQueriesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostDesignDocsQueriesWithContext is an alternate form of the PostDesignDocsQueries method which supports a Context parameter
 func (cloudant *CloudantV1) PostDesignDocsQueriesWithContext(ctx context.Context, postDesignDocsQueriesOptions *PostDesignDocsQueriesOptions) (result *AllDocsQueriesResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postDesignDocsQueriesOptions, "postDesignDocsQueriesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postDesignDocsQueriesOptions, "postDesignDocsQueriesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2972,6 +3409,7 @@ func (cloudant *CloudantV1) PostDesignDocsQueriesWithContext(ctx context.Context
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design_docs/queries`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -2995,22 +3433,27 @@ func (cloudant *CloudantV1) PostDesignDocsQueriesWithContext(ctx context.Context
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postDesignDocsQueries", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAllDocsQueriesResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3025,22 +3468,26 @@ func (cloudant *CloudantV1) PostDesignDocsQueriesWithContext(ctx context.Context
 // `POST` method is that the query is submitted as a JSON object in the request body. This avoids the limitations of
 // passing query options as URL query parameters of a `GET` request.
 func (cloudant *CloudantV1) PostView(postViewOptions *PostViewOptions) (result *ViewResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostViewWithContext(context.Background(), postViewOptions)
+	result, response, err = cloudant.PostViewWithContext(context.Background(), postViewOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostViewWithContext is an alternate form of the PostView method which supports a Context parameter
 func (cloudant *CloudantV1) PostViewWithContext(ctx context.Context, postViewOptions *PostViewOptions) (result *ViewResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postViewOptions, "postViewOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postViewOptions, "postViewOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postViewOptions.Db,
+		"db":   *postViewOptions.Db,
 		"ddoc": *postViewOptions.Ddoc,
 		"view": *postViewOptions.View,
 	}
@@ -3050,6 +3497,7 @@ func (cloudant *CloudantV1) PostViewWithContext(ctx context.Context, postViewOpt
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}/_view/{view}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3092,11 +3540,11 @@ func (cloudant *CloudantV1) PostViewWithContext(ctx context.Context, postViewOpt
 	if postViewOptions.UpdateSeq != nil {
 		body["update_seq"] = postViewOptions.UpdateSeq
 	}
-	if postViewOptions.Endkey != nil {
-		body["endkey"] = postViewOptions.Endkey
+	if postViewOptions.EndKey != nil {
+		body["end_key"] = postViewOptions.EndKey
 	}
-	if postViewOptions.EndkeyDocid != nil {
-		body["endkey_docid"] = postViewOptions.EndkeyDocid
+	if postViewOptions.EndKeyDocID != nil {
+		body["end_key_doc_id"] = postViewOptions.EndKeyDocID
 	}
 	if postViewOptions.Group != nil {
 		body["group"] = postViewOptions.Group
@@ -3116,33 +3564,38 @@ func (cloudant *CloudantV1) PostViewWithContext(ctx context.Context, postViewOpt
 	if postViewOptions.Stable != nil {
 		body["stable"] = postViewOptions.Stable
 	}
-	if postViewOptions.Startkey != nil {
-		body["startkey"] = postViewOptions.Startkey
+	if postViewOptions.StartKey != nil {
+		body["start_key"] = postViewOptions.StartKey
 	}
-	if postViewOptions.StartkeyDocid != nil {
-		body["startkey_docid"] = postViewOptions.StartkeyDocid
+	if postViewOptions.StartKeyDocID != nil {
+		body["start_key_doc_id"] = postViewOptions.StartKeyDocID
 	}
 	if postViewOptions.Update != nil {
 		body["update"] = postViewOptions.Update
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postView", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalViewResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3157,22 +3610,26 @@ func (cloudant *CloudantV1) PostViewWithContext(ctx context.Context, postViewOpt
 // `POST` method is that the query is submitted as a JSON object in the request body. This avoids the limitations of
 // passing query options as URL query parameters of a `GET` request.
 func (cloudant *CloudantV1) PostViewAsStream(postViewOptions *PostViewOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostViewAsStreamWithContext(context.Background(), postViewOptions)
+	result, response, err = cloudant.PostViewAsStreamWithContext(context.Background(), postViewOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostViewAsStreamWithContext is an alternate form of the PostViewAsStream method which supports a Context parameter
 func (cloudant *CloudantV1) PostViewAsStreamWithContext(ctx context.Context, postViewOptions *PostViewOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postViewOptions, "postViewOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postViewOptions, "postViewOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postViewOptions.Db,
+		"db":   *postViewOptions.Db,
 		"ddoc": *postViewOptions.Ddoc,
 		"view": *postViewOptions.View,
 	}
@@ -3182,6 +3639,7 @@ func (cloudant *CloudantV1) PostViewAsStreamWithContext(ctx context.Context, pos
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}/_view/{view}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3224,11 +3682,11 @@ func (cloudant *CloudantV1) PostViewAsStreamWithContext(ctx context.Context, pos
 	if postViewOptions.UpdateSeq != nil {
 		body["update_seq"] = postViewOptions.UpdateSeq
 	}
-	if postViewOptions.Endkey != nil {
-		body["endkey"] = postViewOptions.Endkey
+	if postViewOptions.EndKey != nil {
+		body["end_key"] = postViewOptions.EndKey
 	}
-	if postViewOptions.EndkeyDocid != nil {
-		body["endkey_docid"] = postViewOptions.EndkeyDocid
+	if postViewOptions.EndKeyDocID != nil {
+		body["end_key_doc_id"] = postViewOptions.EndKeyDocID
 	}
 	if postViewOptions.Group != nil {
 		body["group"] = postViewOptions.Group
@@ -3248,26 +3706,33 @@ func (cloudant *CloudantV1) PostViewAsStreamWithContext(ctx context.Context, pos
 	if postViewOptions.Stable != nil {
 		body["stable"] = postViewOptions.Stable
 	}
-	if postViewOptions.Startkey != nil {
-		body["startkey"] = postViewOptions.Startkey
+	if postViewOptions.StartKey != nil {
+		body["start_key"] = postViewOptions.StartKey
 	}
-	if postViewOptions.StartkeyDocid != nil {
-		body["startkey_docid"] = postViewOptions.StartkeyDocid
+	if postViewOptions.StartKeyDocID != nil {
+		body["start_key_doc_id"] = postViewOptions.StartKeyDocID
 	}
 	if postViewOptions.Update != nil {
 		body["update"] = postViewOptions.Update
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postViewAsStream", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3275,22 +3740,26 @@ func (cloudant *CloudantV1) PostViewAsStreamWithContext(ctx context.Context, pos
 // PostViewQueries : Multi-query a MapReduce view
 // This operation runs multiple specified view queries against the view function from the specified design document.
 func (cloudant *CloudantV1) PostViewQueries(postViewQueriesOptions *PostViewQueriesOptions) (result *ViewQueriesResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostViewQueriesWithContext(context.Background(), postViewQueriesOptions)
+	result, response, err = cloudant.PostViewQueriesWithContext(context.Background(), postViewQueriesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostViewQueriesWithContext is an alternate form of the PostViewQueries method which supports a Context parameter
 func (cloudant *CloudantV1) PostViewQueriesWithContext(ctx context.Context, postViewQueriesOptions *PostViewQueriesOptions) (result *ViewQueriesResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postViewQueriesOptions, "postViewQueriesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postViewQueriesOptions, "postViewQueriesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postViewQueriesOptions.Db,
+		"db":   *postViewQueriesOptions.Db,
 		"ddoc": *postViewQueriesOptions.Ddoc,
 		"view": *postViewQueriesOptions.View,
 	}
@@ -3300,6 +3769,7 @@ func (cloudant *CloudantV1) PostViewQueriesWithContext(ctx context.Context, post
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}/_view/{view}/queries`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3320,22 +3790,27 @@ func (cloudant *CloudantV1) PostViewQueriesWithContext(ctx context.Context, post
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postViewQueries", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalViewQueriesResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3347,22 +3822,26 @@ func (cloudant *CloudantV1) PostViewQueriesWithContext(ctx context.Context, post
 // PostViewQueriesAsStream : Multi-query a MapReduce view as stream
 // This operation runs multiple specified view queries against the view function from the specified design document.
 func (cloudant *CloudantV1) PostViewQueriesAsStream(postViewQueriesOptions *PostViewQueriesOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostViewQueriesAsStreamWithContext(context.Background(), postViewQueriesOptions)
+	result, response, err = cloudant.PostViewQueriesAsStreamWithContext(context.Background(), postViewQueriesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostViewQueriesAsStreamWithContext is an alternate form of the PostViewQueriesAsStream method which supports a Context parameter
 func (cloudant *CloudantV1) PostViewQueriesAsStreamWithContext(ctx context.Context, postViewQueriesOptions *PostViewQueriesOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postViewQueriesOptions, "postViewQueriesOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postViewQueriesOptions, "postViewQueriesOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postViewQueriesOptions.Db,
+		"db":   *postViewQueriesOptions.Db,
 		"ddoc": *postViewQueriesOptions.Ddoc,
 		"view": *postViewQueriesOptions.View,
 	}
@@ -3372,6 +3851,7 @@ func (cloudant *CloudantV1) PostViewQueriesAsStreamWithContext(ctx context.Conte
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}/_view/{view}/queries`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3392,15 +3872,22 @@ func (cloudant *CloudantV1) PostViewQueriesAsStreamWithContext(ctx context.Conte
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postViewQueriesAsStream", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3408,22 +3895,26 @@ func (cloudant *CloudantV1) PostViewQueriesAsStreamWithContext(ctx context.Conte
 // GetPartitionInformation : Retrieve information about a database partition
 // Given a partition key, return the database name, sizes, partition, doc count, and doc delete count.
 func (cloudant *CloudantV1) GetPartitionInformation(getPartitionInformationOptions *GetPartitionInformationOptions) (result *PartitionInformation, response *core.DetailedResponse, err error) {
-	return cloudant.GetPartitionInformationWithContext(context.Background(), getPartitionInformationOptions)
+	result, response, err = cloudant.GetPartitionInformationWithContext(context.Background(), getPartitionInformationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetPartitionInformationWithContext is an alternate form of the GetPartitionInformation method which supports a Context parameter
 func (cloudant *CloudantV1) GetPartitionInformationWithContext(ctx context.Context, getPartitionInformationOptions *GetPartitionInformationOptions) (result *PartitionInformation, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getPartitionInformationOptions, "getPartitionInformationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getPartitionInformationOptions, "getPartitionInformationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *getPartitionInformationOptions.Db,
+		"db":            *getPartitionInformationOptions.Db,
 		"partition_key": *getPartitionInformationOptions.PartitionKey,
 	}
 
@@ -3432,6 +3923,7 @@ func (cloudant *CloudantV1) GetPartitionInformationWithContext(ctx context.Conte
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_partition/{partition_key}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3447,17 +3939,21 @@ func (cloudant *CloudantV1) GetPartitionInformationWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getPartitionInformation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPartitionInformation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3472,22 +3968,26 @@ func (cloudant *CloudantV1) GetPartitionInformationWithContext(ctx context.Conte
 // parameters are specified, results for all documents in the database partition are returned. Optionally, document
 // content or additional metadata can be included in the response.
 func (cloudant *CloudantV1) PostPartitionAllDocs(postPartitionAllDocsOptions *PostPartitionAllDocsOptions) (result *AllDocsResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostPartitionAllDocsWithContext(context.Background(), postPartitionAllDocsOptions)
+	result, response, err = cloudant.PostPartitionAllDocsWithContext(context.Background(), postPartitionAllDocsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostPartitionAllDocsWithContext is an alternate form of the PostPartitionAllDocs method which supports a Context parameter
 func (cloudant *CloudantV1) PostPartitionAllDocsWithContext(ctx context.Context, postPartitionAllDocsOptions *PostPartitionAllDocsOptions) (result *AllDocsResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postPartitionAllDocsOptions, "postPartitionAllDocsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postPartitionAllDocsOptions, "postPartitionAllDocsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postPartitionAllDocsOptions.Db,
+		"db":            *postPartitionAllDocsOptions.Db,
 		"partition_key": *postPartitionAllDocsOptions.PartitionKey,
 	}
 
@@ -3496,6 +3996,7 @@ func (cloudant *CloudantV1) PostPartitionAllDocsWithContext(ctx context.Context,
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_partition/{partition_key}/_all_docs`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3538,8 +4039,8 @@ func (cloudant *CloudantV1) PostPartitionAllDocsWithContext(ctx context.Context,
 	if postPartitionAllDocsOptions.UpdateSeq != nil {
 		body["update_seq"] = postPartitionAllDocsOptions.UpdateSeq
 	}
-	if postPartitionAllDocsOptions.Endkey != nil {
-		body["endkey"] = postPartitionAllDocsOptions.Endkey
+	if postPartitionAllDocsOptions.EndKey != nil {
+		body["end_key"] = postPartitionAllDocsOptions.EndKey
 	}
 	if postPartitionAllDocsOptions.Key != nil {
 		body["key"] = postPartitionAllDocsOptions.Key
@@ -3547,27 +4048,32 @@ func (cloudant *CloudantV1) PostPartitionAllDocsWithContext(ctx context.Context,
 	if postPartitionAllDocsOptions.Keys != nil {
 		body["keys"] = postPartitionAllDocsOptions.Keys
 	}
-	if postPartitionAllDocsOptions.Startkey != nil {
-		body["startkey"] = postPartitionAllDocsOptions.Startkey
+	if postPartitionAllDocsOptions.StartKey != nil {
+		body["start_key"] = postPartitionAllDocsOptions.StartKey
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postPartitionAllDocs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAllDocsResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3582,22 +4088,26 @@ func (cloudant *CloudantV1) PostPartitionAllDocsWithContext(ctx context.Context,
 // parameters are specified, results for all documents in the database partition are returned. Optionally, document
 // content or additional metadata can be included in the response.
 func (cloudant *CloudantV1) PostPartitionAllDocsAsStream(postPartitionAllDocsOptions *PostPartitionAllDocsOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostPartitionAllDocsAsStreamWithContext(context.Background(), postPartitionAllDocsOptions)
+	result, response, err = cloudant.PostPartitionAllDocsAsStreamWithContext(context.Background(), postPartitionAllDocsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostPartitionAllDocsAsStreamWithContext is an alternate form of the PostPartitionAllDocsAsStream method which supports a Context parameter
 func (cloudant *CloudantV1) PostPartitionAllDocsAsStreamWithContext(ctx context.Context, postPartitionAllDocsOptions *PostPartitionAllDocsOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postPartitionAllDocsOptions, "postPartitionAllDocsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postPartitionAllDocsOptions, "postPartitionAllDocsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postPartitionAllDocsOptions.Db,
+		"db":            *postPartitionAllDocsOptions.Db,
 		"partition_key": *postPartitionAllDocsOptions.PartitionKey,
 	}
 
@@ -3606,6 +4116,7 @@ func (cloudant *CloudantV1) PostPartitionAllDocsAsStreamWithContext(ctx context.
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_partition/{partition_key}/_all_docs`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3648,8 +4159,8 @@ func (cloudant *CloudantV1) PostPartitionAllDocsAsStreamWithContext(ctx context.
 	if postPartitionAllDocsOptions.UpdateSeq != nil {
 		body["update_seq"] = postPartitionAllDocsOptions.UpdateSeq
 	}
-	if postPartitionAllDocsOptions.Endkey != nil {
-		body["endkey"] = postPartitionAllDocsOptions.Endkey
+	if postPartitionAllDocsOptions.EndKey != nil {
+		body["end_key"] = postPartitionAllDocsOptions.EndKey
 	}
 	if postPartitionAllDocsOptions.Key != nil {
 		body["key"] = postPartitionAllDocsOptions.Key
@@ -3657,20 +4168,27 @@ func (cloudant *CloudantV1) PostPartitionAllDocsAsStreamWithContext(ctx context.
 	if postPartitionAllDocsOptions.Keys != nil {
 		body["keys"] = postPartitionAllDocsOptions.Keys
 	}
-	if postPartitionAllDocsOptions.Startkey != nil {
-		body["startkey"] = postPartitionAllDocsOptions.Startkey
+	if postPartitionAllDocsOptions.StartKey != nil {
+		body["start_key"] = postPartitionAllDocsOptions.StartKey
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postPartitionAllDocsAsStream", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3680,25 +4198,29 @@ func (cloudant *CloudantV1) PostPartitionAllDocsAsStreamWithContext(ctx context.
 // Lucene Query Parser Syntax. Search indexes are defined by an index function, similar to a map function in MapReduce
 // views. The index function decides what data to index and store in the index.
 func (cloudant *CloudantV1) PostPartitionSearch(postPartitionSearchOptions *PostPartitionSearchOptions) (result *SearchResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostPartitionSearchWithContext(context.Background(), postPartitionSearchOptions)
+	result, response, err = cloudant.PostPartitionSearchWithContext(context.Background(), postPartitionSearchOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostPartitionSearchWithContext is an alternate form of the PostPartitionSearch method which supports a Context parameter
 func (cloudant *CloudantV1) PostPartitionSearchWithContext(ctx context.Context, postPartitionSearchOptions *PostPartitionSearchOptions) (result *SearchResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postPartitionSearchOptions, "postPartitionSearchOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postPartitionSearchOptions, "postPartitionSearchOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postPartitionSearchOptions.Db,
+		"db":            *postPartitionSearchOptions.Db,
 		"partition_key": *postPartitionSearchOptions.PartitionKey,
-		"ddoc": *postPartitionSearchOptions.Ddoc,
-		"index": *postPartitionSearchOptions.Index,
+		"ddoc":          *postPartitionSearchOptions.Ddoc,
+		"index":         *postPartitionSearchOptions.Index,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -3706,6 +4228,7 @@ func (cloudant *CloudantV1) PostPartitionSearchWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_partition/{partition_key}/_design/{ddoc}/_search/{index}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3759,22 +4282,27 @@ func (cloudant *CloudantV1) PostPartitionSearchWithContext(ctx context.Context, 
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postPartitionSearch", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSearchResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -3788,25 +4316,29 @@ func (cloudant *CloudantV1) PostPartitionSearchWithContext(ctx context.Context, 
 // Lucene Query Parser Syntax. Search indexes are defined by an index function, similar to a map function in MapReduce
 // views. The index function decides what data to index and store in the index.
 func (cloudant *CloudantV1) PostPartitionSearchAsStream(postPartitionSearchOptions *PostPartitionSearchOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostPartitionSearchAsStreamWithContext(context.Background(), postPartitionSearchOptions)
+	result, response, err = cloudant.PostPartitionSearchAsStreamWithContext(context.Background(), postPartitionSearchOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostPartitionSearchAsStreamWithContext is an alternate form of the PostPartitionSearchAsStream method which supports a Context parameter
 func (cloudant *CloudantV1) PostPartitionSearchAsStreamWithContext(ctx context.Context, postPartitionSearchOptions *PostPartitionSearchOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postPartitionSearchOptions, "postPartitionSearchOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postPartitionSearchOptions, "postPartitionSearchOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postPartitionSearchOptions.Db,
+		"db":            *postPartitionSearchOptions.Db,
 		"partition_key": *postPartitionSearchOptions.PartitionKey,
-		"ddoc": *postPartitionSearchOptions.Ddoc,
-		"index": *postPartitionSearchOptions.Index,
+		"ddoc":          *postPartitionSearchOptions.Ddoc,
+		"index":         *postPartitionSearchOptions.Index,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -3814,6 +4346,7 @@ func (cloudant *CloudantV1) PostPartitionSearchAsStreamWithContext(ctx context.C
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_partition/{partition_key}/_design/{ddoc}/_search/{index}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3867,15 +4400,22 @@ func (cloudant *CloudantV1) PostPartitionSearchAsStreamWithContext(ctx context.C
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postPartitionSearchAsStream", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -3886,25 +4426,29 @@ func (cloudant *CloudantV1) PostPartitionSearchAsStreamWithContext(ctx context.C
 // results. The remainder of the POST view functionality is identical to the `GET /{db}/_design/{ddoc}/_view/{view}`
 // API.
 func (cloudant *CloudantV1) PostPartitionView(postPartitionViewOptions *PostPartitionViewOptions) (result *ViewResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostPartitionViewWithContext(context.Background(), postPartitionViewOptions)
+	result, response, err = cloudant.PostPartitionViewWithContext(context.Background(), postPartitionViewOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostPartitionViewWithContext is an alternate form of the PostPartitionView method which supports a Context parameter
 func (cloudant *CloudantV1) PostPartitionViewWithContext(ctx context.Context, postPartitionViewOptions *PostPartitionViewOptions) (result *ViewResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postPartitionViewOptions, "postPartitionViewOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postPartitionViewOptions, "postPartitionViewOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postPartitionViewOptions.Db,
+		"db":            *postPartitionViewOptions.Db,
 		"partition_key": *postPartitionViewOptions.PartitionKey,
-		"ddoc": *postPartitionViewOptions.Ddoc,
-		"view": *postPartitionViewOptions.View,
+		"ddoc":          *postPartitionViewOptions.Ddoc,
+		"view":          *postPartitionViewOptions.View,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -3912,6 +4456,7 @@ func (cloudant *CloudantV1) PostPartitionViewWithContext(ctx context.Context, po
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_partition/{partition_key}/_design/{ddoc}/_view/{view}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -3954,11 +4499,11 @@ func (cloudant *CloudantV1) PostPartitionViewWithContext(ctx context.Context, po
 	if postPartitionViewOptions.UpdateSeq != nil {
 		body["update_seq"] = postPartitionViewOptions.UpdateSeq
 	}
-	if postPartitionViewOptions.Endkey != nil {
-		body["endkey"] = postPartitionViewOptions.Endkey
+	if postPartitionViewOptions.EndKey != nil {
+		body["end_key"] = postPartitionViewOptions.EndKey
 	}
-	if postPartitionViewOptions.EndkeyDocid != nil {
-		body["endkey_docid"] = postPartitionViewOptions.EndkeyDocid
+	if postPartitionViewOptions.EndKeyDocID != nil {
+		body["end_key_doc_id"] = postPartitionViewOptions.EndKeyDocID
 	}
 	if postPartitionViewOptions.Group != nil {
 		body["group"] = postPartitionViewOptions.Group
@@ -3975,36 +4520,38 @@ func (cloudant *CloudantV1) PostPartitionViewWithContext(ctx context.Context, po
 	if postPartitionViewOptions.Reduce != nil {
 		body["reduce"] = postPartitionViewOptions.Reduce
 	}
-	if postPartitionViewOptions.Stable != nil {
-		body["stable"] = postPartitionViewOptions.Stable
+	if postPartitionViewOptions.StartKey != nil {
+		body["start_key"] = postPartitionViewOptions.StartKey
 	}
-	if postPartitionViewOptions.Startkey != nil {
-		body["startkey"] = postPartitionViewOptions.Startkey
-	}
-	if postPartitionViewOptions.StartkeyDocid != nil {
-		body["startkey_docid"] = postPartitionViewOptions.StartkeyDocid
+	if postPartitionViewOptions.StartKeyDocID != nil {
+		body["start_key_doc_id"] = postPartitionViewOptions.StartKeyDocID
 	}
 	if postPartitionViewOptions.Update != nil {
 		body["update"] = postPartitionViewOptions.Update
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postPartitionView", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalViewResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4019,25 +4566,29 @@ func (cloudant *CloudantV1) PostPartitionViewWithContext(ctx context.Context, po
 // results. The remainder of the POST view functionality is identical to the `GET /{db}/_design/{ddoc}/_view/{view}`
 // API.
 func (cloudant *CloudantV1) PostPartitionViewAsStream(postPartitionViewOptions *PostPartitionViewOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostPartitionViewAsStreamWithContext(context.Background(), postPartitionViewOptions)
+	result, response, err = cloudant.PostPartitionViewAsStreamWithContext(context.Background(), postPartitionViewOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostPartitionViewAsStreamWithContext is an alternate form of the PostPartitionViewAsStream method which supports a Context parameter
 func (cloudant *CloudantV1) PostPartitionViewAsStreamWithContext(ctx context.Context, postPartitionViewOptions *PostPartitionViewOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postPartitionViewOptions, "postPartitionViewOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postPartitionViewOptions, "postPartitionViewOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postPartitionViewOptions.Db,
+		"db":            *postPartitionViewOptions.Db,
 		"partition_key": *postPartitionViewOptions.PartitionKey,
-		"ddoc": *postPartitionViewOptions.Ddoc,
-		"view": *postPartitionViewOptions.View,
+		"ddoc":          *postPartitionViewOptions.Ddoc,
+		"view":          *postPartitionViewOptions.View,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -4045,6 +4596,7 @@ func (cloudant *CloudantV1) PostPartitionViewAsStreamWithContext(ctx context.Con
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_partition/{partition_key}/_design/{ddoc}/_view/{view}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4087,11 +4639,11 @@ func (cloudant *CloudantV1) PostPartitionViewAsStreamWithContext(ctx context.Con
 	if postPartitionViewOptions.UpdateSeq != nil {
 		body["update_seq"] = postPartitionViewOptions.UpdateSeq
 	}
-	if postPartitionViewOptions.Endkey != nil {
-		body["endkey"] = postPartitionViewOptions.Endkey
+	if postPartitionViewOptions.EndKey != nil {
+		body["end_key"] = postPartitionViewOptions.EndKey
 	}
-	if postPartitionViewOptions.EndkeyDocid != nil {
-		body["endkey_docid"] = postPartitionViewOptions.EndkeyDocid
+	if postPartitionViewOptions.EndKeyDocID != nil {
+		body["end_key_doc_id"] = postPartitionViewOptions.EndKeyDocID
 	}
 	if postPartitionViewOptions.Group != nil {
 		body["group"] = postPartitionViewOptions.Group
@@ -4108,53 +4660,177 @@ func (cloudant *CloudantV1) PostPartitionViewAsStreamWithContext(ctx context.Con
 	if postPartitionViewOptions.Reduce != nil {
 		body["reduce"] = postPartitionViewOptions.Reduce
 	}
-	if postPartitionViewOptions.Stable != nil {
-		body["stable"] = postPartitionViewOptions.Stable
+	if postPartitionViewOptions.StartKey != nil {
+		body["start_key"] = postPartitionViewOptions.StartKey
 	}
-	if postPartitionViewOptions.Startkey != nil {
-		body["startkey"] = postPartitionViewOptions.Startkey
-	}
-	if postPartitionViewOptions.StartkeyDocid != nil {
-		body["startkey_docid"] = postPartitionViewOptions.StartkeyDocid
+	if postPartitionViewOptions.StartKeyDocID != nil {
+		body["start_key_doc_id"] = postPartitionViewOptions.StartKeyDocID
 	}
 	if postPartitionViewOptions.Update != nil {
 		body["update"] = postPartitionViewOptions.Update
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postPartitionViewAsStream", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
-// PostPartitionFind : Query a database partition index by using selector syntax (POST)
-// Query documents by using a declarative JSON querying syntax. Queries can use the built-in `_all_docs` index or custom
-// indices, specified by using the `_index` endpoint.
+// PostPartitionExplain : Retrieve information about which partition index is used for a query
+// Shows which index is being used by the query. Parameters are the same as the
+// [`/{db}/_partition/{partition_key}/_find` endpoint](#postpartitionfind-queries).
+func (cloudant *CloudantV1) PostPartitionExplain(postPartitionExplainOptions *PostPartitionExplainOptions) (result *ExplainResult, response *core.DetailedResponse, err error) {
+	result, response, err = cloudant.PostPartitionExplainWithContext(context.Background(), postPartitionExplainOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// PostPartitionExplainWithContext is an alternate form of the PostPartitionExplain method which supports a Context parameter
+func (cloudant *CloudantV1) PostPartitionExplainWithContext(ctx context.Context, postPartitionExplainOptions *PostPartitionExplainOptions) (result *ExplainResult, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(postPartitionExplainOptions, "postPartitionExplainOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(postPartitionExplainOptions, "postPartitionExplainOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"db":            *postPartitionExplainOptions.Db,
+		"partition_key": *postPartitionExplainOptions.PartitionKey,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_partition/{partition_key}/_explain`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range postPartitionExplainOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("cloudant", "V1", "PostPartitionExplain")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if postPartitionExplainOptions.Selector != nil {
+		body["selector"] = postPartitionExplainOptions.Selector
+	}
+	if postPartitionExplainOptions.Bookmark != nil {
+		body["bookmark"] = postPartitionExplainOptions.Bookmark
+	}
+	if postPartitionExplainOptions.Conflicts != nil {
+		body["conflicts"] = postPartitionExplainOptions.Conflicts
+	}
+	if postPartitionExplainOptions.ExecutionStats != nil {
+		body["execution_stats"] = postPartitionExplainOptions.ExecutionStats
+	}
+	if postPartitionExplainOptions.Fields != nil {
+		body["fields"] = postPartitionExplainOptions.Fields
+	}
+	if postPartitionExplainOptions.Limit != nil {
+		body["limit"] = postPartitionExplainOptions.Limit
+	}
+	if postPartitionExplainOptions.Skip != nil {
+		body["skip"] = postPartitionExplainOptions.Skip
+	}
+	if postPartitionExplainOptions.Sort != nil {
+		body["sort"] = postPartitionExplainOptions.Sort
+	}
+	if postPartitionExplainOptions.Stable != nil {
+		body["stable"] = postPartitionExplainOptions.Stable
+	}
+	if postPartitionExplainOptions.Update != nil {
+		body["update"] = postPartitionExplainOptions.Update
+	}
+	if postPartitionExplainOptions.UseIndex != nil {
+		body["use_index"] = postPartitionExplainOptions.UseIndex
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = cloudant.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postPartitionExplain", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalExplainResult)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// PostPartitionFind : Query a database partition index by using selector syntax
+// Query documents by using a declarative JSON querying syntax. It's best practice to create an appropriate index for
+// all fields in selector by using the `_index` endpoint.
+//
+// Queries without an appropriate backing index will fallback to using the built-in `_all_docs` index. This is not
+// recommended because it has a noticeable performance impact causing a full scan of the partition with each request. In
+// this case the response body will include a warning field recommending that an index is created.
 func (cloudant *CloudantV1) PostPartitionFind(postPartitionFindOptions *PostPartitionFindOptions) (result *FindResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostPartitionFindWithContext(context.Background(), postPartitionFindOptions)
+	result, response, err = cloudant.PostPartitionFindWithContext(context.Background(), postPartitionFindOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostPartitionFindWithContext is an alternate form of the PostPartitionFind method which supports a Context parameter
 func (cloudant *CloudantV1) PostPartitionFindWithContext(ctx context.Context, postPartitionFindOptions *PostPartitionFindOptions) (result *FindResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postPartitionFindOptions, "postPartitionFindOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postPartitionFindOptions, "postPartitionFindOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postPartitionFindOptions.Db,
+		"db":            *postPartitionFindOptions.Db,
 		"partition_key": *postPartitionFindOptions.PartitionKey,
 	}
 
@@ -4163,6 +4839,7 @@ func (cloudant *CloudantV1) PostPartitionFindWithContext(ctx context.Context, po
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_partition/{partition_key}/_find`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4213,22 +4890,27 @@ func (cloudant *CloudantV1) PostPartitionFindWithContext(ctx context.Context, po
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postPartitionFind", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalFindResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4237,26 +4919,34 @@ func (cloudant *CloudantV1) PostPartitionFindWithContext(ctx context.Context, po
 	return
 }
 
-// PostPartitionFindAsStream : Query a database partition index by using selector syntax (POST) as stream
-// Query documents by using a declarative JSON querying syntax. Queries can use the built-in `_all_docs` index or custom
-// indices, specified by using the `_index` endpoint.
+// PostPartitionFindAsStream : Query a database partition index by using selector syntax as stream
+// Query documents by using a declarative JSON querying syntax. It's best practice to create an appropriate index for
+// all fields in selector by using the `_index` endpoint.
+//
+// Queries without an appropriate backing index will fallback to using the built-in `_all_docs` index. This is not
+// recommended because it has a noticeable performance impact causing a full scan of the partition with each request. In
+// this case the response body will include a warning field recommending that an index is created.
 func (cloudant *CloudantV1) PostPartitionFindAsStream(postPartitionFindOptions *PostPartitionFindOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostPartitionFindAsStreamWithContext(context.Background(), postPartitionFindOptions)
+	result, response, err = cloudant.PostPartitionFindAsStreamWithContext(context.Background(), postPartitionFindOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostPartitionFindAsStreamWithContext is an alternate form of the PostPartitionFindAsStream method which supports a Context parameter
 func (cloudant *CloudantV1) PostPartitionFindAsStreamWithContext(ctx context.Context, postPartitionFindOptions *PostPartitionFindOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postPartitionFindOptions, "postPartitionFindOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postPartitionFindOptions, "postPartitionFindOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postPartitionFindOptions.Db,
+		"db":            *postPartitionFindOptions.Db,
 		"partition_key": *postPartitionFindOptions.PartitionKey,
 	}
 
@@ -4265,6 +4955,7 @@ func (cloudant *CloudantV1) PostPartitionFindAsStreamWithContext(ctx context.Con
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_partition/{partition_key}/_find`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4315,34 +5006,44 @@ func (cloudant *CloudantV1) PostPartitionFindAsStreamWithContext(ctx context.Con
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postPartitionFindAsStream", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
 // PostExplain : Retrieve information about which index is used for a query
-// Shows which index is being used by the query. Parameters are the same as the [`_find`
-// endpoint](#query-an-index-by-using-selector-syntax).
+// Shows which index is being used by the query. Parameters are the same as the [`_find` endpoint](#postfind).
 func (cloudant *CloudantV1) PostExplain(postExplainOptions *PostExplainOptions) (result *ExplainResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostExplainWithContext(context.Background(), postExplainOptions)
+	result, response, err = cloudant.PostExplainWithContext(context.Background(), postExplainOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostExplainWithContext is an alternate form of the PostExplain method which supports a Context parameter
 func (cloudant *CloudantV1) PostExplainWithContext(ctx context.Context, postExplainOptions *PostExplainOptions) (result *ExplainResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postExplainOptions, "postExplainOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postExplainOptions, "postExplainOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4355,6 +5056,7 @@ func (cloudant *CloudantV1) PostExplainWithContext(ctx context.Context, postExpl
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_explain`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4408,22 +5110,27 @@ func (cloudant *CloudantV1) PostExplainWithContext(ctx context.Context, postExpl
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postExplain", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalExplainResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4433,20 +5140,28 @@ func (cloudant *CloudantV1) PostExplainWithContext(ctx context.Context, postExpl
 }
 
 // PostFind : Query an index by using selector syntax
-// Query documents by using a declarative JSON querying syntax. Queries can use the built-in `_all_docs` index or custom
-// indices, specified by using the `_index` endpoint.
+// Query documents by using a declarative JSON querying syntax. It's best practice to create an appropriate index for
+// all fields in selector by using the `_index` endpoint.
+//
+// Queries without an appropriate backing index will fallback to using the built-in `_all_docs` index. This is not
+// recommended because it has a significant performance impact causing a full scan of the database with each request. In
+// this case the response body will include a warning field recommending that an index is created.
 func (cloudant *CloudantV1) PostFind(postFindOptions *PostFindOptions) (result *FindResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostFindWithContext(context.Background(), postFindOptions)
+	result, response, err = cloudant.PostFindWithContext(context.Background(), postFindOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostFindWithContext is an alternate form of the PostFind method which supports a Context parameter
 func (cloudant *CloudantV1) PostFindWithContext(ctx context.Context, postFindOptions *PostFindOptions) (result *FindResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postFindOptions, "postFindOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postFindOptions, "postFindOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4459,6 +5174,7 @@ func (cloudant *CloudantV1) PostFindWithContext(ctx context.Context, postFindOpt
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_find`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4512,22 +5228,27 @@ func (cloudant *CloudantV1) PostFindWithContext(ctx context.Context, postFindOpt
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postFind", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalFindResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4537,20 +5258,28 @@ func (cloudant *CloudantV1) PostFindWithContext(ctx context.Context, postFindOpt
 }
 
 // PostFindAsStream : Query an index by using selector syntax as stream
-// Query documents by using a declarative JSON querying syntax. Queries can use the built-in `_all_docs` index or custom
-// indices, specified by using the `_index` endpoint.
+// Query documents by using a declarative JSON querying syntax. It's best practice to create an appropriate index for
+// all fields in selector by using the `_index` endpoint.
+//
+// Queries without an appropriate backing index will fallback to using the built-in `_all_docs` index. This is not
+// recommended because it has a significant performance impact causing a full scan of the database with each request. In
+// this case the response body will include a warning field recommending that an index is created.
 func (cloudant *CloudantV1) PostFindAsStream(postFindOptions *PostFindOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostFindAsStreamWithContext(context.Background(), postFindOptions)
+	result, response, err = cloudant.PostFindAsStreamWithContext(context.Background(), postFindOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostFindAsStreamWithContext is an alternate form of the PostFindAsStream method which supports a Context parameter
 func (cloudant *CloudantV1) PostFindAsStreamWithContext(ctx context.Context, postFindOptions *PostFindOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postFindOptions, "postFindOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postFindOptions, "postFindOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4563,6 +5292,7 @@ func (cloudant *CloudantV1) PostFindAsStreamWithContext(ctx context.Context, pos
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_find`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4616,35 +5346,46 @@ func (cloudant *CloudantV1) PostFindAsStreamWithContext(ctx context.Context, pos
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postFindAsStream", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
 
 // GetIndexesInformation : Retrieve information about all indexes
-// When you make a GET request to `/db/_index`, you get a list of all indexes used by Cloudant Query in the database,
-// including the primary index. In addition to the information available through this API, indexes are also stored in
-// the `indexes` property of design documents.
+// When you make a GET request to `/db/_index`, you get a list of all the indexes using `"language":"query"` in the
+// database and the primary index. In addition to the information available through this API, the indexes are stored in
+// the `indexes` property of their respective design documents.
 func (cloudant *CloudantV1) GetIndexesInformation(getIndexesInformationOptions *GetIndexesInformationOptions) (result *IndexesInformation, response *core.DetailedResponse, err error) {
-	return cloudant.GetIndexesInformationWithContext(context.Background(), getIndexesInformationOptions)
+	result, response, err = cloudant.GetIndexesInformationWithContext(context.Background(), getIndexesInformationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetIndexesInformationWithContext is an alternate form of the GetIndexesInformation method which supports a Context parameter
 func (cloudant *CloudantV1) GetIndexesInformationWithContext(ctx context.Context, getIndexesInformationOptions *GetIndexesInformationOptions) (result *IndexesInformation, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getIndexesInformationOptions, "getIndexesInformationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getIndexesInformationOptions, "getIndexesInformationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4657,6 +5398,7 @@ func (cloudant *CloudantV1) GetIndexesInformationWithContext(ctx context.Context
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_index`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4672,17 +5414,21 @@ func (cloudant *CloudantV1) GetIndexesInformationWithContext(ctx context.Context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getIndexesInformation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIndexesInformation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4694,17 +5440,21 @@ func (cloudant *CloudantV1) GetIndexesInformationWithContext(ctx context.Context
 // PostIndex : Create a new index on a database
 // Create a new index on a database.
 func (cloudant *CloudantV1) PostIndex(postIndexOptions *PostIndexOptions) (result *IndexResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostIndexWithContext(context.Background(), postIndexOptions)
+	result, response, err = cloudant.PostIndexWithContext(context.Background(), postIndexOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostIndexWithContext is an alternate form of the PostIndex method which supports a Context parameter
 func (cloudant *CloudantV1) PostIndexWithContext(ctx context.Context, postIndexOptions *PostIndexOptions) (result *IndexResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postIndexOptions, "postIndexOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postIndexOptions, "postIndexOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4717,6 +5467,7 @@ func (cloudant *CloudantV1) PostIndexWithContext(ctx context.Context, postIndexO
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_index`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4738,9 +5489,6 @@ func (cloudant *CloudantV1) PostIndexWithContext(ctx context.Context, postIndexO
 	if postIndexOptions.Ddoc != nil {
 		body["ddoc"] = postIndexOptions.Ddoc
 	}
-	if postIndexOptions.Def != nil {
-		body["def"] = postIndexOptions.Def
-	}
 	if postIndexOptions.Name != nil {
 		body["name"] = postIndexOptions.Name
 	}
@@ -4752,22 +5500,27 @@ func (cloudant *CloudantV1) PostIndexWithContext(ctx context.Context, postIndexO
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postIndex", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIndexResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4777,25 +5530,30 @@ func (cloudant *CloudantV1) PostIndexWithContext(ctx context.Context, postIndexO
 }
 
 // DeleteIndex : Delete an index
+// Delete the index functions from the design document and index files on the server.
 func (cloudant *CloudantV1) DeleteIndex(deleteIndexOptions *DeleteIndexOptions) (result *Ok, response *core.DetailedResponse, err error) {
-	return cloudant.DeleteIndexWithContext(context.Background(), deleteIndexOptions)
+	result, response, err = cloudant.DeleteIndexWithContext(context.Background(), deleteIndexOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteIndexWithContext is an alternate form of the DeleteIndex method which supports a Context parameter
 func (cloudant *CloudantV1) DeleteIndexWithContext(ctx context.Context, deleteIndexOptions *DeleteIndexOptions) (result *Ok, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteIndexOptions, "deleteIndexOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteIndexOptions, "deleteIndexOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *deleteIndexOptions.Db,
-		"ddoc": *deleteIndexOptions.Ddoc,
-		"type": *deleteIndexOptions.Type,
+		"db":    *deleteIndexOptions.Db,
+		"ddoc":  *deleteIndexOptions.Ddoc,
+		"type":  *deleteIndexOptions.Type,
 		"index": *deleteIndexOptions.Index,
 	}
 
@@ -4804,6 +5562,7 @@ func (cloudant *CloudantV1) DeleteIndexWithContext(ctx context.Context, deleteIn
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_index/_design/{ddoc}/{type}/{index}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4819,17 +5578,21 @@ func (cloudant *CloudantV1) DeleteIndexWithContext(ctx context.Context, deleteIn
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "deleteIndex", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOk)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4842,17 +5605,21 @@ func (cloudant *CloudantV1) DeleteIndexWithContext(ctx context.Context, deleteIn
 // Returns the results of analyzer tokenization of the provided sample text. This endpoint can be used for testing
 // analyzer tokenization.
 func (cloudant *CloudantV1) PostSearchAnalyze(postSearchAnalyzeOptions *PostSearchAnalyzeOptions) (result *SearchAnalyzeResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostSearchAnalyzeWithContext(context.Background(), postSearchAnalyzeOptions)
+	result, response, err = cloudant.PostSearchAnalyzeWithContext(context.Background(), postSearchAnalyzeOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostSearchAnalyzeWithContext is an alternate form of the PostSearchAnalyze method which supports a Context parameter
 func (cloudant *CloudantV1) PostSearchAnalyzeWithContext(ctx context.Context, postSearchAnalyzeOptions *PostSearchAnalyzeOptions) (result *SearchAnalyzeResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postSearchAnalyzeOptions, "postSearchAnalyzeOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postSearchAnalyzeOptions, "postSearchAnalyzeOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4861,6 +5628,7 @@ func (cloudant *CloudantV1) PostSearchAnalyzeWithContext(ctx context.Context, po
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_search_analyze`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -4884,22 +5652,27 @@ func (cloudant *CloudantV1) PostSearchAnalyzeWithContext(ctx context.Context, po
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postSearchAnalyze", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSearchAnalyzeResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -4915,23 +5688,27 @@ func (cloudant *CloudantV1) PostSearchAnalyzeWithContext(ctx context.Context, po
 // the query is submitted as a JSON object in the request body. This avoids the limitations of passing query options as
 // URL query parameters of a `GET` request.
 func (cloudant *CloudantV1) PostSearch(postSearchOptions *PostSearchOptions) (result *SearchResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostSearchWithContext(context.Background(), postSearchOptions)
+	result, response, err = cloudant.PostSearchWithContext(context.Background(), postSearchOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostSearchWithContext is an alternate form of the PostSearch method which supports a Context parameter
 func (cloudant *CloudantV1) PostSearchWithContext(ctx context.Context, postSearchOptions *PostSearchOptions) (result *SearchResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postSearchOptions, "postSearchOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postSearchOptions, "postSearchOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postSearchOptions.Db,
-		"ddoc": *postSearchOptions.Ddoc,
+		"db":    *postSearchOptions.Db,
+		"ddoc":  *postSearchOptions.Ddoc,
 		"index": *postSearchOptions.Index,
 	}
 
@@ -4940,6 +5717,7 @@ func (cloudant *CloudantV1) PostSearchWithContext(ctx context.Context, postSearc
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}/_search/{index}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5011,22 +5789,27 @@ func (cloudant *CloudantV1) PostSearchWithContext(ctx context.Context, postSearc
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postSearch", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSearchResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5042,23 +5825,27 @@ func (cloudant *CloudantV1) PostSearchWithContext(ctx context.Context, postSearc
 // the query is submitted as a JSON object in the request body. This avoids the limitations of passing query options as
 // URL query parameters of a `GET` request.
 func (cloudant *CloudantV1) PostSearchAsStream(postSearchOptions *PostSearchOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.PostSearchAsStreamWithContext(context.Background(), postSearchOptions)
+	result, response, err = cloudant.PostSearchAsStreamWithContext(context.Background(), postSearchOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostSearchAsStreamWithContext is an alternate form of the PostSearchAsStream method which supports a Context parameter
 func (cloudant *CloudantV1) PostSearchAsStreamWithContext(ctx context.Context, postSearchOptions *PostSearchOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postSearchOptions, "postSearchOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postSearchOptions, "postSearchOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *postSearchOptions.Db,
-		"ddoc": *postSearchOptions.Ddoc,
+		"db":    *postSearchOptions.Db,
+		"ddoc":  *postSearchOptions.Ddoc,
 		"index": *postSearchOptions.Index,
 	}
 
@@ -5067,6 +5854,7 @@ func (cloudant *CloudantV1) PostSearchAsStreamWithContext(ctx context.Context, p
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}/_search/{index}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5138,15 +5926,22 @@ func (cloudant *CloudantV1) PostSearchAsStreamWithContext(ctx context.Context, p
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "postSearchAsStream", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -5154,23 +5949,27 @@ func (cloudant *CloudantV1) PostSearchAsStreamWithContext(ctx context.Context, p
 // GetSearchInfo : Retrieve information about a search index
 // Retrieve search index metadata information, such as the size of the index on disk.
 func (cloudant *CloudantV1) GetSearchInfo(getSearchInfoOptions *GetSearchInfoOptions) (result *SearchInfoResult, response *core.DetailedResponse, err error) {
-	return cloudant.GetSearchInfoWithContext(context.Background(), getSearchInfoOptions)
+	result, response, err = cloudant.GetSearchInfoWithContext(context.Background(), getSearchInfoOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetSearchInfoWithContext is an alternate form of the GetSearchInfo method which supports a Context parameter
 func (cloudant *CloudantV1) GetSearchInfoWithContext(ctx context.Context, getSearchInfoOptions *GetSearchInfoOptions) (result *SearchInfoResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getSearchInfoOptions, "getSearchInfoOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getSearchInfoOptions, "getSearchInfoOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *getSearchInfoOptions.Db,
-		"ddoc": *getSearchInfoOptions.Ddoc,
+		"db":    *getSearchInfoOptions.Db,
+		"ddoc":  *getSearchInfoOptions.Ddoc,
 		"index": *getSearchInfoOptions.Index,
 	}
 
@@ -5179,6 +5978,7 @@ func (cloudant *CloudantV1) GetSearchInfoWithContext(ctx context.Context, getSea
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}/_search_info/{index}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5194,343 +5994,21 @@ func (cloudant *CloudantV1) GetSearchInfoWithContext(ctx context.Context, getSea
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getSearchInfo", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSearchInfoResult)
 		if err != nil {
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// GetGeo : Query a geospatial index
-// Executes a query against the requested geospatial index from the specified design document.
-func (cloudant *CloudantV1) GetGeo(getGeoOptions *GetGeoOptions) (result *GeoResult, response *core.DetailedResponse, err error) {
-	return cloudant.GetGeoWithContext(context.Background(), getGeoOptions)
-}
-
-// GetGeoWithContext is an alternate form of the GetGeo method which supports a Context parameter
-func (cloudant *CloudantV1) GetGeoWithContext(ctx context.Context, getGeoOptions *GetGeoOptions) (result *GeoResult, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getGeoOptions, "getGeoOptions cannot be nil")
-	if err != nil {
-		return
-	}
-	err = core.ValidateStruct(getGeoOptions, "getGeoOptions")
-	if err != nil {
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"db": *getGeoOptions.Db,
-		"ddoc": *getGeoOptions.Ddoc,
-		"index": *getGeoOptions.Index,
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}/_geo/{index}`, pathParamsMap)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range getGeoOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("cloudant", "V1", "GetGeo")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if getGeoOptions.Bbox != nil {
-		builder.AddQuery("bbox", fmt.Sprint(*getGeoOptions.Bbox))
-	}
-	if getGeoOptions.Bookmark != nil {
-		builder.AddQuery("bookmark", fmt.Sprint(*getGeoOptions.Bookmark))
-	}
-	if getGeoOptions.Format != nil {
-		builder.AddQuery("format", fmt.Sprint(*getGeoOptions.Format))
-	}
-	if getGeoOptions.G != nil {
-		builder.AddQuery("g", fmt.Sprint(*getGeoOptions.G))
-	}
-	if getGeoOptions.IncludeDocs != nil {
-		builder.AddQuery("include_docs", fmt.Sprint(*getGeoOptions.IncludeDocs))
-	}
-	if getGeoOptions.Lat != nil {
-		builder.AddQuery("lat", fmt.Sprint(*getGeoOptions.Lat))
-	}
-	if getGeoOptions.Limit != nil {
-		builder.AddQuery("limit", fmt.Sprint(*getGeoOptions.Limit))
-	}
-	if getGeoOptions.Lon != nil {
-		builder.AddQuery("lon", fmt.Sprint(*getGeoOptions.Lon))
-	}
-	if getGeoOptions.Nearest != nil {
-		builder.AddQuery("nearest", fmt.Sprint(*getGeoOptions.Nearest))
-	}
-	if getGeoOptions.Radius != nil {
-		builder.AddQuery("radius", fmt.Sprint(*getGeoOptions.Radius))
-	}
-	if getGeoOptions.Rangex != nil {
-		builder.AddQuery("rangex", fmt.Sprint(*getGeoOptions.Rangex))
-	}
-	if getGeoOptions.Rangey != nil {
-		builder.AddQuery("rangey", fmt.Sprint(*getGeoOptions.Rangey))
-	}
-	if getGeoOptions.Relation != nil {
-		builder.AddQuery("relation", fmt.Sprint(*getGeoOptions.Relation))
-	}
-	if getGeoOptions.Skip != nil {
-		builder.AddQuery("skip", fmt.Sprint(*getGeoOptions.Skip))
-	}
-	if getGeoOptions.Stale != nil {
-		builder.AddQuery("stale", fmt.Sprint(*getGeoOptions.Stale))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = cloudant.Service.Request(request, &rawResponse)
-	if err != nil {
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGeoResult)
-		if err != nil {
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// GetGeoAsStream : Query a geospatial index as stream
-// Executes a query against the requested geospatial index from the specified design document.
-func (cloudant *CloudantV1) GetGeoAsStream(getGeoOptions *GetGeoOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.GetGeoAsStreamWithContext(context.Background(), getGeoOptions)
-}
-
-// GetGeoAsStreamWithContext is an alternate form of the GetGeoAsStream method which supports a Context parameter
-func (cloudant *CloudantV1) GetGeoAsStreamWithContext(ctx context.Context, getGeoOptions *GetGeoOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getGeoOptions, "getGeoOptions cannot be nil")
-	if err != nil {
-		return
-	}
-	err = core.ValidateStruct(getGeoOptions, "getGeoOptions")
-	if err != nil {
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"db": *getGeoOptions.Db,
-		"ddoc": *getGeoOptions.Ddoc,
-		"index": *getGeoOptions.Index,
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}/_geo/{index}`, pathParamsMap)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range getGeoOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("cloudant", "V1", "GetGeoAsStream")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if getGeoOptions.Bbox != nil {
-		builder.AddQuery("bbox", fmt.Sprint(*getGeoOptions.Bbox))
-	}
-	if getGeoOptions.Bookmark != nil {
-		builder.AddQuery("bookmark", fmt.Sprint(*getGeoOptions.Bookmark))
-	}
-	if getGeoOptions.Format != nil {
-		builder.AddQuery("format", fmt.Sprint(*getGeoOptions.Format))
-	}
-	if getGeoOptions.G != nil {
-		builder.AddQuery("g", fmt.Sprint(*getGeoOptions.G))
-	}
-	if getGeoOptions.IncludeDocs != nil {
-		builder.AddQuery("include_docs", fmt.Sprint(*getGeoOptions.IncludeDocs))
-	}
-	if getGeoOptions.Lat != nil {
-		builder.AddQuery("lat", fmt.Sprint(*getGeoOptions.Lat))
-	}
-	if getGeoOptions.Limit != nil {
-		builder.AddQuery("limit", fmt.Sprint(*getGeoOptions.Limit))
-	}
-	if getGeoOptions.Lon != nil {
-		builder.AddQuery("lon", fmt.Sprint(*getGeoOptions.Lon))
-	}
-	if getGeoOptions.Nearest != nil {
-		builder.AddQuery("nearest", fmt.Sprint(*getGeoOptions.Nearest))
-	}
-	if getGeoOptions.Radius != nil {
-		builder.AddQuery("radius", fmt.Sprint(*getGeoOptions.Radius))
-	}
-	if getGeoOptions.Rangex != nil {
-		builder.AddQuery("rangex", fmt.Sprint(*getGeoOptions.Rangex))
-	}
-	if getGeoOptions.Rangey != nil {
-		builder.AddQuery("rangey", fmt.Sprint(*getGeoOptions.Rangey))
-	}
-	if getGeoOptions.Relation != nil {
-		builder.AddQuery("relation", fmt.Sprint(*getGeoOptions.Relation))
-	}
-	if getGeoOptions.Skip != nil {
-		builder.AddQuery("skip", fmt.Sprint(*getGeoOptions.Skip))
-	}
-	if getGeoOptions.Stale != nil {
-		builder.AddQuery("stale", fmt.Sprint(*getGeoOptions.Stale))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	response, err = cloudant.Service.Request(request, &result)
-
-	return
-}
-
-// PostGeoCleanup : Cleanup old geospatial indexes
-// Cleanup old geospatial indexes from disk that have been superseded by newer index builds.
-func (cloudant *CloudantV1) PostGeoCleanup(postGeoCleanupOptions *PostGeoCleanupOptions) (result *Ok, response *core.DetailedResponse, err error) {
-	return cloudant.PostGeoCleanupWithContext(context.Background(), postGeoCleanupOptions)
-}
-
-// PostGeoCleanupWithContext is an alternate form of the PostGeoCleanup method which supports a Context parameter
-func (cloudant *CloudantV1) PostGeoCleanupWithContext(ctx context.Context, postGeoCleanupOptions *PostGeoCleanupOptions) (result *Ok, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(postGeoCleanupOptions, "postGeoCleanupOptions cannot be nil")
-	if err != nil {
-		return
-	}
-	err = core.ValidateStruct(postGeoCleanupOptions, "postGeoCleanupOptions")
-	if err != nil {
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"db": *postGeoCleanupOptions.Db,
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_geo_cleanup`, pathParamsMap)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range postGeoCleanupOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("cloudant", "V1", "PostGeoCleanup")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = cloudant.Service.Request(request, &rawResponse)
-	if err != nil {
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOk)
-		if err != nil {
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// GetGeoIndexInformation : Retrieve information about a geospatial index
-func (cloudant *CloudantV1) GetGeoIndexInformation(getGeoIndexInformationOptions *GetGeoIndexInformationOptions) (result *GeoIndexInformation, response *core.DetailedResponse, err error) {
-	return cloudant.GetGeoIndexInformationWithContext(context.Background(), getGeoIndexInformationOptions)
-}
-
-// GetGeoIndexInformationWithContext is an alternate form of the GetGeoIndexInformation method which supports a Context parameter
-func (cloudant *CloudantV1) GetGeoIndexInformationWithContext(ctx context.Context, getGeoIndexInformationOptions *GetGeoIndexInformationOptions) (result *GeoIndexInformation, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getGeoIndexInformationOptions, "getGeoIndexInformationOptions cannot be nil")
-	if err != nil {
-		return
-	}
-	err = core.ValidateStruct(getGeoIndexInformationOptions, "getGeoIndexInformationOptions")
-	if err != nil {
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"db": *getGeoIndexInformationOptions.Db,
-		"ddoc": *getGeoIndexInformationOptions.Ddoc,
-		"index": *getGeoIndexInformationOptions.Index,
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_design/{ddoc}/_geo_info/{index}`, pathParamsMap)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range getGeoIndexInformationOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("cloudant", "V1", "GetGeoIndexInformation")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = cloudant.Service.Request(request, &rawResponse)
-	if err != nil {
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalGeoIndexInformation)
-		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5544,17 +6022,21 @@ func (cloudant *CloudantV1) GetGeoIndexInformationWithContext(ctx context.Contex
 // `_replicator` database.  The method supports the same query arguments as the `GET /_replicator/{doc_id}` method, but
 // only headers like content length and the revision (ETag header) are returned.
 func (cloudant *CloudantV1) HeadReplicationDocument(headReplicationDocumentOptions *HeadReplicationDocumentOptions) (response *core.DetailedResponse, err error) {
-	return cloudant.HeadReplicationDocumentWithContext(context.Background(), headReplicationDocumentOptions)
+	response, err = cloudant.HeadReplicationDocumentWithContext(context.Background(), headReplicationDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // HeadReplicationDocumentWithContext is an alternate form of the HeadReplicationDocument method which supports a Context parameter
 func (cloudant *CloudantV1) HeadReplicationDocumentWithContext(ctx context.Context, headReplicationDocumentOptions *HeadReplicationDocumentOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(headReplicationDocumentOptions, "headReplicationDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(headReplicationDocumentOptions, "headReplicationDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5567,6 +6049,7 @@ func (cloudant *CloudantV1) HeadReplicationDocumentWithContext(ctx context.Conte
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_replicator/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5584,10 +6067,16 @@ func (cloudant *CloudantV1) HeadReplicationDocumentWithContext(ctx context.Conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "headReplicationDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -5597,17 +6086,21 @@ func (cloudant *CloudantV1) HeadReplicationDocumentWithContext(ctx context.Conte
 // document.  Since the response body is empty, using the HEAD method is a lightweight way to check if the replication
 // scheduler document exists or not.
 func (cloudant *CloudantV1) HeadSchedulerDocument(headSchedulerDocumentOptions *HeadSchedulerDocumentOptions) (response *core.DetailedResponse, err error) {
-	return cloudant.HeadSchedulerDocumentWithContext(context.Background(), headSchedulerDocumentOptions)
+	response, err = cloudant.HeadSchedulerDocumentWithContext(context.Background(), headSchedulerDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // HeadSchedulerDocumentWithContext is an alternate form of the HeadSchedulerDocument method which supports a Context parameter
 func (cloudant *CloudantV1) HeadSchedulerDocumentWithContext(ctx context.Context, headSchedulerDocumentOptions *HeadSchedulerDocumentOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(headSchedulerDocumentOptions, "headSchedulerDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(headSchedulerDocumentOptions, "headSchedulerDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5620,6 +6113,7 @@ func (cloudant *CloudantV1) HeadSchedulerDocumentWithContext(ctx context.Context
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_scheduler/docs/_replicator/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5634,10 +6128,16 @@ func (cloudant *CloudantV1) HeadSchedulerDocumentWithContext(ctx context.Context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "headSchedulerDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -5646,17 +6146,21 @@ func (cloudant *CloudantV1) HeadSchedulerDocumentWithContext(ctx context.Context
 // Returns the HTTP headers that contain a minimal amount of information about the specified replication task. Only the
 // header information is returned.
 func (cloudant *CloudantV1) HeadSchedulerJob(headSchedulerJobOptions *HeadSchedulerJobOptions) (response *core.DetailedResponse, err error) {
-	return cloudant.HeadSchedulerJobWithContext(context.Background(), headSchedulerJobOptions)
+	response, err = cloudant.HeadSchedulerJobWithContext(context.Background(), headSchedulerJobOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // HeadSchedulerJobWithContext is an alternate form of the HeadSchedulerJob method which supports a Context parameter
 func (cloudant *CloudantV1) HeadSchedulerJobWithContext(ctx context.Context, headSchedulerJobOptions *HeadSchedulerJobOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(headSchedulerJobOptions, "headSchedulerJobOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(headSchedulerJobOptions, "headSchedulerJobOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5669,6 +6173,7 @@ func (cloudant *CloudantV1) HeadSchedulerJobWithContext(ctx context.Context, hea
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_scheduler/jobs/{job_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5683,10 +6188,16 @@ func (cloudant *CloudantV1) HeadSchedulerJobWithContext(ctx context.Context, hea
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "headSchedulerJob", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -5694,17 +6205,21 @@ func (cloudant *CloudantV1) HeadSchedulerJobWithContext(ctx context.Context, hea
 // DeleteReplicationDocument : Cancel a replication
 // Cancels a replication by deleting the document that describes it from the `_replicator` database.
 func (cloudant *CloudantV1) DeleteReplicationDocument(deleteReplicationDocumentOptions *DeleteReplicationDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
-	return cloudant.DeleteReplicationDocumentWithContext(context.Background(), deleteReplicationDocumentOptions)
+	result, response, err = cloudant.DeleteReplicationDocumentWithContext(context.Background(), deleteReplicationDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteReplicationDocumentWithContext is an alternate form of the DeleteReplicationDocument method which supports a Context parameter
 func (cloudant *CloudantV1) DeleteReplicationDocumentWithContext(ctx context.Context, deleteReplicationDocumentOptions *DeleteReplicationDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteReplicationDocumentOptions, "deleteReplicationDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteReplicationDocumentOptions, "deleteReplicationDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5717,6 +6232,7 @@ func (cloudant *CloudantV1) DeleteReplicationDocumentWithContext(ctx context.Con
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_replicator/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5742,17 +6258,21 @@ func (cloudant *CloudantV1) DeleteReplicationDocumentWithContext(ctx context.Con
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "deleteReplicationDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocumentResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5765,17 +6285,21 @@ func (cloudant *CloudantV1) DeleteReplicationDocumentWithContext(ctx context.Con
 // Retrieves a replication document from the `_replicator` database to view the configuration of the replication. The
 // status of the replication is no longer recorded in the document but can be checked via the replication scheduler.
 func (cloudant *CloudantV1) GetReplicationDocument(getReplicationDocumentOptions *GetReplicationDocumentOptions) (result *ReplicationDocument, response *core.DetailedResponse, err error) {
-	return cloudant.GetReplicationDocumentWithContext(context.Background(), getReplicationDocumentOptions)
+	result, response, err = cloudant.GetReplicationDocumentWithContext(context.Background(), getReplicationDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetReplicationDocumentWithContext is an alternate form of the GetReplicationDocument method which supports a Context parameter
 func (cloudant *CloudantV1) GetReplicationDocumentWithContext(ctx context.Context, getReplicationDocumentOptions *GetReplicationDocumentOptions) (result *ReplicationDocument, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getReplicationDocumentOptions, "getReplicationDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getReplicationDocumentOptions, "getReplicationDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5788,6 +6312,7 @@ func (cloudant *CloudantV1) GetReplicationDocumentWithContext(ctx context.Contex
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_replicator/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5837,17 +6362,21 @@ func (cloudant *CloudantV1) GetReplicationDocumentWithContext(ctx context.Contex
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getReplicationDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalReplicationDocument)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5860,17 +6389,21 @@ func (cloudant *CloudantV1) GetReplicationDocumentWithContext(ctx context.Contex
 // Creates or modifies a document in the `_replicator` database to start a new replication or to edit an existing
 // replication.
 func (cloudant *CloudantV1) PutReplicationDocument(putReplicationDocumentOptions *PutReplicationDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
-	return cloudant.PutReplicationDocumentWithContext(context.Background(), putReplicationDocumentOptions)
+	result, response, err = cloudant.PutReplicationDocumentWithContext(context.Background(), putReplicationDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PutReplicationDocumentWithContext is an alternate form of the PutReplicationDocument method which supports a Context parameter
 func (cloudant *CloudantV1) PutReplicationDocumentWithContext(ctx context.Context, putReplicationDocumentOptions *PutReplicationDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(putReplicationDocumentOptions, "putReplicationDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(putReplicationDocumentOptions, "putReplicationDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5883,6 +6416,7 @@ func (cloudant *CloudantV1) PutReplicationDocumentWithContext(ctx context.Contex
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_replicator/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5912,22 +6446,27 @@ func (cloudant *CloudantV1) PutReplicationDocumentWithContext(ctx context.Contex
 
 	_, err = builder.SetBodyContentJSON(putReplicationDocumentOptions.ReplicationDocument)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "putReplicationDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocumentResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -5941,13 +6480,16 @@ func (cloudant *CloudantV1) PutReplicationDocumentWithContext(ctx context.Contex
 // For each document, the endpoint returns the document ID, database, replication ID, source and target, and other
 // information.
 func (cloudant *CloudantV1) GetSchedulerDocs(getSchedulerDocsOptions *GetSchedulerDocsOptions) (result *SchedulerDocsResult, response *core.DetailedResponse, err error) {
-	return cloudant.GetSchedulerDocsWithContext(context.Background(), getSchedulerDocsOptions)
+	result, response, err = cloudant.GetSchedulerDocsWithContext(context.Background(), getSchedulerDocsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetSchedulerDocsWithContext is an alternate form of the GetSchedulerDocs method which supports a Context parameter
 func (cloudant *CloudantV1) GetSchedulerDocsWithContext(ctx context.Context, getSchedulerDocsOptions *GetSchedulerDocsOptions) (result *SchedulerDocsResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getSchedulerDocsOptions, "getSchedulerDocsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5956,6 +6498,7 @@ func (cloudant *CloudantV1) GetSchedulerDocsWithContext(ctx context.Context, get
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_scheduler/docs`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -5981,17 +6524,21 @@ func (cloudant *CloudantV1) GetSchedulerDocsWithContext(ctx context.Context, get
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getSchedulerDocs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSchedulerDocsResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6004,17 +6551,21 @@ func (cloudant *CloudantV1) GetSchedulerDocsWithContext(ctx context.Context, get
 // Retrieves information about a replication document from the replicator database. The endpoint returns the document
 // ID, database, replication ID, source and target, and other information.
 func (cloudant *CloudantV1) GetSchedulerDocument(getSchedulerDocumentOptions *GetSchedulerDocumentOptions) (result *SchedulerDocument, response *core.DetailedResponse, err error) {
-	return cloudant.GetSchedulerDocumentWithContext(context.Background(), getSchedulerDocumentOptions)
+	result, response, err = cloudant.GetSchedulerDocumentWithContext(context.Background(), getSchedulerDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetSchedulerDocumentWithContext is an alternate form of the GetSchedulerDocument method which supports a Context parameter
 func (cloudant *CloudantV1) GetSchedulerDocumentWithContext(ctx context.Context, getSchedulerDocumentOptions *GetSchedulerDocumentOptions) (result *SchedulerDocument, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getSchedulerDocumentOptions, "getSchedulerDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getSchedulerDocumentOptions, "getSchedulerDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6027,6 +6578,7 @@ func (cloudant *CloudantV1) GetSchedulerDocumentWithContext(ctx context.Context,
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_scheduler/docs/_replicator/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6042,17 +6594,21 @@ func (cloudant *CloudantV1) GetSchedulerDocumentWithContext(ctx context.Context,
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getSchedulerDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSchedulerDocument)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6067,13 +6623,16 @@ func (cloudant *CloudantV1) GetSchedulerDocumentWithContext(ctx context.Context,
 // documents were malformed. Each job description includes source and target information, replication ID, history of
 // recent events, and other information.
 func (cloudant *CloudantV1) GetSchedulerJobs(getSchedulerJobsOptions *GetSchedulerJobsOptions) (result *SchedulerJobsResult, response *core.DetailedResponse, err error) {
-	return cloudant.GetSchedulerJobsWithContext(context.Background(), getSchedulerJobsOptions)
+	result, response, err = cloudant.GetSchedulerJobsWithContext(context.Background(), getSchedulerJobsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetSchedulerJobsWithContext is an alternate form of the GetSchedulerJobs method which supports a Context parameter
 func (cloudant *CloudantV1) GetSchedulerJobsWithContext(ctx context.Context, getSchedulerJobsOptions *GetSchedulerJobsOptions) (result *SchedulerJobsResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getSchedulerJobsOptions, "getSchedulerJobsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6082,6 +6641,7 @@ func (cloudant *CloudantV1) GetSchedulerJobsWithContext(ctx context.Context, get
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_scheduler/jobs`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6104,17 +6664,21 @@ func (cloudant *CloudantV1) GetSchedulerJobsWithContext(ctx context.Context, get
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getSchedulerJobs", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSchedulerJobsResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6126,17 +6690,21 @@ func (cloudant *CloudantV1) GetSchedulerJobsWithContext(ctx context.Context, get
 // GetSchedulerJob : Retrieve a replication scheduler job
 // Retrieves the state of a single replication task based on its replication ID.
 func (cloudant *CloudantV1) GetSchedulerJob(getSchedulerJobOptions *GetSchedulerJobOptions) (result *SchedulerJob, response *core.DetailedResponse, err error) {
-	return cloudant.GetSchedulerJobWithContext(context.Background(), getSchedulerJobOptions)
+	result, response, err = cloudant.GetSchedulerJobWithContext(context.Background(), getSchedulerJobOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetSchedulerJobWithContext is an alternate form of the GetSchedulerJob method which supports a Context parameter
 func (cloudant *CloudantV1) GetSchedulerJobWithContext(ctx context.Context, getSchedulerJobOptions *GetSchedulerJobOptions) (result *SchedulerJob, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getSchedulerJobOptions, "getSchedulerJobOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getSchedulerJobOptions, "getSchedulerJobOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6149,6 +6717,7 @@ func (cloudant *CloudantV1) GetSchedulerJobWithContext(ctx context.Context, getS
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_scheduler/jobs/{job_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6164,17 +6733,21 @@ func (cloudant *CloudantV1) GetSchedulerJobWithContext(ctx context.Context, getS
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getSchedulerJob", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSchedulerJob)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6186,13 +6759,16 @@ func (cloudant *CloudantV1) GetSchedulerJobWithContext(ctx context.Context, getS
 // GetSessionInformation : Retrieve current session cookie information
 // Retrieves information about the authenticated user's session.
 func (cloudant *CloudantV1) GetSessionInformation(getSessionInformationOptions *GetSessionInformationOptions) (result *SessionInformation, response *core.DetailedResponse, err error) {
-	return cloudant.GetSessionInformationWithContext(context.Background(), getSessionInformationOptions)
+	result, response, err = cloudant.GetSessionInformationWithContext(context.Background(), getSessionInformationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetSessionInformationWithContext is an alternate form of the GetSessionInformation method which supports a Context parameter
 func (cloudant *CloudantV1) GetSessionInformationWithContext(ctx context.Context, getSessionInformationOptions *GetSessionInformationOptions) (result *SessionInformation, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getSessionInformationOptions, "getSessionInformationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6201,6 +6777,7 @@ func (cloudant *CloudantV1) GetSessionInformationWithContext(ctx context.Context
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_session`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6216,17 +6793,21 @@ func (cloudant *CloudantV1) GetSessionInformationWithContext(ctx context.Context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getSessionInformation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSessionInformation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6240,17 +6821,21 @@ func (cloudant *CloudantV1) GetSessionInformationWithContext(ctx context.Context
 // automatically include `_admin` permissions to all databases you create. Everyone and everything else, including users
 // you share databases with and API keys you create, must be given a permission level explicitly.
 func (cloudant *CloudantV1) GetSecurity(getSecurityOptions *GetSecurityOptions) (result *Security, response *core.DetailedResponse, err error) {
-	return cloudant.GetSecurityWithContext(context.Background(), getSecurityOptions)
+	result, response, err = cloudant.GetSecurityWithContext(context.Background(), getSecurityOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetSecurityWithContext is an alternate form of the GetSecurity method which supports a Context parameter
 func (cloudant *CloudantV1) GetSecurityWithContext(ctx context.Context, getSecurityOptions *GetSecurityOptions) (result *Security, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getSecurityOptions, "getSecurityOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getSecurityOptions, "getSecurityOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6263,6 +6848,7 @@ func (cloudant *CloudantV1) GetSecurityWithContext(ctx context.Context, getSecur
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_security`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6278,17 +6864,21 @@ func (cloudant *CloudantV1) GetSecurityWithContext(ctx context.Context, getSecur
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getSecurity", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSecurity)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6308,17 +6898,21 @@ func (cloudant *CloudantV1) GetSecurityWithContext(ctx context.Context, getSecur
 // read data from a database, but did not identify itself, the task can continue only if the `nobody` user has the role
 // `_reader`.
 func (cloudant *CloudantV1) PutSecurity(putSecurityOptions *PutSecurityOptions) (result *Ok, response *core.DetailedResponse, err error) {
-	return cloudant.PutSecurityWithContext(context.Background(), putSecurityOptions)
+	result, response, err = cloudant.PutSecurityWithContext(context.Background(), putSecurityOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PutSecurityWithContext is an alternate form of the PutSecurity method which supports a Context parameter
 func (cloudant *CloudantV1) PutSecurityWithContext(ctx context.Context, putSecurityOptions *PutSecurityOptions) (result *Ok, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(putSecurityOptions, "putSecurityOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(putSecurityOptions, "putSecurityOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6331,6 +6925,7 @@ func (cloudant *CloudantV1) PutSecurityWithContext(ctx context.Context, putSecur
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_security`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6360,22 +6955,27 @@ func (cloudant *CloudantV1) PutSecurityWithContext(ctx context.Context, putSecur
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "putSecurity", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOk)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6389,13 +6989,16 @@ func (cloudant *CloudantV1) PutSecurityWithContext(ctx context.Context, putSecur
 // account for that person or application. An API key is a randomly generated username and password. The key is given
 // the wanted access permissions for a database.
 func (cloudant *CloudantV1) PostApiKeys(postApiKeysOptions *PostApiKeysOptions) (result *ApiKeysResult, response *core.DetailedResponse, err error) {
-	return cloudant.PostApiKeysWithContext(context.Background(), postApiKeysOptions)
+	result, response, err = cloudant.PostApiKeysWithContext(context.Background(), postApiKeysOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostApiKeysWithContext is an alternate form of the PostApiKeys method which supports a Context parameter
 func (cloudant *CloudantV1) PostApiKeysWithContext(ctx context.Context, postApiKeysOptions *PostApiKeysOptions) (result *ApiKeysResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(postApiKeysOptions, "postApiKeysOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6404,6 +7007,7 @@ func (cloudant *CloudantV1) PostApiKeysWithContext(ctx context.Context, postApiK
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_api/v2/api_keys`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6419,17 +7023,21 @@ func (cloudant *CloudantV1) PostApiKeysWithContext(ctx context.Context, postApiK
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postApiKeys", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalApiKeysResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6448,17 +7056,21 @@ func (cloudant *CloudantV1) PostApiKeysWithContext(ctx context.Context, postApiK
 // read data from a database, but did not identify itself, the task can continue only if the `nobody` user has the role
 // `_reader`.
 func (cloudant *CloudantV1) PutCloudantSecurityConfiguration(putCloudantSecurityConfigurationOptions *PutCloudantSecurityConfigurationOptions) (result *Ok, response *core.DetailedResponse, err error) {
-	return cloudant.PutCloudantSecurityConfigurationWithContext(context.Background(), putCloudantSecurityConfigurationOptions)
+	result, response, err = cloudant.PutCloudantSecurityConfigurationWithContext(context.Background(), putCloudantSecurityConfigurationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PutCloudantSecurityConfigurationWithContext is an alternate form of the PutCloudantSecurityConfiguration method which supports a Context parameter
 func (cloudant *CloudantV1) PutCloudantSecurityConfigurationWithContext(ctx context.Context, putCloudantSecurityConfigurationOptions *PutCloudantSecurityConfigurationOptions) (result *Ok, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(putCloudantSecurityConfigurationOptions, "putCloudantSecurityConfigurationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(putCloudantSecurityConfigurationOptions, "putCloudantSecurityConfigurationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6471,6 +7083,7 @@ func (cloudant *CloudantV1) PutCloudantSecurityConfigurationWithContext(ctx cont
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_api/v2/db/{db}/_security`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6500,22 +7113,27 @@ func (cloudant *CloudantV1) PutCloudantSecurityConfigurationWithContext(ctx cont
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "putCloudantSecurityConfiguration", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOk)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6528,13 +7146,16 @@ func (cloudant *CloudantV1) PutCloudantSecurityConfigurationWithContext(ctx cont
 // Lists all Cross-origin resource sharing (CORS) configuration. CORS defines a way in which the browser and the server
 // interact to determine whether or not to allow the request.
 func (cloudant *CloudantV1) GetCorsInformation(getCorsInformationOptions *GetCorsInformationOptions) (result *CorsInformation, response *core.DetailedResponse, err error) {
-	return cloudant.GetCorsInformationWithContext(context.Background(), getCorsInformationOptions)
+	result, response, err = cloudant.GetCorsInformationWithContext(context.Background(), getCorsInformationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetCorsInformationWithContext is an alternate form of the GetCorsInformation method which supports a Context parameter
 func (cloudant *CloudantV1) GetCorsInformationWithContext(ctx context.Context, getCorsInformationOptions *GetCorsInformationOptions) (result *CorsInformation, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getCorsInformationOptions, "getCorsInformationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6543,6 +7164,7 @@ func (cloudant *CloudantV1) GetCorsInformationWithContext(ctx context.Context, g
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_api/v2/user/config/cors`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6558,17 +7180,21 @@ func (cloudant *CloudantV1) GetCorsInformationWithContext(ctx context.Context, g
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getCorsInformation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCorsInformation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6581,17 +7207,21 @@ func (cloudant *CloudantV1) GetCorsInformationWithContext(ctx context.Context, g
 // Sets the CORS configuration. The configuration applies to all databases and all account level endpoints in your
 // account.
 func (cloudant *CloudantV1) PutCorsConfiguration(putCorsConfigurationOptions *PutCorsConfigurationOptions) (result *Ok, response *core.DetailedResponse, err error) {
-	return cloudant.PutCorsConfigurationWithContext(context.Background(), putCorsConfigurationOptions)
+	result, response, err = cloudant.PutCorsConfigurationWithContext(context.Background(), putCorsConfigurationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PutCorsConfigurationWithContext is an alternate form of the PutCorsConfiguration method which supports a Context parameter
 func (cloudant *CloudantV1) PutCorsConfigurationWithContext(ctx context.Context, putCorsConfigurationOptions *PutCorsConfigurationOptions) (result *Ok, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(putCorsConfigurationOptions, "putCorsConfigurationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(putCorsConfigurationOptions, "putCorsConfigurationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6600,6 +7230,7 @@ func (cloudant *CloudantV1) PutCorsConfigurationWithContext(ctx context.Context,
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_api/v2/user/config/cors`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6626,22 +7257,27 @@ func (cloudant *CloudantV1) PutCorsConfigurationWithContext(ctx context.Context,
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "putCorsConfiguration", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOk)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6655,23 +7291,27 @@ func (cloudant *CloudantV1) PutCorsConfigurationWithContext(ctx context.Context,
 // supports the same query arguments as the `GET /{db}/{doc_id}/{attachment_name}` method, but only the header
 // information (including attachment size, encoding, and the MD5 hash as an ETag), is returned.
 func (cloudant *CloudantV1) HeadAttachment(headAttachmentOptions *HeadAttachmentOptions) (response *core.DetailedResponse, err error) {
-	return cloudant.HeadAttachmentWithContext(context.Background(), headAttachmentOptions)
+	response, err = cloudant.HeadAttachmentWithContext(context.Background(), headAttachmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // HeadAttachmentWithContext is an alternate form of the HeadAttachment method which supports a Context parameter
 func (cloudant *CloudantV1) HeadAttachmentWithContext(ctx context.Context, headAttachmentOptions *HeadAttachmentOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(headAttachmentOptions, "headAttachmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(headAttachmentOptions, "headAttachmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *headAttachmentOptions.Db,
-		"doc_id": *headAttachmentOptions.DocID,
+		"db":              *headAttachmentOptions.Db,
+		"doc_id":          *headAttachmentOptions.DocID,
 		"attachment_name": *headAttachmentOptions.AttachmentName,
 	}
 
@@ -6680,6 +7320,7 @@ func (cloudant *CloudantV1) HeadAttachmentWithContext(ctx context.Context, headA
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/{doc_id}/{attachment_name}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6704,10 +7345,16 @@ func (cloudant *CloudantV1) HeadAttachmentWithContext(ctx context.Context, headA
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "headAttachment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -6716,23 +7363,27 @@ func (cloudant *CloudantV1) HeadAttachmentWithContext(ctx context.Context, headA
 // Deletes the attachment with the filename, `{attachment_name}`, from the specified doc. You must supply the `rev`
 // query parameter or `If-Match` header with the current revision to delete the attachment.
 func (cloudant *CloudantV1) DeleteAttachment(deleteAttachmentOptions *DeleteAttachmentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
-	return cloudant.DeleteAttachmentWithContext(context.Background(), deleteAttachmentOptions)
+	result, response, err = cloudant.DeleteAttachmentWithContext(context.Background(), deleteAttachmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteAttachmentWithContext is an alternate form of the DeleteAttachment method which supports a Context parameter
 func (cloudant *CloudantV1) DeleteAttachmentWithContext(ctx context.Context, deleteAttachmentOptions *DeleteAttachmentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteAttachmentOptions, "deleteAttachmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteAttachmentOptions, "deleteAttachmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *deleteAttachmentOptions.Db,
-		"doc_id": *deleteAttachmentOptions.DocID,
+		"db":              *deleteAttachmentOptions.Db,
+		"doc_id":          *deleteAttachmentOptions.DocID,
 		"attachment_name": *deleteAttachmentOptions.AttachmentName,
 	}
 
@@ -6741,6 +7392,7 @@ func (cloudant *CloudantV1) DeleteAttachmentWithContext(ctx context.Context, del
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/{doc_id}/{attachment_name}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6766,17 +7418,21 @@ func (cloudant *CloudantV1) DeleteAttachmentWithContext(ctx context.Context, del
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "deleteAttachment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocumentResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6790,23 +7446,27 @@ func (cloudant *CloudantV1) DeleteAttachmentWithContext(ctx context.Context, del
 // returned, just as if you were accessing a static file. The returned Content-Type header is the same as the content
 // type set when the document attachment was submitted to the database.
 func (cloudant *CloudantV1) GetAttachment(getAttachmentOptions *GetAttachmentOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
-	return cloudant.GetAttachmentWithContext(context.Background(), getAttachmentOptions)
+	result, response, err = cloudant.GetAttachmentWithContext(context.Background(), getAttachmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetAttachmentWithContext is an alternate form of the GetAttachment method which supports a Context parameter
 func (cloudant *CloudantV1) GetAttachmentWithContext(ctx context.Context, getAttachmentOptions *GetAttachmentOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getAttachmentOptions, "getAttachmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getAttachmentOptions, "getAttachmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *getAttachmentOptions.Db,
-		"doc_id": *getAttachmentOptions.DocID,
+		"db":              *getAttachmentOptions.Db,
+		"doc_id":          *getAttachmentOptions.DocID,
 		"attachment_name": *getAttachmentOptions.AttachmentName,
 	}
 
@@ -6815,6 +7475,7 @@ func (cloudant *CloudantV1) GetAttachmentWithContext(ctx context.Context, getAtt
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/{doc_id}/{attachment_name}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6846,10 +7507,16 @@ func (cloudant *CloudantV1) GetAttachmentWithContext(ctx context.Context, getAtt
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, &result)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "getAttachment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -6863,23 +7530,27 @@ func (cloudant *CloudantV1) GetAttachmentWithContext(ctx context.Context, getAtt
 // supply the revision information to add an attachment to the document, this serves as validation to update the
 // existing attachment.
 func (cloudant *CloudantV1) PutAttachment(putAttachmentOptions *PutAttachmentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
-	return cloudant.PutAttachmentWithContext(context.Background(), putAttachmentOptions)
+	result, response, err = cloudant.PutAttachmentWithContext(context.Background(), putAttachmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PutAttachmentWithContext is an alternate form of the PutAttachment method which supports a Context parameter
 func (cloudant *CloudantV1) PutAttachmentWithContext(ctx context.Context, putAttachmentOptions *PutAttachmentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(putAttachmentOptions, "putAttachmentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(putAttachmentOptions, "putAttachmentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *putAttachmentOptions.Db,
-		"doc_id": *putAttachmentOptions.DocID,
+		"db":              *putAttachmentOptions.Db,
+		"doc_id":          *putAttachmentOptions.DocID,
 		"attachment_name": *putAttachmentOptions.AttachmentName,
 	}
 
@@ -6888,6 +7559,7 @@ func (cloudant *CloudantV1) PutAttachmentWithContext(ctx context.Context, putAtt
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/{doc_id}/{attachment_name}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6913,22 +7585,27 @@ func (cloudant *CloudantV1) PutAttachmentWithContext(ctx context.Context, putAtt
 
 	_, err = builder.SetBodyContent(core.StringNilMapper(putAttachmentOptions.ContentType), nil, nil, putAttachmentOptions.Attachment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-body-content-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "putAttachment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocumentResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -6941,22 +7618,26 @@ func (cloudant *CloudantV1) PutAttachmentWithContext(ctx context.Context, putAtt
 // Retrieves the HTTP headers containing minimal amount of information about the specified local document. Since the
 // response body is empty, using the HEAD method is a lightweight way to check if the local document exists or not.
 func (cloudant *CloudantV1) HeadLocalDocument(headLocalDocumentOptions *HeadLocalDocumentOptions) (response *core.DetailedResponse, err error) {
-	return cloudant.HeadLocalDocumentWithContext(context.Background(), headLocalDocumentOptions)
+	response, err = cloudant.HeadLocalDocumentWithContext(context.Background(), headLocalDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // HeadLocalDocumentWithContext is an alternate form of the HeadLocalDocument method which supports a Context parameter
 func (cloudant *CloudantV1) HeadLocalDocumentWithContext(ctx context.Context, headLocalDocumentOptions *HeadLocalDocumentOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(headLocalDocumentOptions, "headLocalDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(headLocalDocumentOptions, "headLocalDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *headLocalDocumentOptions.Db,
+		"db":     *headLocalDocumentOptions.Db,
 		"doc_id": *headLocalDocumentOptions.DocID,
 	}
 
@@ -6965,6 +7646,7 @@ func (cloudant *CloudantV1) HeadLocalDocumentWithContext(ctx context.Context, he
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_local/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -6982,10 +7664,16 @@ func (cloudant *CloudantV1) HeadLocalDocumentWithContext(ctx context.Context, he
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "headLocalDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -6994,22 +7682,26 @@ func (cloudant *CloudantV1) HeadLocalDocumentWithContext(ctx context.Context, he
 // Deletes the specified local document. The semantics are identical to deleting a standard document in the specified
 // database, except that the document is not replicated.
 func (cloudant *CloudantV1) DeleteLocalDocument(deleteLocalDocumentOptions *DeleteLocalDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
-	return cloudant.DeleteLocalDocumentWithContext(context.Background(), deleteLocalDocumentOptions)
+	result, response, err = cloudant.DeleteLocalDocumentWithContext(context.Background(), deleteLocalDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // DeleteLocalDocumentWithContext is an alternate form of the DeleteLocalDocument method which supports a Context parameter
 func (cloudant *CloudantV1) DeleteLocalDocumentWithContext(ctx context.Context, deleteLocalDocumentOptions *DeleteLocalDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteLocalDocumentOptions, "deleteLocalDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(deleteLocalDocumentOptions, "deleteLocalDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *deleteLocalDocumentOptions.Db,
+		"db":     *deleteLocalDocumentOptions.Db,
 		"doc_id": *deleteLocalDocumentOptions.DocID,
 	}
 
@@ -7018,6 +7710,7 @@ func (cloudant *CloudantV1) DeleteLocalDocumentWithContext(ctx context.Context, 
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_local/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7037,17 +7730,21 @@ func (cloudant *CloudantV1) DeleteLocalDocumentWithContext(ctx context.Context, 
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "deleteLocalDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocumentResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -7060,22 +7757,26 @@ func (cloudant *CloudantV1) DeleteLocalDocumentWithContext(ctx context.Context, 
 // Retrieves the specified local document. The semantics are identical to accessing a standard document in the specified
 // database, except that the document is not replicated.
 func (cloudant *CloudantV1) GetLocalDocument(getLocalDocumentOptions *GetLocalDocumentOptions) (result *Document, response *core.DetailedResponse, err error) {
-	return cloudant.GetLocalDocumentWithContext(context.Background(), getLocalDocumentOptions)
+	result, response, err = cloudant.GetLocalDocumentWithContext(context.Background(), getLocalDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetLocalDocumentWithContext is an alternate form of the GetLocalDocument method which supports a Context parameter
 func (cloudant *CloudantV1) GetLocalDocumentWithContext(ctx context.Context, getLocalDocumentOptions *GetLocalDocumentOptions) (result *Document, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getLocalDocumentOptions, "getLocalDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getLocalDocumentOptions, "getLocalDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *getLocalDocumentOptions.Db,
+		"db":     *getLocalDocumentOptions.Db,
 		"doc_id": *getLocalDocumentOptions.DocID,
 	}
 
@@ -7084,6 +7785,7 @@ func (cloudant *CloudantV1) GetLocalDocumentWithContext(ctx context.Context, get
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_local/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7115,17 +7817,21 @@ func (cloudant *CloudantV1) GetLocalDocumentWithContext(ctx context.Context, get
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getLocalDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocument)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -7138,26 +7844,34 @@ func (cloudant *CloudantV1) GetLocalDocumentWithContext(ctx context.Context, get
 // Stores the specified local document. The semantics are identical to storing a standard document in the specified
 // database, except that the document is not replicated.
 func (cloudant *CloudantV1) PutLocalDocument(putLocalDocumentOptions *PutLocalDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
-	return cloudant.PutLocalDocumentWithContext(context.Background(), putLocalDocumentOptions)
+	result, response, err = cloudant.PutLocalDocumentWithContext(context.Background(), putLocalDocumentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PutLocalDocumentWithContext is an alternate form of the PutLocalDocument method which supports a Context parameter
 func (cloudant *CloudantV1) PutLocalDocumentWithContext(ctx context.Context, putLocalDocumentOptions *PutLocalDocumentOptions) (result *DocumentResult, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(putLocalDocumentOptions, "putLocalDocumentOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(putLocalDocumentOptions, "putLocalDocumentOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+	if core.IsNil(putLocalDocumentOptions.Document) && core.IsNil(putLocalDocumentOptions.Body) {
+		err = core.SDKErrorf(nil, "one of [putLocalDocumentOptions.Document, putLocalDocumentOptions.Body] must be specified", "condition-not-met", common.GetComponentInfo())
 		return
 	}
 
-	if putLocalDocumentOptions.Document != nil && putLocalDocumentOptions.ContentType == nil {
+	if !core.IsNil(putLocalDocumentOptions.Document) && core.IsNil(putLocalDocumentOptions.ContentType) {
 		putLocalDocumentOptions.SetContentType("application/json")
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *putLocalDocumentOptions.Db,
+		"db":     *putLocalDocumentOptions.Db,
 		"doc_id": *putLocalDocumentOptions.DocID,
 	}
 
@@ -7166,6 +7880,7 @@ func (cloudant *CloudantV1) PutLocalDocumentWithContext(ctx context.Context, put
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_local/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7188,22 +7903,27 @@ func (cloudant *CloudantV1) PutLocalDocumentWithContext(ctx context.Context, put
 
 	_, err = builder.SetBodyContent(core.StringNilMapper(putLocalDocumentOptions.ContentType), putLocalDocumentOptions.Document, nil, putLocalDocumentOptions.Body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-body-content-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "putLocalDocument", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocumentResult)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -7217,17 +7937,21 @@ func (cloudant *CloudantV1) PutLocalDocumentWithContext(ctx context.Context, put
 // database, the replicator sends this set to the destination database's `_revs_diff` to find out which of them already
 // exists there. It can then avoid fetching and sending already-known document bodies.
 func (cloudant *CloudantV1) PostRevsDiff(postRevsDiffOptions *PostRevsDiffOptions) (result map[string]RevsDiff, response *core.DetailedResponse, err error) {
-	return cloudant.PostRevsDiffWithContext(context.Background(), postRevsDiffOptions)
+	result, response, err = cloudant.PostRevsDiffWithContext(context.Background(), postRevsDiffOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostRevsDiffWithContext is an alternate form of the PostRevsDiff method which supports a Context parameter
 func (cloudant *CloudantV1) PostRevsDiffWithContext(ctx context.Context, postRevsDiffOptions *PostRevsDiffOptions) (result map[string]RevsDiff, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postRevsDiffOptions, "postRevsDiffOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postRevsDiffOptions, "postRevsDiffOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7240,6 +7964,7 @@ func (cloudant *CloudantV1) PostRevsDiffWithContext(ctx context.Context, postRev
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_revs_diff`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7256,22 +7981,27 @@ func (cloudant *CloudantV1) PostRevsDiffWithContext(ctx context.Context, postRev
 
 	_, err = builder.SetBodyContentJSON(postRevsDiffOptions.DocumentRevisions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postRevsDiff", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalRevsDiff)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -7283,17 +8013,21 @@ func (cloudant *CloudantV1) PostRevsDiffWithContext(ctx context.Context, postRev
 // GetShardsInformation : Retrieve shard information
 // List each shard range and the corresponding replicas for a specified database.
 func (cloudant *CloudantV1) GetShardsInformation(getShardsInformationOptions *GetShardsInformationOptions) (result *ShardsInformation, response *core.DetailedResponse, err error) {
-	return cloudant.GetShardsInformationWithContext(context.Background(), getShardsInformationOptions)
+	result, response, err = cloudant.GetShardsInformationWithContext(context.Background(), getShardsInformationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetShardsInformationWithContext is an alternate form of the GetShardsInformation method which supports a Context parameter
 func (cloudant *CloudantV1) GetShardsInformationWithContext(ctx context.Context, getShardsInformationOptions *GetShardsInformationOptions) (result *ShardsInformation, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getShardsInformationOptions, "getShardsInformationOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getShardsInformationOptions, "getShardsInformationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7306,6 +8040,7 @@ func (cloudant *CloudantV1) GetShardsInformationWithContext(ctx context.Context,
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_shards`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7321,17 +8056,21 @@ func (cloudant *CloudantV1) GetShardsInformationWithContext(ctx context.Context,
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getShardsInformation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalShardsInformation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -7344,22 +8083,26 @@ func (cloudant *CloudantV1) GetShardsInformationWithContext(ctx context.Context,
 // Retrieves information about a specific shard where a particular document is stored, along with information about the
 // nodes where that shard has a replica.
 func (cloudant *CloudantV1) GetDocumentShardsInfo(getDocumentShardsInfoOptions *GetDocumentShardsInfoOptions) (result *DocumentShardInfo, response *core.DetailedResponse, err error) {
-	return cloudant.GetDocumentShardsInfoWithContext(context.Background(), getDocumentShardsInfoOptions)
+	result, response, err = cloudant.GetDocumentShardsInfoWithContext(context.Background(), getDocumentShardsInfoOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetDocumentShardsInfoWithContext is an alternate form of the GetDocumentShardsInfo method which supports a Context parameter
 func (cloudant *CloudantV1) GetDocumentShardsInfoWithContext(ctx context.Context, getDocumentShardsInfoOptions *GetDocumentShardsInfoOptions) (result *DocumentShardInfo, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getDocumentShardsInfoOptions, "getDocumentShardsInfoOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getDocumentShardsInfoOptions, "getDocumentShardsInfoOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"db": *getDocumentShardsInfoOptions.Db,
+		"db":     *getDocumentShardsInfoOptions.Db,
 		"doc_id": *getDocumentShardsInfoOptions.DocID,
 	}
 
@@ -7368,6 +8111,7 @@ func (cloudant *CloudantV1) GetDocumentShardsInfoWithContext(ctx context.Context
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/{db}/_shards/{doc_id}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7383,17 +8127,21 @@ func (cloudant *CloudantV1) GetDocumentShardsInfoWithContext(ctx context.Context
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getDocumentShardsInfo", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDocumentShardInfo)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -7405,13 +8153,16 @@ func (cloudant *CloudantV1) GetDocumentShardsInfoWithContext(ctx context.Context
 // HeadUpInformation : Retrieve HTTP headers about whether the server is up
 // Retrieves the HTTP headers about whether the server is up.
 func (cloudant *CloudantV1) HeadUpInformation(headUpInformationOptions *HeadUpInformationOptions) (response *core.DetailedResponse, err error) {
-	return cloudant.HeadUpInformationWithContext(context.Background(), headUpInformationOptions)
+	response, err = cloudant.HeadUpInformationWithContext(context.Background(), headUpInformationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // HeadUpInformationWithContext is an alternate form of the HeadUpInformation method which supports a Context parameter
 func (cloudant *CloudantV1) HeadUpInformationWithContext(ctx context.Context, headUpInformationOptions *HeadUpInformationOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(headUpInformationOptions, "headUpInformationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7420,6 +8171,7 @@ func (cloudant *CloudantV1) HeadUpInformationWithContext(ctx context.Context, he
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_up`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7434,10 +8186,16 @@ func (cloudant *CloudantV1) HeadUpInformationWithContext(ctx context.Context, he
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = cloudant.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "headUpInformation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
@@ -7447,13 +8205,16 @@ func (cloudant *CloudantV1) HeadUpInformationWithContext(ctx context.Context, he
 // currently running tasks, with each task described as a single object. Depending on the operation type, the set of
 // response object fields might be different.
 func (cloudant *CloudantV1) GetActiveTasks(getActiveTasksOptions *GetActiveTasksOptions) (result []ActiveTask, response *core.DetailedResponse, err error) {
-	return cloudant.GetActiveTasksWithContext(context.Background(), getActiveTasksOptions)
+	result, response, err = cloudant.GetActiveTasksWithContext(context.Background(), getActiveTasksOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetActiveTasksWithContext is an alternate form of the GetActiveTasks method which supports a Context parameter
 func (cloudant *CloudantV1) GetActiveTasksWithContext(ctx context.Context, getActiveTasksOptions *GetActiveTasksOptions) (result []ActiveTask, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getActiveTasksOptions, "getActiveTasksOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7462,6 +8223,7 @@ func (cloudant *CloudantV1) GetActiveTasksWithContext(ctx context.Context, getAc
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_active_tasks`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7477,17 +8239,21 @@ func (cloudant *CloudantV1) GetActiveTasksWithContext(ctx context.Context, getAc
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse []json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getActiveTasks", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalActiveTask)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -7499,14 +8265,19 @@ func (cloudant *CloudantV1) GetActiveTasksWithContext(ctx context.Context, getAc
 // GetUpInformation : Retrieve information about whether the server is up
 // Confirms that the server is up, running, and ready to respond to requests. If `maintenance_mode` is `true` or `nolb`,
 // the endpoint returns a 404 response.
+//
+// **Tip:**  The authentication for this endpoint is only enforced when using IAM.
 func (cloudant *CloudantV1) GetUpInformation(getUpInformationOptions *GetUpInformationOptions) (result *UpInformation, response *core.DetailedResponse, err error) {
-	return cloudant.GetUpInformationWithContext(context.Background(), getUpInformationOptions)
+	result, response, err = cloudant.GetUpInformationWithContext(context.Background(), getUpInformationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetUpInformationWithContext is an alternate form of the GetUpInformation method which supports a Context parameter
 func (cloudant *CloudantV1) GetUpInformationWithContext(ctx context.Context, getUpInformationOptions *GetUpInformationOptions) (result *UpInformation, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getUpInformationOptions, "getUpInformationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7515,6 +8286,7 @@ func (cloudant *CloudantV1) GetUpInformationWithContext(ctx context.Context, get
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_up`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7530,17 +8302,21 @@ func (cloudant *CloudantV1) GetUpInformationWithContext(ctx context.Context, get
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getUpInformation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUpInformation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -7552,13 +8328,16 @@ func (cloudant *CloudantV1) GetUpInformationWithContext(ctx context.Context, get
 // GetActivityTrackerEvents : Retrieve Activity Tracker events information
 // Check event types that are being sent to IBM Cloud Activity Tracker for the IBM Cloudant instance.
 func (cloudant *CloudantV1) GetActivityTrackerEvents(getActivityTrackerEventsOptions *GetActivityTrackerEventsOptions) (result *ActivityTrackerEvents, response *core.DetailedResponse, err error) {
-	return cloudant.GetActivityTrackerEventsWithContext(context.Background(), getActivityTrackerEventsOptions)
+	result, response, err = cloudant.GetActivityTrackerEventsWithContext(context.Background(), getActivityTrackerEventsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetActivityTrackerEventsWithContext is an alternate form of the GetActivityTrackerEvents method which supports a Context parameter
 func (cloudant *CloudantV1) GetActivityTrackerEventsWithContext(ctx context.Context, getActivityTrackerEventsOptions *GetActivityTrackerEventsOptions) (result *ActivityTrackerEvents, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getActivityTrackerEventsOptions, "getActivityTrackerEventsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7567,6 +8346,7 @@ func (cloudant *CloudantV1) GetActivityTrackerEventsWithContext(ctx context.Cont
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_api/v2/user/activity_tracker/events`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7582,17 +8362,21 @@ func (cloudant *CloudantV1) GetActivityTrackerEventsWithContext(ctx context.Cont
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getActivityTrackerEvents", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalActivityTrackerEvents)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -7604,17 +8388,21 @@ func (cloudant *CloudantV1) GetActivityTrackerEventsWithContext(ctx context.Cont
 // PostActivityTrackerEvents : Modify Activity Tracker events configuration
 // Configure event types that are being sent to IBM Cloud Activity Tracker for the IBM Cloudant instance.
 func (cloudant *CloudantV1) PostActivityTrackerEvents(postActivityTrackerEventsOptions *PostActivityTrackerEventsOptions) (result *Ok, response *core.DetailedResponse, err error) {
-	return cloudant.PostActivityTrackerEventsWithContext(context.Background(), postActivityTrackerEventsOptions)
+	result, response, err = cloudant.PostActivityTrackerEventsWithContext(context.Background(), postActivityTrackerEventsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // PostActivityTrackerEventsWithContext is an alternate form of the PostActivityTrackerEvents method which supports a Context parameter
 func (cloudant *CloudantV1) PostActivityTrackerEventsWithContext(ctx context.Context, postActivityTrackerEventsOptions *PostActivityTrackerEventsOptions) (result *Ok, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(postActivityTrackerEventsOptions, "postActivityTrackerEventsOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(postActivityTrackerEventsOptions, "postActivityTrackerEventsOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7623,6 +8411,7 @@ func (cloudant *CloudantV1) PostActivityTrackerEventsWithContext(ctx context.Con
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_api/v2/user/activity_tracker/events`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7643,22 +8432,27 @@ func (cloudant *CloudantV1) PostActivityTrackerEventsWithContext(ctx context.Con
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 		return
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "postActivityTrackerEvents", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOk)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -7671,13 +8465,16 @@ func (cloudant *CloudantV1) PostActivityTrackerEventsWithContext(ctx context.Con
 // View the current consumption of provisioned throughput capacity for an IBM Cloudant instance. The current consumption
 // shows the quantities of reads, writes, and global queries conducted against the instance for a given second.
 func (cloudant *CloudantV1) GetCurrentThroughputInformation(getCurrentThroughputInformationOptions *GetCurrentThroughputInformationOptions) (result *CurrentThroughputInformation, response *core.DetailedResponse, err error) {
-	return cloudant.GetCurrentThroughputInformationWithContext(context.Background(), getCurrentThroughputInformationOptions)
+	result, response, err = cloudant.GetCurrentThroughputInformationWithContext(context.Background(), getCurrentThroughputInformationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetCurrentThroughputInformationWithContext is an alternate form of the GetCurrentThroughputInformation method which supports a Context parameter
 func (cloudant *CloudantV1) GetCurrentThroughputInformationWithContext(ctx context.Context, getCurrentThroughputInformationOptions *GetCurrentThroughputInformationOptions) (result *CurrentThroughputInformation, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(getCurrentThroughputInformationOptions, "getCurrentThroughputInformationOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7686,6 +8483,7 @@ func (cloudant *CloudantV1) GetCurrentThroughputInformationWithContext(ctx conte
 	builder.EnableGzipCompression = cloudant.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(cloudant.Service.Options.URL, `/_api/v2/user/current/throughput`, nil)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -7701,17 +8499,21 @@ func (cloudant *CloudantV1) GetCurrentThroughputInformationWithContext(ctx conte
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = cloudant.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getCurrentThroughputInformation", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCurrentThroughputInformation)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -7719,34 +8521,105 @@ func (cloudant *CloudantV1) GetCurrentThroughputInformationWithContext(ctx conte
 
 	return
 }
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.0.0-dev0.1.14")
+}
 
 // ActiveTask : Schema for information about a running task.
 type ActiveTask struct {
-	// Processed changes.
+	// The total count of attempted doc revisions fetched with `_bulk_get`. Available for `replication` type tasks.
+	BulkGetAttempts *int64 `json:"bulk_get_attempts,omitempty"`
+
+	// The total count of successful docs fetched with `_bulk_get`. Available for `replication` type tasks.
+	BulkGetDocs *int64 `json:"bulk_get_docs,omitempty"`
+
+	// Processed changes. Available for `database_compaction`, `indexer`, `search_indexer`, `view_compaction` type tasks.
 	ChangesDone *int64 `json:"changes_done,omitempty"`
+
+	// The count of changes not yet replicated. Available for `replication` type tasks.
+	ChangesPending *int64 `json:"changes_pending,omitempty"`
+
+	// Specifies the checkpoint interval in ms. Available for `replication` type tasks.
+	CheckpointInterval *int64 `json:"checkpoint_interval,omitempty"`
+
+	// The source sequence id which was last successfully replicated. Available for `replication` type tasks.
+	CheckpointedSourceSeq *string `json:"checkpointed_source_seq,omitempty"`
+
+	// The replication configured to be continuous. Available for `replication` type tasks.
+	Continuous *bool `json:"continuous,omitempty"`
 
 	// Source database.
 	Database *string `json:"database" validate:"required"`
 
+	// The design document that belongs to this task. Available for `indexer`, `search_indexer`, `view_compaction` type
+	// tasks.
+	DesignDocument *string `json:"design_document,omitempty"`
+
+	// Replication document ID. Available for `replication` type tasks.
+	DocID *string `json:"doc_id,omitempty"`
+
+	// Number of document write failures. Available for `replication` type tasks.
+	DocWriteFailures *int64 `json:"doc_write_failures,omitempty"`
+
+	// Number of documents read. Available for `replication` type tasks.
+	DocsRead *int64 `json:"docs_read,omitempty"`
+
+	// Number of documents written to target. Available for `replication` type tasks.
+	DocsWritten *int64 `json:"docs_written,omitempty"`
+
+	// The search index that belongs to this task. Available for `search_indexer` type tasks.
+	Index *string `json:"index,omitempty"`
+
+	// Indexer process ID. Available for `indexer` type tasks.
+	IndexerPid *string `json:"indexer_pid,omitempty"`
+
+	// The count of docs which have been read from the source. Available for `replication` type tasks.
+	MissingRevisionsFound *int64 `json:"missing_revisions_found,omitempty"`
+
 	// Cluster node where the task is running.
 	Node *string `json:"node" validate:"required"`
+
+	// The phase the active task is in. `docid_sort`, `docid_copy`, `document_copy` phases are available for
+	// `database_compaction`, while `ids` and `view` phases are available for `view_compaction` type tasks.
+	Phase *string `json:"phase,omitempty"`
 
 	// Process ID.
 	Pid *string `json:"pid" validate:"required"`
 
-	// Current percentage progress.
+	// Process status.
+	ProcessStatus *string `json:"process_status,omitempty"`
+
+	// Current percentage progress. Available for `database_compaction`, `indexer`, `search_indexer`, `view_compaction`
+	// type tasks.
 	Progress *int64 `json:"progress,omitempty"`
+
+	// Replication ID. Available for `replication` type tasks.
+	ReplicationID *string `json:"replication_id,omitempty"`
+
+	// Indicates whether a compaction retry is currently running on the database. Available for `database_compaction` type
+	// tasks.
+	Retry *bool `json:"retry,omitempty"`
+
+	// The count of revisions which have been checked since this replication began. Available for `replication` type tasks.
+	RevisionsChecked *int64 `json:"revisions_checked,omitempty"`
+
+	// Replication source. Available for `replication` type tasks.
+	Source *string `json:"source,omitempty"`
+
+	// The last sequence number obtained from the source database changes feed. Available for `replication` type tasks.
+	SourceSeq *string `json:"source_seq,omitempty"`
 
 	// Schema for a Unix epoch timestamp.
 	StartedOn *int64 `json:"started_on" validate:"required"`
 
-	// Task status message.
-	Status *string `json:"status,omitempty"`
+	// Replication target. Available for `replication` type tasks.
+	Target *string `json:"target,omitempty"`
 
-	// Task name.
-	Task *string `json:"task,omitempty"`
+	// The last sequence number processed by the replicator. Available for `replication` type tasks.
+	ThroughSeq *string `json:"through_seq,omitempty"`
 
-	// Total changes to process.
+	// Total changes to process. Available for `database_compaction`, `indexer`, `search_indexer`, `view_compaction` type
+	// tasks.
 	TotalChanges *int64 `json:"total_changes,omitempty"`
 
 	// Operation type.
@@ -7754,53 +8627,217 @@ type ActiveTask struct {
 
 	// Schema for a Unix epoch timestamp.
 	UpdatedOn *int64 `json:"updated_on" validate:"required"`
+
+	// Name of user running replication or owning the indexer. Available for `indexer`, `replication` type tasks.
+	User *string `json:"user,omitempty"`
+
+	// Number of view indexes. Available for `view_compaction` type tasks.
+	View *int64 `json:"view,omitempty"`
 }
+
+// Constants associated with the ActiveTask.Phase property.
+// The phase the active task is in. `docid_sort`, `docid_copy`, `document_copy` phases are available for
+// `database_compaction`, while `ids` and `view` phases are available for `view_compaction` type tasks.
+const (
+	ActiveTaskPhaseDocidCopyConst    = "docid_copy"
+	ActiveTaskPhaseDocidSortConst    = "docid_sort"
+	ActiveTaskPhaseDocumentCopyConst = "document_copy"
+	ActiveTaskPhaseIdsConst          = "ids"
+	ActiveTaskPhaseViewConst         = "view"
+)
+
+// Constants associated with the ActiveTask.ProcessStatus property.
+// Process status.
+const (
+	ActiveTaskProcessStatusExitingConst           = "exiting"
+	ActiveTaskProcessStatusGarbageCollectingConst = "garbage_collecting"
+	ActiveTaskProcessStatusRunnableConst          = "runnable"
+	ActiveTaskProcessStatusRunningConst           = "running"
+	ActiveTaskProcessStatusSuspendedConst         = "suspended"
+	ActiveTaskProcessStatusWaitingConst           = "waiting"
+)
+
+// Constants associated with the ActiveTask.Type property.
+// Operation type.
+const (
+	ActiveTaskTypeDatabaseCompactionConst = "database_compaction"
+	ActiveTaskTypeIndexerConst            = "indexer"
+	ActiveTaskTypeReplicationConst        = "replication"
+	ActiveTaskTypeSearchIndexerConst      = "search_indexer"
+	ActiveTaskTypeViewCompactionConst     = "view_compaction"
+)
 
 // UnmarshalActiveTask unmarshals an instance of ActiveTask from the specified map of raw messages.
 func UnmarshalActiveTask(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ActiveTask)
+	err = core.UnmarshalPrimitive(m, "bulk_get_attempts", &obj.BulkGetAttempts)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bulk_get_attempts-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "bulk_get_docs", &obj.BulkGetDocs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bulk_get_docs-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "changes_done", &obj.ChangesDone)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "changes_done-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "changes_pending", &obj.ChangesPending)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "changes_pending-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "checkpoint_interval", &obj.CheckpointInterval)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "checkpoint_interval-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "checkpointed_source_seq", &obj.CheckpointedSourceSeq)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "checkpointed_source_seq-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "continuous", &obj.Continuous)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "continuous-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "database", &obj.Database)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "database-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "design_document", &obj.DesignDocument)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "design_document-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "doc_id", &obj.DocID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "doc_write_failures", &obj.DocWriteFailures)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_write_failures-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "docs_read", &obj.DocsRead)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "docs_read-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "docs_written", &obj.DocsWritten)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "docs_written-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "index", &obj.Index)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "index-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "indexer_pid", &obj.IndexerPid)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "indexer_pid-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "missing_revisions_found", &obj.MissingRevisionsFound)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "missing_revisions_found-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "node", &obj.Node)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "node-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "phase", &obj.Phase)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "phase-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pid", &obj.Pid)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pid-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "process_status", &obj.ProcessStatus)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "process_status-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "progress", &obj.Progress)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "progress-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "replication_id", &obj.ReplicationID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "replication_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "retry", &obj.Retry)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "retry-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "revisions_checked", &obj.RevisionsChecked)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "revisions_checked-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "source", &obj.Source)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "source-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "source_seq", &obj.SourceSeq)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "source_seq-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "started_on", &obj.StartedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "started_on-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "task", &obj.Task)
+	err = core.UnmarshalPrimitive(m, "through_seq", &obj.ThroughSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "through_seq-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_changes", &obj.TotalChanges)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_changes-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated_on", &obj.UpdatedOn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updated_on-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "user", &obj.User)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "view", &obj.View)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "view-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7816,7 +8853,7 @@ type ActivityTrackerEvents struct {
 
 // Constants associated with the ActivityTrackerEvents.Types property.
 const (
-	ActivityTrackerEventsTypesDataConst = "data"
+	ActivityTrackerEventsTypesDataConst       = "data"
 	ActivityTrackerEventsTypesManagementConst = "management"
 )
 
@@ -7826,6 +8863,9 @@ func (*CloudantV1) NewActivityTrackerEvents(types []string) (_model *ActivityTra
 		Types: types,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -7834,6 +8874,7 @@ func UnmarshalActivityTrackerEvents(m map[string]json.RawMessage, result interfa
 	obj := new(ActivityTrackerEvents)
 	err = core.UnmarshalPrimitive(m, "types", &obj.Types)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "types-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7852,6 +8893,7 @@ func UnmarshalAllDocsQueriesResult(m map[string]json.RawMessage, result interfac
 	obj := new(AllDocsQueriesResult)
 	err = core.UnmarshalModel(m, "results", &obj.Results, UnmarshalAllDocsResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "results-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7867,8 +8909,8 @@ type AllDocsQuery struct {
 	// Parameter to specify whether to include attachments bodies in a response.
 	Attachments *bool `json:"attachments,omitempty"`
 
-	// Parameter to specify whether to include a list of conflicted revisions in the `_conflicts` property of the returned
-	// document. Ignored if `include_docs` isn't `true`.
+	// Parameter to specify whether to include a list of conflicted revisions in each returned document. Active only when
+	// `include_docs` is `true`.
 	Conflicts *bool `json:"conflicts,omitempty"`
 
 	// Parameter to specify whether to return the documents in descending by key order.
@@ -7891,7 +8933,7 @@ type AllDocsQuery struct {
 	UpdateSeq *bool `json:"update_seq,omitempty"`
 
 	// Schema for a document ID.
-	Endkey *string `json:"endkey,omitempty"`
+	EndKey *string `json:"end_key,omitempty"`
 
 	// Schema for a document ID.
 	Key *string `json:"key,omitempty"`
@@ -7900,7 +8942,7 @@ type AllDocsQuery struct {
 	Keys []string `json:"keys,omitempty"`
 
 	// Schema for a document ID.
-	Startkey *string `json:"startkey,omitempty"`
+	StartKey *string `json:"start_key,omitempty"`
 }
 
 // UnmarshalAllDocsQuery unmarshals an instance of AllDocsQuery from the specified map of raw messages.
@@ -7908,54 +8950,67 @@ func UnmarshalAllDocsQuery(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(AllDocsQuery)
 	err = core.UnmarshalPrimitive(m, "att_encoding_info", &obj.AttEncodingInfo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "att_encoding_info-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "attachments", &obj.Attachments)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "attachments-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "conflicts", &obj.Conflicts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "conflicts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "descending", &obj.Descending)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "descending-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "include_docs", &obj.IncludeDocs)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "include_docs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "inclusive_end", &obj.InclusiveEnd)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "inclusive_end-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "skip", &obj.Skip)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "skip-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "update_seq", &obj.UpdateSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "update_seq-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "endkey", &obj.Endkey)
+	err = core.UnmarshalPrimitive(m, "end_key", &obj.EndKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "end_key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "keys", &obj.Keys)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "keys-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "startkey", &obj.Startkey)
+	err = core.UnmarshalPrimitive(m, "start_key", &obj.StartKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start_key-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -7979,14 +9034,17 @@ func UnmarshalAllDocsResult(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(AllDocsResult)
 	err = core.UnmarshalPrimitive(m, "total_rows", &obj.TotalRows)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_rows-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rows", &obj.Rows, UnmarshalDocsResultRow)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rows-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "update_seq", &obj.UpdateSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "update_seq-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8011,46 +9069,46 @@ type Analyzer struct {
 // * For search indexes the default is `standard` * For query text indexes the default is `keyword` * For a query text
 // index default_field the default is `standard`.
 const (
-	AnalyzerNameArabicConst = "arabic"
-	AnalyzerNameArmenianConst = "armenian"
-	AnalyzerNameBasqueConst = "basque"
-	AnalyzerNameBrazilianConst = "brazilian"
-	AnalyzerNameBulgarianConst = "bulgarian"
-	AnalyzerNameCatalanConst = "catalan"
-	AnalyzerNameChineseConst = "chinese"
-	AnalyzerNameCjkConst = "cjk"
-	AnalyzerNameClassicConst = "classic"
-	AnalyzerNameCzechConst = "czech"
-	AnalyzerNameDanishConst = "danish"
-	AnalyzerNameDutchConst = "dutch"
-	AnalyzerNameEmailConst = "email"
-	AnalyzerNameEnglishConst = "english"
-	AnalyzerNameFinnishConst = "finnish"
-	AnalyzerNameFrenchConst = "french"
-	AnalyzerNameGalicianConst = "galician"
-	AnalyzerNameGermanConst = "german"
-	AnalyzerNameGreekConst = "greek"
-	AnalyzerNameHindiConst = "hindi"
-	AnalyzerNameHungarianConst = "hungarian"
+	AnalyzerNameArabicConst     = "arabic"
+	AnalyzerNameArmenianConst   = "armenian"
+	AnalyzerNameBasqueConst     = "basque"
+	AnalyzerNameBrazilianConst  = "brazilian"
+	AnalyzerNameBulgarianConst  = "bulgarian"
+	AnalyzerNameCatalanConst    = "catalan"
+	AnalyzerNameChineseConst    = "chinese"
+	AnalyzerNameCjkConst        = "cjk"
+	AnalyzerNameClassicConst    = "classic"
+	AnalyzerNameCzechConst      = "czech"
+	AnalyzerNameDanishConst     = "danish"
+	AnalyzerNameDutchConst      = "dutch"
+	AnalyzerNameEmailConst      = "email"
+	AnalyzerNameEnglishConst    = "english"
+	AnalyzerNameFinnishConst    = "finnish"
+	AnalyzerNameFrenchConst     = "french"
+	AnalyzerNameGalicianConst   = "galician"
+	AnalyzerNameGermanConst     = "german"
+	AnalyzerNameGreekConst      = "greek"
+	AnalyzerNameHindiConst      = "hindi"
+	AnalyzerNameHungarianConst  = "hungarian"
 	AnalyzerNameIndonesianConst = "indonesian"
-	AnalyzerNameIrishConst = "irish"
-	AnalyzerNameItalianConst = "italian"
-	AnalyzerNameJapaneseConst = "japanese"
-	AnalyzerNameKeywordConst = "keyword"
-	AnalyzerNameLatvianConst = "latvian"
-	AnalyzerNameNorwegianConst = "norwegian"
-	AnalyzerNamePerfieldConst = "perfield"
-	AnalyzerNamePersianConst = "persian"
-	AnalyzerNamePolishConst = "polish"
+	AnalyzerNameIrishConst      = "irish"
+	AnalyzerNameItalianConst    = "italian"
+	AnalyzerNameJapaneseConst   = "japanese"
+	AnalyzerNameKeywordConst    = "keyword"
+	AnalyzerNameLatvianConst    = "latvian"
+	AnalyzerNameNorwegianConst  = "norwegian"
+	AnalyzerNamePerfieldConst   = "perfield"
+	AnalyzerNamePersianConst    = "persian"
+	AnalyzerNamePolishConst     = "polish"
 	AnalyzerNamePortugueseConst = "portuguese"
-	AnalyzerNameRomanianConst = "romanian"
-	AnalyzerNameRussianConst = "russian"
-	AnalyzerNameSimpleConst = "simple"
-	AnalyzerNameSpanishConst = "spanish"
-	AnalyzerNameStandardConst = "standard"
-	AnalyzerNameSwedishConst = "swedish"
-	AnalyzerNameThaiConst = "thai"
-	AnalyzerNameTurkishConst = "turkish"
+	AnalyzerNameRomanianConst   = "romanian"
+	AnalyzerNameRussianConst    = "russian"
+	AnalyzerNameSimpleConst     = "simple"
+	AnalyzerNameSpanishConst    = "spanish"
+	AnalyzerNameStandardConst   = "standard"
+	AnalyzerNameSwedishConst    = "swedish"
+	AnalyzerNameThaiConst       = "thai"
+	AnalyzerNameTurkishConst    = "turkish"
 	AnalyzerNameWhitespaceConst = "whitespace"
 )
 
@@ -8059,10 +9117,12 @@ func UnmarshalAnalyzer(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Analyzer)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "stopwords", &obj.Stopwords)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "stopwords-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8090,46 +9150,46 @@ type AnalyzerConfiguration struct {
 // * For search indexes the default is `standard` * For query text indexes the default is `keyword` * For a query text
 // index default_field the default is `standard`.
 const (
-	AnalyzerConfigurationNameArabicConst = "arabic"
-	AnalyzerConfigurationNameArmenianConst = "armenian"
-	AnalyzerConfigurationNameBasqueConst = "basque"
-	AnalyzerConfigurationNameBrazilianConst = "brazilian"
-	AnalyzerConfigurationNameBulgarianConst = "bulgarian"
-	AnalyzerConfigurationNameCatalanConst = "catalan"
-	AnalyzerConfigurationNameChineseConst = "chinese"
-	AnalyzerConfigurationNameCjkConst = "cjk"
-	AnalyzerConfigurationNameClassicConst = "classic"
-	AnalyzerConfigurationNameCzechConst = "czech"
-	AnalyzerConfigurationNameDanishConst = "danish"
-	AnalyzerConfigurationNameDutchConst = "dutch"
-	AnalyzerConfigurationNameEmailConst = "email"
-	AnalyzerConfigurationNameEnglishConst = "english"
-	AnalyzerConfigurationNameFinnishConst = "finnish"
-	AnalyzerConfigurationNameFrenchConst = "french"
-	AnalyzerConfigurationNameGalicianConst = "galician"
-	AnalyzerConfigurationNameGermanConst = "german"
-	AnalyzerConfigurationNameGreekConst = "greek"
-	AnalyzerConfigurationNameHindiConst = "hindi"
-	AnalyzerConfigurationNameHungarianConst = "hungarian"
+	AnalyzerConfigurationNameArabicConst     = "arabic"
+	AnalyzerConfigurationNameArmenianConst   = "armenian"
+	AnalyzerConfigurationNameBasqueConst     = "basque"
+	AnalyzerConfigurationNameBrazilianConst  = "brazilian"
+	AnalyzerConfigurationNameBulgarianConst  = "bulgarian"
+	AnalyzerConfigurationNameCatalanConst    = "catalan"
+	AnalyzerConfigurationNameChineseConst    = "chinese"
+	AnalyzerConfigurationNameCjkConst        = "cjk"
+	AnalyzerConfigurationNameClassicConst    = "classic"
+	AnalyzerConfigurationNameCzechConst      = "czech"
+	AnalyzerConfigurationNameDanishConst     = "danish"
+	AnalyzerConfigurationNameDutchConst      = "dutch"
+	AnalyzerConfigurationNameEmailConst      = "email"
+	AnalyzerConfigurationNameEnglishConst    = "english"
+	AnalyzerConfigurationNameFinnishConst    = "finnish"
+	AnalyzerConfigurationNameFrenchConst     = "french"
+	AnalyzerConfigurationNameGalicianConst   = "galician"
+	AnalyzerConfigurationNameGermanConst     = "german"
+	AnalyzerConfigurationNameGreekConst      = "greek"
+	AnalyzerConfigurationNameHindiConst      = "hindi"
+	AnalyzerConfigurationNameHungarianConst  = "hungarian"
 	AnalyzerConfigurationNameIndonesianConst = "indonesian"
-	AnalyzerConfigurationNameIrishConst = "irish"
-	AnalyzerConfigurationNameItalianConst = "italian"
-	AnalyzerConfigurationNameJapaneseConst = "japanese"
-	AnalyzerConfigurationNameKeywordConst = "keyword"
-	AnalyzerConfigurationNameLatvianConst = "latvian"
-	AnalyzerConfigurationNameNorwegianConst = "norwegian"
-	AnalyzerConfigurationNamePerfieldConst = "perfield"
-	AnalyzerConfigurationNamePersianConst = "persian"
-	AnalyzerConfigurationNamePolishConst = "polish"
+	AnalyzerConfigurationNameIrishConst      = "irish"
+	AnalyzerConfigurationNameItalianConst    = "italian"
+	AnalyzerConfigurationNameJapaneseConst   = "japanese"
+	AnalyzerConfigurationNameKeywordConst    = "keyword"
+	AnalyzerConfigurationNameLatvianConst    = "latvian"
+	AnalyzerConfigurationNameNorwegianConst  = "norwegian"
+	AnalyzerConfigurationNamePerfieldConst   = "perfield"
+	AnalyzerConfigurationNamePersianConst    = "persian"
+	AnalyzerConfigurationNamePolishConst     = "polish"
 	AnalyzerConfigurationNamePortugueseConst = "portuguese"
-	AnalyzerConfigurationNameRomanianConst = "romanian"
-	AnalyzerConfigurationNameRussianConst = "russian"
-	AnalyzerConfigurationNameSimpleConst = "simple"
-	AnalyzerConfigurationNameSpanishConst = "spanish"
-	AnalyzerConfigurationNameStandardConst = "standard"
-	AnalyzerConfigurationNameSwedishConst = "swedish"
-	AnalyzerConfigurationNameThaiConst = "thai"
-	AnalyzerConfigurationNameTurkishConst = "turkish"
+	AnalyzerConfigurationNameRomanianConst   = "romanian"
+	AnalyzerConfigurationNameRussianConst    = "russian"
+	AnalyzerConfigurationNameSimpleConst     = "simple"
+	AnalyzerConfigurationNameSpanishConst    = "spanish"
+	AnalyzerConfigurationNameStandardConst   = "standard"
+	AnalyzerConfigurationNameSwedishConst    = "swedish"
+	AnalyzerConfigurationNameThaiConst       = "thai"
+	AnalyzerConfigurationNameTurkishConst    = "turkish"
 	AnalyzerConfigurationNameWhitespaceConst = "whitespace"
 )
 
@@ -8138,14 +9198,17 @@ func UnmarshalAnalyzerConfiguration(m map[string]json.RawMessage, result interfa
 	obj := new(AnalyzerConfiguration)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "stopwords", &obj.Stopwords)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "stopwords-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "fields", &obj.Fields, UnmarshalAnalyzer)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "fields-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8169,14 +9232,17 @@ func UnmarshalApiKeysResult(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(ApiKeysResult)
 	err = core.UnmarshalPrimitive(m, "ok", &obj.Ok)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ok-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8225,38 +9291,47 @@ func UnmarshalAttachment(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(Attachment)
 	err = core.UnmarshalPrimitive(m, "content_type", &obj.ContentType)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "content_type-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "data", &obj.Data)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "data-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "digest", &obj.Digest)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "digest-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "encoded_length", &obj.EncodedLength)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "encoded_length-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "encoding", &obj.Encoding)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "encoding-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "follows", &obj.Follows)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "follows-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "length", &obj.Length)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "length-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "revpos", &obj.Revpos)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "revpos-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "stub", &obj.Stub)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "stub-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8278,6 +9353,9 @@ func (*CloudantV1) NewBulkDocs(docs []Document) (_model *BulkDocs, err error) {
 		Docs: docs,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8286,10 +9364,12 @@ func UnmarshalBulkDocs(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(BulkDocs)
 	err = core.UnmarshalModel(m, "docs", &obj.Docs, UnmarshalDocument)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "docs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "new_edits", &obj.NewEdits)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new_edits-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8314,6 +9394,9 @@ func (*CloudantV1) NewBulkGetQueryDocument(id string) (_model *BulkGetQueryDocum
 		ID: core.StringPtr(id),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -8322,14 +9405,17 @@ func UnmarshalBulkGetQueryDocument(m map[string]json.RawMessage, result interfac
 	obj := new(BulkGetQueryDocument)
 	err = core.UnmarshalPrimitive(m, "atts_since", &obj.AttsSince)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "atts_since-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rev-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8347,6 +9433,7 @@ func UnmarshalBulkGetResult(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(BulkGetResult)
 	err = core.UnmarshalModel(m, "results", &obj.Results, UnmarshalBulkGetResultItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "results-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8367,10 +9454,12 @@ func UnmarshalBulkGetResultDocument(m map[string]json.RawMessage, result interfa
 	obj := new(BulkGetResultDocument)
 	err = core.UnmarshalModel(m, "error", &obj.Error, UnmarshalDocumentResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "ok", &obj.Ok, UnmarshalDocument)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ok-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8391,10 +9480,12 @@ func UnmarshalBulkGetResultItem(m map[string]json.RawMessage, result interface{}
 	obj := new(BulkGetResultItem)
 	err = core.UnmarshalModel(m, "docs", &obj.Docs, UnmarshalBulkGetResultDocument)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "docs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8415,10 +9506,12 @@ func UnmarshalCapacityThroughputInformation(m map[string]json.RawMessage, result
 	obj := new(CapacityThroughputInformation)
 	err = core.UnmarshalModel(m, "current", &obj.Current, UnmarshalCapacityThroughputInformationCurrent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "current-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalCapacityThroughputInformationTarget)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8436,6 +9529,7 @@ func UnmarshalCapacityThroughputInformationCurrent(m map[string]json.RawMessage,
 	obj := new(CapacityThroughputInformationCurrent)
 	err = core.UnmarshalModel(m, "throughput", &obj.Throughput, UnmarshalThroughputInformation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "throughput-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8453,6 +9547,7 @@ func UnmarshalCapacityThroughputInformationTarget(m map[string]json.RawMessage, 
 	obj := new(CapacityThroughputInformationTarget)
 	err = core.UnmarshalModel(m, "throughput", &obj.Throughput, UnmarshalThroughputInformation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "throughput-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8470,6 +9565,7 @@ func UnmarshalChange(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Change)
 	err = core.UnmarshalPrimitive(m, "rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rev-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8493,14 +9589,17 @@ func UnmarshalChangesResult(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(ChangesResult)
 	err = core.UnmarshalPrimitive(m, "last_seq", &obj.LastSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_seq-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pending", &obj.Pending)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pending-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "results", &obj.Results, UnmarshalChangesResultItem)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "results-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8530,22 +9629,27 @@ func UnmarshalChangesResultItem(m map[string]json.RawMessage, result interface{}
 	obj := new(ChangesResultItem)
 	err = core.UnmarshalModel(m, "changes", &obj.Changes, UnmarshalChange)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "changes-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deleted", &obj.Deleted)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "doc", &obj.Doc, UnmarshalDocument)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "seq", &obj.Seq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "seq-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8569,14 +9673,17 @@ func UnmarshalContentInformationSizes(m map[string]json.RawMessage, result inter
 	obj := new(ContentInformationSizes)
 	err = core.UnmarshalPrimitive(m, "active", &obj.Active)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "active-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "external", &obj.External)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "external-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "file", &obj.File)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "file-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8603,14 +9710,17 @@ func UnmarshalCorsInformation(m map[string]json.RawMessage, result interface{}) 
 	obj := new(CorsInformation)
 	err = core.UnmarshalPrimitive(m, "allow_credentials", &obj.AllowCredentials)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "allow_credentials-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enable_cors", &obj.EnableCors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enable_cors-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "origins", &obj.Origins)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "origins-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8628,6 +9738,7 @@ func UnmarshalCurrentThroughputInformation(m map[string]json.RawMessage, result 
 	obj := new(CurrentThroughputInformation)
 	err = core.UnmarshalModel(m, "throughput", &obj.Throughput, UnmarshalCurrentThroughputInformationThroughput)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "throughput-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8651,14 +9762,17 @@ func UnmarshalCurrentThroughputInformationThroughput(m map[string]json.RawMessag
 	obj := new(CurrentThroughputInformationThroughput)
 	err = core.UnmarshalPrimitive(m, "query", &obj.Query)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "query-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "read", &obj.Read)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "read-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "write", &obj.Write)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "write-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8694,6 +9808,10 @@ type DatabaseInformation struct {
 	// The engine used for the database.
 	Engine *string `json:"engine,omitempty"`
 
+	// An opaque string to detect whether a database has been recreated. The field name is for compatibility with old
+	// replicator versions. Do not use the value to infer timing infromation. Typically only used by replicators.
+	InstanceStartTime *string `json:"instance_start_time" validate:"required"`
+
 	// Schema for database properties.
 	Props *DatabaseInformationProps `json:"props" validate:"required"`
 
@@ -8706,6 +9824,9 @@ type DatabaseInformation struct {
 
 	// The UUID of the database.
 	UUID *string `json:"uuid,omitempty"`
+
+	// Information about database's partitioned indexes.
+	PartitionedIndexes *PartitionedIndexesInformation `json:"partitioned_indexes,omitempty"`
 }
 
 // UnmarshalDatabaseInformation unmarshals an instance of DatabaseInformation from the specified map of raw messages.
@@ -8713,54 +9834,77 @@ func UnmarshalDatabaseInformation(m map[string]json.RawMessage, result interface
 	obj := new(DatabaseInformation)
 	err = core.UnmarshalModel(m, "cluster", &obj.Cluster, UnmarshalDatabaseInformationCluster)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cluster-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "committed_update_seq", &obj.CommittedUpdateSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "committed_update_seq-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "compact_running", &obj.CompactRunning)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compact_running-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "compacted_seq", &obj.CompactedSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compacted_seq-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "db_name", &obj.DbName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "db_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "disk_format_version", &obj.DiskFormatVersion)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "disk_format_version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "doc_count", &obj.DocCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "doc_del_count", &obj.DocDelCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_del_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "engine", &obj.Engine)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "engine-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "instance_start_time", &obj.InstanceStartTime)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "instance_start_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "props", &obj.Props, UnmarshalDatabaseInformationProps)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "props-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "sizes", &obj.Sizes, UnmarshalContentInformationSizes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sizes-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "update_seq", &obj.UpdateSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "update_seq-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "uuid", &obj.UUID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "uuid-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "partitioned_indexes", &obj.PartitionedIndexes, UnmarshalPartitionedIndexesInformation)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "partitioned_indexes-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8769,7 +9913,8 @@ func UnmarshalDatabaseInformation(m map[string]json.RawMessage, result interface
 
 // DatabaseInformationCluster : Schema for database cluster information.
 type DatabaseInformationCluster struct {
-	// Schema for the number of replicas of a database in a cluster.
+	// Schema for the number of replicas of a database in a cluster. The cluster is using the default value and it cannot
+	// be changed by the user.
 	N *int64 `json:"n" validate:"required"`
 
 	// Schema for the number of shards in a database. Each shard is a partition of the hash value range.
@@ -8787,18 +9932,22 @@ func UnmarshalDatabaseInformationCluster(m map[string]json.RawMessage, result in
 	obj := new(DatabaseInformationCluster)
 	err = core.UnmarshalPrimitive(m, "n", &obj.N)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "q", &obj.Q)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "q-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "r", &obj.R)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "r-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "w", &obj.W)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "w-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8816,6 +9965,7 @@ func UnmarshalDatabaseInformationProps(m map[string]json.RawMessage, result inte
 	obj := new(DatabaseInformationProps)
 	err = core.UnmarshalPrimitive(m, "partitioned", &obj.Partitioned)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "partitioned-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8824,9 +9974,6 @@ func UnmarshalDatabaseInformationProps(m map[string]json.RawMessage, result inte
 
 // DbEvent : Schema for a database change event.
 type DbEvent struct {
-	// Account name.
-	Account *string `json:"account,omitempty"`
-
 	// Database name.
 	DbName *string `json:"db_name" validate:"required"`
 
@@ -8848,20 +9995,19 @@ const (
 // UnmarshalDbEvent unmarshals an instance of DbEvent from the specified map of raw messages.
 func UnmarshalDbEvent(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(DbEvent)
-	err = core.UnmarshalPrimitive(m, "account", &obj.Account)
-	if err != nil {
-		return
-	}
 	err = core.UnmarshalPrimitive(m, "db_name", &obj.DbName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "db_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "seq", &obj.Seq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "seq-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8882,10 +10028,12 @@ func UnmarshalDbUpdates(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(DbUpdates)
 	err = core.UnmarshalPrimitive(m, "last_seq", &obj.LastSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_seq-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "results", &obj.Results, UnmarshalDbEvent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "results-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8909,14 +10057,17 @@ func UnmarshalDbsInfoResult(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(DbsInfoResult)
 	err = core.UnmarshalPrimitive(m, "error", &obj.Error)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "info", &obj.Info, UnmarshalDatabaseInformation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "info-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -8934,7 +10085,7 @@ type DeleteAttachmentOptions struct {
 	// Path parameter to specify the attachment name.
 	AttachmentName *string `json:"attachment_name" validate:"required,ne="`
 
-	// Header parameter to specify the document revision. Alternative to rev query parameter.
+	// Header parameter for a conditional HTTP request matching an ETag.
 	IfMatch *string `json:"If-Match,omitempty"`
 
 	// Query parameter to specify a document revision.
@@ -8958,8 +10109,8 @@ const (
 // NewDeleteAttachmentOptions : Instantiate DeleteAttachmentOptions
 func (*CloudantV1) NewDeleteAttachmentOptions(db string, docID string, attachmentName string) *DeleteAttachmentOptions {
 	return &DeleteAttachmentOptions{
-		Db: core.StringPtr(db),
-		DocID: core.StringPtr(docID),
+		Db:             core.StringPtr(db),
+		DocID:          core.StringPtr(docID),
 		AttachmentName: core.StringPtr(attachmentName),
 	}
 }
@@ -9043,7 +10194,7 @@ type DeleteDesignDocumentOptions struct {
 	// `_design/` prefix.
 	Ddoc *string `json:"ddoc" validate:"required,ne="`
 
-	// Header parameter to specify the document revision. Alternative to rev query parameter.
+	// Header parameter for a conditional HTTP request matching an ETag.
 	IfMatch *string `json:"If-Match,omitempty"`
 
 	// Query parameter to specify whether to store in batch mode. The server will respond with a HTTP 202 Accepted response
@@ -9067,7 +10218,7 @@ const (
 // NewDeleteDesignDocumentOptions : Instantiate DeleteDesignDocumentOptions
 func (*CloudantV1) NewDeleteDesignDocumentOptions(db string, ddoc string) *DeleteDesignDocumentOptions {
 	return &DeleteDesignDocumentOptions{
-		Db: core.StringPtr(db),
+		Db:   core.StringPtr(db),
 		Ddoc: core.StringPtr(ddoc),
 	}
 }
@@ -9116,7 +10267,7 @@ type DeleteDocumentOptions struct {
 	// Path parameter to specify the document ID.
 	DocID *string `json:"doc_id" validate:"required,ne="`
 
-	// Header parameter to specify the document revision. Alternative to rev query parameter.
+	// Header parameter for a conditional HTTP request matching an ETag.
 	IfMatch *string `json:"If-Match,omitempty"`
 
 	// Query parameter to specify whether to store in batch mode. The server will respond with a HTTP 202 Accepted response
@@ -9140,7 +10291,7 @@ const (
 // NewDeleteDocumentOptions : Instantiate DeleteDocumentOptions
 func (*CloudantV1) NewDeleteDocumentOptions(db string, docID string) *DeleteDocumentOptions {
 	return &DeleteDocumentOptions{
-		Db: core.StringPtr(db),
+		Db:    core.StringPtr(db),
 		DocID: core.StringPtr(docID),
 	}
 }
@@ -9203,17 +10354,17 @@ type DeleteIndexOptions struct {
 // Constants associated with the DeleteIndexOptions.Type property.
 // Path parameter to specify the index type.
 const (
-	DeleteIndexOptionsTypeJSONConst = "json"
+	DeleteIndexOptionsTypeJSONConst    = "json"
 	DeleteIndexOptionsTypeSpecialConst = "special"
-	DeleteIndexOptionsTypeTextConst = "text"
+	DeleteIndexOptionsTypeTextConst    = "text"
 )
 
 // NewDeleteIndexOptions : Instantiate DeleteIndexOptions
 func (*CloudantV1) NewDeleteIndexOptions(db string, ddoc string, typeVar string, index string) *DeleteIndexOptions {
 	return &DeleteIndexOptions{
-		Db: core.StringPtr(db),
-		Ddoc: core.StringPtr(ddoc),
-		Type: core.StringPtr(typeVar),
+		Db:    core.StringPtr(db),
+		Ddoc:  core.StringPtr(ddoc),
+		Type:  core.StringPtr(typeVar),
 		Index: core.StringPtr(index),
 	}
 }
@@ -9274,7 +10425,7 @@ const (
 // NewDeleteLocalDocumentOptions : Instantiate DeleteLocalDocumentOptions
 func (*CloudantV1) NewDeleteLocalDocumentOptions(db string, docID string) *DeleteLocalDocumentOptions {
 	return &DeleteLocalDocumentOptions{
-		Db: core.StringPtr(db),
+		Db:    core.StringPtr(db),
 		DocID: core.StringPtr(docID),
 	}
 }
@@ -9308,7 +10459,7 @@ type DeleteReplicationDocumentOptions struct {
 	// Path parameter to specify the document ID.
 	DocID *string `json:"doc_id" validate:"required,ne="`
 
-	// Header parameter to specify the document revision. Alternative to rev query parameter.
+	// Header parameter for a conditional HTTP request matching an ETag.
 	IfMatch *string `json:"If-Match,omitempty"`
 
 	// Query parameter to specify whether to store in batch mode. The server will respond with a HTTP 202 Accepted response
@@ -9380,7 +10531,7 @@ type DesignDocument struct {
 	// Schema for a list of document revision identifiers.
 	DeletedConflicts []string `json:"_deleted_conflicts,omitempty"`
 
-	// Document ID.
+	// Schema for a design document ID.
 	ID *string `json:"_id,omitempty"`
 
 	// Document's update sequence in current database. Available if requested with local_seq=true query parameter.
@@ -9478,9 +10629,6 @@ type DesignDocument struct {
 	// Schema for design document views.
 	Views map[string]DesignDocumentViewsMapReduce `json:"views,omitempty"`
 
-	// Schema for geospatial index function definitions.
-	StIndexes map[string]GeoIndexDefinition `json:"st_indexes,omitempty"`
-
 	// Allows users to set arbitrary properties
 	additionalProperties map[string]interface{}
 }
@@ -9567,10 +10715,10 @@ func (o *DesignDocument) MarshalJSON() (buffer []byte, err error) {
 	if o.Views != nil {
 		m["views"] = o.Views
 	}
-	if o.StIndexes != nil {
-		m["st_indexes"] = o.StIndexes
-	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9579,94 +10727,105 @@ func UnmarshalDesignDocument(m map[string]json.RawMessage, result interface{}) (
 	obj := new(DesignDocument)
 	err = core.UnmarshalModel(m, "_attachments", &obj.Attachments, UnmarshalAttachment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_attachments-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_attachments")
 	err = core.UnmarshalPrimitive(m, "_conflicts", &obj.Conflicts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_conflicts-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_conflicts")
 	err = core.UnmarshalPrimitive(m, "_deleted", &obj.Deleted)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_deleted-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_deleted")
 	err = core.UnmarshalPrimitive(m, "_deleted_conflicts", &obj.DeletedConflicts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_deleted_conflicts-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_deleted_conflicts")
 	err = core.UnmarshalPrimitive(m, "_id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_id-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_id")
 	err = core.UnmarshalPrimitive(m, "_local_seq", &obj.LocalSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_local_seq-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_local_seq")
 	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_rev-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_rev")
 	err = core.UnmarshalModel(m, "_revisions", &obj.Revisions, UnmarshalRevisions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_revisions-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_revisions")
 	err = core.UnmarshalModel(m, "_revs_info", &obj.RevsInfo, UnmarshalDocumentRevisionStatus)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_revs_info-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_revs_info")
 	err = core.UnmarshalPrimitive(m, "autoupdate", &obj.Autoupdate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "autoupdate-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "autoupdate")
 	err = core.UnmarshalPrimitive(m, "filters", &obj.Filters)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "filters-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "filters")
 	err = core.UnmarshalModel(m, "indexes", &obj.Indexes, UnmarshalSearchIndexDefinition)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "indexes-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "indexes")
 	err = core.UnmarshalPrimitive(m, "language", &obj.Language)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "language-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "language")
 	err = core.UnmarshalModel(m, "options", &obj.Options, UnmarshalDesignDocumentOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "options-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "options")
 	err = core.UnmarshalPrimitive(m, "validate_doc_update", &obj.ValidateDocUpdate)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "validate_doc_update-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "validate_doc_update")
 	err = core.UnmarshalModel(m, "views", &obj.Views, UnmarshalDesignDocumentViewsMapReduce)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "views-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "views")
-	err = core.UnmarshalModel(m, "st_indexes", &obj.StIndexes, UnmarshalGeoIndexDefinition)
-	if err != nil {
-		return
-	}
-	delete(m, "st_indexes")
 	for k := range m {
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -9689,10 +10848,12 @@ func UnmarshalDesignDocumentInformation(m map[string]json.RawMessage, result int
 	obj := new(DesignDocumentInformation)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "view_index", &obj.ViewIndex, UnmarshalDesignDocumentViewIndex)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "view_index-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9710,6 +10871,7 @@ func UnmarshalDesignDocumentOptions(m map[string]json.RawMessage, result interfa
 	obj := new(DesignDocumentOptions)
 	err = core.UnmarshalPrimitive(m, "partitioned", &obj.Partitioned)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "partitioned-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9718,6 +10880,10 @@ func UnmarshalDesignDocumentOptions(m map[string]json.RawMessage, result interfa
 
 // DesignDocumentViewIndex : View index information.
 type DesignDocumentViewIndex struct {
+	// List of collator versions. If there are multiple entries this implies a libicu upgrade has occurred but compaction
+	// has not run yet.
+	CollatorVersions []string `json:"collator_versions" validate:"required"`
+
 	// Indicates whether a compaction routine is currently running on the view.
 	CompactRunning *bool `json:"compact_running" validate:"required"`
 
@@ -9733,6 +10899,9 @@ type DesignDocumentViewIndex struct {
 	// Indicates if the view is currently being updated.
 	UpdaterRunning *bool `json:"updater_running" validate:"required"`
 
+	// Schema for an ability to tell if view is up-to-date without querying it.
+	UpdatesPending *UpdatesPending `json:"updates_pending" validate:"required"`
+
 	// Number of clients waiting on views from this design document.
 	WaitingClients *int64 `json:"waiting_clients" validate:"required"`
 
@@ -9743,32 +10912,49 @@ type DesignDocumentViewIndex struct {
 // UnmarshalDesignDocumentViewIndex unmarshals an instance of DesignDocumentViewIndex from the specified map of raw messages.
 func UnmarshalDesignDocumentViewIndex(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(DesignDocumentViewIndex)
+	err = core.UnmarshalPrimitive(m, "collator_versions", &obj.CollatorVersions)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "collator_versions-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "compact_running", &obj.CompactRunning)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "compact_running-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "language", &obj.Language)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "language-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "signature", &obj.Signature)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "signature-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "sizes", &obj.Sizes, UnmarshalContentInformationSizes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sizes-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updater_running", &obj.UpdaterRunning)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "updater_running-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "updates_pending", &obj.UpdatesPending, UnmarshalUpdatesPending)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "updates_pending-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "waiting_clients", &obj.WaitingClients)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "waiting_clients-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "waiting_commit", &obj.WaitingCommit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "waiting_commit-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9790,6 +10976,9 @@ func (*CloudantV1) NewDesignDocumentViewsMapReduce(mapVar string) (_model *Desig
 		Map: core.StringPtr(mapVar),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9798,10 +10987,12 @@ func UnmarshalDesignDocumentViewsMapReduce(m map[string]json.RawMessage, result 
 	obj := new(DesignDocumentViewsMapReduce)
 	err = core.UnmarshalPrimitive(m, "map", &obj.Map)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "map-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reduce", &obj.Reduce)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reduce-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9818,6 +11009,9 @@ type DocsResultRow struct {
 
 	// The reason the error occurred (if available).
 	Reason *string `json:"reason,omitempty"`
+
+	// An internal error reference (if available).
+	Ref *int64 `json:"ref,omitempty"`
 
 	// Schema for a document.
 	Doc *Document `json:"doc,omitempty"`
@@ -9837,30 +11031,42 @@ func UnmarshalDocsResultRow(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(DocsResultRow)
 	err = core.UnmarshalPrimitive(m, "caused_by", &obj.CausedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "caused_by-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "error", &obj.Error)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reason", &obj.Reason)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reason-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ref", &obj.Ref)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ref-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "doc", &obj.Doc, UnmarshalDocument)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "value", &obj.Value, UnmarshalDocsResultRowValue)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9869,6 +11075,9 @@ func UnmarshalDocsResultRow(m map[string]json.RawMessage, result interface{}) (e
 
 // DocsResultRowValue : Value of built-in `/_all_docs` style view.
 type DocsResultRowValue struct {
+	// If `true` then the document is deleted. Not present for undeleted documents.
+	Deleted *bool `json:"deleted,omitempty"`
+
 	// Schema for a document revision identifier.
 	Rev *string `json:"rev" validate:"required"`
 }
@@ -9876,8 +11085,14 @@ type DocsResultRowValue struct {
 // UnmarshalDocsResultRowValue unmarshals an instance of DocsResultRowValue from the specified map of raw messages.
 func UnmarshalDocsResultRowValue(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(DocsResultRowValue)
+	err = core.UnmarshalPrimitive(m, "deleted", &obj.Deleted)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rev-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -9898,7 +11113,7 @@ type Document struct {
 	// Schema for a list of document revision identifiers.
 	DeletedConflicts []string `json:"_deleted_conflicts,omitempty"`
 
-	// Document ID.
+	// Schema for a document ID.
 	ID *string `json:"_id,omitempty"`
 
 	// Document's update sequence in current database. Available if requested with local_seq=true query parameter.
@@ -9979,6 +11194,9 @@ func (o *Document) MarshalJSON() (buffer []byte, err error) {
 		m["_revs_info"] = o.RevsInfo
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -9987,46 +11205,55 @@ func UnmarshalDocument(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Document)
 	err = core.UnmarshalModel(m, "_attachments", &obj.Attachments, UnmarshalAttachment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_attachments-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_attachments")
 	err = core.UnmarshalPrimitive(m, "_conflicts", &obj.Conflicts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_conflicts-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_conflicts")
 	err = core.UnmarshalPrimitive(m, "_deleted", &obj.Deleted)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_deleted-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_deleted")
 	err = core.UnmarshalPrimitive(m, "_deleted_conflicts", &obj.DeletedConflicts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_deleted_conflicts-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_deleted_conflicts")
 	err = core.UnmarshalPrimitive(m, "_id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_id-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_id")
 	err = core.UnmarshalPrimitive(m, "_local_seq", &obj.LocalSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_local_seq-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_local_seq")
 	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_rev-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_rev")
 	err = core.UnmarshalModel(m, "_revisions", &obj.Revisions, UnmarshalRevisions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_revisions-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_revisions")
 	err = core.UnmarshalModel(m, "_revs_info", &obj.RevsInfo, UnmarshalDocumentRevisionStatus)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_revs_info-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_revs_info")
@@ -10034,7 +11261,7 @@ func UnmarshalDocument(m map[string]json.RawMessage, result interface{}) (err er
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -10062,6 +11289,9 @@ type DocumentResult struct {
 
 	// The reason the error occurred (if available).
 	Reason *string `json:"reason,omitempty"`
+
+	// An internal error reference (if available).
+	Ref *int64 `json:"ref,omitempty"`
 }
 
 // UnmarshalDocumentResult unmarshals an instance of DocumentResult from the specified map of raw messages.
@@ -10069,26 +11299,37 @@ func UnmarshalDocumentResult(m map[string]json.RawMessage, result interface{}) (
 	obj := new(DocumentResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ok", &obj.Ok)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ok-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "caused_by", &obj.CausedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "caused_by-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "error", &obj.Error)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reason", &obj.Reason)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reason-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ref", &obj.Ref)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ref-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10110,17 +11351,20 @@ type DocumentRevisionStatus struct {
 // `missing`: Revision is not available - `deleted`: Revision belongs to deleted document.
 const (
 	DocumentRevisionStatusStatusAvailableConst = "available"
-	DocumentRevisionStatusStatusDeletedConst = "deleted"
-	DocumentRevisionStatusStatusMissingConst = "missing"
+	DocumentRevisionStatusStatusDeletedConst   = "deleted"
+	DocumentRevisionStatusStatusMissingConst   = "missing"
 )
 
 // NewDocumentRevisionStatus : Instantiate DocumentRevisionStatus (Generic Model Constructor)
 func (*CloudantV1) NewDocumentRevisionStatus(rev string, status string) (_model *DocumentRevisionStatus, err error) {
 	_model = &DocumentRevisionStatus{
-		Rev: core.StringPtr(rev),
+		Rev:    core.StringPtr(rev),
 		Status: core.StringPtr(status),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -10129,10 +11373,12 @@ func UnmarshalDocumentRevisionStatus(m map[string]json.RawMessage, result interf
 	obj := new(DocumentRevisionStatus)
 	err = core.UnmarshalPrimitive(m, "rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rev-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10153,10 +11399,12 @@ func UnmarshalDocumentShardInfo(m map[string]json.RawMessage, result interface{}
 	obj := new(DocumentShardInfo)
 	err = core.UnmarshalPrimitive(m, "nodes", &obj.Nodes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "nodes-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "range", &obj.Range)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "range-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10186,22 +11434,27 @@ func UnmarshalExecutionStats(m map[string]json.RawMessage, result interface{}) (
 	obj := new(ExecutionStats)
 	err = core.UnmarshalPrimitive(m, "execution_time_ms", &obj.ExecutionTimeMs)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "execution_time_ms-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "results_returned", &obj.ResultsReturned)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "results_returned-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_docs_examined", &obj.TotalDocsExamined)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_docs_examined-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_keys_examined", &obj.TotalKeysExamined)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_keys_examined-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "total_quorum_docs_examined", &obj.TotalQuorumDocsExamined)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_quorum_docs_examined-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10210,23 +11463,33 @@ func UnmarshalExecutionStats(m map[string]json.RawMessage, result interface{}) (
 
 // ExplainResult : Schema for information about the index used for a find query.
 type ExplainResult struct {
-	// dbname.
+	// When `true`, the query is answered using the index only and no documents are fetched.
+	Covering *bool `json:"covering" validate:"required"`
+
+	// Name of database.
 	Dbname *string `json:"dbname" validate:"required"`
 
-	// fields.
+	// Fields that were requested to be projected from the document. If no fields were requested to be projected this will
+	// be empty and all fields will be returned.
 	Fields []string `json:"fields" validate:"required"`
 
 	// Schema for information about an index.
 	Index *IndexInformation `json:"index" validate:"required"`
 
-	// limit.
+	// Schema for the list of all the other indexes that were not chosen for serving the query.
+	IndexCandidates []IndexCandidate `json:"index_candidates,omitempty"`
+
+	// The used maximum number of results returned.
 	Limit *int64 `json:"limit" validate:"required"`
 
-	// opts.
-	Opts map[string]interface{} `json:"opts" validate:"required"`
+	// Arguments passed to the underlying view.
+	Mrargs *ExplainResultMrArgs `json:"mrargs,omitempty"`
 
-	// range.
-	Range *ExplainResultRange `json:"range,omitempty"`
+	// Options used for the request.
+	Opts *ExplainResultOpts `json:"opts" validate:"required"`
+
+	// Schema for any JSON type.
+	Partitioned interface{} `json:"partitioned,omitempty"`
 
 	// JSON object describing criteria used to select documents. The selector specifies fields in the document, and
 	// provides an expression to evaluate with the field content or other data.
@@ -10244,76 +11507,302 @@ type ExplainResult struct {
 	// Operators are identified by the use of a dollar sign `$` prefix in the name field.
 	//
 	// There are two core types of operators in the selector syntax:
-	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. In addition
-	// to the common boolean operators (`$and`, `$or`, `$not`, `$nor`) there are three combination operators: `$all`,
-	// `$elemMatch`, and `$allMatch`. A combination operator takes a single argument. The argument is either another
-	// selector, or an array of selectors.
+	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. A
+	// combination operator takes a single argument. The argument is either another selector, or an array of selectors.
 	// * Condition operators: are specific to a field, and are used to evaluate the value stored in that field. For
 	// instance, the basic `$eq` operator matches when the specified field contains a value that is equal to the supplied
-	// argument.
+	// argument. See [the Cloudant Docs](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-operators) for a list of all
+	// available combination and conditional operators.
+	// * Only equality operators such as `$eq`, `$gt`, `$gte`, `$lt`, and `$lte` (but not `$ne`) can be used as the basis
+	// of a query. You should include at least one of these in a selector.
+	//
+	// For further reference see
+	// [selector syntax](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-selector-syntax).
 	Selector map[string]interface{} `json:"selector" validate:"required"`
 
-	// skip.
+	// Schema for a list of objects with extra information on the selector to provide insights about its usability.
+	SelectorHints []SelectorHint `json:"selector_hints,omitempty"`
+
+	// Skip parameter used.
 	Skip *int64 `json:"skip" validate:"required"`
 }
 
 // UnmarshalExplainResult unmarshals an instance of ExplainResult from the specified map of raw messages.
 func UnmarshalExplainResult(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ExplainResult)
+	err = core.UnmarshalPrimitive(m, "covering", &obj.Covering)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "covering-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "dbname", &obj.Dbname)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "dbname-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "fields", &obj.Fields)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "fields-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "index", &obj.Index, UnmarshalIndexInformation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "index-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "index_candidates", &obj.IndexCandidates, UnmarshalIndexCandidate)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "index_candidates-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "opts", &obj.Opts)
+	err = core.UnmarshalModel(m, "mrargs", &obj.Mrargs, UnmarshalExplainResultMrArgs)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "mrargs-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "range", &obj.Range, UnmarshalExplainResultRange)
+	err = core.UnmarshalModel(m, "opts", &obj.Opts, UnmarshalExplainResultOpts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "opts-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "partitioned", &obj.Partitioned)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "partitioned-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "selector", &obj.Selector)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "selector-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "selector_hints", &obj.SelectorHints, UnmarshalSelectorHint)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "selector_hints-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "skip", &obj.Skip)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "skip-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// ExplainResultRange : range.
-type ExplainResultRange struct {
-	// end_key.
-	EndKey []interface{} `json:"end_key,omitempty"`
+// ExplainResultMrArgs : Arguments passed to the underlying view.
+type ExplainResultMrArgs struct {
+	// Schema for any JSON type.
+	Conflicts interface{} `json:"conflicts,omitempty"`
 
-	// start_key.
-	StartKey []interface{} `json:"start_key,omitempty"`
+	// Direction parameter passed to the underlying view.
+	Direction *string `json:"direction,omitempty"`
+
+	// Schema for any JSON type.
+	EndKey interface{} `json:"end_key,omitempty"`
+
+	// A parameter that specifies whether to include the full content of the documents in the response in the underlying
+	// view.
+	IncludeDocs *bool `json:"include_docs,omitempty"`
+
+	// Partition parameter passed to the underlying view.
+	Partition *string `json:"partition,omitempty"`
+
+	// A parameter that specifies returning only documents that match any of the specified keys in the underlying view.
+	Reduce *bool `json:"reduce,omitempty"`
+
+	// A parameter that specifies whether the view results should be returned form a "stable" set of shards passed to the
+	// underlying view.
+	Stable *bool `json:"stable,omitempty"`
+
+	// Schema for any JSON type.
+	StartKey interface{} `json:"start_key,omitempty"`
+
+	// Schema for any JSON type.
+	Update interface{} `json:"update,omitempty"`
+
+	// The type of the underlying view.
+	ViewType *string `json:"view_type,omitempty"`
 }
 
-// UnmarshalExplainResultRange unmarshals an instance of ExplainResultRange from the specified map of raw messages.
-func UnmarshalExplainResultRange(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ExplainResultRange)
+// Constants associated with the ExplainResultMrArgs.ViewType property.
+// The type of the underlying view.
+const (
+	ExplainResultMrArgsViewTypeMapConst    = "map"
+	ExplainResultMrArgsViewTypeReduceConst = "reduce"
+)
+
+// UnmarshalExplainResultMrArgs unmarshals an instance of ExplainResultMrArgs from the specified map of raw messages.
+func UnmarshalExplainResultMrArgs(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ExplainResultMrArgs)
+	err = core.UnmarshalPrimitive(m, "conflicts", &obj.Conflicts)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "conflicts-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "direction", &obj.Direction)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "direction-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "end_key", &obj.EndKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "end_key-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "include_docs", &obj.IncludeDocs)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "include_docs-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "partition", &obj.Partition)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "partition-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "reduce", &obj.Reduce)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "reduce-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "stable", &obj.Stable)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "stable-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "start_key", &obj.StartKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start_key-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "update", &obj.Update)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "update-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "view_type", &obj.ViewType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "view_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ExplainResultOpts : Options used for the request.
+type ExplainResultOpts struct {
+	// Opaque bookmark token used when paginating results.
+	Bookmark *string `json:"bookmark" validate:"required"`
+
+	// Conflicts used in the request query.
+	Conflicts *bool `json:"conflicts" validate:"required"`
+
+	// Execution statistics used in the request query.
+	ExecutionStats *bool `json:"execution_stats" validate:"required"`
+
+	// JSON array that uses the field syntax. Use this parameter to specify which fields of a document must be returned. If
+	// it is omitted or empty, the entire document is returned.
+	Fields []string `json:"fields" validate:"required"`
+
+	// Limit used in the request query.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// On which database partition the request was used. If it was not used on a database partition, it returns with `""`.
+	Partition *string `json:"partition" validate:"required"`
+
+	// The read quorum that is needed for the result.
+	R *int64 `json:"r" validate:"required"`
+
+	// Skip used in the request query.
+	Skip *int64 `json:"skip" validate:"required"`
+
+	// Schema for any JSON type.
+	Sort interface{} `json:"sort" validate:"required"`
+
+	// Stable used in the request query.
+	Stable *bool `json:"stable" validate:"required"`
+
+	// Stale used in the request query.
+	// Deprecated: this field is deprecated and may be removed in a future release.
+	Stale *bool `json:"stale" validate:"required"`
+
+	// Update used in the request query.
+	Update *bool `json:"update" validate:"required"`
+
+	// Use index used in the request query.
+	UseIndex []string `json:"use_index" validate:"required"`
+}
+
+// UnmarshalExplainResultOpts unmarshals an instance of ExplainResultOpts from the specified map of raw messages.
+func UnmarshalExplainResultOpts(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ExplainResultOpts)
+	err = core.UnmarshalPrimitive(m, "bookmark", &obj.Bookmark)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "bookmark-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "conflicts", &obj.Conflicts)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "conflicts-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "execution_stats", &obj.ExecutionStats)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "execution_stats-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "fields", &obj.Fields)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "fields-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "partition", &obj.Partition)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "partition-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "r", &obj.R)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "r-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "skip", &obj.Skip)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "skip-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "sort", &obj.Sort)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "sort-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "stable", &obj.Stable)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "stable-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "stale", &obj.Stale)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "stale-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "update", &obj.Update)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "update-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "use_index", &obj.UseIndex)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "use_index-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10340,371 +11829,22 @@ func UnmarshalFindResult(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(FindResult)
 	err = core.UnmarshalPrimitive(m, "bookmark", &obj.Bookmark)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bookmark-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "docs", &obj.Docs, UnmarshalDocument)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "docs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "execution_stats", &obj.ExecutionStats, UnmarshalExecutionStats)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "execution_stats-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "warning", &obj.Warning)
 	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// GeoIndexDefinition : Schema for a geospatial index definition.
-type GeoIndexDefinition struct {
-	// String form of a JavaScript function that is called for each document in the database. The function takes the
-	// document as a parameter, extracts some geospatial data from it, and then calls the `st_index` function to index that
-	// data. The `st_index` takes a GeoJSON geometry as a parameter.
-	Index *string `json:"index" validate:"required"`
-}
-
-// NewGeoIndexDefinition : Instantiate GeoIndexDefinition (Generic Model Constructor)
-func (*CloudantV1) NewGeoIndexDefinition(index string) (_model *GeoIndexDefinition, err error) {
-	_model = &GeoIndexDefinition{
-		Index: core.StringPtr(index),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-// UnmarshalGeoIndexDefinition unmarshals an instance of GeoIndexDefinition from the specified map of raw messages.
-func UnmarshalGeoIndexDefinition(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GeoIndexDefinition)
-	err = core.UnmarshalPrimitive(m, "index", &obj.Index)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// GeoIndexInformation : Schema for information about a geospatial index.
-type GeoIndexInformation struct {
-	// Schema for geospatial index statistics.
-	GeoIndex *GeoIndexStats `json:"geo_index" validate:"required"`
-
-	// The name of the geospatial index design document.
-	Name *string `json:"name" validate:"required"`
-}
-
-// UnmarshalGeoIndexInformation unmarshals an instance of GeoIndexInformation from the specified map of raw messages.
-func UnmarshalGeoIndexInformation(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GeoIndexInformation)
-	err = core.UnmarshalModel(m, "geo_index", &obj.GeoIndex, UnmarshalGeoIndexStats)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// GeoIndexStats : Schema for geospatial index statistics.
-type GeoIndexStats struct {
-	// The size of the geospatial index, in bytes.
-	DataSize *int64 `json:"data_size" validate:"required"`
-
-	// The size of the geospatial index, as stored on disk, in bytes.
-	DiskSize *int64 `json:"disk_size" validate:"required"`
-
-	// Number of documents in the geospatial index.
-	DocCount *int64 `json:"doc_count" validate:"required"`
-}
-
-// UnmarshalGeoIndexStats unmarshals an instance of GeoIndexStats from the specified map of raw messages.
-func UnmarshalGeoIndexStats(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GeoIndexStats)
-	err = core.UnmarshalPrimitive(m, "data_size", &obj.DataSize)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "disk_size", &obj.DiskSize)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "doc_count", &obj.DocCount)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// GeoJSONFeature : Schema for a GeoJSON feature object. Note that the content of the feature objects varies depending on the response
-// format chosen and whether the `include_docs` parameter is `true`.
-type GeoJSONFeature struct {
-	// Schema for a document ID.
-	ID *string `json:"_id,omitempty"`
-
-	// Schema for a document revision identifier.
-	Rev *string `json:"_rev,omitempty"`
-
-	// Schema for a GeoJSON bounding box.
-	Bbox []float64 `json:"bbox,omitempty"`
-
-	// Schema for a GeoJSON geometry object.
-	Geometry GeoJSONGeometryObjectIntf `json:"geometry" validate:"required"`
-
-	// Schema for the properties of a GeoJSON feature object.
-	Properties map[string]interface{} `json:"properties,omitempty"`
-
-	// Declaration of the GeoJSON type: Feature Object.
-	Type *string `json:"type" validate:"required"`
-
-	// Allows users to set arbitrary properties
-	additionalProperties map[string]interface{}
-}
-
-// Constants associated with the GeoJSONFeature.Type property.
-// Declaration of the GeoJSON type: Feature Object.
-const (
-	GeoJSONFeatureTypeFeatureConst = "Feature"
-)
-
-// SetProperty allows the user to set an arbitrary property on an instance of GeoJSONFeature
-func (o *GeoJSONFeature) SetProperty(key string, value interface{}) {
-	if o.additionalProperties == nil {
-		o.additionalProperties = make(map[string]interface{})
-	}
-	o.additionalProperties[key] = value
-}
-
-// SetProperties allows the user to set a map of arbitrary properties on an instance of GeoJSONFeature
-func (o *GeoJSONFeature) SetProperties(m map[string]interface{}) {
-	o.additionalProperties = make(map[string]interface{})
-	for k, v := range m {
-		o.additionalProperties[k] = v
-	}
-}
-
-// GetProperty allows the user to retrieve an arbitrary property from an instance of GeoJSONFeature
-func (o *GeoJSONFeature) GetProperty(key string) interface{} {
-	return o.additionalProperties[key]
-}
-
-// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of GeoJSONFeature
-func (o *GeoJSONFeature) GetProperties() map[string]interface{} {
-	return o.additionalProperties
-}
-
-// MarshalJSON performs custom serialization for instances of GeoJSONFeature
-func (o *GeoJSONFeature) MarshalJSON() (buffer []byte, err error) {
-	m := make(map[string]interface{})
-	if len(o.additionalProperties) > 0 {
-		for k, v := range o.additionalProperties {
-			m[k] = v
-		}
-	}
-	if o.ID != nil {
-		m["_id"] = o.ID
-	}
-	if o.Rev != nil {
-		m["_rev"] = o.Rev
-	}
-	if o.Bbox != nil {
-		m["bbox"] = o.Bbox
-	}
-	if o.Geometry != nil {
-		m["geometry"] = o.Geometry
-	}
-	if o.Properties != nil {
-		m["properties"] = o.Properties
-	}
-	if o.Type != nil {
-		m["type"] = o.Type
-	}
-	buffer, err = json.Marshal(m)
-	return
-}
-
-// UnmarshalGeoJSONFeature unmarshals an instance of GeoJSONFeature from the specified map of raw messages.
-func UnmarshalGeoJSONFeature(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GeoJSONFeature)
-	err = core.UnmarshalPrimitive(m, "_id", &obj.ID)
-	if err != nil {
-		return
-	}
-	delete(m, "_id")
-	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
-	if err != nil {
-		return
-	}
-	delete(m, "_rev")
-	err = core.UnmarshalPrimitive(m, "bbox", &obj.Bbox)
-	if err != nil {
-		return
-	}
-	delete(m, "bbox")
-	err = core.UnmarshalModel(m, "geometry", &obj.Geometry, UnmarshalGeoJSONGeometryObject)
-	if err != nil {
-		return
-	}
-	delete(m, "geometry")
-	err = core.UnmarshalPrimitive(m, "properties", &obj.Properties)
-	if err != nil {
-		return
-	}
-	delete(m, "properties")
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	delete(m, "type")
-	for k := range m {
-		var v interface{}
-		e := core.UnmarshalPrimitive(m, k, &v)
-		if e != nil {
-			err = e
-			return
-		}
-		obj.SetProperty(k, v)
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// GeoJSONGeometryObject : Schema for a GeoJSON geometry object.
-// Models which "extend" this model:
-// - GeoJSONGeometry
-// - GeoJSONGeometryCollection
-type GeoJSONGeometryObject struct {
-	// The type of GeoJSON Geometry.
-	Type *string `json:"type,omitempty"`
-
-	// Used for all geometry types except `GeometryCollection`. The structure of the elements in the array varies by
-	// geometry type.
-	Coordinates []interface{} `json:"coordinates,omitempty"`
-
-	// Used for the `GeometryCollection` type.
-	Geometries []GeoJSONGeometry `json:"geometries,omitempty"`
-}
-
-// Constants associated with the GeoJSONGeometryObject.Type property.
-// The type of GeoJSON Geometry.
-const (
-	GeoJSONGeometryObjectTypeGeometrycollectionConst = "GeometryCollection"
-	GeoJSONGeometryObjectTypeLinestringConst = "LineString"
-	GeoJSONGeometryObjectTypeMultilinestringConst = "MultiLineString"
-	GeoJSONGeometryObjectTypeMultipointConst = "MultiPoint"
-	GeoJSONGeometryObjectTypeMultipolygonConst = "MultiPolygon"
-	GeoJSONGeometryObjectTypePointConst = "Point"
-	GeoJSONGeometryObjectTypePolygonConst = "Polygon"
-)
-func (*GeoJSONGeometryObject) isaGeoJSONGeometryObject() bool {
-	return true
-}
-
-type GeoJSONGeometryObjectIntf interface {
-	isaGeoJSONGeometryObject() bool
-}
-
-// UnmarshalGeoJSONGeometryObject unmarshals an instance of GeoJSONGeometryObject from the specified map of raw messages.
-func UnmarshalGeoJSONGeometryObject(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GeoJSONGeometryObject)
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "coordinates", &obj.Coordinates)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "geometries", &obj.Geometries, UnmarshalGeoJSONGeometry)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// GeoResult : Schema for the result of a geospatial query operation. For the `legacy`, `geojson`, or `application/vnd.geo+json`
-// format this is a GeoJson FeatureCollection with additional metadata in foreign members.
-type GeoResult struct {
-	// Opaque bookmark token used when paginating results.
-	Bookmark *string `json:"bookmark" validate:"required"`
-
-	// The array of GeoJSON Feature Objects matching the geospatial query.
-	Features []GeoJSONFeature `json:"features,omitempty"`
-
-	// The array of rows matching the geospatial query. Present only when using `view` format.
-	Rows []GeoResultRow `json:"rows" validate:"required"`
-
-	// Declaration of the GeoJSON type: FeatureCollection Object.
-	Type *string `json:"type,omitempty"`
-}
-
-// Constants associated with the GeoResult.Type property.
-// Declaration of the GeoJSON type: FeatureCollection Object.
-const (
-	GeoResultTypeFeaturecollectionConst = "FeatureCollection"
-)
-
-// UnmarshalGeoResult unmarshals an instance of GeoResult from the specified map of raw messages.
-func UnmarshalGeoResult(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GeoResult)
-	err = core.UnmarshalPrimitive(m, "bookmark", &obj.Bookmark)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "features", &obj.Features, UnmarshalGeoJSONFeature)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "rows", &obj.Rows, UnmarshalGeoResultRow)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// GeoResultRow : Schema for a row of a geospatial result using view format.
-type GeoResultRow struct {
-	// Schema for a document.
-	Doc *Document `json:"doc,omitempty"`
-
-	// Schema for a GeoJSON geometry.
-	Geometry *GeoJSONGeometry `json:"geometry,omitempty"`
-
-	// Schema for a document ID.
-	ID *string `json:"id,omitempty"`
-
-	// Schema for a document revision identifier.
-	Rev *string `json:"rev,omitempty"`
-}
-
-// UnmarshalGeoResultRow unmarshals an instance of GeoResultRow from the specified map of raw messages.
-func UnmarshalGeoResultRow(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GeoResultRow)
-	err = core.UnmarshalModel(m, "doc", &obj.Doc, UnmarshalDocument)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "geometry", &obj.Geometry, UnmarshalGeoJSONGeometry)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "rev", &obj.Rev)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "warning-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -10754,7 +11894,7 @@ type GetAllDbsOptions struct {
 
 	// Query parameter to specify to stop returning records when the specified key is reached. String representation of any
 	// JSON type that matches the key type emitted by the view function.
-	Endkey *string `json:"endkey,omitempty"`
+	EndKey *string `json:"end_key,omitempty"`
 
 	// Query parameter to specify the number of returned documents to limit the result to.
 	Limit *int64 `json:"limit,omitempty"`
@@ -10764,7 +11904,7 @@ type GetAllDbsOptions struct {
 
 	// Query parameter to specify to start returning records from the specified key. String representation of any JSON type
 	// that matches the key type emitted by the view function.
-	Startkey *string `json:"startkey,omitempty"`
+	StartKey *string `json:"start_key,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -10781,9 +11921,9 @@ func (_options *GetAllDbsOptions) SetDescending(descending bool) *GetAllDbsOptio
 	return _options
 }
 
-// SetEndkey : Allow user to set Endkey
-func (_options *GetAllDbsOptions) SetEndkey(endkey string) *GetAllDbsOptions {
-	_options.Endkey = core.StringPtr(endkey)
+// SetEndKey : Allow user to set EndKey
+func (_options *GetAllDbsOptions) SetEndKey(endKey string) *GetAllDbsOptions {
+	_options.EndKey = core.StringPtr(endKey)
 	return _options
 }
 
@@ -10799,9 +11939,9 @@ func (_options *GetAllDbsOptions) SetSkip(skip int64) *GetAllDbsOptions {
 	return _options
 }
 
-// SetStartkey : Allow user to set Startkey
-func (_options *GetAllDbsOptions) SetStartkey(startkey string) *GetAllDbsOptions {
-	_options.Startkey = core.StringPtr(startkey)
+// SetStartKey : Allow user to set StartKey
+func (_options *GetAllDbsOptions) SetStartKey(startKey string) *GetAllDbsOptions {
+	_options.StartKey = core.StringPtr(startKey)
 	return _options
 }
 
@@ -10825,10 +11965,10 @@ type GetAttachmentOptions struct {
 	// The type of the response:  or *_/_*.
 	Accept *string `json:"Accept,omitempty"`
 
-	// Header parameter to specify the document revision. Alternative to rev query parameter.
+	// Header parameter for a conditional HTTP request matching an ETag.
 	IfMatch *string `json:"If-Match,omitempty"`
 
-	// Header parameter to specify a double quoted document revision token for cache control.
+	// Header parameter for a conditional HTTP request not matching an ETag.
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
 
 	// Header parameter to specify the byte range for a request. This allows the implementation of resumable downloads and
@@ -10845,8 +11985,8 @@ type GetAttachmentOptions struct {
 // NewGetAttachmentOptions : Instantiate GetAttachmentOptions
 func (*CloudantV1) NewGetAttachmentOptions(db string, docID string, attachmentName string) *GetAttachmentOptions {
 	return &GetAttachmentOptions{
-		Db: core.StringPtr(db),
-		DocID: core.StringPtr(docID),
+		Db:             core.StringPtr(db),
+		DocID:          core.StringPtr(docID),
 		AttachmentName: core.StringPtr(attachmentName),
 	}
 }
@@ -10989,13 +12129,28 @@ func (options *GetDatabaseInformationOptions) SetHeaders(param map[string]string
 
 // GetDbUpdatesOptions : The GetDbUpdates options.
 type GetDbUpdatesOptions struct {
+	// Query parameter to specify whether to return the documents in descending by key order.
+	Descending *bool `json:"descending,omitempty"`
+
 	// Query parameter to specify the changes feed type.
 	Feed *string `json:"feed,omitempty"`
 
-	// Query parameter to specify the period in milliseconds after which an empty line is sent in the results. Only
-	// applicable for longpoll, continuous, and eventsource feeds. Overrides any timeout to keep the feed alive
-	// indefinitely. May also be `true` to use default value of 60000.
+	// Query parameter to specify the period in milliseconds after which an empty line is sent in the results. Off by
+	// default and only applicable for
+	// `continuous` and `eventsource` feeds. Overrides any timeout to keep the feed alive indefinitely. May also be `true`
+	// to use a value of `60000`.
+	//
+	// **Note:** Delivery of heartbeats cannot be relied on at specific intervals. If your application runs in an
+	// environment where idle network connections may break, `heartbeat` is not suitable as a keepalive mechanism. Instead,
+	// consider one of the following options:
+	//   * Use the `timeout` parameter with a value that is compatible with your network environment.
+	//   * Switch to scheduled usage of one of the non-continuous changes feed types
+	//     (`normal` or `longpoll`).
+	//   * Use TCP keepalive.
 	Heartbeat *int64 `json:"heartbeat,omitempty"`
+
+	// Query parameter to specify the number of returned documents to limit the result to.
+	Limit *int64 `json:"limit,omitempty"`
 
 	// Query parameter to specify the maximum period in milliseconds to wait for a change before the response is sent, even
 	// if there are no results. Only applicable for `longpoll` or `continuous` feeds. Default value is specified by
@@ -11014,15 +12169,21 @@ type GetDbUpdatesOptions struct {
 // Constants associated with the GetDbUpdatesOptions.Feed property.
 // Query parameter to specify the changes feed type.
 const (
-	GetDbUpdatesOptionsFeedContinuousConst = "continuous"
+	GetDbUpdatesOptionsFeedContinuousConst  = "continuous"
 	GetDbUpdatesOptionsFeedEventsourceConst = "eventsource"
-	GetDbUpdatesOptionsFeedLongpollConst = "longpoll"
-	GetDbUpdatesOptionsFeedNormalConst = "normal"
+	GetDbUpdatesOptionsFeedLongpollConst    = "longpoll"
+	GetDbUpdatesOptionsFeedNormalConst      = "normal"
 )
 
 // NewGetDbUpdatesOptions : Instantiate GetDbUpdatesOptions
 func (*CloudantV1) NewGetDbUpdatesOptions() *GetDbUpdatesOptions {
 	return &GetDbUpdatesOptions{}
+}
+
+// SetDescending : Allow user to set Descending
+func (_options *GetDbUpdatesOptions) SetDescending(descending bool) *GetDbUpdatesOptions {
+	_options.Descending = core.BoolPtr(descending)
+	return _options
 }
 
 // SetFeed : Allow user to set Feed
@@ -11034,6 +12195,12 @@ func (_options *GetDbUpdatesOptions) SetFeed(feed string) *GetDbUpdatesOptions {
 // SetHeartbeat : Allow user to set Heartbeat
 func (_options *GetDbUpdatesOptions) SetHeartbeat(heartbeat int64) *GetDbUpdatesOptions {
 	_options.Heartbeat = core.Int64Ptr(heartbeat)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *GetDbUpdatesOptions) SetLimit(limit int64) *GetDbUpdatesOptions {
+	_options.Limit = core.Int64Ptr(limit)
 	return _options
 }
 
@@ -11071,7 +12238,7 @@ type GetDesignDocumentInformationOptions struct {
 // NewGetDesignDocumentInformationOptions : Instantiate GetDesignDocumentInformationOptions
 func (*CloudantV1) NewGetDesignDocumentInformationOptions(db string, ddoc string) *GetDesignDocumentInformationOptions {
 	return &GetDesignDocumentInformationOptions{
-		Db: core.StringPtr(db),
+		Db:   core.StringPtr(db),
 		Ddoc: core.StringPtr(ddoc),
 	}
 }
@@ -11103,7 +12270,7 @@ type GetDesignDocumentOptions struct {
 	// `_design/` prefix.
 	Ddoc *string `json:"ddoc" validate:"required,ne="`
 
-	// Header parameter to specify a double quoted document revision token for cache control.
+	// Header parameter for a conditional HTTP request not matching an ETag.
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
 
 	// Query parameter to specify whether to include attachments bodies in a response.
@@ -11113,8 +12280,8 @@ type GetDesignDocumentOptions struct {
 	// attachment is compressed.
 	AttEncodingInfo *bool `json:"att_encoding_info,omitempty"`
 
-	// Query parameter to specify whether to include a list of conflicted revisions in the `_conflicts` property of the
-	// returned document. Ignored if `include_docs` isn't `true`.
+	// Query parameter to specify whether to include a list of conflicted revisions in each returned document. Active only
+	// when `include_docs` is `true`.
 	Conflicts *bool `json:"conflicts,omitempty"`
 
 	// Query parameter to specify whether to include a list of deleted conflicted revisions in the `_deleted_conflicts`
@@ -11147,7 +12314,7 @@ type GetDesignDocumentOptions struct {
 // NewGetDesignDocumentOptions : Instantiate GetDesignDocumentOptions
 func (*CloudantV1) NewGetDesignDocumentOptions(db string, ddoc string) *GetDesignDocumentOptions {
 	return &GetDesignDocumentOptions{
-		Db: core.StringPtr(db),
+		Db:   core.StringPtr(db),
 		Ddoc: core.StringPtr(ddoc),
 	}
 }
@@ -11244,7 +12411,7 @@ type GetDocumentOptions struct {
 	// Path parameter to specify the document ID.
 	DocID *string `json:"doc_id" validate:"required,ne="`
 
-	// Header parameter to specify a double quoted document revision token for cache control.
+	// Header parameter for a conditional HTTP request not matching an ETag.
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
 
 	// Query parameter to specify whether to include attachments bodies in a response.
@@ -11254,8 +12421,8 @@ type GetDocumentOptions struct {
 	// attachment is compressed.
 	AttEncodingInfo *bool `json:"att_encoding_info,omitempty"`
 
-	// Query parameter to specify whether to include a list of conflicted revisions in the `_conflicts` property of the
-	// returned document. Ignored if `include_docs` isn't `true`.
+	// Query parameter to specify whether to include a list of conflicted revisions in each returned document. Active only
+	// when `include_docs` is `true`.
 	Conflicts *bool `json:"conflicts,omitempty"`
 
 	// Query parameter to specify whether to include a list of deleted conflicted revisions in the `_deleted_conflicts`
@@ -11288,7 +12455,7 @@ type GetDocumentOptions struct {
 // NewGetDocumentOptions : Instantiate GetDocumentOptions
 func (*CloudantV1) NewGetDocumentOptions(db string, docID string) *GetDocumentOptions {
 	return &GetDocumentOptions{
-		Db: core.StringPtr(db),
+		Db:    core.StringPtr(db),
 		DocID: core.StringPtr(docID),
 	}
 }
@@ -11392,7 +12559,7 @@ type GetDocumentShardsInfoOptions struct {
 // NewGetDocumentShardsInfoOptions : Instantiate GetDocumentShardsInfoOptions
 func (*CloudantV1) NewGetDocumentShardsInfoOptions(db string, docID string) *GetDocumentShardsInfoOptions {
 	return &GetDocumentShardsInfoOptions{
-		Db: core.StringPtr(db),
+		Db:    core.StringPtr(db),
 		DocID: core.StringPtr(docID),
 	}
 }
@@ -11411,282 +12578,6 @@ func (_options *GetDocumentShardsInfoOptions) SetDocID(docID string) *GetDocumen
 
 // SetHeaders : Allow user to set Headers
 func (options *GetDocumentShardsInfoOptions) SetHeaders(param map[string]string) *GetDocumentShardsInfoOptions {
-	options.Headers = param
-	return options
-}
-
-// GetGeoIndexInformationOptions : The GetGeoIndexInformation options.
-type GetGeoIndexInformationOptions struct {
-	// Path parameter to specify the database name.
-	Db *string `json:"db" validate:"required,ne="`
-
-	// Path parameter to specify the design document name. The design document name is the design document ID excluding the
-	// `_design/` prefix.
-	Ddoc *string `json:"ddoc" validate:"required,ne="`
-
-	// Path parameter to specify the index name.
-	Index *string `json:"index" validate:"required,ne="`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewGetGeoIndexInformationOptions : Instantiate GetGeoIndexInformationOptions
-func (*CloudantV1) NewGetGeoIndexInformationOptions(db string, ddoc string, index string) *GetGeoIndexInformationOptions {
-	return &GetGeoIndexInformationOptions{
-		Db: core.StringPtr(db),
-		Ddoc: core.StringPtr(ddoc),
-		Index: core.StringPtr(index),
-	}
-}
-
-// SetDb : Allow user to set Db
-func (_options *GetGeoIndexInformationOptions) SetDb(db string) *GetGeoIndexInformationOptions {
-	_options.Db = core.StringPtr(db)
-	return _options
-}
-
-// SetDdoc : Allow user to set Ddoc
-func (_options *GetGeoIndexInformationOptions) SetDdoc(ddoc string) *GetGeoIndexInformationOptions {
-	_options.Ddoc = core.StringPtr(ddoc)
-	return _options
-}
-
-// SetIndex : Allow user to set Index
-func (_options *GetGeoIndexInformationOptions) SetIndex(index string) *GetGeoIndexInformationOptions {
-	_options.Index = core.StringPtr(index)
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *GetGeoIndexInformationOptions) SetHeaders(param map[string]string) *GetGeoIndexInformationOptions {
-	options.Headers = param
-	return options
-}
-
-// GetGeoOptions : The GetGeo options.
-type GetGeoOptions struct {
-	// Path parameter to specify the database name.
-	Db *string `json:"db" validate:"required,ne="`
-
-	// Path parameter to specify the design document name. The design document name is the design document ID excluding the
-	// `_design/` prefix.
-	Ddoc *string `json:"ddoc" validate:"required,ne="`
-
-	// Path parameter to specify the index name.
-	Index *string `json:"index" validate:"required,ne="`
-
-	// Query parameter to specify a geospatial query bounding box with two latitude,longitude coordinates for the
-	// lower-left and upper-right corners. An example is `-11.05987446,12.28339928,-101.05987446,62.28339928`.
-	Bbox *string `json:"bbox,omitempty"`
-
-	// Query parameter to specify a bookmark that was received from a previous request. This parameter enables paging
-	// through the results. If there are no more results after the bookmark, you get a response containing no further
-	// results and the same bookmark, confirming the end of the result list.
-	Bookmark *string `json:"bookmark,omitempty"`
-
-	// Query parameter that causes the geospatial query output to be returned in the specified format.
-	Format *string `json:"format,omitempty"`
-
-	// Query parameter to specify a Well Known Text (WKT) representation of a geospatial query geometry. The valid values
-	// for the WKT parameter include `Point`, `LineString`, `Polygon`, `MultiPoint`, `MultiLineString`, `MultiPolygon`, and
-	// `GeometryCollection`.
-	G *string `json:"g,omitempty"`
-
-	// Query parameter to specify whether to include the full content of the documents in the response.
-	IncludeDocs *bool `json:"include_docs,omitempty"`
-
-	// Query parameter to specify a latitude coordinate for use with radius or ellipse geospatial queries.
-	Lat *float64 `json:"lat,omitempty"`
-
-	// Query parameter to specify the number of returned documents to limit the result to.
-	Limit *int64 `json:"limit,omitempty"`
-
-	// Query parameter to specify a longitude coordinate for use with radius or ellipse geospatial queries.
-	Lon *float64 `json:"lon,omitempty"`
-
-	// Query parameter to specify whether to perform a nearest neighbour (NN) search. If provided, the `nearest=true`
-	// search returns all results by sorting their distances to the center of the query geometry. NN search can be used
-	// alone or with any of the supported DE-9IM (Dimensionally Extended nine-Intersection Model) specification geometric
-	// relations documented.
-	Nearest *bool `json:"nearest,omitempty"`
-
-	// Query parameter to specify the radius, in meters, to search from a lat,lon coordinate point in a circular geospatial
-	// query.
-	Radius *float64 `json:"radius,omitempty"`
-
-	// Query parameter to specify the first radius, in meters, to search from a lat,lon coordinate point in an ellipse
-	// geospatial query.
-	Rangex *float64 `json:"rangex,omitempty"`
-
-	// Query parameter to specify the second radius, in meters, to search from a lat,lon coordinate point in an ellipse
-	// geospatial query.
-	Rangey *float64 `json:"rangey,omitempty"`
-
-	// Query parameter to specify the DE-9IM (Dimensionally Extended nine-Intersection Model)geospatial relationship
-	// between the query geometry and the result documents.
-	Relation *string `json:"relation,omitempty"`
-
-	// Query parameter to specify the number of records before starting to return the results.
-	Skip *int64 `json:"skip,omitempty"`
-
-	// Query parameter to specify to not wait for the index to finish building before returning results.
-	Stale *string `json:"stale,omitempty"`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// Constants associated with the GetGeoOptions.Format property.
-// Query parameter that causes the geospatial query output to be returned in the specified format.
-const (
-	GetGeoOptionsFormatApplicationVndGeoJSONConst = "application/vnd.geo+json"
-	GetGeoOptionsFormatGeojsonConst = "geojson"
-	GetGeoOptionsFormatLegacyConst = "legacy"
-	GetGeoOptionsFormatViewConst = "view"
-)
-
-// Constants associated with the GetGeoOptions.Relation property.
-// Query parameter to specify the DE-9IM (Dimensionally Extended nine-Intersection Model)geospatial relationship between
-// the query geometry and the result documents.
-const (
-	GetGeoOptionsRelationContainsConst = "contains"
-	GetGeoOptionsRelationContainsProperlyConst = "contains_properly"
-	GetGeoOptionsRelationCoveredByConst = "covered_by"
-	GetGeoOptionsRelationCoversConst = "covers"
-	GetGeoOptionsRelationCrossesConst = "crosses"
-	GetGeoOptionsRelationDisjointConst = "disjoint"
-	GetGeoOptionsRelationIntersectsConst = "intersects"
-	GetGeoOptionsRelationOverlapsConst = "overlaps"
-	GetGeoOptionsRelationTouchesConst = "touches"
-	GetGeoOptionsRelationWithinConst = "within"
-)
-
-// Constants associated with the GetGeoOptions.Stale property.
-// Query parameter to specify to not wait for the index to finish building before returning results.
-const (
-	GetGeoOptionsStaleOkConst = "ok"
-)
-
-// NewGetGeoOptions : Instantiate GetGeoOptions
-func (*CloudantV1) NewGetGeoOptions(db string, ddoc string, index string) *GetGeoOptions {
-	return &GetGeoOptions{
-		Db: core.StringPtr(db),
-		Ddoc: core.StringPtr(ddoc),
-		Index: core.StringPtr(index),
-	}
-}
-
-// SetDb : Allow user to set Db
-func (_options *GetGeoOptions) SetDb(db string) *GetGeoOptions {
-	_options.Db = core.StringPtr(db)
-	return _options
-}
-
-// SetDdoc : Allow user to set Ddoc
-func (_options *GetGeoOptions) SetDdoc(ddoc string) *GetGeoOptions {
-	_options.Ddoc = core.StringPtr(ddoc)
-	return _options
-}
-
-// SetIndex : Allow user to set Index
-func (_options *GetGeoOptions) SetIndex(index string) *GetGeoOptions {
-	_options.Index = core.StringPtr(index)
-	return _options
-}
-
-// SetBbox : Allow user to set Bbox
-func (_options *GetGeoOptions) SetBbox(bbox string) *GetGeoOptions {
-	_options.Bbox = core.StringPtr(bbox)
-	return _options
-}
-
-// SetBookmark : Allow user to set Bookmark
-func (_options *GetGeoOptions) SetBookmark(bookmark string) *GetGeoOptions {
-	_options.Bookmark = core.StringPtr(bookmark)
-	return _options
-}
-
-// SetFormat : Allow user to set Format
-func (_options *GetGeoOptions) SetFormat(format string) *GetGeoOptions {
-	_options.Format = core.StringPtr(format)
-	return _options
-}
-
-// SetG : Allow user to set G
-func (_options *GetGeoOptions) SetG(g string) *GetGeoOptions {
-	_options.G = core.StringPtr(g)
-	return _options
-}
-
-// SetIncludeDocs : Allow user to set IncludeDocs
-func (_options *GetGeoOptions) SetIncludeDocs(includeDocs bool) *GetGeoOptions {
-	_options.IncludeDocs = core.BoolPtr(includeDocs)
-	return _options
-}
-
-// SetLat : Allow user to set Lat
-func (_options *GetGeoOptions) SetLat(lat float64) *GetGeoOptions {
-	_options.Lat = core.Float64Ptr(lat)
-	return _options
-}
-
-// SetLimit : Allow user to set Limit
-func (_options *GetGeoOptions) SetLimit(limit int64) *GetGeoOptions {
-	_options.Limit = core.Int64Ptr(limit)
-	return _options
-}
-
-// SetLon : Allow user to set Lon
-func (_options *GetGeoOptions) SetLon(lon float64) *GetGeoOptions {
-	_options.Lon = core.Float64Ptr(lon)
-	return _options
-}
-
-// SetNearest : Allow user to set Nearest
-func (_options *GetGeoOptions) SetNearest(nearest bool) *GetGeoOptions {
-	_options.Nearest = core.BoolPtr(nearest)
-	return _options
-}
-
-// SetRadius : Allow user to set Radius
-func (_options *GetGeoOptions) SetRadius(radius float64) *GetGeoOptions {
-	_options.Radius = core.Float64Ptr(radius)
-	return _options
-}
-
-// SetRangex : Allow user to set Rangex
-func (_options *GetGeoOptions) SetRangex(rangex float64) *GetGeoOptions {
-	_options.Rangex = core.Float64Ptr(rangex)
-	return _options
-}
-
-// SetRangey : Allow user to set Rangey
-func (_options *GetGeoOptions) SetRangey(rangey float64) *GetGeoOptions {
-	_options.Rangey = core.Float64Ptr(rangey)
-	return _options
-}
-
-// SetRelation : Allow user to set Relation
-func (_options *GetGeoOptions) SetRelation(relation string) *GetGeoOptions {
-	_options.Relation = core.StringPtr(relation)
-	return _options
-}
-
-// SetSkip : Allow user to set Skip
-func (_options *GetGeoOptions) SetSkip(skip int64) *GetGeoOptions {
-	_options.Skip = core.Int64Ptr(skip)
-	return _options
-}
-
-// SetStale : Allow user to set Stale
-func (_options *GetGeoOptions) SetStale(stale string) *GetGeoOptions {
-	_options.Stale = core.StringPtr(stale)
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *GetGeoOptions) SetHeaders(param map[string]string) *GetGeoOptions {
 	options.Headers = param
 	return options
 }
@@ -11730,7 +12621,7 @@ type GetLocalDocumentOptions struct {
 	// The type of the response: application/json, multipart/mixed, multipart/related, or application/octet-stream.
 	Accept *string `json:"Accept,omitempty"`
 
-	// Header parameter to specify a double quoted document revision token for cache control.
+	// Header parameter for a conditional HTTP request not matching an ETag.
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
 
 	// Query parameter to specify whether to include attachments bodies in a response.
@@ -11750,7 +12641,7 @@ type GetLocalDocumentOptions struct {
 // NewGetLocalDocumentOptions : Instantiate GetLocalDocumentOptions
 func (*CloudantV1) NewGetLocalDocumentOptions(db string, docID string) *GetLocalDocumentOptions {
 	return &GetLocalDocumentOptions{
-		Db: core.StringPtr(db),
+		Db:    core.StringPtr(db),
 		DocID: core.StringPtr(docID),
 	}
 }
@@ -11836,7 +12727,7 @@ type GetPartitionInformationOptions struct {
 // NewGetPartitionInformationOptions : Instantiate GetPartitionInformationOptions
 func (*CloudantV1) NewGetPartitionInformationOptions(db string, partitionKey string) *GetPartitionInformationOptions {
 	return &GetPartitionInformationOptions{
-		Db: core.StringPtr(db),
+		Db:           core.StringPtr(db),
 		PartitionKey: core.StringPtr(partitionKey),
 	}
 }
@@ -11864,7 +12755,7 @@ type GetReplicationDocumentOptions struct {
 	// Path parameter to specify the document ID.
 	DocID *string `json:"doc_id" validate:"required,ne="`
 
-	// Header parameter to specify a double quoted document revision token for cache control.
+	// Header parameter for a conditional HTTP request not matching an ETag.
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
 
 	// Query parameter to specify whether to include attachments bodies in a response.
@@ -11874,8 +12765,8 @@ type GetReplicationDocumentOptions struct {
 	// attachment is compressed.
 	AttEncodingInfo *bool `json:"att_encoding_info,omitempty"`
 
-	// Query parameter to specify whether to include a list of conflicted revisions in the `_conflicts` property of the
-	// returned document. Ignored if `include_docs` isn't `true`.
+	// Query parameter to specify whether to include a list of conflicted revisions in each returned document. Active only
+	// when `include_docs` is `true`.
 	Conflicts *bool `json:"conflicts,omitempty"`
 
 	// Query parameter to specify whether to include a list of deleted conflicted revisions in the `_deleted_conflicts`
@@ -12009,13 +12900,13 @@ type GetSchedulerDocsOptions struct {
 // Constants associated with the GetSchedulerDocsOptions.States property.
 // Schema for replication state.
 const (
-	GetSchedulerDocsOptionsStatesCompletedConst = "completed"
-	GetSchedulerDocsOptionsStatesCrashingConst = "crashing"
-	GetSchedulerDocsOptionsStatesErrorConst = "error"
-	GetSchedulerDocsOptionsStatesFailedConst = "failed"
+	GetSchedulerDocsOptionsStatesCompletedConst    = "completed"
+	GetSchedulerDocsOptionsStatesCrashingConst     = "crashing"
+	GetSchedulerDocsOptionsStatesErrorConst        = "error"
+	GetSchedulerDocsOptionsStatesFailedConst       = "failed"
 	GetSchedulerDocsOptionsStatesInitializingConst = "initializing"
-	GetSchedulerDocsOptionsStatesPendingConst = "pending"
-	GetSchedulerDocsOptionsStatesRunningConst = "running"
+	GetSchedulerDocsOptionsStatesPendingConst      = "pending"
+	GetSchedulerDocsOptionsStatesRunningConst      = "running"
 )
 
 // NewGetSchedulerDocsOptions : Instantiate GetSchedulerDocsOptions
@@ -12105,7 +12996,7 @@ func (options *GetSchedulerJobOptions) SetHeaders(param map[string]string) *GetS
 
 // GetSchedulerJobsOptions : The GetSchedulerJobs options.
 type GetSchedulerJobsOptions struct {
-	// Query parameter to specify the number of returned documents to limit the result to.
+	// Query parameter to specify the number of returned jobs to limit the result to.
 	Limit *int64 `json:"limit,omitempty"`
 
 	// Query parameter to specify the number of records before starting to return the results.
@@ -12157,8 +13048,8 @@ type GetSearchInfoOptions struct {
 // NewGetSearchInfoOptions : Instantiate GetSearchInfoOptions
 func (*CloudantV1) NewGetSearchInfoOptions(db string, ddoc string, index string) *GetSearchInfoOptions {
 	return &GetSearchInfoOptions{
-		Db: core.StringPtr(db),
-		Ddoc: core.StringPtr(ddoc),
+		Db:    core.StringPtr(db),
+		Ddoc:  core.StringPtr(ddoc),
 		Index: core.StringPtr(index),
 	}
 }
@@ -12334,10 +13225,10 @@ type HeadAttachmentOptions struct {
 	// Path parameter to specify the attachment name.
 	AttachmentName *string `json:"attachment_name" validate:"required,ne="`
 
-	// Header parameter to specify the document revision. Alternative to rev query parameter.
+	// Header parameter for a conditional HTTP request matching an ETag.
 	IfMatch *string `json:"If-Match,omitempty"`
 
-	// Header parameter to specify a double quoted document revision token for cache control.
+	// Header parameter for a conditional HTTP request not matching an ETag.
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
 
 	// Query parameter to specify a document revision.
@@ -12350,8 +13241,8 @@ type HeadAttachmentOptions struct {
 // NewHeadAttachmentOptions : Instantiate HeadAttachmentOptions
 func (*CloudantV1) NewHeadAttachmentOptions(db string, docID string, attachmentName string) *HeadAttachmentOptions {
 	return &HeadAttachmentOptions{
-		Db: core.StringPtr(db),
-		DocID: core.StringPtr(docID),
+		Db:             core.StringPtr(db),
+		DocID:          core.StringPtr(docID),
 		AttachmentName: core.StringPtr(attachmentName),
 	}
 }
@@ -12435,7 +13326,7 @@ type HeadDesignDocumentOptions struct {
 	// `_design/` prefix.
 	Ddoc *string `json:"ddoc" validate:"required,ne="`
 
-	// Header parameter to specify a double quoted document revision token for cache control.
+	// Header parameter for a conditional HTTP request not matching an ETag.
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -12445,7 +13336,7 @@ type HeadDesignDocumentOptions struct {
 // NewHeadDesignDocumentOptions : Instantiate HeadDesignDocumentOptions
 func (*CloudantV1) NewHeadDesignDocumentOptions(db string, ddoc string) *HeadDesignDocumentOptions {
 	return &HeadDesignDocumentOptions{
-		Db: core.StringPtr(db),
+		Db:   core.StringPtr(db),
 		Ddoc: core.StringPtr(ddoc),
 	}
 }
@@ -12482,7 +13373,7 @@ type HeadDocumentOptions struct {
 	// Path parameter to specify the document ID.
 	DocID *string `json:"doc_id" validate:"required,ne="`
 
-	// Header parameter to specify a double quoted document revision token for cache control.
+	// Header parameter for a conditional HTTP request not matching an ETag.
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
 
 	// Query parameter to specify whether to force retrieving latest leaf revision, no matter what rev was requested.
@@ -12498,7 +13389,7 @@ type HeadDocumentOptions struct {
 // NewHeadDocumentOptions : Instantiate HeadDocumentOptions
 func (*CloudantV1) NewHeadDocumentOptions(db string, docID string) *HeadDocumentOptions {
 	return &HeadDocumentOptions{
-		Db: core.StringPtr(db),
+		Db:    core.StringPtr(db),
 		DocID: core.StringPtr(docID),
 	}
 }
@@ -12547,7 +13438,7 @@ type HeadLocalDocumentOptions struct {
 	// Path parameter to specify the document ID.
 	DocID *string `json:"doc_id" validate:"required,ne="`
 
-	// Header parameter to specify a double quoted document revision token for cache control.
+	// Header parameter for a conditional HTTP request not matching an ETag.
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -12557,7 +13448,7 @@ type HeadLocalDocumentOptions struct {
 // NewHeadLocalDocumentOptions : Instantiate HeadLocalDocumentOptions
 func (*CloudantV1) NewHeadLocalDocumentOptions(db string, docID string) *HeadLocalDocumentOptions {
 	return &HeadLocalDocumentOptions{
-		Db: core.StringPtr(db),
+		Db:    core.StringPtr(db),
 		DocID: core.StringPtr(docID),
 	}
 }
@@ -12591,7 +13482,7 @@ type HeadReplicationDocumentOptions struct {
 	// Path parameter to specify the document ID.
 	DocID *string `json:"doc_id" validate:"required,ne="`
 
-	// Header parameter to specify a double quoted document revision token for cache control.
+	// Header parameter for a conditional HTTP request not matching an ETag.
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -12697,6 +13588,143 @@ func (options *HeadUpInformationOptions) SetHeaders(param map[string]string) *He
 	return options
 }
 
+// IndexAnalysis : Schema for detailed explanation of why the specific index was excluded by the query planner.
+type IndexAnalysis struct {
+	// When `true`, the query is answered using the index only and no documents are fetched.
+	Covering *bool `json:"covering" validate:"required"`
+
+	// A position of the unused index based on its potential relevance to the query.
+	Ranking *int64 `json:"ranking" validate:"required"`
+
+	// A list of reasons explaining why index was not chosen for the query.
+	Reasons []IndexAnalysisExclusionReason `json:"reasons" validate:"required"`
+
+	// Indicates whether an index can still be used for the query.
+	Usable *bool `json:"usable" validate:"required"`
+}
+
+// UnmarshalIndexAnalysis unmarshals an instance of IndexAnalysis from the specified map of raw messages.
+func UnmarshalIndexAnalysis(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IndexAnalysis)
+	err = core.UnmarshalPrimitive(m, "covering", &obj.Covering)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "covering-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ranking", &obj.Ranking)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ranking-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "reasons", &obj.Reasons, UnmarshalIndexAnalysisExclusionReason)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "reasons-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "usable", &obj.Usable)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "usable-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// IndexAnalysisExclusionReason : A reason for index's exclusion.
+type IndexAnalysisExclusionReason struct {
+	// A reason code for index's exclusion.
+	//
+	// The full list of possible reason codes is following:
+	//
+	// * alphabetically_comes_after: json
+	//   There is another suitable index whose name comes before that of this index.
+	// * empty_selector: text
+	// "text" indexes do not support queries with empty selectors.
+	// * excluded_by_user: any use_index was used to manually specify the index.
+	// * field_mismatch: any Fields in "selector" of the query do match with the fields available in the index.
+	// * is_partial: json, text Partial indexes can be selected only manually.
+	// * less_overlap: json There is a better match of fields available within the indexes for the query.
+	// * needs_text_search: json The use of the $text operator requires a "text" index.
+	// * scope_mismatch: json The scope of the query and the index is not the same.
+	// * sort_order_mismatch: json, special Fields in "sort" of the query do not match with the fields available in the
+	// index.
+	// * too_many_fields: json The index has more fields than the chosen one.
+	// * unfavored_type: any The type of the index is not preferred.
+	Name *string `json:"name,omitempty"`
+}
+
+// Constants associated with the IndexAnalysisExclusionReason.Name property.
+// A reason code for index's exclusion.
+//
+// The full list of possible reason codes is following:
+//
+//   - alphabetically_comes_after: json
+//     There is another suitable index whose name comes before that of this index.
+//   - empty_selector: text
+//
+// "text" indexes do not support queries with empty selectors.
+// * excluded_by_user: any use_index was used to manually specify the index.
+// * field_mismatch: any Fields in "selector" of the query do match with the fields available in the index.
+// * is_partial: json, text Partial indexes can be selected only manually.
+// * less_overlap: json There is a better match of fields available within the indexes for the query.
+// * needs_text_search: json The use of the $text operator requires a "text" index.
+// * scope_mismatch: json The scope of the query and the index is not the same.
+// * sort_order_mismatch: json, special Fields in "sort" of the query do not match with the fields available in the
+// index.
+// * too_many_fields: json The index has more fields than the chosen one.
+// * unfavored_type: any The type of the index is not preferred.
+const (
+	IndexAnalysisExclusionReasonNameAlphabeticallyComesAfterConst = "alphabetically_comes_after"
+	IndexAnalysisExclusionReasonNameEmptySelectorConst            = "empty_selector"
+	IndexAnalysisExclusionReasonNameExcludedByUserConst           = "excluded_by_user"
+	IndexAnalysisExclusionReasonNameFieldMismatchConst            = "field_mismatch"
+	IndexAnalysisExclusionReasonNameIsPartialConst                = "is_partial"
+	IndexAnalysisExclusionReasonNameLessOverlapConst              = "less_overlap"
+	IndexAnalysisExclusionReasonNameNeedsTextSearchConst          = "needs_text_search"
+	IndexAnalysisExclusionReasonNameScopeMismatchConst            = "scope_mismatch"
+	IndexAnalysisExclusionReasonNameSortOrderMismatchConst        = "sort_order_mismatch"
+	IndexAnalysisExclusionReasonNameTooManyFieldsConst            = "too_many_fields"
+	IndexAnalysisExclusionReasonNameUnfavoredTypeConst            = "unfavored_type"
+)
+
+// UnmarshalIndexAnalysisExclusionReason unmarshals an instance of IndexAnalysisExclusionReason from the specified map of raw messages.
+func UnmarshalIndexAnalysisExclusionReason(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IndexAnalysisExclusionReason)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// IndexCandidate : Schema for an index that was not chosen for serving the query with the reason for the exclusion.
+type IndexCandidate struct {
+	// Schema for detailed explanation of why the specific index was excluded by the query planner.
+	Analysis *IndexAnalysis `json:"analysis" validate:"required"`
+
+	// Schema for information about an index.
+	Index *IndexInformation `json:"index" validate:"required"`
+}
+
+// UnmarshalIndexCandidate unmarshals an instance of IndexCandidate from the specified map of raw messages.
+func UnmarshalIndexCandidate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IndexCandidate)
+	err = core.UnmarshalModel(m, "analysis", &obj.Analysis, UnmarshalIndexAnalysis)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "analysis-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "index", &obj.Index, UnmarshalIndexInformation)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "index-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // IndexDefinition : Schema for a `json` or `text` query index definition. Indexes of type `text` have additional configuration properties
 // that do not apply to `json` indexes, these are:
 // * `default_analyzer` - the default text analyzer to use * `default_field` - whether to index the text in all document
@@ -12740,13 +13768,17 @@ type IndexDefinition struct {
 	// Operators are identified by the use of a dollar sign `$` prefix in the name field.
 	//
 	// There are two core types of operators in the selector syntax:
-	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. In addition
-	// to the common boolean operators (`$and`, `$or`, `$not`, `$nor`) there are three combination operators: `$all`,
-	// `$elemMatch`, and `$allMatch`. A combination operator takes a single argument. The argument is either another
-	// selector, or an array of selectors.
+	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. A
+	// combination operator takes a single argument. The argument is either another selector, or an array of selectors.
 	// * Condition operators: are specific to a field, and are used to evaluate the value stored in that field. For
 	// instance, the basic `$eq` operator matches when the specified field contains a value that is equal to the supplied
-	// argument.
+	// argument. See [the Cloudant Docs](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-operators) for a list of all
+	// available combination and conditional operators.
+	// * Only equality operators such as `$eq`, `$gt`, `$gte`, `$lt`, and `$lte` (but not `$ne`) can be used as the basis
+	// of a query. You should include at least one of these in a selector.
+	//
+	// For further reference see
+	// [selector syntax](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-selector-syntax).
 	PartialFilterSelector map[string]interface{} `json:"partial_filter_selector,omitempty"`
 }
 
@@ -12755,22 +13787,27 @@ func UnmarshalIndexDefinition(m map[string]json.RawMessage, result interface{}) 
 	obj := new(IndexDefinition)
 	err = core.UnmarshalModel(m, "default_analyzer", &obj.DefaultAnalyzer, UnmarshalAnalyzer)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "default_analyzer-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "default_field", &obj.DefaultField, UnmarshalIndexTextOperatorDefaultField)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "default_field-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "fields", &obj.Fields, UnmarshalIndexField)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "fields-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "index_array_lengths", &obj.IndexArrayLengths)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "index_array_lengths-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "partial_filter_selector", &obj.PartialFilterSelector)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "partial_filter_selector-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12793,8 +13830,8 @@ type IndexField struct {
 // The type of the named field.
 const (
 	IndexFieldTypeBooleanConst = "boolean"
-	IndexFieldTypeNumberConst = "number"
-	IndexFieldTypeStringConst = "string"
+	IndexFieldTypeNumberConst  = "number"
+	IndexFieldTypeStringConst  = "string"
 )
 
 // SetProperty allows the user to set an arbitrary property on an instance of IndexField
@@ -12838,6 +13875,9 @@ func (o *IndexField) MarshalJSON() (buffer []byte, err error) {
 		m["type"] = o.Type
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -12846,11 +13886,13 @@ func UnmarshalIndexField(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(IndexField)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "name")
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "type")
@@ -12858,7 +13900,7 @@ func UnmarshalIndexField(m map[string]json.RawMessage, result interface{}) (err 
 		var v *string
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -12869,7 +13911,7 @@ func UnmarshalIndexField(m map[string]json.RawMessage, result interface{}) (err 
 
 // IndexInformation : Schema for information about an index.
 type IndexInformation struct {
-	// Design document ID.
+	// Design document ID including a `_design/` prefix.
 	Ddoc *string `json:"ddoc" validate:"required"`
 
 	// Schema for a `json` or `text` query index definition. Indexes of type `text` have additional configuration
@@ -12881,6 +13923,9 @@ type IndexInformation struct {
 	// Index name.
 	Name *string `json:"name" validate:"required"`
 
+	// Indicates if index is partitioned.
+	Partitioned *bool `json:"partitioned,omitempty"`
+
 	// Schema for the type of an index.
 	Type *string `json:"type" validate:"required"`
 }
@@ -12888,9 +13933,9 @@ type IndexInformation struct {
 // Constants associated with the IndexInformation.Type property.
 // Schema for the type of an index.
 const (
-	IndexInformationTypeJSONConst = "json"
+	IndexInformationTypeJSONConst    = "json"
 	IndexInformationTypeSpecialConst = "special"
-	IndexInformationTypeTextConst = "text"
+	IndexInformationTypeTextConst    = "text"
 )
 
 // UnmarshalIndexInformation unmarshals an instance of IndexInformation from the specified map of raw messages.
@@ -12898,18 +13943,27 @@ func UnmarshalIndexInformation(m map[string]json.RawMessage, result interface{})
 	obj := new(IndexInformation)
 	err = core.UnmarshalPrimitive(m, "ddoc", &obj.Ddoc)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ddoc-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "def", &obj.Def, UnmarshalIndexDefinition)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "def-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "partitioned", &obj.Partitioned)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "partitioned-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12932,7 +13986,7 @@ type IndexResult struct {
 // Flag to show whether the index was created or one already exists.
 const (
 	IndexResultResultCreatedConst = "created"
-	IndexResultResultExistsConst = "exists"
+	IndexResultResultExistsConst  = "exists"
 )
 
 // UnmarshalIndexResult unmarshals an instance of IndexResult from the specified map of raw messages.
@@ -12940,14 +13994,17 @@ func UnmarshalIndexResult(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(IndexResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "result", &obj.Result)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "result-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12969,10 +14026,12 @@ func UnmarshalIndexTextOperatorDefaultField(m map[string]json.RawMessage, result
 	obj := new(IndexTextOperatorDefaultField)
 	err = core.UnmarshalModel(m, "analyzer", &obj.Analyzer, UnmarshalAnalyzer)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "analyzer-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "enabled-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12993,10 +14052,12 @@ func UnmarshalIndexesInformation(m map[string]json.RawMessage, result interface{
 	obj := new(IndexesInformation)
 	err = core.UnmarshalPrimitive(m, "total_rows", &obj.TotalRows)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_rows-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "indexes", &obj.Indexes, UnmarshalIndexInformation)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "indexes-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13017,10 +14078,12 @@ func UnmarshalMembershipInformation(m map[string]json.RawMessage, result interfa
 	obj := new(MembershipInformation)
 	err = core.UnmarshalPrimitive(m, "all_nodes", &obj.AllNodes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "all_nodes-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cluster_nodes", &obj.ClusterNodes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cluster_nodes-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13038,6 +14101,7 @@ func UnmarshalOk(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(Ok)
 	err = core.UnmarshalPrimitive(m, "ok", &obj.Ok)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ok-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13070,26 +14134,32 @@ func UnmarshalPartitionInformation(m map[string]json.RawMessage, result interfac
 	obj := new(PartitionInformation)
 	err = core.UnmarshalPrimitive(m, "db_name", &obj.DbName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "db_name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "doc_count", &obj.DocCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "doc_del_count", &obj.DocDelCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_del_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "partition", &obj.Partition)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "partition-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "partitioned_indexes", &obj.PartitionedIndexes, UnmarshalPartitionInformationIndexes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "partitioned_indexes-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "sizes", &obj.Sizes, UnmarshalPartitionInformationSizes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "sizes-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13113,14 +14183,17 @@ func UnmarshalPartitionInformationIndexes(m map[string]json.RawMessage, result i
 	obj := new(PartitionInformationIndexes)
 	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "indexes", &obj.Indexes, UnmarshalPartitionInformationIndexesIndexes)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "indexes-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13141,10 +14214,12 @@ func UnmarshalPartitionInformationIndexesIndexes(m map[string]json.RawMessage, r
 	obj := new(PartitionInformationIndexesIndexes)
 	err = core.UnmarshalPrimitive(m, "search", &obj.Search)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "search-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "view", &obj.View)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "view-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13165,10 +14240,72 @@ func UnmarshalPartitionInformationSizes(m map[string]json.RawMessage, result int
 	obj := new(PartitionInformationSizes)
 	err = core.UnmarshalPrimitive(m, "active", &obj.Active)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "active-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "external", &obj.External)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "external-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PartitionedIndexesDetailedInformation : Number of partitioned indexes by type.
+type PartitionedIndexesDetailedInformation struct {
+	// Number of partitioned indexes of search type.
+	Search *int64 `json:"search,omitempty"`
+
+	// Number of partitioned indexes of view type.
+	View *int64 `json:"view,omitempty"`
+}
+
+// UnmarshalPartitionedIndexesDetailedInformation unmarshals an instance of PartitionedIndexesDetailedInformation from the specified map of raw messages.
+func UnmarshalPartitionedIndexesDetailedInformation(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PartitionedIndexesDetailedInformation)
+	err = core.UnmarshalPrimitive(m, "search", &obj.Search)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "search-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "view", &obj.View)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "view-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PartitionedIndexesInformation : Information about database's partitioned indexes.
+type PartitionedIndexesInformation struct {
+	// Total number of partitioned indexes in the database.
+	Count *int64 `json:"count,omitempty"`
+
+	// Number of partitioned indexes by type.
+	Indexes *PartitionedIndexesDetailedInformation `json:"indexes,omitempty"`
+
+	// Maximum allowed number of partitioned indexes in the database.
+	Limit *int64 `json:"limit,omitempty"`
+}
+
+// UnmarshalPartitionedIndexesInformation unmarshals an instance of PartitionedIndexesInformation from the specified map of raw messages.
+func UnmarshalPartitionedIndexesInformation(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PartitionedIndexesInformation)
+	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "indexes", &obj.Indexes, UnmarshalPartitionedIndexesDetailedInformation)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "indexes-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13187,7 +14324,7 @@ type PostActivityTrackerEventsOptions struct {
 
 // Constants associated with the PostActivityTrackerEventsOptions.Types property.
 const (
-	PostActivityTrackerEventsOptionsTypesDataConst = "data"
+	PostActivityTrackerEventsOptionsTypesDataConst       = "data"
 	PostActivityTrackerEventsOptionsTypesManagementConst = "management"
 )
 
@@ -13222,8 +14359,8 @@ type PostAllDocsOptions struct {
 	// Parameter to specify whether to include attachments bodies in a response.
 	Attachments *bool `json:"attachments,omitempty"`
 
-	// Parameter to specify whether to include a list of conflicted revisions in the `_conflicts` property of the returned
-	// document. Ignored if `include_docs` isn't `true`.
+	// Parameter to specify whether to include a list of conflicted revisions in each returned document. Active only when
+	// `include_docs` is `true`.
 	Conflicts *bool `json:"conflicts,omitempty"`
 
 	// Parameter to specify whether to return the documents in descending by key order.
@@ -13246,7 +14383,7 @@ type PostAllDocsOptions struct {
 	UpdateSeq *bool `json:"update_seq,omitempty"`
 
 	// Schema for a document ID.
-	Endkey *string `json:"endkey,omitempty"`
+	EndKey *string `json:"end_key,omitempty"`
 
 	// Schema for a document ID.
 	Key *string `json:"key,omitempty"`
@@ -13255,7 +14392,7 @@ type PostAllDocsOptions struct {
 	Keys []string `json:"keys,omitempty"`
 
 	// Schema for a document ID.
-	Startkey *string `json:"startkey,omitempty"`
+	StartKey *string `json:"start_key,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -13328,9 +14465,9 @@ func (_options *PostAllDocsOptions) SetUpdateSeq(updateSeq bool) *PostAllDocsOpt
 	return _options
 }
 
-// SetEndkey : Allow user to set Endkey
-func (_options *PostAllDocsOptions) SetEndkey(endkey string) *PostAllDocsOptions {
-	_options.Endkey = core.StringPtr(endkey)
+// SetEndKey : Allow user to set EndKey
+func (_options *PostAllDocsOptions) SetEndKey(endKey string) *PostAllDocsOptions {
+	_options.EndKey = core.StringPtr(endKey)
 	return _options
 }
 
@@ -13346,9 +14483,9 @@ func (_options *PostAllDocsOptions) SetKeys(keys []string) *PostAllDocsOptions {
 	return _options
 }
 
-// SetStartkey : Allow user to set Startkey
-func (_options *PostAllDocsOptions) SetStartkey(startkey string) *PostAllDocsOptions {
-	_options.Startkey = core.StringPtr(startkey)
+// SetStartKey : Allow user to set StartKey
+func (_options *PostAllDocsOptions) SetStartKey(startKey string) *PostAllDocsOptions {
+	_options.StartKey = core.StringPtr(startKey)
 	return _options
 }
 
@@ -13374,7 +14511,7 @@ type PostAllDocsQueriesOptions struct {
 // NewPostAllDocsQueriesOptions : Instantiate PostAllDocsQueriesOptions
 func (*CloudantV1) NewPostAllDocsQueriesOptions(db string, queries []AllDocsQuery) *PostAllDocsQueriesOptions {
 	return &PostAllDocsQueriesOptions{
-		Db: core.StringPtr(db),
+		Db:      core.StringPtr(db),
 		Queries: queries,
 	}
 }
@@ -13489,7 +14626,7 @@ type PostBulkGetOptions struct {
 // NewPostBulkGetOptions : Instantiate PostBulkGetOptions
 func (*CloudantV1) NewPostBulkGetOptions(db string, docs []BulkGetQueryDocument) *PostBulkGetOptions {
 	return &PostBulkGetOptions{
-		Db: core.StringPtr(db),
+		Db:   core.StringPtr(db),
 		Docs: docs,
 	}
 }
@@ -13545,7 +14682,7 @@ type PostChangesOptions struct {
 	DocIds []string `json:"doc_ids,omitempty"`
 
 	// JSON array that uses the field syntax. Use this parameter to specify which fields of a document must be returned. If
-	// it is omitted, the entire document is returned.
+	// it is omitted or empty, the entire document is returned.
 	Fields []string `json:"fields,omitempty"`
 
 	// JSON object describing criteria used to select documents. The selector specifies fields in the document, and
@@ -13564,13 +14701,17 @@ type PostChangesOptions struct {
 	// Operators are identified by the use of a dollar sign `$` prefix in the name field.
 	//
 	// There are two core types of operators in the selector syntax:
-	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. In addition
-	// to the common boolean operators (`$and`, `$or`, `$not`, `$nor`) there are three combination operators: `$all`,
-	// `$elemMatch`, and `$allMatch`. A combination operator takes a single argument. The argument is either another
-	// selector, or an array of selectors.
+	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. A
+	// combination operator takes a single argument. The argument is either another selector, or an array of selectors.
 	// * Condition operators: are specific to a field, and are used to evaluate the value stored in that field. For
 	// instance, the basic `$eq` operator matches when the specified field contains a value that is equal to the supplied
-	// argument.
+	// argument. See [the Cloudant Docs](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-operators) for a list of all
+	// available combination and conditional operators.
+	// * Only equality operators such as `$eq`, `$gt`, `$gte`, `$lt`, and `$lte` (but not `$ne`) can be used as the basis
+	// of a query. You should include at least one of these in a selector.
+	//
+	// For further reference see
+	// [selector syntax](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-selector-syntax).
 	Selector map[string]interface{} `json:"selector,omitempty"`
 
 	// Header parameter to specify the ID of the last events received by the server on a previous connection. Overrides
@@ -13584,8 +14725,8 @@ type PostChangesOptions struct {
 	// Query parameter to specify whether to include attachments bodies in a response.
 	Attachments *bool `json:"attachments,omitempty"`
 
-	// Query parameter to specify whether to include a list of conflicted revisions in the `_conflicts` property of the
-	// returned document. Ignored if `include_docs` isn't `true`.
+	// Query parameter to specify whether to include a list of conflicted revisions in each returned document. Active only
+	// when `include_docs` is `true`.
 	Conflicts *bool `json:"conflicts,omitempty"`
 
 	// Query parameter to specify whether to return the documents in descending by key order.
@@ -13594,24 +14735,38 @@ type PostChangesOptions struct {
 	// Query parameter to specify the changes feed type.
 	Feed *string `json:"feed,omitempty"`
 
-	// Query parameter to specify a filter function from a design document that will filter the changes stream emitting
-	// only filtered events. For example: `design_doc/filtername`.
+	// Query parameter to specify a filter to emit only specific events from the changes stream.
 	//
-	// Additionally, some keywords are reserved for built-in filters:
-	//
+	// The built-in filter types are:
 	//   * `_design` - Returns only changes to design documents.
 	//   * `_doc_ids` - Returns changes for documents with an ID matching one specified in
-	//       `doc_ids` request body parameter.
+	//       `doc_ids` request body parameter. (`POST` only)
 	//   * `_selector` - Returns changes for documents that match the `selector`
 	//       request body parameter. The selector syntax is the same as used for
-	//       `_find`.
+	//       `_find`. (`POST` only)
 	//   * `_view` - Returns changes for documents that match an existing map
 	//       function in the view specified by the query parameter `view`.
+	//
+	// Additionally, the value can be the name of a JS filter function from a design document. For example:
+	// `design_doc/filtername`.
+	//
+	// **Note:** For better performance use the built-in `_selector`, `_design` or `_doc_ids` filters rather than JS based
+	// `_view` or design document filters. If you need to pass values to change the filtered content use the `_selector`
+	// filter type.
 	Filter *string `json:"filter,omitempty"`
 
-	// Query parameter to specify the period in milliseconds after which an empty line is sent in the results. Only
-	// applicable for longpoll, continuous, and eventsource feeds. Overrides any timeout to keep the feed alive
-	// indefinitely. May also be `true` to use default value of 60000.
+	// Query parameter to specify the period in milliseconds after which an empty line is sent in the results. Off by
+	// default and only applicable for
+	// `continuous` and `eventsource` feeds. Overrides any timeout to keep the feed alive indefinitely. May also be `true`
+	// to use a value of `60000`.
+	//
+	// **Note:** Delivery of heartbeats cannot be relied on at specific intervals. If your application runs in an
+	// environment where idle network connections may break, `heartbeat` is not suitable as a keepalive mechanism. Instead,
+	// consider one of the following options:
+	//   * Use the `timeout` parameter with a value that is compatible with your network environment.
+	//   * Switch to scheduled usage of one of the non-continuous changes feed types
+	//     (`normal` or `longpoll`).
+	//   * Use TCP keepalive.
 	Heartbeat *int64 `json:"heartbeat,omitempty"`
 
 	// Query parameter to specify whether to include the full content of the documents in the response.
@@ -13652,10 +14807,10 @@ type PostChangesOptions struct {
 // Constants associated with the PostChangesOptions.Feed property.
 // Query parameter to specify the changes feed type.
 const (
-	PostChangesOptionsFeedContinuousConst = "continuous"
+	PostChangesOptionsFeedContinuousConst  = "continuous"
 	PostChangesOptionsFeedEventsourceConst = "eventsource"
-	PostChangesOptionsFeedLongpollConst = "longpoll"
-	PostChangesOptionsFeedNormalConst = "normal"
+	PostChangesOptionsFeedLongpollConst    = "longpoll"
+	PostChangesOptionsFeedNormalConst      = "normal"
 )
 
 // NewPostChangesOptions : Instantiate PostChangesOptions
@@ -13818,9 +14973,6 @@ type PostDesignDocsOptions struct {
 	// Path parameter to specify the database name.
 	Db *string `json:"db" validate:"required,ne="`
 
-	// The type of the response: application/json or application/octet-stream.
-	Accept *string `json:"Accept,omitempty"`
-
 	// Parameter to specify whether to include the encoding information in attachment stubs if the particular attachment is
 	// compressed.
 	AttEncodingInfo *bool `json:"att_encoding_info,omitempty"`
@@ -13828,8 +14980,8 @@ type PostDesignDocsOptions struct {
 	// Parameter to specify whether to include attachments bodies in a response.
 	Attachments *bool `json:"attachments,omitempty"`
 
-	// Parameter to specify whether to include a list of conflicted revisions in the `_conflicts` property of the returned
-	// document. Ignored if `include_docs` isn't `true`.
+	// Parameter to specify whether to include a list of conflicted revisions in each returned document. Active only when
+	// `include_docs` is `true`.
 	Conflicts *bool `json:"conflicts,omitempty"`
 
 	// Parameter to specify whether to return the documents in descending by key order.
@@ -13852,7 +15004,7 @@ type PostDesignDocsOptions struct {
 	UpdateSeq *bool `json:"update_seq,omitempty"`
 
 	// Schema for a document ID.
-	Endkey *string `json:"endkey,omitempty"`
+	EndKey *string `json:"end_key,omitempty"`
 
 	// Schema for a document ID.
 	Key *string `json:"key,omitempty"`
@@ -13861,7 +15013,7 @@ type PostDesignDocsOptions struct {
 	Keys []string `json:"keys,omitempty"`
 
 	// Schema for a document ID.
-	Startkey *string `json:"startkey,omitempty"`
+	StartKey *string `json:"start_key,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -13877,12 +15029,6 @@ func (*CloudantV1) NewPostDesignDocsOptions(db string) *PostDesignDocsOptions {
 // SetDb : Allow user to set Db
 func (_options *PostDesignDocsOptions) SetDb(db string) *PostDesignDocsOptions {
 	_options.Db = core.StringPtr(db)
-	return _options
-}
-
-// SetAccept : Allow user to set Accept
-func (_options *PostDesignDocsOptions) SetAccept(accept string) *PostDesignDocsOptions {
-	_options.Accept = core.StringPtr(accept)
 	return _options
 }
 
@@ -13940,9 +15086,9 @@ func (_options *PostDesignDocsOptions) SetUpdateSeq(updateSeq bool) *PostDesignD
 	return _options
 }
 
-// SetEndkey : Allow user to set Endkey
-func (_options *PostDesignDocsOptions) SetEndkey(endkey string) *PostDesignDocsOptions {
-	_options.Endkey = core.StringPtr(endkey)
+// SetEndKey : Allow user to set EndKey
+func (_options *PostDesignDocsOptions) SetEndKey(endKey string) *PostDesignDocsOptions {
+	_options.EndKey = core.StringPtr(endKey)
 	return _options
 }
 
@@ -13958,9 +15104,9 @@ func (_options *PostDesignDocsOptions) SetKeys(keys []string) *PostDesignDocsOpt
 	return _options
 }
 
-// SetStartkey : Allow user to set Startkey
-func (_options *PostDesignDocsOptions) SetStartkey(startkey string) *PostDesignDocsOptions {
-	_options.Startkey = core.StringPtr(startkey)
+// SetStartKey : Allow user to set StartKey
+func (_options *PostDesignDocsOptions) SetStartKey(startKey string) *PostDesignDocsOptions {
+	_options.StartKey = core.StringPtr(startKey)
 	return _options
 }
 
@@ -13989,7 +15135,7 @@ type PostDesignDocsQueriesOptions struct {
 // NewPostDesignDocsQueriesOptions : Instantiate PostDesignDocsQueriesOptions
 func (*CloudantV1) NewPostDesignDocsQueriesOptions(db string, queries []AllDocsQuery) *PostDesignDocsQueriesOptions {
 	return &PostDesignDocsQueriesOptions{
-		Db: core.StringPtr(db),
+		Db:      core.StringPtr(db),
 		Queries: queries,
 	}
 }
@@ -14111,13 +15257,17 @@ type PostExplainOptions struct {
 	// Operators are identified by the use of a dollar sign `$` prefix in the name field.
 	//
 	// There are two core types of operators in the selector syntax:
-	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. In addition
-	// to the common boolean operators (`$and`, `$or`, `$not`, `$nor`) there are three combination operators: `$all`,
-	// `$elemMatch`, and `$allMatch`. A combination operator takes a single argument. The argument is either another
-	// selector, or an array of selectors.
+	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. A
+	// combination operator takes a single argument. The argument is either another selector, or an array of selectors.
 	// * Condition operators: are specific to a field, and are used to evaluate the value stored in that field. For
 	// instance, the basic `$eq` operator matches when the specified field contains a value that is equal to the supplied
-	// argument.
+	// argument. See [the Cloudant Docs](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-operators) for a list of all
+	// available combination and conditional operators.
+	// * Only equality operators such as `$eq`, `$gt`, `$gte`, `$lt`, and `$lte` (but not `$ne`) can be used as the basis
+	// of a query. You should include at least one of these in a selector.
+	//
+	// For further reference see
+	// [selector syntax](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-selector-syntax).
 	Selector map[string]interface{} `json:"selector" validate:"required"`
 
 	// Opaque bookmark token used when paginating results.
@@ -14132,7 +15282,7 @@ type PostExplainOptions struct {
 	ExecutionStats *bool `json:"execution_stats,omitempty"`
 
 	// JSON array that uses the field syntax. Use this parameter to specify which fields of a document must be returned. If
-	// it is omitted, the entire document is returned.
+	// it is omitted or empty, the entire document is returned.
 	Fields []string `json:"fields,omitempty"`
 
 	// Maximum number of results returned. The `type: text` indexes are limited to 200 results when queried.
@@ -14147,7 +15297,9 @@ type PostExplainOptions struct {
 	//
 	// For example in JSON: `[{"fieldName1": "desc"}, {"fieldName2.subFieldName1": "desc"}]`
 	//
-	// When sorting with multiple fields they must use the same sort direction, either all ascending or all descending.
+	// When sorting with multiple fields, ensure that there is an index already defined with all the sort fields in the
+	// same order and each object in the sort array has a single key or at least one of the sort fields is included in the
+	// selector. All sorting fields must use the same sort direction, either all ascending or all descending.
 	Sort []map[string]string `json:"sort,omitempty"`
 
 	// Whether or not the view results should be returned from a "stable" set of shards.
@@ -14156,8 +15308,12 @@ type PostExplainOptions struct {
 	// Whether to update the index prior to returning the result.
 	Update *string `json:"update,omitempty"`
 
-	// Use this option to identify a specific index for query to run against, rather than by using the IBM Cloudant Query
-	// algorithm to find the best index.
+	// Use this option to identify a specific index to answer the query, rather than letting the IBM Cloudant query planner
+	// choose an index. Specified as a two element array of design document id followed by index name, for example
+	// `["my_design_doc", "my_index"]`.
+	//
+	// It’s recommended to specify indexes explicitly in your queries to prevent existing queries being affected by new
+	// indexes that might get added later.
 	UseIndex []string `json:"use_index,omitempty"`
 
 	// The read quorum that is needed for the result. The value defaults to 1, in which case the document that was found in
@@ -14173,7 +15329,7 @@ type PostExplainOptions struct {
 // Constants associated with the PostExplainOptions.Sort property.
 // Schema for a mapping of field name to sort direction.
 const (
-	PostExplainOptionsSortAscConst = "asc"
+	PostExplainOptionsSortAscConst  = "asc"
 	PostExplainOptionsSortDescConst = "desc"
 )
 
@@ -14181,14 +15337,14 @@ const (
 // Whether to update the index prior to returning the result.
 const (
 	PostExplainOptionsUpdateFalseConst = "false"
-	PostExplainOptionsUpdateLazyConst = "lazy"
-	PostExplainOptionsUpdateTrueConst = "true"
+	PostExplainOptionsUpdateLazyConst  = "lazy"
+	PostExplainOptionsUpdateTrueConst  = "true"
 )
 
 // NewPostExplainOptions : Instantiate PostExplainOptions
 func (*CloudantV1) NewPostExplainOptions(db string, selector map[string]interface{}) *PostExplainOptions {
 	return &PostExplainOptions{
-		Db: core.StringPtr(db),
+		Db:       core.StringPtr(db),
 		Selector: selector,
 	}
 }
@@ -14298,13 +15454,17 @@ type PostFindOptions struct {
 	// Operators are identified by the use of a dollar sign `$` prefix in the name field.
 	//
 	// There are two core types of operators in the selector syntax:
-	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. In addition
-	// to the common boolean operators (`$and`, `$or`, `$not`, `$nor`) there are three combination operators: `$all`,
-	// `$elemMatch`, and `$allMatch`. A combination operator takes a single argument. The argument is either another
-	// selector, or an array of selectors.
+	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. A
+	// combination operator takes a single argument. The argument is either another selector, or an array of selectors.
 	// * Condition operators: are specific to a field, and are used to evaluate the value stored in that field. For
 	// instance, the basic `$eq` operator matches when the specified field contains a value that is equal to the supplied
-	// argument.
+	// argument. See [the Cloudant Docs](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-operators) for a list of all
+	// available combination and conditional operators.
+	// * Only equality operators such as `$eq`, `$gt`, `$gte`, `$lt`, and `$lte` (but not `$ne`) can be used as the basis
+	// of a query. You should include at least one of these in a selector.
+	//
+	// For further reference see
+	// [selector syntax](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-selector-syntax).
 	Selector map[string]interface{} `json:"selector" validate:"required"`
 
 	// Opaque bookmark token used when paginating results.
@@ -14319,7 +15479,7 @@ type PostFindOptions struct {
 	ExecutionStats *bool `json:"execution_stats,omitempty"`
 
 	// JSON array that uses the field syntax. Use this parameter to specify which fields of a document must be returned. If
-	// it is omitted, the entire document is returned.
+	// it is omitted or empty, the entire document is returned.
 	Fields []string `json:"fields,omitempty"`
 
 	// Maximum number of results returned. The `type: text` indexes are limited to 200 results when queried.
@@ -14334,7 +15494,9 @@ type PostFindOptions struct {
 	//
 	// For example in JSON: `[{"fieldName1": "desc"}, {"fieldName2.subFieldName1": "desc"}]`
 	//
-	// When sorting with multiple fields they must use the same sort direction, either all ascending or all descending.
+	// When sorting with multiple fields, ensure that there is an index already defined with all the sort fields in the
+	// same order and each object in the sort array has a single key or at least one of the sort fields is included in the
+	// selector. All sorting fields must use the same sort direction, either all ascending or all descending.
 	Sort []map[string]string `json:"sort,omitempty"`
 
 	// Whether or not the view results should be returned from a "stable" set of shards.
@@ -14343,8 +15505,12 @@ type PostFindOptions struct {
 	// Whether to update the index prior to returning the result.
 	Update *string `json:"update,omitempty"`
 
-	// Use this option to identify a specific index for query to run against, rather than by using the IBM Cloudant Query
-	// algorithm to find the best index.
+	// Use this option to identify a specific index to answer the query, rather than letting the IBM Cloudant query planner
+	// choose an index. Specified as a two element array of design document id followed by index name, for example
+	// `["my_design_doc", "my_index"]`.
+	//
+	// It’s recommended to specify indexes explicitly in your queries to prevent existing queries being affected by new
+	// indexes that might get added later.
 	UseIndex []string `json:"use_index,omitempty"`
 
 	// The read quorum that is needed for the result. The value defaults to 1, in which case the document that was found in
@@ -14360,7 +15526,7 @@ type PostFindOptions struct {
 // Constants associated with the PostFindOptions.Sort property.
 // Schema for a mapping of field name to sort direction.
 const (
-	PostFindOptionsSortAscConst = "asc"
+	PostFindOptionsSortAscConst  = "asc"
 	PostFindOptionsSortDescConst = "desc"
 )
 
@@ -14368,14 +15534,14 @@ const (
 // Whether to update the index prior to returning the result.
 const (
 	PostFindOptionsUpdateFalseConst = "false"
-	PostFindOptionsUpdateLazyConst = "lazy"
-	PostFindOptionsUpdateTrueConst = "true"
+	PostFindOptionsUpdateLazyConst  = "lazy"
+	PostFindOptionsUpdateTrueConst  = "true"
 )
 
 // NewPostFindOptions : Instantiate PostFindOptions
 func (*CloudantV1) NewPostFindOptions(db string, selector map[string]interface{}) *PostFindOptions {
 	return &PostFindOptions{
-		Db: core.StringPtr(db),
+		Db:       core.StringPtr(db),
 		Selector: selector,
 	}
 }
@@ -14464,34 +15630,6 @@ func (options *PostFindOptions) SetHeaders(param map[string]string) *PostFindOpt
 	return options
 }
 
-// PostGeoCleanupOptions : The PostGeoCleanup options.
-type PostGeoCleanupOptions struct {
-	// Path parameter to specify the database name.
-	Db *string `json:"db" validate:"required,ne="`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewPostGeoCleanupOptions : Instantiate PostGeoCleanupOptions
-func (*CloudantV1) NewPostGeoCleanupOptions(db string) *PostGeoCleanupOptions {
-	return &PostGeoCleanupOptions{
-		Db: core.StringPtr(db),
-	}
-}
-
-// SetDb : Allow user to set Db
-func (_options *PostGeoCleanupOptions) SetDb(db string) *PostGeoCleanupOptions {
-	_options.Db = core.StringPtr(db)
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *PostGeoCleanupOptions) SetHeaders(param map[string]string) *PostGeoCleanupOptions {
-	options.Headers = param
-	return options
-}
-
 // PostIndexOptions : The PostIndex options.
 type PostIndexOptions struct {
 	// Path parameter to specify the database name.
@@ -14503,14 +15641,9 @@ type PostIndexOptions struct {
 	// document fields and what analyzer to use for that purpose.
 	Index *IndexDefinition `json:"index" validate:"required"`
 
-	// Name of the design document in which the index will be created.
+	// Specifies the design document name in which the index will be created. The design document name is the design
+	// document ID excluding the `_design/` prefix.
 	Ddoc *string `json:"ddoc,omitempty"`
-
-	// Schema for a `json` or `text` query index definition. Indexes of type `text` have additional configuration
-	// properties that do not apply to `json` indexes, these are:
-	// * `default_analyzer` - the default text analyzer to use * `default_field` - whether to index the text in all
-	// document fields and what analyzer to use for that purpose.
-	Def *IndexDefinition `json:"def,omitempty"`
 
 	// name.
 	Name *string `json:"name,omitempty"`
@@ -14529,15 +15662,15 @@ type PostIndexOptions struct {
 // Constants associated with the PostIndexOptions.Type property.
 // Schema for the type of an index.
 const (
-	PostIndexOptionsTypeJSONConst = "json"
+	PostIndexOptionsTypeJSONConst    = "json"
 	PostIndexOptionsTypeSpecialConst = "special"
-	PostIndexOptionsTypeTextConst = "text"
+	PostIndexOptionsTypeTextConst    = "text"
 )
 
 // NewPostIndexOptions : Instantiate PostIndexOptions
 func (*CloudantV1) NewPostIndexOptions(db string, index *IndexDefinition) *PostIndexOptions {
 	return &PostIndexOptions{
-		Db: core.StringPtr(db),
+		Db:    core.StringPtr(db),
 		Index: index,
 	}
 }
@@ -14557,12 +15690,6 @@ func (_options *PostIndexOptions) SetIndex(index *IndexDefinition) *PostIndexOpt
 // SetDdoc : Allow user to set Ddoc
 func (_options *PostIndexOptions) SetDdoc(ddoc string) *PostIndexOptions {
 	_options.Ddoc = core.StringPtr(ddoc)
-	return _options
-}
-
-// SetDef : Allow user to set Def
-func (_options *PostIndexOptions) SetDef(def *IndexDefinition) *PostIndexOptions {
-	_options.Def = def
 	return _options
 }
 
@@ -14605,8 +15732,8 @@ type PostPartitionAllDocsOptions struct {
 	// Parameter to specify whether to include attachments bodies in a response.
 	Attachments *bool `json:"attachments,omitempty"`
 
-	// Parameter to specify whether to include a list of conflicted revisions in the `_conflicts` property of the returned
-	// document. Ignored if `include_docs` isn't `true`.
+	// Parameter to specify whether to include a list of conflicted revisions in each returned document. Active only when
+	// `include_docs` is `true`.
 	Conflicts *bool `json:"conflicts,omitempty"`
 
 	// Parameter to specify whether to return the documents in descending by key order.
@@ -14629,7 +15756,7 @@ type PostPartitionAllDocsOptions struct {
 	UpdateSeq *bool `json:"update_seq,omitempty"`
 
 	// Schema for a document ID.
-	Endkey *string `json:"endkey,omitempty"`
+	EndKey *string `json:"end_key,omitempty"`
 
 	// Schema for a document ID.
 	Key *string `json:"key,omitempty"`
@@ -14638,7 +15765,7 @@ type PostPartitionAllDocsOptions struct {
 	Keys []string `json:"keys,omitempty"`
 
 	// Schema for a document ID.
-	Startkey *string `json:"startkey,omitempty"`
+	StartKey *string `json:"start_key,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -14647,7 +15774,7 @@ type PostPartitionAllDocsOptions struct {
 // NewPostPartitionAllDocsOptions : Instantiate PostPartitionAllDocsOptions
 func (*CloudantV1) NewPostPartitionAllDocsOptions(db string, partitionKey string) *PostPartitionAllDocsOptions {
 	return &PostPartitionAllDocsOptions{
-		Db: core.StringPtr(db),
+		Db:           core.StringPtr(db),
 		PartitionKey: core.StringPtr(partitionKey),
 	}
 }
@@ -14718,9 +15845,9 @@ func (_options *PostPartitionAllDocsOptions) SetUpdateSeq(updateSeq bool) *PostP
 	return _options
 }
 
-// SetEndkey : Allow user to set Endkey
-func (_options *PostPartitionAllDocsOptions) SetEndkey(endkey string) *PostPartitionAllDocsOptions {
-	_options.Endkey = core.StringPtr(endkey)
+// SetEndKey : Allow user to set EndKey
+func (_options *PostPartitionAllDocsOptions) SetEndKey(endKey string) *PostPartitionAllDocsOptions {
+	_options.EndKey = core.StringPtr(endKey)
 	return _options
 }
 
@@ -14736,14 +15863,209 @@ func (_options *PostPartitionAllDocsOptions) SetKeys(keys []string) *PostPartiti
 	return _options
 }
 
-// SetStartkey : Allow user to set Startkey
-func (_options *PostPartitionAllDocsOptions) SetStartkey(startkey string) *PostPartitionAllDocsOptions {
-	_options.Startkey = core.StringPtr(startkey)
+// SetStartKey : Allow user to set StartKey
+func (_options *PostPartitionAllDocsOptions) SetStartKey(startKey string) *PostPartitionAllDocsOptions {
+	_options.StartKey = core.StringPtr(startKey)
 	return _options
 }
 
 // SetHeaders : Allow user to set Headers
 func (options *PostPartitionAllDocsOptions) SetHeaders(param map[string]string) *PostPartitionAllDocsOptions {
+	options.Headers = param
+	return options
+}
+
+// PostPartitionExplainOptions : The PostPartitionExplain options.
+type PostPartitionExplainOptions struct {
+	// Path parameter to specify the database name.
+	Db *string `json:"db" validate:"required,ne="`
+
+	// Path parameter to specify the database partition key.
+	PartitionKey *string `json:"partition_key" validate:"required,ne="`
+
+	// JSON object describing criteria used to select documents. The selector specifies fields in the document, and
+	// provides an expression to evaluate with the field content or other data.
+	//
+	// The selector object must:
+	//   * Be structured as valid JSON.
+	//   * Contain a valid query expression.
+	//
+	// Using a selector is significantly more efficient than using a JavaScript filter function, and is the recommended
+	// option if filtering on document attributes only.
+	//
+	// Elementary selector syntax requires you to specify one or more fields, and the corresponding values required for
+	// those fields. You can create more complex selector expressions by combining operators.
+	//
+	// Operators are identified by the use of a dollar sign `$` prefix in the name field.
+	//
+	// There are two core types of operators in the selector syntax:
+	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. A
+	// combination operator takes a single argument. The argument is either another selector, or an array of selectors.
+	// * Condition operators: are specific to a field, and are used to evaluate the value stored in that field. For
+	// instance, the basic `$eq` operator matches when the specified field contains a value that is equal to the supplied
+	// argument. See [the Cloudant Docs](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-operators) for a list of all
+	// available combination and conditional operators.
+	// * Only equality operators such as `$eq`, `$gt`, `$gte`, `$lt`, and `$lte` (but not `$ne`) can be used as the basis
+	// of a query. You should include at least one of these in a selector.
+	//
+	// For further reference see
+	// [selector syntax](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-selector-syntax).
+	Selector map[string]interface{} `json:"selector" validate:"required"`
+
+	// Opaque bookmark token used when paginating results.
+	Bookmark *string `json:"bookmark,omitempty"`
+
+	// A boolean value that indicates whether or not to include information about existing conflicts in the document.
+	Conflicts *bool `json:"conflicts,omitempty"`
+
+	// Use this option to find information about the query that was run. This information includes total key lookups, total
+	// document lookups (when `include_docs=true` is used), and total quorum document lookups (when each document replica
+	// is fetched).
+	ExecutionStats *bool `json:"execution_stats,omitempty"`
+
+	// JSON array that uses the field syntax. Use this parameter to specify which fields of a document must be returned. If
+	// it is omitted or empty, the entire document is returned.
+	Fields []string `json:"fields,omitempty"`
+
+	// Maximum number of results returned. The `type: text` indexes are limited to 200 results when queried.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Skip the first 'n' results, where 'n' is the value that is specified.
+	Skip *int64 `json:"skip,omitempty"`
+
+	// The sort field contains a list of pairs, each mapping a field name to a sort direction (asc or desc). The first
+	// field name and direction pair is the topmost level of sort. The second pair, if provided, is the next level of sort.
+	// The field can be any field, using dotted notation if desired for sub-document fields.
+	//
+	// For example in JSON: `[{"fieldName1": "desc"}, {"fieldName2.subFieldName1": "desc"}]`
+	//
+	// When sorting with multiple fields, ensure that there is an index already defined with all the sort fields in the
+	// same order and each object in the sort array has a single key or at least one of the sort fields is included in the
+	// selector. All sorting fields must use the same sort direction, either all ascending or all descending.
+	Sort []map[string]string `json:"sort,omitempty"`
+
+	// Whether or not the view results should be returned from a "stable" set of shards.
+	Stable *bool `json:"stable,omitempty"`
+
+	// Whether to update the index prior to returning the result.
+	Update *string `json:"update,omitempty"`
+
+	// Use this option to identify a specific index to answer the query, rather than letting the IBM Cloudant query planner
+	// choose an index. Specified as a two element array of design document id followed by index name, for example
+	// `["my_design_doc", "my_index"]`.
+	//
+	// It’s recommended to specify indexes explicitly in your queries to prevent existing queries being affected by new
+	// indexes that might get added later.
+	UseIndex []string `json:"use_index,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the PostPartitionExplainOptions.Sort property.
+// Schema for a mapping of field name to sort direction.
+const (
+	PostPartitionExplainOptionsSortAscConst  = "asc"
+	PostPartitionExplainOptionsSortDescConst = "desc"
+)
+
+// Constants associated with the PostPartitionExplainOptions.Update property.
+// Whether to update the index prior to returning the result.
+const (
+	PostPartitionExplainOptionsUpdateFalseConst = "false"
+	PostPartitionExplainOptionsUpdateLazyConst  = "lazy"
+	PostPartitionExplainOptionsUpdateTrueConst  = "true"
+)
+
+// NewPostPartitionExplainOptions : Instantiate PostPartitionExplainOptions
+func (*CloudantV1) NewPostPartitionExplainOptions(db string, partitionKey string, selector map[string]interface{}) *PostPartitionExplainOptions {
+	return &PostPartitionExplainOptions{
+		Db:           core.StringPtr(db),
+		PartitionKey: core.StringPtr(partitionKey),
+		Selector:     selector,
+	}
+}
+
+// SetDb : Allow user to set Db
+func (_options *PostPartitionExplainOptions) SetDb(db string) *PostPartitionExplainOptions {
+	_options.Db = core.StringPtr(db)
+	return _options
+}
+
+// SetPartitionKey : Allow user to set PartitionKey
+func (_options *PostPartitionExplainOptions) SetPartitionKey(partitionKey string) *PostPartitionExplainOptions {
+	_options.PartitionKey = core.StringPtr(partitionKey)
+	return _options
+}
+
+// SetSelector : Allow user to set Selector
+func (_options *PostPartitionExplainOptions) SetSelector(selector map[string]interface{}) *PostPartitionExplainOptions {
+	_options.Selector = selector
+	return _options
+}
+
+// SetBookmark : Allow user to set Bookmark
+func (_options *PostPartitionExplainOptions) SetBookmark(bookmark string) *PostPartitionExplainOptions {
+	_options.Bookmark = core.StringPtr(bookmark)
+	return _options
+}
+
+// SetConflicts : Allow user to set Conflicts
+func (_options *PostPartitionExplainOptions) SetConflicts(conflicts bool) *PostPartitionExplainOptions {
+	_options.Conflicts = core.BoolPtr(conflicts)
+	return _options
+}
+
+// SetExecutionStats : Allow user to set ExecutionStats
+func (_options *PostPartitionExplainOptions) SetExecutionStats(executionStats bool) *PostPartitionExplainOptions {
+	_options.ExecutionStats = core.BoolPtr(executionStats)
+	return _options
+}
+
+// SetFields : Allow user to set Fields
+func (_options *PostPartitionExplainOptions) SetFields(fields []string) *PostPartitionExplainOptions {
+	_options.Fields = fields
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *PostPartitionExplainOptions) SetLimit(limit int64) *PostPartitionExplainOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetSkip : Allow user to set Skip
+func (_options *PostPartitionExplainOptions) SetSkip(skip int64) *PostPartitionExplainOptions {
+	_options.Skip = core.Int64Ptr(skip)
+	return _options
+}
+
+// SetSort : Allow user to set Sort
+func (_options *PostPartitionExplainOptions) SetSort(sort []map[string]string) *PostPartitionExplainOptions {
+	_options.Sort = sort
+	return _options
+}
+
+// SetStable : Allow user to set Stable
+func (_options *PostPartitionExplainOptions) SetStable(stable bool) *PostPartitionExplainOptions {
+	_options.Stable = core.BoolPtr(stable)
+	return _options
+}
+
+// SetUpdate : Allow user to set Update
+func (_options *PostPartitionExplainOptions) SetUpdate(update string) *PostPartitionExplainOptions {
+	_options.Update = core.StringPtr(update)
+	return _options
+}
+
+// SetUseIndex : Allow user to set UseIndex
+func (_options *PostPartitionExplainOptions) SetUseIndex(useIndex []string) *PostPartitionExplainOptions {
+	_options.UseIndex = useIndex
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *PostPartitionExplainOptions) SetHeaders(param map[string]string) *PostPartitionExplainOptions {
 	options.Headers = param
 	return options
 }
@@ -14772,13 +16094,17 @@ type PostPartitionFindOptions struct {
 	// Operators are identified by the use of a dollar sign `$` prefix in the name field.
 	//
 	// There are two core types of operators in the selector syntax:
-	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. In addition
-	// to the common boolean operators (`$and`, `$or`, `$not`, `$nor`) there are three combination operators: `$all`,
-	// `$elemMatch`, and `$allMatch`. A combination operator takes a single argument. The argument is either another
-	// selector, or an array of selectors.
+	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. A
+	// combination operator takes a single argument. The argument is either another selector, or an array of selectors.
 	// * Condition operators: are specific to a field, and are used to evaluate the value stored in that field. For
 	// instance, the basic `$eq` operator matches when the specified field contains a value that is equal to the supplied
-	// argument.
+	// argument. See [the Cloudant Docs](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-operators) for a list of all
+	// available combination and conditional operators.
+	// * Only equality operators such as `$eq`, `$gt`, `$gte`, `$lt`, and `$lte` (but not `$ne`) can be used as the basis
+	// of a query. You should include at least one of these in a selector.
+	//
+	// For further reference see
+	// [selector syntax](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-selector-syntax).
 	Selector map[string]interface{} `json:"selector" validate:"required"`
 
 	// Opaque bookmark token used when paginating results.
@@ -14793,7 +16119,7 @@ type PostPartitionFindOptions struct {
 	ExecutionStats *bool `json:"execution_stats,omitempty"`
 
 	// JSON array that uses the field syntax. Use this parameter to specify which fields of a document must be returned. If
-	// it is omitted, the entire document is returned.
+	// it is omitted or empty, the entire document is returned.
 	Fields []string `json:"fields,omitempty"`
 
 	// Maximum number of results returned. The `type: text` indexes are limited to 200 results when queried.
@@ -14808,7 +16134,9 @@ type PostPartitionFindOptions struct {
 	//
 	// For example in JSON: `[{"fieldName1": "desc"}, {"fieldName2.subFieldName1": "desc"}]`
 	//
-	// When sorting with multiple fields they must use the same sort direction, either all ascending or all descending.
+	// When sorting with multiple fields, ensure that there is an index already defined with all the sort fields in the
+	// same order and each object in the sort array has a single key or at least one of the sort fields is included in the
+	// selector. All sorting fields must use the same sort direction, either all ascending or all descending.
 	Sort []map[string]string `json:"sort,omitempty"`
 
 	// Whether or not the view results should be returned from a "stable" set of shards.
@@ -14817,8 +16145,12 @@ type PostPartitionFindOptions struct {
 	// Whether to update the index prior to returning the result.
 	Update *string `json:"update,omitempty"`
 
-	// Use this option to identify a specific index for query to run against, rather than by using the IBM Cloudant Query
-	// algorithm to find the best index.
+	// Use this option to identify a specific index to answer the query, rather than letting the IBM Cloudant query planner
+	// choose an index. Specified as a two element array of design document id followed by index name, for example
+	// `["my_design_doc", "my_index"]`.
+	//
+	// It’s recommended to specify indexes explicitly in your queries to prevent existing queries being affected by new
+	// indexes that might get added later.
 	UseIndex []string `json:"use_index,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -14828,7 +16160,7 @@ type PostPartitionFindOptions struct {
 // Constants associated with the PostPartitionFindOptions.Sort property.
 // Schema for a mapping of field name to sort direction.
 const (
-	PostPartitionFindOptionsSortAscConst = "asc"
+	PostPartitionFindOptionsSortAscConst  = "asc"
 	PostPartitionFindOptionsSortDescConst = "desc"
 )
 
@@ -14836,16 +16168,16 @@ const (
 // Whether to update the index prior to returning the result.
 const (
 	PostPartitionFindOptionsUpdateFalseConst = "false"
-	PostPartitionFindOptionsUpdateLazyConst = "lazy"
-	PostPartitionFindOptionsUpdateTrueConst = "true"
+	PostPartitionFindOptionsUpdateLazyConst  = "lazy"
+	PostPartitionFindOptionsUpdateTrueConst  = "true"
 )
 
 // NewPostPartitionFindOptions : Instantiate PostPartitionFindOptions
 func (*CloudantV1) NewPostPartitionFindOptions(db string, partitionKey string, selector map[string]interface{}) *PostPartitionFindOptions {
 	return &PostPartitionFindOptions{
-		Db: core.StringPtr(db),
+		Db:           core.StringPtr(db),
 		PartitionKey: core.StringPtr(partitionKey),
-		Selector: selector,
+		Selector:     selector,
 	}
 }
 
@@ -15006,11 +16338,11 @@ const (
 // NewPostPartitionSearchOptions : Instantiate PostPartitionSearchOptions
 func (*CloudantV1) NewPostPartitionSearchOptions(db string, partitionKey string, ddoc string, index string, query string) *PostPartitionSearchOptions {
 	return &PostPartitionSearchOptions{
-		Db: core.StringPtr(db),
+		Db:           core.StringPtr(db),
 		PartitionKey: core.StringPtr(partitionKey),
-		Ddoc: core.StringPtr(ddoc),
-		Index: core.StringPtr(index),
-		Query: core.StringPtr(query),
+		Ddoc:         core.StringPtr(ddoc),
+		Index:        core.StringPtr(index),
+		Query:        core.StringPtr(query),
 	}
 }
 
@@ -15138,8 +16470,8 @@ type PostPartitionViewOptions struct {
 	// Parameter to specify whether to include attachments bodies in a response.
 	Attachments *bool `json:"attachments,omitempty"`
 
-	// Parameter to specify whether to include a list of conflicted revisions in the `_conflicts` property of the returned
-	// document. Ignored if `include_docs` isn't `true`.
+	// Parameter to specify whether to include a list of conflicted revisions in each returned document. Active only when
+	// `include_docs` is `true`.
 	Conflicts *bool `json:"conflicts,omitempty"`
 
 	// Parameter to specify whether to return the documents in descending by key order.
@@ -15162,39 +16494,43 @@ type PostPartitionViewOptions struct {
 	UpdateSeq *bool `json:"update_seq,omitempty"`
 
 	// Schema for any JSON type.
-	Endkey interface{} `json:"endkey,omitempty"`
+	EndKey interface{} `json:"end_key,omitempty"`
 
 	// Schema for a document ID.
-	EndkeyDocid *string `json:"endkey_docid,omitempty"`
+	EndKeyDocID *string `json:"end_key_doc_id,omitempty"`
 
-	// Parameter to specify whether to group the results using the reduce function to a group rather than a single row.
-	// Implies reduce is true and the maximum group_level.
+	// Parameter to specify whether to group reduced results by key. Valid only if a reduce function defined in the view.
+	// If the view emits key in JSON array format, then it is possible to reduce groups further based on the number of
+	// array elements with the `group_level` parameter.
 	Group *bool `json:"group,omitempty"`
 
-	// Parameter to specify the group level to be used. Implies group is true.
+	// Parameter to specify a group level to be used. Only applicable if the view uses keys that are JSON arrays. Implies
+	// group is `true`. Group level groups the reduced results by the specified number of array elements. If unset, results
+	// are grouped by the entire array key, returning a reduced value for each complete key.
 	GroupLevel *int64 `json:"group_level,omitempty"`
 
 	// Schema for any JSON type.
 	Key interface{} `json:"key,omitempty"`
 
-	// Parameter to specify to return only documents that match the specified keys. String representation of a JSON array
-	// containing elements that match the key type emitted by the view function.
+	// Parameter to specify returning only documents that match any of the specified keys. A JSON array of keys that match
+	// the key type emitted by the view function.
 	Keys []interface{} `json:"keys,omitempty"`
 
 	// Parameter to specify whether to use the reduce function in a map-reduce view. Default is true when a reduce function
 	// is defined.
 	Reduce *bool `json:"reduce,omitempty"`
 
-	// Parameter to specify whether view results should be returned from a stable set of shards.
-	Stable *bool `json:"stable,omitempty"`
-
 	// Schema for any JSON type.
-	Startkey interface{} `json:"startkey,omitempty"`
+	StartKey interface{} `json:"start_key,omitempty"`
 
 	// Schema for a document ID.
-	StartkeyDocid *string `json:"startkey_docid,omitempty"`
+	StartKeyDocID *string `json:"start_key_doc_id,omitempty"`
 
 	// Parameter to specify whether or not the view in question should be updated prior to responding to the user.
+	//
+	// * `true` - Return results after the view is updated.
+	// * `false` - Return results without updating the view.
+	// * `lazy` - Return the view results without waiting for an update, but update them immediately after the request.
 	Update *string `json:"update,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -15203,19 +16539,23 @@ type PostPartitionViewOptions struct {
 
 // Constants associated with the PostPartitionViewOptions.Update property.
 // Parameter to specify whether or not the view in question should be updated prior to responding to the user.
+//
+// * `true` - Return results after the view is updated.
+// * `false` - Return results without updating the view.
+// * `lazy` - Return the view results without waiting for an update, but update them immediately after the request.
 const (
 	PostPartitionViewOptionsUpdateFalseConst = "false"
-	PostPartitionViewOptionsUpdateLazyConst = "lazy"
-	PostPartitionViewOptionsUpdateTrueConst = "true"
+	PostPartitionViewOptionsUpdateLazyConst  = "lazy"
+	PostPartitionViewOptionsUpdateTrueConst  = "true"
 )
 
 // NewPostPartitionViewOptions : Instantiate PostPartitionViewOptions
 func (*CloudantV1) NewPostPartitionViewOptions(db string, partitionKey string, ddoc string, view string) *PostPartitionViewOptions {
 	return &PostPartitionViewOptions{
-		Db: core.StringPtr(db),
+		Db:           core.StringPtr(db),
 		PartitionKey: core.StringPtr(partitionKey),
-		Ddoc: core.StringPtr(ddoc),
-		View: core.StringPtr(view),
+		Ddoc:         core.StringPtr(ddoc),
+		View:         core.StringPtr(view),
 	}
 }
 
@@ -15297,15 +16637,15 @@ func (_options *PostPartitionViewOptions) SetUpdateSeq(updateSeq bool) *PostPart
 	return _options
 }
 
-// SetEndkey : Allow user to set Endkey
-func (_options *PostPartitionViewOptions) SetEndkey(endkey interface{}) *PostPartitionViewOptions {
-	_options.Endkey = endkey
+// SetEndKey : Allow user to set EndKey
+func (_options *PostPartitionViewOptions) SetEndKey(endKey interface{}) *PostPartitionViewOptions {
+	_options.EndKey = endKey
 	return _options
 }
 
-// SetEndkeyDocid : Allow user to set EndkeyDocid
-func (_options *PostPartitionViewOptions) SetEndkeyDocid(endkeyDocid string) *PostPartitionViewOptions {
-	_options.EndkeyDocid = core.StringPtr(endkeyDocid)
+// SetEndKeyDocID : Allow user to set EndKeyDocID
+func (_options *PostPartitionViewOptions) SetEndKeyDocID(endKeyDocID string) *PostPartitionViewOptions {
+	_options.EndKeyDocID = core.StringPtr(endKeyDocID)
 	return _options
 }
 
@@ -15339,21 +16679,15 @@ func (_options *PostPartitionViewOptions) SetReduce(reduce bool) *PostPartitionV
 	return _options
 }
 
-// SetStable : Allow user to set Stable
-func (_options *PostPartitionViewOptions) SetStable(stable bool) *PostPartitionViewOptions {
-	_options.Stable = core.BoolPtr(stable)
+// SetStartKey : Allow user to set StartKey
+func (_options *PostPartitionViewOptions) SetStartKey(startKey interface{}) *PostPartitionViewOptions {
+	_options.StartKey = startKey
 	return _options
 }
 
-// SetStartkey : Allow user to set Startkey
-func (_options *PostPartitionViewOptions) SetStartkey(startkey interface{}) *PostPartitionViewOptions {
-	_options.Startkey = startkey
-	return _options
-}
-
-// SetStartkeyDocid : Allow user to set StartkeyDocid
-func (_options *PostPartitionViewOptions) SetStartkeyDocid(startkeyDocid string) *PostPartitionViewOptions {
-	_options.StartkeyDocid = core.StringPtr(startkeyDocid)
+// SetStartKeyDocID : Allow user to set StartKeyDocID
+func (_options *PostPartitionViewOptions) SetStartKeyDocID(startKeyDocID string) *PostPartitionViewOptions {
+	_options.StartKeyDocID = core.StringPtr(startKeyDocID)
 	return _options
 }
 
@@ -15384,7 +16718,7 @@ type PostRevsDiffOptions struct {
 // NewPostRevsDiffOptions : Instantiate PostRevsDiffOptions
 func (*CloudantV1) NewPostRevsDiffOptions(db string, documentRevisions map[string][]string) *PostRevsDiffOptions {
 	return &PostRevsDiffOptions{
-		Db: core.StringPtr(db),
+		Db:                core.StringPtr(db),
 		DocumentRevisions: documentRevisions,
 	}
 }
@@ -15422,45 +16756,45 @@ type PostSearchAnalyzeOptions struct {
 // Constants associated with the PostSearchAnalyzeOptions.Analyzer property.
 // The analyzer type that is being used at the tokenization.
 const (
-	PostSearchAnalyzeOptionsAnalyzerArabicConst = "arabic"
-	PostSearchAnalyzeOptionsAnalyzerArmenianConst = "armenian"
-	PostSearchAnalyzeOptionsAnalyzerBasqueConst = "basque"
-	PostSearchAnalyzeOptionsAnalyzerBrazilianConst = "brazilian"
-	PostSearchAnalyzeOptionsAnalyzerBulgarianConst = "bulgarian"
-	PostSearchAnalyzeOptionsAnalyzerCatalanConst = "catalan"
-	PostSearchAnalyzeOptionsAnalyzerChineseConst = "chinese"
-	PostSearchAnalyzeOptionsAnalyzerCjkConst = "cjk"
-	PostSearchAnalyzeOptionsAnalyzerClassicConst = "classic"
-	PostSearchAnalyzeOptionsAnalyzerCzechConst = "czech"
-	PostSearchAnalyzeOptionsAnalyzerDanishConst = "danish"
-	PostSearchAnalyzeOptionsAnalyzerDutchConst = "dutch"
-	PostSearchAnalyzeOptionsAnalyzerEmailConst = "email"
-	PostSearchAnalyzeOptionsAnalyzerEnglishConst = "english"
-	PostSearchAnalyzeOptionsAnalyzerFinnishConst = "finnish"
-	PostSearchAnalyzeOptionsAnalyzerFrenchConst = "french"
-	PostSearchAnalyzeOptionsAnalyzerGalicianConst = "galician"
-	PostSearchAnalyzeOptionsAnalyzerGermanConst = "german"
-	PostSearchAnalyzeOptionsAnalyzerGreekConst = "greek"
-	PostSearchAnalyzeOptionsAnalyzerHindiConst = "hindi"
-	PostSearchAnalyzeOptionsAnalyzerHungarianConst = "hungarian"
+	PostSearchAnalyzeOptionsAnalyzerArabicConst     = "arabic"
+	PostSearchAnalyzeOptionsAnalyzerArmenianConst   = "armenian"
+	PostSearchAnalyzeOptionsAnalyzerBasqueConst     = "basque"
+	PostSearchAnalyzeOptionsAnalyzerBrazilianConst  = "brazilian"
+	PostSearchAnalyzeOptionsAnalyzerBulgarianConst  = "bulgarian"
+	PostSearchAnalyzeOptionsAnalyzerCatalanConst    = "catalan"
+	PostSearchAnalyzeOptionsAnalyzerChineseConst    = "chinese"
+	PostSearchAnalyzeOptionsAnalyzerCjkConst        = "cjk"
+	PostSearchAnalyzeOptionsAnalyzerClassicConst    = "classic"
+	PostSearchAnalyzeOptionsAnalyzerCzechConst      = "czech"
+	PostSearchAnalyzeOptionsAnalyzerDanishConst     = "danish"
+	PostSearchAnalyzeOptionsAnalyzerDutchConst      = "dutch"
+	PostSearchAnalyzeOptionsAnalyzerEmailConst      = "email"
+	PostSearchAnalyzeOptionsAnalyzerEnglishConst    = "english"
+	PostSearchAnalyzeOptionsAnalyzerFinnishConst    = "finnish"
+	PostSearchAnalyzeOptionsAnalyzerFrenchConst     = "french"
+	PostSearchAnalyzeOptionsAnalyzerGalicianConst   = "galician"
+	PostSearchAnalyzeOptionsAnalyzerGermanConst     = "german"
+	PostSearchAnalyzeOptionsAnalyzerGreekConst      = "greek"
+	PostSearchAnalyzeOptionsAnalyzerHindiConst      = "hindi"
+	PostSearchAnalyzeOptionsAnalyzerHungarianConst  = "hungarian"
 	PostSearchAnalyzeOptionsAnalyzerIndonesianConst = "indonesian"
-	PostSearchAnalyzeOptionsAnalyzerIrishConst = "irish"
-	PostSearchAnalyzeOptionsAnalyzerItalianConst = "italian"
-	PostSearchAnalyzeOptionsAnalyzerJapaneseConst = "japanese"
-	PostSearchAnalyzeOptionsAnalyzerKeywordConst = "keyword"
-	PostSearchAnalyzeOptionsAnalyzerLatvianConst = "latvian"
-	PostSearchAnalyzeOptionsAnalyzerNorwegianConst = "norwegian"
-	PostSearchAnalyzeOptionsAnalyzerPersianConst = "persian"
-	PostSearchAnalyzeOptionsAnalyzerPolishConst = "polish"
+	PostSearchAnalyzeOptionsAnalyzerIrishConst      = "irish"
+	PostSearchAnalyzeOptionsAnalyzerItalianConst    = "italian"
+	PostSearchAnalyzeOptionsAnalyzerJapaneseConst   = "japanese"
+	PostSearchAnalyzeOptionsAnalyzerKeywordConst    = "keyword"
+	PostSearchAnalyzeOptionsAnalyzerLatvianConst    = "latvian"
+	PostSearchAnalyzeOptionsAnalyzerNorwegianConst  = "norwegian"
+	PostSearchAnalyzeOptionsAnalyzerPersianConst    = "persian"
+	PostSearchAnalyzeOptionsAnalyzerPolishConst     = "polish"
 	PostSearchAnalyzeOptionsAnalyzerPortugueseConst = "portuguese"
-	PostSearchAnalyzeOptionsAnalyzerRomanianConst = "romanian"
-	PostSearchAnalyzeOptionsAnalyzerRussianConst = "russian"
-	PostSearchAnalyzeOptionsAnalyzerSimpleConst = "simple"
-	PostSearchAnalyzeOptionsAnalyzerSpanishConst = "spanish"
-	PostSearchAnalyzeOptionsAnalyzerStandardConst = "standard"
-	PostSearchAnalyzeOptionsAnalyzerSwedishConst = "swedish"
-	PostSearchAnalyzeOptionsAnalyzerThaiConst = "thai"
-	PostSearchAnalyzeOptionsAnalyzerTurkishConst = "turkish"
+	PostSearchAnalyzeOptionsAnalyzerRomanianConst   = "romanian"
+	PostSearchAnalyzeOptionsAnalyzerRussianConst    = "russian"
+	PostSearchAnalyzeOptionsAnalyzerSimpleConst     = "simple"
+	PostSearchAnalyzeOptionsAnalyzerSpanishConst    = "spanish"
+	PostSearchAnalyzeOptionsAnalyzerStandardConst   = "standard"
+	PostSearchAnalyzeOptionsAnalyzerSwedishConst    = "swedish"
+	PostSearchAnalyzeOptionsAnalyzerThaiConst       = "thai"
+	PostSearchAnalyzeOptionsAnalyzerTurkishConst    = "turkish"
 	PostSearchAnalyzeOptionsAnalyzerWhitespaceConst = "whitespace"
 )
 
@@ -15468,7 +16802,7 @@ const (
 func (*CloudantV1) NewPostSearchAnalyzeOptions(analyzer string, text string) *PostSearchAnalyzeOptions {
 	return &PostSearchAnalyzeOptions{
 		Analyzer: core.StringPtr(analyzer),
-		Text: core.StringPtr(text),
+		Text:     core.StringPtr(text),
 	}
 }
 
@@ -15589,8 +16923,8 @@ const (
 // NewPostSearchOptions : Instantiate PostSearchOptions
 func (*CloudantV1) NewPostSearchOptions(db string, ddoc string, index string, query string) *PostSearchOptions {
 	return &PostSearchOptions{
-		Db: core.StringPtr(db),
-		Ddoc: core.StringPtr(ddoc),
+		Db:    core.StringPtr(db),
+		Ddoc:  core.StringPtr(ddoc),
 		Index: core.StringPtr(index),
 		Query: core.StringPtr(query),
 	}
@@ -15747,8 +17081,8 @@ type PostViewOptions struct {
 	// Parameter to specify whether to include attachments bodies in a response.
 	Attachments *bool `json:"attachments,omitempty"`
 
-	// Parameter to specify whether to include a list of conflicted revisions in the `_conflicts` property of the returned
-	// document. Ignored if `include_docs` isn't `true`.
+	// Parameter to specify whether to include a list of conflicted revisions in each returned document. Active only when
+	// `include_docs` is `true`.
 	Conflicts *bool `json:"conflicts,omitempty"`
 
 	// Parameter to specify whether to return the documents in descending by key order.
@@ -15771,39 +17105,51 @@ type PostViewOptions struct {
 	UpdateSeq *bool `json:"update_seq,omitempty"`
 
 	// Schema for any JSON type.
-	Endkey interface{} `json:"endkey,omitempty"`
+	EndKey interface{} `json:"end_key,omitempty"`
 
 	// Schema for a document ID.
-	EndkeyDocid *string `json:"endkey_docid,omitempty"`
+	EndKeyDocID *string `json:"end_key_doc_id,omitempty"`
 
-	// Parameter to specify whether to group the results using the reduce function to a group rather than a single row.
-	// Implies reduce is true and the maximum group_level.
+	// Parameter to specify whether to group reduced results by key. Valid only if a reduce function defined in the view.
+	// If the view emits key in JSON array format, then it is possible to reduce groups further based on the number of
+	// array elements with the `group_level` parameter.
 	Group *bool `json:"group,omitempty"`
 
-	// Parameter to specify the group level to be used. Implies group is true.
+	// Parameter to specify a group level to be used. Only applicable if the view uses keys that are JSON arrays. Implies
+	// group is `true`. Group level groups the reduced results by the specified number of array elements. If unset, results
+	// are grouped by the entire array key, returning a reduced value for each complete key.
 	GroupLevel *int64 `json:"group_level,omitempty"`
 
 	// Schema for any JSON type.
 	Key interface{} `json:"key,omitempty"`
 
-	// Parameter to specify to return only documents that match the specified keys. String representation of a JSON array
-	// containing elements that match the key type emitted by the view function.
+	// Parameter to specify returning only documents that match any of the specified keys. A JSON array of keys that match
+	// the key type emitted by the view function.
 	Keys []interface{} `json:"keys,omitempty"`
 
 	// Parameter to specify whether to use the reduce function in a map-reduce view. Default is true when a reduce function
 	// is defined.
 	Reduce *bool `json:"reduce,omitempty"`
 
-	// Parameter to specify whether view results should be returned from a stable set of shards.
+	// Query parameter to specify whether use the same replica of  the index on each request. The default value `false`
+	// contacts all  replicas and returns the result from the first, fastest, responder. Setting it to `true` when used in
+	// conjunction with `update=false`  may improve consistency at the expense of increased latency and decreased
+	// throughput if the selected replica is not the fastest of the available  replicas.
+	//
+	// **Note:** In general setting `true` is discouraged and is strictly not recommended when using `update=true`.
 	Stable *bool `json:"stable,omitempty"`
 
 	// Schema for any JSON type.
-	Startkey interface{} `json:"startkey,omitempty"`
+	StartKey interface{} `json:"start_key,omitempty"`
 
 	// Schema for a document ID.
-	StartkeyDocid *string `json:"startkey_docid,omitempty"`
+	StartKeyDocID *string `json:"start_key_doc_id,omitempty"`
 
 	// Parameter to specify whether or not the view in question should be updated prior to responding to the user.
+	//
+	// * `true` - Return results after the view is updated.
+	// * `false` - Return results without updating the view.
+	// * `lazy` - Return the view results without waiting for an update, but update them immediately after the request.
 	Update *string `json:"update,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -15812,16 +17158,20 @@ type PostViewOptions struct {
 
 // Constants associated with the PostViewOptions.Update property.
 // Parameter to specify whether or not the view in question should be updated prior to responding to the user.
+//
+// * `true` - Return results after the view is updated.
+// * `false` - Return results without updating the view.
+// * `lazy` - Return the view results without waiting for an update, but update them immediately after the request.
 const (
 	PostViewOptionsUpdateFalseConst = "false"
-	PostViewOptionsUpdateLazyConst = "lazy"
-	PostViewOptionsUpdateTrueConst = "true"
+	PostViewOptionsUpdateLazyConst  = "lazy"
+	PostViewOptionsUpdateTrueConst  = "true"
 )
 
 // NewPostViewOptions : Instantiate PostViewOptions
 func (*CloudantV1) NewPostViewOptions(db string, ddoc string, view string) *PostViewOptions {
 	return &PostViewOptions{
-		Db: core.StringPtr(db),
+		Db:   core.StringPtr(db),
 		Ddoc: core.StringPtr(ddoc),
 		View: core.StringPtr(view),
 	}
@@ -15899,15 +17249,15 @@ func (_options *PostViewOptions) SetUpdateSeq(updateSeq bool) *PostViewOptions {
 	return _options
 }
 
-// SetEndkey : Allow user to set Endkey
-func (_options *PostViewOptions) SetEndkey(endkey interface{}) *PostViewOptions {
-	_options.Endkey = endkey
+// SetEndKey : Allow user to set EndKey
+func (_options *PostViewOptions) SetEndKey(endKey interface{}) *PostViewOptions {
+	_options.EndKey = endKey
 	return _options
 }
 
-// SetEndkeyDocid : Allow user to set EndkeyDocid
-func (_options *PostViewOptions) SetEndkeyDocid(endkeyDocid string) *PostViewOptions {
-	_options.EndkeyDocid = core.StringPtr(endkeyDocid)
+// SetEndKeyDocID : Allow user to set EndKeyDocID
+func (_options *PostViewOptions) SetEndKeyDocID(endKeyDocID string) *PostViewOptions {
+	_options.EndKeyDocID = core.StringPtr(endKeyDocID)
 	return _options
 }
 
@@ -15947,15 +17297,15 @@ func (_options *PostViewOptions) SetStable(stable bool) *PostViewOptions {
 	return _options
 }
 
-// SetStartkey : Allow user to set Startkey
-func (_options *PostViewOptions) SetStartkey(startkey interface{}) *PostViewOptions {
-	_options.Startkey = startkey
+// SetStartKey : Allow user to set StartKey
+func (_options *PostViewOptions) SetStartKey(startKey interface{}) *PostViewOptions {
+	_options.StartKey = startKey
 	return _options
 }
 
-// SetStartkeyDocid : Allow user to set StartkeyDocid
-func (_options *PostViewOptions) SetStartkeyDocid(startkeyDocid string) *PostViewOptions {
-	_options.StartkeyDocid = core.StringPtr(startkeyDocid)
+// SetStartKeyDocID : Allow user to set StartKeyDocID
+func (_options *PostViewOptions) SetStartKeyDocID(startKeyDocID string) *PostViewOptions {
+	_options.StartKeyDocID = core.StringPtr(startKeyDocID)
 	return _options
 }
 
@@ -15994,9 +17344,9 @@ type PostViewQueriesOptions struct {
 // NewPostViewQueriesOptions : Instantiate PostViewQueriesOptions
 func (*CloudantV1) NewPostViewQueriesOptions(db string, ddoc string, view string, queries []ViewQuery) *PostViewQueriesOptions {
 	return &PostViewQueriesOptions{
-		Db: core.StringPtr(db),
-		Ddoc: core.StringPtr(ddoc),
-		View: core.StringPtr(view),
+		Db:      core.StringPtr(db),
+		Ddoc:    core.StringPtr(ddoc),
+		View:    core.StringPtr(view),
 		Queries: queries,
 	}
 }
@@ -16048,7 +17398,7 @@ type PutAttachmentOptions struct {
 	// Content-Type of the attachment.
 	ContentType *string `json:"Content-Type" validate:"required"`
 
-	// Header parameter to specify the document revision. Alternative to rev query parameter.
+	// Header parameter for a conditional HTTP request matching an ETag.
 	IfMatch *string `json:"If-Match,omitempty"`
 
 	// Query parameter to specify a document revision.
@@ -16061,11 +17411,11 @@ type PutAttachmentOptions struct {
 // NewPutAttachmentOptions : Instantiate PutAttachmentOptions
 func (*CloudantV1) NewPutAttachmentOptions(db string, docID string, attachmentName string, attachment io.ReadCloser, contentType string) *PutAttachmentOptions {
 	return &PutAttachmentOptions{
-		Db: core.StringPtr(db),
-		DocID: core.StringPtr(docID),
+		Db:             core.StringPtr(db),
+		DocID:          core.StringPtr(docID),
 		AttachmentName: core.StringPtr(attachmentName),
-		Attachment: attachment,
-		ContentType: core.StringPtr(contentType),
+		Attachment:     attachment,
+		ContentType:    core.StringPtr(contentType),
 	}
 }
 
@@ -16170,20 +17520,20 @@ type PutCloudantSecurityConfigurationOptions struct {
 // Constants associated with the PutCloudantSecurityConfigurationOptions.Cloudant property.
 // Database permissions for Cloudant users and/or API keys.
 const (
-	PutCloudantSecurityConfigurationOptionsCloudantAdminConst = "_admin"
-	PutCloudantSecurityConfigurationOptionsCloudantDbUpdatesConst = "_db_updates"
-	PutCloudantSecurityConfigurationOptionsCloudantDesignConst = "_design"
-	PutCloudantSecurityConfigurationOptionsCloudantReaderConst = "_reader"
+	PutCloudantSecurityConfigurationOptionsCloudantAdminConst      = "_admin"
+	PutCloudantSecurityConfigurationOptionsCloudantDbUpdatesConst  = "_db_updates"
+	PutCloudantSecurityConfigurationOptionsCloudantDesignConst     = "_design"
+	PutCloudantSecurityConfigurationOptionsCloudantReaderConst     = "_reader"
 	PutCloudantSecurityConfigurationOptionsCloudantReplicatorConst = "_replicator"
-	PutCloudantSecurityConfigurationOptionsCloudantSecurityConst = "_security"
-	PutCloudantSecurityConfigurationOptionsCloudantShardsConst = "_shards"
-	PutCloudantSecurityConfigurationOptionsCloudantWriterConst = "_writer"
+	PutCloudantSecurityConfigurationOptionsCloudantSecurityConst   = "_security"
+	PutCloudantSecurityConfigurationOptionsCloudantShardsConst     = "_shards"
+	PutCloudantSecurityConfigurationOptionsCloudantWriterConst     = "_writer"
 )
 
 // NewPutCloudantSecurityConfigurationOptions : Instantiate PutCloudantSecurityConfigurationOptions
 func (*CloudantV1) NewPutCloudantSecurityConfigurationOptions(db string, cloudant map[string][]string) *PutCloudantSecurityConfigurationOptions {
 	return &PutCloudantSecurityConfigurationOptions{
-		Db: core.StringPtr(db),
+		Db:       core.StringPtr(db),
 		Cloudant: cloudant,
 	}
 }
@@ -16281,8 +17631,10 @@ type PutDatabaseOptions struct {
 	// Query parameter to specify whether to enable database partitions when creating a database.
 	Partitioned *bool `json:"partitioned,omitempty"`
 
-	// The number of shards in the database. Each shard is a partition of the hash value range. Its value is set by the
-	// service. For more information about modifying database configuration, contact IBM Cloudant support.
+	// The number of shards in the database. Each shard is a partition of the hash value range. Cloudant recommends using
+	// the default value for most databases. However, if your database is expected to be larger than 250 GB or have a lot
+	// of indexes, you may need to adjust the settings. In these cases, it's best to reach out to IBM Cloudant customer
+	// support for guidance on how to meet your specific needs and requirements.
 	Q *int64 `json:"q,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -16332,7 +17684,7 @@ type PutDesignDocumentOptions struct {
 	// HTTP request body for DesignDocument operations.
 	DesignDocument *DesignDocument `json:"designDocument" validate:"required"`
 
-	// Header parameter to specify the document revision. Alternative to rev query parameter.
+	// Header parameter for a conditional HTTP request matching an ETag.
 	IfMatch *string `json:"If-Match,omitempty"`
 
 	// Query parameter to specify whether to store in batch mode. The server will respond with a HTTP 202 Accepted response
@@ -16361,8 +17713,8 @@ const (
 // NewPutDesignDocumentOptions : Instantiate PutDesignDocumentOptions
 func (*CloudantV1) NewPutDesignDocumentOptions(db string, ddoc string, designDocument *DesignDocument) *PutDesignDocumentOptions {
 	return &PutDesignDocumentOptions{
-		Db: core.StringPtr(db),
-		Ddoc: core.StringPtr(ddoc),
+		Db:             core.StringPtr(db),
+		Ddoc:           core.StringPtr(ddoc),
 		DesignDocument: designDocument,
 	}
 }
@@ -16432,7 +17784,7 @@ type PutDocumentOptions struct {
 	// The type of the input.
 	ContentType *string `json:"Content-Type,omitempty"`
 
-	// Header parameter to specify the document revision. Alternative to rev query parameter.
+	// Header parameter for a conditional HTTP request matching an ETag.
 	IfMatch *string `json:"If-Match,omitempty"`
 
 	// Query parameter to specify whether to store in batch mode. The server will respond with a HTTP 202 Accepted response
@@ -16461,7 +17813,7 @@ const (
 // NewPutDocumentOptions : Instantiate PutDocumentOptions
 func (*CloudantV1) NewPutDocumentOptions(db string, docID string) *PutDocumentOptions {
 	return &PutDocumentOptions{
-		Db: core.StringPtr(db),
+		Db:    core.StringPtr(db),
 		DocID: core.StringPtr(docID),
 	}
 }
@@ -16561,7 +17913,7 @@ const (
 // NewPutLocalDocumentOptions : Instantiate PutLocalDocumentOptions
 func (*CloudantV1) NewPutLocalDocumentOptions(db string, docID string) *PutLocalDocumentOptions {
 	return &PutLocalDocumentOptions{
-		Db: core.StringPtr(db),
+		Db:    core.StringPtr(db),
 		DocID: core.StringPtr(docID),
 	}
 }
@@ -16616,7 +17968,7 @@ type PutReplicationDocumentOptions struct {
 	// HTTP request body for replication operations.
 	ReplicationDocument *ReplicationDocument `json:"replicationDocument" validate:"required"`
 
-	// Header parameter to specify the document revision. Alternative to rev query parameter.
+	// Header parameter for a conditional HTTP request matching an ETag.
 	IfMatch *string `json:"If-Match,omitempty"`
 
 	// Query parameter to specify whether to store in batch mode. The server will respond with a HTTP 202 Accepted response
@@ -16645,7 +17997,7 @@ const (
 // NewPutReplicationDocumentOptions : Instantiate PutReplicationDocumentOptions
 func (*CloudantV1) NewPutReplicationDocumentOptions(docID string, replicationDocument *ReplicationDocument) *PutReplicationDocumentOptions {
 	return &PutReplicationDocumentOptions{
-		DocID: core.StringPtr(docID),
+		DocID:               core.StringPtr(docID),
 		ReplicationDocument: replicationDocument,
 	}
 }
@@ -16716,14 +18068,14 @@ type PutSecurityOptions struct {
 // Constants associated with the PutSecurityOptions.Cloudant property.
 // Database permissions for Cloudant users and/or API keys.
 const (
-	PutSecurityOptionsCloudantAdminConst = "_admin"
-	PutSecurityOptionsCloudantDbUpdatesConst = "_db_updates"
-	PutSecurityOptionsCloudantDesignConst = "_design"
-	PutSecurityOptionsCloudantReaderConst = "_reader"
+	PutSecurityOptionsCloudantAdminConst      = "_admin"
+	PutSecurityOptionsCloudantDbUpdatesConst  = "_db_updates"
+	PutSecurityOptionsCloudantDesignConst     = "_design"
+	PutSecurityOptionsCloudantReaderConst     = "_reader"
 	PutSecurityOptionsCloudantReplicatorConst = "_replicator"
-	PutSecurityOptionsCloudantSecurityConst = "_security"
-	PutSecurityOptionsCloudantShardsConst = "_shards"
-	PutSecurityOptionsCloudantWriterConst = "_writer"
+	PutSecurityOptionsCloudantSecurityConst   = "_security"
+	PutSecurityOptionsCloudantShardsConst     = "_shards"
+	PutSecurityOptionsCloudantWriterConst     = "_writer"
 )
 
 // NewPutSecurityOptions : Instantiate PutSecurityOptions
@@ -16771,7 +18123,8 @@ func (options *PutSecurityOptions) SetHeaders(param map[string]string) *PutSecur
 
 // ReplicationCreateTargetParameters : Request parameters to use during target database creation.
 type ReplicationCreateTargetParameters struct {
-	// Schema for the number of replicas of a database in a cluster.
+	// Schema for the number of replicas of a database in a cluster. The cluster is using the default value and it cannot
+	// be changed by the user.
 	N *int64 `json:"n,omitempty"`
 
 	// Parameter to specify whether to enable database partitions when creating the target database.
@@ -16786,14 +18139,17 @@ func UnmarshalReplicationCreateTargetParameters(m map[string]json.RawMessage, re
 	obj := new(ReplicationCreateTargetParameters)
 	err = core.UnmarshalPrimitive(m, "n", &obj.N)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "n-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "partitioned", &obj.Partitioned)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "partitioned-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "q", &obj.Q)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "q-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -16818,6 +18174,9 @@ func (*CloudantV1) NewReplicationDatabase(url string) (_model *ReplicationDataba
 		URL: core.StringPtr(url),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -16826,14 +18185,17 @@ func UnmarshalReplicationDatabase(m map[string]json.RawMessage, result interface
 	obj := new(ReplicationDatabase)
 	err = core.UnmarshalModel(m, "auth", &obj.Auth, UnmarshalReplicationDatabaseAuth)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "auth-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "headers", &obj.HeadersVar)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "headers-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -16854,10 +18216,12 @@ func UnmarshalReplicationDatabaseAuth(m map[string]json.RawMessage, result inter
 	obj := new(ReplicationDatabaseAuth)
 	err = core.UnmarshalModel(m, "basic", &obj.Basic, UnmarshalReplicationDatabaseAuthBasic)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "basic-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "iam", &obj.Iam, UnmarshalReplicationDatabaseAuthIam)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "iam-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -16880,6 +18244,9 @@ func (*CloudantV1) NewReplicationDatabaseAuthBasic(password string, username str
 		Username: core.StringPtr(username),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -16888,10 +18255,12 @@ func UnmarshalReplicationDatabaseAuthBasic(m map[string]json.RawMessage, result 
 	obj := new(ReplicationDatabaseAuthBasic)
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "password-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "username-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -16910,6 +18279,9 @@ func (*CloudantV1) NewReplicationDatabaseAuthIam(apiKey string) (_model *Replica
 		ApiKey: core.StringPtr(apiKey),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -16918,6 +18290,7 @@ func UnmarshalReplicationDatabaseAuthIam(m map[string]json.RawMessage, result in
 	obj := new(ReplicationDatabaseAuthIam)
 	err = core.UnmarshalPrimitive(m, "api_key", &obj.ApiKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "api_key-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -16938,7 +18311,7 @@ type ReplicationDocument struct {
 	// Schema for a list of document revision identifiers.
 	DeletedConflicts []string `json:"_deleted_conflicts,omitempty"`
 
-	// Document ID.
+	// Schema for a document ID.
 	ID *string `json:"_id,omitempty"`
 
 	// Document's update sequence in current database. Available if requested with local_seq=true query parameter.
@@ -16983,6 +18356,10 @@ type ReplicationDocument struct {
 	// Maximum number of HTTP connections per replication.
 	HTTPConnections *int64 `json:"http_connections,omitempty"`
 
+	// The replication document owner. The server sets an appropriate value if the field is unset when writing a
+	// replication document. Only administrators can modify the value to an owner other than themselves.
+	Owner *string `json:"owner,omitempty"`
+
 	// Schema for a map of string key value pairs, such as query parameters.
 	QueryParams map[string]string `json:"query_params,omitempty"`
 
@@ -17006,13 +18383,17 @@ type ReplicationDocument struct {
 	// Operators are identified by the use of a dollar sign `$` prefix in the name field.
 	//
 	// There are two core types of operators in the selector syntax:
-	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. In addition
-	// to the common boolean operators (`$and`, `$or`, `$not`, `$nor`) there are three combination operators: `$all`,
-	// `$elemMatch`, and `$allMatch`. A combination operator takes a single argument. The argument is either another
-	// selector, or an array of selectors.
+	// * Combination operators: applied at the topmost level of selection. They are used to combine selectors. A
+	// combination operator takes a single argument. The argument is either another selector, or an array of selectors.
 	// * Condition operators: are specific to a field, and are used to evaluate the value stored in that field. For
 	// instance, the basic `$eq` operator matches when the specified field contains a value that is equal to the supplied
-	// argument.
+	// argument. See [the Cloudant Docs](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-operators) for a list of all
+	// available combination and conditional operators.
+	// * Only equality operators such as `$eq`, `$gt`, `$gte`, `$lt`, and `$lte` (but not `$ne`) can be used as the basis
+	// of a query. You should include at least one of these in a selector.
+	//
+	// For further reference see
+	// [selector syntax](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-selector-syntax).
 	Selector map[string]interface{} `json:"selector,omitempty"`
 
 	// Start the replication at a specific sequence value.
@@ -17024,14 +18405,26 @@ type ReplicationDocument struct {
 	// Schema for a replication source or target database.
 	Source *ReplicationDatabase `json:"source" validate:"required"`
 
+	// This setting is forbidden in IBM Cloudant replication documents. This setting may be used with alternative
+	// replication mediators.
+	//
 	// Address of a (http or socks5 protocol) proxy server through which replication with the source database should occur.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	SourceProxy *string `json:"source_proxy,omitempty"`
 
 	// Schema for a replication source or target database.
 	Target *ReplicationDatabase `json:"target" validate:"required"`
 
+	// This setting is forbidden in IBM Cloudant replication documents. This setting may be used with alternative
+	// replication mediators.
+	//
 	// Address of a (http or socks5 protocol) proxy server through which replication with the target database should occur.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TargetProxy *string `json:"target_proxy,omitempty"`
+
+	// Specify whether to use _bulk_get for fetching documents from the source. If unset, the server configured default
+	// will be used.
+	UseBulkGet *bool `json:"use_bulk_get,omitempty"`
 
 	// Specify if checkpoints should be saved during replication. Using checkpoints means a replication can be efficiently
 	// resumed.
@@ -17039,6 +18432,11 @@ type ReplicationDocument struct {
 
 	// Schema for the user context of a session.
 	UserCtx *UserContext `json:"user_ctx,omitempty"`
+
+	// Replicate only the winning revisions. Replication with this mode discards conflicting revisions. Replication IDs and
+	// checkpoints generated by this mode are different to those generated by default, so it is possible to first replicate
+	// the winning revisions then later backfill remaining revisions with a regular replication job.
+	WinningRevsOnly *bool `json:"winning_revs_only,omitempty"`
 
 	// Controls how many documents are processed. After each batch a checkpoint is written so this controls how frequently
 	// checkpointing occurs.
@@ -17059,6 +18457,9 @@ func (*CloudantV1) NewReplicationDocument(source *ReplicationDatabase, target *R
 		Target: target,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -17150,6 +18551,9 @@ func (o *ReplicationDocument) MarshalJSON() (buffer []byte, err error) {
 	if o.HTTPConnections != nil {
 		m["http_connections"] = o.HTTPConnections
 	}
+	if o.Owner != nil {
+		m["owner"] = o.Owner
+	}
 	if o.QueryParams != nil {
 		m["query_params"] = o.QueryParams
 	}
@@ -17177,11 +18581,17 @@ func (o *ReplicationDocument) MarshalJSON() (buffer []byte, err error) {
 	if o.TargetProxy != nil {
 		m["target_proxy"] = o.TargetProxy
 	}
+	if o.UseBulkGet != nil {
+		m["use_bulk_get"] = o.UseBulkGet
+	}
 	if o.UseCheckpoints != nil {
 		m["use_checkpoints"] = o.UseCheckpoints
 	}
 	if o.UserCtx != nil {
 		m["user_ctx"] = o.UserCtx
+	}
+	if o.WinningRevsOnly != nil {
+		m["winning_revs_only"] = o.WinningRevsOnly
 	}
 	if o.WorkerBatchSize != nil {
 		m["worker_batch_size"] = o.WorkerBatchSize
@@ -17190,6 +18600,9 @@ func (o *ReplicationDocument) MarshalJSON() (buffer []byte, err error) {
 		m["worker_processes"] = o.WorkerProcesses
 	}
 	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -17198,156 +18611,205 @@ func UnmarshalReplicationDocument(m map[string]json.RawMessage, result interface
 	obj := new(ReplicationDocument)
 	err = core.UnmarshalModel(m, "_attachments", &obj.Attachments, UnmarshalAttachment)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_attachments-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_attachments")
 	err = core.UnmarshalPrimitive(m, "_conflicts", &obj.Conflicts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_conflicts-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_conflicts")
 	err = core.UnmarshalPrimitive(m, "_deleted", &obj.Deleted)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_deleted-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_deleted")
 	err = core.UnmarshalPrimitive(m, "_deleted_conflicts", &obj.DeletedConflicts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_deleted_conflicts-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_deleted_conflicts")
 	err = core.UnmarshalPrimitive(m, "_id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_id-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_id")
 	err = core.UnmarshalPrimitive(m, "_local_seq", &obj.LocalSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_local_seq-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_local_seq")
 	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_rev-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_rev")
 	err = core.UnmarshalModel(m, "_revisions", &obj.Revisions, UnmarshalRevisions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_revisions-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_revisions")
 	err = core.UnmarshalModel(m, "_revs_info", &obj.RevsInfo, UnmarshalDocumentRevisionStatus)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "_revs_info-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "_revs_info")
 	err = core.UnmarshalPrimitive(m, "cancel", &obj.Cancel)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cancel-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "cancel")
 	err = core.UnmarshalPrimitive(m, "checkpoint_interval", &obj.CheckpointInterval)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "checkpoint_interval-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "checkpoint_interval")
 	err = core.UnmarshalPrimitive(m, "connection_timeout", &obj.ConnectionTimeout)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "connection_timeout-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "connection_timeout")
 	err = core.UnmarshalPrimitive(m, "continuous", &obj.Continuous)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "continuous-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "continuous")
 	err = core.UnmarshalPrimitive(m, "create_target", &obj.CreateTarget)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "create_target-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "create_target")
 	err = core.UnmarshalModel(m, "create_target_params", &obj.CreateTargetParams, UnmarshalReplicationCreateTargetParameters)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "create_target_params-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "create_target_params")
 	err = core.UnmarshalPrimitive(m, "doc_ids", &obj.DocIds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_ids-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "doc_ids")
 	err = core.UnmarshalPrimitive(m, "filter", &obj.Filter)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "filter-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "filter")
 	err = core.UnmarshalPrimitive(m, "http_connections", &obj.HTTPConnections)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "http_connections-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "http_connections")
+	err = core.UnmarshalPrimitive(m, "owner", &obj.Owner)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "owner-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "owner")
 	err = core.UnmarshalPrimitive(m, "query_params", &obj.QueryParams)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "query_params-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "query_params")
 	err = core.UnmarshalPrimitive(m, "retries_per_request", &obj.RetriesPerRequest)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "retries_per_request-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "retries_per_request")
 	err = core.UnmarshalPrimitive(m, "selector", &obj.Selector)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "selector-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "selector")
 	err = core.UnmarshalPrimitive(m, "since_seq", &obj.SinceSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "since_seq-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "since_seq")
 	err = core.UnmarshalPrimitive(m, "socket_options", &obj.SocketOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "socket_options-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "socket_options")
 	err = core.UnmarshalModel(m, "source", &obj.Source, UnmarshalReplicationDatabase)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "source-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "source")
 	err = core.UnmarshalPrimitive(m, "source_proxy", &obj.SourceProxy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "source_proxy-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "source_proxy")
 	err = core.UnmarshalModel(m, "target", &obj.Target, UnmarshalReplicationDatabase)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "target")
 	err = core.UnmarshalPrimitive(m, "target_proxy", &obj.TargetProxy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_proxy-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "target_proxy")
+	err = core.UnmarshalPrimitive(m, "use_bulk_get", &obj.UseBulkGet)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "use_bulk_get-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "use_bulk_get")
 	err = core.UnmarshalPrimitive(m, "use_checkpoints", &obj.UseCheckpoints)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "use_checkpoints-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "use_checkpoints")
 	err = core.UnmarshalModel(m, "user_ctx", &obj.UserCtx, UnmarshalUserContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "user_ctx-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "user_ctx")
+	err = core.UnmarshalPrimitive(m, "winning_revs_only", &obj.WinningRevsOnly)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "winning_revs_only-error", common.GetComponentInfo())
+		return
+	}
+	delete(m, "winning_revs_only")
 	err = core.UnmarshalPrimitive(m, "worker_batch_size", &obj.WorkerBatchSize)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "worker_batch_size-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "worker_batch_size")
 	err = core.UnmarshalPrimitive(m, "worker_processes", &obj.WorkerProcesses)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "worker_processes-error", common.GetComponentInfo())
 		return
 	}
 	delete(m, "worker_processes")
@@ -17355,7 +18817,7 @@ func UnmarshalReplicationDocument(m map[string]json.RawMessage, result interface
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
 		if e != nil {
-			err = e
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
 			return
 		}
 		obj.SetProperty(k, v)
@@ -17376,10 +18838,13 @@ type Revisions struct {
 // NewRevisions : Instantiate Revisions (Generic Model Constructor)
 func (*CloudantV1) NewRevisions(ids []string, start int64) (_model *Revisions, err error) {
 	_model = &Revisions{
-		Ids: ids,
+		Ids:   ids,
 		Start: core.Int64Ptr(start),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -17388,10 +18853,12 @@ func UnmarshalRevisions(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(Revisions)
 	err = core.UnmarshalPrimitive(m, "ids", &obj.Ids)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ids-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17412,10 +18879,12 @@ func UnmarshalRevsDiff(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(RevsDiff)
 	err = core.UnmarshalPrimitive(m, "missing", &obj.Missing)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "missing-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "possible_ancestors", &obj.PossibleAncestors)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "possible_ancestors-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17436,10 +18905,12 @@ func UnmarshalSchedulerDocsResult(m map[string]json.RawMessage, result interface
 	obj := new(SchedulerDocsResult)
 	err = core.UnmarshalPrimitive(m, "total_rows", &obj.TotalRows)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_rows-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "docs", &obj.Docs, UnmarshalSchedulerDocument)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "docs-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17475,7 +18946,10 @@ type SchedulerDocument struct {
 	// Replication source.
 	Source *string `json:"source,omitempty"`
 
+	// Forbidden in IBM Cloudant mediated replications.
+	//
 	// Address of the (http or socks5 protocol) proxy server through which replication with the source database occurs.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	SourceProxy *string `json:"source_proxy,omitempty"`
 
 	// Timestamp of when the replication was started.
@@ -17487,20 +18961,23 @@ type SchedulerDocument struct {
 	// Replication target.
 	Target *string `json:"target,omitempty"`
 
+	// Forbidden in IBM Cloudant mediated replications.
+	//
 	// Address of the (http or socks5 protocol) proxy server through which replication with the target database occurs.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TargetProxy *string `json:"target_proxy,omitempty"`
 }
 
 // Constants associated with the SchedulerDocument.State property.
 // Schema for replication state.
 const (
-	SchedulerDocumentStateCompletedConst = "completed"
-	SchedulerDocumentStateCrashingConst = "crashing"
-	SchedulerDocumentStateErrorConst = "error"
-	SchedulerDocumentStateFailedConst = "failed"
+	SchedulerDocumentStateCompletedConst    = "completed"
+	SchedulerDocumentStateCrashingConst     = "crashing"
+	SchedulerDocumentStateErrorConst        = "error"
+	SchedulerDocumentStateFailedConst       = "failed"
 	SchedulerDocumentStateInitializingConst = "initializing"
-	SchedulerDocumentStatePendingConst = "pending"
-	SchedulerDocumentStateRunningConst = "running"
+	SchedulerDocumentStatePendingConst      = "pending"
+	SchedulerDocumentStateRunningConst      = "running"
 )
 
 // UnmarshalSchedulerDocument unmarshals an instance of SchedulerDocument from the specified map of raw messages.
@@ -17508,54 +18985,67 @@ func UnmarshalSchedulerDocument(m map[string]json.RawMessage, result interface{}
 	obj := new(SchedulerDocument)
 	err = core.UnmarshalPrimitive(m, "database", &obj.Database)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "database-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "doc_id", &obj.DocID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "error_count", &obj.ErrorCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "info", &obj.Info, UnmarshalSchedulerInfo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "info-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "last_updated", &obj.LastUpdated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "last_updated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "node", &obj.Node)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "node-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "source", &obj.Source)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "source-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "source_proxy", &obj.SourceProxy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "source_proxy-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "start_time", &obj.StartTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target_proxy", &obj.TargetProxy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target_proxy-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17601,42 +19091,52 @@ func UnmarshalSchedulerInfo(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(SchedulerInfo)
 	err = core.UnmarshalPrimitive(m, "changes_pending", &obj.ChangesPending)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "changes_pending-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "checkpointed_source_seq", &obj.CheckpointedSourceSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "checkpointed_source_seq-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "doc_write_failures", &obj.DocWriteFailures)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_write_failures-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "docs_read", &obj.DocsRead)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "docs_read-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "docs_written", &obj.DocsWritten)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "docs_written-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "error", &obj.Error)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "missing_revisions_found", &obj.MissingRevisionsFound)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "missing_revisions_found-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "revisions_checked", &obj.RevisionsChecked)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "revisions_checked-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "source_seq", &obj.SourceSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "source_seq-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "through_seq", &obj.ThroughSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "through_seq-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17685,46 +19185,57 @@ func UnmarshalSchedulerJob(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(SchedulerJob)
 	err = core.UnmarshalPrimitive(m, "database", &obj.Database)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "database-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "doc_id", &obj.DocID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "history", &obj.History, UnmarshalSchedulerJobEvent)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "history-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "info", &obj.Info, UnmarshalSchedulerInfo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "info-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "node", &obj.Node)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "node-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pid", &obj.Pid)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pid-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "source", &obj.Source)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "source-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "start_time", &obj.StartTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "target", &obj.Target)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "target-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "user", &obj.User)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "user-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17748,14 +19259,17 @@ func UnmarshalSchedulerJobEvent(m map[string]json.RawMessage, result interface{}
 	obj := new(SchedulerJobEvent)
 	err = core.UnmarshalPrimitive(m, "reason", &obj.Reason)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reason-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "timestamp", &obj.Timestamp)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "timestamp-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17776,10 +19290,12 @@ func UnmarshalSchedulerJobsResult(m map[string]json.RawMessage, result interface
 	obj := new(SchedulerJobsResult)
 	err = core.UnmarshalPrimitive(m, "total_rows", &obj.TotalRows)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_rows-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "jobs", &obj.Jobs, UnmarshalSchedulerJob)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "jobs-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17797,6 +19313,7 @@ func UnmarshalSearchAnalyzeResult(m map[string]json.RawMessage, result interface
 	obj := new(SearchAnalyzeResult)
 	err = core.UnmarshalPrimitive(m, "tokens", &obj.Tokens)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "tokens-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17836,6 +19353,9 @@ func (*CloudantV1) NewSearchIndexDefinition(index string) (_model *SearchIndexDe
 		Index: core.StringPtr(index),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -17844,10 +19364,12 @@ func UnmarshalSearchIndexDefinition(m map[string]json.RawMessage, result interfa
 	obj := new(SearchIndexDefinition)
 	err = core.UnmarshalModel(m, "analyzer", &obj.Analyzer, UnmarshalAnalyzerConfiguration)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "analyzer-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "index", &obj.Index)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "index-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17870,6 +19392,9 @@ type SearchIndexInfo struct {
 
 	// The pending sequence identifier.
 	PendingSeq *int64 `json:"pending_seq" validate:"required"`
+
+	// Unique signature of the search index.
+	Signature *string `json:"signature" validate:"required"`
 }
 
 // UnmarshalSearchIndexInfo unmarshals an instance of SearchIndexInfo from the specified map of raw messages.
@@ -17877,22 +19402,32 @@ func UnmarshalSearchIndexInfo(m map[string]json.RawMessage, result interface{}) 
 	obj := new(SearchIndexInfo)
 	err = core.UnmarshalPrimitive(m, "committed_seq", &obj.CommittedSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "committed_seq-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "disk_size", &obj.DiskSize)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "disk_size-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "doc_count", &obj.DocCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "doc_del_count", &obj.DocDelCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc_del_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pending_seq", &obj.PendingSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "pending_seq-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "signature", &obj.Signature)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "signature-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17913,10 +19448,12 @@ func UnmarshalSearchInfoResult(m map[string]json.RawMessage, result interface{})
 	obj := new(SearchInfoResult)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "search_index", &obj.SearchIndex, UnmarshalSearchIndexInfo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "search_index-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -17953,30 +19490,37 @@ func UnmarshalSearchResult(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(SearchResult)
 	err = core.UnmarshalPrimitive(m, "total_rows", &obj.TotalRows)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_rows-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "bookmark", &obj.Bookmark)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bookmark-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "by", &obj.By)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "by-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "counts", &obj.Counts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "counts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ranges", &obj.Ranges)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ranges-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rows", &obj.Rows, UnmarshalSearchResultRow)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rows-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "groups", &obj.Groups, UnmarshalSearchResultProperties)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "groups-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18010,26 +19554,32 @@ func UnmarshalSearchResultProperties(m map[string]json.RawMessage, result interf
 	obj := new(SearchResultProperties)
 	err = core.UnmarshalPrimitive(m, "total_rows", &obj.TotalRows)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_rows-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "bookmark", &obj.Bookmark)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bookmark-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "by", &obj.By)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "by-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "counts", &obj.Counts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "counts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "ranges", &obj.Ranges)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ranges-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rows", &obj.Rows, UnmarshalSearchResultRow)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rows-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18056,18 +19606,22 @@ func UnmarshalSearchResultRow(m map[string]json.RawMessage, result interface{}) 
 	obj := new(SearchResultRow)
 	err = core.UnmarshalModel(m, "doc", &obj.Doc, UnmarshalDocument)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "fields", &obj.Fields)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "fields-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "highlights", &obj.Highlights)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "highlights-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18092,14 +19646,14 @@ type Security struct {
 // Constants associated with the Security.Cloudant property.
 // Database permissions for Cloudant users and/or API keys.
 const (
-	SecurityCloudantAdminConst = "_admin"
-	SecurityCloudantDbUpdatesConst = "_db_updates"
-	SecurityCloudantDesignConst = "_design"
-	SecurityCloudantReaderConst = "_reader"
+	SecurityCloudantAdminConst      = "_admin"
+	SecurityCloudantDbUpdatesConst  = "_db_updates"
+	SecurityCloudantDesignConst     = "_design"
+	SecurityCloudantReaderConst     = "_reader"
 	SecurityCloudantReplicatorConst = "_replicator"
-	SecurityCloudantSecurityConst = "_security"
-	SecurityCloudantShardsConst = "_shards"
-	SecurityCloudantWriterConst = "_writer"
+	SecurityCloudantSecurityConst   = "_security"
+	SecurityCloudantShardsConst     = "_shards"
+	SecurityCloudantWriterConst     = "_writer"
 )
 
 // UnmarshalSecurity unmarshals an instance of Security from the specified map of raw messages.
@@ -18107,18 +19661,22 @@ func UnmarshalSecurity(m map[string]json.RawMessage, result interface{}) (err er
 	obj := new(Security)
 	err = core.UnmarshalModel(m, "admins", &obj.Admins, UnmarshalSecurityObject)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "admins-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "members", &obj.Members, UnmarshalSecurityObject)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "members-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "cloudant", &obj.Cloudant)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "cloudant-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "couchdb_auth_only", &obj.CouchdbAuthOnly)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "couchdb_auth_only-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18139,10 +19697,53 @@ func UnmarshalSecurityObject(m map[string]json.RawMessage, result interface{}) (
 	obj := new(SecurityObject)
 	err = core.UnmarshalPrimitive(m, "names", &obj.Names)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "names-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "roles", &obj.Roles)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "roles-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SelectorHint : Schema for extra information on the selector.
+type SelectorHint struct {
+	// A list of fields in the given selector that can be used to restrict the query.
+	IndexableFields []string `json:"indexable_fields" validate:"required"`
+
+	// A type of the index.
+	Type *string `json:"type" validate:"required"`
+
+	// A list of fields in the given selector that can't be used to restrict the query.
+	UnindexableFields []string `json:"unindexable_fields" validate:"required"`
+}
+
+// Constants associated with the SelectorHint.Type property.
+// A type of the index.
+const (
+	SelectorHintTypeJSONConst = "json"
+	SelectorHintTypeTextConst = "text"
+)
+
+// UnmarshalSelectorHint unmarshals an instance of SelectorHint from the specified map of raw messages.
+func UnmarshalSelectorHint(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SelectorHint)
+	err = core.UnmarshalPrimitive(m, "indexable_fields", &obj.IndexableFields)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "indexable_fields-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "unindexable_fields", &obj.UnindexableFields)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unindexable_fields-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18172,22 +19773,27 @@ func UnmarshalServerInformation(m map[string]json.RawMessage, result interface{}
 	obj := new(ServerInformation)
 	err = core.UnmarshalPrimitive(m, "couchdb", &obj.Couchdb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "couchdb-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "features", &obj.Features)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "features-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "vendor", &obj.Vendor, UnmarshalServerVendor)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "vendor-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "features_flags", &obj.FeaturesFlags)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "features_flags-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18200,10 +19806,63 @@ type ServerVendor struct {
 	Name *string `json:"name" validate:"required"`
 
 	// Vendor variant.
-	Variant *string `json:"variant,omitempty"`
+	Variant *string `json:"variant" validate:"required"`
 
 	// Vendor version.
-	Version *string `json:"version,omitempty"`
+	Version *string `json:"version" validate:"required"`
+
+	// Allows users to set arbitrary properties
+	additionalProperties map[string]*string
+}
+
+// SetProperty allows the user to set an arbitrary property on an instance of ServerVendor
+func (o *ServerVendor) SetProperty(key string, value *string) {
+	if o.additionalProperties == nil {
+		o.additionalProperties = make(map[string]*string)
+	}
+	o.additionalProperties[key] = value
+}
+
+// SetProperties allows the user to set a map of arbitrary properties on an instance of ServerVendor
+func (o *ServerVendor) SetProperties(m map[string]*string) {
+	o.additionalProperties = make(map[string]*string)
+	for k, v := range m {
+		o.additionalProperties[k] = v
+	}
+}
+
+// GetProperty allows the user to retrieve an arbitrary property from an instance of ServerVendor
+func (o *ServerVendor) GetProperty(key string) *string {
+	return o.additionalProperties[key]
+}
+
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of ServerVendor
+func (o *ServerVendor) GetProperties() map[string]*string {
+	return o.additionalProperties
+}
+
+// MarshalJSON performs custom serialization for instances of ServerVendor
+func (o *ServerVendor) MarshalJSON() (buffer []byte, err error) {
+	m := make(map[string]interface{})
+	if len(o.additionalProperties) > 0 {
+		for k, v := range o.additionalProperties {
+			m[k] = v
+		}
+	}
+	if o.Name != nil {
+		m["name"] = o.Name
+	}
+	if o.Variant != nil {
+		m["variant"] = o.Variant
+	}
+	if o.Version != nil {
+		m["version"] = o.Version
+	}
+	buffer, err = json.Marshal(m)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-marshal", common.GetComponentInfo())
+	}
+	return
 }
 
 // UnmarshalServerVendor unmarshals an instance of ServerVendor from the specified map of raw messages.
@@ -18211,15 +19870,30 @@ func UnmarshalServerVendor(m map[string]json.RawMessage, result interface{}) (er
 	obj := new(ServerVendor)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
+	delete(m, "name")
 	err = core.UnmarshalPrimitive(m, "variant", &obj.Variant)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "variant-error", common.GetComponentInfo())
 		return
 	}
+	delete(m, "variant")
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "version-error", common.GetComponentInfo())
 		return
+	}
+	delete(m, "version")
+	for k := range m {
+		var v *string
+		e := core.UnmarshalPrimitive(m, k, &v)
+		if e != nil {
+			err = core.SDKErrorf(e, "", "additional-properties-error", common.GetComponentInfo())
+			return
+		}
+		obj.SetProperty(k, v)
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
@@ -18242,14 +19916,17 @@ func UnmarshalSessionAuthentication(m map[string]json.RawMessage, result interfa
 	obj := new(SessionAuthentication)
 	err = core.UnmarshalPrimitive(m, "authenticated", &obj.Authenticated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authenticated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "authentication_db", &obj.AuthenticationDb)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authentication_db-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "authentication_handlers", &obj.AuthenticationHandlers)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "authentication_handlers-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18273,14 +19950,17 @@ func UnmarshalSessionInformation(m map[string]json.RawMessage, result interface{
 	obj := new(SessionInformation)
 	err = core.UnmarshalPrimitive(m, "ok", &obj.Ok)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "ok-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "info", &obj.Info, UnmarshalSessionAuthentication)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "info-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "userCtx", &obj.UserCtx, UnmarshalUserContext)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "userCtx-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18299,6 +19979,7 @@ func UnmarshalShardsInformation(m map[string]json.RawMessage, result interface{}
 	obj := new(ShardsInformation)
 	err = core.UnmarshalPrimitive(m, "shards", &obj.Shards)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "shards-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18326,18 +20007,22 @@ func UnmarshalThroughputInformation(m map[string]json.RawMessage, result interfa
 	obj := new(ThroughputInformation)
 	err = core.UnmarshalPrimitive(m, "blocks", &obj.Blocks)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "blocks-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "query", &obj.Query)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "query-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "read", &obj.Read)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "read-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "write", &obj.Write)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "write-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18347,7 +20032,7 @@ func UnmarshalThroughputInformation(m map[string]json.RawMessage, result interfa
 // UpInformation : Schema for information about the up state of the server.
 type UpInformation struct {
 	// seeds.
-	Seeds interface{} `json:"seeds" validate:"required"`
+	Seeds map[string]interface{} `json:"seeds,omitempty"`
 
 	// status.
 	Status *string `json:"status" validate:"required"`
@@ -18357,8 +20042,8 @@ type UpInformation struct {
 // status.
 const (
 	UpInformationStatusMaintenanceModeConst = "maintenance_mode"
-	UpInformationStatusNolbConst = "nolb"
-	UpInformationStatusOkConst = "ok"
+	UpInformationStatusNolbConst            = "nolb"
+	UpInformationStatusOkConst              = "ok"
 )
 
 // UnmarshalUpInformation unmarshals an instance of UpInformation from the specified map of raw messages.
@@ -18366,10 +20051,47 @@ func UnmarshalUpInformation(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(UpInformation)
 	err = core.UnmarshalPrimitive(m, "seeds", &obj.Seeds)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "seeds-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UpdatesPending : Schema for an ability to tell if view is up-to-date without querying it.
+type UpdatesPending struct {
+	// Sum of shard copies with the least amount of work to do.
+	Minimum *int64 `json:"minimum" validate:"required"`
+
+	// Sum of unique shards. This value is zero when at least one copy of every shard range is up-to-date and the view is
+	// able to answer a query without index building delays.
+	Preferred *int64 `json:"preferred" validate:"required"`
+
+	// Sum of all shard copies.
+	Total *int64 `json:"total" validate:"required"`
+}
+
+// UnmarshalUpdatesPending unmarshals an instance of UpdatesPending from the specified map of raw messages.
+func UnmarshalUpdatesPending(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(UpdatesPending)
+	err = core.UnmarshalPrimitive(m, "minimum", &obj.Minimum)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "minimum-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "preferred", &obj.Preferred)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "preferred-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total", &obj.Total)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "total-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18391,23 +20113,26 @@ type UserContext struct {
 // Constants associated with the UserContext.Roles property.
 // Schema for a security role.
 const (
-	UserContextRolesAdminConst = "_admin"
-	UserContextRolesDbUpdatesConst = "_db_updates"
-	UserContextRolesDesignConst = "_design"
-	UserContextRolesReaderConst = "_reader"
+	UserContextRolesAdminConst      = "_admin"
+	UserContextRolesDbUpdatesConst  = "_db_updates"
+	UserContextRolesDesignConst     = "_design"
+	UserContextRolesReaderConst     = "_reader"
 	UserContextRolesReplicatorConst = "_replicator"
-	UserContextRolesSecurityConst = "_security"
-	UserContextRolesShardsConst = "_shards"
-	UserContextRolesWriterConst = "_writer"
+	UserContextRolesSecurityConst   = "_security"
+	UserContextRolesShardsConst     = "_shards"
+	UserContextRolesWriterConst     = "_writer"
 )
 
 // NewUserContext : Instantiate UserContext (Generic Model Constructor)
 func (*CloudantV1) NewUserContext(name string, roles []string) (_model *UserContext, err error) {
 	_model = &UserContext{
-		Name: core.StringPtr(name),
+		Name:  core.StringPtr(name),
 		Roles: roles,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
@@ -18416,14 +20141,17 @@ func UnmarshalUserContext(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(UserContext)
 	err = core.UnmarshalPrimitive(m, "db", &obj.Db)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "db-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "roles", &obj.Roles)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "roles-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18441,6 +20169,7 @@ func UnmarshalUuidsResult(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(UuidsResult)
 	err = core.UnmarshalPrimitive(m, "uuids", &obj.Uuids)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "uuids-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18459,6 +20188,7 @@ func UnmarshalViewQueriesResult(m map[string]json.RawMessage, result interface{}
 	obj := new(ViewQueriesResult)
 	err = core.UnmarshalModel(m, "results", &obj.Results, UnmarshalViewResult)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "results-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18474,8 +20204,8 @@ type ViewQuery struct {
 	// Parameter to specify whether to include attachments bodies in a response.
 	Attachments *bool `json:"attachments,omitempty"`
 
-	// Parameter to specify whether to include a list of conflicted revisions in the `_conflicts` property of the returned
-	// document. Ignored if `include_docs` isn't `true`.
+	// Parameter to specify whether to include a list of conflicted revisions in each returned document. Active only when
+	// `include_docs` is `true`.
 	Conflicts *bool `json:"conflicts,omitempty"`
 
 	// Parameter to specify whether to return the documents in descending by key order.
@@ -18498,48 +20228,64 @@ type ViewQuery struct {
 	UpdateSeq *bool `json:"update_seq,omitempty"`
 
 	// Schema for any JSON type.
-	Endkey interface{} `json:"endkey,omitempty"`
+	EndKey interface{} `json:"end_key,omitempty"`
 
 	// Schema for a document ID.
-	EndkeyDocid *string `json:"endkey_docid,omitempty"`
+	EndKeyDocID *string `json:"end_key_doc_id,omitempty"`
 
-	// Parameter to specify whether to group the results using the reduce function to a group rather than a single row.
-	// Implies reduce is true and the maximum group_level.
+	// Parameter to specify whether to group reduced results by key. Valid only if a reduce function defined in the view.
+	// If the view emits key in JSON array format, then it is possible to reduce groups further based on the number of
+	// array elements with the `group_level` parameter.
 	Group *bool `json:"group,omitempty"`
 
-	// Parameter to specify the group level to be used. Implies group is true.
+	// Parameter to specify a group level to be used. Only applicable if the view uses keys that are JSON arrays. Implies
+	// group is `true`. Group level groups the reduced results by the specified number of array elements. If unset, results
+	// are grouped by the entire array key, returning a reduced value for each complete key.
 	GroupLevel *int64 `json:"group_level,omitempty"`
 
 	// Schema for any JSON type.
 	Key interface{} `json:"key,omitempty"`
 
-	// Parameter to specify to return only documents that match the specified keys. String representation of a JSON array
-	// containing elements that match the key type emitted by the view function.
+	// Parameter to specify returning only documents that match any of the specified keys. A JSON array of keys that match
+	// the key type emitted by the view function.
 	Keys []interface{} `json:"keys,omitempty"`
 
 	// Parameter to specify whether to use the reduce function in a map-reduce view. Default is true when a reduce function
 	// is defined.
 	Reduce *bool `json:"reduce,omitempty"`
 
-	// Parameter to specify whether view results should be returned from a stable set of shards.
+	// Query parameter to specify whether use the same replica of  the index on each request. The default value `false`
+	// contacts all  replicas and returns the result from the first, fastest, responder. Setting it to `true` when used in
+	// conjunction with `update=false`  may improve consistency at the expense of increased latency and decreased
+	// throughput if the selected replica is not the fastest of the available  replicas.
+	//
+	// **Note:** In general setting `true` is discouraged and is strictly not recommended when using `update=true`.
 	Stable *bool `json:"stable,omitempty"`
 
 	// Schema for any JSON type.
-	Startkey interface{} `json:"startkey,omitempty"`
+	StartKey interface{} `json:"start_key,omitempty"`
 
 	// Schema for a document ID.
-	StartkeyDocid *string `json:"startkey_docid,omitempty"`
+	StartKeyDocID *string `json:"start_key_doc_id,omitempty"`
 
 	// Parameter to specify whether or not the view in question should be updated prior to responding to the user.
+	//
+	// * `true` - Return results after the view is updated.
+	// * `false` - Return results without updating the view.
+	// * `lazy` - Return the view results without waiting for an update, but update them immediately after the request.
 	Update *string `json:"update,omitempty"`
 }
 
 // Constants associated with the ViewQuery.Update property.
 // Parameter to specify whether or not the view in question should be updated prior to responding to the user.
+//
+// * `true` - Return results after the view is updated.
+// * `false` - Return results without updating the view.
+// * `lazy` - Return the view results without waiting for an update, but update them immediately after the request.
 const (
 	ViewQueryUpdateFalseConst = "false"
-	ViewQueryUpdateLazyConst = "lazy"
-	ViewQueryUpdateTrueConst = "true"
+	ViewQueryUpdateLazyConst  = "lazy"
+	ViewQueryUpdateTrueConst  = "true"
 )
 
 // UnmarshalViewQuery unmarshals an instance of ViewQuery from the specified map of raw messages.
@@ -18547,82 +20293,102 @@ func UnmarshalViewQuery(m map[string]json.RawMessage, result interface{}) (err e
 	obj := new(ViewQuery)
 	err = core.UnmarshalPrimitive(m, "att_encoding_info", &obj.AttEncodingInfo)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "att_encoding_info-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "attachments", &obj.Attachments)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "attachments-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "conflicts", &obj.Conflicts)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "conflicts-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "descending", &obj.Descending)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "descending-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "include_docs", &obj.IncludeDocs)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "include_docs-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "inclusive_end", &obj.InclusiveEnd)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "inclusive_end-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "skip", &obj.Skip)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "skip-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "update_seq", &obj.UpdateSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "update_seq-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "endkey", &obj.Endkey)
+	err = core.UnmarshalPrimitive(m, "end_key", &obj.EndKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "end_key-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "endkey_docid", &obj.EndkeyDocid)
+	err = core.UnmarshalPrimitive(m, "end_key_doc_id", &obj.EndKeyDocID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "end_key_doc_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "group", &obj.Group)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "group-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "group_level", &obj.GroupLevel)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "group_level-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "keys", &obj.Keys)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "keys-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reduce", &obj.Reduce)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reduce-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "stable", &obj.Stable)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "stable-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "startkey", &obj.Startkey)
+	err = core.UnmarshalPrimitive(m, "start_key", &obj.StartKey)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start_key-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "startkey_docid", &obj.StartkeyDocid)
+	err = core.UnmarshalPrimitive(m, "start_key_doc_id", &obj.StartKeyDocID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "start_key_doc_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "update", &obj.Update)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "update-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18646,14 +20412,17 @@ func UnmarshalViewResult(m map[string]json.RawMessage, result interface{}) (err 
 	obj := new(ViewResult)
 	err = core.UnmarshalPrimitive(m, "total_rows", &obj.TotalRows)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "total_rows-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "update_seq", &obj.UpdateSeq)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "update_seq-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "rows", &obj.Rows, UnmarshalViewResultRow)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "rows-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -18670,6 +20439,9 @@ type ViewResultRow struct {
 
 	// The reason the error occurred (if available).
 	Reason *string `json:"reason,omitempty"`
+
+	// An internal error reference (if available).
+	Ref *int64 `json:"ref,omitempty"`
 
 	// Schema for a document.
 	Doc *Document `json:"doc,omitempty"`
@@ -18689,113 +20461,42 @@ func UnmarshalViewResultRow(m map[string]json.RawMessage, result interface{}) (e
 	obj := new(ViewResultRow)
 	err = core.UnmarshalPrimitive(m, "caused_by", &obj.CausedBy)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "caused_by-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "error", &obj.Error)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "error-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "reason", &obj.Reason)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "reason-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ref", &obj.Ref)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "ref-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "doc", &obj.Doc, UnmarshalDocument)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "doc-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "key-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// GeoJSONGeometry : Schema for a GeoJSON geometry.
-// This model "extends" GeoJSONGeometryObject
-type GeoJSONGeometry struct {
-	// The type of GeoJSON Geometry.
-	Type *string `json:"type" validate:"required"`
-
-	// Used for all geometry types except `GeometryCollection`. The structure of the elements in the array varies by
-	// geometry type.
-	Coordinates []interface{} `json:"coordinates" validate:"required"`
-}
-
-// Constants associated with the GeoJSONGeometry.Type property.
-// The type of GeoJSON Geometry.
-const (
-	GeoJSONGeometryTypeGeometrycollectionConst = "GeometryCollection"
-	GeoJSONGeometryTypeLinestringConst = "LineString"
-	GeoJSONGeometryTypeMultilinestringConst = "MultiLineString"
-	GeoJSONGeometryTypeMultipointConst = "MultiPoint"
-	GeoJSONGeometryTypeMultipolygonConst = "MultiPolygon"
-	GeoJSONGeometryTypePointConst = "Point"
-	GeoJSONGeometryTypePolygonConst = "Polygon"
-)
-
-func (*GeoJSONGeometry) isaGeoJSONGeometryObject() bool {
-	return true
-}
-
-// UnmarshalGeoJSONGeometry unmarshals an instance of GeoJSONGeometry from the specified map of raw messages.
-func UnmarshalGeoJSONGeometry(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GeoJSONGeometry)
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "coordinates", &obj.Coordinates)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// GeoJSONGeometryCollection : Schema for a GeoJSON GeometryCollection type geometry.
-// This model "extends" GeoJSONGeometryObject
-type GeoJSONGeometryCollection struct {
-	// The type of GeoJSON Geometry.
-	Type *string `json:"type" validate:"required"`
-
-	// Used for the `GeometryCollection` type.
-	Geometries []GeoJSONGeometry `json:"geometries" validate:"required"`
-}
-
-// Constants associated with the GeoJSONGeometryCollection.Type property.
-// The type of GeoJSON Geometry.
-const (
-	GeoJSONGeometryCollectionTypeGeometrycollectionConst = "GeometryCollection"
-	GeoJSONGeometryCollectionTypeLinestringConst = "LineString"
-	GeoJSONGeometryCollectionTypeMultilinestringConst = "MultiLineString"
-	GeoJSONGeometryCollectionTypeMultipointConst = "MultiPoint"
-	GeoJSONGeometryCollectionTypeMultipolygonConst = "MultiPolygon"
-	GeoJSONGeometryCollectionTypePointConst = "Point"
-	GeoJSONGeometryCollectionTypePolygonConst = "Polygon"
-)
-
-func (*GeoJSONGeometryCollection) isaGeoJSONGeometryObject() bool {
-	return true
-}
-
-// UnmarshalGeoJSONGeometryCollection unmarshals an instance of GeoJSONGeometryCollection from the specified map of raw messages.
-func UnmarshalGeoJSONGeometryCollection(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GeoJSONGeometryCollection)
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "geometries", &obj.Geometries, UnmarshalGeoJSONGeometry)
-	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))

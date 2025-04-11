@@ -109,19 +109,6 @@ func (cfg *Config) FromEnv() error {
 		}
 	}
 
-	if v := os.Getenv("VSPHERE_API_DISABLE"); v != "" {
-		APIDisable, err := strconv.ParseBool(v)
-		if err != nil {
-			klog.Errorf("Failed to parse VSPHERE_API_DISABLE: %s", err)
-		} else {
-			cfg.Global.APIDisable = APIDisable
-		}
-	}
-
-	if v := os.Getenv("VSPHERE_API_BINDING"); v != "" {
-		cfg.Global.APIBinding = v
-	}
-
 	if v := os.Getenv("VSPHERE_SECRETS_DIRECTORY"); v != "" {
 		cfg.Global.SecretsDirectory = v
 	}

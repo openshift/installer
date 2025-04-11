@@ -42,7 +42,7 @@ type CreateImage struct {
 	ImagePath string `json:"imagePath,omitempty"`
 
 	// Image OS Type, required if importing a raw image; raw images can only be imported using the command line interface
-	// Enum: [aix ibmi rhel sles]
+	// Enum: ["aix","ibmi","rhel","sles"]
 	OsType string `json:"osType,omitempty"`
 
 	// Cloud Storage Region; only required to access IBM Cloud Storage
@@ -55,7 +55,7 @@ type CreateImage struct {
 	// >*Note*: url option is deprecated, this option is supported till Oct 2022
 	//
 	// Required: true
-	// Enum: [root-project url]
+	// Enum: ["root-project","url"]
 	Source *string `json:"source"`
 
 	// The storage affinity data; ignored if storagePool is provided; Used only when importing an image from cloud storage.
@@ -63,6 +63,9 @@ type CreateImage struct {
 
 	// Storage pool where the image will be loaded; if provided then storageAffinity will be ignored; Used only when importing an image from cloud storage.
 	StoragePool string `json:"storagePool,omitempty"`
+
+	// user tags
+	UserTags Tags `json:"userTags,omitempty"`
 }
 
 // Validate validates this create image
@@ -78,6 +81,10 @@ func (m *CreateImage) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateStorageAffinity(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateUserTags(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -197,11 +204,32 @@ func (m *CreateImage) validateStorageAffinity(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *CreateImage) validateUserTags(formats strfmt.Registry) error {
+	if swag.IsZero(m.UserTags) { // not required
+		return nil
+	}
+
+	if err := m.UserTags.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
+	}
+
+	return nil
+}
+
 // ContextValidate validate this create image based on the context it is used
 func (m *CreateImage) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.contextValidateStorageAffinity(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateUserTags(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -227,6 +255,20 @@ func (m *CreateImage) contextValidateStorageAffinity(ctx context.Context, format
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *CreateImage) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
 	}
 
 	return nil

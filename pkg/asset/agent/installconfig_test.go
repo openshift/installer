@@ -4,8 +4,8 @@ import (
 	"net"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -41,7 +42,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: Platform: Unsupported value: "aws": supported values: "baremetal", "vsphere", "none", "external"`,
+			expectedError: `invalid install-config configuration: platform: Unsupported value: "aws": supported values: "baremetal", "vsphere", "nutanix", "none", "external"`,
 		},
 		{
 			name: "apiVips not set for baremetal Compact platform",
@@ -90,12 +91,430 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 			expectedError: "invalid install-config configuration: [platform.baremetal.apiVIPs: Required value: must specify at least one VIP for the API, platform.baremetal.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set]",
 		},
 		{
+			name: "apiVIPs are missing for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.nutanix.apiVIPs: Required value: must specify at least one VIP for the API, platform.nutanix.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set]`,
+		},
+		{
+			name: "ingressVIP missing for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.nutanix.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.nutanix.ingressVIPs: Required value: must specify at least one VIP for the Ingress]`,
+		},
+		{
+			name: "ingress and apiVip's must be from machine network CIDR when loadbalancer type is not usermanaged for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 10.0.0.1
+    ingressVips:
+      - 10.0.0.2
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.nutanix.apiVIPs: Invalid value: "10.0.0.1": IP expected to be in one of the machine networks: 192.168.122.0/23, platform.nutanix.ingressVIPs: Invalid value: "10.0.0.2": IP expected to be in one of the machine networks: 192.168.122.0/23]`,
+		},
+		{
+			name: "missing prismCentral endpoint address and port for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address:
+        port:
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.nutanix.prismCentral.endpoint.address: Required value: must specify the Prism Central endpoint address, platform.nutanix.prismCentral.endpoint.port: Invalid value: 0: The Prism Central endpoint port is invalid, must be in the range of 1 to 65535]`,
+		},
+		{
+			name: "missing prismCentral username and password for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: 
+      username: 
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.nutanix.prismCentral.username: Required value: must specify the Prism Central username, platform.nutanix.prismCentral.password: Required value: must specify the Prism Central password]`,
+		},
+		{
+			name: "missing prismElements for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: platform.nutanix.prismElements: Required value: must specify one Prism Element`,
+		},
+		{
+			name: "missing prismElement uuid for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid:
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: platform.nutanix.prismElements.uuid: Required value: must specify the Prism Element UUID`,
+		},
+		{
+			name: "missing subnetUUIDs for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: platform.nutanix.subnetUUIDs: Required value: must specify at least one subnet`,
+		},
+		{
+			name: "duplicate subnetUUIDs for nutanix platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: platform.nutanix.subnetUUIDs: Invalid value: "a2e46975-2cde-4a49-9dda-815eb4fcd681": should not configure duplicate value`,
+		},
+		{
+			name: "valid configuration for nutanix platform for compact cluster",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+  serviceNetwork: 
+  - 172.30.0.0/16
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 3
+platform:
+  nutanix:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    prismCentral:
+      endpoint:
+        address: pc1.test.metalkube.org
+        port: 9440
+      password: testPassword
+      username: testUser
+    prismElements:
+    - endpoint:
+        address: pe1.test.metalkube.org
+        port: 9440
+      uuid: 00061f7f-44f7-19dc-72gc-7cc25586ee53
+    subnetUUIDs:
+    - a2e46975-2cde-4a49-9dda-815eb4fcd681
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("192.168.122.0/23")},
+					},
+					NetworkType:    "OVNKubernetes",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
+						},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       pointer.Int64(3),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       pointer.Int64(0),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform: types.Platform{
+					Nutanix: &nutanix.Platform{
+						APIVIPs:     []string{"192.168.122.10"},
+						IngressVIPs: []string{"192.168.122.11"},
+						PrismCentral: nutanix.PrismCentral{
+							Endpoint: nutanix.PrismEndpoint{Address: "pc1.test.metalkube.org", Port: 9440},
+							Username: "testUser",
+							Password: "testPassword",
+						},
+						PrismElements: []nutanix.PrismElement{{
+							Endpoint: nutanix.PrismEndpoint{Address: "pe1.test.metalkube.org", Port: 9440},
+							UUID:     "00061f7f-44f7-19dc-72gc-7cc25586ee53",
+						}},
+						SubnetUUIDs: []string{"a2e46975-2cde-4a49-9dda-815eb4fcd681"},
+					},
+				},
+				PullSecret:      `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+				Publish:         types.ExternalPublishingStrategy,
+				CredentialsMode: types.ManualCredentialsMode,
+			},
+		},
+		{
 			name: "ingressVIP missing and deprecated vSphere credentials are present",
 			data: `
 apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
 platform:
   vsphere:
     apiVips:
@@ -108,7 +527,166 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress, platform.vsphere.failureDomains[0].topology.folder: Required value: must specify a folder for agent-based installs]`,
+		},
+		{
+			name: "apiVIPs are missing for vsphere platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  vsphere:
+    ingressVips:
+      - 192.168.122.11
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Required value: must specify at least one VIP for the API, platform.vsphere.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set]`,
+		},
+		{
+			name: "invalid IP values of api and ingress VIPs for vsphere platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.01
+    ingressVips:
+      - 192.168.122.256
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.01": "192.168.122.01" is not a valid IP, platform.vsphere.apiVIPs: Invalid value: "192.168.122.01": IP expected to be in one of the machine networks: 192.168.122.0/23, platform.vsphere.ingressVIPs: Invalid value: "192.168.122.256": "192.168.122.256" is not a valid IP, platform.vsphere.ingressVIPs: Invalid value: "192.168.122.256": IP expected to be in one of the machine networks: 192.168.122.0/23]`,
+		},
+		{
+			name: "api and ingressVIP's are missing for vsphere platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  vsphere: {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Required value: must specify at least one VIP for the API, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress]`,
+		},
+		{
+			name: "ingress and apiVip's must be different when loadbalancer type is not usermanaged for vsphere platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.10
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": VIP for API must not be one of the Ingress VIPs`,
+		},
+		{
+			name: "ingress and apiVip's must be from machine network CIDR when loadbalancer type is not usermanaged for vsphere platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  vsphere:
+    apiVips:
+      - 10.0.0.1
+    ingressVips:
+      - 10.0.0.2
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "10.0.0.1": IP expected to be in one of the machine networks: 192.168.122.0/23, platform.vsphere.ingressVIPs: Invalid value: "10.0.0.2": IP expected to be in one of the machine networks: 192.168.122.0/23]`,
+		},
+		{
+			name: "one must be ipv4 and other must be ipv6 when dual api and ingressVIP's are provided for vsphere platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+      - 192.168.122.11
+    ingressVips:
+      - 192.168.122.12
+      - 192.168.122.13
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: []string{"192.168.122.10", "192.168.122.11"}: If two API VIPs are given, one must be an IPv4 address, the other an IPv6, platform.vsphere.ingressVIPs: Invalid value: []string{"192.168.122.12", "192.168.122.13"}: If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6]`,
+		},
+		{
+			name: "api and ingress vips must belong to primary machine network's family for dual stack ipv4/v6",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 2001:db8:1234:1::/120
+  - cidr: 192.168.122.0/23
+  serviceNetwork:
+  - 2001:db8:5678::/108
+  - 192.168.112.0/23
+  clusterNetwork:
+  - cidr: 2001:db8:abcd::/48
+    hostPrefix: 64
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": VIP for the API must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6, platform.vsphere.ingressVIPs: Invalid value: "192.168.122.11": VIP for the Ingress must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6]`,
 		},
 		{
 			name: "ingressVIP missing and vcenter vSphere credentials are present",
@@ -117,6 +695,10 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
 platform:
   vsphere:
     apiVips:
@@ -142,7 +724,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress]`,
 		},
 		{
 			name: "vcenter vSphere credentials are present but failureDomain server does not match",
@@ -151,6 +733,10 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
 platform:
   vsphere:
     apiVips:
@@ -198,6 +784,10 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
 platform:
   vsphere:
     apiVips:
@@ -208,7 +798,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [Platform.VSphere.username: Required value: All credential fields are required if any one is specified, Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.username: Required value: All credential fields are required if any one is specified, platform.vsphere.vcenters[0].password: Required value: All credential fields are required if any one is specified, platform.vsphere.vcenters[0].datacenter: Required value: All credential fields are required if any one is specified, platform.vsphere.failureDomains[0].topology.folder: Required value: must specify a folder for agent-based installs]`,
 		},
 		{
 			name: "All required vSphere fields must be entered if some of them are entered - vcenter fields",
@@ -217,6 +807,10 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
 platform:
   vsphere:
     apiVips:
@@ -229,7 +823,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.vcenters[0].password: Required value: All credential fields are required if any one is specified, platform.vsphere.vcenters[0].datacenter: Required value: All credential fields are required if any one is specified, platform.vsphere.failureDomains[0].topology.folder: Required value: must specify a folder for agent-based installs]`,
 		},
 		{
 			name: "ingressVIP missing for vSphere, credentials not provided and should not flag error",
@@ -238,6 +832,10 @@ apiVersion: v1
 metadata:
   name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
 platform:
   vsphere:
     apiVips:
@@ -245,7 +843,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.ingressVIPs: Required value: must specify at least one VIP for the Ingress]`,
 		},
 		{
 			name: "no compute.replicas set for SNO",
@@ -267,7 +865,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for platform none or external. Found 3",
+			expectedError: "invalid install-config configuration: compute.replicas: Forbidden: Total number of compute replicas must be 0 when controlPlane.replicas is 1 for platform none or external. Found 3",
 		},
 		{
 			name: "incorrect compute.replicas set",
@@ -291,7 +889,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: ControlPlane.Replicas: Invalid value: 2: ControlPlane.Replicas can only be set to 3 or 1. Found 2",
+			expectedError: "invalid install-config configuration: [controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 0 credentials were found, controlPlane.replicas: Unsupported value: 2: supported values: \"3\", \"1\", \"4\", \"5\"]",
 		},
 		{
 			name: "invalid platform for SNO cluster",
@@ -320,7 +918,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: [Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", \"external\", Platform: Invalid value: \"aws\": Only platform none and external supports 1 ControlPlane and 0 Compute nodes]",
+			expectedError: "invalid install-config configuration: [platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"nutanix\", \"none\", \"external\", platform: Invalid value: \"aws\": Only platform none and external supports 1 ControlPlane and 0 Compute nodes]",
 		},
 		{
 			name: "invalid platform.baremetal for architecture ppc64le",
@@ -359,7 +957,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: Platform: Invalid value: \"baremetal\": CPU architecture \"ppc64le\" only supports platform \"none\".",
+			expectedError: "invalid install-config configuration: platform: Invalid value: \"baremetal\": CPU architecture \"ppc64le\" only supports platform \"none\".",
 		},
 		{
 			name: "invalid platform.baremetal for architecture s390x",
@@ -398,7 +996,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: Platform: Invalid value: \"baremetal\": CPU architecture \"s390x\" only supports platform \"none\".",
+			expectedError: "invalid install-config configuration: platform: Invalid value: \"baremetal\": CPU architecture \"s390x\" only supports platform \"none\".",
 		},
 		{
 			name: "generic platformName for external platform",
@@ -486,7 +1084,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: Platform.External.CloudControllerManager: Invalid value: "": When using external oci platform, Platform.External.CloudControllerManager must be set to External`,
+			expectedError: `invalid install-config configuration: platform.external.cloudControllerManager: Invalid value: "": When using external oci platform, platform.external.cloudControllerManager must be set to External`,
 		},
 		{
 			name: "valid configuration for none platform for sno",
@@ -623,6 +1221,140 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 			},
 		},
 		{
+			name: "valid configuration control plane replicas set to 5",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 2
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 5
+platform:
+  none : {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					},
+					NetworkType:    "OVNKubernetes",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
+						},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       pointer.Int64(5),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       pointer.Int64(2),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform:   types.Platform{None: &none.Platform{}},
+				PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+				Publish:    types.ExternalPublishingStrategy,
+			},
+		},
+		{
+			name: "valid configuration control plane replicas set to 4",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 2
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 4
+platform:
+  none : {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					},
+					NetworkType:    "OVNKubernetes",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
+						},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       pointer.Int64(4),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       pointer.Int64(2),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform:   types.Platform{None: &none.Platform{}},
+				PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+				Publish:    types.ExternalPublishingStrategy,
+			},
+		},
+		{
 			name: "valid configuration for baremetal platform for HA cluster - deprecated and unused fields",
 			data: `
 apiVersion: v1
@@ -669,6 +1401,9 @@ platform:
     clusterOSImage: https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8
     bootstrapExternalStaticIP: 192.1168.122.50
     bootstrapExternalStaticGateway: gateway
+    AdditionalNTPServers:
+        - "10.0.1.1"
+        - "10.0.1.2"
     hosts:
       - name: host1
         bootMACAddress: 52:54:01:aa:aa:a1
@@ -777,6 +1512,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 						ClusterOSImage:                 "https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8",
 						BootstrapExternalStaticIP:      "192.1168.122.50",
 						BootstrapExternalStaticGateway: "gateway",
+						AdditionalNTPServers:           []string{"10.0.1.1", "10.0.1.2"},
 					},
 				},
 				PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
@@ -995,7 +1731,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [Platform.BareMetal.clusterProvisioningIP: Invalid value: "172.22.0.11": "172.22.0.11" overlaps with the allocated DHCP range, Platform.BareMetal.hosts[2].BMC.Address: Duplicate value: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"]`,
+			expectedError: `invalid install-config configuration: [platform.baremetal.clusterProvisioningIP: Invalid value: "172.22.0.11": "172.22.0.11" overlaps with the allocated DHCP range, platform.baremetal.hosts[2].bmc.address: Duplicate value: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"]`,
 		},
 	}
 	for _, tc := range cases {

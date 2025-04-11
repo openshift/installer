@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -48,7 +49,7 @@ func (*ClusterImageSet) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ClusterImageSet manifest.
-func (a *ClusterImageSet) Generate(dependencies asset.Parents) error {
+func (a *ClusterImageSet) Generate(ctx context.Context, dependencies asset.Parents) error {
 	agentWorkflow := &workflow.AgentWorkflow{}
 	clusterInfo := &joiner.ClusterInfo{}
 	releaseImage := &releaseimage.Image{}
@@ -56,7 +57,7 @@ func (a *ClusterImageSet) Generate(dependencies asset.Parents) error {
 	dependencies.Get(releaseImage, installConfig, agentWorkflow, clusterInfo)
 
 	switch agentWorkflow.Workflow {
-	case workflow.AgentWorkflowTypeInstall:
+	case workflow.AgentWorkflowTypeInstall, workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
 		currentVersion, err := version.Version()
 		if err != nil {
 			return err
@@ -77,7 +78,7 @@ func (a *ClusterImageSet) Generate(dependencies asset.Parents) error {
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
 	}
 
-	return a.finish(agentWorkflow.Workflow)
+	return a.finish(ctx, agentWorkflow.Workflow)
 }
 
 func (a *ClusterImageSet) generateManifest(version, releaseImage, clusterNamespace string) error {
@@ -119,6 +120,7 @@ func (a *ClusterImageSet) Files() []*asset.File {
 
 // Load returns ClusterImageSet asset from the disk.
 func (a *ClusterImageSet) Load(f asset.FileFetcher) (bool, error) {
+	ctx := context.TODO()
 
 	agentWorkflow := &workflow.AgentWorkflow{}
 	_, err := agentWorkflow.Load(f)
@@ -143,35 +145,35 @@ func (a *ClusterImageSet) Load(f asset.FileFetcher) (bool, error) {
 	}
 	a.Config = clusterImageSet
 
-	if err = a.finish(agentWorkflow.Workflow); err != nil {
+	if err = a.finish(ctx, agentWorkflow.Workflow); err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-func (a *ClusterImageSet) finish(workflowType workflow.AgentWorkflowType) error {
+func (a *ClusterImageSet) finish(ctx context.Context, workflowType workflow.AgentWorkflowType) error {
 	if a.Config == nil {
 		return errors.New("missing configuration or manifest file")
 	}
 
-	if err := a.validateClusterImageSet(workflowType).ToAggregate(); err != nil {
+	if err := a.validateClusterImageSet(ctx, workflowType).ToAggregate(); err != nil {
 		return errors.Wrapf(err, "invalid ClusterImageSet configuration")
 	}
 
 	return nil
 }
 
-func (a *ClusterImageSet) validateClusterImageSet(workflowType workflow.AgentWorkflowType) field.ErrorList {
+func (a *ClusterImageSet) validateClusterImageSet(ctx context.Context, workflowType workflow.AgentWorkflowType) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if err := a.validateReleaseVersion(workflowType); err != nil {
+	if err := a.validateReleaseVersion(ctx, workflowType); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
 	return allErrs
 }
 
-func (a *ClusterImageSet) validateReleaseVersion(workflowType workflow.AgentWorkflowType) field.ErrorList {
+func (a *ClusterImageSet) validateReleaseVersion(ctx context.Context, workflowType workflow.AgentWorkflowType) field.ErrorList {
 	// skip release version check in case of add nodes workflow
 	if workflowType == workflow.AgentWorkflowTypeAddNodes {
 		return nil
@@ -179,13 +181,15 @@ func (a *ClusterImageSet) validateReleaseVersion(workflowType workflow.AgentWork
 
 	var allErrs field.ErrorList
 
-	fieldPath := field.NewPath("Spec", "ReleaseImage")
+	fieldPath := field.NewPath("spec", "releaseImage")
 
 	releaseImage := &releaseimage.Image{}
-	releaseImage.Generate(asset.Parents{})
+	if err := releaseImage.Generate(ctx, asset.Parents{}); err != nil {
+		return append(allErrs, field.InternalError(fieldPath, fmt.Errorf("failed to generate the release image asset: %w", err)))
+	}
 
 	if a.Config.Spec.ReleaseImage != releaseImage.PullSpec {
-		allErrs = append(allErrs, field.Forbidden(fieldPath, fmt.Sprintf("value must be equal to %s", releaseImage.PullSpec)))
+		allErrs = append(allErrs, field.Invalid(fieldPath, a.Config.Spec.ReleaseImage, fmt.Sprintf("value must be equal to %s", releaseImage.PullSpec)))
 	}
 
 	return allErrs

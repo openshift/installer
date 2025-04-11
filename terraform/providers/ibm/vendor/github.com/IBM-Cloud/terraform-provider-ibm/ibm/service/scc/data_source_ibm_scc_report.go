@@ -5,13 +5,13 @@ package scc
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/scc-go-sdk/v5/securityandcompliancecenterapiv3"
 )
 
@@ -193,37 +193,37 @@ func dataSourceIbmSccReportRead(context context.Context, d *schema.ResourceData,
 	report, response, err := resultsClient.GetReportWithContext(context, getReportOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetReportWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetReportWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetReportWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(*report.ID)
 
 	if err = d.Set("id", report.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting id: %s", err))
 	}
 
 	if err = d.Set("group_id", report.GroupID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting group_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting group_id: %s", err))
 	}
 
-	if err = d.Set("created_on", report.CreatedOn); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created_on: %s", err))
+	if err = d.Set("created_on", flex.DateTimeToString(report.CreatedOn)); err != nil {
+		return diag.FromErr(flex.FmtErrorf("Error setting created_on: %s", err))
 	}
 
 	if err = d.Set("scan_time", report.ScanTime); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting scan_time: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting scan_time: %s", err))
 	}
 
 	if err = d.Set("type", report.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting type: %s", err))
 	}
 
 	if err = d.Set("cos_object", report.CosObject); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting cos_object: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting cos_object: %s", err))
 	}
 
 	if err = d.Set("instance_id", report.InstanceID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting instance_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting instance_id: %s", err))
 	}
 
 	account := []map[string]interface{}{}
@@ -235,7 +235,7 @@ func dataSourceIbmSccReportRead(context context.Context, d *schema.ResourceData,
 		account = append(account, modelMap)
 	}
 	if err = d.Set("account", account); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting account %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting account %s", err))
 	}
 
 	profile := []map[string]interface{}{}
@@ -247,7 +247,7 @@ func dataSourceIbmSccReportRead(context context.Context, d *schema.ResourceData,
 		profile = append(profile, modelMap)
 	}
 	if err = d.Set("profile", profile); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting profile %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting profile %s", err))
 	}
 
 	attachment := []map[string]interface{}{}
@@ -259,7 +259,7 @@ func dataSourceIbmSccReportRead(context context.Context, d *schema.ResourceData,
 		attachment = append(attachment, modelMap)
 	}
 	if err = d.Set("attachment", attachment); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting attachment %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting attachment %s", err))
 	}
 
 	return nil
@@ -307,9 +307,9 @@ func dataSourceIbmSccReportAttachmentToMap(model *securityandcompliancecenterapi
 	if model.Schedule != nil {
 		modelMap["schedule"] = model.Schedule
 	}
-	if model.Scope != nil {
+	if model.Scopes != nil {
 		scope := []map[string]interface{}{}
-		for _, scopeItem := range model.Scope {
+		for _, scopeItem := range model.Scopes {
 			scopeItemMap, err := dataSourceIbmSccReportAttachmentScopeToMap(&scopeItem)
 			if err != nil {
 				return modelMap, err
@@ -321,7 +321,7 @@ func dataSourceIbmSccReportAttachmentToMap(model *securityandcompliancecenterapi
 	return modelMap, nil
 }
 
-func dataSourceIbmSccReportAttachmentScopeToMap(model *securityandcompliancecenterapiv3.AttachmentScope) (map[string]interface{}, error) {
+func dataSourceIbmSccReportAttachmentScopeToMap(model *securityandcompliancecenterapiv3.Scope) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ID != nil {
 		modelMap["id"] = model.ID
@@ -332,7 +332,7 @@ func dataSourceIbmSccReportAttachmentScopeToMap(model *securityandcompliancecent
 	if model.Properties != nil {
 		properties := []map[string]interface{}{}
 		for _, propertiesItem := range model.Properties {
-			propertiesItemMap, err := dataSourceIbmSccReportScopePropertyToMap(&propertiesItem)
+			propertiesItemMap, err := dataSourceIbmSccReportScopePropertyToMap(propertiesItem)
 			if err != nil {
 				return modelMap, err
 			}
@@ -343,13 +343,6 @@ func dataSourceIbmSccReportAttachmentScopeToMap(model *securityandcompliancecent
 	return modelMap, nil
 }
 
-func dataSourceIbmSccReportScopePropertyToMap(model *securityandcompliancecenterapiv3.ScopeProperty) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.Name != nil {
-		modelMap["name"] = model.Name
-	}
-	if model.Value != nil {
-		modelMap["value"] = model.Value
-	}
-	return modelMap, nil
+func dataSourceIbmSccReportScopePropertyToMap(model securityandcompliancecenterapiv3.ScopePropertyIntf) (map[string]interface{}, error) {
+	return scopePropertiesToMap(model)
 }

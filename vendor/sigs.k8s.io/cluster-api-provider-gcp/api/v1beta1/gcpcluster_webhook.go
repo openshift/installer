@@ -41,8 +41,10 @@ func (c *GCPCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-gcpcluster,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=gcpclusters,versions=v1beta1,name=validation.gcpcluster.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta1-gcpcluster,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=gcpclusters,versions=v1beta1,name=default.gcpcluster.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 
-var _ webhook.Validator = &GCPCluster{}
-var _ webhook.Defaulter = &GCPCluster{}
+var (
+	_ webhook.Validator = &GCPCluster{}
+	_ webhook.Defaulter = &GCPCluster{}
+)
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
 func (c *GCPCluster) Default() {
@@ -80,6 +82,27 @@ func (c *GCPCluster) ValidateUpdate(oldRaw runtime.Object) (admission.Warnings, 
 		allErrs = append(allErrs,
 			field.Invalid(field.NewPath("spec", "CredentialsRef"),
 				c.Spec.CredentialsRef, "field is immutable"),
+		)
+	}
+
+	if !reflect.DeepEqual(c.Spec.LoadBalancer, old.Spec.LoadBalancer) {
+		allErrs = append(allErrs,
+			field.Invalid(field.NewPath("spec", "LoadBalancer"),
+				c.Spec.LoadBalancer, "field is immutable"),
+		)
+	}
+
+	if c.Spec.Network.Mtu < int64(1300) {
+		allErrs = append(allErrs,
+			field.Invalid(field.NewPath("spec", "Network", "Mtu"),
+				c.Spec.Network.Mtu, "field cannot be lesser than 1300"),
+		)
+	}
+
+	if c.Spec.Network.Mtu > int64(8896) {
+		allErrs = append(allErrs,
+			field.Invalid(field.NewPath("spec", "Network", "Mtu"),
+				c.Spec.Network.Mtu, "field cannot be greater than 8896"),
 		)
 	}
 

@@ -27,6 +27,7 @@ type KubeletConfigBuilder struct {
 	bitmap_      uint32
 	id           string
 	href         string
+	name         string
 	podPidsLimit int
 }
 
@@ -60,10 +61,17 @@ func (b *KubeletConfigBuilder) Empty() bool {
 	return b == nil || b.bitmap_&^1 == 0
 }
 
+// Name sets the value of the 'name' attribute to the given value.
+func (b *KubeletConfigBuilder) Name(value string) *KubeletConfigBuilder {
+	b.name = value
+	b.bitmap_ |= 8
+	return b
+}
+
 // PodPidsLimit sets the value of the 'pod_pids_limit' attribute to the given value.
 func (b *KubeletConfigBuilder) PodPidsLimit(value int) *KubeletConfigBuilder {
 	b.podPidsLimit = value
-	b.bitmap_ |= 8
+	b.bitmap_ |= 16
 	return b
 }
 
@@ -75,6 +83,7 @@ func (b *KubeletConfigBuilder) Copy(object *KubeletConfig) *KubeletConfigBuilder
 	b.bitmap_ = object.bitmap_
 	b.id = object.id
 	b.href = object.href
+	b.name = object.name
 	b.podPidsLimit = object.podPidsLimit
 	return b
 }
@@ -85,6 +94,7 @@ func (b *KubeletConfigBuilder) Build() (object *KubeletConfig, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.bitmap_ = b.bitmap_
+	object.name = b.name
 	object.podPidsLimit = b.podPidsLimit
 	return
 }

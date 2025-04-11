@@ -85,6 +85,26 @@ type Network struct {
 	// created for the API Server.
 	// +optional
 	APIServerForwardingRule *string `json:"apiServerForwardingRule,omitempty"`
+
+	// APIInternalAddress is the IPV4 regional address assigned to the
+	// internal Load Balancer.
+	// +optional
+	APIInternalAddress *string `json:"apiInternalIpAddress,omitempty"`
+
+	// APIInternalHealthCheck is the full reference to the health check
+	// created for the internal Load Balancer.
+	// +optional
+	APIInternalHealthCheck *string `json:"apiInternalHealthCheck,omitempty"`
+
+	// APIInternalBackendService is the full reference to the backend service
+	// created for the internal Load Balancer.
+	// +optional
+	APIInternalBackendService *string `json:"apiInternalBackendService,omitempty"`
+
+	// APIInternalForwardingRule is the full reference to the forwarding rule
+	// created for the internal Load Balancer.
+	// +optional
+	APIInternalForwardingRule *string `json:"apiInternalForwardingRule,omitempty"`
 }
 
 // NetworkSpec encapsulates all things related to a GCP network.
@@ -112,11 +132,43 @@ type NetworkSpec struct {
 	// Allow for configuration of load balancer backend (useful for changing apiserver port)
 	// +optional
 	LoadBalancerBackendPort *int32 `json:"loadBalancerBackendPort,omitempty"`
+
+	// HostProject is the name of the project hosting the shared VPC network resources.
+	// +optional
+	HostProject *string `json:"hostProject,omitempty"`
+
+	// Mtu: Maximum Transmission Unit in bytes. The minimum value for this field is
+	// 1300 and the maximum value is 8896. The suggested value is 1500, which is
+	// the default MTU used on the Internet, or 8896 if you want to use Jumbo
+	// frames. If unspecified, the value defaults to 1460.
+	// More info: https://pkg.go.dev/google.golang.org/api/compute/v1#Network
+	// +kubebuilder:validation:Minimum:=1300
+	// +kubebuilder:validation:Maximum:=8896
+	// +kubebuilder:default:=1460
+	// +optional
+	Mtu int64 `json:"mtu,omitempty"`
 }
+
+// LoadBalancerType defines the Load Balancer that should be created.
+type LoadBalancerType string
+
+var (
+	// External creates a Global External Proxy Load Balancer
+	// to manage traffic to backends in multiple regions. This is the default Load
+	// Balancer and will be created if no LoadBalancerType is defined.
+	External = LoadBalancerType("External")
+
+	// Internal creates a Regional Internal Passthrough Load
+	// Balancer to manage traffic to backends in the configured region.
+	Internal = LoadBalancerType("Internal")
+
+	// InternalExternal creates both External and Internal Load Balancers to provide
+	// separate endpoints for managing both external and internal traffic.
+	InternalExternal = LoadBalancerType("InternalExternal")
+)
 
 // LoadBalancerSpec contains configuration for one or more LoadBalancers.
 type LoadBalancerSpec struct {
-
 	// APIServerInstanceGroupTagOverride overrides the default setting for the
 	// tag used when creating the API Server Instance Group.
 	// +kubebuilder:validation:Optional
@@ -124,6 +176,15 @@ type LoadBalancerSpec struct {
 	// +kubebuilder:validation:Pattern=`(^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)`
 	// +optional
 	APIServerInstanceGroupTagOverride *string `json:"apiServerInstanceGroupTagOverride,omitempty"`
+
+	// LoadBalancerType defines the type of Load Balancer that should be created.
+	// If not set, a Global External Proxy Load Balancer will be created by default.
+	// +optional
+	LoadBalancerType *LoadBalancerType `json:"loadBalancerType,omitempty"`
+
+	// InternalLoadBalancer is the configuration for an Internal Passthrough Network Load Balancer.
+	// +optional
+	InternalLoadBalancer *LoadBalancer `json:"internalLoadBalancer,omitempty"`
 }
 
 // SubnetSpec configures an GCP Subnet.
@@ -179,6 +240,22 @@ type SubnetSpec struct {
 	// +kubebuilder:default=PRIVATE_RFC_1918
 	// +optional
 	Purpose *string `json:"purpose,omitempty"`
+
+	// StackType: The stack type for the subnet. If set to IPV4_ONLY, new VMs in
+	// the subnet are assigned IPv4 addresses only. If set to IPV4_IPV6, new VMs in
+	// the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
+	// IPV4_ONLY is used. This field can be both set at resource creation time and
+	// updated using patch.
+	//
+	// Possible values:
+	//   "IPV4_IPV6" - New VMs in this subnet can have both IPv4 and IPv6
+	// addresses.
+	//   "IPV4_ONLY" - New VMs in this subnet will only be assigned IPv4 addresses.
+	//   "IPV6_ONLY" - New VMs in this subnet will only be assigned IPv6 addresses.
+	// +kubebuilder:validation:Enum=IPV4_ONLY;IPV4_IPV6;IPV6_ONLY
+	// +kubebuilder:default=IPV4_ONLY
+	// +optional
+	StackType string `json:"stackType,omitempty"`
 }
 
 // String returns a string representation of the subnet.
@@ -278,4 +355,20 @@ type ObjectReference struct {
 	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
 	// +kubebuilder:validation:Required
 	Name string `json:"name"`
+}
+
+// LoadBalancer specifies the configuration of a LoadBalancer.
+type LoadBalancer struct {
+	// Name is the name of the Load Balancer. If not set a default name
+	// will be used. For an Internal Load Balancer service the default
+	// name is "api-internal".
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Pattern=`(^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)`
+	// +optional
+	Name *string `json:"name,omitempty"`
+
+	// Subnet is the name of the subnet to use for a regional Load Balancer. A subnet is
+	// required for the Load Balancer, if not defined the first configured subnet will be
+	// used.
+	Subnet *string `json:"subnet,omitempty"`
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/pointer"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -616,6 +617,67 @@ func TestValidateMachinePool(t *testing.T) {
 				},
 			},
 			expected: `^test-path.defaultMachinePlatform.settings.securityType: Invalid value: "": securityType should be set to TrustedLaunch when uefiSettings are enabled.$`,
+		},
+		{
+			name:          "azure VM Identity is unrecognized type",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						Identity: &azure.VMIdentity{
+							Type: "unrecognized",
+						},
+					},
+				},
+			},
+			expected: `^test-path.identity.type: Unsupported value: "unrecognized": supported values: "None", "UserAssigned"$`,
+		},
+		{
+			name:          "azure VM SystemAssignedIdentity is not allowed",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						Identity: &azure.VMIdentity{
+							Type: "SystemAssigned",
+						},
+					},
+				},
+			},
+			expected: `^test-path.identity.type: Unsupported value: "SystemAssigned": supported values: "None", "UserAssigned"$`,
+		},
+		{
+			name:          "azure VM identity cannot mismatch type and field",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						Identity: &azure.VMIdentity{
+							Type:                   capz.VMIdentityNone,
+							UserAssignedIdentities: []azure.UserAssignedIdentity{},
+						},
+					},
+				},
+			},
+			expected: `^test-path.identity.type: Invalid value: "None": userAssignedIdentities may only be used with type: UserAssigned$`,
+		},
+		{
+			name:          "azure VM identity must have user assigned identities when type==UserAssigned",
+			azurePlatform: azure.PublicCloud,
+			pool: &types.MachinePool{
+				Name: "",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						Identity: &azure.VMIdentity{
+							Type: capz.VMIdentityUserAssigned,
+						},
+					},
+				},
+			},
+			expected: `^test-path.identity.userAssignedIdentities: Required value: userAssignedIdentities must be specified when using type: UserAssigned$`,
 		},
 	}
 	for _, tc := range cases {

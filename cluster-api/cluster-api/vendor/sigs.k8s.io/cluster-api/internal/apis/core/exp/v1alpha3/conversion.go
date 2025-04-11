@@ -21,7 +21,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	clusterv1alpha3 "sigs.k8s.io/cluster-api/internal/apis/core/v1alpha3"
 	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
 )
 
@@ -70,8 +72,11 @@ func (src *MachinePool) ConvertTo(dstRaw conversion.Hub) error {
 	if ok, err := utilconversion.UnmarshalData(src, restored); err != nil || !ok {
 		return err
 	}
+	dst.Spec.Template.Spec.ReadinessGates = restored.Spec.Template.Spec.ReadinessGates
 	dst.Spec.Template.Spec.NodeDeletionTimeout = restored.Spec.Template.Spec.NodeDeletionTimeout
 	dst.Spec.Template.Spec.NodeVolumeDetachTimeout = restored.Spec.Template.Spec.NodeVolumeDetachTimeout
+	dst.Status.V1Beta2 = restored.Status.V1Beta2
+
 	return nil
 }
 
@@ -95,4 +100,17 @@ func (dst *MachinePoolList) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*expv1.MachinePoolList)
 
 	return Convert_v1beta1_MachinePoolList_To_v1alpha3_MachinePoolList(src, dst, nil)
+}
+
+func Convert_v1alpha3_MachineTemplateSpec_To_v1beta1_MachineTemplateSpec(in *clusterv1alpha3.MachineTemplateSpec, out *clusterv1.MachineTemplateSpec, s apimachineryconversion.Scope) error {
+	return clusterv1alpha3.Convert_v1alpha3_MachineTemplateSpec_To_v1beta1_MachineTemplateSpec(in, out, s)
+}
+
+func Convert_v1beta1_MachineTemplateSpec_To_v1alpha3_MachineTemplateSpec(in *clusterv1.MachineTemplateSpec, out *clusterv1alpha3.MachineTemplateSpec, s apimachineryconversion.Scope) error {
+	return clusterv1alpha3.Convert_v1beta1_MachineTemplateSpec_To_v1alpha3_MachineTemplateSpec(in, out, s)
+}
+
+func Convert_v1beta1_MachinePoolStatus_To_v1alpha3_MachinePoolStatus(in *expv1.MachinePoolStatus, out *MachinePoolStatus, s apimachineryconversion.Scope) error {
+	// V1Beta2 was added in v1beta1
+	return autoConvert_v1beta1_MachinePoolStatus_To_v1alpha3_MachinePoolStatus(in, out, s)
 }

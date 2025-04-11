@@ -1,6 +1,7 @@
 package openshift
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -30,7 +31,7 @@ func (t *KubeadminPasswordSecret) Name() string {
 }
 
 // Generate generates the actual files by this asset
-func (t *KubeadminPasswordSecret) Generate(parents asset.Parents) error {
+func (t *KubeadminPasswordSecret) Generate(_ context.Context, parents asset.Parents) error {
 	fileName := kubeadminPasswordSecretFileName
 	data, err := content.GetOpenshiftTemplate(fileName)
 	if err != nil {

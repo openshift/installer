@@ -10,17 +10,11 @@
 </h6>
 
 <p align="center">
-  <a href="https://travis-ci.org/gabriel-vasile/mimetype">
-    <img alt="Build Status" src="https://travis-ci.org/gabriel-vasile/mimetype.svg?branch=master">
-  </a>
   <a href="https://pkg.go.dev/github.com/gabriel-vasile/mimetype">
     <img alt="Go Reference" src="https://pkg.go.dev/badge/github.com/gabriel-vasile/mimetype.svg">
   </a>
   <a href="https://goreportcard.com/report/github.com/gabriel-vasile/mimetype">
     <img alt="Go report card" src="https://goreportcard.com/badge/github.com/gabriel-vasile/mimetype">
-  </a>
-  <a href="https://codecov.io/gh/gabriel-vasile/mimetype">
-    <img alt="Code coverage" src="https://codecov.io/gh/gabriel-vasile/mimetype/branch/master/graph/badge.svg?token=qcfJF1kkl2"/>
   </a>
   <a href="LICENSE">
     <img alt="License" src="https://img.shields.io/badge/License-MIT-green.svg">
@@ -87,7 +81,7 @@ To prevent loading entire files into memory, when detecting from a
 or from a [file](https://pkg.go.dev/github.com/gabriel-vasile/mimetype#DetectFile)
 **mimetype** limits itself to reading only the header of the input.
 <div align="center">
-  <img alt="structure" src="https://github.com/gabriel-vasile/mimetype/blob/420a05228c6a6efbb6e6f080168a25663414ff36/mimetype.gif?raw=true" width="88%">
+  <img alt="how project is structured" src="https://raw.githubusercontent.com/gabriel-vasile/mimetype/master/testdata/gif.gif" width="88%">
 </div>
 
 ## Performance

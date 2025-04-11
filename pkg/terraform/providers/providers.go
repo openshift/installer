@@ -15,8 +15,6 @@ import (
 var (
 	// AWS is the provider for creating resources in AWS.
 	AWS = provider("aws")
-	// AzureRM is the provider for creating resources in the Azure clouds.
-	AzureRM = provider("azurerm")
 	// AzureStack is the provider for creating resources in Azure Stack.
 	AzureStack = provider("azurestack")
 	// Google is the provider for creating resources in GCP.

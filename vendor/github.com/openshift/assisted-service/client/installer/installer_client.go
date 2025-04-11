@@ -181,6 +181,9 @@ type API interface {
 	   V2SetIgnoredValidations Register the validations which are to be ignored for this cluster.*/
 	V2SetIgnoredValidations(ctx context.Context, params *V2SetIgnoredValidationsParams) (*V2SetIgnoredValidationsCreated, error)
 	/*
+	   V2UpdateClusterFinalizingProgress Update installation finalizing progress.*/
+	V2UpdateClusterFinalizingProgress(ctx context.Context, params *V2UpdateClusterFinalizingProgressParams) (*V2UpdateClusterFinalizingProgressOK, error)
+	/*
 	   V2UpdateClusterInstallConfig Override values in the install config.*/
 	V2UpdateClusterInstallConfig(ctx context.Context, params *V2UpdateClusterInstallConfigParams) (*V2UpdateClusterInstallConfigCreated, error)
 	/*
@@ -1554,6 +1557,31 @@ func (a *Client) V2SetIgnoredValidations(ctx context.Context, params *V2SetIgnor
 		return nil, err
 	}
 	return result.(*V2SetIgnoredValidationsCreated), nil
+
+}
+
+/*
+V2UpdateClusterFinalizingProgress Update installation finalizing progress.
+*/
+func (a *Client) V2UpdateClusterFinalizingProgress(ctx context.Context, params *V2UpdateClusterFinalizingProgressParams) (*V2UpdateClusterFinalizingProgressOK, error) {
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "v2UpdateClusterFinalizingProgress",
+		Method:             "PUT",
+		PathPattern:        "/v2/clusters/{cluster_id}/progress",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &V2UpdateClusterFinalizingProgressReader{formats: a.formats},
+		AuthInfo:           a.authInfo,
+		Context:            ctx,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*V2UpdateClusterFinalizingProgressOK), nil
 
 }
 

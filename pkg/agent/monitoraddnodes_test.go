@@ -48,7 +48,7 @@ func TestDecodedFirstCSRSubjectContainsHostname(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			containsHostname := containsHostname(decodedFirstCSRSubject([]byte(tt.request)), tt.hostnames)
+			containsHostname := containsHostname(decodedFirstCSRSubject([]byte(tt.request), nil), tt.hostnames)
 			assert.Equal(t, tt.expectedResult, containsHostname)
 		})
 	}
@@ -154,7 +154,7 @@ func TestFilterCSRsMatchingHostnames(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filteredCSRs := filterCSRsMatchingHostname(tt.signerName, tt.csrs, tt.hostnames)
+			filteredCSRs := filterCSRsMatchingHostname(tt.signerName, tt.csrs, tt.hostnames, nil)
 			assert.Equal(t, tt.expectedResult, filteredCSRs)
 		})
 	}

@@ -31,6 +31,9 @@ type PVMInstanceReferenceV2 struct {
 	// Format: date-time
 	CreationDate strfmt.DateTime `json:"creationDate,omitempty"`
 
+	// crn
+	Crn CRN `json:"crn,omitempty"`
+
 	// The pvm instance deployment information
 	// Required: true
 	Deployment *PvmInstanceDeployment `json:"deployment"`
@@ -74,6 +77,9 @@ type PVMInstanceReferenceV2 struct {
 
 	// The pvm instance virtual CPU information
 	VirtualCores *PVMInstanceVirtualCores `json:"virtualCores,omitempty"`
+
+	// Information about Virtual Serial Number assigned to the PVM Instance
+	VirtualSerialNumber *GetServerVirtualSerialNumber `json:"virtualSerialNumber,omitempty"`
 }
 
 // Validate validates this p VM instance reference v2
@@ -89,6 +95,10 @@ func (m *PVMInstanceReferenceV2) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateCreationDate(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateCrn(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -137,6 +147,10 @@ func (m *PVMInstanceReferenceV2) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateVirtualCores(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateVirtualSerialNumber(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -191,6 +205,23 @@ func (m *PVMInstanceReferenceV2) validateCreationDate(formats strfmt.Registry) e
 	}
 
 	if err := validate.FormatOf("creationDate", "body", "date-time", m.CreationDate.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceReferenceV2) validateCrn(formats strfmt.Registry) error {
+	if swag.IsZero(m.Crn) { // not required
+		return nil
+	}
+
+	if err := m.Crn.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("crn")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("crn")
+		}
 		return err
 	}
 
@@ -396,6 +427,25 @@ func (m *PVMInstanceReferenceV2) validateVirtualCores(formats strfmt.Registry) e
 	return nil
 }
 
+func (m *PVMInstanceReferenceV2) validateVirtualSerialNumber(formats strfmt.Registry) error {
+	if swag.IsZero(m.VirtualSerialNumber) { // not required
+		return nil
+	}
+
+	if m.VirtualSerialNumber != nil {
+		if err := m.VirtualSerialNumber.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("virtualSerialNumber")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("virtualSerialNumber")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ContextValidate validate this p VM instance reference v2 based on the context it is used
 func (m *PVMInstanceReferenceV2) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
@@ -405,6 +455,10 @@ func (m *PVMInstanceReferenceV2) ContextValidate(ctx context.Context, formats st
 	}
 
 	if err := m.contextValidateCores(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateCrn(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -437,6 +491,10 @@ func (m *PVMInstanceReferenceV2) ContextValidate(ctx context.Context, formats st
 	}
 
 	if err := m.contextValidateVirtualCores(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateVirtualSerialNumber(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -479,6 +537,24 @@ func (m *PVMInstanceReferenceV2) contextValidateCores(ctx context.Context, forma
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceReferenceV2) contextValidateCrn(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Crn) { // not required
+		return nil
+	}
+
+	if err := m.Crn.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("crn")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("crn")
+		}
+		return err
 	}
 
 	return nil
@@ -636,6 +712,27 @@ func (m *PVMInstanceReferenceV2) contextValidateVirtualCores(ctx context.Context
 				return ve.ValidateName("virtualCores")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
 				return ce.ValidateName("virtualCores")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *PVMInstanceReferenceV2) contextValidateVirtualSerialNumber(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.VirtualSerialNumber != nil {
+
+		if swag.IsZero(m.VirtualSerialNumber) { // not required
+			return nil
+		}
+
+		if err := m.VirtualSerialNumber.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("virtualSerialNumber")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("virtualSerialNumber")
 			}
 			return err
 		}

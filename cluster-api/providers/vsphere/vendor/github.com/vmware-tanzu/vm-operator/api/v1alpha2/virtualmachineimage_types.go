@@ -31,6 +31,18 @@ const (
 	VirtualMachineImageCapabilityLabel = "capability.image." + GroupName + "/"
 )
 
+const (
+	// VMIContentLibRefAnnotation is the key for the annotation that stores the content library
+	// reference for VMI and CVMI down conversion.
+	VMIContentLibRefAnnotation = "vmoperator.vmware.com/conversion-content-lib-ref"
+)
+
+const (
+	// VirtualMachineImageV1Alpha1CompatibleCondition denotes that an image was prepared by
+	// VMware specifically for compatibility with VMService.
+	VirtualMachineImageV1Alpha1CompatibleCondition = "VirtualMachineImageV1Alpha1Compatible"
+)
+
 // Condition reasons for VirtualMachineImages.
 const (
 	// VirtualMachineImageNotSyncedReason documents that the VirtualMachineImage is not synced with
@@ -201,7 +213,7 @@ type VirtualMachineImageStatus struct {
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:resource:scope=Cluster,shortName=vmi;vmimage
+// +kubebuilder:resource:scope=Namespaced,shortName=vmi;vmimage
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Display Name",type="string",JSONPath=".status.name"

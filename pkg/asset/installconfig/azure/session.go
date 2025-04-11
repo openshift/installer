@@ -83,6 +83,57 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 		return nil, fmt.Errorf("failed to get Azure environment for the %q cloud: %w", cloudName, err)
 	}
 
+	cloudConfig, err := GetCloudConfiguration(cloudName, armEndpoint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cloud configuration for the %q cloud: %w", cloudName, err)
+	}
+
+	if credentials == nil {
+		credentials, err = credentialsFromFileOrUser()
+		if err != nil {
+			return nil, err
+		}
+	}
+	var cred azcore.TokenCredential
+	var authType AuthenticationType
+	switch {
+	case credentials.ClientCertificatePath != "":
+		logrus.Warnf("Using client certs to authenticate. Please be warned cluster does not support certs and only the installer does.")
+		cred, err = newTokenCredentialFromCertificates(credentials, *cloudConfig)
+		authType = ClientCertificateAuth
+	case credentials.ClientSecret != "":
+		cred, err = newTokenCredentialFromCredentials(credentials, *cloudConfig)
+		authType = ClientSecretAuth
+	default:
+		cred, err = newTokenCredentialFromMSI(credentials, *cloudConfig)
+		authType = ManagedIdentityAuth
+	}
+	if err != nil {
+		return nil, err
+	}
+	session, err := newSessionFromCredentials(cloudEnv, credentials, cred)
+	if err != nil {
+		return nil, err
+	}
+	session.CloudConfig = *cloudConfig
+	session.AuthType = authType
+	return session, nil
+}
+
+// GetCloudConfiguration gets a cloud configuration from the cloud name and endpoint.
+func GetCloudConfiguration(cloudName azure.CloudEnvironment, armEndpoint string) (*cloud.Configuration, error) {
+	var cloudEnv azureenv.Environment
+	var err error
+	switch cloudName {
+	case azure.StackCloud:
+		cloudEnv, err = azureenv.EnvironmentFromURL(armEndpoint)
+	default:
+		cloudEnv, err = azureenv.EnvironmentFromName(string(cloudName))
+	}
+	if err != nil {
+		return nil, err
+	}
+
 	var cloudConfig cloud.Configuration
 	switch cloudName {
 	case azure.StackCloud:
@@ -103,36 +154,7 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 		cloudConfig = cloud.AzurePublic
 	}
 
-	if credentials == nil {
-		credentials, err = credentialsFromFileOrUser()
-		if err != nil {
-			return nil, err
-		}
-	}
-	var cred azcore.TokenCredential
-	var authType AuthenticationType
-	switch {
-	case credentials.ClientCertificatePath != "":
-		logrus.Warnf("Using client certs to authenticate. Please be warned cluster does not support certs and only the installer does.")
-		cred, err = newTokenCredentialFromCertificates(credentials, cloudConfig)
-		authType = ClientCertificateAuth
-	case credentials.ClientSecret != "":
-		cred, err = newTokenCredentialFromCredentials(credentials, cloudConfig)
-		authType = ClientSecretAuth
-	default:
-		cred, err = newTokenCredentialFromMSI(credentials, cloudConfig)
-		authType = ManagedIdentityAuth
-	}
-	if err != nil {
-		return nil, err
-	}
-	session, err := newSessionFromCredentials(cloudEnv, credentials, cred)
-	if err != nil {
-		return nil, err
-	}
-	session.CloudConfig = cloudConfig
-	session.AuthType = authType
-	return session, nil
+	return &cloudConfig, nil
 }
 
 // credentialsFromFileOrUser returns credentials found
@@ -291,6 +313,7 @@ func newTokenCredentialFromCertificates(credentials *Credentials, cloudConfig cl
 		ClientOptions: azcore.ClientOptions{
 			Cloud: cloudConfig,
 		},
+		SendCertificateChain: true,
 	}
 
 	data, err := os.ReadFile(credentials.ClientCertificatePath)

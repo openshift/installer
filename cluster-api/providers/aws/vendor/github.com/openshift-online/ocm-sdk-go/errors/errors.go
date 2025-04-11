@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/golang/glog"
 	jsoniter "github.com/json-iterator/go"
@@ -47,6 +48,7 @@ type ErrorBuilder struct {
 	reason      string
 	details     interface{}
 	operationID string
+	timestamp   *time.Time
 }
 
 // Error represents errors.
@@ -59,6 +61,7 @@ type Error struct {
 	reason      string
 	details     interface{}
 	operationID string
+	timestamp   *time.Time
 }
 
 // NewError creates a new builder that can then be used to create error objects.
@@ -115,6 +118,13 @@ func (b *ErrorBuilder) Details(value interface{}) *ErrorBuilder {
 	return b
 }
 
+// Timestamp sets the moment when it happened.
+func (b *ErrorBuilder) Timestamp(value *time.Time) *ErrorBuilder {
+	b.timestamp = value
+	b.bitmap_ |= 128
+	return b
+}
+
 // Copy copies the attributes of the given error into this
 // builder, discarding any previous values.
 func (b *ErrorBuilder) Copy(object *Error) *ErrorBuilder {
@@ -129,6 +139,7 @@ func (b *ErrorBuilder) Copy(object *Error) *ErrorBuilder {
 	b.reason = object.reason
 	b.details = object.details
 	b.operationID = object.operationID
+	b.timestamp = object.timestamp
 	return b
 }
 
@@ -142,6 +153,7 @@ func (b *ErrorBuilder) Build() (result *Error, err error) {
 		reason:      b.reason,
 		details:     b.details,
 		operationID: b.operationID,
+		timestamp:   b.timestamp,
 		bitmap_:     b.bitmap_,
 	}
 	return
@@ -281,7 +293,26 @@ func (e *Error) GetDetails() (value interface{}, ok bool) {
 	return
 }
 
+// Timestamp sets the moment when it happened
+func (e *Error) Timestamp() *time.Time {
+	if e != nil && e.bitmap_&128 != 0 {
+		return e.timestamp
+	}
+	return nil
+}
+
+// GetTimestamp returns the timestamp of the error and a flag
+// indicating if the timestamp have a value.
+func (e *Error) GetTimestamp() (value *time.Time, ok bool) {
+	ok = e != nil && e.bitmap_&128 != 0
+	if ok {
+		value = e.timestamp
+	}
+	return
+}
+
 // Error is the implementation of the error interface.
+// Details are intentionally left out as there is no guarantee of their type
 func (e *Error) Error() string {
 	chunks := make([]string, 0, 3)
 	if e.bitmap_&1 != 0 {
@@ -292,6 +323,9 @@ func (e *Error) Error() string {
 	}
 	if e.bitmap_&8 != 0 {
 		chunks = append(chunks, fmt.Sprintf("code is '%s'", e.code))
+	}
+	if e.bitmap_&128 != 0 {
+		chunks = append(chunks, fmt.Sprintf("at '%v'", e.timestamp.Format(time.RFC3339)))
 	}
 	if e.bitmap_&32 != 0 {
 		chunks = append(chunks, fmt.Sprintf("operation identifier is '%s'", e.operationID))
@@ -372,6 +406,14 @@ func readError(iterator *jsoniter.Iterator) *Error {
 		case "details":
 			object.details = iterator.ReadAny().GetInterface()
 			object.bitmap_ |= 64
+		case "timestamp":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.timestamp = &value
+			object.bitmap_ |= 128
 		default:
 			iterator.ReadAny()
 		}
@@ -427,6 +469,11 @@ func writeError(e *Error, stream *jsoniter.Stream) {
 		stream.WriteMore()
 		stream.WriteObjectField("details")
 		stream.WriteVal(e.details)
+	}
+	if e.bitmap_&128 != 0 {
+		stream.WriteMore()
+		stream.WriteObjectField("timestamp")
+		stream.WriteVal(e.timestamp)
 	}
 	stream.WriteObjectEnd()
 }

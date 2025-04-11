@@ -1,6 +1,7 @@
 package image
 
 import (
+	"context"
 	"encoding/base64"
 	"testing"
 
@@ -11,13 +12,17 @@ import (
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
 func TestUnconfiguredIgnition_Generate(t *testing.T) {
 	skipTestIfnmstatectlIsMissing(t)
+
+	defer setupEmbeddedResources(t)()
 
 	nmStateConfig := getTestNMStateConfig()
 
@@ -30,9 +35,10 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 	}{
 		{
 			name:          "default-configs-and-no-nmstateconfigs",
-			expectedFiles: generatedFilesUnconfiguredIgnition("/usr/local/bin/pre-network-manager-config.sh"),
+			expectedFiles: generatedFilesUnconfiguredIgnition("/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
 			serviceEnabledMap: map[string]bool{
 				"pre-network-manager-config.service": false,
+				"oci-eval-user-data.service":         true,
 				"agent-check-config-image.service":   true},
 		},
 		{
@@ -46,7 +52,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 					MirrorConfig: []mirror.RegistriesConfig{
 						{
 							Location: "some.registry.org/release",
-							Mirror:   "some.mirror.org",
+							Mirrors:  []string{"some.mirror.org"},
 						},
 					},
 				},
@@ -58,9 +64,10 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				},
 			},
 			expectedFiles: generatedFilesUnconfiguredIgnition(registriesConfPath,
-				registryCABundlePath, "/usr/local/bin/pre-network-manager-config.sh"),
+				registryCABundlePath, "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
 			serviceEnabledMap: map[string]bool{
 				"pre-network-manager-config.service": false,
+				"oci-eval-user-data.service":         true,
 				"agent-check-config-image.service":   true},
 		},
 		{
@@ -69,9 +76,10 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				&nmStateConfig,
 			},
 			expectedFiles: generatedFilesUnconfiguredIgnition("/etc/assisted/network/host0/eth0.nmconnection",
-				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh"),
+				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
 			serviceEnabledMap: map[string]bool{
 				"pre-network-manager-config.service": true,
+				"oci-eval-user-data.service":         true,
 				"agent-check-config-image.service":   true},
 		},
 	}
@@ -85,7 +93,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 			parents.Add(deps...)
 
 			unconfiguredIgnitionAsset := &UnconfiguredIgnition{}
-			err := unconfiguredIgnitionAsset.Generate(parents)
+			err := unconfiguredIgnitionAsset.Generate(context.Background(), parents)
 
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())
@@ -110,6 +118,7 @@ func buildUnconfiguredIgnitionAssetDefaultDependencies(t *testing.T) []asset.Ass
 	clusterImageSet := getTestClusterImageSet()
 
 	return []asset.Asset{
+		&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 		&infraEnv,
 		&agentPullSecret,
 		&clusterImageSet,
@@ -117,11 +126,12 @@ func buildUnconfiguredIgnitionAssetDefaultDependencies(t *testing.T) []asset.Ass
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
 		&common.InfraEnvID{},
+		&agentconfig.AgentConfig{},
 	}
 }
 
-func getTestInfraEnv() manifests.InfraEnv {
-	return manifests.InfraEnv{
+func getTestInfraEnv() manifests.InfraEnvFile {
+	return manifests.InfraEnvFile{
 		Config: &aiv1beta1.InfraEnv{
 			Spec: aiv1beta1.InfraEnvSpec{
 				SSHAuthorizedKey: "my-ssh-key",

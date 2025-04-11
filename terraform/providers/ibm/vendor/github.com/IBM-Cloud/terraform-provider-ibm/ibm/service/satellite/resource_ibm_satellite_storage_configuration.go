@@ -396,9 +396,10 @@ func resourceIBMContainerStorageConfigurationUpdate(d *schema.ResourceData, meta
 		for _, v := range result {
 			if len(v.Groups) != 0 {
 				createAssignmentGroupOptions := &kubernetesserviceapiv1.CreateAssignmentOptions{
-					Name:   v.Name,
-					Groups: v.Groups,
-					Config: v.ChannelName,
+					Name:       v.Name,
+					Groups:     v.Groups,
+					Config:     v.ChannelName,
+					Controller: &satLocation,
 				}
 				_, _, err = satClient.CreateAssignment(createAssignmentGroupOptions)
 				if err != nil {
@@ -425,41 +426,27 @@ func resourceIBMContainerStorageConfigurationUpdate(d *schema.ResourceData, meta
 func resourceIBMContainerStorageConfigurationDelete(d *schema.ResourceData, meta interface{}) error {
 	uuid := d.Get("uuid").(string)
 	name := d.Get("config_name").(string)
+	controller := d.Get("location").(string)
 	delete_assignments := d.Get("delete_assignments").(bool)
+	removeStorageConfigurationOptions := &kubernetesserviceapiv1.RemoveStorageConfigurationOptions{}
+	removeStorageConfigurationOptions.UUID = &uuid
+	removeStorageConfigurationOptions.Controller = &controller
+	if delete_assignments || d.HasChange("storage_template_version") {
+		removeStorageConfigurationOptions.RemoveAssignments = &delete_assignments
+	}
 
 	satClient, err := meta.(conns.ClientSession).SatelliteClientSession()
 	if err != nil {
 		return err
 	}
-	// If delete assignments = true, then all the configuration's assignments are deleted before it is destroyed.
-	if delete_assignments || d.HasChange("storage_template_version") {
-		getAssignmentsByConfigOptions := &kubernetesserviceapiv1.GetAssignmentsByConfigOptions{
-			Config: &name,
-		}
-		result, _, err := satClient.GetAssignmentsByConfig(getAssignmentsByConfigOptions)
-		if err != nil {
-			return err
-		}
-		for _, v := range result {
-			removeAssignmentsByConfigOptions := &kubernetesserviceapiv1.RemoveAssignmentOptions{
-				UUID: v.UUID,
-			}
-			_, _, err := satClient.RemoveAssignment(removeAssignmentsByConfigOptions)
-			if err != nil {
-				return fmt.Errorf("[ERROR] Failed to Delete Assignments for Storage Configuration %s - %v", name, err)
-			}
-		}
-	}
-
-	_, _, err = satClient.RemoveStorageConfiguration(&kubernetesserviceapiv1.RemoveStorageConfigurationOptions{
-		UUID: &uuid,
-	})
+	_, _, err = satClient.RemoveStorageConfiguration(removeStorageConfigurationOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error Deleting Storage Configuration %s - %v", name, err)
 	}
 	getStorageConfigurationOptions := &kubernetesserviceapiv1.GetStorageConfigurationOptions{
 		Name: &name,
 	}
+
 	// If we cannot Get the storage configuration, it is assumed to be successfully deleted.
 	_, err = waitForStorageConfigurationDeletionStatus(getStorageConfigurationOptions, meta, d)
 	if err != nil {
@@ -533,7 +520,7 @@ func storageConfigurationDeletionStatusRefreshFunc(getStorageConfigurationOption
 			return nil, "NotReady", err
 		}
 		_, response, err := satClient.GetStorageConfiguration(getStorageConfigurationOptions)
-		if response.GetStatusCode() == 500 {
+		if response.GetStatusCode() == 404 {
 			return true, "Ready", nil
 		}
 

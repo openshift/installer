@@ -16,16 +16,21 @@ type ConvertToARMResolvedDetails struct {
 	// TODO: We might be able to remove this in favor of using AzureName() everywhere in the future
 	Name string
 
+	// TODO: We could collapse all of these Resolved[X, string] into a single Resolved[any, string], if we wanted to...
+
 	// ResolvedReferences is a set of references which have been resolved to their ARM IDs.
-	ResolvedReferences Resolved[ResourceReference]
+	ResolvedReferences Resolved[ResourceReference, string]
 
 	// ResolvedSecrets is a set of secret references which have been resolved to the corresponding
 	// secret value.
-	ResolvedSecrets Resolved[SecretReference]
+	ResolvedSecrets Resolved[SecretReference, string]
+
+	// ResolvedSecretMaps is a set of secret references which have been resolved to the corresponding secrets.
+	ResolvedSecretMaps Resolved[SecretMapReference, map[string]string]
 
 	// ResolvedConfigMaps is a set of config map references which have been resolved to the corresponding
 	// config map value.
-	ResolvedConfigMaps Resolved[ConfigMapReference]
+	ResolvedConfigMaps Resolved[ConfigMapReference, string]
 }
 
 type ToARMConverter interface {

@@ -20,11 +20,12 @@ import (
 	"context"
 
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
+	runtimeclient "sigs.k8s.io/cluster-api/exp/runtime/client"
 	runtimecontrollers "sigs.k8s.io/cluster-api/exp/runtime/internal/controllers"
-	runtimeclient "sigs.k8s.io/cluster-api/internal/runtime/client"
 )
 
 // ExtensionConfigReconciler reconciles an ExtensionConfig object.
@@ -37,11 +38,11 @@ type ExtensionConfigReconciler struct {
 	WatchFilterValue string
 }
 
-func (r *ExtensionConfigReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+func (r *ExtensionConfigReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options, partialSecretCache cache.Cache) error {
 	return (&runtimecontrollers.Reconciler{
 		Client:           r.Client,
 		APIReader:        r.APIReader,
 		RuntimeClient:    r.RuntimeClient,
 		WatchFilterValue: r.WatchFilterValue,
-	}).SetupWithManager(ctx, mgr, options)
+	}).SetupWithManager(ctx, mgr, options, partialSecretCache)
 }

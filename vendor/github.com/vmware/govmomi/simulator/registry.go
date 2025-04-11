@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017-2023 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,11 +41,13 @@ var refValueMap = map[string]string{
 	"EnvironmentBrowser":             "envbrowser",
 	"HostSystem":                     "host",
 	"ResourcePool":                   "resgroup",
+	"VirtualApp":                     "resgroup-v",
 	"VirtualMachine":                 "vm",
 	"VirtualMachineSnapshot":         "snapshot",
 	"VmwareDistributedVirtualSwitch": "dvs",
 	"DistributedVirtualSwitch":       "dvs",
 	"ClusterComputeResource":         "domain-c",
+	"ComputeResource":                "domain-s",
 	"Folder":                         "group",
 	"StoragePod":                     "group-p",
 }
@@ -61,7 +63,7 @@ var Map = NewRegistry()
 type RegisterObject interface {
 	mo.Reference
 	PutObject(mo.Reference)
-	UpdateObject(mo.Reference, []types.PropertyChange)
+	UpdateObject(*Context, mo.Reference, []types.PropertyChange)
 	RemoveObject(*Context, types.ManagedObjectReference)
 }
 
@@ -76,6 +78,7 @@ type Registry struct {
 	Namespace string
 	Path      string
 	Handler   func(*Context, *Method) (mo.Reference, types.BaseMethodFault)
+	Cookie    func(*Context) string
 
 	tagManager tagManager
 }
@@ -305,7 +308,7 @@ func (r *Registry) Remove(ctx *Context, item types.ManagedObjectReference) {
 // such as any PropertyCollector instances with in-progress WaitForUpdates calls.
 // The changes are also applied to the given object via mo.ApplyPropertyChange,
 // so there is no need to set object fields directly.
-func (r *Registry) Update(obj mo.Reference, changes []types.PropertyChange) {
+func (r *Registry) Update(ctx *Context, obj mo.Reference, changes []types.PropertyChange) {
 	for i := range changes {
 		if changes[i].Op == "" {
 			changes[i].Op = types.PropertyChangeOpAssign
@@ -321,13 +324,13 @@ func (r *Registry) Update(obj mo.Reference, changes []types.PropertyChange) {
 	mo.ApplyPropertyChange(val, changes)
 
 	r.applyHandlers(func(o RegisterObject) {
-		o.UpdateObject(val, changes)
+		o.UpdateObject(ctx, val, changes)
 	})
 }
 
 func (r *Registry) AtomicUpdate(ctx *Context, obj mo.Reference, changes []types.PropertyChange) {
 	r.WithLock(ctx, obj, func() {
-		r.Update(obj, changes)
+		ctx.Update(obj, changes)
 	})
 }
 
@@ -516,6 +519,15 @@ func (r *Registry) SearchIndex() *SearchIndex {
 	return r.Get(r.content().SearchIndex.Reference()).(*SearchIndex)
 }
 
+// AlarmManager returns the AlarmManager singleton
+func (r *Registry) AlarmManager() *AlarmManager {
+	ref := r.content().AlarmManager
+	if ref == nil {
+		return nil // ESX
+	}
+	return r.Get(*ref).(*AlarmManager)
+}
+
 // EventManager returns the EventManager singleton
 func (r *Registry) EventManager() *EventManager {
 	return r.Get(r.content().EventManager.Reference()).(*EventManager)
@@ -524,6 +536,11 @@ func (r *Registry) EventManager() *EventManager {
 // FileManager returns the FileManager singleton
 func (r *Registry) FileManager() *FileManager {
 	return r.Get(r.content().FileManager.Reference()).(*FileManager)
+}
+
+// CryptoManager returns the CryptoManagerKmip singleton
+func (r *Registry) CryptoManager() *CryptoManagerKmip {
+	return r.Get(r.content().CryptoManager.Reference()).(*CryptoManagerKmip)
 }
 
 type VirtualDiskManagerInterface interface {
@@ -570,6 +587,21 @@ func (r *Registry) CustomFieldsManager() *CustomFieldsManager {
 // TenantManager returns TenantManager singleton
 func (r *Registry) TenantManager() *TenantManager {
 	return r.Get(r.content().TenantManager.Reference()).(*TenantManager)
+}
+
+// VmCompatibilityChecker returns VmCompatibilityChecker singleton
+func (r *Registry) VmCompatibilityChecker() *VmCompatibilityChecker {
+	return r.Get(r.content().VmCompatibilityChecker.Reference()).(*VmCompatibilityChecker)
+}
+
+// VmProvisioningChecker returns VmProvisioningChecker singleton
+func (r *Registry) VmProvisioningChecker() *VmProvisioningChecker {
+	return r.Get(r.content().VmProvisioningChecker.Reference()).(*VmProvisioningChecker)
+}
+
+// ExtensionManager returns the ExtensionManager singleton
+func (r *Registry) ExtensionManager() *ExtensionManager {
+	return r.Get(r.content().ExtensionManager.Reference()).(*ExtensionManager)
 }
 
 func (r *Registry) MarshalJSON() ([]byte, error) {

@@ -10,7 +10,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.17.1
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -20,7 +20,6 @@ spec:
     strategy: Webhook
     webhook:
       clientConfig:
-        caBundle: Cg==
         service:
           name: capg-webhook-service
           namespace: capg-system
@@ -140,6 +139,29 @@ spec:
                     maxLength: 16
                     pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
                     type: string
+                  internalLoadBalancer:
+                    description: InternalLoadBalancer is the configuration for an
+                      Internal Passthrough Network Load Balancer.
+                    properties:
+                      name:
+                        description: |-
+                          Name is the name of the Load Balancer. If not set a default name
+                          will be used. For an Internal Load Balancer service the default
+                          name is "api-internal".
+                        pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
+                        type: string
+                      subnet:
+                        description: |-
+                          Subnet is the name of the subnet to use for a regional Load Balancer. A subnet is
+                          required for the Load Balancer, if not defined the first configured subnet will be
+                          used.
+                        type: string
+                    type: object
+                  loadBalancerType:
+                    description: |-
+                      LoadBalancerType defines the type of Load Balancer that should be created.
+                      If not set, a Global External Proxy Load Balancer will be created by default.
+                    type: string
                 type: object
               network:
                 description: NetworkSpec encapsulates all things related to GCP network.
@@ -150,18 +172,32 @@ spec:
                       in "auto" mode. When set to false, the VPC network is created in
                       "custom" mode.
 
-
                       An auto mode VPC network starts with one subnet per region. Each
                       subnet has a predetermined range as described in Auto mode VPC
                       network IP ranges.
 
-
                       Defaults to true.
                     type: boolean
+                  hostProject:
+                    description: HostProject is the name of the project hosting the
+                      shared VPC network resources.
+                    type: string
                   loadBalancerBackendPort:
                     description: Allow for configuration of load balancer backend
                       (useful for changing apiserver port)
                     format: int32
+                    type: integer
+                  mtu:
+                    default: 1460
+                    description: |-
+                      Mtu: Maximum Transmission Unit in bytes. The minimum value for this field is
+                      1300 and the maximum value is 8896. The suggested value is 1500, which is
+                      the default MTU used on the Internet, or 8896 if you want to use Jumbo
+                      frames. If unspecified, the value defaults to 1460.
+                      More info: https://pkg.go.dev/google.golang.org/api/compute/v1#Network
+                    format: int64
+                    maximum: 8896
+                    minimum: 1300
                     type: integer
                   name:
                     description: Name is the name of the network to be used.
@@ -205,7 +241,6 @@ spec:
                             If unspecified, the purpose defaults to PRIVATE_RFC_1918.
                             The enableFlowLogs field isn't supported with the purpose field set to INTERNAL_HTTPS_LOAD_BALANCER.
 
-
                             Possible values:
                               "INTERNAL_HTTPS_LOAD_BALANCER" - Subnet reserved for Internal
                             HTTP(S) Load Balancing.
@@ -234,6 +269,25 @@ spec:
                             SecondaryCidrBlocks defines secondary CIDR ranges,
                             from which secondary IP ranges of a VM may be allocated
                           type: object
+                        stackType:
+                          default: IPV4_ONLY
+                          description: |-
+                            StackType: The stack type for the subnet. If set to IPV4_ONLY, new VMs in
+                            the subnet are assigned IPv4 addresses only. If set to IPV4_IPV6, new VMs in
+                            the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
+                            IPV4_ONLY is used. This field can be both set at resource creation time and
+                            updated using patch.
+
+                            Possible values:
+                              "IPV4_IPV6" - New VMs in this subnet can have both IPv4 and IPv6
+                            addresses.
+                              "IPV4_ONLY" - New VMs in this subnet will only be assigned IPv4 addresses.
+                              "IPV6_ONLY" - New VMs in this subnet will only be assigned IPv6 addresses.
+                          enum:
+                          - IPV4_ONLY
+                          - IPV4_IPV6
+                          - IPV6_ONLY
+                          type: string
                       type: object
                     type: array
                 type: object
@@ -291,6 +345,36 @@ spec:
                   - value
                   type: object
                 type: array
+              serviceEndpoints:
+                description: |-
+                  ServiceEndpoints contains the custom GCP Service Endpoint urls for each applicable service.
+                  For instance, the user can specify a new endpoint for the compute service.
+                properties:
+                  compute:
+                    description: ComputeServiceEndpoint is the custom endpoint url
+                      for the Compute Service
+                    format: uri
+                    pattern: ^https://
+                    type: string
+                  container:
+                    description: ContainerServiceEndpoint is the custom endpoint url
+                      for the Container Service
+                    format: uri
+                    pattern: ^https://
+                    type: string
+                  iam:
+                    description: IAMServiceEndpoint is the custom endpoint url for
+                      the IAM Service
+                    format: uri
+                    pattern: ^https://
+                    type: string
+                  resourceManager:
+                    description: ResourceManagerServiceEndpoint is the custom endpoint
+                      url for the Resource Manager Service
+                    format: uri
+                    pattern: ^https://
+                    type: string
+                type: object
             required:
             - project
             - region
@@ -307,11 +391,11 @@ spec:
                     attributes:
                       additionalProperties:
                         type: string
-                      description: Attributes is a free form map of attributes an
+                      description: attributes is a free form map of attributes an
                         infrastructure provider might use or require.
                       type: object
                     controlPlane:
-                      description: ControlPlane determines if this failure domain
+                      description: controlPlane determines if this failure domain
                         is suitable for use by control plane machines.
                       type: boolean
                   type: object
@@ -320,6 +404,26 @@ spec:
               network:
                 description: Network encapsulates GCP networking resources.
                 properties:
+                  apiInternalBackendService:
+                    description: |-
+                      APIInternalBackendService is the full reference to the backend service
+                      created for the internal Load Balancer.
+                    type: string
+                  apiInternalForwardingRule:
+                    description: |-
+                      APIInternalForwardingRule is the full reference to the forwarding rule
+                      created for the internal Load Balancer.
+                    type: string
+                  apiInternalHealthCheck:
+                    description: |-
+                      APIInternalHealthCheck is the full reference to the health check
+                      created for the internal Load Balancer.
+                    type: string
+                  apiInternalIpAddress:
+                    description: |-
+                      APIInternalAddress is the IPV4 regional address assigned to the
+                      internal Load Balancer.
+                    type: string
                   apiServerBackendService:
                     description: |-
                       APIServerBackendService is the full reference to the backend service
@@ -385,7 +489,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.17.1
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -395,7 +499,6 @@ spec:
     strategy: Webhook
     webhook:
       clientConfig:
-        caBundle: Cg==
         service:
           name: capg-webhook-service
           namespace: capg-system
@@ -453,7 +556,7 @@ spec:
                         additionalProperties:
                           type: string
                         description: |-
-                          Annotations is an unstructured key value map stored with a resource that may be
+                          annotations is an unstructured key value map stored with a resource that may be
                           set by external tools to store and retrieve arbitrary metadata. They are not
                           queryable and should be preserved when modifying objects.
                           More info: http://kubernetes.io/docs/user-guide/annotations
@@ -531,6 +634,29 @@ spec:
                             maxLength: 16
                             pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
                             type: string
+                          internalLoadBalancer:
+                            description: InternalLoadBalancer is the configuration
+                              for an Internal Passthrough Network Load Balancer.
+                            properties:
+                              name:
+                                description: |-
+                                  Name is the name of the Load Balancer. If not set a default name
+                                  will be used. For an Internal Load Balancer service the default
+                                  name is "api-internal".
+                                pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
+                                type: string
+                              subnet:
+                                description: |-
+                                  Subnet is the name of the subnet to use for a regional Load Balancer. A subnet is
+                                  required for the Load Balancer, if not defined the first configured subnet will be
+                                  used.
+                                type: string
+                            type: object
+                          loadBalancerType:
+                            description: |-
+                              LoadBalancerType defines the type of Load Balancer that should be created.
+                              If not set, a Global External Proxy Load Balancer will be created by default.
+                            type: string
                         type: object
                       network:
                         description: NetworkSpec encapsulates all things related to
@@ -542,18 +668,32 @@ spec:
                               in "auto" mode. When set to false, the VPC network is created in
                               "custom" mode.
 
-
                               An auto mode VPC network starts with one subnet per region. Each
                               subnet has a predetermined range as described in Auto mode VPC
                               network IP ranges.
 
-
                               Defaults to true.
                             type: boolean
+                          hostProject:
+                            description: HostProject is the name of the project hosting
+                              the shared VPC network resources.
+                            type: string
                           loadBalancerBackendPort:
                             description: Allow for configuration of load balancer
                               backend (useful for changing apiserver port)
                             format: int32
+                            type: integer
+                          mtu:
+                            default: 1460
+                            description: |-
+                              Mtu: Maximum Transmission Unit in bytes. The minimum value for this field is
+                              1300 and the maximum value is 8896. The suggested value is 1500, which is
+                              the default MTU used on the Internet, or 8896 if you want to use Jumbo
+                              frames. If unspecified, the value defaults to 1460.
+                              More info: https://pkg.go.dev/google.golang.org/api/compute/v1#Network
+                            format: int64
+                            maximum: 8896
+                            minimum: 1300
                             type: integer
                           name:
                             description: Name is the name of the network to be used.
@@ -597,7 +737,6 @@ spec:
                                     If unspecified, the purpose defaults to PRIVATE_RFC_1918.
                                     The enableFlowLogs field isn't supported with the purpose field set to INTERNAL_HTTPS_LOAD_BALANCER.
 
-
                                     Possible values:
                                       "INTERNAL_HTTPS_LOAD_BALANCER" - Subnet reserved for Internal
                                     HTTP(S) Load Balancing.
@@ -626,6 +765,25 @@ spec:
                                     SecondaryCidrBlocks defines secondary CIDR ranges,
                                     from which secondary IP ranges of a VM may be allocated
                                   type: object
+                                stackType:
+                                  default: IPV4_ONLY
+                                  description: |-
+                                    StackType: The stack type for the subnet. If set to IPV4_ONLY, new VMs in
+                                    the subnet are assigned IPv4 addresses only. If set to IPV4_IPV6, new VMs in
+                                    the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
+                                    IPV4_ONLY is used. This field can be both set at resource creation time and
+                                    updated using patch.
+
+                                    Possible values:
+                                      "IPV4_IPV6" - New VMs in this subnet can have both IPv4 and IPv6
+                                    addresses.
+                                      "IPV4_ONLY" - New VMs in this subnet will only be assigned IPv4 addresses.
+                                      "IPV6_ONLY" - New VMs in this subnet will only be assigned IPv6 addresses.
+                                  enum:
+                                  - IPV4_ONLY
+                                  - IPV4_IPV6
+                                  - IPV6_ONLY
+                                  type: string
                               type: object
                             type: array
                         type: object
@@ -683,6 +841,36 @@ spec:
                           - value
                           type: object
                         type: array
+                      serviceEndpoints:
+                        description: |-
+                          ServiceEndpoints contains the custom GCP Service Endpoint urls for each applicable service.
+                          For instance, the user can specify a new endpoint for the compute service.
+                        properties:
+                          compute:
+                            description: ComputeServiceEndpoint is the custom endpoint
+                              url for the Compute Service
+                            format: uri
+                            pattern: ^https://
+                            type: string
+                          container:
+                            description: ContainerServiceEndpoint is the custom endpoint
+                              url for the Container Service
+                            format: uri
+                            pattern: ^https://
+                            type: string
+                          iam:
+                            description: IAMServiceEndpoint is the custom endpoint
+                              url for the IAM Service
+                            format: uri
+                            pattern: ^https://
+                            type: string
+                          resourceManager:
+                            description: ResourceManagerServiceEndpoint is the custom
+                              endpoint url for the Resource Manager Service
+                            format: uri
+                            pattern: ^https://
+                            type: string
+                        type: object
                     required:
                     - project
                     - region
@@ -702,7 +890,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.17.1
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -712,7 +900,6 @@ spec:
     strategy: Webhook
     webhook:
       clientConfig:
-        caBundle: Cg==
         service:
           name: capg-webhook-service
           namespace: capg-system
@@ -788,6 +975,8 @@ spec:
                         1. "pd-standard" - Standard (HDD) persistent disk
                         2. "pd-ssd" - SSD persistent disk
                         3. "local-ssd" - Local SSD disk (https://cloud.google.com/compute/docs/disks/local-ssd).
+                        4. "pd-balanced" - Balanced Persistent Disk
+                        5. "hyperdisk-balanced" - Hyperdisk Balanced
                         Default is "pd-standard".
                       type: string
                     encryptionKey:
@@ -824,6 +1013,8 @@ spec:
                               maxLength: 160
                               pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
                               type: string
+                          required:
+                          - kmsKeyName
                           type: object
                         suppliedKey:
                           description: SuppliedKey provides the key used to create
@@ -903,12 +1094,20 @@ spec:
                 type: array
               confidentialCompute:
                 description: |-
-                  ConfidentialCompute Defines whether the instance should have confidential compute enabled.
-                  If enabled OnHostMaintenance is required to be set to "Terminate".
+                  ConfidentialCompute Defines whether the instance should have confidential compute enabled or not, and the confidential computing technology of choice.
+                  If Disabled, the machine will not be configured to be a confidential computing instance.
+                  If Enabled, confidential computing will be configured and AMD Secure Encrypted Virtualization will be configured by default. That is subject to change over time. If using AMD Secure Encrypted Virtualization is vital, use AMDEncryptedVirtualization explicitly instead.
+                  If AMDEncryptedVirtualization, it will configure AMD Secure Encrypted Virtualization (AMD SEV) as the confidential computing technology.
+                  If AMDEncryptedVirtualizationNestedPaging, it will configure AMD Secure Encrypted Virtualization Secure Nested Paging (AMD SEV-SNP) as the confidential computing technology.
+                  If IntelTrustedDomainExtensions, it will configure Intel TDX as the confidential computing technology.
+                  If enabled (any value other than Disabled) OnHostMaintenance is required to be set to "Terminate".
                   If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
                 enum:
                 - Enabled
                 - Disabled
+                - AMDEncryptedVirtualization
+                - AMDEncryptedVirtualizationNestedPaging
+                - IntelTrustedDomainExtensions
                 type: string
               image:
                 description: |-
@@ -946,6 +1145,15 @@ spec:
               providerID:
                 description: ProviderID is the unique identifier as specified by the
                   cloud provider.
+                type: string
+              provisioningModel:
+                description: |-
+                  ProvisioningModel defines if instance is spot.
+                  If set to "Standard" while preemptible is true, then the VM will be of type "Preemptible".
+                  If "Spot", VM type is "Spot". When unspecified, defaults to "Standard".
+                enum:
+                - Standard
+                - Spot
                 type: string
               publicIP:
                 description: |-
@@ -1011,6 +1219,8 @@ spec:
                   Supported types of root volumes:
                   1. "pd-standard" - Standard (HDD) persistent disk
                   2. "pd-ssd" - SSD persistent disk
+                  3. "pd-balanced" - Balanced Persistent Disk
+                  4. "hyperdisk-balanced" - Hyperdisk Balanced
                   Default is "pd-standard".
                 type: string
               rootDiskEncryptionKey:
@@ -1046,6 +1256,8 @@ spec:
                         maxLength: 160
                         pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
                         type: string
+                    required:
+                    - kmsKeyName
                     type: object
                   suppliedKey:
                     description: SuppliedKey provides the key used to create or manage
@@ -1161,7 +1373,6 @@ spec:
                   reconciling the Machine and will contain a more verbose string suitable
                   for logging and human consumption.
 
-
                   This field should not be set for transitive errors that a controller
                   faces that are expected to be fixed automatically over
                   time (like service outages), but instead indicate that something is
@@ -1170,7 +1381,6 @@ spec:
                   of terminal errors would be invalid combinations of settings in the
                   spec, values that are unsupported by the controller, or the
                   responsible controller itself being critically misconfigured.
-
 
                   Any transient errors that occur during the reconciliation of Machines
                   can be added as events to the Machine object and/or logged in the
@@ -1182,7 +1392,6 @@ spec:
                   reconciling the Machine and will contain a succinct value suitable
                   for machine interpretation.
 
-
                   This field should not be set for transitive errors that a controller
                   faces that are expected to be fixed automatically over
                   time (like service outages), but instead indicate that something is
@@ -1191,7 +1400,6 @@ spec:
                   of terminal errors would be invalid combinations of settings in the
                   spec, values that are unsupported by the controller, or the
                   responsible controller itself being critically misconfigured.
-
 
                   Any transient errors that occur during the reconciliation of Machines
                   can be added as events to the Machine object and/or logged in the
@@ -1216,7 +1424,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capg-system/capg-serving-cert
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.17.1
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1226,7 +1434,6 @@ spec:
     strategy: Webhook
     webhook:
       clientConfig:
-        caBundle: Cg==
         service:
           name: capg-webhook-service
           namespace: capg-system
@@ -1283,7 +1490,7 @@ spec:
                         additionalProperties:
                           type: string
                         description: |-
-                          Annotations is an unstructured key value map stored with a resource that may be
+                          annotations is an unstructured key value map stored with a resource that may be
                           set by external tools to store and retrieve arbitrary metadata. They are not
                           queryable and should be preserved when modifying objects.
                           More info: http://kubernetes.io/docs/user-guide/annotations
@@ -1315,6 +1522,8 @@ spec:
                                 1. "pd-standard" - Standard (HDD) persistent disk
                                 2. "pd-ssd" - SSD persistent disk
                                 3. "local-ssd" - Local SSD disk (https://cloud.google.com/compute/docs/disks/local-ssd).
+                                4. "pd-balanced" - Balanced Persistent Disk
+                                5. "hyperdisk-balanced" - Hyperdisk Balanced
                                 Default is "pd-standard".
                               type: string
                             encryptionKey:
@@ -1351,6 +1560,8 @@ spec:
                                       maxLength: 160
                                       pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
                                       type: string
+                                  required:
+                                  - kmsKeyName
                                   type: object
                                 suppliedKey:
                                   description: SuppliedKey provides the key used to
@@ -1432,12 +1643,20 @@ spec:
                         type: array
                       confidentialCompute:
                         description: |-
-                          ConfidentialCompute Defines whether the instance should have confidential compute enabled.
-                          If enabled OnHostMaintenance is required to be set to "Terminate".
+                          ConfidentialCompute Defines whether the instance should have confidential compute enabled or not, and the confidential computing technology of choice.
+                          If Disabled, the machine will not be configured to be a confidential computing instance.
+                          If Enabled, confidential computing will be configured and AMD Secure Encrypted Virtualization will be configured by default. That is subject to change over time. If using AMD Secure Encrypted Virtualization is vital, use AMDEncryptedVirtualization explicitly instead.
+                          If AMDEncryptedVirtualization, it will configure AMD Secure Encrypted Virtualization (AMD SEV) as the confidential computing technology.
+                          If AMDEncryptedVirtualizationNestedPaging, it will configure AMD Secure Encrypted Virtualization Secure Nested Paging (AMD SEV-SNP) as the confidential computing technology.
+                          If IntelTrustedDomainExtensions, it will configure Intel TDX as the confidential computing technology.
+                          If enabled (any value other than Disabled) OnHostMaintenance is required to be set to "Terminate".
                           If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
                         enum:
                         - Enabled
                         - Disabled
+                        - AMDEncryptedVirtualization
+                        - AMDEncryptedVirtualizationNestedPaging
+                        - IntelTrustedDomainExtensions
                         type: string
                       image:
                         description: |-
@@ -1475,6 +1694,15 @@ spec:
                       providerID:
                         description: ProviderID is the unique identifier as specified
                           by the cloud provider.
+                        type: string
+                      provisioningModel:
+                        description: |-
+                          ProvisioningModel defines if instance is spot.
+                          If set to "Standard" while preemptible is true, then the VM will be of type "Preemptible".
+                          If "Spot", VM type is "Spot". When unspecified, defaults to "Standard".
+                        enum:
+                        - Standard
+                        - Spot
                         type: string
                       publicIP:
                         description: |-
@@ -1540,6 +1768,8 @@ spec:
                           Supported types of root volumes:
                           1. "pd-standard" - Standard (HDD) persistent disk
                           2. "pd-ssd" - SSD persistent disk
+                          3. "pd-balanced" - Balanced Persistent Disk
+                          4. "hyperdisk-balanced" - Hyperdisk Balanced
                           Default is "pd-standard".
                         type: string
                       rootDiskEncryptionKey:
@@ -1576,6 +1806,8 @@ spec:
                                 maxLength: 160
                                 pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
                                 type: string
+                            required:
+                            - kmsKeyName
                             type: object
                           suppliedKey:
                             description: SuppliedKey provides the key used to create
@@ -1680,7 +1912,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.17.1
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1793,6 +2025,29 @@ spec:
                     maxLength: 16
                     pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
                     type: string
+                  internalLoadBalancer:
+                    description: InternalLoadBalancer is the configuration for an
+                      Internal Passthrough Network Load Balancer.
+                    properties:
+                      name:
+                        description: |-
+                          Name is the name of the Load Balancer. If not set a default name
+                          will be used. For an Internal Load Balancer service the default
+                          name is "api-internal".
+                        pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
+                        type: string
+                      subnet:
+                        description: |-
+                          Subnet is the name of the subnet to use for a regional Load Balancer. A subnet is
+                          required for the Load Balancer, if not defined the first configured subnet will be
+                          used.
+                        type: string
+                    type: object
+                  loadBalancerType:
+                    description: |-
+                      LoadBalancerType defines the type of Load Balancer that should be created.
+                      If not set, a Global External Proxy Load Balancer will be created by default.
+                    type: string
                 type: object
               network:
                 description: NetworkSpec encapsulates all things related to the GCP
@@ -1804,18 +2059,32 @@ spec:
                       in "auto" mode. When set to false, the VPC network is created in
                       "custom" mode.
 
-
                       An auto mode VPC network starts with one subnet per region. Each
                       subnet has a predetermined range as described in Auto mode VPC
                       network IP ranges.
 
-
                       Defaults to true.
                     type: boolean
+                  hostProject:
+                    description: HostProject is the name of the project hosting the
+                      shared VPC network resources.
+                    type: string
                   loadBalancerBackendPort:
                     description: Allow for configuration of load balancer backend
                       (useful for changing apiserver port)
                     format: int32
+                    type: integer
+                  mtu:
+                    default: 1460
+                    description: |-
+                      Mtu: Maximum Transmission Unit in bytes. The minimum value for this field is
+                      1300 and the maximum value is 8896. The suggested value is 1500, which is
+                      the default MTU used on the Internet, or 8896 if you want to use Jumbo
+                      frames. If unspecified, the value defaults to 1460.
+                      More info: https://pkg.go.dev/google.golang.org/api/compute/v1#Network
+                    format: int64
+                    maximum: 8896
+                    minimum: 1300
                     type: integer
                   name:
                     description: Name is the name of the network to be used.
@@ -1859,7 +2128,6 @@ spec:
                             If unspecified, the purpose defaults to PRIVATE_RFC_1918.
                             The enableFlowLogs field isn't supported with the purpose field set to INTERNAL_HTTPS_LOAD_BALANCER.
 
-
                             Possible values:
                               "INTERNAL_HTTPS_LOAD_BALANCER" - Subnet reserved for Internal
                             HTTP(S) Load Balancing.
@@ -1888,6 +2156,25 @@ spec:
                             SecondaryCidrBlocks defines secondary CIDR ranges,
                             from which secondary IP ranges of a VM may be allocated
                           type: object
+                        stackType:
+                          default: IPV4_ONLY
+                          description: |-
+                            StackType: The stack type for the subnet. If set to IPV4_ONLY, new VMs in
+                            the subnet are assigned IPv4 addresses only. If set to IPV4_IPV6, new VMs in
+                            the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
+                            IPV4_ONLY is used. This field can be both set at resource creation time and
+                            updated using patch.
+
+                            Possible values:
+                              "IPV4_IPV6" - New VMs in this subnet can have both IPv4 and IPv6
+                            addresses.
+                              "IPV4_ONLY" - New VMs in this subnet will only be assigned IPv4 addresses.
+                              "IPV6_ONLY" - New VMs in this subnet will only be assigned IPv6 addresses.
+                          enum:
+                          - IPV4_ONLY
+                          - IPV4_IPV6
+                          - IPV6_ONLY
+                          type: string
                       type: object
                     type: array
                 type: object
@@ -1945,6 +2232,36 @@ spec:
                   - value
                   type: object
                 type: array
+              serviceEndpoints:
+                description: |-
+                  ServiceEndpoints contains the custom GCP Service Endpoint urls for each applicable service.
+                  For instance, the user can specify a new endpoint for the compute service.
+                properties:
+                  compute:
+                    description: ComputeServiceEndpoint is the custom endpoint url
+                      for the Compute Service
+                    format: uri
+                    pattern: ^https://
+                    type: string
+                  container:
+                    description: ContainerServiceEndpoint is the custom endpoint url
+                      for the Container Service
+                    format: uri
+                    pattern: ^https://
+                    type: string
+                  iam:
+                    description: IAMServiceEndpoint is the custom endpoint url for
+                      the IAM Service
+                    format: uri
+                    pattern: ^https://
+                    type: string
+                  resourceManager:
+                    description: ResourceManagerServiceEndpoint is the custom endpoint
+                      url for the Resource Manager Service
+                    format: uri
+                    pattern: ^https://
+                    type: string
+                type: object
             required:
             - project
             - region
@@ -1975,20 +2292,20 @@ spec:
                       description: |-
                         The reason for the condition's last transition in CamelCase.
                         The specific API may choose whether or not this field is considered a guaranteed API.
-                        This field may not be empty.
+                        This field may be empty.
                       type: string
                     severity:
                       description: |-
-                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
                         understand the current situation and act accordingly.
                         The Severity field MUST be set only when Status=False.
                       type: string
                     status:
-                      description: Status of the condition, one of True, False, Unknown.
+                      description: status of the condition, one of True, False, Unknown.
                       type: string
                     type:
                       description: |-
-                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
                         Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
                         can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
@@ -2007,11 +2324,11 @@ spec:
                     attributes:
                       additionalProperties:
                         type: string
-                      description: Attributes is a free form map of attributes an
+                      description: attributes is a free form map of attributes an
                         infrastructure provider might use or require.
                       type: object
                     controlPlane:
-                      description: ControlPlane determines if this failure domain
+                      description: controlPlane determines if this failure domain
                         is suitable for use by control plane machines.
                       type: boolean
                   type: object
@@ -2020,6 +2337,26 @@ spec:
               network:
                 description: Network encapsulates GCP networking resources.
                 properties:
+                  apiInternalBackendService:
+                    description: |-
+                      APIInternalBackendService is the full reference to the backend service
+                      created for the internal Load Balancer.
+                    type: string
+                  apiInternalForwardingRule:
+                    description: |-
+                      APIInternalForwardingRule is the full reference to the forwarding rule
+                      created for the internal Load Balancer.
+                    type: string
+                  apiInternalHealthCheck:
+                    description: |-
+                      APIInternalHealthCheck is the full reference to the health check
+                      created for the internal Load Balancer.
+                    type: string
+                  apiInternalIpAddress:
+                    description: |-
+                      APIInternalAddress is the IPV4 regional address assigned to the
+                      internal Load Balancer.
+                    type: string
                   apiServerBackendService:
                     description: |-
                       APIServerBackendService is the full reference to the backend service
@@ -2083,7 +2420,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.17.1
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -2151,15 +2488,82 @@ spec:
                   If you don't specify a name then a default name will be created
                   based on the namespace and name of the managed control plane.
                 type: string
+              clusterNetwork:
+                description: ClusterNetwork define the cluster network.
+                properties:
+                  pod:
+                    description: Pod defines the range of CIDRBlock list from where
+                      it gets the IP address.
+                    properties:
+                      cidrBlock:
+                        description: |-
+                          CidrBlock is where all pods in the cluster are assigned an IP address from this range. Enter a range
+                          (in CIDR notation) within a network range, a mask, or leave this field blank to use a default range.
+                          This setting is permanent.
+                        type: string
+                    type: object
+                  privateCluster:
+                    description: PrivateCluster defines the private cluster spec.
+                    properties:
+                      controlPlaneCidrBlock:
+                        description: |-
+                          ControlPlaneCidrBlock is the IP range in CIDR notation to use for the hosted master network. This range must not
+                          overlap with any other ranges in use within the cluster's network. Honored when enabled is true.
+                        type: string
+                      controlPlaneGlobalAccess:
+                        description: ControlPlaneGlobalAccess is whenever master is
+                          accessible globally or not. Honored when enabled is true.
+                        type: boolean
+                      disableDefaultSNAT:
+                        description: DisableDefaultSNAT disables cluster default sNAT
+                          rules. Honored when enabled is true.
+                        type: boolean
+                      enablePrivateEndpoint:
+                        description: |-
+                          EnablePrivateEndpoint: Whether the master's internal IP
+                          address is used as the cluster endpoint.
+                        type: boolean
+                      enablePrivateNodes:
+                        description: |-
+                          EnablePrivateNodes: Whether nodes have internal IP
+                          addresses only. If enabled, all nodes are given only RFC
+                          1918 private addresses and communicate with the master via
+                          private networking.
+                        type: boolean
+                    type: object
+                  service:
+                    description: Service defines the range of CIDRBlock list from
+                      where it gets the IP address.
+                    properties:
+                      cidrBlock:
+                        description: |-
+                          CidrBlock is where cluster services will be assigned an IP address from this IP address range. Enter a range
+                          (in CIDR notation) within a network range, a mask, or leave this field blank to use a default range.
+                          This setting is permanent.
+                        type: string
+                    type: object
+                  useIPAliases:
+                    description: |-
+                      UseIPAliases is whether alias IPs will be used for pod IPs in the cluster. If false, routes will be used for
+                      pod IPs in the cluster.
+                    type: boolean
+                type: object
               controlPlaneVersion:
                 description: |-
                   ControlPlaneVersion represents the control plane version of the GKE cluster.
                   If not specified, the default version currently supported by GKE will be
                   used.
                 type: string
+              description:
+                description: Description describe the cluster.
+                type: string
               enableAutopilot:
                 description: EnableAutopilot indicates whether to enable autopilot
                   for this GKE cluster.
+                type: boolean
+              enableIdentityService:
+                description: EnableIdentityService indicates whether to enable Identity
+                  Service component for this GKE cluster.
                 type: boolean
               endpoint:
                 description: Endpoint represents the endpoint used to communicate
@@ -2180,6 +2584,12 @@ spec:
                 description: |-
                   Location represents the location (region or zone) in which the GKE cluster
                   will be created.
+                type: string
+              loggingService:
+                description: |-
+                  LoggingService represents configuration of logging service feature of the GKE cluster.
+                  Possible values: none, logging.googleapis.com/kubernetes (default).
+                  Value is ignored when enableAutopilot = true.
                 type: string
               master_authorized_networks_config:
                 description: |-
@@ -2209,6 +2619,12 @@ spec:
                       Public IP addresses.
                     type: boolean
                 type: object
+              monitoringService:
+                description: |-
+                  MonitoringService represents configuration of monitoring service feature of the GKE cluster.
+                  Possible values: none, monitoring.googleapis.com/kubernetes (default).
+                  Value is ignored when enableAutopilot = true.
+                type: string
               project:
                 description: Project is the name of the project to deploy the cluster
                   to.
@@ -2252,20 +2668,20 @@ spec:
                       description: |-
                         The reason for the condition's last transition in CamelCase.
                         The specific API may choose whether or not this field is considered a guaranteed API.
-                        This field may not be empty.
+                        This field may be empty.
                       type: string
                     severity:
                       description: |-
-                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
                         understand the current situation and act accordingly.
                         The Severity field MUST be set only when Status=False.
                       type: string
                     status:
-                      description: Status of the condition, one of True, False, Unknown.
+                      description: status of the condition, one of True, False, Unknown.
                       type: string
                     type:
                       description: |-
-                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
                         Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
                         can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
@@ -2303,7 +2719,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.17.1
   labels:
     cluster.x-k8s.io/provider: infrastructure-gcp
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -2615,20 +3031,20 @@ spec:
                       description: |-
                         The reason for the condition's last transition in CamelCase.
                         The specific API may choose whether or not this field is considered a guaranteed API.
-                        This field may not be empty.
+                        This field may be empty.
                       type: string
                     severity:
                       description: |-
-                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
                         understand the current situation and act accordingly.
                         The Severity field MUST be set only when Status=False.
                       type: string
                     status:
-                      description: Status of the condition, one of True, False, Unknown.
+                      description: status of the condition, one of True, False, Unknown.
                       type: string
                     type:
                       description: |-
-                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
                         Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
                         can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
@@ -2758,22 +3174,8 @@ rules:
   resources:
   - clusters
   - clusters/status
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - cluster.x-k8s.io
-  resources:
   - machinepools
   - machinepools/status
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - cluster.x-k8s.io
-  resources:
   - machines
   - machines/status
   verbs:
@@ -2784,97 +3186,9 @@ rules:
   - infrastructure.cluster.x-k8s.io
   resources:
   - gcpclusters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - gcpclusters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
   - gcpmachines
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - gcpmachines/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
   - gcpmanagedclusters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - gcpmanagedclusters/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - gcpmanagedclusters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
   - gcpmanagedcontrolplanes
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - gcpmanagedcontrolplanes/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - gcpmanagedcontrolplanes/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
   - gcpmanagedmachinepools
   verbs:
   - create
@@ -2887,16 +3201,22 @@ rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
-  - gcpmanagedmachinepools/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
+  - gcpclusters/status
+  - gcpmachines/status
+  - gcpmanagedclusters/status
+  - gcpmanagedcontrolplanes/status
   - gcpmanagedmachinepools/status
   verbs:
   - get
   - patch
+  - update
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - gcpmanagedclusters/finalizers
+  - gcpmanagedcontrolplanes/finalizers
+  - gcpmanagedmachinepools/finalizers
+  verbs:
   - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -3032,6 +3352,7 @@ spec:
           privileged: false
           runAsGroup: 65532
           runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert

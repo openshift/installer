@@ -289,6 +289,16 @@ func resourceIBMISSecurityGroupRead(d *schema.ResourceData, meta interface{}) er
 							}
 						}
 					}
+					local, ok := rule.Local.(*vpcv1.SecurityGroupRuleLocal)
+					if ok {
+						if local != nil && reflect.ValueOf(local).IsNil() == false {
+							if local.Address != nil {
+								r[isSecurityGroupRuleLocal] = local.Address
+							} else if local.CIDRBlock != nil {
+								r[isSecurityGroupRuleLocal] = local.CIDRBlock
+							}
+						}
+					}
 					rules = append(rules, r)
 				}
 			case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll":
@@ -309,6 +319,16 @@ func resourceIBMISSecurityGroupRead(d *schema.ResourceData, meta interface{}) er
 								r[isSecurityGroupRuleRemote] = remote.Address
 							} else if remote.CIDRBlock != nil {
 								r[isSecurityGroupRuleRemote] = remote.CIDRBlock
+							}
+						}
+					}
+					local, ok := rule.Local.(*vpcv1.SecurityGroupRuleLocal)
+					if ok {
+						if local != nil && reflect.ValueOf(local).IsNil() == false {
+							if local.Address != nil {
+								r[isSecurityGroupRuleLocal] = local.Address
+							} else if local.CIDRBlock != nil {
+								r[isSecurityGroupRuleLocal] = local.CIDRBlock
 							}
 						}
 					}
@@ -338,6 +358,16 @@ func resourceIBMISSecurityGroupRead(d *schema.ResourceData, meta interface{}) er
 								r[isSecurityGroupRuleRemote] = remote.Address
 							} else if remote.CIDRBlock != nil {
 								r[isSecurityGroupRuleRemote] = remote.CIDRBlock
+							}
+						}
+					}
+					local, ok := rule.Local.(*vpcv1.SecurityGroupRuleLocal)
+					if ok {
+						if local != nil && reflect.ValueOf(local).IsNil() == false {
+							if local.Address != nil {
+								r[isSecurityGroupRuleLocal] = local.Address
+							} else if local.CIDRBlock != nil {
+								r[isSecurityGroupRuleLocal] = local.CIDRBlock
 							}
 						}
 					}
@@ -546,6 +576,12 @@ func makeIBMISSecurityRuleSchema() map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Security group id: an IP address, a CIDR block, or a single security group identifier",
+		},
+
+		isSecurityGroupRuleLocal: {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Security group local ip: an IP address, a CIDR block",
 		},
 
 		isSecurityGroupRuleType: {

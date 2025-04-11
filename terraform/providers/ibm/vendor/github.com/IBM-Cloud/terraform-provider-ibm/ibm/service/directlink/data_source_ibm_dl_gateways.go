@@ -337,8 +337,11 @@ func dataSourceIBMDLGatewaysRead(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 	gateways := make([]map[string]interface{}, 0)
-	for _, instance := range listGateways.Gateways {
+	for _, gwIntf := range listGateways.Gateways {
+
 		gateway := map[string]interface{}{}
+		instance := gwIntf.(*directlinkv1.GatewayCollectionGatewaysItem)
+
 		if instance.ID != nil {
 			gateway["id"] = *instance.ID
 		}

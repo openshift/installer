@@ -20,24 +20,9 @@ package scope
 type ResourceNotFound string
 
 var (
-	// VPCLoadBalancerNotFound is the error returned when a VPC load balancer is not found.
-	VPCLoadBalancerNotFound = ResourceNotFound("cannot be found")
-
-	// VPCSubnetNotFound is the error returned when a VPC subnet is not found.
-	VPCSubnetNotFound = ResourceNotFound("Subnet not found")
-
-	// VPCNotFound is the error returned when a VPC is not found.
-	VPCNotFound = ResourceNotFound("VPC not found")
-
-	// TransitGatewayNotFound is the error returned when a transit gateway is not found.
-	TransitGatewayNotFound = ResourceNotFound("gateway was not found")
+	// ResourceNotFoundCode indicates the http status code when a resource does not exist.
+	ResourceNotFoundCode = 404
 
 	// DHCPServerNotFound is the error returned when a DHCP server is not found.
 	DHCPServerNotFound = ResourceNotFound("dhcp server does not exist")
-
-	// COSInstanceNotFound is the error returned when a COS service instance is not found.
-	COSInstanceNotFound = ResourceNotFound("COS instance unavailable")
-
-	// VPCSecurityGroupNotFound is the error returned when a VPC security group is not found.
-	VPCSecurityGroupNotFound = ResourceNotFound("Security group not found")
 )

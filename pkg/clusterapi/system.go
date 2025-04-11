@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -17,12 +18,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset/cluster/metadata"
 	azic "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	powervsic "github.com/openshift/installer/pkg/asset/installconfig/powervs"
+	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/clusterapi/internal/process"
 	"github.com/openshift/installer/pkg/clusterapi/internal/process/addr"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -47,6 +50,10 @@ const (
 	SystemStateRunning SystemState = "running"
 	// SystemStateStopped indicates the system is stopped.
 	SystemStateStopped SystemState = "stopped"
+
+	// ArtifactsDir is the directory where output (manifests, kubeconfig, etc.)
+	// related to CAPI-based installs are stored.
+	ArtifactsDir = ".clusterapi_output"
 )
 
 // Interface is the interface for the cluster-api system.
@@ -55,6 +62,7 @@ type Interface interface {
 	State() SystemState
 	Client() client.Client
 	Teardown()
+	CleanEtcd()
 }
 
 // System returns the cluster-api system.
@@ -79,8 +87,32 @@ type system struct {
 	logWriter *io.PipeWriter
 }
 
+// hostHasIPv4Address verifies if the host that launches the host control plane has IPv4 address.
+func hostHasIPv4Address() (bool, error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return false, err
+	}
+	for _, intf := range interfaces {
+		if intf.Flags&net.FlagUp == 0 || intf.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+		addrs, err := intf.Addrs()
+		if err != nil {
+			return false, err
+		}
+		for _, addr := range addrs {
+			ipNet, ok := addr.(*net.IPNet)
+			if ok && ipNet.IP.To4() != nil {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
 // Run launches the cluster-api system.
-func (c *system) Run(ctx context.Context) error {
+func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 	c.Lock()
 	defer c.Unlock()
 
@@ -90,6 +122,18 @@ func (c *system) Run(ctx context.Context) error {
 
 	// Create the local control plane.
 	lcp := &localControlPlane{}
+
+	ipv4, err := hostHasIPv4Address()
+	if err != nil {
+		return err
+	}
+	// If the host has no IPv4 available, the default value of service network should be modified to IPv6 CIDR.
+	if !ipv4 {
+		lcp.APIServerArgs = map[string]string{
+			"service-cluster-ip-range": "fd02::/112",
+		}
+	}
+
 	if err := lcp.Run(ctx); err != nil {
 		return fmt.Errorf("failed to run local control plane: %w", err)
 	}
@@ -145,7 +189,7 @@ func (c *system) Run(ctx context.Context) error {
 				"--health-addr={{suggestHealthHostPort}}",
 				"--webhook-port={{.WebhookPort}}",
 				"--webhook-cert-dir={{.WebhookCertDir}}",
-				"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true",
+				"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true,TagUnmanagedNetworkResources=false,EKS=false",
 			},
 			map[string]string{},
 		)
@@ -173,10 +217,10 @@ func (c *system) Run(ctx context.Context) error {
 				&Azure,
 				[]string{
 					"-v=2",
-					"--diagnostics-address=0",
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
 					"--webhook-cert-dir={{.WebhookCertDir}}",
+					"--feature-gates=MachinePool=false",
 				},
 				map[string]string{},
 			),
@@ -198,6 +242,8 @@ func (c *system) Run(ctx context.Context) error {
 					"AZURE_CLIENT_CERTIFICATE_PASSWORD": session.Credentials.ClientCertificatePassword,
 					"AZURE_TENANT_ID":                   session.Credentials.TenantID,
 					"AZURE_SUBSCRIPTION_ID":             session.Credentials.SubscriptionID,
+					"AZURE_RESOURCE_MANAGER_ENDPOINT":   session.Environment.ResourceManagerEndpoint,
+					"AZURE_RESOURCE_MANAGER_AUDIENCE":   session.Environment.ServiceManagementEndpoint,
 				},
 			),
 		)
@@ -231,15 +277,47 @@ func (c *system) Run(ctx context.Context) error {
 			),
 		)
 	case ibmcloud.Name:
-		// TODO
+		ibmcloudFlags := []string{
+			"--provider-id-fmt=v2",
+			"-v=2",
+			"--health-addr={{suggestHealthHostPort}}",
+			"--leader-elect=false",
+			"--webhook-port={{.WebhookPort}}",
+			"--webhook-cert-dir={{.WebhookCertDir}}",
+			fmt.Sprintf("--namespace=%s", capiutils.Namespace),
+		}
+
+		// Get the ServiceEndpoint overrides, along with Region, to pass on to CAPI, if any.
+		if serviceEndpoints := metadata.IBMCloud.GetRegionAndEndpointsFlag(); serviceEndpoints != "" {
+			ibmcloudFlags = append(ibmcloudFlags, fmt.Sprintf("--service-endpoint=%s", serviceEndpoints))
+		}
+
+		iamEndpoint := "https://iam.cloud.ibm.com"
+		// Override IAM endpoint if an override was provided.
+		if overrideURL := ibmcloud.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, metadata.IBMCloud.ServiceEndpoints); overrideURL != "" {
+			iamEndpoint = overrideURL
+		}
+
+		controllers = append(controllers,
+			c.getInfrastructureController(
+				&IBMCloud,
+				ibmcloudFlags,
+				map[string]string{
+					"IBMCLOUD_AUTH_TYPE": "iam",
+					"IBMCLOUD_APIKEY":    os.Getenv("IC_API_KEY"),
+					"IBMCLOUD_AUTH_URL":  iamEndpoint,
+					"LOGLEVEL":           "5",
+				},
+			),
+		)
 	case nutanix.Name:
 		controllers = append(controllers,
 			c.getInfrastructureController(
 				&Nutanix,
 				[]string{
-					"-metrics-bind-address=0",
-					"-health-probe-bind-address={{suggestHealthHostPort}}",
-					"-leader-elect=false",
+					"--diagnostics-address=0",
+					"--health-probe-bind-address={{suggestHealthHostPort}}",
+					"--leader-elect=false",
 				},
 				map[string]string{},
 			),
@@ -286,37 +364,35 @@ func (c *system) Run(ctx context.Context) error {
 		}
 		APIKey := bxClient.GetBxClientAPIKey()
 
-		controllers = append(controllers,
-			c.getInfrastructureController(
-				&IBMCloud,
-				[]string{
-					"--provider-id-fmt=v2",
-					"--v=5",
-					"--health-addr={{suggestHealthHostPort}}",
-					"--webhook-port={{.WebhookPort}}",
-					"--webhook-cert-dir={{.WebhookCertDir}}",
-				},
-				map[string]string{
-					"IBMCLOUD_AUTH_TYPE": "iam",
-					"IBMCLOUD_APIKEY":    APIKey,
-					"IBMCLOUD_AUTH_URL":  "https://iam.cloud.ibm.com",
-					"LOGLEVEL":           "5",
-				},
-			),
+		controller := c.getInfrastructureController(
+			&IBMCloud,
+			[]string{
+				"--provider-id-fmt=v2",
+				"--v=2",
+				"--health-addr={{suggestHealthHostPort}}",
+				"--webhook-port={{.WebhookPort}}",
+				"--webhook-cert-dir={{.WebhookCertDir}}",
+			},
+			map[string]string{
+				"IBMCLOUD_AUTH_TYPE": "iam",
+				"IBMCLOUD_APIKEY":    APIKey,
+				"IBMCLOUD_AUTH_URL":  "https://iam.cloud.ibm.com",
+				"LOGLEVEL":           "2",
+			},
 		)
+		if cfg := metadata.PowerVS; cfg != nil {
+			overrides := bxClient.MapServiceEndpointsForCAPI(cfg)
+			if len(overrides) > 0 {
+				controller.Args = append(controller.Args, fmt.Sprintf("--service-endpoint=%s:%s", cfg.Region, strings.Join(overrides, ",")))
+			}
+		}
+		controllers = append(controllers, controller)
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)
 	}
 
 	// We only show controller logs if the log level is DEBUG or above
 	c.logWriter = logrus.StandardLogger().WriterLevel(logrus.DebugLevel)
-
-	// Run the controllers.
-	for _, ct := range controllers {
-		if err := c.runController(ctx, ct); err != nil {
-			return fmt.Errorf("failed to run controller %q: %w", ct.Name, err)
-		}
-	}
 
 	// We create a wait group to wait for the controllers to stop,
 	// this waitgroup is a global, and is used by the Teardown function
@@ -326,6 +402,7 @@ func (c *system) Run(ctx context.Context) error {
 		defer c.wg.Done()
 		// Stop the controllers when the context is cancelled.
 		<-ctx.Done()
+		logrus.Info("Shutting down local Cluster API controllers...")
 		for _, ct := range controllers {
 			if ct.state != nil {
 				if err := ct.state.Stop(); err != nil {
@@ -335,12 +412,14 @@ func (c *system) Run(ctx context.Context) error {
 				logrus.Infof("Stopped controller: %s", ct.Name)
 			}
 		}
-
-		// Stop the local control plane.
-		if err := c.lcp.Stop(); err != nil {
-			logrus.Warnf("Failed to stop local Cluster API control plane: %v", err)
-		}
 	}()
+
+	// Run the controllers.
+	for _, ct := range controllers {
+		if err := c.runController(ctx, ct); err != nil {
+			return fmt.Errorf("failed to run controller %q: %w", ct.Name, err)
+		}
+	}
 
 	return nil
 }
@@ -365,13 +444,20 @@ func (c *system) Teardown() {
 	// Clean up the binary directory.
 	defer os.RemoveAll(c.lcp.BinDir)
 
+	// Clean up log file handles.
+	defer c.lcp.EtcdLog.Close()
+	defer c.lcp.APIServerLog.Close()
+
 	// Proceed to shutdown.
 	c.teardownOnce.Do(func() {
 		c.cancel()
-		logrus.Info("Shutting down local Cluster API control plane...")
 		ch := make(chan struct{})
 		go func() {
 			c.wg.Wait()
+			logrus.Info("Shutting down local Cluster API control plane...")
+			if err := c.lcp.Stop(); err != nil {
+				logrus.Warnf("Failed to stop local Cluster API control plane: %v", err)
+			}
 			close(ch)
 		}()
 		select {
@@ -383,6 +469,21 @@ func (c *system) Teardown() {
 
 		c.logWriter.Close()
 	})
+}
+
+// CleanEtcd removes the etcd database from the host.
+func (c *system) CleanEtcd() {
+	c.Lock()
+	defer c.Unlock()
+
+	if c.lcp == nil {
+		return
+	}
+
+	// Clean up the etcd directory.
+	if err := os.RemoveAll(c.lcp.EtcdDataDir); err != nil {
+		logrus.Warnf("Unable to delete local etcd data directory %s. It is safe to remove the directory manually", c.lcp.EtcdDataDir)
+	}
 }
 
 // State returns the state of the cluster-api system.
@@ -439,7 +540,7 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 	// If the provider is not empty, we extract it to the binaries directory.
 	if ct.Provider != nil {
 		if err := ct.Provider.Extract(c.lcp.BinDir); err != nil {
-			logrus.Fatal(err)
+			return fmt.Errorf("failed to extract provider %q: %w", ct.Name, err)
 		}
 	}
 
@@ -479,6 +580,13 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 		templateData := map[string]string{
 			"WebhookPort":    fmt.Sprintf("%d", wh.LocalServingPort),
 			"WebhookCertDir": wh.LocalServingCertDir,
+			"KubeconfigPath": c.lcp.KubeconfigPath,
+		}
+
+		// We cannot override KUBECONFIG, e.g., in case the user supplies a callback that needs to access the cluster,
+		// such as via credential_process in the AWS config file. The kubeconfig path is set in the controller instead.
+		if ct.Provider == nil || ct.Provider.Name != "azureaso" {
+			ct.Args = append(ct.Args, "--kubeconfig={{.KubeconfigPath}}")
 		}
 
 		args := make([]string, 0, len(ct.Args))
@@ -500,7 +608,10 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 			ct.Env = map[string]string{}
 		}
 		// Override KUBECONFIG to point to the local control plane.
-		ct.Env["KUBECONFIG"] = c.lcp.KubeconfigPath
+		// azureaso doesn't support the --kubeconfig parameter.
+		if ct.Provider != nil && ct.Provider.Name == "azureaso" {
+			ct.Env["KUBECONFIG"] = c.lcp.KubeconfigPath
+		}
 		for key, value := range ct.Env {
 			env = append(env, fmt.Sprintf("%s=%s", key, value))
 		}

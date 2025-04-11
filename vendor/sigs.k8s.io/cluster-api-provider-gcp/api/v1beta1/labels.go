@@ -111,6 +111,9 @@ const (
 
 	// APIServerRoleTagValue describes the value for the apiserver role.
 	APIServerRoleTagValue = "apiserver"
+
+	// InternalRoleTagValue describes the value for the internal role.
+	InternalRoleTagValue = "api-internal"
 )
 
 // ClusterTagKey generates the key for resources associated with a cluster.

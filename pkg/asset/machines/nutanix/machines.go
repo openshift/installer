@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
@@ -181,6 +182,7 @@ func provider(clusterID string, platform *nutanix.Platform, mpool *nutanix.Machi
 			UUID: &peUUID,
 		},
 		SystemDiskSize: resource.MustParse(fmt.Sprintf("%dGi", mpool.OSDisk.DiskSizeGiB)),
+		GPUs:           mpool.GPUs,
 	}
 
 	// FailureDomain
@@ -201,6 +203,49 @@ func provider(clusterID string, platform *nutanix.Platform, mpool *nutanix.Machi
 
 	if len(mpool.Categories) > 0 {
 		providerCfg.Categories = mpool.Categories
+	}
+
+	for _, disk := range mpool.DataDisks {
+		providerDisk := machinev1.NutanixVMDisk{
+			DiskSize:         disk.DiskSize,
+			DeviceProperties: disk.DeviceProperties,
+		}
+
+		if disk.StorageConfig != nil {
+			providerDisk.StorageConfig = &machinev1.NutanixVMStorageConfig{
+				DiskMode: disk.StorageConfig.DiskMode,
+			}
+
+			if disk.StorageConfig.StorageContainer != nil {
+				scRef := disk.StorageConfig.StorageContainer
+				if scRef.ReferenceName != "" && failureDomain != nil {
+					if scRef, err := platform.GetStorageContainerFromFailureDomain(failureDomain.Name, scRef.ReferenceName); err != nil {
+						return nil, fmt.Errorf("not found storage container with reference name %q in failureDomain %q", scRef.ReferenceName, failureDomain.Name)
+					}
+				}
+
+				providerDisk.StorageConfig.StorageContainer = &machinev1.NutanixStorageResourceIdentifier{
+					Type: machinev1.NutanixIdentifierUUID,
+					UUID: ptr.To(scRef.UUID),
+				}
+			}
+		}
+
+		if disk.DataSourceImage != nil {
+			imgRef := disk.DataSourceImage
+			if imgRef.ReferenceName != "" && failureDomain != nil {
+				if imgRef, err := platform.GetDataSourceImageFromFailureDomain(failureDomain.Name, imgRef.ReferenceName); err != nil {
+					return nil, fmt.Errorf("not found dataSource image with reference name %q in failureDomain %q", imgRef.ReferenceName, failureDomain.Name)
+				}
+			}
+
+			providerDisk.DataSource = &machinev1.NutanixResourceIdentifier{
+				Type: machinev1.NutanixIdentifierUUID,
+				UUID: ptr.To(imgRef.UUID),
+			}
+		}
+
+		providerCfg.DataDisks = append(providerCfg.DataDisks, providerDisk)
 	}
 
 	return providerCfg, nil

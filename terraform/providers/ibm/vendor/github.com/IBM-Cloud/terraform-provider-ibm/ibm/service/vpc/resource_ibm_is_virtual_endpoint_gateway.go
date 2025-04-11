@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -33,6 +34,7 @@ const (
 	isVirtualEndpointGatewayIPsResourceType           = "resource_type"
 	isVirtualEndpointGatewayHealthState               = "health_state"
 	isVirtualEndpointGatewayLifecycleState            = "lifecycle_state"
+	isVirtualEndpointGatewayLifecycleReasons          = "lifecycle_reasons"
 	isVirtualEndpointGatewayTarget                    = "target"
 	isVirtualEndpointGatewayTargetName                = "name"
 	isVirtualEndpointGatewayTargetCRN                 = "crn"
@@ -122,6 +124,32 @@ func ResourceIBMISEndpointGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Endpoint gateway lifecycle state",
 			},
+			isVirtualEndpointGatewayLifecycleReasons: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current lifecycle_state (if any).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the reason for this lifecycle state.",
+						},
+
+						"message": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the reason for this lifecycle state.",
+						},
+
+						"more_info": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about the reason for this lifecycle state.",
+						},
+					},
+				},
+			},
 			isVirtualEndpointGatewaySecurityGroups: {
 				Type:        schema.TypeSet,
 				Computed:    true,
@@ -179,6 +207,7 @@ func ResourceIBMISEndpointGateway() *schema.Resource {
 						isVirtualEndpointGatewayTargetName: {
 							Type:     schema.TypeString,
 							Optional: true,
+							Computed: true,
 							ForceNew: true,
 							AtLeastOneOf: []string{
 								targetNameFmt,
@@ -263,7 +292,7 @@ func ResourceIBMISEndpointGatewayValidator() *validate.ResourceValidator {
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
 			Required:                   true,
-			AllowedValues:              "provider_cloud_service, provider_infrastructure_service"})
+			AllowedValues:              "provider_cloud_service, provider_infrastructure_service, private_path_service_gateway"})
 
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
@@ -356,8 +385,29 @@ func resourceIBMisVirtualEndpointGatewayCreate(d *schema.ResourceData, meta inte
 
 	_, err = isWaitForVirtualEndpointGatewayAvailable(sess, d.Id(), d.Timeout(schema.TimeoutCreate))
 	if err != nil {
-		return err
+		if d.Get(targetResourceTypeFmt).(string) == "private_path_service_gateway" {
+			isAccessPending := false
+			if strings.Contains(err.Error(), "timeout while waiting for state to become") {
+				opt := sess.NewGetEndpointGatewayOptions(d.Id())
+				endpointGateway, response, err := sess.GetEndpointGateway(opt)
+				if err != nil {
+					log.Printf("Get Endpoint Gateway failed: %v", response)
+					return fmt.Errorf("[ERROR] Get Endpoint Gateway failed %s\n%s", err, response)
+				}
+				if len(endpointGateway.LifecycleReasons) > 0 {
+					if endpointGateway.LifecycleReasons[0].Code != nil && strings.Compare(*endpointGateway.LifecycleReasons[0].Code, "access_pending") == 0 {
+						isAccessPending = true
+					}
+				}
+			}
+			if !isAccessPending {
+				return err
+			}
+		} else {
+			return err
+		}
 	}
+
 	v := os.Getenv("IC_ENV_TAGS")
 	if _, ok := d.GetOk(isVirtualEndpointGatewayTags); ok || v != "" {
 		oldList, newList := d.GetChange(isVirtualEndpointGatewayTags)
@@ -385,6 +435,7 @@ func resourceIBMisVirtualEndpointGatewayUpdate(d *schema.ResourceData, meta inte
 	if err != nil {
 		return err
 	}
+
 	// create option
 	endpointGatewayPatchModel := new(vpcv1.EndpointGatewayPatch)
 	if d.HasChange(isVirtualEndpointGatewayName) {
@@ -498,6 +549,9 @@ func resourceIBMisVirtualEndpointGatewayRead(d *schema.ResourceData, meta interf
 	d.Set(isVirtualEndpointGatewayHealthState, endpointGateway.HealthState)
 	d.Set(isVirtualEndpointGatewayCreatedAt, endpointGateway.CreatedAt.String())
 	d.Set(isVirtualEndpointGatewayLifecycleState, endpointGateway.LifecycleState)
+	if err := d.Set(isVirtualEndpointGatewayLifecycleReasons, resourceEGWFlattenLifecycleReasons(endpointGateway.LifecycleReasons)); err != nil {
+		return fmt.Errorf("[ERROR] Error setting lifecycle_reasons: %s", err)
+	}
 	d.Set(isVirtualEndpointGatewayAllowDnsResolutionBinding, endpointGateway.AllowDnsResolutionBinding)
 	d.Set(isVirtualEndpointGatewayResourceType, endpointGateway.ResourceType)
 	d.Set(isVirtualEndpointGatewayCRN, endpointGateway.CRN)
@@ -505,9 +559,11 @@ func resourceIBMisVirtualEndpointGatewayRead(d *schema.ResourceData, meta interf
 	d.Set(isVirtualEndpointGatewayResourceGroupID, endpointGateway.ResourceGroup.ID)
 	d.Set(isVirtualEndpointGatewayTarget,
 		flattenEndpointGatewayTarget(endpointGateway.Target.(*vpcv1.EndpointGatewayTarget)))
+	serviceEndpoints := []string{}
 	if len(endpointGateway.ServiceEndpoints) > 0 {
-		d.Set(isVirtualEndpointGatewayServiceEndpoints, endpointGateway.ServiceEndpoints)
+		serviceEndpoints = endpointGateway.ServiceEndpoints
 	}
+	d.Set(isVirtualEndpointGatewayServiceEndpoints, serviceEndpoints)
 	d.Set(isVirtualEndpointGatewayVpcID, endpointGateway.VPC.ID)
 	if endpointGateway.SecurityGroups != nil {
 		d.Set(isVirtualEndpointGatewaySecurityGroups, flattenDataSourceSecurityGroups(endpointGateway.SecurityGroups))
@@ -555,6 +611,22 @@ func isWaitForVirtualEndpointGatewayAvailable(sess *vpcv1.VpcV1, endPointGateway
 	return stateConf.WaitForState()
 }
 
+func isWaitForVirtualEndpointGatewayForPPSGAvailable(sess *vpcv1.VpcV1, endPointGatewayId string, timeout time.Duration) (interface{}, error) {
+	log.Printf("Waiting for virtual endpoint gateway (%s) to be available.", endPointGatewayId)
+	// When the target is PPSG, pending is a valid state when the endpoint gateway binding is not permitted within the terraform configuration.
+	stateConf := &resource.StateChangeConf{
+		Pending:                   []string{"waiting", "updating"},
+		Target:                    []string{"stable", "failed", "pending", ""},
+		Refresh:                   isVirtualEndpointGatewayRefreshFunc(sess, endPointGatewayId),
+		Timeout:                   timeout,
+		Delay:                     10 * time.Second,
+		MinTimeout:                10 * time.Second,
+		ContinuousTargetOccurence: 6,
+	}
+
+	return stateConf.WaitForState()
+}
+
 func isVirtualEndpointGatewayRefreshFunc(sess *vpcv1.VpcV1, endPointGatewayId string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 
@@ -584,7 +656,40 @@ func resourceIBMisVirtualEndpointGatewayDelete(d *schema.ResourceData, meta inte
 		log.Printf("Delete Endpoint Gateway failed: %v", response)
 		return fmt.Errorf("Delete Endpoint Gateway failed : %s\n%s", err, response)
 	}
+	_, err = isWaitForEGWDelete(sess, d, d.Id())
+	if err != nil {
+		return err
+	}
 	return nil
+}
+
+func isWaitForEGWDelete(vpcClient *vpcv1.VpcV1, d *schema.ResourceData, id string) (interface{}, error) {
+
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{"deleting", "stable"},
+		Target:  []string{"done", ""},
+		Refresh: func() (interface{}, string, error) {
+			getegwoptions := &vpcv1.GetEndpointGatewayOptions{
+				ID: &id,
+			}
+			egw, response, err := vpcClient.GetEndpointGateway(getegwoptions)
+			if err != nil {
+				if response != nil && response.StatusCode == 404 {
+					return egw, "done", nil
+				}
+				return nil, "", fmt.Errorf("[ERROR] Error Getting EGW: %s\n%s", err, response)
+			}
+			if *egw.LifecycleState == "failed" {
+				return egw, *egw.LifecycleState, fmt.Errorf("[ERROR] The egw %s failed to delete: %v", d.Id(), err)
+			}
+			return egw, "deleting", nil
+		},
+		Timeout:    d.Timeout(schema.TimeoutDelete),
+		Delay:      10 * time.Second,
+		MinTimeout: 10 * time.Second,
+	}
+
+	return stateConf.WaitForState()
 }
 
 func resourceIBMisVirtualEndpointGatewayExists(d *schema.ResourceData, meta interface{}) (bool, error) {
@@ -622,9 +727,13 @@ func expandIPs(ipsSet []interface{}) (ipsOptions []vpcv1.EndpointGatewayReserved
 		}
 
 		ipsOpt := &vpcv1.EndpointGatewayReservedIP{
-			ID:     core.StringPtr(ipsID),
-			Name:   core.StringPtr(ipsName),
 			Subnet: ipsSubnetOpt,
+		}
+		if ipsID != "" {
+			ipsOpt.ID = &ipsID
+		}
+		if ipsName != "" {
+			ipsOpt.Name = &ipsName
 		}
 		ipsOptions = append(ipsOptions, ipsOpt)
 	}
@@ -662,4 +771,20 @@ func flattenEndpointGatewayTarget(target *vpcv1.EndpointGatewayTarget) interface
 	}
 	targetSlice = append(targetSlice, targetOutput)
 	return targetSlice
+}
+
+func resourceEGWFlattenLifecycleReasons(lifecycleReasons []vpcv1.EndpointGatewayLifecycleReason) (lifecycleReasonsList []map[string]interface{}) {
+	lifecycleReasonsList = make([]map[string]interface{}, 0)
+	for _, lr := range lifecycleReasons {
+		currentLR := map[string]interface{}{}
+		if lr.Code != nil && lr.Message != nil {
+			currentLR[isInstanceLifecycleReasonsCode] = *lr.Code
+			currentLR[isInstanceLifecycleReasonsMessage] = *lr.Message
+			if lr.MoreInfo != nil {
+				currentLR[isInstanceLifecycleReasonsMoreInfo] = *lr.MoreInfo
+			}
+			lifecycleReasonsList = append(lifecycleReasonsList, currentLR)
+		}
+	}
+	return lifecycleReasonsList
 }

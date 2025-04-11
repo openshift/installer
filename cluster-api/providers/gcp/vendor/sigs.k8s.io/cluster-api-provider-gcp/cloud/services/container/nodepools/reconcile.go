@@ -82,7 +82,7 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 		conditions.MarkTrue(s.scope.ConditionSetter(), infrav1exp.GKEMachinePoolCreatingCondition)
 		return ctrl.Result{RequeueAfter: reconciler.DefaultRetryTime}, nil
 	}
-	log.V(2).Info("Node pool found", "cluster", s.scope.Cluster.Name, "nodepool", nodePool.Name)
+	log.V(2).Info("Node pool found", "cluster", s.scope.Cluster.Name, "nodepool", nodePool.GetName())
 
 	instances, err := s.getInstances(ctx, nodePool)
 	if err != nil {
@@ -91,10 +91,10 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 	}
 	providerIDList := []string{}
 	for _, instance := range instances {
-		log.V(4).Info("parsing gce instance url", "url", *instance.Instance)
-		providerID, err := providerid.NewFromResourceURL(*instance.Instance)
+		log.V(4).Info("parsing gce instance url", "url", instance.GetInstance())
+		providerID, err := providerid.NewFromResourceURL(instance.GetInstance())
 		if err != nil {
-			log.Error(err, "parsing instance url", "url", *instance.Instance)
+			log.Error(err, "parsing instance url", "url", instance.GetInstance())
 			conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEMachinePoolReadyCondition, infrav1exp.GKEMachinePoolErrorReason, clusterv1.ConditionSeverityError, "")
 			return ctrl.Result{}, err
 		}
@@ -104,7 +104,7 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 	s.scope.GCPManagedMachinePool.Status.Replicas = int32(len(providerIDList))
 
 	// Update GKEManagedMachinePool conditions based on GKE node pool status
-	switch nodePool.Status {
+	switch nodePool.GetStatus() {
 	case containerpb.NodePool_PROVISIONING:
 		// node pool is creating
 		log.Info("Node pool provisioning in progress")
@@ -127,8 +127,8 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 	case containerpb.NodePool_ERROR, containerpb.NodePool_RUNNING_WITH_ERROR:
 		// node pool is in error or degraded state
 		var msg string
-		if len(nodePool.Conditions) > 0 {
-			msg = nodePool.Conditions[0].GetMessage()
+		if len(nodePool.GetConditions()) > 0 {
+			msg = nodePool.GetConditions()[0].GetMessage()
 		}
 		log.Error(errors.New("Node pool in error/degraded state"), msg, "name", s.scope.GCPManagedMachinePool.Name)
 		conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEMachinePoolReadyCondition, infrav1exp.GKEMachinePoolErrorReason, clusterv1.ConditionSeverityError, "")
@@ -140,7 +140,7 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 		conditions.MarkFalse(s.scope.ConditionSetter(), infrav1exp.GKEMachinePoolCreatingCondition, infrav1exp.GKEMachinePoolCreatedReason, clusterv1.ConditionSeverityInfo, "")
 		log.Info("Node pool running")
 	default:
-		log.Error(errors.New("Unhandled node pool status"), fmt.Sprintf("Unhandled node pool status %s", nodePool.Status), "name", s.scope.GCPManagedMachinePool.Name)
+		log.Error(errors.New("Unhandled node pool status"), fmt.Sprintf("Unhandled node pool status %s", nodePool.GetStatus()), "name", s.scope.GCPManagedMachinePool.Name)
 		return ctrl.Result{}, nil
 	}
 
@@ -149,7 +149,7 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 		log.Info("Node pool config update required", "request", nodePoolUpdateConfigRequest)
 		err = s.updateNodePoolConfig(ctx, nodePoolUpdateConfigRequest)
 		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("node pool config update (either version/labels/taints/locations/image type/network tag/linux node config or all) failed: %s", err)
+			return ctrl.Result{}, fmt.Errorf("node pool config update (either version/labels/taints/locations/image type/network tag/linux node config or all) failed: %w", err)
 		}
 		log.Info("Node pool config updating in progress")
 		s.scope.GCPManagedMachinePool.Status.Ready = true
@@ -210,7 +210,7 @@ func (s *Service) Delete(ctx context.Context) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
-	switch nodePool.Status {
+	switch nodePool.GetStatus() {
 	case containerpb.NodePool_PROVISIONING:
 		log.Info("Node pool provisioning in progress")
 		return ctrl.Result{RequeueAfter: reconciler.DefaultRetryTime}, nil
@@ -260,7 +260,7 @@ func (s *Service) describeNodePool(ctx context.Context, log *logr.Logger) (*cont
 func (s *Service) getInstances(ctx context.Context, nodePool *containerpb.NodePool) ([]*computepb.ManagedInstance, error) {
 	instances := []*computepb.ManagedInstance{}
 
-	for _, url := range nodePool.InstanceGroupUrls {
+	for _, url := range nodePool.GetInstanceGroupUrls() {
 		resourceURL, err := resourceurl.Parse(url)
 		if err != nil {
 			return nil, errors.Wrap(err, "error parsing instance group url")
@@ -357,47 +357,47 @@ func (s *Service) checkDiffAndPrepareUpdateConfig(existingNodePool *containerpb.
 	// Node version
 	if s.scope.NodePoolVersion() != nil {
 		desiredNodePoolVersion := infrav1exp.ConvertFromSdkNodeVersion(*s.scope.NodePoolVersion())
-		if desiredNodePoolVersion != infrav1exp.ConvertFromSdkNodeVersion(existingNodePool.Version) {
+		if desiredNodePoolVersion != infrav1exp.ConvertFromSdkNodeVersion(existingNodePool.GetVersion()) {
 			needUpdate = true
 			updateNodePoolRequest.NodeVersion = desiredNodePoolVersion
 		}
 	}
 	// Kubernetes labels
-	if !cmp.Equal(desiredNodePool.Config.GetLabels(), existingNodePool.Config.Labels) {
+	if !cmp.Equal(desiredNodePool.GetConfig().GetLabels(), existingNodePool.GetConfig().GetLabels()) {
 		needUpdate = true
 		updateNodePoolRequest.Labels = &containerpb.NodeLabels{
-			Labels: desiredNodePool.Config.Labels,
+			Labels: desiredNodePool.GetConfig().GetLabels(),
 		}
 	}
 	// Kubernetes taints
-	if !cmp.Equal(desiredNodePool.Config.GetTaints(), existingNodePool.Config.Taints) {
+	if !cmp.Equal(desiredNodePool.GetConfig().GetTaints(), existingNodePool.GetConfig().GetTaints()) {
 		needUpdate = true
 		updateNodePoolRequest.Taints = &containerpb.NodeTaints{
-			Taints: desiredNodePool.Config.GetTaints(),
+			Taints: desiredNodePool.GetConfig().GetTaints(),
 		}
 	}
 	// Node image type
 	// GCP API returns image type string in all uppercase, we can do a case-insensitive check here.
-	if desiredNodePool.Config.ImageType != "" && !strings.EqualFold(desiredNodePool.Config.ImageType, existingNodePool.Config.ImageType) {
+	if desiredNodePool.GetConfig().GetImageType() != "" && !strings.EqualFold(desiredNodePool.GetConfig().GetImageType(), existingNodePool.GetConfig().GetImageType()) {
 		needUpdate = true
-		updateNodePoolRequest.ImageType = desiredNodePool.Config.ImageType
+		updateNodePoolRequest.ImageType = desiredNodePool.GetConfig().GetImageType()
 	}
 	// Additional resource labels
-	if !cmp.Equal(desiredNodePool.Config.ResourceLabels, existingNodePool.Config.ResourceLabels) {
+	if !cmp.Equal(desiredNodePool.GetConfig().GetResourceLabels(), existingNodePool.GetConfig().GetResourceLabels()) {
 		needUpdate = true
 		updateNodePoolRequest.ResourceLabels = &containerpb.ResourceLabels{
-			Labels: desiredNodePool.Config.ResourceLabels,
+			Labels: desiredNodePool.GetConfig().GetResourceLabels(),
 		}
 	}
 	// Locations
 	desiredLocations := s.scope.GCPManagedMachinePool.Spec.NodeLocations
-	if desiredLocations != nil && !cmp.Equal(desiredLocations, existingNodePool.Locations) {
+	if desiredLocations != nil && !cmp.Equal(desiredLocations, existingNodePool.GetLocations()) {
 		needUpdate = true
 		updateNodePoolRequest.Locations = desiredLocations
 	}
 	// Network tags
 	desiredNetworkTags := s.scope.GCPManagedMachinePool.Spec.NodeNetwork.Tags
-	if existingNodePool.Config != nil && !cmp.Equal(desiredNetworkTags, existingNodePool.Config.Tags) {
+	if existingNodePool.GetConfig() != nil && !cmp.Equal(desiredNetworkTags, existingNodePool.GetConfig().GetTags()) {
 		needUpdate = true
 		updateNodePoolRequest.Tags = &containerpb.NetworkTags{
 			Tags: desiredNetworkTags,
@@ -405,7 +405,7 @@ func (s *Service) checkDiffAndPrepareUpdateConfig(existingNodePool *containerpb.
 	}
 	// LinuxNodeConfig
 	desiredLinuxNodeConfig := infrav1exp.ConvertToSdkLinuxNodeConfig(s.scope.GCPManagedMachinePool.Spec.LinuxNodeConfig)
-	if !cmp.Equal(desiredLinuxNodeConfig, existingNodePool.Config.LinuxNodeConfig, cmpopts.IgnoreUnexported(containerpb.LinuxNodeConfig{})) {
+	if !cmp.Equal(desiredLinuxNodeConfig, existingNodePool.GetConfig().GetLinuxNodeConfig(), cmpopts.IgnoreUnexported(containerpb.LinuxNodeConfig{})) {
 		needUpdate = true
 		updateNodePoolRequest.LinuxNodeConfig = desiredLinuxNodeConfig
 	}
@@ -421,7 +421,7 @@ func (s *Service) checkDiffAndPrepareUpdateAutoscaling(existingNodePool *contain
 		Name: s.scope.NodePoolFullName(),
 	}
 
-	if !cmp.Equal(desiredAutoscaling, existingNodePool.Autoscaling, cmpopts.IgnoreUnexported(containerpb.NodePoolAutoscaling{})) {
+	if !cmp.Equal(desiredAutoscaling, existingNodePool.GetAutoscaling(), cmpopts.IgnoreUnexported(containerpb.NodePoolAutoscaling{})) {
 		needUpdate = true
 		setNodePoolAutoscalingRequest.Autoscaling = desiredAutoscaling
 	}
@@ -432,7 +432,7 @@ func (s *Service) checkDiffAndPrepareUpdateSize(existingNodePool *containerpb.No
 	needUpdate := false
 	desiredAutoscaling := infrav1exp.ConvertToSdkAutoscaling(s.scope.GCPManagedMachinePool.Spec.Scaling)
 
-	if desiredAutoscaling.Enabled {
+	if desiredAutoscaling.GetEnabled() {
 		// Do not update node pool size if autoscaling is enabled.
 		return false, nil
 	}
@@ -443,10 +443,10 @@ func (s *Service) checkDiffAndPrepareUpdateSize(existingNodePool *containerpb.No
 
 	replicas := *s.scope.MachinePool.Spec.Replicas
 	if shared.IsRegional(s.scope.Region()) {
-		replicas /= int32(len(existingNodePool.Locations))
+		replicas /= int32(len(existingNodePool.GetLocations()))
 	}
 
-	if replicas != existingNodePool.InitialNodeCount {
+	if replicas != existingNodePool.GetInitialNodeCount() {
 		needUpdate = true
 		setNodePoolSizeRequest.NodeCount = replicas
 	}

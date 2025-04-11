@@ -6,13 +6,14 @@ package iamaccessgroup
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/iamaccessgroupsv2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"time"
 )
 
 func ResourceIBMIAMAccessGroup() *schema.Resource {
@@ -46,6 +47,11 @@ func ResourceIBMIAMAccessGroup() *schema.Resource {
 			"version": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+			"crn": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "CRN of the access group",
 			},
 		},
 	}
@@ -85,6 +91,7 @@ func resourceIBMIAMAccessGroupRead(context context.Context, d *schema.ResourceDa
 	}
 	agrpID := d.Id()
 	getAccessGroupOptions := iamAccessGroupsClient.NewGetAccessGroupOptions(agrpID)
+	getAccessGroupOptions.SetShowCRN(true)
 	var agrp *iamaccessgroupsv2.Group
 	var detailedResponse *core.DetailedResponse
 	err = resource.RetryContext(context, 5*time.Second, func() *resource.RetryError {
@@ -101,14 +108,18 @@ func resourceIBMIAMAccessGroupRead(context context.Context, d *schema.ResourceDa
 	if conns.IsResourceTimeoutError(err) {
 		agrp, detailedResponse, err = iamAccessGroupsClient.GetAccessGroup(getAccessGroupOptions)
 	}
-	if err != nil || agrp == nil || detailedResponse == nil {
+	if err != nil || agrp == nil {
+		if detailedResponse != nil && detailedResponse.StatusCode == 404 {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("[ERROR] Error retrieving access group: %s. API Response: %s", err, detailedResponse))
 	}
 	version := detailedResponse.GetHeaders().Get("etag")
 	d.Set("name", agrp.Name)
 	d.Set("description", agrp.Description)
 	d.Set("version", version)
-
+	d.Set("crn", agrp.CRN)
 	return nil
 }
 

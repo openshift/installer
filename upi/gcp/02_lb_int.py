@@ -26,7 +26,7 @@ def GenerateConfig(context):
             'type': "HTTPS"
         }
     }, {
-        'name': context.properties['infra_id'] + '-api-internal-backend-service',
+        'name': context.properties['infra_id'] + '-api-internal',
         'type': 'compute.v1.regionBackendService',
         'properties': {
             'backends': backends,
@@ -40,7 +40,7 @@ def GenerateConfig(context):
         'name': context.properties['infra_id'] + '-api-internal-forwarding-rule',
         'type': 'compute.v1.forwardingRule',
         'properties': {
-            'backendService': '$(ref.' + context.properties['infra_id'] + '-api-internal-backend-service.selfLink)',
+            'backendService': '$(ref.' + context.properties['infra_id'] + '-api-internal.selfLink)',
             'IPAddress': '$(ref.' + context.properties['infra_id'] + '-cluster-ip.selfLink)',
             'loadBalancingScheme': 'INTERNAL',
             'ports': ['6443','22623'],

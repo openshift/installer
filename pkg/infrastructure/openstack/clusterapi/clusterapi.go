@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -31,6 +32,10 @@ func (p Provider) Name() string {
 	return openstack.Name
 }
 
+// PublicGatherEndpoint indicates that machine ready checks should NOT wait for an ExternalIP
+// in the status when declaring machines ready.
+func (Provider) PublicGatherEndpoint() clusterapi.GatherEndpoint { return clusterapi.InternalIP }
+
 var _ clusterapi.PreProvider = Provider{}
 
 // PreProvision tags the VIP ports, and creates the security groups and the
@@ -39,7 +44,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	var (
 		infraID          = in.InfraID
 		installConfig    = in.InstallConfig
-		rhcosImage       = string(*in.RhcosImage)
+		rhcosImage       = in.RhcosImage.ControlPlane
 		manifestsAsset   = in.ManifestsAsset
 		machineManifests = in.MachineManifests
 		workersAsset     = in.WorkersAsset
@@ -121,13 +126,13 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("failed to get OSPCluster: %w", err)
 	}
 
-	return infraready.FloatingIPs(ospCluster, installConfig, infraID)
+	return infraready.FloatingIPs(ctx, ospCluster, installConfig, infraID)
 }
 
 var _ clusterapi.IgnitionProvider = Provider{}
 
 // Ignition uploads the bootstrap machine's Ignition file to OpenStack.
-func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, error) {
+func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
 	logrus.Debugf("Uploading the bootstrap machine's Ignition file to OpenStack")
 	var (
 		bootstrapIgnData = in.BootstrapIgnData
@@ -135,7 +140,16 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		installConfig    = in.InstallConfig
 	)
 
-	return preprovision.UploadIgnitionAndBuildShim(ctx, installConfig.Config.Platform.OpenStack.Cloud, infraID, installConfig.Config.Proxy, bootstrapIgnData)
+	ignShim, err := preprovision.UploadIgnitionAndBuildShim(ctx, installConfig.Config.Platform.OpenStack.Cloud, infraID, installConfig.Config.Proxy, bootstrapIgnData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload and build ignition shim: %w", err)
+	}
+
+	ignSecrets := []*corev1.Secret{
+		clusterapi.IgnitionSecret(ignShim, in.InfraID, "bootstrap"),
+		clusterapi.IgnitionSecret(in.MasterIgnData, in.InfraID, "master"),
+	}
+	return ignSecrets, nil
 }
 
 var _ clusterapi.PostProvider = Provider{}

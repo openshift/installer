@@ -15,7 +15,8 @@ import (
 
 func DataSourceIBMApiGateway() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceIBMApiGatewayRead,
+		Read:               dataSourceIBMApiGatewayRead,
+		DeprecationMessage: "This service is deprecated.",
 		Schema: map[string]*schema.Schema{
 			"service_instance_crn": {
 				Type:        schema.TypeString,

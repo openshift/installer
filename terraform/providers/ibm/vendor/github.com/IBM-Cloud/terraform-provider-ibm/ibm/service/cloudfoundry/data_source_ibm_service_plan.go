@@ -27,7 +27,9 @@ func DataSourceIBMServicePlan() *schema.Resource {
 				Required:    true,
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
+
 }
 
 func dataSourceIBMServicePlanRead(d *schema.ResourceData, meta interface{}) error {

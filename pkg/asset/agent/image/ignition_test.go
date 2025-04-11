@@ -1,11 +1,13 @@
 package image
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
 	"os/exec"
 	"path"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -90,10 +92,11 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	}
 	clusterName := "test-agent-cluster-install.test"
 
-	privateKey := "-----BEGIN EC PUBLIC KEY-----\nMFkwEwYHKoAiDHV4tg==\n-----END EC PUBLIC KEY-----\n"
-	publicKey := "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIOSCfDNmx0qe6dncV4tg==\n-----END EC PRIVATE KEY-----\n"
-
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, infraEnvID, osImage, proxy, "minimal-iso", privateKey, publicKey, "")
+	publicKey := "-----BEGIN EC PUBLIC KEY-----\nMHcCAQEEIOSCfDNmx0qe6dncV4tg==\n-----END EC PUBLIC KEY-----\n"
+	agentAuthToken := "agentAuthToken"
+	userAuthToken := "userAuthToken"
+	watcherAuthToken := "watcherAuthToken"
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, agentAuthToken, userAuthToken, watcherAuthToken, "", "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
@@ -107,15 +110,21 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, infraEnvID, templateData.InfraEnvID)
 	assert.Equal(t, osImage, templateData.OSImage)
 	assert.Equal(t, proxy, templateData.Proxy)
-	assert.Equal(t, privateKey, templateData.PrivateKeyPEM)
 	assert.Equal(t, publicKey, templateData.PublicKeyPEM)
+	assert.Equal(t, gencrypto.AuthType, templateData.AuthType)
+	assert.Equal(t, agentAuthToken, templateData.AgentAuthToken)
+	assert.Equal(t, userAuthToken, templateData.UserAuthToken)
+	assert.Equal(t, watcherAuthToken, templateData.WatcherAuthToken)
+
 }
 
 func TestIgnition_getRendezvousHostEnv(t *testing.T) {
 	nodeZeroIP := "2001:db8::dead:beef"
-	rendezvousHostEnv := getRendezvousHostEnv("http", nodeZeroIP, workflow.AgentWorkflowTypeInstall)
+	agentAuthtoken := "agentAuthtoken"
+	userAuthToken := "userAuthToken"
+	rendezvousHostEnv := getRendezvousHostEnv("http", nodeZeroIP, agentAuthtoken, userAuthToken, workflow.AgentWorkflowTypeInstall)
 	assert.Equal(t,
-		"NODE_ZERO_IP="+nodeZeroIP+"\nSERVICE_BASE_URL=http://["+nodeZeroIP+"]:8090/\nIMAGE_SERVICE_BASE_URL=http://["+nodeZeroIP+"]:8888/\nWORKFLOW_TYPE=install\n",
+		"NODE_ZERO_IP="+nodeZeroIP+"\nSERVICE_BASE_URL=http://["+nodeZeroIP+"]:8090/\nIMAGE_SERVICE_BASE_URL=http://["+nodeZeroIP+"]:8888/\nPULL_SECRET_TOKEN="+agentAuthtoken+"\nUSER_AUTH_TOKEN="+userAuthToken+"\nWORKFLOW_TYPE=install\n",
 		rendezvousHostEnv)
 }
 
@@ -354,6 +363,7 @@ func generatedFiles(otherFiles ...string) []string {
 		// "/etc/assisted/manifests/infraenv.yaml",
 		"/etc/assisted/network/host0/eth0.nmconnection",
 		"/etc/assisted/network/host0/mac_interface.ini",
+		"/usr/local/bin/oci-eval-user-data.sh",
 		"/usr/local/bin/pre-network-manager-config.sh",
 		"/opt/agent/tls/kubeadmin-password.hash"}
 	files = append(files, otherFiles...)
@@ -392,58 +402,64 @@ func commonFiles() []string {
 		"/usr/local/bin/load-config-iso.sh",
 		"/etc/udev/rules.d/80-agent-config-image.rules",
 		"/usr/local/bin/add-node.sh",
+		"/usr/local/bin/agent-auth-token-status.sh",
+		"/usr/local/bin/common.sh",
+	}
+}
+
+func setupEmbeddedResources(t *testing.T) func() {
+	t.Helper()
+	workingDirectory, err := os.Getwd()
+	assert.NoError(t, err)
+	assert.NoError(t, os.Chdir(path.Join(workingDirectory, "../../../../data")))
+	return func() {
+		assert.NoError(t, os.Chdir(workingDirectory))
 	}
 }
 
 func TestIgnition_Generate(t *testing.T) {
 	skipTestIfnmstatectlIsMissing(t)
 
-	// This patch currently allows testing the Ignition asset using the embedded resources.
-	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
-	workingDirectory, err := os.Getwd()
-	assert.NoError(t, err)
-	err = os.Chdir(path.Join(workingDirectory, "../../../../data"))
-	assert.NoError(t, err)
-
-	secretDataBytes, err := base64.StdEncoding.DecodeString("c3VwZXItc2VjcmV0Cg==")
-	assert.NoError(t, err)
+	defer setupEmbeddedResources(t)()
 
 	cases := []struct {
 		name                string
-		overrideDeps        []asset.Asset
+		overrideAssets      map[reflect.Type]func(t *testing.T, dep asset.Asset) asset.Asset
 		expectedError       string
 		expectedFiles       []string
 		expectedFileContent map[string]string
 		serviceEnabledMap   map[string]bool
 	}{
 		{
-			name: "no-extra-manifests",
+			name: "default",
 			serviceEnabledMap: map[string]bool{
 				"pre-network-manager-config.service": true,
 				"agent-check-config-image.service":   false},
 			expectedFiles: generatedFiles(),
 		},
 		{
-			name: "default",
-			overrideDeps: []asset.Asset{
-				&manifests.ExtraManifests{
-					FileList: []*asset.File{
-						{
-							Filename: "openshift/test-configmap.yaml",
-							Data: []byte(`
+			name: "with extra manifests",
+			overrideAssets: map[reflect.Type]func(t *testing.T, dep asset.Asset) asset.Asset{
+				reflect.TypeOf(manifests.ExtraManifests{}): func(t *testing.T, dep asset.Asset) asset.Asset {
+					t.Helper()
+					return &manifests.ExtraManifests{
+						FileList: []*asset.File{
+							{
+								Filename: "openshift/test-configmap.yaml",
+								Data: []byte(`
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: agent-test-1
-
+    name: agent-test-1
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: agent-test-2`),
+    name: agent-test-2`),
+							},
 						},
-					},
+					}
 				},
 			},
 			expectedFiles: generatedFiles("/etc/assisted/extra-manifests/test-configmap-0.yaml", "/etc/assisted/extra-manifests/test-configmap-1.yaml"),
@@ -464,55 +480,60 @@ metadata:
 		},
 		{
 			name: "no nmstateconfigs defined, pre-network-manager-config.service should not be enabled",
-			overrideDeps: []asset.Asset{
-				&manifests.AgentManifests{
-					InfraEnv: &aiv1beta1.InfraEnv{
-						Spec: aiv1beta1.InfraEnvSpec{
-							SSHAuthorizedKey: "my-ssh-key",
-						},
-					},
-					ClusterImageSet: &hivev1.ClusterImageSet{
-						Spec: hivev1.ClusterImageSetSpec{
-							ReleaseImage: "registry.ci.openshift.org/origin/release:4.11",
-						},
-					},
-					ClusterDeployment: &hivev1.ClusterDeployment{
-						Spec: hivev1.ClusterDeploymentSpec{
-							ClusterName: "ostest",
-							BaseDomain:  "ostest",
-						},
-					},
-					PullSecret: &v1.Secret{
-						Data: map[string][]byte{
-							".dockerconfigjson": secretDataBytes,
-						},
-					},
-					AgentClusterInstall: &hiveext.AgentClusterInstall{
-						Spec: hiveext.AgentClusterInstallSpec{
-							APIVIP: "192.168.111.5",
-							ProvisionRequirements: hiveext.ProvisionRequirements{
-								ControlPlaneAgents: 3,
-								WorkerAgents:       5,
-							},
-						},
-					},
+			overrideAssets: map[reflect.Type]func(t *testing.T, dep asset.Asset) asset.Asset{
+				reflect.TypeOf(manifests.AgentManifests{}): func(t *testing.T, dep asset.Asset) asset.Asset {
+					t.Helper()
+					am, ok := dep.(*manifests.AgentManifests)
+					assert.True(t, ok)
+					// remove nmstate configuration
+					am.NMStateConfigs = []*aiv1beta1.NMStateConfig{}
+					am.StaticNetworkConfigs = []*models.HostStaticNetworkConfig{}
+					return am
 				},
 			},
 			serviceEnabledMap: map[string]bool{
 				"pre-network-manager-config.service": false},
+		},
+		{
+			name: "with additional ntp sources",
+			overrideAssets: map[reflect.Type]func(t *testing.T, dep asset.Asset) asset.Asset{
+				reflect.TypeOf(manifests.AgentManifests{}): func(t *testing.T, dep asset.Asset) asset.Asset {
+					t.Helper()
+					am, ok := dep.(*manifests.AgentManifests)
+					assert.True(t, ok)
+					am.InfraEnv.Spec.AdditionalNTPSources = []string{"0.clock.ntp.org", "1.clock.ntp.org"}
+					return am
+				},
+			},
+			expectedFiles: generatedFiles("/etc/chrony.conf"),
+			expectedFileContent: map[string]string{
+				"/etc/chrony.conf": `server 0.clock.ntp.org iburst
+server 1.clock.ntp.org iburst
+makestep 1.0 3
+rtcsync
+logdir /var/log/chrony`,
+			},
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			deps := buildIgnitionAssetDefaultDependencies(t)
 
-			overrideDeps(deps, tc.overrideDeps)
+			if tc.overrideAssets != nil {
+				for i, dep := range deps {
+					overrideFunc, found := tc.overrideAssets[reflect.TypeOf(dep).Elem()]
+					if !found {
+						continue
+					}
+					deps[i] = overrideFunc(t, dep)
+				}
+			}
 
 			parents := asset.Parents{}
 			parents.Add(deps...)
 
 			ignitionAsset := &Ignition{}
-			err := ignitionAsset.Generate(parents)
+			err := ignitionAsset.Generate(context.Background(), parents)
 
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())
@@ -700,7 +721,7 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 				MirrorConfig: []mirror.RegistriesConfig{
 					{
 						Location: "some.registry.org/release",
-						Mirror:   "some.mirror.org",
+						Mirrors:  []string{"some.mirror.org"},
 					},
 				},
 			},
@@ -717,7 +738,7 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 				MirrorConfig: []mirror.RegistriesConfig{
 					{
 						Location: "registry.ci.openshift.org/ocp/release",
-						Mirror:   "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+						Mirrors:  []string{"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"},
 					},
 				},
 			},
@@ -734,15 +755,38 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 				MirrorConfig: []mirror.RegistriesConfig{
 					{
 						Location: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
-						Mirror:   "localhost:5000/openshift4/openshift/release",
+						Mirrors:  []string{"localhost:5000/openshift4/openshift/release"},
 					},
 					{
 						Location: "quay.io/openshift-release-dev/ocp-release",
-						Mirror:   "localhost:5000/openshift-release-dev/ocp-release",
+						Mirrors:  []string{"localhost:5000/openshift-release-dev/ocp-release"},
 					},
 				},
 			},
 			expectedMirror: "localhost:5000/openshift-release-dev/ocp-release@sha256:300bce8246cf880e792e106607925de0a404484637627edf5f517375517d54a4",
+		},
+		{
+			name:    "mirror-match-multiple-mirrors",
+			release: "registry.ci.openshift.org/ocp/release:4.18.0-0.nightly-foo",
+			registriesConf: mirror.RegistriesConf{
+				File: &asset.File{
+					Filename: "registries.conf",
+					Data:     []byte(""),
+				},
+				MirrorConfig: []mirror.RegistriesConfig{
+					{
+						Location: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+						Mirrors: []string{"virthost.ostest.test.metalkube.org:5000/localimages/ocp-release",
+							"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"},
+					},
+					{
+						Location: "registry.ci.openshift.org/ocp/release",
+						Mirrors: []string{"virthost.ostest.test.metalkube.org:5000/localimages/ocp-release",
+							"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"},
+					},
+				},
+			},
+			expectedMirror: "virthost.ostest.test.metalkube.org:5000/localimages/ocp-release:4.18.0-0.nightly-foo",
 		},
 	}
 	for _, tc := range cases {
@@ -777,7 +821,7 @@ func TestIgnition_getPublicContainerRegistries(t *testing.T) {
 				MirrorConfig: []mirror.RegistriesConfig{
 					{
 						Location: "some.registry.org/release",
-						Mirror:   "some.mirror.org",
+						Mirrors:  []string{"some.mirror.org"},
 					},
 				},
 			},
@@ -793,11 +837,11 @@ func TestIgnition_getPublicContainerRegistries(t *testing.T) {
 				MirrorConfig: []mirror.RegistriesConfig{
 					{
 						Location: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
-						Mirror:   "localhost:5000/openshift4/openshift/release",
+						Mirrors:  []string{"localhost:5000/openshift4/openshift/release"},
 					},
 					{
 						Location: "registry.ci.openshift.org/ocp/release",
-						Mirror:   "localhost:5000/openshift-release-dev/ocp-release",
+						Mirrors:  []string{"localhost:5000/openshift-release-dev/ocp-release"},
 					},
 				},
 			},
@@ -813,11 +857,11 @@ func TestIgnition_getPublicContainerRegistries(t *testing.T) {
 				MirrorConfig: []mirror.RegistriesConfig{
 					{
 						Location: "registry.ci.openshift.org/ocp-v4.0-art-dev",
-						Mirror:   "localhost:5000/openshift4/openshift/release",
+						Mirrors:  []string{"localhost:5000/openshift4/openshift/release"},
 					},
 					{
 						Location: "registry.ci.openshift.org/ocp/release",
-						Mirror:   "localhost:5000/openshift-release-dev/ocp-release",
+						Mirrors:  []string{"localhost:5000/openshift-release-dev/ocp-release"},
 					},
 				},
 			},

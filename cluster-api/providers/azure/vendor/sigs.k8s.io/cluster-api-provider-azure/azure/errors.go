@@ -24,23 +24,13 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/Azure/go-autorest/autorest"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 
 // ResourceNotFound parses an error to check if its status code is Not Found (404).
 func ResourceNotFound(err error) bool {
-	return hasStatusCode(err, http.StatusNotFound)
-}
-
-// hasStatusCode returns true if an error is a DetailedError or ResponseError with a matching status code.
-func hasStatusCode(err error, statusCode int) bool {
-	derr := autorest.DetailedError{} // azure-sdk-for-go v1
-	if errors.As(err, &derr) {
-		return derr.StatusCode == statusCode
-	}
-	var rerr *azcore.ResponseError // azure-sdk-for-go v2
-	return errors.As(err, &rerr) && rerr.StatusCode == statusCode
+	var rerr *azcore.ResponseError
+	return errors.As(err, &rerr) && rerr.StatusCode == http.StatusNotFound
 }
 
 // VMDeletedError is returned when a virtual machine is deleted outside of capz.

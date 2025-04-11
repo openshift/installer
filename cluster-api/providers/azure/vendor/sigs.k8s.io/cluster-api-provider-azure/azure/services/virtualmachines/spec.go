@@ -33,30 +33,32 @@ import (
 
 // VMSpec defines the specification for a Virtual Machine.
 type VMSpec struct {
-	Name                   string
-	ResourceGroup          string
-	Location               string
-	ExtendedLocation       *infrav1.ExtendedLocationSpec
-	ClusterName            string
-	Role                   string
-	NICIDs                 []string
-	SSHKeyData             string
-	Size                   string
-	AvailabilitySetID      string
-	Zone                   string
-	Identity               infrav1.VMIdentity
-	OSDisk                 infrav1.OSDisk
-	DataDisks              []infrav1.DataDisk
-	UserAssignedIdentities []infrav1.UserAssignedIdentity
-	SpotVMOptions          *infrav1.SpotVMOptions
-	SecurityProfile        *infrav1.SecurityProfile
-	AdditionalTags         infrav1.Tags
-	AdditionalCapabilities *infrav1.AdditionalCapabilities
-	DiagnosticsProfile     *infrav1.Diagnostics
-	SKU                    resourceskus.SKU
-	Image                  *infrav1.Image
-	BootstrapData          string
-	ProviderID             string
+	Name                       string
+	ResourceGroup              string
+	Location                   string
+	ExtendedLocation           *infrav1.ExtendedLocationSpec
+	ClusterName                string
+	Role                       string
+	NICIDs                     []string
+	SSHKeyData                 string
+	Size                       string
+	AvailabilitySetID          string
+	Zone                       string
+	Identity                   infrav1.VMIdentity
+	OSDisk                     infrav1.OSDisk
+	DataDisks                  []infrav1.DataDisk
+	UserAssignedIdentities     []infrav1.UserAssignedIdentity
+	SpotVMOptions              *infrav1.SpotVMOptions
+	SecurityProfile            *infrav1.SecurityProfile
+	AdditionalTags             infrav1.Tags
+	AdditionalCapabilities     *infrav1.AdditionalCapabilities
+	DiagnosticsProfile         *infrav1.Diagnostics
+	DisableExtensionOperations bool
+	CapacityReservationGroupID string
+	SKU                        resourceskus.SKU
+	Image                      *infrav1.Image
+	BootstrapData              string
+	ProviderID                 string
 }
 
 // ResourceName returns the name of the virtual machine.
@@ -137,10 +139,11 @@ func (s *VMSpec) Parameters(ctx context.Context, existing interface{}) (params i
 			NetworkProfile: &armcompute.NetworkProfile{
 				NetworkInterfaces: s.generateNICRefs(),
 			},
-			Priority:           priority,
-			EvictionPolicy:     evictionPolicy,
-			BillingProfile:     billingProfile,
-			DiagnosticsProfile: converters.GetDiagnosticsProfile(s.DiagnosticsProfile),
+			Priority:            priority,
+			EvictionPolicy:      evictionPolicy,
+			BillingProfile:      billingProfile,
+			DiagnosticsProfile:  converters.GetDiagnosticsProfile(s.DiagnosticsProfile),
+			CapacityReservation: s.getCapacityReservationProfile(),
 		},
 		Identity: identity,
 		Zones:    s.getZones(),
@@ -180,6 +183,7 @@ func (s *VMSpec) generateStorageProfile() (*armcompute.StorageProfile, error) {
 	if !MemoryCapability {
 		return nil, azure.WithTerminalError(errors.New("VM memory should be bigger or equal to at least 2Gi"))
 	}
+
 	// enable ephemeral OS
 	if s.OSDisk.DiffDiskSettings != nil {
 		if !s.SKU.HasCapability(resourceskus.EphemeralOSDisk) {
@@ -188,6 +192,10 @@ func (s *VMSpec) generateStorageProfile() (*armcompute.StorageProfile, error) {
 
 		storageProfile.OSDisk.DiffDiskSettings = &armcompute.DiffDiskSettings{
 			Option: ptr.To(armcompute.DiffDiskOptions(s.OSDisk.DiffDiskSettings.Option)),
+		}
+
+		if s.OSDisk.DiffDiskSettings.Placement != nil {
+			storageProfile.OSDisk.DiffDiskSettings.Placement = ptr.To(armcompute.DiffDiskPlacement(*s.OSDisk.DiffDiskSettings.Placement))
 		}
 	}
 
@@ -261,9 +269,10 @@ func (s *VMSpec) generateOSProfile() (*armcompute.OSProfile, error) {
 	}
 
 	osProfile := &armcompute.OSProfile{
-		ComputerName:  ptr.To(s.Name),
-		AdminUsername: ptr.To(azure.DefaultUserName),
-		CustomData:    ptr.To(s.BootstrapData),
+		ComputerName:             ptr.To(s.Name),
+		AdminUsername:            ptr.To(azure.DefaultUserName),
+		CustomData:               ptr.To(s.BootstrapData),
+		AllowExtensionOperations: ptr.To(!s.DisableExtensionOperations),
 	}
 
 	switch s.OSDisk.OSType {
@@ -437,4 +446,14 @@ func (s *VMSpec) getZones() []*string {
 		zones = []*string{ptr.To(s.Zone)}
 	}
 	return zones
+}
+
+func (s *VMSpec) getCapacityReservationProfile() *armcompute.CapacityReservationProfile {
+	var crf *armcompute.CapacityReservationProfile
+	if s.CapacityReservationGroupID != "" {
+		crf = &armcompute.CapacityReservationProfile{
+			CapacityReservationGroup: &armcompute.SubResource{ID: &s.CapacityReservationGroupID},
+		}
+	}
+	return crf
 }

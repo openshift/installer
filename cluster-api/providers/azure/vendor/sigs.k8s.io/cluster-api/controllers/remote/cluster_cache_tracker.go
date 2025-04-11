@@ -67,8 +67,14 @@ var ErrClusterLocked = errors.New("cluster is locked already")
 
 // ClusterCacheTracker manages client caches for workload clusters.
 type ClusterCacheTracker struct {
-	log                   logr.Logger
+	log logr.Logger
+
+	cacheByObject   map[client.Object]cache.ByObject
+	cacheSyncPeriod *time.Duration
+
 	clientUncachedObjects []client.Object
+	clientQPS             float32
+	clientBurst           int
 
 	client client.Client
 
@@ -112,11 +118,28 @@ type ClusterCacheTrackerOptions struct {
 	// Defaults to a no-op logger if it's not set.
 	Log *logr.Logger
 
+	// CacheByObject restricts the cache's ListWatch to the desired fields per GVK at the specified object.
+	CacheByObject map[client.Object]cache.ByObject
+
+	// CacheSyncPeriod is the syncPeriod used by the remote cluster cache.
+	CacheSyncPeriod *time.Duration
+
 	// ClientUncachedObjects instructs the Client to never cache the following objects,
 	// it'll instead query the API server directly.
 	// Defaults to never caching ConfigMap and Secret if not set.
 	ClientUncachedObjects []client.Object
-	Indexes               []Index
+
+	// ClientQPS is the maximum queries per second from the controller client
+	// to the Kubernetes API server of workload clusters.
+	// Defaults to 20.
+	ClientQPS float32
+
+	// ClientBurst is the maximum number of queries that should be allowed in
+	// one burst from the controller client to the Kubernetes API server of workload clusters.
+	// Default 30.
+	ClientBurst int
+
+	Indexes []Index
 
 	// ControllerName is the name of the controller.
 	// This is used to calculate the user agent string.
@@ -138,6 +161,13 @@ func setDefaultOptions(opts *ClusterCacheTrackerOptions) {
 			&corev1.ConfigMap{},
 			&corev1.Secret{},
 		}
+	}
+
+	if opts.ClientQPS == 0 {
+		opts.ClientQPS = 20
+	}
+	if opts.ClientBurst == 0 {
+		opts.ClientBurst = 30
 	}
 }
 
@@ -170,6 +200,10 @@ func NewClusterCacheTracker(manager ctrl.Manager, options ClusterCacheTrackerOpt
 		controllerPodMetadata: controllerPodMetadata,
 		log:                   *options.Log,
 		clientUncachedObjects: options.ClientUncachedObjects,
+		cacheByObject:         options.CacheByObject,
+		cacheSyncPeriod:       options.CacheSyncPeriod,
+		clientQPS:             options.ClientQPS,
+		clientBurst:           options.ClientBurst,
 		client:                manager.GetClient(),
 		secretCachingClient:   options.SecretCachingClient,
 		scheme:                manager.GetScheme(),
@@ -181,19 +215,24 @@ func NewClusterCacheTracker(manager ctrl.Manager, options ClusterCacheTrackerOpt
 
 // GetClient returns a cached client for the given cluster.
 func (t *ClusterCacheTracker) GetClient(ctx context.Context, cluster client.ObjectKey) (client.Client, error) {
-	accessor, err := t.getClusterAccessor(ctx, cluster, t.indexes...)
+	accessor, err := t.getClusterAccessor(ctx, cluster)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to get client")
 	}
 
 	return accessor.client, nil
 }
 
+// GetReader returns a cached read-only client for the given cluster.
+func (t *ClusterCacheTracker) GetReader(ctx context.Context, cluster client.ObjectKey) (client.Reader, error) {
+	return t.GetClient(ctx, cluster)
+}
+
 // GetRESTConfig returns a cached REST config for the given cluster.
 func (t *ClusterCacheTracker) GetRESTConfig(ctc context.Context, cluster client.ObjectKey) (*rest.Config, error) {
-	accessor, err := t.getClusterAccessor(ctc, cluster, t.indexes...)
+	accessor, err := t.getClusterAccessor(ctc, cluster)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to get REST config")
 	}
 
 	return accessor.config, nil
@@ -201,9 +240,9 @@ func (t *ClusterCacheTracker) GetRESTConfig(ctc context.Context, cluster client.
 
 // GetEtcdClientCertificateKey returns a cached certificate key to be used for generating certificates for accessing etcd in the given cluster.
 func (t *ClusterCacheTracker) GetEtcdClientCertificateKey(ctx context.Context, cluster client.ObjectKey) (*rsa.PrivateKey, error) {
-	accessor, err := t.getClusterAccessor(ctx, cluster, t.indexes...)
+	accessor, err := t.getClusterAccessor(ctx, cluster)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to get etcd client certificate key")
 	}
 
 	return accessor.etcdClientCertificateKey, nil
@@ -249,7 +288,7 @@ func (t *ClusterCacheTracker) storeAccessor(cluster client.ObjectKey, accessor *
 // It then falls back to create a new clusterAccessor if needed.
 // If there is already another go routine trying to create a clusterAccessor
 // for the same cluster, an error is returned.
-func (t *ClusterCacheTracker) getClusterAccessor(ctx context.Context, cluster client.ObjectKey, indexes ...Index) (*clusterAccessor, error) {
+func (t *ClusterCacheTracker) getClusterAccessor(ctx context.Context, cluster client.ObjectKey) (*clusterAccessor, error) {
 	log := ctrl.LoggerFrom(ctx, "cluster", klog.KRef(cluster.Namespace, cluster.Name))
 
 	// If the clusterAccessor already exists, return early.
@@ -262,7 +301,7 @@ func (t *ClusterCacheTracker) getClusterAccessor(ctx context.Context, cluster cl
 	// for the cluster at the same time.
 	// Return an error if another go routine already tries to create a clusterAccessor.
 	if ok := t.clusterLock.TryLock(cluster); !ok {
-		return nil, errors.Wrapf(ErrClusterLocked, "failed to create cluster accessor: failed to get lock for cluster")
+		return nil, errors.Wrapf(ErrClusterLocked, "failed to create cluster accessor: failed to get lock for cluster (probably because another worker is trying to create the client at the moment)")
 	}
 	defer t.clusterLock.Unlock(cluster)
 
@@ -274,7 +313,7 @@ func (t *ClusterCacheTracker) getClusterAccessor(ctx context.Context, cluster cl
 
 	// We are the go routine who has to initialize the clusterAccessor.
 	log.V(4).Info("Creating new cluster accessor")
-	accessor, err := t.newClusterAccessor(ctx, cluster, indexes...)
+	accessor, err := t.newClusterAccessor(ctx, cluster)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create cluster accessor")
 	}
@@ -285,7 +324,7 @@ func (t *ClusterCacheTracker) getClusterAccessor(ctx context.Context, cluster cl
 }
 
 // newClusterAccessor creates a new clusterAccessor.
-func (t *ClusterCacheTracker) newClusterAccessor(ctx context.Context, cluster client.ObjectKey, indexes ...Index) (*clusterAccessor, error) {
+func (t *ClusterCacheTracker) newClusterAccessor(ctx context.Context, cluster client.ObjectKey) (*clusterAccessor, error) {
 	log := ctrl.LoggerFrom(ctx)
 
 	// Get a rest config for the remote cluster.
@@ -298,9 +337,11 @@ func (t *ClusterCacheTracker) newClusterAccessor(ctx context.Context, cluster cl
 	if err != nil {
 		return nil, errors.Wrapf(err, "error fetching REST client config for remote cluster %q", cluster.String())
 	}
+	config.QPS = t.clientQPS
+	config.Burst = t.clientBurst
 
 	// Create a http client and a mapper for the cluster.
-	httpClient, mapper, err := t.createHTTPClientAndMapper(config, cluster)
+	httpClient, mapper, restClient, err := t.createHTTPClientAndMapper(ctx, config, cluster)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error creating http client and mapper for remote cluster %q", cluster.String())
 	}
@@ -332,7 +373,7 @@ func (t *ClusterCacheTracker) newClusterAccessor(ctx context.Context, cluster cl
 		config.Host = inClusterConfig.Host
 
 		// Update the http client and the mapper to use in-cluster config.
-		httpClient, mapper, err = t.createHTTPClientAndMapper(config, cluster)
+		httpClient, mapper, restClient, err = t.createHTTPClientAndMapper(ctx, config, cluster)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error creating http client and mapper (using in-cluster config) for remote cluster %q", cluster.String())
 		}
@@ -343,7 +384,7 @@ func (t *ClusterCacheTracker) newClusterAccessor(ctx context.Context, cluster cl
 	}
 
 	// Create a client and a cache for the cluster.
-	cachedClient, err := t.createCachedClient(ctx, config, cluster, httpClient, mapper, indexes)
+	cachedClient, err := t.createCachedClient(ctx, config, cluster, httpClient, restClient, mapper)
 	if err != nil {
 		return nil, err
 	}
@@ -392,28 +433,40 @@ func (t *ClusterCacheTracker) runningOnWorkloadCluster(ctx context.Context, c cl
 }
 
 // createHTTPClientAndMapper creates a http client and a dynamic rest mapper for the given cluster, based on the rest.Config.
-func (t *ClusterCacheTracker) createHTTPClientAndMapper(config *rest.Config, cluster client.ObjectKey) (*http.Client, meta.RESTMapper, error) {
+func (t *ClusterCacheTracker) createHTTPClientAndMapper(ctx context.Context, config *rest.Config, cluster client.ObjectKey) (*http.Client, meta.RESTMapper, *rest.RESTClient, error) {
 	// Create a http client for the cluster.
 	httpClient, err := rest.HTTPClientFor(config)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "error creating client for remote cluster %q: error creating http client", cluster.String())
+		return nil, nil, nil, errors.Wrapf(err, "error creating client for remote cluster %q: error creating http client", cluster.String())
 	}
 
 	// Create a mapper for it
 	mapper, err := apiutil.NewDynamicRESTMapper(config, httpClient)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "error creating client for remote cluster %q: error creating dynamic rest mapper", cluster.String())
+		return nil, nil, nil, errors.Wrapf(err, "error creating client for remote cluster %q: error creating dynamic rest mapper", cluster.String())
+	}
+
+	// Create a REST client for the cluster (this is later used for health checking as well).
+	codec := runtime.NoopEncoder{Decoder: scheme.Codecs.UniversalDecoder()}
+	restClientConfig := rest.CopyConfig(config)
+	restClientConfig.NegotiatedSerializer = serializer.NegotiatedSerializerWrapper(runtime.SerializerInfo{Serializer: codec})
+	restClient, err := rest.UnversionedRESTClientForConfigAndClient(restClientConfig, httpClient)
+	if err != nil {
+		return nil, nil, nil, errors.Wrapf(err, "error creating client for remote cluster %q: error creating REST client", cluster.String())
+	}
+
+	// Note: This checks if the apiserver is up. We do this already here to produce a clearer error message if the cluster is unreachable.
+	if _, err := restClient.Get().AbsPath("/").Timeout(healthCheckRequestTimeout).DoRaw(ctx); err != nil {
+		return nil, nil, nil, errors.Wrapf(err, "error creating client for remote cluster %q: cluster is not reachable", cluster.String())
 	}
 
 	// Verify if we can get a rest mapping from the workload cluster apiserver.
-	// Note: This also checks if the apiserver is up in general. We do this already here
-	// to avoid further effort creating a cache and a client and to produce a clearer error message.
 	_, err = mapper.RESTMapping(corev1.SchemeGroupVersion.WithKind("Node").GroupKind(), corev1.SchemeGroupVersion.Version)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "error creating client for remote cluster %q: error getting rest mapping", cluster.String())
+		return nil, nil, nil, errors.Wrapf(err, "error creating client for remote cluster %q: error getting rest mapping", cluster.String())
 	}
 
-	return httpClient, mapper, nil
+	return httpClient, mapper, restClient, nil
 }
 
 // createUncachedClient creates an uncached client for the given cluster, based on the rest.Config.
@@ -437,12 +490,14 @@ type cachedClientOutput struct {
 }
 
 // createCachedClient creates a cached client for the given cluster, based on a rest.Config.
-func (t *ClusterCacheTracker) createCachedClient(ctx context.Context, config *rest.Config, cluster client.ObjectKey, httpClient *http.Client, mapper meta.RESTMapper, indexes []Index) (*cachedClientOutput, error) {
+func (t *ClusterCacheTracker) createCachedClient(ctx context.Context, config *rest.Config, cluster client.ObjectKey, httpClient *http.Client, restClient *rest.RESTClient, mapper meta.RESTMapper) (*cachedClientOutput, error) {
 	// Create the cache for the remote cluster
 	cacheOptions := cache.Options{
 		HTTPClient: httpClient,
 		Scheme:     t.scheme,
 		Mapper:     mapper,
+		ByObject:   t.cacheByObject,
+		SyncPeriod: t.cacheSyncPeriod,
 	}
 	remoteCache, err := cache.New(config, cacheOptions)
 	if err != nil {
@@ -457,7 +512,7 @@ func (t *ClusterCacheTracker) createCachedClient(ctx context.Context, config *re
 		cancelFunc: cacheCtxCancel,
 	}
 
-	for _, index := range indexes {
+	for _, index := range t.indexes {
 		if err := cache.IndexField(ctx, index.Object, index.Field, index.ExtractValue); err != nil {
 			return nil, errors.Wrapf(err, "error creating cached client for remote cluster %q: error adding index for field %q to cache", cluster.String(), index.Field)
 		}
@@ -499,8 +554,7 @@ func (t *ClusterCacheTracker) createCachedClient(ctx context.Context, config *re
 	// Start cluster healthcheck!!!
 	go t.healthCheckCluster(cacheCtx, &healthCheckInput{
 		cluster:    cluster,
-		cfg:        config,
-		httpClient: httpClient,
+		restClient: restClient,
 	})
 
 	return &cachedClientOutput{
@@ -531,7 +585,7 @@ func (t *ClusterCacheTracker) deleteAccessor(_ context.Context, cluster client.O
 // Watcher is a scoped-down interface from Controller that only knows how to watch.
 type Watcher interface {
 	// Watch watches src for changes, sending events to eventHandler if they pass predicates.
-	Watch(src source.Source, eventHandler handler.EventHandler, predicates ...predicate.Predicate) error
+	Watch(src source.Source) error
 }
 
 // WatchInput specifies the parameters used to establish a new watch for a remote cluster.
@@ -561,27 +615,27 @@ func (t *ClusterCacheTracker) Watch(ctx context.Context, input WatchInput) error
 		return errors.New("input.Name is required")
 	}
 
-	accessor, err := t.getClusterAccessor(ctx, input.Cluster, t.indexes...)
+	accessor, err := t.getClusterAccessor(ctx, input.Cluster)
 	if err != nil {
-		return errors.Wrapf(err, "failed to add %s watch on cluster %s", input.Kind, klog.KRef(input.Cluster.Namespace, input.Cluster.Name))
+		return errors.Wrapf(err, "failed to add %T watch on cluster %s", input.Kind, klog.KRef(input.Cluster.Namespace, input.Cluster.Name))
 	}
 
 	// We have to lock the cluster, so that the watch is not created multiple times in parallel.
 	ok := t.clusterLock.TryLock(input.Cluster)
 	if !ok {
-		return errors.Wrapf(ErrClusterLocked, "failed to add %T watch on cluster %s: failed to get lock for cluster", input.Kind, klog.KRef(input.Cluster.Namespace, input.Cluster.Name))
+		return errors.Wrapf(ErrClusterLocked, "failed to add %T watch on cluster %s: failed to get lock for cluster (probably because another worker is trying to create the client at the moment)", input.Kind, klog.KRef(input.Cluster.Namespace, input.Cluster.Name))
 	}
 	defer t.clusterLock.Unlock(input.Cluster)
 
 	if accessor.watches.Has(input.Name) {
 		log := ctrl.LoggerFrom(ctx)
-		log.V(6).Info("Watch already exists", "Cluster", klog.KRef(input.Cluster.Namespace, input.Cluster.Name), "name", input.Name)
+		log.V(6).Info(fmt.Sprintf("Watch %s already exists", input.Name), "Cluster", klog.KRef(input.Cluster.Namespace, input.Cluster.Name))
 		return nil
 	}
 
 	// Need to create the watch
-	if err := input.Watcher.Watch(source.Kind(accessor.cache, input.Kind), input.EventHandler, input.Predicates...); err != nil {
-		return errors.Wrapf(err, "failed to add %s watch on cluster %s: failed to create watch", input.Kind, klog.KRef(input.Cluster.Namespace, input.Cluster.Name))
+	if err := input.Watcher.Watch(source.Kind(accessor.cache, input.Kind, input.EventHandler, input.Predicates...)); err != nil {
+		return errors.Wrapf(err, "failed to add %T watch on cluster %s: failed to create watch", input.Kind, klog.KRef(input.Cluster.Namespace, input.Cluster.Name))
 	}
 
 	accessor.watches.Insert(input.Name)
@@ -592,8 +646,7 @@ func (t *ClusterCacheTracker) Watch(ctx context.Context, input WatchInput) error
 // healthCheckInput provides the input for the healthCheckCluster method.
 type healthCheckInput struct {
 	cluster            client.ObjectKey
-	httpClient         *http.Client
-	cfg                *rest.Config
+	restClient         *rest.RESTClient
 	interval           time.Duration
 	requestTimeout     time.Duration
 	unhealthyThreshold int
@@ -625,18 +678,7 @@ func (t *ClusterCacheTracker) healthCheckCluster(ctx context.Context, in *health
 
 	unhealthyCount := 0
 
-	// This gets us a client that can make raw http(s) calls to the remote apiserver. We only need to create it once
-	// and we can reuse it inside the polling loop.
-	codec := runtime.NoopEncoder{Decoder: scheme.Codecs.UniversalDecoder()}
-	cfg := rest.CopyConfig(in.cfg)
-	cfg.NegotiatedSerializer = serializer.NegotiatedSerializerWrapper(runtime.SerializerInfo{Serializer: codec})
-	restClient, restClientErr := rest.UnversionedRESTClientForConfigAndClient(cfg, in.httpClient)
-
 	runHealthCheckWithThreshold := func(ctx context.Context) (bool, error) {
-		if restClientErr != nil {
-			return false, restClientErr
-		}
-
 		cluster := &clusterv1.Cluster{}
 		if err := t.client.Get(ctx, in.cluster, cluster); err != nil {
 			if apierrors.IsNotFound(err) {
@@ -667,7 +709,7 @@ func (t *ClusterCacheTracker) healthCheckCluster(ctx context.Context, in *health
 
 		// An error here means there was either an issue connecting or the API returned an error.
 		// If no error occurs, reset the unhealthy counter.
-		_, err := restClient.Get().AbsPath(in.path).Timeout(in.requestTimeout).DoRaw(ctx)
+		_, err := in.restClient.Get().AbsPath(in.path).Timeout(in.requestTimeout).DoRaw(ctx)
 		if err != nil {
 			if apierrors.IsUnauthorized(err) {
 				// Unauthorized means that the underlying kubeconfig is not authorizing properly anymore, which

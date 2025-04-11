@@ -120,6 +120,11 @@ func FindSecretReferences(obj interface{}) (set.Set[genruntime.SecretReference],
 	return Find[genruntime.SecretReference](obj)
 }
 
+// FindSecretMaps finds all the genruntime.SecretMapReference's on the provided object
+func FindSecretMaps(obj interface{}) (set.Set[genruntime.SecretMapReference], error) {
+	return Find[genruntime.SecretMapReference](obj)
+}
+
 // FindConfigMapReferences finds all the genruntime.ConfigMapReference's on the provided object
 func FindConfigMapReferences(obj interface{}) (set.Set[genruntime.ConfigMapReference], error) {
 	return Find[genruntime.ConfigMapReference](obj)

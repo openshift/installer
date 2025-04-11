@@ -41,6 +41,11 @@ KUBETEST_CONF_PATH ?= $(abspath $(E2E_DATA_DIR)/kubetest/conformance.yaml)
 KUBETEST_FAST_CONF_PATH ?= $(abspath $(E2E_DATA_DIR)/kubetest/conformance-fast.yaml)
 GO_INSTALL := ./scripts/go_install.sh
 
+# go-apidiff
+GO_APIDIFF_VER := v0.8.2
+GO_APIDIFF_BIN := go-apidiff
+GO_APIDIFF_PKG := github.com/joelanford/go-apidiff
+
 # Binaries.
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/controller-gen
 CONVERSION_GEN := $(TOOLS_BIN_DIR)/conversion-gen
@@ -48,11 +53,13 @@ ENVSUBST := $(TOOLS_BIN_DIR)/envsubst
 GINKGO := $(TOOLS_BIN_DIR)/ginkgo
 GOJQ := $(TOOLS_BIN_DIR)/gojq
 GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
+GOTESTSUM := $(TOOLS_BIN_DIR)/gotestsum
 KUSTOMIZE := $(TOOLS_BIN_DIR)/kustomize
 MOCKGEN := $(TOOLS_BIN_DIR)/mockgen
 RELEASE_NOTES := $(TOOLS_BIN_DIR)/release-notes
 SETUP_ENVTEST := $(TOOLS_BIN_DIR)/setup-envtest
 GEN_CRD_API_REFERENCE_DOCS := $(TOOLS_BIN_DIR)/gen-crd-api-reference-docs
+GO_APIDIFF := $(TOOLS_BIN_DIR)/$(GO_APIDIFF_BIN)-$(GO_APIDIFF_VER)
 
 # Kubebuilder
 export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.28.0
@@ -140,8 +147,16 @@ kubebuilder_assets: $(SETUP_ENVTEST)
 
 .PHONY: test
 TEST_PATHS ?= ./...
-test: kubebuilder_assets
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" go test -v $(TEST_PATHS) $(TEST_ARGS)
+test: test-capo test-orc
+
+.PHONY: test-capo
+test-capo: $(ARTIFACTS) $(GOTESTSUM) kubebuilder_assets
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GOTESTSUM) --junitfile $(ARTIFACTS)/junit.test.xml --junitfile-hide-empty-pkg --jsonfile $(ARTIFACTS)/test-output.log -- \
+			   -v $(TEST_PATHS) $(TEST_ARGS)
+
+.PHONY: test-orc
+test-orc:
+	$(MAKE) -C $(REPO_ROOT)/orc test
 
 E2E_TEMPLATES_DIR=test/e2e/data/infrastructure-openstack
 E2E_KUSTOMIZE_DIR=test/e2e/data/kustomize
@@ -151,7 +166,6 @@ E2E_NO_ARTIFACT_TEMPLATES_DIR=test/e2e/data/infrastructure-openstack-no-artifact
 .PHONY: e2e-templates
 e2e-templates: ## Generate cluster templates for e2e tests
 e2e-templates: $(addprefix $(E2E_NO_ARTIFACT_TEMPLATES_DIR)/, \
-		 cluster-template-v1alpha6.yaml \
 		 cluster-template-v1alpha7.yaml \
 		 cluster-template-md-remediation.yaml \
 		 cluster-template-kcp-remediation.yaml \
@@ -209,6 +223,11 @@ test-conformance: $(GINKGO) e2e-prerequisites ## Run clusterctl based conformanc
 test-conformance-fast: ## Run clusterctl based conformance test on workload cluster (requires Docker) using a subset of the conformance suite in parallel.
 	$(MAKE) test-conformance CONFORMANCE_E2E_ARGS="-kubetest.config-file=$(KUBETEST_FAST_CONF_PATH) -kubetest.ginkgo-nodes=5 $(E2E_ARGS)"
 
+APIDIFF_OLD_COMMIT ?= $(shell git rev-parse origin/main)
+
+.PHONY: apidiff
+apidiff: $(GO_APIDIFF) ## Check for API differences.
+	$(GO_APIDIFF) $(APIDIFF_OLD_COMMIT)
 
 ## --------------------------------------
 ##@ Binaries
@@ -225,6 +244,12 @@ managers:
 manager-openstack-infrastructure: ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS} -extldflags '-static'" -o $(BIN_DIR)/manager .
 
+.PHONY: $(GO_APIDIFF_BIN)
+$(GO_APIDIFF_BIN): $(GO_APIDIFF)
+
+$(GO_APIDIFF): # Build go-apidiff.
+	GOBIN=$(abspath $(TOOLS_BIN_DIR)) $(GO_INSTALL) $(GO_APIDIFF_PKG) $(GO_APIDIFF_BIN) $(GO_APIDIFF_VER)
+
 ## --------------------------------------
 ##@ Linting
 ## --------------------------------------
@@ -232,10 +257,12 @@ manager-openstack-infrastructure: ## Build manager binary.
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Lint codebase
 	$(GOLANGCI_LINT) run -v --fast=false
+	$(MAKE) -C $(REPO_ROOT)/orc lint
 
 .PHONY: lint-update
 lint-update: $(GOLANGCI_LINT) ## Lint codebase
 	$(GOLANGCI_LINT) run -v --fast=false --fix
+	$(MAKE) -C $(REPO_ROOT)/orc lint-fix
 
 lint-fast: $(GOLANGCI_LINT) ## Run only faster linters to detect possible issues
 	$(GOLANGCI_LINT) run -v --fast=true
@@ -246,11 +273,13 @@ lint-fast: $(GOLANGCI_LINT) ## Run only faster linters to detect possible issues
 
 .PHONY: modules
 modules: ## Runs go mod to ensure proper vendoring.
+	$(MAKE) -C $(REPO_ROOT)/orc modules
 	go mod tidy
 	cd $(TOOLS_DIR); go mod tidy
+	cd $(REPO_ROOT)/hack/codegen; go work sync; go mod tidy
 
 .PHONY: generate
-generate: templates generate-controller-gen generate-conversion-gen generate-go generate-manifests generate-api-docs ## Generate all generated code
+generate: templates generate-orc generate-controller-gen generate-codegen generate-conversion-gen generate-go generate-manifests generate-api-docs ## Generate all generated code
 
 .PHONY: generate-go
 generate-go: $(MOCKGEN)
@@ -262,18 +291,22 @@ generate-controller-gen: $(CONTROLLER_GEN)
 		paths=./api/... \
 		object:headerFile=./hack/boilerplate/boilerplate.generatego.txt
 
+.PHONY: generate-codegen
+generate-codegen: generate-controller-gen
+	./hack/update-codegen.sh
+
+.PHONY: generate-orc
+generate-orc:
+	$(MAKE) -C $(REPO_ROOT)/orc generate
+
 .PHONY: generate-conversion-gen
-capo_module := sigs.k8s.io/cluster-api-provider-openstack
 generate-conversion-gen: $(CONVERSION_GEN)
 	$(CONVERSION_GEN) \
-		--input-dirs=$(capo_module)/api/v1alpha5 \
-		--input-dirs=$(capo_module)/api/v1alpha6 \
-		--input-dirs=$(capo_module)/api/v1alpha7 \
-		--extra-dirs=$(capo_module)/pkg/utils/optional \
-		--extra-dirs=$(capo_module)/pkg/utils/conversioncommon \
-		--output-file-base=zz_generated.conversion \
-		--trim-path-prefix=$(capo_module)/ \
-		--go-header-file=./hack/boilerplate/boilerplate.generatego.txt
+		--extra-peer-dirs=./pkg/utils/optional \
+		--extra-peer-dirs=./pkg/utils/conversioncommon \
+		--output-file=zz_generated.conversion.go \
+		--go-header-file=./hack/boilerplate/boilerplate.generatego.txt \
+		./api/v1alpha6 ./api/v1alpha7
 
 .PHONY: generate-manifests
 generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
@@ -288,6 +321,7 @@ generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
 	$(CONTROLLER_GEN) \
 		paths=./ \
 		paths=./controllers/... \
+		paths=./internal/controllers/... \
 		output:rbac:dir=$(RBAC_ROOT) \
 		rbac:roleName=manager-role
 
@@ -306,7 +340,7 @@ generate-api-docs-%: $(GEN_CRD_API_REFERENCE_DOCS) FORCE
 
 .PHONY: docker-build
 docker-build: ## Build the docker image for controller-manager
-	docker build -f Dockerfile --build-arg goproxy=$(GOPROXY) --build-arg ARCH=$(ARCH) --build-arg LDFLAGS="$(LDFLAGS)" . -t $(CONTROLLER_IMG_TAG)
+	docker build -f Dockerfile --build-arg goproxy=$(GOPROXY) --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" . -t $(CONTROLLER_IMG_TAG)
 
 .PHONY: docker-push
 docker-push: ## Push the docker image
@@ -506,7 +540,7 @@ clean-release: ## Remove the release folder
 	rm -rf $(RELEASE_DIR)
 
 .PHONY: verify
-verify: verify-boilerplate verify-modules verify-gen
+verify: verify-boilerplate verify-modules verify-gen verify-orc
 
 .PHONY: verify-boilerplate
 verify-boilerplate:
@@ -514,27 +548,21 @@ verify-boilerplate:
 
 .PHONY: verify-modules
 verify-modules: modules
-	@if !(git diff --quiet HEAD -- go.sum go.mod hack/tools/go.mod hack/tools/go.sum); then \
+	@if !(git diff --quiet HEAD -- go.* hack/tools/go.* hack/codegen/go.*); then \
 		git diff; \
 		echo "go module files are out of date"; exit 1; \
 	fi
 
+.PHONY: verify-gen
 verify-gen: generate
 	@if !(git diff --quiet HEAD); then \
 		git diff; \
 		echo "generated files are out of date, run make generate"; exit 1; \
 	fi
 
-.PHONY: vendor verify-vendoring
-vendor:
-	go mod vendor
-	cd $(TOOLS_DIR); go mod vendor
-
-verify-vendoring: vendor
-	@if !(git diff --quiet HEAD); then \
-		git diff; \
-		echo "vendored files are out of date, run go mod vendor"; exit 1; \
-	fi
+.PHONY: verify-orc
+verify-orc:
+	$(MAKE) -C $(REPO_ROOT)/orc verify-generated
 
 .PHONY: compile-e2e
 compile-e2e: ## Test e2e compilation

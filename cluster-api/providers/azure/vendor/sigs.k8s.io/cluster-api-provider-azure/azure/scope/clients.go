@@ -25,19 +25,20 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/Azure/go-autorest/autorest"
 	azureautorest "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 
 // AzureClients contains all the Azure clients used by the scopes.
 type AzureClients struct {
 	auth.EnvironmentSettings
 
-	Authorizer                 autorest.Authorizer
 	TokenCredential            azcore.TokenCredential
 	ResourceManagerEndpoint    string
 	ResourceManagerVMDNSSuffix string
+
+	authType infrav1.IdentityType
 }
 
 // CloudEnvironment returns the Azure environment the controller runs in.
@@ -47,23 +48,23 @@ func (c *AzureClients) CloudEnvironment() string {
 
 // TenantID returns the Azure tenant id the controller runs in.
 func (c *AzureClients) TenantID() string {
-	return c.Values[auth.TenantID]
+	return c.Values["AZURE_TENANT_ID"]
 }
 
 // ClientID returns the Azure client id from the controller environment.
 func (c *AzureClients) ClientID() string {
-	return c.Values[auth.ClientID]
+	return c.Values["AZURE_CLIENT_ID"]
 }
 
 // ClientSecret returns the Azure client secret from the controller environment.
 func (c *AzureClients) ClientSecret() string {
-	return c.Values[auth.ClientSecret]
+	return c.Values["AZURE_CLIENT_SECRET"]
 }
 
 // SubscriptionID returns the Azure subscription id of the cluster,
 // either specified or from the environment.
 func (c *AzureClients) SubscriptionID() string {
-	return c.Values[auth.SubscriptionID]
+	return c.Values["AZURE_SUBSCRIPTION_ID"]
 }
 
 // Token returns the Azure token credential of the cluster used for SDKv2 services.
@@ -75,7 +76,7 @@ func (c *AzureClients) Token() azcore.TokenCredential {
 // ClientID).
 func (c *AzureClients) HashKey() string {
 	hasher := sha256.New()
-	_, _ = hasher.Write([]byte(c.TenantID() + c.CloudEnvironment() + c.SubscriptionID() + c.ClientID()))
+	_, _ = hasher.Write([]byte(c.TenantID() + c.CloudEnvironment() + c.SubscriptionID() + c.ClientID() + string(c.authType)))
 	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 }
 
@@ -99,22 +100,23 @@ func (c *AzureClients) setCredentialsWithProvider(ctx context.Context, subscript
 	c.EnvironmentSettings = settings
 	c.ResourceManagerEndpoint = settings.Environment.ResourceManagerEndpoint
 	c.ResourceManagerVMDNSSuffix = settings.Environment.ResourceManagerVMDNSSuffix
-	c.Values[auth.SubscriptionID] = strings.TrimSuffix(subscriptionID, "\n")
-	c.Values[auth.TenantID] = strings.TrimSuffix(credentialsProvider.GetTenantID(), "\n")
-	c.Values[auth.ClientID] = strings.TrimSuffix(credentialsProvider.GetClientID(), "\n")
+	c.Values["AZURE_SUBSCRIPTION_ID"] = strings.TrimSuffix(subscriptionID, "\n")
+	c.Values["AZURE_TENANT_ID"] = strings.TrimSuffix(credentialsProvider.GetTenantID(), "\n")
+	c.Values["AZURE_CLIENT_ID"] = strings.TrimSuffix(credentialsProvider.GetClientID(), "\n")
 
 	clientSecret, err := credentialsProvider.GetClientSecret(ctx)
 	if err != nil {
 		return err
 	}
-	c.Values[auth.ClientSecret] = strings.TrimSuffix(clientSecret, "\n")
+	c.Values["AZURE_CLIENT_SECRET"] = strings.TrimSuffix(clientSecret, "\n")
+
+	c.authType = credentialsProvider.Type()
 
 	tokenCredential, err := credentialsProvider.GetTokenCredential(ctx, c.ResourceManagerEndpoint, c.Environment.ActiveDirectoryEndpoint, c.Environment.TokenAudience)
 	if err != nil {
 		return err
 	}
 	c.TokenCredential = tokenCredential
-	c.Authorizer, err = credentialsProvider.GetAuthorizer(ctx, tokenCredential, c.Environment.TokenAudience)
 	return err
 }
 
@@ -122,24 +124,24 @@ func (c *AzureClients) getSettingsFromEnvironment(environmentName string) (s aut
 	s = auth.EnvironmentSettings{
 		Values: map[string]string{},
 	}
-	s.Values[auth.EnvironmentName] = environmentName
-	setValue(s, auth.SubscriptionID)
-	setValue(s, auth.TenantID)
-	setValue(s, auth.AuxiliaryTenantIDs)
-	setValue(s, auth.ClientID)
-	setValue(s, auth.ClientSecret)
-	setValue(s, auth.CertificatePath)
-	setValue(s, auth.CertificatePassword)
-	setValue(s, auth.Username)
-	setValue(s, auth.Password)
-	setValue(s, auth.Resource)
-	if v := s.Values[auth.EnvironmentName]; v == "" {
+	s.Values["AZURE_ENVIRONMENT"] = environmentName
+	setValue(s, "AZURE_SUBSCRIPTION_ID")
+	setValue(s, "AZURE_TENANT_ID")
+	setValue(s, "AZURE_AUXILIARY_TENANT_IDS")
+	setValue(s, "AZURE_CLIENT_ID")
+	setValue(s, "AZURE_CLIENT_SECRET")
+	setValue(s, "AZURE_CERTIFICATE_PATH")
+	setValue(s, "AZURE_CERTIFICATE_PASSWORD")
+	setValue(s, "AZURE_USERNAME")
+	setValue(s, "AZURE_PASSWORD")
+	setValue(s, "AZURE_AD_RESOURCE")
+	if v := s.Values["AZURE_ENVIRONMENT"]; v == "" {
 		s.Environment = azureautorest.PublicCloud
 	} else {
 		s.Environment, err = azureautorest.EnvironmentFromName(v)
 	}
-	if s.Values[auth.Resource] == "" {
-		s.Values[auth.Resource] = s.Environment.ResourceManagerEndpoint
+	if s.Values["AZURE_AD_RESOURCE"] == "" {
+		s.Values["AZURE_AD_RESOURCE"] = s.Environment.ResourceManagerEndpoint
 	}
 	return
 }

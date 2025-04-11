@@ -174,6 +174,11 @@ func DataSourceIBMISSubnet() *schema.Resource {
 							Computed:    true,
 							Description: "The user-defined name for this routing table.",
 						},
+						"crn": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The crn for this routing table.",
+						},
 						"resource_type": {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -318,7 +323,7 @@ func subnetGetByNameOrID(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func dataSourcesubnetRoutingTableDeletedToMap(deletedItem vpcv1.RoutingTableReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourcesubnetRoutingTableDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -353,6 +358,9 @@ func dataSourceSubnetRoutingTableToMap(routingTableItem vpcv1.RoutingTableRefere
 	}
 	if routingTableItem.Name != nil {
 		routingTableMap["name"] = routingTableItem.Name
+	}
+	if routingTableItem.CRN != nil {
+		routingTableMap["crn"] = routingTableItem.CRN
 	}
 	if routingTableItem.ResourceType != nil {
 		routingTableMap["resource_type"] = routingTableItem.ResourceType

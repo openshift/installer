@@ -6,8 +6,9 @@ exists $WORK/agentconfig.noarch.iso
 
 isocmp agentconfig.noarch.iso /etc/assisted/manifests/agent-cluster-install.yaml expected/agent-cluster-install.yaml
 isocmp agentconfig.noarch.iso /etc/assisted/manifests/cluster-image-set.yaml expected/cluster-image-set.yaml
-isocmp agentconfig.noarch.iso /etc/assisted/manifests/pull-secret.yaml expected/pull-secret.yaml
 isocmp agentconfig.noarch.iso /etc/assisted/manifests/cluster-deployment.yaml expected/cluster-deployment.yaml
+
+isoIgnitionContains agentconfig.noarch.iso /etc/assisted/manifests/pull-secret.yaml
 
 -- install-config.yaml --
 apiVersion: v1
@@ -106,19 +107,3 @@ metadata:
 spec:
   releaseImage: $RELEASE_IMAGE
 status: {}
--- expected/pull-secret.yaml --
-apiVersion: v1
-kind: Secret
-metadata:
-  creationTimestamp: null
-  name: ostest-pull-secret
-  namespace: cluster0
-stringData:
-  .dockerconfigjson: |-
-    {
-      "auths": {
-        "quay.io": {
-          "auth": "c3VwZXItc2VjcmV0Cg=="
-        }
-      }
-    }

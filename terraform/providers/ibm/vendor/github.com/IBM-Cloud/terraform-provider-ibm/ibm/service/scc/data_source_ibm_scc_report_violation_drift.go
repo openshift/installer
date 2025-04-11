@@ -5,7 +5,6 @@ package scc
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -122,13 +121,13 @@ func dataSourceIbmSccReportViolationDriftRead(context context.Context, d *schema
 	reportViolationsDrift, response, err := resultsClient.GetReportViolationsDriftWithContext(context, getReportViolationsDriftOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetReportViolationsDriftWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetReportViolationsDriftWithContext failed %s\n%s", err, response))
+		return diag.FromErr(flex.FmtErrorf("GetReportViolationsDriftWithContext failed %s\n%s", err, response))
 	}
 
 	d.SetId(dataSourceIbmSccReportViolationDriftID(d))
 
 	if err = d.Set("home_account_id", reportViolationsDrift.HomeAccountID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting home_account_id: %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting home_account_id: %s", err))
 	}
 
 	dataPoints := []map[string]interface{}{}
@@ -142,7 +141,7 @@ func dataSourceIbmSccReportViolationDriftRead(context context.Context, d *schema
 		}
 	}
 	if err = d.Set("data_points", dataPoints); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting data_points %s", err))
+		return diag.FromErr(flex.FmtErrorf("Error setting data_points %s", err))
 	}
 
 	return nil
@@ -164,8 +163,8 @@ func dataSourceIbmSccReportViolationDriftReportViolationDataPointToMap(model *se
 	if model.ScanTime != nil {
 		modelMap["scan_time"] = model.ScanTime
 	}
-	if model.Controls != nil {
-		controlsMap, err := dataSourceIbmSccReportViolationDriftComplianceStatsToMap(model.Controls)
+	if model.ControlsSummary != nil {
+		controlsMap, err := dataSourceIbmSccReportViolationDriftComplianceStatsToMap(model.ControlsSummary)
 		if err != nil {
 			return modelMap, err
 		}

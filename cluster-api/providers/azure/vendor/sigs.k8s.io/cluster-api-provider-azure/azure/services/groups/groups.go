@@ -70,7 +70,7 @@ func (s *Service) IsManaged(ctx context.Context) (bool, error) {
 		// resource. We also need to check that deleting the ASO resource will really
 		// delete the underlying resource group by checking the ASO reconcile-policy.
 		group := spec.ResourceRef()
-		groupName := group.Name
+		groupName := azure.GetNormalizedKubernetesName(group.Name)
 		groupNamespace := s.Scope.ASOOwner().GetNamespace()
 		err = s.Scope.GetClient().Get(ctx, client.ObjectKey{Namespace: groupNamespace, Name: groupName}, group)
 		if err != nil || group.GetAnnotations()[asoannotations.ReconcilePolicy] != string(asoannotations.ReconcilePolicyManage) {

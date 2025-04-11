@@ -8,9 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"cloud.google.com/go/kms/apiv1/kmspb"
+	"github.com/jarcoal/httpmock"
 	logrusTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	googleoauth "golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudresourcemanager/v3"
 	compute "google.golang.org/api/compute/v1"
@@ -20,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -29,22 +32,24 @@ import (
 type editFunctions []func(ic *types.InstallConfig)
 
 var (
-	validNetworkName   = "valid-vpc"
-	validProjectName   = "valid-project"
-	invalidProjectName = "invalid-project"
-	validRegion        = "us-east1"
-	invalidRegion      = "us-east4"
-	validZone          = "us-east1-b"
-	validComputeSubnet = "valid-compute-subnet"
-	validCPSubnet      = "valid-controlplane-subnet"
-	validCIDR          = "10.0.0.0/16"
-	validClusterName   = "valid-cluster"
-	validPrivateZone   = "valid-short-private-zone"
-	validPublicZone    = "valid-short-public-zone"
-	invalidPublicZone  = "invalid-short-public-zone"
-	validBaseDomain    = "example.installer.domain."
-	validXpnSA         = "valid-example-sa@gcloud.serviceaccount.com"
-	invalidXpnSA       = "invalid-example-sa@gcloud.serviceaccount.com"
+	validNetworkName          = "valid-vpc"
+	validProjectName          = "valid-project"
+	invalidProjectName        = "invalid-project"
+	validRegion               = "us-east1"
+	invalidRegion             = "us-east4"
+	validZone                 = "us-east1-b"
+	validComputeSubnet        = "valid-compute-subnet"
+	validCPSubnet             = "valid-controlplane-subnet"
+	validCIDR                 = "10.0.0.0/16"
+	validClusterName          = "valid-cluster"
+	validPrivateZone          = "valid-short-private-zone"
+	validPublicZone           = "valid-short-public-zone"
+	invalidPublicZone         = "invalid-short-public-zone"
+	validBaseDomain           = "example.installer.domain."
+	validXpnSA                = "valid-example-sa@gcloud.serviceaccount.com"
+	invalidXpnSA              = "invalid-example-sa@gcloud.serviceaccount.com"
+	validServiceEndpointURL   = "https://computeexample.googleapis.com/compute/v1/"
+	invalidServiceEndpointURL = "http://badstorage.googleapis"
 
 	// #nosec G101
 	fakeCreds = `{
@@ -93,6 +98,10 @@ var (
 		ic.Platform.GCP.DefaultMachinePlatform.InstanceType = "n1-dne-1"
 	}
 
+	invalidateControlPlaneDiskTypes = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.DiskType = "pd-standard"
+	}
+
 	invalidateNetwork        = func(ic *types.InstallConfig) { ic.GCP.Network = "invalid-vpc" }
 	invalidateComputeSubnet  = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet = "invalid-compute-subnet" }
 	invalidateCPSubnet       = func(ic *types.InstallConfig) { ic.GCP.ControlPlaneSubnet = "invalid-cp-subnet" }
@@ -106,14 +115,89 @@ var (
 	validateXpnSA            = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = validXpnSA }
 	invalidateXpnSA          = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = invalidXpnSA }
 
+	validServiceEndpoint = func(ic *types.InstallConfig) {
+		ic.GCP.ServiceEndpoints = append(ic.GCP.ServiceEndpoints,
+			configv1.GCPServiceEndpoint{
+				Name: configv1.GCPServiceEndpointNameCompute,
+				URL:  validServiceEndpointURL,
+			},
+		)
+	}
+
+	invalidServiceEndpointBadFormat = func(ic *types.InstallConfig) {
+		ic.GCP.ServiceEndpoints = append(ic.GCP.ServiceEndpoints,
+			configv1.GCPServiceEndpoint{
+				Name: configv1.GCPServiceEndpointNameStorage,
+				URL:  invalidServiceEndpointURL,
+			},
+		)
+	}
+
+	invalidDefaultMachineKeyRing = func(ic *types.InstallConfig) {
+		ic.GCP.DefaultMachinePlatform = &gcp.MachinePool{}
+		ic.GCP.DefaultMachinePlatform.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &gcp.KMSKeyReference{
+					Name:    "invalidKeyName",
+					KeyRing: "invalidKeyRingName",
+				},
+			},
+		}
+	}
+
+	validCPKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &gcp.KMSKeyReference{
+					Name:    "validKeyName",
+					KeyRing: "validKeyRingName",
+				},
+			},
+		}
+	}
+	invalidateCPKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &gcp.KMSKeyReference{
+					Name:    "invalidKeyName",
+					KeyRing: "invalidKeyRingName",
+				},
+			},
+		}
+	}
+
+	validComputeKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &gcp.KMSKeyReference{
+					Name:    "validKeyName",
+					KeyRing: "validKeyRingName",
+				},
+			},
+		}
+	}
+	invalidateComputeKMSKeyRing = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.OSDisk = gcp.OSDisk{
+			EncryptionKey: &gcp.EncryptionKeyReference{
+				KMSKey: &gcp.KMSKeyReference{
+					Name:    "validKeyName",
+					KeyRing: "invalidKeyRingName",
+				},
+			},
+		}
+	}
+
 	machineTypeAPIResult = map[string]*compute.MachineType{
-		"n1-standard-1":  {GuestCpus: 1, MemoryMb: 3840},
-		"n1-standard-2":  {GuestCpus: 2, MemoryMb: 7680},
-		"n1-standard-4":  {GuestCpus: 4, MemoryMb: 15360},
-		"n2-standard-1":  {GuestCpus: 1, MemoryMb: 8192},
-		"n2-standard-2":  {GuestCpus: 2, MemoryMb: 16384},
-		"n2-standard-4":  {GuestCpus: 4, MemoryMb: 32768},
-		"t2a-standard-4": {GuestCpus: 4, MemoryMb: 16384},
+		"n1-standard-1":     {GuestCpus: 1, MemoryMb: 3840},
+		"n1-standard-2":     {GuestCpus: 2, MemoryMb: 7680},
+		"n1-standard-4":     {GuestCpus: 4, MemoryMb: 15360},
+		"n2-standard-1":     {GuestCpus: 1, MemoryMb: 8192},
+		"n2-standard-2":     {GuestCpus: 2, MemoryMb: 16384},
+		"n2-standard-4":     {GuestCpus: 4, MemoryMb: 32768},
+		"n4-standard-4":     {GuestCpus: 4, MemoryMb: 32768},
+		"t2a-standard-4":    {GuestCpus: 4, MemoryMb: 16384},
+		"n4-custom-4-16384": {GuestCpus: 4, MemoryMb: 16384}, // custom machine type
+		"custom-4-16384":    {GuestCpus: 4, MemoryMb: 16384}, // custom machine type - default type
 	}
 
 	subnetAPIResult = []*compute.Subnetwork{
@@ -234,6 +318,12 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			expectedErrMsg: `\[platform.gcp.defaultMachinePlatform.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 4 vCPUs, platform.gcp.defaultMachinePlatform.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 15360 MB Memory, controlPlane.platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 4 vCPUs, controlPlane.platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 15360 MB Memory, compute\[0\].platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 2 vCPUs, compute\[0\].platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 7680 MB Memory\]`,
 		},
 		{
+			name:           "Invalid control plane machine disk types",
+			edits:          editFunctions{validMachineTypes, invalidateControlPlaneDiskTypes},
+			expectedError:  true,
+			expectedErrMsg: `controlPlane.type: Unsupported value: "pd-standard": supported values: "hyperdisk-balanced", "pd-balanced", "pd-ssd"`,
+		},
+		{
 			name:           "Invalid control plane machine types",
 			edits:          editFunctions{invalidateControlPlaneMachineTypes},
 			expectedError:  true,
@@ -310,6 +400,45 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			expectedError:  true,
 			expectedErrMsg: "controlPlane.platform.gcp.serviceAccount: Internal error\"",
 		},
+		{
+			name:          "Valid Control Plane KMS Key",
+			edits:         editFunctions{validCPKMSKeyRing},
+			expectedError: false,
+		},
+		{
+			name:           "Invalid Control Plane KMS Key",
+			edits:          editFunctions{invalidateCPKMSKeyRing},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.controlPlane.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
+		},
+		{
+			name:          "Valid Compute KMS Key",
+			edits:         editFunctions{validComputeKMSKeyRing},
+			expectedError: false,
+		},
+		{
+			name:           "Invalid Compute KMS Key",
+			edits:          editFunctions{invalidateComputeKMSKeyRing},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.compute.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
+		},
+		{
+			name:           "Valid Control Plane Invalid Compute Invalid Default Machine KMS Key",
+			edits:          editFunctions{validCPKMSKeyRing, invalidateComputeKMSKeyRing, invalidDefaultMachineKeyRing},
+			expectedError:  true,
+			expectedErrMsg: "platform.gcp.compute.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data, platform.gcp.defaultMachinePool.encryptionKey.kmsKey.keyRing: Invalid value: \"invalidKeyRingName\": failed to find key ring invalidKeyRingName: data",
+		},
+		{
+			name:          "Valid Service Endpoint Override",
+			edits:         editFunctions{validServiceEndpoint},
+			expectedError: false,
+		},
+		{
+			name:           "Invalid Service Endpoint Override Bad Format",
+			edits:          editFunctions{invalidServiceEndpointBadFormat},
+			expectedError:  true,
+			expectedErrMsg: `[platform.gcp.serviceEndpoint\[0\]: Invalid value: \"http://badstorage.googleapis\": Head \"http://badstorage.googleapis\": dial tcp: lookup badstorage.googleapis: no such host]`,
+		},
 	}
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -365,6 +494,34 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 
 	gcpClient.EXPECT().GetServiceAccount(gomock.Any(), validProjectName, validXpnSA).Return(validXpnSA, nil).AnyTimes()
 	gcpClient.EXPECT().GetServiceAccount(gomock.Any(), validProjectName, invalidXpnSA).Return("", fmt.Errorf("controlPlane.platform.gcp.serviceAccount: Internal error\"")).AnyTimes()
+
+	validKeyRing := &kmspb.KeyRing{
+		Name: "validKeyRingName",
+	}
+	gcpClient.EXPECT().GetKeyRing(gomock.Any(), "validKeyRingName").Return(validKeyRing, nil).AnyTimes()
+	gcpClient.EXPECT().GetKeyRing(gomock.Any(), "invalidKeyRingName").Return(nil, fmt.Errorf("failed to find key ring invalidKeyRingName: data")).AnyTimes()
+
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder("HEAD", validServiceEndpointURL,
+		func(req *http.Request) (*http.Response, error) {
+			if req.Method != http.MethodHead {
+				return httpmock.NewStringResponse(http.StatusMethodNotAllowed, ""), nil
+			}
+			return httpmock.NewStringResponse(http.StatusOK, ""), nil
+		},
+	)
+
+	httpmock.RegisterResponder("HEAD", invalidServiceEndpointURL,
+		func(req *http.Request) (*http.Response, error) {
+			return nil,
+				fmt.Errorf("Head %s: dial tcp: lookup %s: no such host",
+					invalidServiceEndpointURL,
+					strings.ReplaceAll(invalidServiceEndpointURL, "http://", ""),
+				)
+		},
+	)
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -749,6 +906,7 @@ func TestValidateInstanceType(t *testing.T) {
 	cases := []struct {
 		name           string
 		zones          []string
+		diskType       string
 		instanceType   string
 		arch           string
 		expectedError  bool
@@ -758,6 +916,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Valid instance type with min requirements and no zones specified",
 			zones:          []string{},
 			instanceType:   "n1-standard-4",
+			diskType:       "pd-ssd",
 			expectedError:  false,
 			expectedErrMsg: "",
 		},
@@ -765,6 +924,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Valid instance type with min requirements and valid zones specified",
 			zones:          []string{"a", "b"},
 			instanceType:   "n1-standard-4",
+			diskType:       "pd-ssd",
 			arch:           "amd64",
 			expectedError:  false,
 			expectedErrMsg: "",
@@ -773,6 +933,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Valid instance type with min requirements and invalid zones specified",
 			zones:          []string{"a", "b", "d", "x", "y"},
 			instanceType:   "n1-standard-4",
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: `\[instance.type: Invalid value: "n1\-standard\-4": instance type not available in zones: \[x y\]\]$`,
 		},
@@ -780,6 +941,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Valid instance fails min requirements and no zones specified",
 			zones:          []string{},
 			instanceType:   "n1-standard-2",
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: `^\[instance.type: Invalid value: "n1\-standard\-2": instance type does not meet minimum resource requirements of 4 vCPUs instance.type: Invalid value: "n1\-standard\-2": instance type does not meet minimum resource requirements of 15360 MB Memory\]$`,
 		},
@@ -787,12 +949,14 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Valid instance fails min requirements and valid zones specified",
 			zones:          []string{"a", "b"},
 			instanceType:   "n1-standard-1",
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: ``,
 		},
 		{
 			name:           "Valid instance fails min requirements and invalid zones specified",
 			zones:          []string{"a", "x", "y"},
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: ``,
 		},
@@ -800,6 +964,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Invalid instance and no zones specified",
 			zones:          []string{},
 			instanceType:   "invalid-instance-1",
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: `^\[<nil>: Internal error: 404\]$`,
 		},
@@ -807,6 +972,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Invalid instance and valid zones specified",
 			zones:          []string{"a", "b"},
 			instanceType:   "invalid-instance-1",
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: `^\[<nil>: Internal error: 404\]$`,
 		},
@@ -814,6 +980,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Invalid instance and invalid zones specified",
 			zones:          []string{"a", "x", "y", "z"},
 			instanceType:   "invalid-instance-1",
+			diskType:       "pd-ssd",
 			expectedError:  true,
 			expectedErrMsg: `^\[<nil>: Internal error: 404\]$`,
 		},
@@ -821,9 +988,58 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Invalid instance architecture",
 			zones:          []string{"a", "b"},
 			instanceType:   "t2a-standard-4",
+			diskType:       "pd-ssd",
 			arch:           "amd64",
 			expectedError:  true,
 			expectedErrMsg: `^\[instance.type: Invalid value: "t2a\-standard\-4": instance type architecture arm64 does not match specified architecture amd64\]$`,
+		},
+		{
+			name:           "Valid special instance type with min requirements",
+			zones:          []string{"a"},
+			instanceType:   "n4-standard-4",
+			diskType:       "hyperdisk-balanced",
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid special instance type with min requirements",
+			zones:          []string{"a"},
+			instanceType:   "n2-standard-4",
+			diskType:       "hyperdisk-balanced",
+			expectedError:  true,
+			expectedErrMsg: `^\[instance.diskType: Invalid value: "hyperdisk\-balanced": n2\-standard\-4 instance requires one of the following disk types: \[pd\-standard pd\-ssd pd\-balanced\]\]$`,
+		},
+		{
+			name:           "Valid custom instance type",
+			zones:          []string{"a"},
+			instanceType:   "n4-custom-4-16384",
+			diskType:       "hyperdisk-balanced",
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Valid custom instance type invalid disk type",
+			zones:          []string{"a"},
+			instanceType:   "n4-custom-4-16384",
+			diskType:       "pd-ssd",
+			expectedError:  true,
+			expectedErrMsg: `^\[instance.diskType: Invalid value: "pd\-ssd": n4\-custom\-4\-16384 instance requires one of the following disk types: \[hyperdisk\-balanced\]\]$`,
+		},
+		{
+			name:           "Valid custom default instance type",
+			zones:          []string{"a"},
+			instanceType:   "custom-4-16384",
+			diskType:       "pd-ssd",
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid disk type custom default instance type",
+			zones:          []string{"a"},
+			instanceType:   "custom-4-16384",
+			diskType:       "hyperdisk-balanced",
+			expectedError:  true,
+			expectedErrMsg: `^\[instance.diskType: Invalid value: "hyperdisk\-balanced": custom\-4\-16384 instance requires one of the following disk types: \[pd\-standard pd\-ssd pd\-balanced\]\]$`,
 		},
 	}
 
@@ -840,7 +1056,7 @@ func TestValidateInstanceType(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			errs := ValidateInstanceType(gcpClient, field.NewPath("instance"), "project-id", "region", test.zones, test.instanceType, controlPlaneReq, test.arch)
+			errs := ValidateInstanceType(gcpClient, field.NewPath("instance"), "project-id", "region", test.zones, test.diskType, test.instanceType, controlPlaneReq, test.arch)
 			if test.expectedError {
 				assert.Regexp(t, test.expectedErrMsg, errs)
 			} else {

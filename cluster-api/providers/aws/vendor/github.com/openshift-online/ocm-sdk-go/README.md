@@ -106,6 +106,11 @@ to the clients for the services that are part of the API.
 
 Contains the `Error` type that is used by the SDK to report errors.
 
+**accesstransparency/v1** 
+
+This package contains the types and clients for version 1 of the access
+transparency service.
+
 **accountsmgmt/v1**
 
 This package contains the types and clients for version 1 of the accounts

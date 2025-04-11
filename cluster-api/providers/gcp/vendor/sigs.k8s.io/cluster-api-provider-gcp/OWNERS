@@ -9,6 +9,7 @@ approvers:
 
 reviewers:
   - cluster-api-gcp-maintainers
+  - cluster-api-gcp-reviewers
 
 emeritus_approvers:
   - detiber

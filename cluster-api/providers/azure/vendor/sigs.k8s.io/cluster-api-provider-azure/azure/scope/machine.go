@@ -160,27 +160,29 @@ func (m *MachineScope) InitMachineCache(ctx context.Context) error {
 // VMSpec returns the VM spec.
 func (m *MachineScope) VMSpec() azure.ResourceSpecGetter {
 	spec := &virtualmachines.VMSpec{
-		Name:                   m.Name(),
-		Location:               m.Location(),
-		ExtendedLocation:       m.ExtendedLocation(),
-		ResourceGroup:          m.NodeResourceGroup(),
-		ClusterName:            m.ClusterName(),
-		Role:                   m.Role(),
-		NICIDs:                 m.NICIDs(),
-		SSHKeyData:             m.AzureMachine.Spec.SSHPublicKey,
-		Size:                   m.AzureMachine.Spec.VMSize,
-		OSDisk:                 m.AzureMachine.Spec.OSDisk,
-		DataDisks:              m.AzureMachine.Spec.DataDisks,
-		AvailabilitySetID:      m.AvailabilitySetID(),
-		Zone:                   m.AvailabilityZone(),
-		Identity:               m.AzureMachine.Spec.Identity,
-		UserAssignedIdentities: m.AzureMachine.Spec.UserAssignedIdentities,
-		SpotVMOptions:          m.AzureMachine.Spec.SpotVMOptions,
-		SecurityProfile:        m.AzureMachine.Spec.SecurityProfile,
-		DiagnosticsProfile:     m.AzureMachine.Spec.Diagnostics,
-		AdditionalTags:         m.AdditionalTags(),
-		AdditionalCapabilities: m.AzureMachine.Spec.AdditionalCapabilities,
-		ProviderID:             m.ProviderID(),
+		Name:                       m.Name(),
+		Location:                   m.Location(),
+		ExtendedLocation:           m.ExtendedLocation(),
+		ResourceGroup:              m.NodeResourceGroup(),
+		ClusterName:                m.ClusterName(),
+		Role:                       m.Role(),
+		NICIDs:                     m.NICIDs(),
+		SSHKeyData:                 m.AzureMachine.Spec.SSHPublicKey,
+		Size:                       m.AzureMachine.Spec.VMSize,
+		OSDisk:                     m.AzureMachine.Spec.OSDisk,
+		DataDisks:                  m.AzureMachine.Spec.DataDisks,
+		AvailabilitySetID:          m.AvailabilitySetID(),
+		Zone:                       m.AvailabilityZone(),
+		Identity:                   m.AzureMachine.Spec.Identity,
+		UserAssignedIdentities:     m.AzureMachine.Spec.UserAssignedIdentities,
+		SpotVMOptions:              m.AzureMachine.Spec.SpotVMOptions,
+		SecurityProfile:            m.AzureMachine.Spec.SecurityProfile,
+		DiagnosticsProfile:         m.AzureMachine.Spec.Diagnostics,
+		DisableExtensionOperations: ptr.Deref(m.AzureMachine.Spec.DisableExtensionOperations, false),
+		AdditionalTags:             m.AdditionalTags(),
+		AdditionalCapabilities:     m.AzureMachine.Spec.AdditionalCapabilities,
+		CapacityReservationGroupID: m.GetCapacityReservationGroupID(),
+		ProviderID:                 m.ProviderID(),
 	}
 	if m.cache != nil {
 		spec.SKU = m.cache.VMSKU
@@ -373,6 +375,10 @@ func (m *MachineScope) HasSystemAssignedIdentity() bool {
 
 // VMExtensionSpecs returns the VM extension specs.
 func (m *MachineScope) VMExtensionSpecs() []azure.ResourceSpecGetter {
+	if ptr.Deref(m.AzureMachine.Spec.DisableExtensionOperations, false) {
+		return []azure.ResourceSpecGetter{}
+	}
+
 	var extensionSpecs = []azure.ResourceSpecGetter{}
 	for _, extension := range m.AzureMachine.Spec.VMExtensions {
 		extensionSpecs = append(extensionSpecs, &vmextensions.VMExtensionSpec{
@@ -502,7 +508,8 @@ func (m *MachineScope) AvailabilitySetSpec() azure.ResourceSpecGetter {
 func (m *MachineScope) AvailabilitySet() (string, bool) {
 	// AvailabilitySet service is not supported on EdgeZone currently.
 	// AvailabilitySet cannot be used with Spot instances.
-	if !m.AvailabilitySetEnabled() || m.AzureMachine.Spec.SpotVMOptions != nil || m.ExtendedLocation() != nil {
+	if !m.AvailabilitySetEnabled() || m.AzureMachine.Spec.SpotVMOptions != nil || m.ExtendedLocation() != nil ||
+		m.AzureMachine.Spec.FailureDomain != nil || m.Machine.Spec.FailureDomain != nil {
 		return "", false
 	}
 
@@ -804,4 +811,10 @@ func (m *MachineScope) UpdatePatchStatus(condition clusterv1.ConditionType, serv
 	default:
 		conditions.MarkFalse(m.AzureMachine, condition, infrav1.FailedReason, clusterv1.ConditionSeverityError, "%s failed to update. err: %s", service, err.Error())
 	}
+}
+
+// GetCapacityReservationGroupID returns the CapacityReservationGroupID from the spec if the
+// value is assigned, or else returns an empty string.
+func (m *MachineScope) GetCapacityReservationGroupID() string {
+	return ptr.Deref(m.AzureMachine.Spec.CapacityReservationGroupID, "")
 }

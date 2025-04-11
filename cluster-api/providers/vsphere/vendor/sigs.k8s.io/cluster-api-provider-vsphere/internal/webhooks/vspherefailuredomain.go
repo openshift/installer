@@ -45,7 +45,7 @@ func (webhook *VSphereFailureDomainWebhook) SetupWebhookWithManager(mgr ctrl.Man
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&infrav1.VSphereFailureDomain{}).
 		WithValidator(webhook).
-		WithDefaulter(webhook).
+		WithDefaulter(webhook, admission.DefaulterRemoveUnknownOrOmitableFields).
 		Complete()
 }
 
@@ -77,7 +77,17 @@ func (webhook *VSphereFailureDomainWebhook) ValidateCreate(_ context.Context, ra
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "Topology", "ComputeCluster"), fmt.Sprintf("cannot be nil if zone's Failure Domain type is %s", obj.Spec.Zone.Type)))
 	}
 
-	return nil, aggregateObjErrors(obj.GroupVersionKind().GroupKind(), obj.Name, allErrs)
+	if len(obj.Spec.Topology.NetworkConfigurations) != 0 && len(obj.Spec.Topology.Networks) != 0 {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "topology", "networks"), "cannot be set if spec.topology.networkConfigurations is already set"))
+	}
+
+	for i, networkConfig := range obj.Spec.Topology.NetworkConfigurations {
+		if networkConfig.NetworkName == "" {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec", "topology", "networkConfigurations").Index(i).Child("networkName"), "cannot be empty"))
+		}
+	}
+
+	return nil, AggregateObjErrors(obj.GroupVersionKind().GroupKind(), obj.Name, allErrs)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.

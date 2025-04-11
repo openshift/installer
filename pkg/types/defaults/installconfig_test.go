@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/utils/pointer"
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -12,8 +11,6 @@ import (
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	"github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
-	"github.com/openshift/installer/pkg/types/libvirt"
-	libvirtdefaults "github.com/openshift/installer/pkg/types/libvirt/defaults"
 	"github.com/openshift/installer/pkg/types/none"
 	nonedefaults "github.com/openshift/installer/pkg/types/none/defaults"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -61,16 +58,6 @@ func defaultAzureInstallConfig() *types.InstallConfig {
 	c := defaultInstallConfig()
 	c.Platform.Azure = &azure.Platform{}
 	azuredefaults.SetPlatformDefaults(c.Platform.Azure)
-	return c
-}
-
-func defaultLibvirtInstallConfig() *types.InstallConfig {
-	c := defaultInstallConfig()
-	c.Networking.MachineNetwork[0].CIDR = *libvirtdefaults.DefaultMachineCIDR
-	c.Platform.Libvirt = &libvirt.Platform{}
-	libvirtdefaults.SetPlatformDefaults(c.Platform.Libvirt)
-	c.ControlPlane.Replicas = pointer.Int64Ptr(1)
-	c.Compute[0].Replicas = pointer.Int64Ptr(1)
 	return c
 }
 
@@ -131,15 +118,6 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 				},
 			},
 			expected: defaultAzureInstallConfig(),
-		},
-		{
-			name: "empty Libvirt",
-			config: &types.InstallConfig{
-				Platform: types.Platform{
-					Libvirt: &libvirt.Platform{},
-				},
-			},
-			expected: defaultLibvirtInstallConfig(),
 		},
 		{
 			name: "empty OpenStack",
@@ -223,6 +201,17 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			expected: defaultInstallConfig(),
 		},
 		{
+			name: "arbiter present",
+			config: &types.InstallConfig{
+				Arbiter: &types.MachinePool{},
+			},
+			expected: func() *types.InstallConfig {
+				c := defaultInstallConfig()
+				c.Arbiter = defaultMachinePoolWithReplicaCount("arbiter", 0)
+				return c
+			}(),
+		},
+		{
 			name: "Compute present",
 			config: &types.InstallConfig{
 				Compute: []types.MachinePool{{Name: "worker"}},
@@ -268,21 +257,6 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultAzureInstallConfig()
-				return c
-			}(),
-		},
-		{
-			name: "Libvirt platform present",
-			config: &types.InstallConfig{
-				Platform: types.Platform{
-					Libvirt: &libvirt.Platform{
-						URI: "test-uri",
-					},
-				},
-			},
-			expected: func() *types.InstallConfig {
-				c := defaultLibvirtInstallConfig()
-				c.Platform.Libvirt.URI = "test-uri"
 				return c
 			}(),
 		},

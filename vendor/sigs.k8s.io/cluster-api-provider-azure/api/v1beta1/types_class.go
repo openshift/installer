@@ -88,6 +88,10 @@ type AzureManagedControlPlaneClassSpec struct {
 	// +optional
 	MachineTemplate *AzureManagedControlPlaneTemplateMachineTemplate `json:"machineTemplate,omitempty"`
 
+	// ResourceGroupName is the name of the Azure resource group for this AKS Cluster.
+	// Immutable.
+	ResourceGroupName string `json:"resourceGroupName"`
+
 	// Version defines the desired Kubernetes version.
 	// +kubebuilder:validation:MinLength:=2
 	Version string `json:"version"`
@@ -415,7 +419,6 @@ type AzureManagedMachinePoolClassSpec struct {
 
 // ManagedControlPlaneVirtualNetworkClassSpec defines the ManagedControlPlaneVirtualNetwork properties that may be shared across several managed control plane vnets.
 type ManagedControlPlaneVirtualNetworkClassSpec struct {
-	Name      string `json:"name"`
 	CIDRBlock string `json:"cidrBlock"`
 	// +optional
 	Subnet ManagedControlPlaneSubnet `json:"subnet,omitempty"`
@@ -470,7 +473,7 @@ type SubnetClassSpec struct {
 	Name string `json:"name"`
 
 	// Role defines the subnet role (eg. Node, ControlPlane)
-	// +kubebuilder:validation:Enum=node;control-plane;bastion;all
+	// +kubebuilder:validation:Enum=node;control-plane;bastion;cluster
 	Role SubnetRole `json:"role"`
 
 	// CIDRBlocks defines the subnet's address space, specified as one or more address prefixes in CIDR notation.

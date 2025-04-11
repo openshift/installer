@@ -3,11 +3,13 @@ package clusterapi
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // injectInstallInfo adds information about the installer and its invoker as a
@@ -31,4 +33,21 @@ func injectInstallInfo(bootstrap []byte) ([]byte, error) {
 	}
 
 	return ign, nil
+}
+
+func prioritizeIPv4(config *types.InstallConfig, addresses []string) string {
+	if len(addresses) == 0 {
+		return ""
+	}
+
+	if config.Platform.Name() == "vsphere" {
+		for _, a := range addresses {
+			ip := net.ParseIP(a)
+			if ip.To4() != nil {
+				return a
+			}
+		}
+	}
+
+	return addresses[0]
 }

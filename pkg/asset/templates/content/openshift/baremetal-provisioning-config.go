@@ -1,6 +1,7 @@
 package openshift
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -30,7 +31,7 @@ func (t *BaremetalConfig) Name() string {
 }
 
 // Generate generates the actual files by this asset
-func (t *BaremetalConfig) Generate(parents asset.Parents) error {
+func (t *BaremetalConfig) Generate(_ context.Context, parents asset.Parents) error {
 	fileName := baremetalConfigFilename
 	data, err := content.GetOpenshiftTemplate(fileName)
 	if err != nil {

@@ -65,7 +65,6 @@
     "nodeSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', variables('nodeSubnetName'))]",
     "infraLoadBalancerName" : "[parameters('baseName')]",
     "sshKeyPath" : "/home/capi/.ssh/authorized_keys",
-    "identityName" : "[concat(parameters('baseName'), '-identity')]",
     "galleryName": "[concat('gallery_', replace(parameters('baseName'), '-', '_'))]",
     "imageName" : "[concat(parameters('baseName'), if(equals(parameters('hyperVGen'), 'V2'), '-gen2', ''))]",
     "copy" : [
@@ -117,12 +116,6 @@
               "location" : "[variables('location')]",
               "tags" : {
                 "kubernetes.io-cluster-ffranzupi": "owned"
-              },
-              "identity" : {
-                "type" : "userAssigned",
-                "userAssignedIdentities" : {
-                  "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities/', variables('identityName'))]" : {}
-                }
               },
               "dependsOn" : [
                 "[concat('Microsoft.Network/networkInterfaces/', concat(variables('vmNames')[copyIndex()], '-nic'))]"

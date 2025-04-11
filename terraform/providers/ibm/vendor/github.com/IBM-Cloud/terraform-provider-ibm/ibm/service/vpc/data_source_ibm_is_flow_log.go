@@ -392,7 +392,7 @@ func dataSourceFlowLogCollectorTargetToMap(targetItem vpcv1.FlowLogCollectorTarg
 	return targetMap
 }
 
-func dataSourceFlowLogCollectorTargetDeletedToMap(deletedItem vpcv1.NetworkInterfaceReferenceTargetContextDeleted) (deletedMap map[string]interface{}) {
+func dataSourceFlowLogCollectorTargetDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -435,7 +435,7 @@ func dataSourceFlowLogCollectorVPCToMap(vpcItem vpcv1.VPCReference) (vpcMap map[
 	return vpcMap
 }
 
-func dataSourceFlowLogCollectorVPCDeletedToMap(deletedItem vpcv1.VPCReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceFlowLogCollectorVPCDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

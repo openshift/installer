@@ -18,12 +18,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
@@ -35,6 +32,7 @@ import (
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	configinformers "github.com/openshift/client-go/config/informers/externalversions"
 	configlisters "github.com/openshift/client-go/config/listers/config/v1"
+	operatorclient "github.com/openshift/client-go/operator/clientset/versioned"
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/pkg/asset"
@@ -47,9 +45,10 @@ import (
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
-	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
+	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	baremetalutils "github.com/openshift/installer/pkg/utils/baremetal"
@@ -148,7 +147,18 @@ var (
 		assets: targetassets.Cluster,
 	}
 
-	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget, singleNodeIgnitionConfigTarget}
+	permissionsTarget = target{
+		name: "Permissions",
+		command: &cobra.Command{
+			Use:   "permissions-policy",
+			Short: "Generates a list of required permissions asset",
+			// This is internal-only for now
+			Hidden: true,
+		},
+		assets: targetassets.Permissions,
+	}
+
+	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget, singleNodeIgnitionConfigTarget, permissionsTarget}
 )
 
 // clusterCreatePostRun is the main entrypoint for the cluster create command
@@ -178,24 +188,29 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 	//
 	timer.StartTimer("Bootstrap Complete")
 	if err := waitForBootstrapComplete(ctx, config); err != nil {
-		bundlePath, gatherErr := runGatherBootstrapCmd(ctx, command.RootOpts.Dir)
-		if gatherErr != nil {
-			logrus.Error("Attempted to gather debug logs after installation failure: ", gatherErr)
-		}
 		if err := logClusterOperatorConditions(ctx, config); err != nil {
 			logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err)
 		}
 		logrus.Error("Bootstrap failed to complete: ", err.Unwrap())
 		logrus.Error(err.Error())
-		if gatherErr == nil {
-			if err := service.AnalyzeGatherBundle(bundlePath); err != nil {
-				logrus.Error("Attempted to analyze the debug logs after installation failure: ", err)
-			}
-			logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
-		}
+		gatherAndAnalyzeBootstrapLogs(ctx, command.RootOpts.Dir)
 		return exitCodeBootstrapFailed, nil
 	}
 	timer.StopTimer("Bootstrap Complete")
+
+	// In CI, we want to collect an installer log bundle so we can examine bootstrap logs that aren't
+	// collectable anywhere else.
+	if gatherBootstrap, ok := os.LookupEnv("OPENSHIFT_INSTALL_GATHER_BOOTSTRAP"); ok && gatherBootstrap != "" {
+		timer.StartTimer("Bootstrap Gather")
+		logrus.Infof("OPENSHIFT_INSTALL_GATHER_BOOTSTRAP is set, will attempt to gather a log bundle")
+		bundlePath, gatherErr := runGatherBootstrapCmd(ctx, command.RootOpts.Dir)
+		if gatherErr != nil {
+			logrus.Warningf("Attempted to gather debug logs, and it failed: %q ", gatherErr)
+		} else {
+			logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
+		}
+		timer.StopTimer("Bootstrap Gather")
+	}
 
 	//
 	// Wait for the bootstrap to be destroyed.
@@ -322,6 +337,9 @@ func runTargetCmd(ctx context.Context, targets ...asset.WritableAsset) func(cmd 
 			if strings.Contains(err.Error(), asset.InstallConfigError) {
 				logrus.Error(err)
 				logrus.Exit(exitCodeInstallConfigError)
+			}
+			if strings.Contains(err.Error(), asset.ControlPlaneCreationError) {
+				gatherAndAnalyzeBootstrapLogs(ctx, command.RootOpts.Dir)
 			}
 			if strings.Contains(err.Error(), asset.ClusterCreationError) {
 				logrus.Error(err)
@@ -451,7 +469,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 		}
 	}
 
-	timeout := 30 * time.Minute
+	timeout := 45 * time.Minute
 
 	// Wait longer for baremetal, VSphere due to length of time it takes to boot
 	if platformName == baremetal.Name || platformName == vsphere.Name {
@@ -477,7 +495,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 		return err
 	}
 
-	if err := waitForStableSNOBootstrap(ctx, config); err != nil {
+	if err := waitForEtcdBootstrapMemberRemoval(ctx, config); err != nil {
 		return newBootstrapError(err)
 	}
 
@@ -519,62 +537,34 @@ func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset
 	return nil
 }
 
-// When bootstrap on SNO deployments, we should not remove the bootstrap node prematurely,
-// here we make sure that the deployment is stable.
-// Given the nature of single node we just need to make sure things such as etcd are in the proper state
-// before continuing.
-func waitForStableSNOBootstrap(ctx context.Context, config *rest.Config) error {
-	timeout := 5 * time.Minute
-
-	// If we're not in a single node deployment, bail early
-	if isSNO, err := IsSingleNode(); err != nil {
-		logrus.Warningf("Can not determine if installing a Single Node cluster, continuing as normal install: %v", err)
-		return nil
-	} else if !isSNO {
-		return nil
-	}
-
-	snoBootstrapContext, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	untilTime := time.Now().Add(timeout)
-	timezone, _ := untilTime.Zone()
-	logrus.Info("Detected Single Node deployment")
-	logrus.Infof("Waiting up to %v (until %v %s) for the bootstrap etcd member to be removed...",
-		timeout, untilTime.Format(time.Kitchen), timezone)
-
-	client, err := dynamic.NewForConfig(config)
+// If the bootstrap etcd member is cleaned up before it has been removed from the etcd cluster, the
+// etcd cluster cannot maintain quorum through the rollout of any single permanent member.
+func waitForEtcdBootstrapMemberRemoval(ctx context.Context, config *rest.Config) error {
+	logrus.Info("Waiting for the bootstrap etcd member to be removed...")
+	client, err := operatorclient.NewForConfig(config)
 	if err != nil {
-		return fmt.Errorf("error creating dynamic client: %w", err)
+		return fmt.Errorf("error creating operator client: %w", err)
 	}
-	gvr := schema.GroupVersionResource{
-		Group:    operatorv1.SchemeGroupVersion.Group,
-		Version:  operatorv1.SchemeGroupVersion.Version,
-		Resource: "etcds",
-	}
-	resourceClient := client.Resource(gvr)
 	// Validate the etcd operator has removed the bootstrap etcd member
-	return wait.PollUntilContextCancel(snoBootstrapContext, 1*time.Second, true, func(ctx context.Context) (done bool, err error) {
-		etcdOperator := &operatorv1.Etcd{}
-		etcdUnstructured, err := resourceClient.Get(ctx, "cluster", metav1.GetOptions{})
+	if err := wait.PollUntilContextCancel(ctx, 1*time.Second, true, func(ctx context.Context) (done bool, err error) {
+		etcd, err := client.OperatorV1().Etcds().Get(ctx, "cluster", metav1.GetOptions{})
 		if err != nil {
-			// There might be service disruptions in SNO, we log those here but keep trying with in the time limit
-			logrus.Debugf("Error getting ETCD Cluster resource, retrying: %v", err)
+			logrus.Debugf("Error getting etcd operator singleton, retrying: %v", err)
 			return false, nil
 		}
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(etcdUnstructured.Object, etcdOperator)
-		if err != nil {
-			// This error should not happen, if we do, we log the error and keep retrying until we hit the limit
-			logrus.Debugf("Error parsing etcds resource, retrying: %v", err)
-			return false, nil
-		}
-		for _, condition := range etcdOperator.Status.Conditions {
+
+		for _, condition := range etcd.Status.Conditions {
 			if condition.Type == "EtcdBootstrapMemberRemoved" {
-				return configv1.ConditionStatus(condition.Status) == configv1.ConditionTrue, nil
+				return condition.Status == operatorv1.ConditionTrue, nil
 			}
 		}
 		return false, nil
-	})
+	}); err != nil {
+		logrus.Warnf("Bootstrap etcd member may not have been removed: %v", err)
+		return err
+	}
+	logrus.Info("Bootstrap etcd member has been removed")
+	return nil
 }
 
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation
@@ -773,7 +763,7 @@ func logComplete(directory, consoleURL string) error {
 		return err
 	}
 	logrus.Info("Install complete!")
-	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=%s'", kubeconfig)
+	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run\n    export KUBECONFIG=%s", kubeconfig)
 	if consoleURL != "" {
 		logrus.Infof("Access the OpenShift web-console here: %s", consoleURL)
 		if skipPasswordPrintFlag {
@@ -890,8 +880,12 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 		return fmt.Errorf("failed to fetch %s: %w", installConfig.Name(), err)
 	}
 	switch installConfig.Config.Platform.Name() { //nolint:gocritic
+	case aws.Name:
+		if installConfig.Config.AWS.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
+			return nil
+		}
 	case gcp.Name:
-		if installConfig.Config.GCP.UserProvisionedDNS != gcp.UserProvisionedDNSEnabled {
+		if installConfig.Config.GCP.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
 			return nil
 		}
 	default:
@@ -931,26 +925,4 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 	}
 
 	return nil
-}
-
-// IsSingleNode determines if we are in a single node configuration based off of the install config
-// loaded from the asset store.
-func IsSingleNode() (bool, error) {
-	assetStore, err := assetstore.NewStore(command.RootOpts.Dir)
-	if err != nil {
-		return false, fmt.Errorf("error loading asset store: %w", err)
-	}
-	installConfig, err := assetStore.Load(&installconfig.InstallConfig{})
-	if err != nil {
-		return false, fmt.Errorf("error loading installConfig: %w", err)
-	}
-	if installConfig == nil {
-		return false, fmt.Errorf("installConfig loaded from asset store was nil")
-	}
-
-	config := installConfig.(*installconfig.InstallConfig).Config
-	if machinePool := config.ControlPlane; machinePool != nil {
-		return *machinePool.Replicas == int64(1), nil
-	}
-	return false, nil
 }

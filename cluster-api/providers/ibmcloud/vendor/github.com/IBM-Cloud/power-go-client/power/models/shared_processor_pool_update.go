@@ -21,7 +21,7 @@ type SharedProcessorPoolUpdate struct {
 	Name string `json:"name,omitempty"`
 
 	// The amount of reserved processor cores for the Shared Processor Pool; only integers allowed, no fractional values; the amount can be increased (dependent on available resources) or decreased (dependent on currently allocated resources)
-	ReservedCores int64 `json:"reservedCores,omitempty"`
+	ReservedCores *int64 `json:"reservedCores,omitempty"`
 }
 
 // Validate validates this shared processor pool update

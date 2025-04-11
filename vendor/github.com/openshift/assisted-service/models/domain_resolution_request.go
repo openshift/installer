@@ -22,7 +22,7 @@ type DomainResolutionRequest struct {
 
 	// domains
 	// Required: true
-	Domains []*DomainResolutionRequestDomain `json:"domains"`
+	Domains []DomainResolutionRequestDomain `json:"domains"`
 }
 
 // Validate validates this domain resolution request
@@ -46,19 +46,14 @@ func (m *DomainResolutionRequest) validateDomains(formats strfmt.Registry) error
 	}
 
 	for i := 0; i < len(m.Domains); i++ {
-		if swag.IsZero(m.Domains[i]) { // not required
-			continue
-		}
 
-		if m.Domains[i] != nil {
-			if err := m.Domains[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("domains" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("domains" + "." + strconv.Itoa(i))
-				}
-				return err
+		if err := m.Domains[i].Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("domains" + "." + strconv.Itoa(i))
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("domains" + "." + strconv.Itoa(i))
 			}
+			return err
 		}
 
 	}
@@ -66,37 +61,8 @@ func (m *DomainResolutionRequest) validateDomains(formats strfmt.Registry) error
 	return nil
 }
 
-// ContextValidate validate this domain resolution request based on the context it is used
+// ContextValidate validates this domain resolution request based on context it is used
 func (m *DomainResolutionRequest) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.contextValidateDomains(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *DomainResolutionRequest) contextValidateDomains(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Domains); i++ {
-
-		if m.Domains[i] != nil {
-			if err := m.Domains[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("domains" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("domains" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
 	return nil
 }
 
@@ -111,67 +77,6 @@ func (m *DomainResolutionRequest) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *DomainResolutionRequest) UnmarshalBinary(b []byte) error {
 	var res DomainResolutionRequest
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// DomainResolutionRequestDomain domain resolution request domain
-//
-// swagger:model DomainResolutionRequestDomain
-type DomainResolutionRequestDomain struct {
-
-	// The domain name that should be resolved
-	// Required: true
-	// Pattern: ^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*[.])+[a-zA-Z]{2,}[.]?$
-	DomainName *string `json:"domain_name"`
-}
-
-// Validate validates this domain resolution request domain
-func (m *DomainResolutionRequestDomain) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateDomainName(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *DomainResolutionRequestDomain) validateDomainName(formats strfmt.Registry) error {
-
-	if err := validate.Required("domain_name", "body", m.DomainName); err != nil {
-		return err
-	}
-
-	if err := validate.Pattern("domain_name", "body", *m.DomainName, `^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*[.])+[a-zA-Z]{2,}[.]?$`); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// ContextValidate validates this domain resolution request domain based on context it is used
-func (m *DomainResolutionRequestDomain) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *DomainResolutionRequestDomain) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *DomainResolutionRequestDomain) UnmarshalBinary(b []byte) error {
-	var res DomainResolutionRequestDomain
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

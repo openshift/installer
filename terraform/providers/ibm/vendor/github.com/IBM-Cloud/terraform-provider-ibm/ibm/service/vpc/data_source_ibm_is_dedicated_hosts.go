@@ -637,7 +637,7 @@ func dataSourceDedicatedHostCollectionDedicatedHostsGroupToMap(groupItem vpcv1.D
 	return groupMap
 }
 
-func dataSourceDedicatedHostCollectionGroupDeletedToMap(deletedItem vpcv1.DedicatedHostGroupReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceDedicatedHostCollectionGroupDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -647,7 +647,7 @@ func dataSourceDedicatedHostCollectionGroupDeletedToMap(deletedItem vpcv1.Dedica
 	return deletedMap
 }
 
-func dataSourceDedicatedHostCollectionInstancesDeletedToMap(deletedItem vpcv1.InstanceReferenceDeleted) (deletedMap map[string]interface{}) {
+func dataSourceDedicatedHostCollectionInstancesDeletedToMap(deletedItem vpcv1.Deleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {
@@ -725,7 +725,7 @@ func dataSourceDedicatedHostCollectionDedicatedHostsVcpuToMap(vcpuItem vpcv1.Vcp
 	return vcpuMap
 }
 
-func dataSourceDedicatedHostCollectionFlattenFirst(result vpcv1.DedicatedHostCollectionFirst) (finalList []map[string]interface{}) {
+func dataSourceDedicatedHostCollectionFlattenFirst(result vpcv1.PageLink) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceDedicatedHostCollectionFirstToMap(result)
 	finalList = append(finalList, finalMap)
@@ -733,7 +733,7 @@ func dataSourceDedicatedHostCollectionFlattenFirst(result vpcv1.DedicatedHostCol
 	return finalList
 }
 
-func dataSourceDedicatedHostCollectionFirstToMap(firstItem vpcv1.DedicatedHostCollectionFirst) (firstMap map[string]interface{}) {
+func dataSourceDedicatedHostCollectionFirstToMap(firstItem vpcv1.PageLink) (firstMap map[string]interface{}) {
 	firstMap = map[string]interface{}{}
 
 	if firstItem.Href != nil {
@@ -743,7 +743,7 @@ func dataSourceDedicatedHostCollectionFirstToMap(firstItem vpcv1.DedicatedHostCo
 	return firstMap
 }
 
-func dataSourceDedicatedHostCollectionFlattenNext(result vpcv1.DedicatedHostCollectionNext) (finalList []map[string]interface{}) {
+func dataSourceDedicatedHostCollectionFlattenNext(result vpcv1.PageLink) (finalList []map[string]interface{}) {
 	finalList = []map[string]interface{}{}
 	finalMap := dataSourceDedicatedHostCollectionNextToMap(result)
 	finalList = append(finalList, finalMap)
@@ -751,7 +751,7 @@ func dataSourceDedicatedHostCollectionFlattenNext(result vpcv1.DedicatedHostColl
 	return finalList
 }
 
-func dataSourceDedicatedHostCollectionNextToMap(nextItem vpcv1.DedicatedHostCollectionNext) (nextMap map[string]interface{}) {
+func dataSourceDedicatedHostCollectionNextToMap(nextItem vpcv1.PageLink) (nextMap map[string]interface{}) {
 	nextMap = map[string]interface{}{}
 
 	if nextItem.Href != nil {

@@ -2,12 +2,13 @@
 package openstack
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack"
-	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
+	"github.com/gophercloud/gophercloud/v2"
+	"github.com/gophercloud/gophercloud/v2/openstack"
+	"github.com/gophercloud/gophercloud/v2/openstack/identity/v3/tokens"
 
 	configv1 "github.com/openshift/api/config/v1"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
@@ -20,6 +21,7 @@ import (
 
 // TFVars generates OpenStack-specific Terraform variables.
 func TFVars(
+	ctx context.Context,
 	installConfig *installconfig.InstallConfig,
 	mastersAsset *machines.Master,
 	workersAsset *machines.Worker,
@@ -33,7 +35,7 @@ func TFVars(
 		defaultmpool = installConfig.Config.OpenStack.DefaultMachinePlatform
 	)
 
-	conn, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := openstackdefaults.NewServiceClient(ctx, "network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, fmt.Errorf("failed to build an OpenStack service client: %w", err)
 	}
@@ -110,7 +112,7 @@ func TFVars(
 	// Glance in the PreTerraform hook of the Cluster asset.
 	imageName, _ := rhcos.GenerateOpenStackImageName(baseImage, clusterID.InfraID)
 
-	serviceCatalog, err := getServiceCatalog(cloud)
+	serviceCatalog, err := getServiceCatalog(ctx, cloud)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve service catalog: %w", err)
 	}
@@ -150,7 +152,7 @@ func TFVars(
 	// defaultMachinesPort carries the machine subnets and the network.
 	var defaultMachinesPort *terraformPort
 	if controlPlanePort := installConfig.Config.Platform.OpenStack.ControlPlanePort; controlPlanePort != nil {
-		port, err := portTargetToTerraformPort(conn, *controlPlanePort)
+		port, err := portTargetToTerraformPort(ctx, conn, *controlPlanePort)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve portTarget :%w", err)
 		}
@@ -187,7 +189,6 @@ func TFVars(
 		IngressFloatingIP                 string                            `json:"openstack_ingress_floating_ip,omitempty"`
 		APIVIPs                           []string                          `json:"openstack_api_int_ips,omitempty"`
 		IngressVIPs                       []string                          `json:"openstack_ingress_ips,omitempty"`
-		TrunkSupport                      bool                              `json:"openstack_trunk_support,omitempty"`
 		OctaviaSupport                    bool                              `json:"openstack_octavia_support,omitempty"`
 		RootVolumeSize                    int                               `json:"openstack_master_root_volume_size,omitempty"`
 		BootstrapShim                     string                            `json:"openstack_bootstrap_shim_ignition,omitempty"`
@@ -214,7 +215,6 @@ func TFVars(
 		IngressFloatingIP:                 installConfig.Config.Platform.OpenStack.IngressFloatingIP,
 		APIVIPs:                           installConfig.Config.Platform.OpenStack.APIVIPs,
 		IngressVIPs:                       installConfig.Config.Platform.OpenStack.IngressVIPs,
-		TrunkSupport:                      masterSpecs[0].Trunk,
 		OctaviaSupport:                    octaviaSupport,
 		RootVolumeSize:                    rootVolumeSize,
 		BootstrapShim:                     bootstrapIgn,
@@ -236,8 +236,8 @@ func TFVars(
 }
 
 // getServiceCatalog fetches OpenStack service catalog with service endpoints
-func getServiceCatalog(cloud string) (*tokens.ServiceCatalog, error) {
-	conn, err := openstackdefaults.NewServiceClient("identity", openstackdefaults.DefaultClientOpts(cloud))
+func getServiceCatalog(ctx context.Context, cloud string) (*tokens.ServiceCatalog, error) {
+	conn, err := openstackdefaults.NewServiceClient(ctx, "identity", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}

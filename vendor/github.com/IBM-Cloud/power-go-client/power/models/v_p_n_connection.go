@@ -45,7 +45,7 @@ type VPNConnection struct {
 	// Mode used by this VPNConnection, either policy-based, or route-based, this attribute is set at the creation and cannot be updated later.
 	// Example: policy
 	// Required: true
-	// Enum: [policy route]
+	// Enum: ["policy","route"]
 	Mode *string `json:"mode"`
 
 	// VPN Connection name
@@ -69,7 +69,7 @@ type VPNConnection struct {
 
 	// status of the VPN connection
 	// Required: true
-	// Enum: [active warning disabled]
+	// Enum: ["active","warning","disabled"]
 	Status *string `json:"status"`
 
 	// public IP address of the VPN Gateway (vSRX) attached to this VPNConnection

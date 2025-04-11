@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	utilsslice "k8s.io/utils/strings/slices"
 
@@ -285,5 +286,34 @@ func convertAWS(config *types.InstallConfig) error {
 	if config.Platform.AWS.ExperimentalPropagateUserTag != nil {
 		config.Platform.AWS.PropagateUserTag = *config.Platform.AWS.ExperimentalPropagateUserTag
 	}
+	// BestEffortDeleteIgnition takes precedence when set
+	if !config.AWS.BestEffortDeleteIgnition {
+		config.AWS.BestEffortDeleteIgnition = config.AWS.PreserveBootstrapIgnition
+	}
+	if ami := config.AWS.AMIID; len(ami) > 0 {
+		if config.AWS.DefaultMachinePlatform == nil {
+			config.AWS.DefaultMachinePlatform = &aws.MachinePool{}
+		}
+		// DefaultMachinePlatform.AMIID takes precedence in the machine manifest code anyway
+		if len(config.AWS.DefaultMachinePlatform.AMIID) == 0 {
+			config.AWS.DefaultMachinePlatform.AMIID = ami
+		}
+	}
+
+	// Subnets field is deprecated in favor of VPC.Subnets.
+	fldPath := field.NewPath("platform", "aws")
+	if len(config.AWS.DeprecatedSubnets) > 0 && len(config.AWS.VPC.Subnets) > 0 { // nolint: staticcheck
+		return field.Forbidden(fldPath.Child("subnets"), fmt.Sprintf("cannot specify %s and %s together", fldPath.Child("subnets"), fldPath.Child("vpc", "subnets")))
+	} else if len(config.AWS.DeprecatedSubnets) > 0 { // nolint: staticcheck
+		var subnets []aws.Subnet
+		for _, subnetID := range config.AWS.DeprecatedSubnets { // nolint: staticcheck
+			subnets = append(subnets, aws.Subnet{
+				ID: aws.AWSSubnetID(subnetID),
+			})
+		}
+		config.AWS.VPC.Subnets = subnets
+		logrus.Warnf("%s is deprecated. Converted to %s", fldPath.Child("subnets"), fldPath.Child("vpc", "subnets"))
+	}
+
 	return nil
 }

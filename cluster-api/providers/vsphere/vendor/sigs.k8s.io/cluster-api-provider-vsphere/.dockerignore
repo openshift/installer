@@ -1,22 +1,36 @@
 .git
 .github
 .vscode
-
-.dockerignore
 .gitignore
 .golangci.yml
-*.out
 bin/
-hack/.bin/
-hack/tools/bin/
+**/*.yaml
 out/
 docs/
-scripts/
+packaging/
+templates/
 **/*.md
-*.test
-cluster-api-provider-vsphere
-examples/provider-components/provider-components*.yaml
-test/
+**/.tiltbuild
+**/config/**/*.yaml
+**/config/**/*.yaml-e
+_artifacts
+Makefile
+**/Makefile
+
+# add yaml files from internal/kubevip which are required for embedding.
+!internal/kubevip/*.yaml
+
+# ignores changes to test-only code to avoid extra rebuilds
+test/e2e/**
+
+# We want to ignore any frequently modified files to avoid cache-busting the COPY ./ ./
+# Binaries for programs and plugins
+**/*.exe
+**/*.dll
+**/*.so
+**/*.dylib
+**/bin/**
+**/out/**
 
 # go.work files
 go.work

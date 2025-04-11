@@ -18,8 +18,6 @@ limitations under the License.
 package constants
 
 import (
-	"time"
-
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 )
 
@@ -51,12 +49,6 @@ const (
 	// MaintenanceAnnotationLabel is the annotation used to indicate a machine and/or
 	// cluster are in maintenance mode.
 	MaintenanceAnnotationLabel = "capv." + infrav1.GroupName + "/maintenance"
-
-	// DefaultEnableKeepAlive is true by default.
-	DefaultEnableKeepAlive = true
-
-	// DefaultKeepAliveDuration unit minutes.
-	DefaultKeepAliveDuration = time.Minute * 5
 
 	// NodeLabelPrefix is the prefix for node labels.
 	NodeLabelPrefix = "node.cluster.x-k8s.io"

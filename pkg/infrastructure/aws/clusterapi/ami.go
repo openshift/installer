@@ -10,23 +10,15 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 )
 
 // copyAMIToRegion copies the AMI to the region configured in the installConfig if needed.
-func copyAMIToRegion(ctx context.Context, installConfig *installconfig.InstallConfig, infraID, rhcosImage string) (string, error) {
-	osImage := strings.SplitN(rhcosImage, ",", 2)
-	amiID := osImage[0]
-	amiRegion := installConfig.Config.AWS.Region
-	if len(osImage) > 1 {
-		amiRegion = osImage[1]
-	}
+func copyAMIToRegion(ctx context.Context, installConfig *installconfig.InstallConfig, infraID string, rhcosImage *rhcos.Image) (string, error) {
+	osImage := strings.SplitN(rhcosImage.ControlPlane, ",", 2)
+	amiID, amiRegion := osImage[0], osImage[1]
 
-	// Already in target region, nothing to do
-	if amiRegion == installConfig.Config.AWS.Region {
-		return amiID, nil
-	}
-
-	logrus.Infof("Copying AMI to region %s", installConfig.AWS.Region)
+	logrus.Infof("Copying AMI %s to region %s", amiID, installConfig.AWS.Region)
 
 	session, err := installConfig.AWS.Session(ctx)
 	if err != nil {

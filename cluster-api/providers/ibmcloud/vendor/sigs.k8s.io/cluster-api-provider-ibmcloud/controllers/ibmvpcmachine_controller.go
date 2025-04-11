@@ -25,7 +25,6 @@ import (
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -36,10 +35,12 @@ import (
 
 	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
+	"sigs.k8s.io/cluster-api/util/conditions"
 
 	infrav1beta2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints"
+	capibmrecord "sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/record"
 )
 
 // IBMVPCMachineReconciler reconciles a IBMVPCMachine object.
@@ -139,7 +140,7 @@ func (r *IBMVPCMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *IBMVPCMachineReconciler) reconcileNormal(machineScope *scope.MachineScope) (ctrl.Result, error) {
+func (r *IBMVPCMachineReconciler) reconcileNormal(machineScope *scope.MachineScope) (ctrl.Result, error) { //nolint:gocyclo
 	if controllerutil.AddFinalizer(machineScope.IBMVPCMachine, infrav1beta2.MachineFinalizer) {
 		return ctrl.Result{}, nil
 	}
@@ -161,14 +162,79 @@ func (r *IBMVPCMachineReconciler) reconcileNormal(machineScope *scope.MachineSco
 		return ctrl.Result{}, fmt.Errorf("failed to reconcile VSI for IBMVPCMachine %s/%s: %w", machineScope.IBMVPCMachine.Namespace, machineScope.IBMVPCMachine.Name, err)
 	}
 
+	machineRunning := false
 	if instance != nil {
-		machineScope.IBMVPCMachine.Status.InstanceID = *instance.ID
-		machineScope.IBMVPCMachine.Status.Addresses = []corev1.NodeAddress{
-			{
-				Type:    corev1.NodeInternalIP,
-				Address: *instance.PrimaryNetworkInterface.PrimaryIP.Address,
-			},
+		// Attempt to tag the Instance.
+		if err := machineScope.TagResource(machineScope.IBMVPCCluster.Name, *instance.CRN); err != nil {
+			return ctrl.Result{}, fmt.Errorf("error failed to tag machine: %w", err)
 		}
+
+		// Set available status' for Machine.
+		machineScope.SetInstanceID(*instance.ID)
+		if err := machineScope.SetProviderID(instance.ID); err != nil {
+			return ctrl.Result{}, fmt.Errorf("error failed to set machine provider id: %w", err)
+		}
+		machineScope.SetAddresses(instance)
+		machineScope.SetInstanceStatus(*instance.Status)
+
+		// Depending on the state of the Machine, update status, conditions, etc.
+		switch machineScope.GetInstanceStatus() {
+		case vpcv1.InstanceStatusPendingConst:
+			machineScope.SetNotReady()
+			conditions.MarkFalse(machineScope.IBMVPCMachine, infrav1beta2.InstanceReadyCondition, infrav1beta2.InstanceNotReadyReason, capiv1beta1.ConditionSeverityWarning, "")
+		case vpcv1.InstanceStatusStoppedConst:
+			machineScope.SetNotReady()
+			conditions.MarkFalse(machineScope.IBMVPCMachine, infrav1beta2.InstanceReadyCondition, infrav1beta2.InstanceStoppedReason, capiv1beta1.ConditionSeverityError, "")
+		case vpcv1.InstanceStatusFailedConst:
+			msg := ""
+			healthReasonsLen := len(instance.HealthReasons)
+			if healthReasonsLen > 0 {
+				// Create a failure message using the last entry's Code and Message fields.
+				// TODO(cjschaef): Consider adding the MoreInfo field as well, as it contains a link to IBM Cloud docs.
+				msg = fmt.Sprintf("%s: %s", *instance.HealthReasons[healthReasonsLen-1].Code, *instance.HealthReasons[healthReasonsLen-1].Message)
+			}
+			machineScope.SetNotReady()
+			machineScope.SetFailureReason(infrav1beta2.UpdateMachineError)
+			machineScope.SetFailureMessage(msg)
+			conditions.MarkFalse(machineScope.IBMVPCMachine, infrav1beta2.InstanceReadyCondition, infrav1beta2.InstanceErroredReason, capiv1beta1.ConditionSeverityError, "%s", msg)
+			capibmrecord.Warnf(machineScope.IBMVPCMachine, "FailedBuildInstance", "Failed to build the instance - %s", msg)
+			return ctrl.Result{}, nil
+		case vpcv1.InstanceStatusRunningConst:
+			machineRunning = true
+		default:
+			machineScope.SetNotReady()
+			machineScope.V(3).Info("unexpected vpc instance status", "instanceStatus", *instance.Status, "instanceID", machineScope.GetInstanceID())
+			conditions.MarkUnknown(machineScope.IBMVPCMachine, infrav1beta2.InstanceReadyCondition, "", "")
+		}
+	} else {
+		machineScope.SetNotReady()
+		conditions.MarkUnknown(machineScope.IBMVPCMachine, infrav1beta2.InstanceReadyCondition, infrav1beta2.InstanceStateUnknownReason, "")
+	}
+
+	// Check if the Machine is running.
+	if !machineRunning {
+		// Requeue after 1 minute if machine is not running.
+		return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
+	}
+
+	// Rely on defined VPC Load Balancer Pool Members first before falling back to hardcoded defaults.
+	if len(machineScope.IBMVPCMachine.Spec.LoadBalancerPoolMembers) > 0 {
+		needsRequeue := false
+		for _, poolMember := range machineScope.IBMVPCMachine.Spec.LoadBalancerPoolMembers {
+			requeue, err := machineScope.ReconcileVPCLoadBalancerPoolMember(poolMember)
+			if err != nil {
+				return ctrl.Result{}, fmt.Errorf("error failed to reconcile machine's pool member: %w", err)
+			} else if requeue {
+				needsRequeue = true
+			}
+		}
+
+		// If any VPC Load Balancer Pool Member needs reconciliation, requeue.
+		if needsRequeue {
+			return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
+		}
+	} else {
+		// Otherwise, default to previous Load Balancer Pool Member configuration.
 		_, ok := machineScope.IBMVPCMachine.Labels[capiv1beta1.MachineControlPlaneNameLabel]
 		if err = machineScope.SetProviderID(instance.ID); err != nil {
 			return ctrl.Result{}, fmt.Errorf("failed to set provider id IBMVPCMachine %s/%s: %w", machineScope.IBMVPCMachine.Namespace, machineScope.IBMVPCMachine.Name, err)
@@ -187,9 +253,11 @@ func (r *IBMVPCMachineReconciler) reconcileNormal(machineScope *scope.MachineSco
 				return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 			}
 		}
-		machineScope.IBMVPCMachine.Status.Ready = true
 	}
 
+	// With a running machine and all Load Balancer Pool Members reconciled, mark machine as ready.
+	machineScope.SetReady()
+	conditions.MarkTrue(machineScope.IBMVPCMachine, infrav1beta2.InstanceReadyCondition)
 	return ctrl.Result{}, nil
 }
 

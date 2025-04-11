@@ -1,11 +1,13 @@
 package installconfig
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -35,7 +37,7 @@ func (a *ClusterID) Dependencies() []asset.Asset {
 }
 
 // Generate generates a new ClusterID
-func (a *ClusterID) Generate(dep asset.Parents) error {
+func (a *ClusterID) Generate(_ context.Context, dep asset.Parents) error {
 	ica := &InstallConfig{}
 	dep.Get(ica)
 
@@ -45,7 +47,7 @@ func (a *ClusterID) Generate(dep asset.Parents) error {
 
 	// add random chars to the end to randomize
 	a.InfraID = generateInfraID(ica.Config.ObjectMeta.Name, maxLen)
-	a.UUID = uuid.New()
+	a.UUID = uuid.NewString()
 	return nil
 }
 
@@ -70,6 +72,7 @@ func generateInfraID(base string, maxLen int) string {
 
 	// truncate to maxBaseLen
 	if len(base) > maxBaseLen {
+		logrus.Warnf("Length of cluster name %q is %d which is greater than the max %d allowed. The name will be truncated to %q", base, len(base), maxBaseLen, strings.TrimRight(base[:maxBaseLen], "-"))
 		base = base[:maxBaseLen]
 	}
 	base = strings.TrimRight(base, "-")

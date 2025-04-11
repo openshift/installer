@@ -16,7 +16,6 @@ import (
 	"go/build"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -34,6 +33,7 @@ import (
 	"github.com/rogpeppe/go-internal/internal/os/execpath"
 	"github.com/rogpeppe/go-internal/par"
 	"github.com/rogpeppe/go-internal/testenv"
+	"github.com/rogpeppe/go-internal/testscript/internal/pty"
 	"github.com/rogpeppe/go-internal/txtar"
 )
 
@@ -98,6 +98,13 @@ func (e *Env) Getenv(key string) string {
 		}
 	}
 	return ""
+}
+
+func envvarname(k string) string {
+	if runtime.GOOS == "windows" {
+		return strings.ToLower(k)
+	}
+	return k
 }
 
 // Setenv sets the value of the environment variable named by the key. It
@@ -254,14 +261,14 @@ func RunT(t T, p Params) {
 	}
 	testTempDir := p.WorkdirRoot
 	if testTempDir == "" {
-		testTempDir, err = ioutil.TempDir(os.Getenv("GOTMPDIR"), "go-test-script")
+		testTempDir, err = os.MkdirTemp(os.Getenv("GOTMPDIR"), "go-test-script")
 		if err != nil {
 			t.Fatal(err)
 		}
 	} else {
 		p.TestWork = true
 	}
-	// The temp dir returned by ioutil.TempDir might be a sym linked dir (default
+	// The temp dir returned by os.MkdirTemp might be a sym linked dir (default
 	// behaviour in macOS). That could mess up matching that includes $WORK if,
 	// for example, an external program outputs resolved paths. Evaluating the
 	// dir here will ensure consistency.
@@ -357,6 +364,9 @@ type TestScript struct {
 	stdin         string                      // standard input to next 'go' command; set by 'stdin' command.
 	stdout        string                      // standard output from last 'go' command; for 'stdout' command
 	stderr        string                      // standard error from last 'go' command; for 'stderr' command
+	ttyin         string                      // terminal input; set by 'ttyin' command
+	stdinPty      bool                        // connect pty to standard input; set by 'ttyin -stdin' command
+	ttyout        string                      // terminal output; for 'ttyout' command
 	stopped       bool                        // test wants to stop early
 	start         time.Time                   // time phase started
 	background    []backgroundCmd             // backgrounded 'exec' and 'go' commands
@@ -403,6 +413,9 @@ func writeFile(name string, data []byte, perm fs.FileMode, excl bool) error {
 	return nil
 }
 
+// Name returns the short name or basename of the test script.
+func (ts *TestScript) Name() string { return ts.name }
+
 // setup sets up the test execution temporary directory and environment.
 // It returns the comment section of the txtar archive.
 func (ts *TestScript) setup() string {
@@ -434,15 +447,26 @@ func (ts *TestScript) setup() string {
 			"/=" + string(os.PathSeparator),
 			":=" + string(os.PathListSeparator),
 			"$=$",
-
-			// If we are collecting coverage profiles for merging into the main one,
-			// ensure the environment variable is forwarded to sub-processes.
-			"GOCOVERDIR=" + os.Getenv("GOCOVERDIR"),
 		},
 		WorkDir: ts.workdir,
 		Values:  make(map[interface{}]interface{}),
 		Cd:      ts.workdir,
 		ts:      ts,
+	}
+
+	// These env vars affect how a Go program behaves at run-time;
+	// If the user or `go test` wrapper set them, we should propagate them
+	// so that sub-process commands run via the test binary see them as well.
+	for _, name := range []string{
+		// If we are collecting coverage profiles, e.g. `go test -coverprofile`.
+		"GOCOVERDIR",
+		// If the user set GORACE when running a command like `go test -race`,
+		// such as GORACE=atexit_sleep_ms=10 to avoid the default 1s sleeps.
+		"GORACE",
+	} {
+		if val := os.Getenv(name); val != "" {
+			env.Vars = append(env.Vars, name+"="+val)
+		}
 	}
 	// Must preserve SYSTEMROOT on Windows: https://github.com/golang/go/issues/25513 et al
 	if runtime.GOOS == "windows" {
@@ -769,7 +793,7 @@ func (ts *TestScript) applyScriptUpdates() {
 			panic("script update file not found")
 		}
 	}
-	if err := ioutil.WriteFile(ts.file, txtar.Format(ts.archive), 0o666); err != nil {
+	if err := os.WriteFile(ts.file, txtar.Format(ts.archive), 0o666); err != nil {
 		ts.t.Fatal("cannot update script: ", err)
 	}
 	ts.Logf("%s updated", ts.file)
@@ -940,16 +964,49 @@ func (ts *TestScript) exec(command string, args ...string) (stdout, stderr strin
 	var stdoutBuf, stderrBuf strings.Builder
 	cmd.Stdout = &stdoutBuf
 	cmd.Stderr = &stderrBuf
+	if ts.ttyin != "" {
+		ctrl, tty, err := pty.Open()
+		if err != nil {
+			return "", "", err
+		}
+		doneR, doneW := make(chan struct{}), make(chan struct{})
+		var ptyBuf strings.Builder
+		go func() {
+			io.Copy(ctrl, strings.NewReader(ts.ttyin))
+			ctrl.Write([]byte{4 /* EOT */})
+			close(doneW)
+		}()
+		go func() {
+			io.Copy(&ptyBuf, ctrl)
+			close(doneR)
+		}()
+		defer func() {
+			tty.Close()
+			ctrl.Close()
+			<-doneR
+			<-doneW
+			ts.ttyin = ""
+			ts.ttyout = ptyBuf.String()
+		}()
+		pty.SetCtty(cmd, tty)
+		if ts.stdinPty {
+			cmd.Stdin = tty
+		}
+	}
 	if err = cmd.Start(); err == nil {
 		err = waitOrStop(ts.ctxt, cmd, ts.gracePeriod)
 	}
 	ts.stdin = ""
+	ts.stdinPty = false
 	return stdoutBuf.String(), stderrBuf.String(), err
 }
 
 // execBackground starts the given command line (an actual subprocess, not simulated)
 // in ts.cd with environment ts.env.
 func (ts *TestScript) execBackground(command string, args ...string) (*exec.Cmd, error) {
+	if ts.ttyin != "" {
+		return nil, errors.New("ttyin is not supported by background commands")
+	}
 	cmd, err := ts.buildExecCmd(command, args...)
 	if err != nil {
 		return nil, err
@@ -1126,9 +1183,11 @@ func (ts *TestScript) ReadFile(file string) string {
 		return ts.stdout
 	case "stderr":
 		return ts.stderr
+	case "ttyout":
+		return ts.ttyout
 	default:
 		file = ts.MkAbs(file)
-		data, err := ioutil.ReadFile(file)
+		data, err := os.ReadFile(file)
 		ts.Check(err)
 		return string(data)
 	}
@@ -1209,11 +1268,11 @@ func (ts *TestScript) parse(line string) []string {
 func removeAll(dir string) error {
 	// module cache has 0o444 directories;
 	// make them writable in order to remove content.
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // ignore errors walking in file system
 		}
-		if info.IsDir() {
+		if entry.IsDir() {
 			os.Chmod(path, 0o777)
 		}
 		return nil

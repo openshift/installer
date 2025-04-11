@@ -48,7 +48,7 @@ func TestValidateMachinePool(t *testing.T) {
 					DiskType: "pd-",
 				},
 			},
-			expected: `^test-path\.diskType: Unsupported value: "pd-": supported values: "pd-balanced", "pd-ssd", "pd-standard"$`,
+			expected: `^test-path\.diskType: Unsupported value: "pd-": supported values: "hyperdisk-balanced", "pd-balanced", "pd-ssd", "pd-standard"$`,
 		},
 		{
 			name: "valid disk size",
@@ -84,6 +84,97 @@ func TestValidateMachinePool(t *testing.T) {
 				},
 			},
 			expected: `^test-path\.diskSizeGB: Invalid value: 66000: exceeding maximum GCP disk size limit, must be below 65536$`,
+		},
+		{
+			name: "enable confidential compute with correct on host maintenance",
+			pool: &gcp.MachinePool{
+				InstanceType:        "c2d-standard-4",
+				ConfidentialCompute: string(gcp.EnabledFeature),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceTerminate),
+			},
+		},
+		{
+			name: "enable confidential compute with incorrect on host maintenance",
+			pool: &gcp.MachinePool{
+				ConfidentialCompute: string(gcp.EnabledFeature),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceMigrate),
+			},
+			expected: `test-path.OnHostMaintenance: Invalid value: "Migrate": OnHostMaintenace must be set to Terminate when ConfidentialCompute is Enabled`,
+		},
+		{
+			name: "AMDEncryptedVirtualization confidential compute with incorrect on host maintenance",
+			pool: &gcp.MachinePool{
+				ConfidentialCompute: string(gcp.ConfidentialComputePolicySEV),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceMigrate),
+			},
+			expected: `test-path.OnHostMaintenance: Invalid value: "Migrate": OnHostMaintenace must be set to Terminate when ConfidentialCompute is AMDEncryptedVirtualization`,
+		},
+		{
+			name: "AMDEncryptedVirtualizationNestedPaging confidential compute with incorrect on host maintenance",
+			pool: &gcp.MachinePool{
+				ConfidentialCompute: string(gcp.ConfidentialComputePolicySEVSNP),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceMigrate),
+			},
+			expected: `test-path.OnHostMaintenance: Invalid value: "Migrate": OnHostMaintenace must be set to Terminate when ConfidentialCompute is AMDEncryptedVirtualizationNestedPaging`,
+		},
+		{
+			name: "IntelTrustedDomainExtensions confidential compute with incorrect on host maintenance",
+			pool: &gcp.MachinePool{
+				ConfidentialCompute: string(gcp.ConfidentialComputePolicyTDX),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceMigrate),
+			},
+			expected: `test-path.OnHostMaintenance: Invalid value: "Migrate": OnHostMaintenace must be set to Terminate when ConfidentialCompute is IntelTrustedDomainExtensions`,
+		},
+		{
+			name: "AMDEncryptedVirtualization confidential compute with unsupported machine type",
+			pool: &gcp.MachinePool{
+				InstanceType:        "c3-standard-4",
+				ConfidentialCompute: string(gcp.ConfidentialComputePolicySEV),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceTerminate),
+			},
+			expected: `test-path.type: Invalid value: "c3-standard-4": Machine type do not support AMDEncryptedVirtualization. Machine types supporting AMDEncryptedVirtualization: c2d, n2d, c3d`,
+		},
+		{
+			name: "AMDEncryptedVirtualization confidential compute with supported machine type",
+			pool: &gcp.MachinePool{
+				InstanceType:        "c3d-standard-4",
+				ConfidentialCompute: string(gcp.ConfidentialComputePolicySEV),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceTerminate),
+			},
+		},
+		{
+			name: "AMDEncryptedVirtualizationNestedPaging confidential compute with unsupported machine type",
+			pool: &gcp.MachinePool{
+				InstanceType:        "c2d-standard-4",
+				ConfidentialCompute: string(gcp.ConfidentialComputePolicySEVSNP),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceTerminate),
+			},
+			expected: `test-path.type: Invalid value: "c2d-standard-4": Machine type do not support AMDEncryptedVirtualizationNestedPaging. Machine types supporting AMDEncryptedVirtualizationNestedPaging: n2d`,
+		},
+		{
+			name: "AMDEncryptedVirtualizationNestedPaging confidential compute with supported machine type",
+			pool: &gcp.MachinePool{
+				InstanceType:        "n2d-standard-4",
+				ConfidentialCompute: string(gcp.ConfidentialComputePolicySEVSNP),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceTerminate),
+			},
+		},
+		{
+			name: "IntelTrustedDomainExtensions confidential compute with unsupported machine type",
+			pool: &gcp.MachinePool{
+				InstanceType:        "n2d-standard-4",
+				ConfidentialCompute: string(gcp.ConfidentialComputePolicyTDX),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceTerminate),
+			},
+			expected: `test-path.type: Invalid value: "n2d-standard-4": Machine type do not support IntelTrustedDomainExtensions. Machine types supporting IntelTrustedDomainExtensions: c3`,
+		},
+		{
+			name: "IntelTrustedDomainExtensions confidential compute with supported machine type",
+			pool: &gcp.MachinePool{
+				InstanceType:        "c3-standard-4",
+				ConfidentialCompute: string(gcp.ConfidentialComputePolicyTDX),
+				OnHostMaintenance:   string(gcp.OnHostMaintenanceTerminate),
+			},
 		},
 	}
 	for _, tc := range cases {

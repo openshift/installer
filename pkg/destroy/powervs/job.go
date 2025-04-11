@@ -26,13 +26,13 @@ func (o *ClusterUninstaller) listJobs() (cloudResources, error) {
 		return cloudResources{}.insert(result...), nil
 	}
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("listJobs: case <-ctx.Done()")
-		return nil, o.Context.Err() // we're cancelled, abort
+		return nil, ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -80,13 +80,13 @@ func (o *ClusterUninstaller) deleteJob(item cloudResource) (DeleteJobResult, err
 	var job *models.Job
 	var err error
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
 		o.Logger.Debugf("deleteJob: case <-ctx.Done()")
-		return DeleteJobError, o.Context.Err() // we're cancelled, abort
+		return DeleteJobError, ctx.Err() // we're cancelled, abort
 	default:
 	}
 
@@ -138,14 +138,14 @@ func (o *ClusterUninstaller) destroyJobs() error {
 
 	items := o.insertPendingItems(jobTypeName, firstPassList.list())
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	for _, item := range items {
 		select {
 		case <-ctx.Done():
 			o.Logger.Debugf("destroyJobs: case <-ctx.Done()")
-			return o.Context.Err() // we're cancelled, abort
+			return ctx.Err() // we're cancelled, abort
 		default:
 		}
 

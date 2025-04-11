@@ -26,6 +26,7 @@ type GCP struct {
 	bitmap_                 uint32
 	authURI                 string
 	authProviderX509CertURL string
+	authentication          *GcpAuthentication
 	clientID                string
 	clientX509CertURL       string
 	clientEmail             string
@@ -88,12 +89,35 @@ func (o *GCP) GetAuthProviderX509CertURL() (value string, ok bool) {
 	return
 }
 
+// Authentication returns the value of the 'authentication' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// GCP Authentication Method
+func (o *GCP) Authentication() *GcpAuthentication {
+	if o != nil && o.bitmap_&4 != 0 {
+		return o.authentication
+	}
+	return nil
+}
+
+// GetAuthentication returns the value of the 'authentication' attribute and
+// a flag indicating if the attribute has a value.
+//
+// GCP Authentication Method
+func (o *GCP) GetAuthentication() (value *GcpAuthentication, ok bool) {
+	ok = o != nil && o.bitmap_&4 != 0
+	if ok {
+		value = o.authentication
+	}
+	return
+}
+
 // ClientID returns the value of the 'client_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // GCP client identifier
 func (o *GCP) ClientID() string {
-	if o != nil && o.bitmap_&4 != 0 {
+	if o != nil && o.bitmap_&8 != 0 {
 		return o.clientID
 	}
 	return ""
@@ -104,7 +128,7 @@ func (o *GCP) ClientID() string {
 //
 // GCP client identifier
 func (o *GCP) GetClientID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&4 != 0
+	ok = o != nil && o.bitmap_&8 != 0
 	if ok {
 		value = o.clientID
 	}
@@ -116,7 +140,7 @@ func (o *GCP) GetClientID() (value string, ok bool) {
 //
 // GCP client x509 certificate url
 func (o *GCP) ClientX509CertURL() string {
-	if o != nil && o.bitmap_&8 != 0 {
+	if o != nil && o.bitmap_&16 != 0 {
 		return o.clientX509CertURL
 	}
 	return ""
@@ -127,7 +151,7 @@ func (o *GCP) ClientX509CertURL() string {
 //
 // GCP client x509 certificate url
 func (o *GCP) GetClientX509CertURL() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&8 != 0
+	ok = o != nil && o.bitmap_&16 != 0
 	if ok {
 		value = o.clientX509CertURL
 	}
@@ -139,7 +163,7 @@ func (o *GCP) GetClientX509CertURL() (value string, ok bool) {
 //
 // GCP client email
 func (o *GCP) ClientEmail() string {
-	if o != nil && o.bitmap_&16 != 0 {
+	if o != nil && o.bitmap_&32 != 0 {
 		return o.clientEmail
 	}
 	return ""
@@ -150,7 +174,7 @@ func (o *GCP) ClientEmail() string {
 //
 // GCP client email
 func (o *GCP) GetClientEmail() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&16 != 0
+	ok = o != nil && o.bitmap_&32 != 0
 	if ok {
 		value = o.clientEmail
 	}
@@ -162,7 +186,7 @@ func (o *GCP) GetClientEmail() (value string, ok bool) {
 //
 // GCP private key
 func (o *GCP) PrivateKey() string {
-	if o != nil && o.bitmap_&32 != 0 {
+	if o != nil && o.bitmap_&64 != 0 {
 		return o.privateKey
 	}
 	return ""
@@ -173,7 +197,7 @@ func (o *GCP) PrivateKey() string {
 //
 // GCP private key
 func (o *GCP) GetPrivateKey() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&32 != 0
+	ok = o != nil && o.bitmap_&64 != 0
 	if ok {
 		value = o.privateKey
 	}
@@ -185,7 +209,7 @@ func (o *GCP) GetPrivateKey() (value string, ok bool) {
 //
 // GCP private key identifier
 func (o *GCP) PrivateKeyID() string {
-	if o != nil && o.bitmap_&64 != 0 {
+	if o != nil && o.bitmap_&128 != 0 {
 		return o.privateKeyID
 	}
 	return ""
@@ -196,7 +220,7 @@ func (o *GCP) PrivateKeyID() string {
 //
 // GCP private key identifier
 func (o *GCP) GetPrivateKeyID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&64 != 0
+	ok = o != nil && o.bitmap_&128 != 0
 	if ok {
 		value = o.privateKeyID
 	}
@@ -208,7 +232,7 @@ func (o *GCP) GetPrivateKeyID() (value string, ok bool) {
 //
 // GCP project identifier.
 func (o *GCP) ProjectID() string {
-	if o != nil && o.bitmap_&128 != 0 {
+	if o != nil && o.bitmap_&256 != 0 {
 		return o.projectID
 	}
 	return ""
@@ -219,7 +243,7 @@ func (o *GCP) ProjectID() string {
 //
 // GCP project identifier.
 func (o *GCP) GetProjectID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&128 != 0
+	ok = o != nil && o.bitmap_&256 != 0
 	if ok {
 		value = o.projectID
 	}
@@ -231,7 +255,7 @@ func (o *GCP) GetProjectID() (value string, ok bool) {
 //
 // GCP Security Settings
 func (o *GCP) Security() *GcpSecurity {
-	if o != nil && o.bitmap_&256 != 0 {
+	if o != nil && o.bitmap_&512 != 0 {
 		return o.security
 	}
 	return nil
@@ -242,7 +266,7 @@ func (o *GCP) Security() *GcpSecurity {
 //
 // GCP Security Settings
 func (o *GCP) GetSecurity() (value *GcpSecurity, ok bool) {
-	ok = o != nil && o.bitmap_&256 != 0
+	ok = o != nil && o.bitmap_&512 != 0
 	if ok {
 		value = o.security
 	}
@@ -254,7 +278,7 @@ func (o *GCP) GetSecurity() (value *GcpSecurity, ok bool) {
 //
 // GCP token uri
 func (o *GCP) TokenURI() string {
-	if o != nil && o.bitmap_&512 != 0 {
+	if o != nil && o.bitmap_&1024 != 0 {
 		return o.tokenURI
 	}
 	return ""
@@ -265,7 +289,7 @@ func (o *GCP) TokenURI() string {
 //
 // GCP token uri
 func (o *GCP) GetTokenURI() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&512 != 0
+	ok = o != nil && o.bitmap_&1024 != 0
 	if ok {
 		value = o.tokenURI
 	}
@@ -277,7 +301,7 @@ func (o *GCP) GetTokenURI() (value string, ok bool) {
 //
 // GCP the type of the service the key belongs to
 func (o *GCP) Type() string {
-	if o != nil && o.bitmap_&1024 != 0 {
+	if o != nil && o.bitmap_&2048 != 0 {
 		return o.type_
 	}
 	return ""
@@ -288,7 +312,7 @@ func (o *GCP) Type() string {
 //
 // GCP the type of the service the key belongs to
 func (o *GCP) GetType() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&1024 != 0
+	ok = o != nil && o.bitmap_&2048 != 0
 	if ok {
 		value = o.type_
 	}

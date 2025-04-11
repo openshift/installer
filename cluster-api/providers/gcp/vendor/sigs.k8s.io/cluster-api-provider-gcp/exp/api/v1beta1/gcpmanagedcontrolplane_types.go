@@ -17,7 +17,11 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/strings/slices"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
@@ -27,6 +31,88 @@ const (
 	ManagedControlPlaneFinalizer = "gcpmanagedcontrolplane.infrastructure.cluster.x-k8s.io"
 )
 
+// PrivateCluster defines a private Cluster.
+type PrivateCluster struct {
+	// EnablePrivateEndpoint: Whether the master's internal IP
+	// address is used as the cluster endpoint.
+	// +optional
+	EnablePrivateEndpoint bool `json:"enablePrivateEndpoint,omitempty"`
+
+	// EnablePrivateNodes: Whether nodes have internal IP
+	// addresses only. If enabled, all nodes are given only RFC
+	// 1918 private addresses and communicate with the master via
+	// private networking.
+	// +optional
+	EnablePrivateNodes bool `json:"enablePrivateNodes,omitempty"`
+
+	// ControlPlaneCidrBlock is the IP range in CIDR notation to use for the hosted master network. This range must not
+	// overlap with any other ranges in use within the cluster's network. Honored when enabled is true.
+	// +optional
+	ControlPlaneCidrBlock string `json:"controlPlaneCidrBlock,omitempty"`
+
+	// ControlPlaneGlobalAccess is whenever master is accessible globally or not. Honored when enabled is true.
+	// +optional
+	ControlPlaneGlobalAccess bool `json:"controlPlaneGlobalAccess,omitempty"`
+
+	// DisableDefaultSNAT disables cluster default sNAT rules. Honored when enabled is true.
+	// +optional
+	DisableDefaultSNAT bool `json:"disableDefaultSNAT,omitempty"`
+}
+
+// ClusterNetworkPod the range of CIDRBlock list from where it gets the IP address.
+type ClusterNetworkPod struct {
+	// CidrBlock is where all pods in the cluster are assigned an IP address from this range. Enter a range
+	// (in CIDR notation) within a network range, a mask, or leave this field blank to use a default range.
+	// This setting is permanent.
+	// +optional
+	CidrBlock string `json:"cidrBlock,omitempty"`
+}
+
+// ClusterNetworkService defines the range of CIDRBlock list from where it gets the IP address.
+type ClusterNetworkService struct {
+	// CidrBlock is where cluster services will be assigned an IP address from this IP address range. Enter a range
+	// (in CIDR notation) within a network range, a mask, or leave this field blank to use a default range.
+	// This setting is permanent.
+	// +optional
+	CidrBlock string `json:"cidrBlock,omitempty"`
+}
+
+// ClusterNetwork define the cluster network.
+type ClusterNetwork struct {
+	// PrivateCluster defines the private cluster spec.
+	// +optional
+	PrivateCluster *PrivateCluster `json:"privateCluster,omitempty"`
+
+	// UseIPAliases is whether alias IPs will be used for pod IPs in the cluster. If false, routes will be used for
+	// pod IPs in the cluster.
+	// +optional
+	UseIPAliases bool `json:"useIPAliases,omitempty"`
+
+	// Pod defines the range of CIDRBlock list from where it gets the IP address.
+	// +optional
+	Pod *ClusterNetworkPod `json:"pod,omitempty"`
+
+	// Service defines the range of CIDRBlock list from where it gets the IP address.
+	// +optional
+	Service *ClusterNetworkService `json:"service,omitempty"`
+}
+
+// WorkloadIdentityConfig allows workloads in your GKE clusters to impersonate Identity and Access Management (IAM)
+// service accounts to access Google Cloud services.
+type WorkloadIdentityConfig struct {
+	// WorkloadPool is the workload pool to attach all Kubernetes service accounts to Google Cloud services.
+	// Only relevant when enabled is true
+	// +kubebuilder:validation:Required
+	WorkloadPool string `json:"workloadPool,omitempty"`
+}
+
+// AuthenticatorGroupConfig is RBAC security group for use with Google security groups in Kubernetes RBAC.
+type AuthenticatorGroupConfig struct {
+	// SecurityGroups is the name of the security group-of-groups to be used.
+	// +kubebuilder:validation:Required
+	SecurityGroups string `json:"securityGroups,omitempty"`
+}
+
 // GCPManagedControlPlaneSpec defines the desired state of GCPManagedControlPlane.
 type GCPManagedControlPlaneSpec struct {
 	// ClusterName allows you to specify the name of the GKE cluster.
@@ -34,6 +120,15 @@ type GCPManagedControlPlaneSpec struct {
 	// based on the namespace and name of the managed control plane.
 	// +optional
 	ClusterName string `json:"clusterName,omitempty"`
+
+	// Description describe the cluster.
+	// +optional
+	Description string `json:"description,omitempty"`
+
+	// ClusterNetwork define the cluster network.
+	// +optional
+	ClusterNetwork *ClusterNetwork `json:"clusterNetwork,omitempty"`
+
 	// Project is the name of the project to deploy the cluster to.
 	Project string `json:"project"`
 	// Location represents the location (region or zone) in which the GKE cluster
@@ -42,6 +137,9 @@ type GCPManagedControlPlaneSpec struct {
 	// EnableAutopilot indicates whether to enable autopilot for this GKE cluster.
 	// +optional
 	EnableAutopilot bool `json:"enableAutopilot"`
+	// EnableIdentityService indicates whether to enable Identity Service component for this GKE cluster.
+	// +optional
+	EnableIdentityService bool `json:"enableIdentityService"`
 	// ReleaseChannel represents the release channel of the GKE cluster.
 	// +optional
 	ReleaseChannel *ReleaseChannel `json:"releaseChannel,omitempty"`
@@ -57,6 +155,16 @@ type GCPManagedControlPlaneSpec struct {
 	// This feature is disabled if this field is not specified.
 	// +optional
 	MasterAuthorizedNetworksConfig *MasterAuthorizedNetworksConfig `json:"master_authorized_networks_config,omitempty"`
+	// LoggingService represents configuration of logging service feature of the GKE cluster.
+	// Possible values: none, logging.googleapis.com/kubernetes (default).
+	// Value is ignored when enableAutopilot = true.
+	// +optional
+	LoggingService *LoggingService `json:"loggingService,omitempty"`
+	// MonitoringService represents configuration of monitoring service feature of the GKE cluster.
+	// Possible values: none, monitoring.googleapis.com/kubernetes (default).
+	// Value is ignored when enableAutopilot = true.
+	// +optional
+	MonitoringService *MonitoringService `json:"monitoringService,omitempty"`
 }
 
 // GCPManagedControlPlaneStatus defines the observed state of GCPManagedControlPlane.
@@ -140,6 +248,42 @@ type MasterAuthorizedNetworksConfigCidrBlock struct {
 	// cidr_block must be specified in CIDR notation.
 	// +kubebuilder:validation:Pattern=`^(?:[0-9]{1,3}\.){3}[0-9]{1,3}(?:\/([0-9]|[1-2][0-9]|3[0-2]))?$|^([a-fA-F0-9:]+:+)+[a-fA-F0-9]+\/[0-9]{1,3}$`
 	CidrBlock string `json:"cidr_block,omitempty"`
+}
+
+// LoggingService is GKE logging service configuration.
+type LoggingService string
+
+// Validate validates LoggingService value.
+func (l LoggingService) Validate() error {
+	validValues := []string{"none", "logging.googleapis.com/kubernetes"}
+	if !slices.Contains(validValues, l.String()) {
+		return fmt.Errorf("invalid value; expect one of : %s", strings.Join(validValues, ","))
+	}
+
+	return nil
+}
+
+// String returns a string from LoggingService.
+func (l LoggingService) String() string {
+	return string(l)
+}
+
+// MonitoringService is GKE logging service configuration.
+type MonitoringService string
+
+// Validate validates MonitoringService value.
+func (m MonitoringService) Validate() error {
+	validValues := []string{"none", "monitoring.googleapis.com/kubernetes"}
+	if !slices.Contains(validValues, m.String()) {
+		return fmt.Errorf("invalid value; expect one of : %s", strings.Join(validValues, ","))
+	}
+
+	return nil
+}
+
+// String returns a string from MonitoringService.
+func (m MonitoringService) String() string {
+	return string(m)
 }
 
 // GetConditions returns the control planes conditions.

@@ -135,6 +135,13 @@ func DataSourceSnapshots() *schema.Resource {
 							Computed: true,
 						},
 
+						"service_tags": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The [service tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) prefixed with `is.snapshot:` associated with this snapshot.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+						},
+
 						isSnapshotCopies: {
 							Type:        schema.TypeList,
 							Computed:    true,
@@ -430,6 +437,39 @@ func DataSourceSnapshots() *schema.Resource {
 							Set:         flex.ResourceIBMVPCHash,
 							Description: "List of access tags",
 						},
+						isSnapshotCatalogOffering: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The catalog offering inherited from the snapshot's source. If a virtual server instance is provisioned with a source_snapshot specifying this snapshot, the virtual server instance will use this snapshot's catalog offering, including its pricing plan.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									isSnapshotCatalogOfferingPlanCrn: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this catalog offering version's billing plan",
+									},
+									"deleted": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted and provides some supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									isSnapshotCatalogOfferingVersionCrn: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this version of a catalog offering",
+									},
+								},
+							},
+						},
 
 						isSnapshotBackupPolicyPlan: {
 							Type:        schema.TypeList,
@@ -589,6 +629,9 @@ func getSnapshots(d *schema.ResourceData, meta interface{}) error {
 		if snapshot.EncryptionKey != nil {
 			l[isSnapshotEncryptionKey] = snapshot.EncryptionKey.CRN
 		}
+		if snapshot.ServiceTags != nil && len(snapshot.ServiceTags) > 0 {
+			l["service_tags"] = snapshot.ServiceTags
+		}
 		if snapshot.EncryptionKey != nil && snapshot.EncryptionKey.CRN != nil {
 			l[isSnapshotEncryptionKey] = *snapshot.EncryptionKey.CRN
 		}
@@ -669,6 +712,35 @@ func getSnapshots(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 		l[isSnapshotClones] = flex.NewStringSet(schema.HashString, clones)
+
+		// catalog
+		catalogList := make([]map[string]interface{}, 0)
+		if snapshot.CatalogOffering != nil {
+			versionCrn := ""
+			if snapshot.CatalogOffering.Version != nil && snapshot.CatalogOffering.Version.CRN != nil {
+				versionCrn = *snapshot.CatalogOffering.Version.CRN
+			}
+			catalogMap := map[string]interface{}{}
+			if versionCrn != "" {
+				catalogMap[isSnapshotCatalogOfferingVersionCrn] = versionCrn
+			}
+			if snapshot.CatalogOffering.Plan != nil {
+				planCrn := ""
+				if snapshot.CatalogOffering.Plan.CRN != nil {
+					planCrn = *snapshot.CatalogOffering.Plan.CRN
+				}
+				if planCrn != "" {
+					catalogMap[isSnapshotCatalogOfferingPlanCrn] = planCrn
+				}
+				if snapshot.CatalogOffering.Plan.Deleted != nil {
+					deletedMap := resourceIbmIsSnapshotCatalogOfferingVersionPlanReferenceDeletedToMap(*snapshot.CatalogOffering.Plan.Deleted)
+					catalogMap["deleted"] = []map[string]interface{}{deletedMap}
+				}
+			}
+			catalogList = append(catalogList, catalogMap)
+		}
+		l[isSnapshotCatalogOffering] = catalogList
+
 		backupPolicyPlanList := []map[string]interface{}{}
 		if snapshot.BackupPolicyPlan != nil {
 			backupPolicyPlan := map[string]interface{}{}
@@ -730,7 +802,7 @@ func dataSourceIBMIsSnapshotsSnapshotCopiesItemToMap(model *vpcv1.SnapshotCopies
 	return modelMap, nil
 }
 
-func dataSourceIBMIsSnapshotsSnapshotRemoteReferenceDeletedToMap(model *vpcv1.SnapshotReferenceDeleted) (map[string]interface{}, error) {
+func dataSourceIBMIsSnapshotsSnapshotRemoteReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.MoreInfo != nil {
 		modelMap["more_info"] = *model.MoreInfo

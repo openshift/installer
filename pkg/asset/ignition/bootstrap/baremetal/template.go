@@ -5,8 +5,12 @@ import (
 	"net"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 	utilsnet "k8s.io/utils/net"
 
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 )
@@ -79,13 +83,23 @@ type TemplateData struct {
 
 	// ExternalURLv6 is a callback URL for the node if the node and the BMC use different network families
 	ExternalURLv6 string
+
+	// DisableIronicVirtualMediaTLS enables or disables TLS in ironic virtual media deployments
+	DisableIronicVirtualMediaTLS bool
+
+	// AdditionalNTPServers holds a list of additional NTP servers to be used for provisioning
+	AdditionalNTPServers []string
 }
 
-func externalURLs(apiVIPs []string) (externalURLv4 string, externalURLv6 string) {
+func externalURLs(apiVIPs []string, protocol string) (externalURLv4 string, externalURLv6 string) {
 	if len(apiVIPs) > 1 {
 		// IPv6 BMCs may not be able to reach IPv4 servers, use the right callback URL for them.
 		// Warning: when backporting to 4.12 or earlier, change the port to 80!
-		externalURL := fmt.Sprintf("http://%s/", net.JoinHostPort(apiVIPs[1], "6180"))
+		port := "6180"
+		if protocol == "https" {
+			port = "6183"
+		}
+		externalURL := fmt.Sprintf("%s://%s/", protocol, net.JoinHostPort(apiVIPs[1], port))
 		if utilsnet.IsIPv6String(apiVIPs[1]) {
 			externalURLv6 = externalURL
 		}
@@ -98,7 +112,7 @@ func externalURLs(apiVIPs []string) (externalURLv4 string, externalURLv6 string)
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
-func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetworkEntry, controlPlaneReplicaCount int64, ironicUsername, ironicPassword string) *TemplateData {
+func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetworkEntry, controlPlaneReplicaCount int64, ironicUsername, ironicPassword string, dependencies asset.Parents) *TemplateData {
 	var templateData TemplateData
 
 	templateData.Hosts = config.Hosts
@@ -111,13 +125,49 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	templateData.ExternalStaticDNS = config.BootstrapExternalStaticDNS
 	templateData.ExternalMACAddress = config.ExternalMACAddress
 
-	_, externalURLv6 := externalURLs(config.APIVIPs)
+	if len(config.AdditionalNTPServers) > 0 {
+		templateData.AdditionalNTPServers = config.AdditionalNTPServers
+	}
 
+	// If the user has manually set disableVirtualMediaTLS to False in the Provisioning CR, then enable TLS in ironic.
+	// The default value is 'false'.
+	templateData.DisableIronicVirtualMediaTLS = false
+	protocol := "https"
+
+	type provisioningCRTemplate struct {
+		Spec struct {
+			DisableVirtualMediaTLS *bool `yaml:"disableVirtualMediaTLS"`
+		} `yaml:"spec"`
+	}
+	provisioningCR := &provisioningCRTemplate{}
+	openshiftManifests := &manifests.Openshift{}
+	dependencies.Get(openshiftManifests)
+	var provisioningCRBytes []byte
+	for _, file := range openshiftManifests.Files() {
+		if strings.Contains(file.Filename, "99_baremetal-provisioning-config.yaml") {
+			provisioningCRBytes = file.Data
+			break
+		}
+	}
+	if provisioningCRBytes != nil {
+		err := yaml.Unmarshal(provisioningCRBytes, provisioningCR)
+		if err != nil {
+			logrus.Errorf("Error in unmarshalling Provisioning CR while generating TLS certificate for ironic virtual media: %s", err)
+		}
+	} else {
+		logrus.Errorf("No Provisioning CR data found while generating TLS certificate for ironic virtual media")
+	}
+	if provisioningCR.Spec.DisableVirtualMediaTLS != nil && *provisioningCR.Spec.DisableVirtualMediaTLS {
+		templateData.DisableIronicVirtualMediaTLS = *provisioningCR.Spec.DisableVirtualMediaTLS
+		logrus.Debugf("TLS is disabled for ironic virtual media")
+		protocol = "http"
+	}
+	_, externalURLv6 := externalURLs(config.APIVIPs, protocol)
 	templateData.ExternalURLv6 = externalURLv6
 
 	if len(config.APIVIPs) > 0 {
 		templateData.APIVIPs = config.APIVIPs
-		templateData.BaremetalEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIPs[0], "6385"))
+		templateData.BaremetalEndpointOverride = fmt.Sprintf("https://%s/v1", net.JoinHostPort(config.APIVIPs[0], "6385"))
 		templateData.BaremetalIntrospectionEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIPs[0], "5050"))
 	}
 
@@ -147,7 +197,7 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 
 		var dhcpAllowList []string
 		for _, host := range config.Hosts {
-			if host.IsMaster() {
+			if host.IsMaster() || host.IsArbiter() {
 				dhcpAllowList = append(dhcpAllowList, host.BootMACAddress)
 			}
 		}

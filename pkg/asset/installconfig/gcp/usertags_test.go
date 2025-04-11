@@ -8,8 +8,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/googleapis/gax-go/v2/apierror"
+	"go.uber.org/mock/gomock"
 	googleoauth "golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudresourcemanager/v3"
 	"google.golang.org/api/googleapi"
@@ -203,7 +203,7 @@ func TestGetUserTags(t *testing.T) {
 			name:          "failed to fetch tag",
 			userTags:      testTags[40:],
 			processedTags: nil,
-			expectedError: `failed to fetch user-defined tag openshift/key52/value52(500): googleapi: Error 500: Internal error while fetching 'openshift/key52/value52'`,
+			expectedError: `failed to fetch user-defined tag openshift/key52/value52: googleapi: Error 500: Internal error while fetching 'openshift/key52/value52'`,
 		},
 	}
 

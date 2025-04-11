@@ -3,10 +3,10 @@
 package v1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
-// NetworkStatusApplyConfiguration represents an declarative configuration of the NetworkStatus type for use
+// NetworkStatusApplyConfiguration represents a declarative configuration of the NetworkStatus type for use
 // with apply.
 type NetworkStatusApplyConfiguration struct {
 	ClusterNetwork    []ClusterNetworkEntryApplyConfiguration `json:"clusterNetwork,omitempty"`
@@ -14,10 +14,10 @@ type NetworkStatusApplyConfiguration struct {
 	NetworkType       *string                                 `json:"networkType,omitempty"`
 	ClusterNetworkMTU *int                                    `json:"clusterNetworkMTU,omitempty"`
 	Migration         *NetworkMigrationApplyConfiguration     `json:"migration,omitempty"`
-	Conditions        []metav1.Condition                      `json:"conditions,omitempty"`
+	Conditions        []metav1.ConditionApplyConfiguration    `json:"conditions,omitempty"`
 }
 
-// NetworkStatusApplyConfiguration constructs an declarative configuration of the NetworkStatus type for use with
+// NetworkStatusApplyConfiguration constructs a declarative configuration of the NetworkStatus type for use with
 // apply.
 func NetworkStatus() *NetworkStatusApplyConfiguration {
 	return &NetworkStatusApplyConfiguration{}
@@ -73,9 +73,12 @@ func (b *NetworkStatusApplyConfiguration) WithMigration(value *NetworkMigrationA
 // WithConditions adds the given value to the Conditions field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Conditions field.
-func (b *NetworkStatusApplyConfiguration) WithConditions(values ...metav1.Condition) *NetworkStatusApplyConfiguration {
+func (b *NetworkStatusApplyConfiguration) WithConditions(values ...*metav1.ConditionApplyConfiguration) *NetworkStatusApplyConfiguration {
 	for i := range values {
-		b.Conditions = append(b.Conditions, values[i])
+		if values[i] == nil {
+			panic("nil value passed to WithConditions")
+		}
+		b.Conditions = append(b.Conditions, *values[i])
 	}
 	return b
 }

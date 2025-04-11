@@ -31,6 +31,9 @@ type Network struct {
 	// (currently not available) cloud connections this network is attached
 	CloudConnections []*NetworkCloudConnectionsItems0 `json:"cloudConnections,omitempty"`
 
+	// The CRN for this resource
+	Crn string `json:"crn,omitempty"`
+
 	// DHCP Managed Network
 	DhcpManaged bool `json:"dhcpManaged,omitempty"`
 
@@ -49,29 +52,38 @@ type Network struct {
 	// Required: true
 	IPAddressRanges []*IPAddressRange `json:"ipAddressRanges"`
 
-	// Enable MTU Jumbo Network (for multi-zone locations only)
+	// (deprecated - replaced by mtu) Enable MTU Jumbo Network (for multi-zone locations only)
 	Jumbo bool `json:"jumbo,omitempty"`
 
-	// Maximum transmission unit (for satellite locations only)
+	// Maximum transmission unit
 	// Maximum: 9000
 	// Minimum: 1450
-	Mtu int64 `json:"mtu,omitempty"`
+	Mtu *int64 `json:"mtu,omitempty"`
 
 	// Network Name
 	// Required: true
 	Name *string `json:"name"`
 
+	// network address translation
+	NetworkAddressTranslation *NetworkAddressTranslation `json:"networkAddressTranslation,omitempty"`
+
 	// Unique Network ID
 	// Required: true
 	NetworkID *string `json:"networkID"`
+
+	// Network Peer ID
+	PeerID string `json:"peerID,omitempty"`
 
 	// Public IP Address Ranges (for pub-vlan networks)
 	PublicIPAddressRanges []*IPAddressRange `json:"publicIPAddressRanges,omitempty"`
 
 	// Type of Network - 'vlan' (private network) 'pub-vlan' (public network) 'dhcp-vlan' (for satellite locations only)
 	// Required: true
-	// Enum: [vlan pub-vlan dhcp-vlan]
+	// Enum: ["vlan","pub-vlan","dhcp-vlan"]
 	Type *string `json:"type"`
+
+	// The user tags associated with this resource.
+	UserTags []string `json:"userTags,omitempty"`
 
 	// VLAN ID
 	// Required: true
@@ -111,6 +123,10 @@ func (m *Network) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateName(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateNetworkAddressTranslation(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -249,11 +265,11 @@ func (m *Network) validateMtu(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if err := validate.MinimumInt("mtu", "body", m.Mtu, 1450, false); err != nil {
+	if err := validate.MinimumInt("mtu", "body", *m.Mtu, 1450, false); err != nil {
 		return err
 	}
 
-	if err := validate.MaximumInt("mtu", "body", m.Mtu, 9000, false); err != nil {
+	if err := validate.MaximumInt("mtu", "body", *m.Mtu, 9000, false); err != nil {
 		return err
 	}
 
@@ -264,6 +280,25 @@ func (m *Network) validateName(formats strfmt.Registry) error {
 
 	if err := validate.Required("name", "body", m.Name); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *Network) validateNetworkAddressTranslation(formats strfmt.Registry) error {
+	if swag.IsZero(m.NetworkAddressTranslation) { // not required
+		return nil
+	}
+
+	if m.NetworkAddressTranslation != nil {
+		if err := m.NetworkAddressTranslation.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("networkAddressTranslation")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("networkAddressTranslation")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -379,6 +414,10 @@ func (m *Network) ContextValidate(ctx context.Context, formats strfmt.Registry) 
 		res = append(res, err)
 	}
 
+	if err := m.contextValidateNetworkAddressTranslation(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidatePublicIPAddressRanges(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -469,6 +508,27 @@ func (m *Network) contextValidateIPAddressRanges(ctx context.Context, formats st
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *Network) contextValidateNetworkAddressTranslation(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.NetworkAddressTranslation != nil {
+
+		if swag.IsZero(m.NetworkAddressTranslation) { // not required
+			return nil
+		}
+
+		if err := m.NetworkAddressTranslation.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("networkAddressTranslation")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("networkAddressTranslation")
+			}
+			return err
+		}
 	}
 
 	return nil

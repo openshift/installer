@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/catalogmanagementv1"
 )
@@ -168,7 +169,9 @@ func ResourceIBMCmValidation() *schema.Resource {
 func resourceIBMCmValidationCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	catalogManagementClient, err := meta.(conns.ClientSession).CatalogManagementV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_validation", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	validateInstallOptions := &catalogmanagementv1.ValidateInstallOptions{}
@@ -188,8 +191,9 @@ func resourceIBMCmValidationCreate(context context.Context, d *schema.ResourceDa
 				d.SetId("")
 				return nil
 			}
-			log.Printf("[DEBUG] GetVersionWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("GetVersionWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetVersionWithContext failed %s\n%s", err, response), "ibm_cm_validation", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		version = offering.Kinds[0].Versions[0]
@@ -207,7 +211,9 @@ func resourceIBMCmValidationCreate(context context.Context, d *schema.ResourceDa
 			err = markVersionAsConsumable(version, context, meta)
 			if err != nil {
 				d.SetId("")
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_validation", "create")
+				log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 		}
 
@@ -220,35 +226,44 @@ func resourceIBMCmValidationCreate(context context.Context, d *schema.ResourceDa
 	if _, ok := d.GetOk("override_values"); ok {
 		overridesModel, err := configureOverrides(d.Get("override_values").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_validation", "create")
+			log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		validateInstallOptions.SetOverrideValues(&overridesModel)
 	}
 	if _, ok := d.GetOk("environment_variables"); ok {
-		envsModel, err := envVariablesToDeployRequestBodyEnvVariables(d.Get("environment_variables").([]map[string]interface{}))
+		envsModel, err := envVariablesToDeployRequestBodyEnvVariables(d.Get("environment_variables").([]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_validation", "create")
+			log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		validateInstallOptions.SetEnvironmentVariables(envsModel)
 	}
-	if _, ok := d.GetOk("schematics"); ok {
-		schematicsModel, err := schematicsMapToDeployRequestBodySchematics(d.Get("schematics").(map[string]interface{}))
+	if _, ok := d.GetOk("schematics.0"); ok {
+		schematicsModel, err := schematicsMapToDeployRequestBodySchematics(d.Get("schematics.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_validation", "create")
+			log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		validateInstallOptions.SetSchematics(&schematicsModel)
 	}
 
 	bxSession, err := meta.(conns.ClientSession).BluemixSession()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_validation", "create")
+		log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	validateInstallOptions.SetXAuthRefreshToken(bxSession.Config.IAMRefreshToken)
 
 	response, err := catalogManagementClient.ValidateInstallWithContext(context, validateInstallOptions)
 	if err != nil {
-		log.Printf("[DEBUG] ValidateInstallWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("ValidateInstallWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ValidateInstallWithContext failed %s\n%s", err, response), "ibm_cm_validation", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*validateInstallOptions.VersionLocID)
@@ -258,8 +273,9 @@ func resourceIBMCmValidationCreate(context context.Context, d *schema.ResourceDa
 	validationStatusOptions.SetXAuthRefreshToken(bxSession.Config.IAMRefreshToken)
 	result, response, err := catalogManagementClient.GetValidationStatusWithContext(context, validationStatusOptions)
 	if err != nil {
-		log.Printf("[DEBUG] GetValidationStatusWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetValidationStatusWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetValidationStatusWithContext failed %s\n%s", err, response), "ibm_cm_validation", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	status := *result.State
@@ -281,8 +297,9 @@ func resourceIBMCmValidationCreate(context context.Context, d *schema.ResourceDa
 
 		result, response, err = catalogManagementClient.GetValidationStatusWithContext(context, validationStatusOptions)
 		if err != nil {
-			log.Printf("[DEBUG] GetValidationStatusWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("GetValidationStatusWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetValidationStatusWithContext failed %s\n%s", err, response), "ibm_cm_validation", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -291,7 +308,9 @@ func resourceIBMCmValidationCreate(context context.Context, d *schema.ResourceDa
 		err = markVersionAsConsumable(version, context, meta)
 		if err != nil {
 			d.SetId("")
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_validation", "create")
+			log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -301,7 +320,9 @@ func resourceIBMCmValidationCreate(context context.Context, d *schema.ResourceDa
 func resourceIBMCmValidationRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	catalogManagementClient, err := meta.(conns.ClientSession).CatalogManagementV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_validation", "read")
+		log.Printf("[DEBUG]\\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getVersionOptions := &catalogmanagementv1.GetVersionOptions{}
@@ -314,38 +335,51 @@ func resourceIBMCmValidationRead(context context.Context, d *schema.ResourceData
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetVersionWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetVersionWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetVersionWithContext failed %s\n%s", err, response), "ibm_cm_validation", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	version := offering.Kinds[0].Versions[0]
 
 	if err = d.Set("version_locator", version.VersionLocator); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting version_locator: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting version_locator: %s", err), "ibm_cm_validation", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if version.Validation != nil && version.Validation.Validated != nil {
 		if err = d.Set("validated", version.Validation.Validated.String()); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting validation: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting validation: %s", err), "ibm_cm_validation", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if version.Validation != nil && version.Validation.Requested != nil {
 		if err = d.Set("requested", version.Validation.Requested.String()); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting requested: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting requested: %s", err), "ibm_cm_validation", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if version.Validation != nil && version.Validation.State != nil {
 		if err = d.Set("state", version.Validation.State); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting state: %s", err), "ibm_cm_validation", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if version.Validation != nil && version.Validation.LastOperation != nil {
 		if err = d.Set("last_operation", version.Validation.LastOperation); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting last_operation: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting last_operation: %s", err), "ibm_cm_validation", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if version.Validation != nil && version.Validation.Message != nil {
 		if err = d.Set("message", version.Validation.Message); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting message: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting message: %s", err), "ibm_cm_validation", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	// if version.Validation != nil && version.Validation.Target != nil {
@@ -409,20 +443,22 @@ func markVersionAsConsumable(version catalogmanagementv1.Version, context contex
 	return nil
 }
 
-func envVariablesToDeployRequestBodyEnvVariables(envVariables []map[string]interface{}) ([]catalogmanagementv1.DeployRequestBodyEnvironmentVariablesItem, error) {
+func envVariablesToDeployRequestBodyEnvVariables(envVariables []interface{}) ([]catalogmanagementv1.DeployRequestBodyEnvironmentVariablesItem, error) {
 	var modelArr []catalogmanagementv1.DeployRequestBodyEnvironmentVariablesItem
 	for _, envVar := range envVariables {
-		model := catalogmanagementv1.DeployRequestBodyEnvironmentVariablesItem{}
-		if envVar["name"] != nil && envVar["name"].(string) != "" {
-			model.Name = core.StringPtr(envVar["name"].(string))
+		if envVar != nil {
+			model := catalogmanagementv1.DeployRequestBodyEnvironmentVariablesItem{}
+			if envVar.(map[string]interface{})["name"] != nil && envVar.(map[string]interface{})["name"].(string) != "" {
+				model.Name = core.StringPtr(envVar.(map[string]interface{})["name"].(string))
+			}
+			if envVar.(map[string]interface{})["value"] != nil {
+				model.Value = envVar.(map[string]interface{})["value"]
+			}
+			if envVar.(map[string]interface{})["secure"] != nil {
+				model.Secure = core.BoolPtr(envVar.(map[string]interface{})["secure"].(bool))
+			}
+			modelArr = append(modelArr, model)
 		}
-		if envVar["value"] != nil {
-			model.Value = envVar["value"]
-		}
-		if envVar["secure"] != nil {
-			model.Secure = core.BoolPtr(envVar["secure"].(bool))
-		}
-		modelArr = append(modelArr, model)
 	}
 	return modelArr, nil
 }

@@ -155,15 +155,24 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 	}
 
 	vsphereField := field.NewPath("platform").Child("vsphere")
-	topologyField := vsphereField.Child("failureDomains").Child("topology")
+	failureDomainField := vsphereField.Child("failureDomains")
+	topologyField := failureDomainField.Child("topology")
 
 	if checkTags {
 		regionTagCategoryID, zoneTagCategoryID, err := validateTagCategories(validationCtx)
 		if err != nil {
 			allErrs = append(allErrs, field.InternalError(vsphereField, err))
 		}
+
 		validationCtx.regionTagCategoryID = regionTagCategoryID
 		validationCtx.zoneTagCategoryID = zoneTagCategoryID
+		if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
+			allErrs = append(allErrs, validateTagAttachments(validationCtx, clusterComputeResource, failureDomain.Topology.ComputeCluster, region, failureDomain.Zone, topologyField.Child("computeCluster"))...)
+			allErrs = append(allErrs, validateTagAttachments(validationCtx, hostSystem, failureDomain.Topology.ComputeCluster, zone, failureDomain.Zone, topologyField.Child("hostGroup"))...)
+		} else {
+			allErrs = append(allErrs, validateTagAttachments(validationCtx, datacenter, failureDomain.Topology.Datacenter, region, failureDomain.Zone, topologyField.Child("datacenter"))...)
+			allErrs = append(allErrs, validateTagAttachments(validationCtx, clusterComputeResource, failureDomain.Topology.ComputeCluster, zone, failureDomain.Zone, topologyField.Child("computeCluster"))...)
+		}
 	}
 
 	allErrs = append(allErrs, resourcePoolExists(validationCtx, resourcePool, topologyField.Child("resourcePool"))...)
@@ -171,6 +180,10 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 	if len(failureDomain.Topology.Folder) > 0 {
 		allErrs = append(allErrs, folderExists(validationCtx, failureDomain.Topology.Folder, topologyField.Child("folder"))...)
 		checkDatacenterPrivileges = false
+	}
+
+	if failureDomain.ZoneType == vsphere.HostGroupFailureDomain {
+		allErrs = append(allErrs, validateHostGroups(validationCtx, failureDomain.Topology.ComputeCluster, failureDomain.Topology.HostGroup, topologyField.Child("hostGroup"))...)
 	}
 
 	allErrs = append(allErrs, validateESXiVersion(validationCtx, failureDomain.Topology.ComputeCluster, vsphereField, topologyField.Child("computeCluster"))...)
@@ -188,6 +201,36 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 	}
 
 	return allErrs
+}
+
+func validateHostGroups(validationCtx *validationContext, cluster, hostGroup string, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+
+	ccr, err := validationCtx.Finder.ClusterComputeResource(ctx, cluster)
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	configInfoEx, err := ccr.Configuration(ctx)
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	for _, g := range configInfoEx.Group {
+		if hg, ok := g.(*vim25types.ClusterHostGroup); ok {
+			if hg.Name == hostGroup {
+				return nil
+			}
+		}
+	}
+
+	// this was originally missed
+	// if we reach here there are no vm-host groups by the name specified
+	// we need to add an error
+
+	return append(allErrs, field.NotFound(fldPath, hostGroup))
 }
 
 func validateVCenterVersion(validationCtx *validationContext, fldPath *field.Path) field.ErrorList {
@@ -349,13 +392,6 @@ func computeClusterExists(validationCtx *validationContext, computeCluster strin
 		permissionGroup := permissions[permissionCluster]
 		err = comparePrivileges(ctx, validationCtx, computeClusterMo.Reference(), permissionGroup)
 
-		if err != nil {
-			return field.ErrorList{field.InternalError(fldPath, err)}
-		}
-	}
-
-	if checkTagAttachment {
-		err = validateTagAttachment(validationCtx, computeClusterMo.Reference())
 		if err != nil {
 			return field.ErrorList{field.InternalError(fldPath, err)}
 		}
@@ -567,59 +603,118 @@ func validateTagCategories(validationCtx *validationContext) (string, string, er
 	return regionTagCategoryID, zoneTagCategoryID, nil
 }
 
-func validateTagAttachment(validationCtx *validationContext, reference vim25types.ManagedObjectReference) error {
-	if validationCtx.TagManager == nil {
-		return nil
-	}
-	client := validationCtx.Client
-	tagManager := validationCtx.TagManager
+type vsphereObjectType string
+
+const (
+	datacenter             vsphereObjectType = "Datacenter"
+	clusterComputeResource vsphereObjectType = "ClusterComputeResource"
+	hostSystem             vsphereObjectType = "HostSystem"
+)
+
+const (
+	region string = "region"
+	zone   string = "zone"
+)
+
+func validateTagAttachments(validationCtx *validationContext, objectType vsphereObjectType, objectPath, objectLocation, locationName string, fldPath *field.Path) field.ErrorList {
+	errList := field.ErrorList{}
+	var refs []mo.Reference
 	regionTagCategoryID := validationCtx.regionTagCategoryID
 	zoneTagCategoryID := validationCtx.zoneTagCategoryID
+	if validationCtx.TagManager == nil {
+		return append(errList, field.InternalError(fldPath, errors.New("Tag manager is unavailable")))
+	}
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 
-	referencesToCheck := []mo.Reference{reference}
-	ancestors, err := mo.Ancestors(ctx,
-		client.RoundTripper,
-		client.ServiceContent.PropertyCollector,
-		reference)
+	switch objectType {
+	case datacenter:
+		obj, err := validationCtx.Finder.Datacenter(ctx, objectPath)
+		if err != nil {
+			return field.ErrorList{field.InternalError(fldPath, err)}
+		}
+		refs = append(refs, obj.Reference())
+	case clusterComputeResource:
+		obj, err := validationCtx.Finder.ClusterComputeResource(ctx, objectPath)
+		if err != nil {
+			return field.ErrorList{field.InternalError(fldPath, err)}
+		}
+		refs = append(refs, obj.Reference())
+	case hostSystem:
+		ccr, err := validationCtx.Finder.ClusterComputeResource(ctx, objectPath)
+		if err != nil {
+			errList = append(errList, field.Invalid(fldPath, objectPath, err.Error()))
+		}
+		if err != nil {
+			return field.ErrorList{field.InternalError(fldPath, err)}
+		}
+		hosts, err := ccr.Hosts(ctx)
+		if err != nil {
+			errList = append(errList, field.Invalid(fldPath, objectPath, err.Error()))
+		}
+
+		for _, o := range hosts {
+			refs = append(refs, o.Reference())
+		}
+	}
+	attachedTags, err := validationCtx.TagManager.GetAttachedTagsOnObjects(ctx, refs)
 	if err != nil {
-		return err
+		errList = append(errList, field.Invalid(fldPath, objectPath, err.Error()))
 	}
-	for _, ancestor := range ancestors {
-		referencesToCheck = append(referencesToCheck, ancestor.Reference())
-	}
-	attachedTags, err := tagManager.GetAttachedTagsOnObjects(ctx, referencesToCheck)
-	if err != nil {
-		return err
-	}
-	regionTagAttached := false
-	zoneTagAttached := false
-	for _, attachedTag := range attachedTags {
-		for _, tag := range attachedTag.Tags {
-			if !regionTagAttached {
-				if tag.CategoryID == regionTagCategoryID {
-					regionTagAttached = true
+
+	anyHostsTagged := false
+
+taggedHostFound:
+	for _, ta := range attachedTags {
+		if findReference(refs, ta.ObjectID) {
+			for _, tag := range ta.Tags {
+				switch objectLocation {
+				case region:
+					if tag.CategoryID == regionTagCategoryID {
+						return nil
+					}
+				case zone:
+					if tag.CategoryID == zoneTagCategoryID {
+						if objectType == hostSystem {
+							if tag.Name == locationName {
+								anyHostsTagged = true
+								// since we are getting all hosts from the defined cluster
+								// there will be hosts not defined in the failure domain being checked
+								// if there is a single host tagged we will continue
+								// this could be expanded to include the vm-host group of type HostSystem
+								// to confirm each is tagged
+								break taggedHostFound
+							}
+						} else {
+							return nil
+						}
+					}
 				}
-			}
-			if !zoneTagAttached {
-				if tag.CategoryID == zoneTagCategoryID {
-					zoneTagAttached = true
-				}
-			}
-			if regionTagAttached && zoneTagAttached {
-				return nil
 			}
 		}
 	}
-	var errs []string
-	if !regionTagAttached {
-		errs = append(errs, fmt.Sprintf("tag associated with tag category %s not attached to this resource or ancestor", vsphere.TagCategoryRegion))
+
+	if objectType != hostSystem {
+		tagCategory := vsphere.TagCategoryRegion
+		if objectLocation == zone {
+			tagCategory = vsphere.TagCategoryZone
+		}
+
+		errList = append(errList, field.Invalid(fldPath, tagCategory, errors.New("tag associated with tag category not attached to this resource or ancestor").Error()))
+	} else if !anyHostsTagged {
+		errList = append(errList, field.Invalid(fldPath, locationName, errors.New("no tagged attached to host in zone").Error()))
 	}
-	if !zoneTagAttached {
-		errs = append(errs, fmt.Sprintf("tag associated with tag category %s not attached to this resource or ancestor", vsphere.TagCategoryZone))
+
+	return errList
+}
+
+func findReference(refs []mo.Reference, ref mo.Reference) bool {
+	for _, r := range refs {
+		if r.Reference().Value == ref.Reference().Value {
+			return true
+		}
 	}
-	return errors.New(strings.Join(errs, ","))
+	return false
 }
 
 func validateTemplate(validationCtx *validationContext, template string, fldPath *field.Path) field.ErrorList {

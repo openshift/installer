@@ -15,19 +15,22 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/containers/image/pkg/sysregistriesv2"
+	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
 	utilsnet "k8s.io/utils/net"
+	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/aws"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/gcp"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/vsphere"
 	mcign "github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -38,7 +41,11 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
+	aztypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -95,8 +102,10 @@ type bootstrapTemplateData struct {
 // platformTemplateData is the data to use to replace values in bootstrap
 // template files that are specific to one platform.
 type platformTemplateData struct {
+	AWS       *aws.TemplateData
 	BareMetal *baremetal.TemplateData
 	VSphere   *vsphere.TemplateData
+	GCP       *gcp.TemplateData
 }
 
 // Common is an asset that generates the ignition config for bootstrap nodes.
@@ -111,12 +120,14 @@ func (a *Common) Dependencies() []asset.Asset {
 		&baremetal.IronicCreds{},
 		&CVOIgnore{},
 		&installconfig.InstallConfig{},
+		&installconfig.ClusterID{},
 		&kubeconfig.AdminInternalClient{},
 		&kubeconfig.Kubelet{},
 		&kubeconfig.LoopbackClient{},
 		&mcign.MasterIgnitionCustomizations{},
 		&mcign.WorkerIgnitionCustomizations{},
 		&machines.Master{},
+		&machines.Arbiter{},
 		&machines.Worker{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
@@ -158,6 +169,7 @@ func (a *Common) Dependencies() []asset.Asset {
 		&tls.MCSCertKey{},
 		&tls.RootCA{},
 		&tls.ServiceAccountKeyPair{},
+		&tls.IronicTLSCert{},
 		&releaseimage.Image{},
 		new(rhcos.Image),
 	}
@@ -167,7 +179,8 @@ func (a *Common) Dependencies() []asset.Asset {
 func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootstrapTemplateData) error {
 	installConfig := &installconfig.InstallConfig{}
 	bootstrapSSHKeyPair := &tls.BootstrapSSHKeyPair{}
-	dependencies.Get(installConfig, bootstrapSSHKeyPair)
+	clusterID := &installconfig.ClusterID{}
+	dependencies.Get(installConfig, bootstrapSSHKeyPair, clusterID)
 
 	a.Config = &igntypes.Config{
 		Ignition: igntypes.Ignition{
@@ -217,6 +230,28 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 			igntypes.SSHAuthorizedKey(string(bootstrapSSHKeyPair.Public())),
 		}},
 	)
+
+	switch platform {
+	case nutanixtypes.Name:
+		// Inserts the file "/etc/hostname" with the bootstrap machine name to the bootstrap ignition data
+		hostname := fmt.Sprintf("%s-bootstrap", clusterID.InfraID)
+		hostnameFile := igntypes.File{
+			Node: igntypes.Node{
+				Path:      "/etc/hostname",
+				Overwrite: ptr.To(true),
+			},
+			FileEmbedded1: igntypes.FileEmbedded1{
+				Mode: ptr.To(420),
+				Contents: igntypes.Resource{
+					Source: ptr.To(dataurl.EncodeBytes([]byte(hostname))),
+				},
+			},
+		}
+		a.Config.Storage.Files = append(a.Config.Storage.Files, hostnameFile)
+	case aztypes.Name:
+		// See https://issues.redhat.com/browse/OCPBUGS-43625
+		ignition.AppendVarPartition(a.Config)
+	}
 
 	return nil
 }
@@ -281,15 +316,24 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	// Generate platform-specific bootstrap data
 	var platformData platformTemplateData
 
+	controlPlaneReplicas := *installConfig.Config.ControlPlane.Replicas
+	if installConfig.Config.Arbiter != nil {
+		controlPlaneReplicas += *installConfig.Config.Arbiter.Replicas
+	}
 	switch installConfig.Config.Platform.Name() {
+	case awstypes.Name:
+		platformData.AWS = aws.GetTemplateData(installConfig.Config.Platform.AWS)
 	case baremetaltypes.Name:
 		platformData.BareMetal = baremetal.GetTemplateData(
 			installConfig.Config.Platform.BareMetal,
 			installConfig.Config.MachineNetwork,
-			*installConfig.Config.ControlPlane.Replicas,
+			controlPlaneReplicas,
 			ironicCreds.Username,
 			ironicCreds.Password,
+			dependencies,
 		)
+	case gcptypes.Name:
+		platformData.GCP = gcp.GetTemplateData(installConfig.Config.Platform.GCP)
 	case vspheretypes.Name:
 		platformData.VSphere = vsphere.GetTemplateData(installConfig.Config.Platform.VSphere)
 	}
@@ -300,15 +344,15 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		bootstrapNodeIP = ""
 	}
 
-	platformFirstAPIVIP := firstAPIVIP(&installConfig.Config.Platform)
-	APIIntVIPonIPv6 := utilsnet.IsIPv6String(platformFirstAPIVIP)
-
-	networkStack := 0
-	for _, snet := range installConfig.Config.ServiceNetwork {
-		if snet.IP.To4() != nil {
-			networkStack |= 1
+	var hasIPv4, hasIPv6, ipv6Primary bool
+	for i, snet := range installConfig.Config.ServiceNetwork {
+		if utilsnet.IsIPv4(snet.IP) {
+			hasIPv4 = true
 		} else {
-			networkStack |= 2
+			hasIPv6 = true
+			if i == 0 {
+				ipv6Primary = true
+			}
 		}
 	}
 
@@ -337,12 +381,12 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		EtcdCluster:           strings.Join(etcdEndpoints, ","),
 		Proxy:                 &proxy.Config.Status,
 		Registries:            registries,
-		BootImage:             string(*rhcosImage),
+		BootImage:             rhcosImage.ControlPlane,
 		PlatformData:          platformData,
 		ClusterProfile:        clusterProfile,
 		BootstrapInPlace:      bootstrapInPlaceConfig,
-		UseIPv6ForNodeIP:      APIIntVIPonIPv6,
-		UseDualForNodeIP:      networkStack == 3,
+		UseIPv6ForNodeIP:      ipv6Primary,
+		UseDualForNodeIP:      hasIPv4 && hasIPv6,
 		IsFCOS:                installConfig.Config.IsFCOS(),
 		IsSCOS:                installConfig.Config.IsSCOS(),
 		IsOKD:                 installConfig.Config.IsOKD(),
@@ -399,20 +443,22 @@ func AddStorageFiles(config *igntypes.Config, base string, uri string, templateD
 	}
 
 	filename := path.Base(uri)
+	filename = strings.TrimSuffix(filename, ".template")
 	parentDir := path.Base(path.Dir(uri))
 
 	var mode int
 	appendToFile := false
-	if parentDir == "bin" || parentDir == "dispatcher.d" {
+	switch {
+	case parentDir == "bin", parentDir == "dispatcher.d", parentDir == "system-generators":
 		mode = 0555
-	} else if filename == "motd" || filename == "containers.conf" {
+	case filename == "motd", filename == "containers.conf":
 		mode = 0644
 		appendToFile = true
-	} else if filename == "registries.conf" {
+	case filename == "registries.conf":
 		// Having the mode be private breaks rpm-ostree, xref
 		// https://github.com/openshift/installer/pull/6789
 		mode = 0644
-	} else {
+	default:
 		mode = 0600
 	}
 	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
@@ -559,6 +605,7 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 		&machines.Master{},
+		&machines.Arbiter{},
 		&machines.Worker{},
 		&mcign.MasterIgnitionCustomizations{},
 		&mcign.WorkerIgnitionCustomizations{},
@@ -612,6 +659,7 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 		&tls.MCSCertKey{},
 		&tls.ServiceAccountKeyPair{},
 		&tls.JournalCertKey{},
+		&tls.IronicTLSCert{},
 	} {
 		dependencies.Get(asset)
 
@@ -702,35 +750,4 @@ func warnIfCertificatesExpired(config *igntypes.Config) {
 	if expiredCerts > 0 {
 		logrus.Warnf("Bootstrap Ignition-Config: %d certificates expired. Installation attempts with the created Ignition-Configs will possibly fail.", expiredCerts)
 	}
-}
-
-// APIVIPs returns the string representations of the platform's API VIPs
-// It returns nil if the platform does not configure VIPs
-func apiVIPs(p *types.Platform) []string {
-	switch {
-	case p == nil:
-		return nil
-	case p.BareMetal != nil:
-		return p.BareMetal.APIVIPs
-	case p.OpenStack != nil:
-		return p.OpenStack.APIVIPs
-	case p.VSphere != nil:
-		return p.VSphere.APIVIPs
-	case p.Ovirt != nil:
-		return p.Ovirt.APIVIPs
-	case p.Nutanix != nil:
-		return p.Nutanix.APIVIPs
-	default:
-		return nil
-	}
-}
-
-// firstAPIVIP returns the first VIP of the API server (e.g. in case of
-// dual-stack)
-func firstAPIVIP(p *types.Platform) string {
-	for _, vip := range apiVIPs(p) {
-		return vip
-	}
-
-	return ""
 }

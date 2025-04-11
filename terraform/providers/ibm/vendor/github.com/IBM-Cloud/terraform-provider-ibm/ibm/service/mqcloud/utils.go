@@ -11,7 +11,8 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
-	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
+
+	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 
 	"github.com/IBM/mqcloud-go-sdk/mqcloudv1"
@@ -31,7 +32,9 @@ const qmCreating = "initializing"
 const isQueueManagerDeleting = "true"
 const isQueueManagerDeleteDone = "true"
 const reservedDeploymentPlan = "reserved-deployment"
-const enforceReservedDeploymentPlan = true
+const reservedCapacityPlan = "reserved-capacity"
+const reservedCapacitySubscriptionPlan = "reserved-capacity-subscription"
+const enforceReservedDeploymentPlan = true // change to false for testing in IKS clusters.
 
 // waitForQmStatusUpdate waits for Queue Manager to be in running state
 func waitForQmStatusUpdate(context context.Context, d *schema.ResourceData, meta interface{}) (interface{}, error) {
@@ -110,59 +113,6 @@ func waitForQueueManagerToDelete(context context.Context, d *schema.ResourceData
 	return stateConf.WaitForStateContext(context)
 }
 
-// checkSIPlan checks whether a Service Instance (SI) is in a Reserved Deployment.
-func checkSIPlan(d *schema.ResourceData, meta interface{}) error {
-	if !enforceReservedDeploymentPlan {
-		return nil
-	}
-
-	instanceID := d.Get("service_instance_guid").(string)
-	// Check cache first
-	if plan, found := planCache[instanceID]; found {
-		return handlePlanCheck(plan, instanceID)
-	}
-
-	// Creating a Resource Controller Client
-	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
-	if err != nil {
-		return fmt.Errorf("[ERROR] Failed to create Resource Controller Client: %s", err)
-	}
-
-	// Getting the resource instance
-	rsInst := rc.GetResourceInstanceOptions{
-		ID: &instanceID,
-	}
-	instance, response, err := rsConClient.GetResourceInstance(&rsInst)
-	if err != nil {
-		return fmt.Errorf("[ERROR] Failed to retrieve Resource Instance: %s, Response: %s", err, response)
-	}
-
-	// Creating a Resource Catalog Client
-	rsCatClient, err := meta.(conns.ClientSession).ResourceCatalogAPI()
-	if err != nil {
-		return fmt.Errorf("[ERROR] Failed to create Resource Catalog Client: %s", err)
-	}
-	rsCatRepo := rsCatClient.ResourceCatalog()
-
-	// Checking the service plan
-	plan, err := rsCatRepo.GetServicePlanName(*instance.ResourcePlanID)
-	if err != nil {
-		return fmt.Errorf("[ERROR] Failed to retrieve Service Plan: %s", err)
-	}
-
-	// Update cache
-	planCache[instanceID] = plan
-
-	return handlePlanCheck(plan, instanceID)
-}
-
-func handlePlanCheck(plan string, instanceID string) error {
-	if plan != reservedDeploymentPlan {
-		return fmt.Errorf("[ERROR] Terraform is only supported for Reserved Deployment Plan. Your Service Plan is: %s for the instance %s", plan, instanceID)
-	}
-	return nil
-}
-
 func IsVersionDowngrade(oldVersion, newVersion string) bool {
 	oldParts := strings.Split(oldVersion, ".")
 	newParts := strings.Split(newVersion, ".")
@@ -192,4 +142,81 @@ func IsVersionDowngrade(oldVersion, newVersion string) bool {
 	}
 
 	return false
+}
+
+// Function variable to allow mocking in tests
+var fetchServicePlanFunc = fetchServicePlan
+
+// checkSIPlan checks whether a Service Instance (SI) is in a Reserved Deployment.
+func checkSIPlan(d *schema.ResourceData, meta interface{}) error {
+	if !enforceReservedDeploymentPlan {
+		return nil
+	}
+
+	instanceID := d.Get("service_instance_guid").(string)
+	// Check cache first
+	if plan, found := planCache[instanceID]; found {
+		return handlePlanCheck(plan, instanceID)
+	}
+
+	plan, err := fetchServicePlanFunc(meta, instanceID)
+	if err != nil {
+		return err
+	}
+
+	// Update cache
+	planCache[instanceID] = plan
+
+	return handlePlanCheck(plan, instanceID)
+}
+
+// fetchServicePlan handles all external function calls to fetch the service plan name.
+func fetchServicePlan(meta interface{}, instanceID string) (string, error) {
+	clientAPIProvider, ok := meta.(conns.ClientSession)
+	if !ok {
+		return "", fmt.Errorf("meta does not implement ClientAPIProvider")
+	}
+
+	// Creating a Resource Controller Client
+	rsConClient, err := clientAPIProvider.ResourceControllerV2API()
+	if err != nil {
+		return "", fmt.Errorf("[ERROR] Failed to create Resource Controller Client: %s", err)
+	}
+
+	// Getting the resource instance
+	rsInst := resourcecontrollerv2.GetResourceInstanceOptions{
+		ID: &instanceID,
+	}
+	instance, response, err := rsConClient.GetResourceInstance(&rsInst)
+	if err != nil {
+		return "", fmt.Errorf("[ERROR] Failed to retrieve Resource Instance: %s, Response: %s", err, response)
+	}
+
+	// Creating a Resource Catalog Client
+	rsCatClient, err := clientAPIProvider.ResourceCatalogAPI()
+	if err != nil {
+		return "", fmt.Errorf("[ERROR] Failed to create Resource Catalog Client: %s", err)
+	}
+	rsCatRepo := rsCatClient.ResourceCatalog()
+	if rsCatRepo == nil {
+		return "", fmt.Errorf("[ERROR] Catalog client is nil")
+	}
+	if instance.ResourcePlanID == nil {
+		return "", fmt.Errorf("[ERROR] Instance ResourcePlanID is nil")
+	}
+
+	// Checking the service plan
+	plan, err := rsCatRepo.GetServicePlanName(*instance.ResourcePlanID)
+	if err != nil {
+		return "", fmt.Errorf("[ERROR] Failed to retrieve Service Plan: %s", err)
+	}
+
+	return plan, nil
+}
+
+func handlePlanCheck(plan string, instanceID string) error {
+	if !strings.Contains(plan, reservedDeploymentPlan) && !strings.Contains(plan, reservedCapacityPlan) && !strings.Contains(plan, reservedCapacitySubscriptionPlan) {
+		return fmt.Errorf("[ERROR] Terraform is only supported for Reserved Deployment, Reserved Capacity, and Reserved Capacity Subscription Plans. Your Service Plan is: %s for the instance %s", plan, instanceID)
+	}
+	return nil
 }

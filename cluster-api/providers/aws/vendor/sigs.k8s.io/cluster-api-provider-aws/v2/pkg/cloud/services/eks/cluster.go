@@ -121,6 +121,10 @@ func (s *Service) reconcileCluster(ctx context.Context) error {
 		return errors.Wrap(err, "failed reconciling cluster config")
 	}
 
+	if err := s.reconcileLogging(cluster.Logging); err != nil {
+		return errors.Wrap(err, "failed reconciling logging")
+	}
+
 	if err := s.reconcileEKSEncryptionConfig(cluster.EncryptionConfig); err != nil {
 		return errors.Wrap(err, "failed reconciling eks encryption config")
 	}
@@ -230,7 +234,7 @@ func makeEksEncryptionConfigs(encryptionConfig *ekscontrolplanev1.EncryptionConf
 	if encryptionConfig == nil {
 		return cfg
 	}
-	//TODO: change EncryptionConfig so that provider and resources are required  if encruptionConfig is specified
+	// TODO: change EncryptionConfig so that provider and resources are required  if encruptionConfig is specified
 	if encryptionConfig.Provider == nil || len(*encryptionConfig.Provider) == 0 {
 		return cfg
 	}
@@ -312,8 +316,8 @@ func makeEksLogging(loggingSpec *ekscontrolplanev1.ControlPlaneLoggingSpec) *eks
 	if loggingSpec == nil {
 		return nil
 	}
-	var on = true
-	var off = false
+	on := true
+	off := false
 	var enabledTypes []string
 	var disabledTypes []string
 
@@ -355,9 +359,18 @@ func makeEksLogging(loggingSpec *ekscontrolplanev1.ControlPlaneLoggingSpec) *eks
 }
 
 func (s *Service) createCluster(eksClusterName string) (*eks.Cluster, error) {
+	var (
+		vpcConfig *eks.VpcConfigRequest
+		err       error
+	)
 	logging := makeEksLogging(s.scope.ControlPlane.Spec.Logging)
 	encryptionConfigs := makeEksEncryptionConfigs(s.scope.ControlPlane.Spec.EncryptionConfig)
-	vpcConfig, err := makeVpcConfig(s.scope.Subnets(), s.scope.ControlPlane.Spec.EndpointAccess, s.scope.SecurityGroups())
+	if s.scope.ControlPlane.Spec.RestrictPrivateSubnets {
+		s.scope.Info("Filtering private subnets")
+		vpcConfig, err = makeVpcConfig(s.scope.Subnets().FilterPrivate(), s.scope.ControlPlane.Spec.EndpointAccess, s.scope.SecurityGroups())
+	} else {
+		vpcConfig, err = makeVpcConfig(s.scope.Subnets(), s.scope.ControlPlane.Spec.EndpointAccess, s.scope.SecurityGroups())
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create vpc config for cluster")
 	}
@@ -421,7 +434,7 @@ func (s *Service) createCluster(eksClusterName string) (*eks.Cluster, error) {
 		conditions.MarkTrue(s.scope.ControlPlane, ekscontrolplanev1.EKSControlPlaneCreatingCondition)
 		record.Eventf(s.scope.ControlPlane, "InitiatedCreateEKSControlPlane", "Initiated creation of a new EKS control plane %s", s.scope.KubernetesClusterName())
 		return true, nil
-	}, awserrors.ResourceNotFound); err != nil { //TODO: change the error that can be retried
+	}, awserrors.ResourceNotFound); err != nil { // TODO: change the error that can be retried
 		record.Warnf(s.scope.ControlPlane, "FailedCreateEKSControlPlane", "Failed to initiate creation of a new EKS control plane: %v", err)
 		return nil, errors.Wrapf(err, "failed to create EKS cluster")
 	}
@@ -457,11 +470,6 @@ func (s *Service) reconcileClusterConfig(cluster *eks.Cluster) error {
 	var needsUpdate bool
 	input := eks.UpdateClusterConfigInput{Name: aws.String(s.scope.KubernetesClusterName())}
 
-	if updateLogging := s.reconcileLogging(cluster.Logging); updateLogging != nil {
-		needsUpdate = true
-		input.Logging = updateLogging
-	}
-
 	updateVpcConfig, err := s.reconcileVpcConfig(cluster.ResourcesVpcConfig)
 	if err != nil {
 		return errors.Wrap(err, "couldn't create vpc config for cluster")
@@ -493,15 +501,39 @@ func (s *Service) reconcileClusterConfig(cluster *eks.Cluster) error {
 	return nil
 }
 
-func (s *Service) reconcileLogging(logging *eks.Logging) *eks.Logging {
+func (s *Service) reconcileLogging(logging *eks.Logging) error {
+	input := eks.UpdateClusterConfigInput{Name: aws.String(s.scope.KubernetesClusterName())}
+
 	for _, logSetup := range logging.ClusterLogging {
 		for _, l := range logSetup.Types {
 			enabled := s.scope.ControlPlane.Spec.Logging.IsLogEnabled(*l)
 			if enabled != *logSetup.Enabled {
-				return makeEksLogging(s.scope.ControlPlane.Spec.Logging)
+				input.Logging = makeEksLogging(s.scope.ControlPlane.Spec.Logging)
 			}
 		}
 	}
+
+	if input.Logging != nil {
+		if err := input.Validate(); err != nil {
+			return errors.Wrap(err, "created invalid UpdateClusterConfigInput")
+		}
+
+		if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
+			if _, err := s.EKSClient.UpdateClusterConfig(&input); err != nil {
+				if aerr, ok := err.(awserr.Error); ok {
+					return false, aerr
+				}
+				return false, err
+			}
+			conditions.MarkTrue(s.scope.ControlPlane, ekscontrolplanev1.EKSControlPlaneUpdatingCondition)
+			record.Eventf(s.scope.ControlPlane, "InitiatedUpdateEKSControlPlane", "Initiated logging update for EKS control plane %s", s.scope.KubernetesClusterName())
+			return true, nil
+		}); err != nil {
+			record.Warnf(s.scope.ControlPlane, "FailedUpdateEKSControlPlane", "Failed to update EKS control plane logging: %v", err)
+			return errors.Wrapf(err, "failed to update EKS cluster")
+		}
+	}
+
 	return nil
 }
 
@@ -519,8 +551,16 @@ func publicAccessCIDRsEqual(as []*string, bs []*string) bool {
 }
 
 func (s *Service) reconcileVpcConfig(vpcConfig *eks.VpcConfigResponse) (*eks.VpcConfigRequest, error) {
+	var (
+		updatedVpcConfig *eks.VpcConfigRequest
+		err              error
+	)
 	endpointAccess := s.scope.ControlPlane.Spec.EndpointAccess
-	updatedVpcConfig, err := makeVpcConfig(s.scope.Subnets(), endpointAccess, s.scope.SecurityGroups())
+	if s.scope.ControlPlane.Spec.RestrictPrivateSubnets {
+		updatedVpcConfig, err = makeVpcConfig(s.scope.Subnets().FilterPrivate(), endpointAccess, s.scope.SecurityGroups())
+	} else {
+		updatedVpcConfig, err = makeVpcConfig(s.scope.Subnets(), endpointAccess, s.scope.SecurityGroups())
+	}
 	if err != nil {
 		return nil, err
 	}

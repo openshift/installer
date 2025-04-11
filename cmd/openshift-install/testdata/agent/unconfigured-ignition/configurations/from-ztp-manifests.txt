@@ -10,11 +10,13 @@ exec openshift-install agent create unconfigured-ignition --dir $WORK
 exists $WORK/unconfigured-agent.ign
 ! exists $WORK/auth/kubeconfig
 ! exists $WORK/auth/kubeadmin-password
+
+unconfiguredIgnContains /etc/assisted/manifests/pull-secret.yaml
 ! unconfiguredIgnContains /etc/assisted/manifests/agent-cluster-install.yaml
 ! unconfiguredIgnContains /etc/assisted/manifests/cluster-deployment.yaml
+
 unconfiguredIgnCmp /etc/assisted/manifests/cluster-image-set.yaml expected/cluster-image-set.yaml
 unconfiguredIgnCmp /etc/assisted/manifests/infraenv.yaml expected/infraenv.yaml
-unconfiguredIgnCmp /etc/assisted/manifests/pull-secret.yaml expected/pull-secret.yaml
 
 -- cluster-manifests/infraenv.yaml --
 apiVersion: agent-install.openshift.io/v1beta1
@@ -85,19 +87,3 @@ status:
     rootfs: ""
   debugInfo:
     eventsURL: ""
--- expected/pull-secret.yaml --
-apiVersion: v1
-kind: Secret
-metadata:
-  creationTimestamp: null
-  name: ostest-pull-secret
-  namespace: cluster0
-stringData:
-  .dockerconfigjson: |-
-    {
-      "auths": {
-        "quay.io": {
-          "auth": "c3VwZXItc2VjcmV0Cg=="
-        }
-      }
-    }

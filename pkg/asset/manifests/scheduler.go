@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -39,7 +40,7 @@ func (*Scheduler) Dependencies() []asset.Asset {
 }
 
 // Generate generates the scheduler config and its CRD.
-func (s *Scheduler) Generate(dependencies asset.Parents) error {
+func (s *Scheduler) Generate(_ context.Context, dependencies asset.Parents) error {
 	config := &configv1.Scheduler{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: configv1.SchemeGroupVersion.String(),

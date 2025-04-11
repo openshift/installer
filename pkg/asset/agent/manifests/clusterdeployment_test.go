@@ -1,12 +1,13 @@
 package manifests
 
 import (
+	"context"
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -73,7 +74,7 @@ func TestClusterDeployment_Generate(t *testing.T) {
 			parents.Add(tc.dependencies...)
 
 			asset := &ClusterDeployment{}
-			err := asset.Generate(parents)
+			err := asset.Generate(context.Background(), parents)
 
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())

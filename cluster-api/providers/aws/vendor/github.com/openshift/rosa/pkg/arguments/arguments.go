@@ -20,6 +20,8 @@ package arguments
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -28,12 +30,17 @@ import (
 	"github.com/openshift/rosa/pkg/aws/profile"
 	"github.com/openshift/rosa/pkg/aws/region"
 	"github.com/openshift/rosa/pkg/debug"
-	"github.com/openshift/rosa/pkg/helper"
 )
 
 const boolType string = "bool"
 
+const regionFlagName = "region"
+const regionDeprecationMessage = "Region flag will be removed from this command in future versions"
+
 var hasUnknownFlags bool
+
+var DisableRegionDeprecationFlagName = "disable-region-deprecation" // Temporary for region deprecation
+var DisableRegionDeprecationWarning = false                         // Temporary for region deprecation
 
 // ParseUnknownFlags parses all flags from the CLI, including
 // unknown ones, and adds them to the current command tree
@@ -314,20 +321,42 @@ func IsValidMode(modes []string, mode string) bool {
 	return false
 }
 
-func markGlobalFlagsHidden(command *cobra.Command, hidden ...string) {
+func deprecateRegion(command *cobra.Command) {
 	command.PersistentFlags().VisitAll(func(flag *pflag.Flag) {
-		name := flag.Name
-		if helper.Contains(hidden, name) {
-			flag.Hidden = true
+		if flag.Name == regionFlagName {
+			flag.Deprecated = regionDeprecationMessage
 		}
 	})
 }
 
-func MarkRegionHidden(parentCmd *cobra.Command, childrenCmds []*cobra.Command) {
+func MarkRegionDeprecated(parentCmd *cobra.Command, childrenCmds []*cobra.Command) {
 	for _, cmd := range childrenCmds {
 		cmd.SetHelpFunc(func(command *cobra.Command, strings []string) {
-			markGlobalFlagsHidden(parentCmd, "region")
+			deprecateRegion(parentCmd)
 			command.Parent().HelpFunc()(command, strings)
 		})
+
+		disableUsage := "Temporarily used for disabling a warning message ran from other commands (no reason to" +
+			" print for cluster describe called inside cluster create, but there is a use for a lone describe."
+		if cmd.LocalFlags().Lookup(DisableRegionDeprecationFlagName) == nil {
+			cmd.LocalFlags().BoolVar(&DisableRegionDeprecationWarning, DisableRegionDeprecationFlagName,
+				false, disableUsage)
+			cmd.LocalFlags().Lookup(DisableRegionDeprecationFlagName).Hidden = true
+		}
+
+		currentRun := cmd.Run
+		cmd.Run = func(c *cobra.Command, args []string) {
+			outputFlag := cmd.Flag("output")
+			regionFlag := cmd.Flag("region")
+			disableDeprecationFlag := cmd.LocalFlags().Lookup(DisableRegionDeprecationFlagName)
+			hasChangedOutputFlag := outputFlag != nil && outputFlag.Value.String() != outputFlag.DefValue
+			hasChangedRegionFlag := regionFlag != nil && regionFlag.Value.String() != regionFlag.DefValue
+			isRegionDeprecationDisabled := disableDeprecationFlag != nil &&
+				disableDeprecationFlag.Value.String() == strconv.FormatBool(true)
+			if hasChangedRegionFlag && !hasChangedOutputFlag && !isRegionDeprecationDisabled {
+				_, _ = fmt.Fprintf(os.Stdout, "%s%s\n", "\u001B[0;33mW:\u001B[m ", regionDeprecationMessage)
+			}
+			currentRun(c, args)
+		}
 	}
 }

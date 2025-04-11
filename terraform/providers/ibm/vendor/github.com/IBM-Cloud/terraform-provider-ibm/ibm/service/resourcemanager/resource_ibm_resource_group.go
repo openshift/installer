@@ -6,9 +6,12 @@ package resourcemanager
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	rg "github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -20,6 +23,10 @@ func ResourceIBMResourceGroup() *schema.Resource {
 		Delete:   resourceIBMResourceGroupDelete,
 		Exists:   resourceIBMResourceGroupExists,
 		Importer: &schema.ResourceImporter{},
+
+		Timeouts: &schema.ResourceTimeout{
+			Delete: schema.DefaultTimeout(20 * time.Minute),
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -222,7 +229,35 @@ func resourceIBMResourceGroupDelete(d *schema.ResourceData, meta interface{}) er
 			log.Printf("[WARN] Resource Group is not found")
 			return nil
 		}
-		return fmt.Errorf("[ERROR] Error Deleting resource group: %s with response code  %s", err, resp)
+		if resp != nil && resp.StatusCode == 500 {
+			err = retry.Retry(d.Timeout(schema.TimeoutDelete), func() *retry.RetryError {
+				resp, err = rMgtClient.DeleteResourceGroup(&resourceGroupDelete)
+				if err != nil {
+					if resp != nil && resp.StatusCode == 500 {
+						return resource.RetryableError(err)
+					}
+					if resp != nil && resp.StatusCode == 404 {
+						log.Printf("[WARN] Resource Group is not found")
+						return nil
+					}
+					return resource.NonRetryableError(err)
+				}
+				return nil
+			})
+			if conns.IsResourceTimeoutError(err) {
+				resp, err = rMgtClient.DeleteResourceGroup(&resourceGroupDelete)
+			}
+			if err != nil {
+				if resp != nil && resp.StatusCode == 404 {
+					log.Printf("[WARN] Resource Group is not found")
+					return nil
+				}
+				return fmt.Errorf("[ERROR] Error Deleting resource group: %s with response code  %s", err, resp)
+			}
+		} else {
+
+			return fmt.Errorf("[ERROR] Error Deleting resource group: %s with response code  %s", err, resp)
+		}
 	}
 
 	d.SetId("")

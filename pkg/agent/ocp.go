@@ -36,7 +36,13 @@ const (
 func NewClusterOpenShiftAPIClient(ctx context.Context, kubeconfigPath string) (*ClusterOpenShiftAPIClient, error) {
 	ocpClient := &ClusterOpenShiftAPIClient{}
 
-	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	var kubeconfig *rest.Config
+	var err error
+	if kubeconfigPath != "" {
+		kubeconfig, err = clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	} else {
+		kubeconfig, err = rest.InClusterConfig()
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "creating kubeconfig for ocp config client")
 	}
@@ -58,7 +64,6 @@ func NewClusterOpenShiftAPIClient(ctx context.Context, kubeconfigPath string) (*
 	ocpClient.configPath = kubeconfigPath
 
 	return ocpClient, nil
-
 }
 
 // AreClusterOperatorsInitialized Waits for all Openshift cluster operators to initialize
@@ -104,7 +109,6 @@ func (ocp *ClusterOpenShiftAPIClient) IsConsoleRouteAvailable() (bool, error) {
 		}
 	}
 	return false, errors.Wrap(err, "Waiting for openshift-console route")
-
 }
 
 // IsConsoleRouteURLAvailable Check if the console route URL is available

@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2022 All Rights Reserved.
+// Copyright IBM Corp. 2024 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package database
@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/cloud-databases-go-sdk/clouddatabasesv5"
 )
@@ -102,7 +103,9 @@ func DataSourceIBMDatabaseBackupsValidator() *validate.ResourceValidator {
 func DataSourceIBMDatabaseBackupsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cloudDatabasesClient, err := meta.(conns.ClientSession).CloudDatabasesV5()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_backups", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	listDeploymentBackupsOptions := &clouddatabasesv5.ListDeploymentBackupsOptions{}
@@ -110,8 +113,9 @@ func DataSourceIBMDatabaseBackupsRead(context context.Context, d *schema.Resourc
 
 	backups, response, err := cloudDatabasesClient.ListDeploymentBackupsWithContext(context, listDeploymentBackupsOptions)
 	if err != nil {
-		log.Printf("[DEBUG] ListDeploymentBackupsWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("ListDeploymentBackupsWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ListDeploymentBackupsWithContext failed:  %s\n%s", err.Error(), response), "(Data) ibm_database_backups", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	// Use the provided filter argument and construct a new list with only the requested resource(s)
@@ -134,7 +138,8 @@ func DataSourceIBMDatabaseBackupsRead(context context.Context, d *schema.Resourc
 
 	if suppliedFilter {
 		if len(backups.Backups) == 0 {
-			return diag.FromErr(fmt.Errorf("no Backups found with deploymentID %s", deploymentID))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("no Backups found with deploymentID %s", deploymentID), "(Data) ibm_database_backups", "read")
+			return tfErr.GetDiag()
 		}
 		d.SetId(deploymentID)
 	} else {
@@ -146,13 +151,15 @@ func DataSourceIBMDatabaseBackupsRead(context context.Context, d *schema.Resourc
 		for _, modelItem := range backups.Backups {
 			modelMap, err := DataSourceIBMDatabaseBackupsBackupToMap(&modelItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "(Data) ibm_database_backups", "read")
+				return tfErr.GetDiag()
 			}
 			backups2 = append(backups2, modelMap)
 		}
 	}
 	if err = d.Set("backups", backups2); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting backups %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting backups: %s", err), "(Data) ibm_database_backups", "read")
+		return tfErr.GetDiag()
 	}
 
 	return nil

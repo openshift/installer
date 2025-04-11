@@ -252,7 +252,7 @@ func resourceIBMContainerVpcWorkerCreate(d *schema.ResourceData, meta interface{
 		return err
 	}
 
-	targetEnv, err := getVpcClusterTargetHeader(d, meta)
+	targetEnv, err := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return err
 	}
@@ -379,7 +379,7 @@ func resourceIBMContainerVpcWorkerExists(d *schema.ResourceData, meta interface{
 	}
 	cluster := parts[1]
 
-	targetEnv, err := getVpcClusterTargetHeader(d, meta)
+	targetEnv, err := getVpcClusterTargetHeader(d)
 	if err != nil {
 		return false, err
 	}
@@ -688,7 +688,7 @@ func WaitForVpcClusterVpcWokersVersionUpdate(d *schema.ResourceData, meta interf
 		Timeout:                   d.Timeout(schema.TimeoutUpdate),
 		Delay:                     10 * time.Second,
 		MinTimeout:                10 * time.Second,
-		ContinuousTargetOccurence: 5,
+		ContinuousTargetOccurence: 3,
 	}
 
 	return stateConf.WaitForState()

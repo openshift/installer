@@ -28,6 +28,12 @@ type SharedProcessorPool struct {
 	// Required: true
 	AvailableCores *float64 `json:"availableCores"`
 
+	// crn
+	Crn CRN `json:"crn,omitempty"`
+
+	// ID of the dedicated host where the Shared Processor Pool resides, if applicable
+	DedicatedHostID string `json:"dedicatedHostID,omitempty"`
+
 	// The host group the host belongs to
 	HostGroup string `json:"hostGroup,omitempty"`
 
@@ -54,6 +60,9 @@ type SharedProcessorPool struct {
 
 	// The status details of the Shared Processor Pool
 	StatusDetail string `json:"statusDetail,omitempty"`
+
+	// user tags
+	UserTags Tags `json:"userTags,omitempty"`
 }
 
 // Validate validates this shared processor pool
@@ -65,6 +74,10 @@ func (m *SharedProcessorPool) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateAvailableCores(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateCrn(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -81,6 +94,10 @@ func (m *SharedProcessorPool) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateSharedProcessorPoolPlacementGroups(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateUserTags(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -102,6 +119,23 @@ func (m *SharedProcessorPool) validateAllocatedCores(formats strfmt.Registry) er
 func (m *SharedProcessorPool) validateAvailableCores(formats strfmt.Registry) error {
 
 	if err := validate.Required("availableCores", "body", m.AvailableCores); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *SharedProcessorPool) validateCrn(formats strfmt.Registry) error {
+	if swag.IsZero(m.Crn) { // not required
+		return nil
+	}
+
+	if err := m.Crn.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("crn")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("crn")
+		}
 		return err
 	}
 
@@ -161,17 +195,60 @@ func (m *SharedProcessorPool) validateSharedProcessorPoolPlacementGroups(formats
 	return nil
 }
 
+func (m *SharedProcessorPool) validateUserTags(formats strfmt.Registry) error {
+	if swag.IsZero(m.UserTags) { // not required
+		return nil
+	}
+
+	if err := m.UserTags.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
+	}
+
+	return nil
+}
+
 // ContextValidate validate this shared processor pool based on the context it is used
 func (m *SharedProcessorPool) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateCrn(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateSharedProcessorPoolPlacementGroups(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateUserTags(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *SharedProcessorPool) contextValidateCrn(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Crn) { // not required
+		return nil
+	}
+
+	if err := m.Crn.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("crn")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("crn")
+		}
+		return err
+	}
+
 	return nil
 }
 
@@ -195,6 +272,20 @@ func (m *SharedProcessorPool) contextValidateSharedProcessorPoolPlacementGroups(
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *SharedProcessorPool) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
 	}
 
 	return nil

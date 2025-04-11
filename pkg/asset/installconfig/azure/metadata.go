@@ -12,7 +12,7 @@ import (
 // from external APIs).
 type Metadata struct {
 	session *Session
-	client  *Client
+	client  API
 	dnsCfg  *DNSConfig
 
 	// CloudName indicates the Azure cloud environment (e.g. public, gov't).
@@ -70,7 +70,7 @@ func (m *Metadata) unlockedSession() (*Session, error) {
 }
 
 // Client holds an Azure Client that implements calls to the Azure API.
-func (m *Metadata) Client() (*Client, error) {
+func (m *Metadata) Client() (API, error) {
 	if m.client == nil {
 		ssn, err := m.Session()
 		if err != nil {
@@ -79,6 +79,12 @@ func (m *Metadata) Client() (*Client, error) {
 		m.client = NewClient(ssn)
 	}
 	return m.client, nil
+}
+
+// UseMockClient returns the provided client from Client() instead of creating
+// a new one.
+func (m *Metadata) UseMockClient(client API) {
+	m.client = client
 }
 
 // DNSConfig holds an Azure DNSConfig Client that implements calls to the Azure API.

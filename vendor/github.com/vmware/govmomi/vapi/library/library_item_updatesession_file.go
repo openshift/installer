@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019-2023 VMware, Inc. All Rights Reserved.
+Copyright (c) 2019-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package library
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -31,6 +32,7 @@ import (
 // TransferEndpoint provides information on the source of a library item file.
 type TransferEndpoint struct {
 	URI                      string `json:"uri,omitempty"`
+	SSLCertificate           string `json:"ssl_certificate,omitempty"`
 	SSLCertificateThumbprint string `json:"ssl_certificate_thumbprint,omitempty"`
 }
 
@@ -86,7 +88,7 @@ func (c *Manager) AddLibraryItemFile(ctx context.Context, sessionID string, upda
 }
 
 // AddLibraryItemFileFromURI adds a file from a remote URI.
-func (c *Manager) AddLibraryItemFileFromURI(ctx context.Context, sessionID, name, uri string) (*UpdateFile, error) {
+func (c *Manager) AddLibraryItemFileFromURI(ctx context.Context, sessionID, name, uri string, checksum ...Checksum) (*UpdateFile, error) {
 	source := &TransferEndpoint{
 		URI: uri,
 	}
@@ -95,6 +97,12 @@ func (c *Manager) AddLibraryItemFileFromURI(ctx context.Context, sessionID, name
 		Name:           name,
 		SourceType:     "PULL",
 		SourceEndpoint: source,
+	}
+
+	if len(checksum) == 1 && checksum[0].Checksum != "" {
+		file.Checksum = &checksum[0]
+	} else if len(checksum) > 1 {
+		return nil, fmt.Errorf("expected 0 or 1 checksum, got %d", len(checksum))
 	}
 
 	if res, err := c.Head(uri); err == nil {
@@ -107,7 +115,11 @@ func (c *Manager) AddLibraryItemFileFromURI(ctx context.Context, sessionID, name
 		if err != nil {
 			return nil, err
 		}
-		source.SSLCertificateThumbprint = res.SSLThumbprint
+		if res.SSLCertificate != "" {
+			source.SSLCertificate = res.SSLCertificate
+		} else {
+			source.SSLCertificateThumbprint = res.SSLThumbprint
+		}
 	}
 
 	return c.AddLibraryItemFile(ctx, sessionID, file)

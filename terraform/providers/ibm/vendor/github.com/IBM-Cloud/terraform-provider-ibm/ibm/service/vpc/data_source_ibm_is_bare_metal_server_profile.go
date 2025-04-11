@@ -48,6 +48,51 @@ func DataSourceIBMIsBareMetalServerProfile() *schema.Resource {
 				Description: "The name for this bare metal server profile",
 			},
 
+			// vni
+
+			"virtual_network_interfaces_supported": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Indicates whether this profile supports virtual network interfaces.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type for this profile field.",
+						},
+						"value": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "The value for this profile field.",
+						},
+					},
+				},
+			},
+			"network_attachment_count": &schema.Schema{
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"max": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The maximum value for this profile field.",
+						},
+						"min": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The minimum value for this profile field.",
+						},
+						"type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type for this profile field.",
+						},
+					},
+				},
+			},
+
 			isBareMetalServerProfileFamily: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -74,6 +119,34 @@ func DataSourceIBMIsBareMetalServerProfile() *schema.Resource {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "The value for this profile field",
+						},
+						"default": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The default value for this profile field.",
+						},
+						"max": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The maximum value for this profile field.",
+						},
+						"min": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The minimum value for this profile field.",
+						},
+						"step": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The increment step value for this profile field.",
+						},
+						"values": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The permitted values for this profile field.",
+							Elem: &schema.Schema{
+								Type: schema.TypeInt,
+							},
 						},
 					},
 				},
@@ -335,6 +408,28 @@ func DataSourceIBMIsBareMetalServerProfile() *schema.Resource {
 					},
 				},
 			},
+			"reservation_terms": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The type for this profile field",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type for this profile field.",
+						},
+						"values": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The supported committed use terms for a reservation using this profile",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -359,9 +454,27 @@ func dataSourceIBMISBMSProfileRead(context context.Context, d *schema.ResourceDa
 	if bmsProfile.Bandwidth != nil {
 		bwList := make([]map[string]interface{}, 0)
 		bw := bmsProfile.Bandwidth.(*vpcv1.BareMetalServerProfileBandwidth)
-		bandwidth := map[string]interface{}{
-			isBareMetalServerProfileType:  *bw.Type,
-			isBareMetalServerProfileValue: *bw.Value,
+		bandwidth := map[string]interface{}{}
+		if bw.Type != nil {
+			bandwidth[isBareMetalServerProfileType] = *bw.Type
+		}
+		if bw.Value != nil {
+			bandwidth[isBareMetalServerProfileValue] = *bw.Value
+		}
+		if bw.Values != nil && len(bw.Values) > 0 {
+			bandwidth[isBareMetalServerProfileValues] = bw.Values
+		}
+		if bw.Default != nil {
+			bandwidth["default"] = flex.IntValue(bw.Default)
+		}
+		if bw.Max != nil {
+			bandwidth["max"] = flex.IntValue(bw.Max)
+		}
+		if bw.Min != nil {
+			bandwidth["min"] = flex.IntValue(bw.Min)
+		}
+		if bw.Step != nil {
+			bandwidth["step"] = flex.IntValue(bw.Step)
 		}
 		bwList = append(bwList, bandwidth)
 		d.Set(isBareMetalServerProfileBandwidth, bwList)
@@ -431,7 +544,7 @@ func dataSourceIBMISBMSProfileRead(context context.Context, d *schema.ResourceDa
 		memList = append(memList, m)
 		d.Set(isBareMetalServerProfileMemory, memList)
 	}
-	d.Set(isBareMetalServerProfileRT, *bmsProfile.ResourceType)
+	d.Set(isBareMetalServerProfileRT, bmsProfile.ResourceType)
 	if bmsProfile.SupportedTrustedPlatformModuleModes != nil {
 		list := make([]map[string]interface{}, 0)
 		var stpmmlist []string
@@ -495,9 +608,60 @@ func dataSourceIBMISBMSProfileRead(context context.Context, d *schema.ResourceDa
 			list = append(list, sz)
 		}
 		d.Set(isBareMetalServerProfileDisks, list)
+
+		// vni
+		virtualNetworkInterfacesSupported := []map[string]interface{}{}
+		if bmsProfile.VirtualNetworkInterfacesSupported != nil {
+			modelMap, err := dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileVirtualNetworkInterfacesSupportedToMap(bmsProfile.VirtualNetworkInterfacesSupported)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			virtualNetworkInterfacesSupported = append(virtualNetworkInterfacesSupported, modelMap)
+		}
+		if err = d.Set("virtual_network_interfaces_supported", virtualNetworkInterfacesSupported); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting virtual_network_interfaces_supported %s", err))
+		}
+		networkAttachmentCount := []map[string]interface{}{}
+		if bmsProfile.NetworkAttachmentCount != nil {
+			modelMap, err := dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkAttachmentCountToMap(bmsProfile.NetworkAttachmentCount)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			networkAttachmentCount = append(networkAttachmentCount, modelMap)
+		}
+		if err = d.Set("network_attachment_count", networkAttachmentCount); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting network_attachment_count %s", err))
+		}
+	}
+	if bmsProfile.ReservationTerms != nil {
+		err = d.Set("reservation_terms", dataSourceBaremetalServerProfileFlattenReservationTerms(*bmsProfile.ReservationTerms))
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting reservation_terms %s", err))
+		}
 	}
 
 	return nil
+}
+
+func dataSourceBaremetalServerProfileFlattenReservationTerms(result vpcv1.BareMetalServerProfileReservationTerms) (finalList []map[string]interface{}) {
+	finalList = []map[string]interface{}{}
+	finalMap := dataSourceBaremetalServerProfileReservationTermsToMap(result)
+	finalList = append(finalList, finalMap)
+
+	return finalList
+}
+
+func dataSourceBaremetalServerProfileReservationTermsToMap(resTermItem vpcv1.BareMetalServerProfileReservationTerms) map[string]interface{} {
+	resTermMap := map[string]interface{}{}
+
+	if resTermItem.Type != nil {
+		resTermMap["type"] = resTermItem.Type
+	}
+	if resTermItem.Values != nil {
+		resTermMap["values"] = resTermItem.Values
+	}
+
+	return resTermMap
 }
 
 func dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileConsoleTypesToMap(model *vpcv1.BareMetalServerProfileConsoleTypes) (map[string]interface{}, error) {
@@ -543,6 +707,54 @@ func dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkInterface
 }
 
 func dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkInterfaceCountDependentToMap(model *vpcv1.BareMetalServerProfileNetworkInterfaceCountDependent) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["type"] = model.Type
+	return modelMap, nil
+}
+
+func dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileVirtualNetworkInterfacesSupportedToMap(model *vpcv1.BareMetalServerProfileVirtualNetworkInterfacesSupported) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["type"] = model.Type
+	modelMap["value"] = model.Value
+	return modelMap, nil
+}
+
+func dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkAttachmentCountToMap(model vpcv1.BareMetalServerProfileNetworkAttachmentCountIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*vpcv1.BareMetalServerProfileNetworkAttachmentCountRange); ok {
+		return dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkAttachmentCountRangeToMap(model.(*vpcv1.BareMetalServerProfileNetworkAttachmentCountRange))
+	} else if _, ok := model.(*vpcv1.BareMetalServerProfileNetworkAttachmentCountDependent); ok {
+		return dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkAttachmentCountDependentToMap(model.(*vpcv1.BareMetalServerProfileNetworkAttachmentCountDependent))
+	} else if _, ok := model.(*vpcv1.BareMetalServerProfileNetworkAttachmentCount); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*vpcv1.BareMetalServerProfileNetworkAttachmentCount)
+		if model.Max != nil {
+			modelMap["max"] = flex.IntValue(model.Max)
+		}
+		if model.Min != nil {
+			modelMap["min"] = flex.IntValue(model.Min)
+		}
+		if model.Type != nil {
+			modelMap["type"] = model.Type
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized vpcv1.BareMetalServerProfileNetworkAttachmentCountIntf subtype encountered")
+	}
+}
+
+func dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkAttachmentCountRangeToMap(model *vpcv1.BareMetalServerProfileNetworkAttachmentCountRange) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Max != nil {
+		modelMap["max"] = flex.IntValue(model.Max)
+	}
+	if model.Min != nil {
+		modelMap["min"] = flex.IntValue(model.Min)
+	}
+	modelMap["type"] = model.Type
+	return modelMap, nil
+}
+
+func dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkAttachmentCountDependentToMap(model *vpcv1.BareMetalServerProfileNetworkAttachmentCountDependent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["type"] = model.Type
 	return modelMap, nil

@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
+	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/v3"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 )
@@ -60,6 +64,14 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 		}
 	}
 
+	// validate PreloadedOSImageName if configured
+	if p.PreloadedOSImageName != "" {
+		err = validatePreloadedImage(ctx, nc, p)
+		if err != nil {
+			errList = append(errList, field.Invalid(parentPath.Child("preloadedOSImageName"), p.PreloadedOSImageName, fmt.Sprintf("fail to validate the preloaded rhcos image: %v", err)))
+		}
+	}
+
 	// validate each FailureDomain configuration
 	for _, fd := range p.FailureDomains {
 		// validate whether the prism element with the UUID exists
@@ -77,7 +89,85 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 					fmt.Sprintf("the failure domain %s configured subnet UUID does not correspond to a valid subnet in Prism: %v", fd.Name, err)))
 			}
 		}
+
+		// validate each configured dataSource image exists
+		for _, dsImgRef := range fd.DataSourceImages {
+			switch {
+			case dsImgRef.UUID != "":
+				if _, err = nc.V3.GetImage(ctx, dsImgRef.UUID); err != nil {
+					errMsg := fmt.Sprintf("failureDomain %q: failed to find the dataSource image with uuid %s: %v", fd.Name, dsImgRef.UUID, err)
+					errList = append(errList, field.Invalid(parentPath.Child("failureDomains", "dataSourceImage", "uuid"), dsImgRef.UUID, errMsg))
+				}
+			case dsImgRef.Name != "":
+				if dsImgUUID, err := nutanixtypes.FindImageUUIDByName(ctx, nc, dsImgRef.Name); err != nil {
+					errMsg := fmt.Sprintf("failureDomain %q: failed to find the dataSource image with name %q: %v", fd.Name, dsImgRef.UUID, err)
+					errList = append(errList, field.Invalid(parentPath.Child("failureDomains", "dataSourceImage", "name"), dsImgRef.Name, errMsg))
+				} else {
+					dsImgRef.UUID = *dsImgUUID
+				}
+			default:
+				errList = append(errList, field.Required(parentPath.Child("failureDomains", "dataSourceImage"), "both the dataSourceImage's uuid and name are empty, you need to configure one."))
+			}
+		}
 	}
 
 	return errList.ToAggregate()
+}
+
+func validatePreloadedImage(ctx context.Context, nc *nutanixclientv3.Client, p *nutanixtypes.Platform) error {
+	// retrieve the rhcos release version
+	rhcosStream, err := rhcos.FetchCoreOSBuild(ctx)
+	if err != nil {
+		return err
+	}
+
+	arch, ok := rhcosStream.Architectures["x86_64"]
+	if !ok {
+		return fmt.Errorf("unable to find the x86_64 rhcos architecture")
+	}
+	artifacts, ok := arch.Artifacts["nutanix"]
+	if !ok {
+		return fmt.Errorf("unable to find the x86_64 nutanix rhcos artifacts")
+	}
+	rhcosReleaseVersion := artifacts.Release
+
+	// retrieve the rhcos version number from rhcosReleaseVersion
+	rhcosVerNum, err := strconv.Atoi(strings.Split(rhcosReleaseVersion, ".")[0])
+	if err != nil {
+		return fmt.Errorf("failed to get the rhcos image version number from the version string %s: %w", rhcosReleaseVersion, err)
+	}
+
+	// retrieve the rhcos version number from the preloaded image object
+	imgUUID, err := nutanixtypes.FindImageUUIDByName(ctx, nc, p.PreloadedOSImageName)
+	if err != nil {
+		return err
+	}
+	imgResp, err := nc.V3.GetImage(ctx, *imgUUID)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve the rhcos image with uuid %s: %w", *imgUUID, err)
+	}
+	imgSource := *imgResp.Status.Resources.SourceURI
+
+	si := strings.LastIndex(imgSource, "/rhcos-")
+	if si < 0 {
+		return fmt.Errorf("failed to get the rhcos image version from the preloaded image %s object's source_uri %s", p.PreloadedOSImageName, imgSource)
+	}
+	verStr := strings.Split(imgSource[si+7:], ".")[0]
+	imgVerNum, err := strconv.Atoi(verStr)
+	if err != nil {
+		return fmt.Errorf("failed to get the rhcos image version number from the version string %s: %w", verStr, err)
+	}
+
+	// verify that the image version numbers are compactible
+	versionDiff := rhcosVerNum - imgVerNum
+	switch {
+	case versionDiff < 0:
+		return fmt.Errorf("the preloaded image's rhcos version: %v is too many revisions ahead the installer bundled rhcos version: %v", imgVerNum, rhcosVerNum)
+	case versionDiff >= 2:
+		return fmt.Errorf("the preloaded image's rhcos version: %v is too many revisions behind the installer bundled rhcos version: %v", imgVerNum, rhcosVerNum)
+	case versionDiff == 1:
+		logrus.Warnf("the preloaded image's rhcos version: %v is behind the installer bundled rhcos version: %v, installation may fail", imgVerNum, rhcosVerNum)
+	}
+
+	return nil
 }

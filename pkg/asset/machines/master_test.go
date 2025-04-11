@@ -1,6 +1,7 @@
 package machines
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -163,7 +164,7 @@ spec:
 							},
 						},
 					}),
-				(*rhcos.Image)(pointer.StringPtr("test-image")),
+				rhcos.MakeAsset("test-image"),
 				(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
 				&machine.Master{
 					File: &asset.File{
@@ -173,7 +174,7 @@ spec:
 				},
 			)
 			master := &Master{}
-			if err := master.Generate(parents); err != nil {
+			if err := master.Generate(context.Background(), parents); err != nil {
 				t.Fatalf("failed to generate master machines: %v", err)
 			}
 			expectedLen := len(tc.expectedMachineConfig)
@@ -222,7 +223,7 @@ func TestControlPlaneIsNotModified(t *testing.T) {
 			InfraID: "test-infra-id",
 		},
 		installConfig,
-		(*rhcos.Image)(pointer.StringPtr("test-image")),
+		rhcos.MakeAsset("test-image"),
 		(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
 		&machine.Master{
 			File: &asset.File{
@@ -232,7 +233,7 @@ func TestControlPlaneIsNotModified(t *testing.T) {
 		},
 	)
 	master := &Master{}
-	if err := master.Generate(parents); err != nil {
+	if err := master.Generate(context.Background(), parents); err != nil {
 		t.Fatalf("failed to generate master machines: %v", err)
 	}
 
@@ -291,7 +292,7 @@ func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 			InfraID: "test-infra-id",
 		},
 		installConfig,
-		(*rhcos.Image)(pointer.StringPtr("test-image")),
+		rhcos.MakeAsset("test-image"),
 		(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
 		&machine.Master{
 			File: &asset.File{
@@ -301,7 +302,7 @@ func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 		},
 	)
 	master := &Master{}
-	assert.NoError(t, master.Generate(parents))
+	assert.NoError(t, master.Generate(context.Background(), parents))
 
 	assert.Len(t, master.HostFiles, 2)
 	verifyHost(t, master.HostFiles[0], "openshift/99_openshift-cluster-api_hosts-0.yaml", "master-0")

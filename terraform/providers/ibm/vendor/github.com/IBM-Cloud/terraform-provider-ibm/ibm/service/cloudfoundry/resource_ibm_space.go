@@ -69,6 +69,7 @@ func ResourceIBMSpace() *schema.Resource {
 				Set:      schema.HashString,
 			},
 		},
+		DeprecationMessage: "This service is deprecated.",
 	}
 }
 

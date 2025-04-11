@@ -21,8 +21,11 @@ ARG goproxy=https://proxy.golang.org
 ENV GOPROXY=$goproxy
 
 # Copy the Go Modules manifests
+RUN mkdir orc
 COPY go.mod go.mod
 COPY go.sum go.sum
+COPY orc/go.mod orc/go.mod
+COPY orc/go.sum orc/go.sum
 
 # Cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer

@@ -48,8 +48,6 @@ func (cci *CommonConfigINI) CreateConfig() *Config {
 	cfg.Global.SecretName = cci.Global.SecretName
 	cfg.Global.SecretNamespace = cci.Global.SecretNamespace
 	cfg.Global.SecretsDirectory = cci.Global.SecretsDirectory
-	cfg.Global.APIDisable = cci.Global.APIDisable
-	cfg.Global.APIBinding = cci.Global.APIBinding
 
 	for keyVcConfig, valVcConfig := range cci.VirtualCenter {
 		cfg.VirtualCenter[keyVcConfig] = &VirtualCenterConfig{

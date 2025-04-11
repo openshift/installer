@@ -21,6 +21,9 @@ import (
 	tgapiv1 "github.com/IBM/networking-go-sdk/transitgatewayapisv1"
 )
 
+//go:generate ../../../../hack/tools/bin/mockgen -source=./transitgateway.go -destination=./mock/transitgateway_generated.go -package=mock
+//go:generate /usr/bin/env bash -c "cat ../../../../hack/boilerplate/boilerplate.generatego.txt ./mock/transitgateway_generated.go > ./mock/_transitgateway_generated.go && mv ./mock/_transitgateway_generated.go ./mock/transitgateway_generated.go"
+
 // TransitGateway interface defines a method that a IBMCLOUD service object should implement in order to
 // use the transitgateway package for listing resource instances.
 type TransitGateway interface {

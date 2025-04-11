@@ -17,12 +17,13 @@ limitations under the License.
 package clients
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack"
-	"github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes"
-	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/gophercloud/gophercloud/v2"
+	"github.com/gophercloud/gophercloud/v2/openstack"
+	"github.com/gophercloud/gophercloud/v2/openstack/blockstorage/v3/volumes"
+	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/metrics"
 )
@@ -51,7 +52,7 @@ func NewVolumeClient(providerClient *gophercloud.ProviderClient, providerClientO
 
 func (c volumeClient) ListVolumes(opts volumes.ListOptsBuilder) ([]volumes.Volume, error) {
 	mc := metrics.NewMetricPrometheusContext("volume", "list")
-	pages, err := volumes.List(c.client, opts).AllPages()
+	pages, err := volumes.List(c.client, opts).AllPages(context.TODO())
 	if mc.ObserveRequest(err) != nil {
 		return nil, err
 	}
@@ -60,19 +61,19 @@ func (c volumeClient) ListVolumes(opts volumes.ListOptsBuilder) ([]volumes.Volum
 
 func (c volumeClient) CreateVolume(opts volumes.CreateOptsBuilder) (*volumes.Volume, error) {
 	mc := metrics.NewMetricPrometheusContext("volume", "create")
-	volume, err := volumes.Create(c.client, opts).Extract()
+	volume, err := volumes.Create(context.TODO(), c.client, opts, nil).Extract()
 	return volume, mc.ObserveRequest(err)
 }
 
 func (c volumeClient) DeleteVolume(volumeID string, opts volumes.DeleteOptsBuilder) error {
 	mc := metrics.NewMetricPrometheusContext("volume", "delete")
-	err := volumes.Delete(c.client, volumeID, opts).ExtractErr()
+	err := volumes.Delete(context.TODO(), c.client, volumeID, opts).ExtractErr()
 	return mc.ObserveRequestIgnoreNotFound(err)
 }
 
 func (c volumeClient) GetVolume(volumeID string) (*volumes.Volume, error) {
 	mc := metrics.NewMetricPrometheusContext("volume", "get")
-	volume, err := volumes.Get(c.client, volumeID).Extract()
+	volume, err := volumes.Get(context.TODO(), c.client, volumeID).Extract()
 	return volume, mc.ObserveRequestIgnoreNotFound(err)
 }
 

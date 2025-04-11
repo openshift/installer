@@ -173,6 +173,10 @@ type AWSManagedControlPlaneSpec struct { //nolint: maligned
 	// +optional
 	VpcCni VpcCni `json:"vpcCni,omitempty"`
 
+	// RestrictPrivateSubnets indicates that the EKS control plane should only use private subnets.
+	// +kubebuilder:default=false
+	RestrictPrivateSubnets bool `json:"restrictPrivateSubnets,omitempty"`
+
 	// KubeProxy defines managed attributes of the kube-proxy daemonset
 	KubeProxy KubeProxy `json:"kubeProxy,omitempty"`
 }

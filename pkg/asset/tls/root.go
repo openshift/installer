@@ -1,6 +1,7 @@
 package tls
 
 import (
+	"context"
 	"crypto/x509"
 	"crypto/x509/pkix"
 
@@ -27,15 +28,15 @@ func (c *RootCA) Dependencies() []asset.Asset {
 }
 
 // Generate generates the MCS/Ignition CA.
-func (c *RootCA) Generate(parents asset.Parents) error {
+func (c *RootCA) Generate(ctx context.Context, parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears,
+		Validity:  ValidityTenYears(),
 		IsCA:      true,
 	}
 
-	return c.SelfSignedCertKey.Generate(cfg, "root-ca")
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca")
 }
 
 // Name returns the human-friendly name of the asset.

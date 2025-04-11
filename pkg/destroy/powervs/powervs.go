@@ -69,19 +69,19 @@ type User struct {
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
-	APIKey         string
-	BaseDomain     string
-	CISInstanceCRN string
-	ClusterName    string
-	Context        context.Context
-	DNSInstanceCRN string
-	DNSZone        string
-	InfraID        string
-	Logger         logrus.FieldLogger
-	Region         string
-	ServiceGUID    string
-	VPCRegion      string
-	Zone           string
+	APIKey             string
+	BaseDomain         string
+	CISInstanceCRN     string
+	ClusterName        string
+	DNSInstanceCRN     string
+	DNSZone            string
+	InfraID            string
+	Logger             logrus.FieldLogger
+	Region             string
+	ServiceGUID        string
+	VPCRegion          string
+	Zone               string
+	TransitGatewayName string
 
 	managementSvc      *resourcemanagerv2.ResourceManagerV2
 	controllerSvc      *resourcecontrollerv2.ResourceControllerV2
@@ -103,6 +103,12 @@ type ClusterUninstaller struct {
 	cosInstanceID   string
 	dnsZoneID       string
 
+	// We should be searching by tag rather than by name.
+	searchByTag bool
+
+	// The user created the Service Instance previously.
+	siPreconfigured bool
+
 	errorTracker
 	pendingItemTracker
 }
@@ -110,9 +116,10 @@ type ClusterUninstaller struct {
 // New returns an IBMCloud destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	var (
-		bxClient *powervs.BxClient
-		APIKey   string
-		err      error
+		bxClient        *powervs.BxClient
+		APIKey          string
+		siPreconfigured bool
+		err             error
 	)
 
 	// We need to prompt for missing variables because NewPISession requires them!
@@ -134,6 +141,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.VPCRegion = %v", metadata.ClusterPlatformMetadata.PowerVS.VPCRegion)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.Zone = %v", metadata.ClusterPlatformMetadata.PowerVS.Zone)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID = %v", metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID)
+	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.TransitGatewayName = %v", metadata.ClusterPlatformMetadata.PowerVS.TransitGatewayName)
 
 	// Handle an optional setting in install-config.yaml
 	if metadata.ClusterPlatformMetadata.PowerVS.VPCRegion == "" {
@@ -145,11 +153,13 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		metadata.ClusterPlatformMetadata.PowerVS.VPCRegion = derivedVPCRegion
 	}
 
+	siPreconfigured = metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID != ""
+	logger.Debugf("powervs.New: siPreconfigured = %v", siPreconfigured)
+
 	return &ClusterUninstaller{
 		APIKey:             APIKey,
 		BaseDomain:         metadata.ClusterPlatformMetadata.PowerVS.BaseDomain,
 		ClusterName:        metadata.ClusterName,
-		Context:            context.Background(),
 		Logger:             logger,
 		InfraID:            metadata.InfraID,
 		CISInstanceCRN:     metadata.ClusterPlatformMetadata.PowerVS.CISInstanceCRN,
@@ -160,6 +170,9 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		pendingItemTracker: newPendingItemTracker(),
 		resourceGroupID:    metadata.ClusterPlatformMetadata.PowerVS.PowerVSResourceGroup,
 		ServiceGUID:        metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID,
+		TransitGatewayName: metadata.ClusterPlatformMetadata.PowerVS.TransitGatewayName,
+		searchByTag:        false, // @TODO Enable in the future
+		siPreconfigured:    siPreconfigured,
 	}, nil
 }
 
@@ -172,7 +185,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	var ok bool
 	var err error
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	if ctx == nil {
@@ -242,7 +255,6 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "DHCPs", execute: o.destroyDHCPNetworks},
 	}, {
-		{name: "Power Subnets", execute: o.destroyPowerSubnets},
 		{name: "Images", execute: o.destroyImages},
 		{name: "VPCs", execute: o.destroyVPCs},
 	}, {
@@ -254,6 +266,8 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "DNS Records", execute: o.destroyDNSRecords},
 		{name: "DNS Resource Records", execute: o.destroyResourceRecords},
+	}, {
+		{name: "Power Subnets", execute: o.destroyPowerSubnets},
 	}, {
 		{name: "Service Instances", execute: o.destroyServiceInstances},
 	}}
@@ -306,7 +320,7 @@ func (o *ClusterUninstaller) executeStageFunction(f struct {
 	var ok bool
 	var err error
 
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := contextWithTimeout()
 	defer cancel()
 
 	if ctx == nil {
@@ -481,6 +495,9 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		return fmt.Errorf("loadSDKServices: NewTransitGatewayApisV1: %w", err)
 	}
 
+	ctx, cancel := contextWithTimeout()
+	defer cancel()
+
 	// Either CISInstanceCRN is set or DNSInstanceCRN is set. Both should not be set at the same time,
 	// but check both just to be safe.
 	if len(o.CISInstanceCRN) > 0 {
@@ -496,9 +513,6 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		if err != nil {
 			return fmt.Errorf("loadSDKServices: creating zonesSvc: %w", err)
 		}
-
-		ctx, cancel := o.contextWithTimeout()
-		defer cancel()
 
 		// Get the Zone ID
 		zoneOptions := o.zonesSvc.NewListZonesOptions()
@@ -573,6 +587,23 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		}
 	}
 
+	o.Logger.Debugf("loadSDKServices: o.resourceGroupID = %s", o.resourceGroupID)
+	// If the user passes in a human readable resource group id, then we need to convert it to a UUID
+	listGroupOptions := o.managementSvc.NewListResourceGroupsOptions()
+	groups, _, err := o.managementSvc.ListResourceGroupsWithContext(ctx, listGroupOptions)
+	if err != nil {
+		return fmt.Errorf("loadSDKServices: Failed to list resource groups: %w", err)
+	}
+	for _, group := range groups.Resources {
+		if *group.Name == o.resourceGroupID {
+			o.Logger.Debugf("loadSDKServices: resource FOUND: %s %s", *group.Name, *group.ID)
+			o.resourceGroupID = *group.ID
+		} else {
+			o.Logger.Debugf("loadSDKServices: resource SKIP:  %s %s", *group.Name, *group.ID)
+		}
+	}
+	o.Logger.Debugf("loadSDKServices: o.resourceGroupID = %s", o.resourceGroupID)
+
 	// If we should have created a service instance dynamically
 	if o.ServiceGUID == "" {
 		serviceName = fmt.Sprintf("%s-power-iaas", o.InfraID)
@@ -630,26 +661,10 @@ func (o *ClusterUninstaller) ServiceInstanceNameToGUID(ctx context.Context, name
 		perPage   int64 = 10
 		moreData        = true
 		nextURL   *string
-		groupID   = o.resourceGroupID
 	)
 
-	o.Logger.Debugf("ServiceInstanceNameToGUID: groupID = %s", groupID)
-	// If the user passes in a human readable group id, then we need to convert it to a UUID
-	listGroupOptions := o.managementSvc.NewListResourceGroupsOptions()
-	groups, _, err := o.managementSvc.ListResourceGroupsWithContext(ctx, listGroupOptions)
-	if err != nil {
-		return "", fmt.Errorf("failed to list resource groups: %w", err)
-	}
-	for _, group := range groups.Resources {
-		o.Logger.Debugf("ServiceInstanceNameToGUID: group.Name = %s", *group.Name)
-		if *group.Name == groupID {
-			groupID = *group.ID
-		}
-	}
-	o.Logger.Debugf("ServiceInstanceNameToGUID: groupID = %s", groupID)
-
 	options = o.controllerSvc.NewListResourceInstancesOptions()
-	options.SetResourceGroupID(groupID)
+	options.SetResourceGroupID(o.resourceGroupID)
 	// resource ID for Power Systems Virtual Server in the Global catalog
 	options.SetResourceID(powerIAASResourceID)
 	options.SetLimit(perPage)
@@ -717,8 +732,8 @@ func (o *ClusterUninstaller) ServiceInstanceNameToGUID(ctx context.Context, name
 	return "", nil
 }
 
-func (o *ClusterUninstaller) contextWithTimeout() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(o.Context, defaultTimeout)
+func contextWithTimeout() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), defaultTimeout)
 }
 
 func (o *ClusterUninstaller) timeout(ctx context.Context) bool {

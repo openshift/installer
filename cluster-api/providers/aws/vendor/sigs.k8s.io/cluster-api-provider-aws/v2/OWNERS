@@ -2,8 +2,6 @@
 
 approvers:
   - sig-cluster-lifecycle-leads
-  - cluster-api-admins
-  - cluster-api-maintainers
   - cluster-api-aws-admins
   - cluster-api-aws-maintainers
 
@@ -21,3 +19,4 @@ emeritus_approvers:
   - rudoi
   - sedefsavas
   - Skarlso
+  - vincepri

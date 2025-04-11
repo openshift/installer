@@ -23,6 +23,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -48,14 +49,20 @@ type ClusterResourceSetBindingReconciler struct {
 }
 
 func (r *ClusterResourceSetBindingReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
+	if r.Client == nil {
+		return errors.New("Client must not be nil")
+	}
+
+	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "clusterresourcesetbinding")
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&addonsv1.ClusterResourceSetBinding{}).
 		Watches(
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(r.clusterToClusterResourceSetBinding),
+			builder.WithPredicates(predicates.ResourceIsChanged(mgr.GetScheme(), predicateLog)),
 		).
 		WithOptions(options).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), predicateLog, r.WatchFilterValue)).
 		Complete(r)
 	if err != nil {
 		return errors.Wrap(err, "failed setting up with a controller manager")
@@ -85,7 +92,7 @@ func (r *ClusterResourceSetBindingReconciler) Reconcile(ctx context.Context, req
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// If the owner cluster is already deleted, delete its ClusterResourceSetBinding
-			log.Info("deleting ClusterResourceSetBinding because the owner Cluster no longer exists")
+			log.Info("Deleting ClusterResourceSetBinding because the owner Cluster no longer exists")
 			return ctrl.Result{}, r.Client.Delete(ctx, binding)
 		}
 		return ctrl.Result{}, err
@@ -98,7 +105,7 @@ func (r *ClusterResourceSetBindingReconciler) Reconcile(ctx context.Context, req
 				return ctrl.Result{}, nil
 			}
 		}
-		log.Info("deleting ClusterResourceSetBinding because the owner Cluster is currently being deleted")
+		log.Info("Deleting ClusterResourceSetBinding because the owner Cluster is currently being deleted")
 		return ctrl.Result{}, r.Client.Delete(ctx, binding)
 	}
 

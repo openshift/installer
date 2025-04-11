@@ -4,6 +4,7 @@
 package vpc
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -12,7 +13,9 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -41,12 +44,12 @@ const (
 
 func ResourceIBMISLBListener() *schema.Resource {
 	return &schema.Resource{
-		Create:   resourceIBMISLBListenerCreate,
-		Read:     resourceIBMISLBListenerRead,
-		Update:   resourceIBMISLBListenerUpdate,
-		Delete:   resourceIBMISLBListenerDelete,
-		Exists:   resourceIBMISLBListenerExists,
-		Importer: &schema.ResourceImporter{},
+		CreateContext: resourceIBMISLBListenerCreate,
+		ReadContext:   resourceIBMISLBListenerRead,
+		UpdateContext: resourceIBMISLBListenerUpdate,
+		DeleteContext: resourceIBMISLBListenerDelete,
+		Exists:        resourceIBMISLBListenerExists,
+		Importer:      &schema.ResourceImporter{},
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(10 * time.Minute),
@@ -115,26 +118,86 @@ func ResourceIBMISLBListener() *schema.Resource {
 			},
 
 			isLBListenerHTTPSRedirectStatusCode: {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				RequiredWith: []string{isLBListenerHTTPSRedirectListener},
-				Description:  "The HTTP status code to be returned in the redirect response",
+				Type:          schema.TypeInt,
+				Optional:      true,
+				RequiredWith:  []string{isLBListenerHTTPSRedirectListener},
+				ConflictsWith: []string{"https_redirect"},
+				Deprecated:    "Please use the argument 'https_redirect'",
+				Description:   "The HTTP status code to be returned in the redirect response",
 			},
 
 			isLBListenerHTTPSRedirectURI: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				RequiredWith: []string{isLBListenerHTTPSRedirectStatusCode, isLBListenerHTTPSRedirectListener},
-				Description:  "Target URI where traffic will be redirected",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"https_redirect"},
+				Deprecated:    "Please use the argument 'https_redirect'",
+				RequiredWith:  []string{isLBListenerHTTPSRedirectStatusCode, isLBListenerHTTPSRedirectListener},
+				Description:   "Target URI where traffic will be redirected",
 			},
 
 			isLBListenerHTTPSRedirectListener: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				RequiredWith: []string{isLBListenerHTTPSRedirectStatusCode},
-				Description:  "ID of the listener that will be set as http redirect target",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"https_redirect"},
+				Deprecated:    "Please use the argument 'https_redirect'",
+				RequiredWith:  []string{isLBListenerHTTPSRedirectStatusCode},
+				Description:   "ID of the listener that will be set as http redirect target",
 			},
-
+			"https_redirect": &schema.Schema{
+				Type:          schema.TypeList,
+				MaxItems:      1,
+				Optional:      true,
+				ConflictsWith: []string{"https_redirect_status_code", "https_redirect_uri", "https_redirect_listener"},
+				Description:   "If present, the target listener that requests are redirected to.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"http_status_code": &schema.Schema{
+							Type:        schema.TypeInt,
+							Required:    true,
+							Description: "The HTTP status code for this redirect.",
+						},
+						"listener": &schema.Schema{
+							Type:     schema.TypeList,
+							MinItems: 1,
+							MaxItems: 1,
+							Required: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"deleted": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The listener's canonical URL.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "The unique identifier for this load balancer listener.",
+									},
+								},
+							},
+						},
+						"uri": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The redirect relative target URI.",
+						},
+					},
+				},
+			},
 			isLBListenerConnectionLimit: {
 				Type:         schema.TypeInt,
 				Optional:     true,
@@ -209,7 +272,7 @@ func ResourceIBMISLBListenerValidator() *validate.ResourceValidator {
 	return &ibmISLBListenerResourceValidator
 }
 
-func resourceIBMISLBListenerCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceIBMISLBListenerCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	log.Printf("[DEBUG] LB Listener create")
 	lbID := d.Get(isLBListenerLBID).(string)
@@ -221,7 +284,7 @@ func resourceIBMISLBListenerCreate(d *schema.ResourceData, meta interface{}) err
 	if pool, ok := d.GetOk(isLBListenerDefaultPool); ok {
 		lbPool, err := getPoolId(pool.(string))
 		if err != nil {
-			return err
+			diag.FromErr(err)
 		}
 		defPool = lbPool
 	}
@@ -263,13 +326,13 @@ func resourceIBMISLBListenerCreate(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	return resourceIBMISLBListenerRead(d, meta)
+	return resourceIBMISLBListenerRead(context, d, meta)
 }
 
-func lbListenerCreate(d *schema.ResourceData, meta interface{}, lbID, protocol, defPool, certificateCRN, listener, uri string, port, portMin, portMax, connLimit, httpStatusCode int64) error {
+func lbListenerCreate(d *schema.ResourceData, meta interface{}, lbID, protocol, defPool, certificateCRN, listener, uri string, port, portMin, portMax, connLimit, httpStatusCode int64) diag.Diagnostics {
 	sess, err := vpcClient(meta)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	options := &vpcv1.CreateLoadBalancerListenerOptions{
@@ -283,11 +346,11 @@ func lbListenerCreate(d *schema.ResourceData, meta interface{}, lbID, protocol, 
 	lb, response, err := sess.GetLoadBalancer(getlboptions)
 
 	if err != nil || lb == nil {
-		return fmt.Errorf("[ERROR] Error getting Load Balancer : %s\n%s", err, response)
+		return diag.FromErr(fmt.Errorf("[ERROR] Error getting Load Balancer : %s\n%s", err, response))
 	}
 	if lb != nil && *lb.RouteMode && lb.Profile != nil && *lb.Profile.Name == "network-fixed" {
 		if portMin > 0 && portMax > 0 && portMin != 1 && portMax != 65535 {
-			return fmt.Errorf("[ERROR] Only acceptable value for port_min is 1 and port_max is 65535 for route_mode enabled private network load balancer")
+			return diag.FromErr(fmt.Errorf("[ERROR] Only acceptable value for port_min is 1 and port_max is 65535 for route_mode enabled private network load balancer"))
 		}
 		pmin := int64(1)
 		pmax := int64(65535)
@@ -297,8 +360,8 @@ func lbListenerCreate(d *schema.ResourceData, meta interface{}, lbID, protocol, 
 	} else if lb != nil && lb.Profile != nil {
 		if strings.EqualFold(*lb.Profile.Family, "network") && *lb.IsPublic {
 			if port == 0 && (portMin == 0 || portMax == 0) {
-				return fmt.Errorf(
-					"[ERROR] Error port_min(%d)/port_max(%d) for public network load balancer(%s) needs to be in between 1-65335", portMin, portMax, lbID)
+				return diag.FromErr(fmt.Errorf(
+					"[ERROR] Error port_min(%d)/port_max(%d) for public network load balancer(%s) needs to be in between 1-65335", portMin, portMax, lbID))
 			} else {
 				if port != 0 {
 					options.Port = &port
@@ -308,7 +371,7 @@ func lbListenerCreate(d *schema.ResourceData, meta interface{}, lbID, protocol, 
 				}
 			}
 		} else if portMin != portMax {
-			return fmt.Errorf("[ERROR] Listener port_min and port_max values have to be equal for ALB and private NLB (excluding route mode)")
+			return diag.FromErr(fmt.Errorf("[ERROR] Listener port_min and port_max values have to be equal for ALB and private NLB (excluding route mode)"))
 		} else {
 			if port != 0 && (portMin == 0 || port == portMin) {
 				options.Port = &port
@@ -345,6 +408,13 @@ func lbListenerCreate(d *schema.ResourceData, meta interface{}, lbID, protocol, 
 		}
 		options.HTTPSRedirect = httpsRedirect
 	}
+	if _, ok := d.GetOk("https_redirect"); ok {
+		httpsRedirectModel, err := resourceIBMIsLbListenerMapToLoadBalancerListenerHTTPSRedirectPrototype(d.Get("https_redirect.0").(map[string]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		options.SetHTTPSRedirect(httpsRedirectModel)
+	}
 	if certificateCRN != "" {
 		options.CertificateInstance = &vpcv1.CertificateInstanceIdentity{
 			CRN: &certificateCRN,
@@ -355,21 +425,21 @@ func lbListenerCreate(d *schema.ResourceData, meta interface{}, lbID, protocol, 
 	}
 	_, err = isWaitForLBAvailable(sess, lbID, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error checking for load balancer (%s) is active: %s", lbID, err)
+		return diag.FromErr(fmt.Errorf("[ERROR] Error checking for load balancer (%s) is active: %s", lbID, err))
 	}
 
 	lbListener, response, err := sess.CreateLoadBalancerListener(options)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error while creating Load Balanacer Listener err %s\n%s", err, response)
+		return diag.FromErr(fmt.Errorf("[ERROR] Error while creating Load Balanacer Listener err %s\n%s", err, response))
 	}
 	d.SetId(fmt.Sprintf("%s/%s", lbID, *lbListener.ID))
 	_, err = isWaitForLBListenerAvailable(sess, lbID, *lbListener.ID, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error waiting for load balancer listener(%s) to become ready: %s", d.Id(), err)
+		return diag.FromErr(fmt.Errorf("[ERROR] Error waiting for load balancer listener(%s) to become ready: %s", d.Id(), err))
 	}
 	_, err = isWaitForLBAvailable(sess, lbID, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error waiting for load balancer (%s) to become ready: %s", lbID, err)
+		return diag.FromErr(fmt.Errorf("[ERROR] Error waiting for load balancer (%s) to become ready: %s", lbID, err))
 	}
 
 	log.Printf("[INFO] Load balancer Listener : %s", *lbListener.ID)
@@ -411,28 +481,28 @@ func isLBListenerRefreshFunc(sess *vpcv1.VpcV1, lbID, lbListenerID string) resou
 	}
 }
 
-func resourceIBMISLBListenerRead(d *schema.ResourceData, meta interface{}) error {
+func resourceIBMISLBListenerRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	parts, err := flex.IdParts(d.Id())
 	if err != nil {
-		return err
+		diag.FromErr(err)
 	}
 
 	lbID := parts[0]
 	lbListenerID := parts[1]
 
-	err = lbListenerGet(d, meta, lbID, lbListenerID)
-	if err != nil {
-		return err
+	diagEerr := lbListenerGet(d, meta, lbID, lbListenerID)
+	if diagEerr != nil {
+		return diagEerr
 	}
 
 	return nil
 }
 
-func lbListenerGet(d *schema.ResourceData, meta interface{}, lbID, lbListenerID string) error {
+func lbListenerGet(d *schema.ResourceData, meta interface{}, lbID, lbListenerID string) diag.Diagnostics {
 	sess, err := vpcClient(meta)
 	if err != nil {
-		return err
+		diag.FromErr(err)
 	}
 	getLoadBalancerListenerOptions := &vpcv1.GetLoadBalancerListenerOptions{
 		LoadBalancerID: &lbID,
@@ -444,7 +514,7 @@ func lbListenerGet(d *schema.ResourceData, meta interface{}, lbID, lbListenerID 
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[ERROR] Error Getting Load Balancer Listener : %s\n%s", err, response)
+		return diag.FromErr(fmt.Errorf("[ERROR] Error Getting Load Balancer Listener : %s\n%s", err, response))
 	}
 	d.Set(isLBListenerLBID, lbID)
 	if lbListener.Port != nil {
@@ -463,10 +533,21 @@ func lbListenerGet(d *schema.ResourceData, meta interface{}, lbID, lbListenerID 
 		d.Set(isLBListenerDefaultPool, *lbListener.DefaultPool.ID)
 	}
 	if lbListener.HTTPSRedirect != nil {
-		d.Set(isLBListenerHTTPSRedirectStatusCode, *lbListener.HTTPSRedirect.HTTPStatusCode)
-		d.Set(isLBListenerHTTPSRedirectListener, *lbListener.HTTPSRedirect.Listener.ID)
-		if lbListener.HTTPSRedirect.URI != nil {
-			d.Set(isLBListenerHTTPSRedirectURI, *lbListener.HTTPSRedirect.URI)
+		if _, ok := d.GetOk("https_redirect"); ok {
+			httpsRedirectMap, err := resourceIBMIsLbListenerLoadBalancerListenerHTTPSRedirectToMap(lbListener.HTTPSRedirect)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			if err = d.Set("https_redirect", []map[string]interface{}{httpsRedirectMap}); err != nil {
+				return diag.FromErr(fmt.Errorf("Error setting https_redirect: %s", err))
+			}
+
+		} else {
+			d.Set(isLBListenerHTTPSRedirectStatusCode, *lbListener.HTTPSRedirect.HTTPStatusCode)
+			d.Set(isLBListenerHTTPSRedirectListener, *lbListener.HTTPSRedirect.Listener.ID)
+			if lbListener.HTTPSRedirect.URI != nil {
+				d.Set(isLBListenerHTTPSRedirectURI, *lbListener.HTTPSRedirect.URI)
+			}
 		}
 	}
 	if lbListener.CertificateInstance != nil {
@@ -485,34 +566,34 @@ func lbListenerGet(d *schema.ResourceData, meta interface{}, lbID, lbListenerID 
 	}
 	lb, response, err := sess.GetLoadBalancer(getLoadBalancerOptions)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error Getting Load Balancer : %s\n%s", err, response)
+		return diag.FromErr(fmt.Errorf("[ERROR] Error Getting Load Balancer : %s\n%s", err, response))
 	}
 	d.Set(flex.RelatedCRN, *lb.CRN)
 	return nil
 }
 
-func resourceIBMISLBListenerUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceIBMISLBListenerUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	parts, err := flex.IdParts(d.Id())
 	if err != nil {
-		return err
+		diag.FromErr(err)
 	}
 
 	lbID := parts[0]
 	lbListenerID := parts[1]
 
-	err = lbListenerUpdate(d, meta, lbID, lbListenerID)
-	if err != nil {
-		return err
+	diagEerr := lbListenerUpdate(d, meta, lbID, lbListenerID)
+	if diagEerr != nil {
+		return diagEerr
 	}
 
-	return resourceIBMISLBListenerRead(d, meta)
+	return resourceIBMISLBListenerRead(context, d, meta)
 }
 
-func lbListenerUpdate(d *schema.ResourceData, meta interface{}, lbID, lbListenerID string) error {
+func lbListenerUpdate(d *schema.ResourceData, meta interface{}, lbID, lbListenerID string) diag.Diagnostics {
 	sess, err := vpcClient(meta)
 	if err != nil {
-		return err
+		diag.FromErr(err)
 	}
 	hasChanged := false
 	var certificateInstance, defPool, protocol, listener, uri string
@@ -535,38 +616,64 @@ func lbListenerUpdate(d *schema.ResourceData, meta interface{}, lbID, lbListener
 	if d.HasChange(isLBListenerDefaultPool) {
 		lbpool, err := getPoolId(d.Get(isLBListenerDefaultPool).(string))
 		if err != nil {
-			return err
+			diag.FromErr(err)
 		}
 		defPool = lbpool
-		loadBalancerListenerPatchModel.DefaultPool = &vpcv1.LoadBalancerPoolIdentity{
+		loadBalancerListenerPatchModel.DefaultPool = &vpcv1.LoadBalancerListenerDefaultPoolPatch{
 			ID: &defPool,
 		}
 		hasChanged = true
 	}
 	httpsRedirectRemoved := false
 	httpsURIRemoved := false
-	if d.HasChange(isLBListenerHTTPSRedirectListener) || d.HasChange(isLBListenerHTTPSRedirectURI) || d.HasChange(isLBListenerHTTPSRedirectStatusCode) {
-		hasChanged = true
-		listener = d.Get(isLBListenerHTTPSRedirectListener).(string)
-		httpStatusCode = int64(d.Get(isLBListenerHTTPSRedirectStatusCode).(int))
-		uri = d.Get(isLBListenerHTTPSRedirectURI).(string)
-		if listener == "" {
+	if d.HasChange("https_redirect") {
+		httpsRedirect := &vpcv1.LoadBalancerListenerHTTPSRedirectPatch{}
+		if _, ok := d.GetOk("https_redirect"); !ok {
 			httpsRedirectRemoved = true
 		} else {
-			HTTPSRedirect := &vpcv1.LoadBalancerListenerHTTPSRedirectPatch{
-				HTTPStatusCode: &httpStatusCode,
-				Listener:       &vpcv1.LoadBalancerListenerIdentityByID{ID: &listener},
+			if d.HasChange("https_redirect.0.http_status_code") {
+				httpStatusCode := int64(d.Get("https_redirect.0.http_status_code").(int))
+				httpsRedirect.HTTPStatusCode = &httpStatusCode
 			}
-			if d.HasChange(isLBListenerHTTPSRedirectURI) {
+			if d.HasChange("https_redirect.0.listener.0.id") {
+				listenerId := d.Get("https_redirect.0.listener.0.id").(string)
+				httpsRedirect.Listener = &vpcv1.LoadBalancerListenerIdentityByID{ID: &listenerId}
+			}
+			if d.HasChange("https_redirect.0.uri") {
+				uri := d.Get("https_redirect.0.uri").(string)
 				if uri == "" {
-					HTTPSRedirect.URI = nil
 					httpsURIRemoved = true
 				} else {
-					HTTPSRedirect.URI = &uri
+					httpsRedirect.URI = &uri
 				}
 			}
+		}
+		loadBalancerListenerPatchModel.HTTPSRedirect = httpsRedirect
+		hasChanged = true
+	} else {
+		if d.HasChange(isLBListenerHTTPSRedirectListener) || d.HasChange(isLBListenerHTTPSRedirectURI) || d.HasChange(isLBListenerHTTPSRedirectStatusCode) {
+			hasChanged = true
+			listener = d.Get(isLBListenerHTTPSRedirectListener).(string)
+			httpStatusCode = int64(d.Get(isLBListenerHTTPSRedirectStatusCode).(int))
+			uri = d.Get(isLBListenerHTTPSRedirectURI).(string)
+			if listener == "" {
+				httpsRedirectRemoved = true
+			} else {
+				HTTPSRedirect := &vpcv1.LoadBalancerListenerHTTPSRedirectPatch{
+					HTTPStatusCode: &httpStatusCode,
+					Listener:       &vpcv1.LoadBalancerListenerIdentityByID{ID: &listener},
+				}
+				if d.HasChange(isLBListenerHTTPSRedirectURI) {
+					if uri == "" {
+						HTTPSRedirect.URI = nil
+						httpsURIRemoved = true
+					} else {
+						HTTPSRedirect.URI = &uri
+					}
+				}
 
-			loadBalancerListenerPatchModel.HTTPSRedirect = HTTPSRedirect
+				loadBalancerListenerPatchModel.HTTPSRedirect = HTTPSRedirect
+			}
 		}
 	}
 	if _, ok := d.GetOk(isLBListenerPort); ok && d.HasChange(isLBListenerPort) {
@@ -610,7 +717,7 @@ func lbListenerUpdate(d *schema.ResourceData, meta interface{}, lbID, lbListener
 	if hasChanged {
 		loadBalancerListenerPatch, err := loadBalancerListenerPatchModel.AsPatch()
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error calling asPatch for LoadBalancerListenerPatch: %s", err)
+			return diag.FromErr(fmt.Errorf("[ERROR] Error calling asPatch for LoadBalancerListenerPatch: %s", err))
 		}
 		if httpsRedirectRemoved {
 			loadBalancerListenerPatch["https_redirect"] = nil
@@ -626,34 +733,34 @@ func lbListenerUpdate(d *schema.ResourceData, meta interface{}, lbID, lbListener
 
 		_, err = isWaitForLBAvailable(sess, lbID, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
-			return fmt.Errorf(
-				"Error checking for load balancer (%s) is active: %s", lbID, err)
+			return diag.FromErr(fmt.Errorf(
+				"Error checking for load balancer (%s) is active: %s", lbID, err))
 		}
 		_, response, err := sess.UpdateLoadBalancerListener(updateLoadBalancerListenerOptions)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error Updating Load Balancer Listener : %s\n%s", err, response)
+			return diag.FromErr(fmt.Errorf("[ERROR] Error Updating Load Balancer Listener : %s\n%s", err, response))
 		}
 
 		_, err = isWaitForLBListenerAvailable(sess, lbID, lbListenerID, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
-			return fmt.Errorf(
-				"Error waiting for load balancer listener(%s) to become ready: %s", d.Id(), err)
+			return diag.FromErr(fmt.Errorf(
+				"Error waiting for load balancer listener(%s) to become ready: %s", d.Id(), err))
 		}
 
 		_, err = isWaitForLBAvailable(sess, lbID, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
-			return fmt.Errorf(
-				"Error waiting for load balancer (%s) to become ready: %s", lbID, err)
+			return diag.FromErr(fmt.Errorf(
+				"Error waiting for load balancer (%s) to become ready: %s", lbID, err))
 		}
 	}
 	return nil
 }
 
-func resourceIBMISLBListenerDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceIBMISLBListenerDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	parts, err := flex.IdParts(d.Id())
 	if err != nil {
-		return err
+		diag.FromErr(err)
 	}
 
 	lbID := parts[0]
@@ -663,18 +770,18 @@ func resourceIBMISLBListenerDelete(d *schema.ResourceData, meta interface{}) err
 	conns.IbmMutexKV.Lock(isLBKey)
 	defer conns.IbmMutexKV.Unlock(isLBKey)
 
-	err = lbListenerDelete(d, meta, lbID, lbListenerID)
-	if err != nil {
-		return err
+	diagEerr := lbListenerDelete(d, meta, lbID, lbListenerID)
+	if diagEerr != nil {
+		return diagEerr
 	}
 
 	return nil
 }
 
-func lbListenerDelete(d *schema.ResourceData, meta interface{}, lbID, lbListenerID string) error {
+func lbListenerDelete(d *schema.ResourceData, meta interface{}, lbID, lbListenerID string) diag.Diagnostics {
 	sess, err := vpcClient(meta)
 	if err != nil {
-		return err
+		diag.FromErr(err)
 	}
 	getLoadBalancerListenerOptions := &vpcv1.GetLoadBalancerListenerOptions{
 		LoadBalancerID: &lbID,
@@ -687,11 +794,11 @@ func lbListenerDelete(d *schema.ResourceData, meta interface{}, lbID, lbListener
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[ERROR] Error Getting vpc load balancer listener(%s): %s\n%s", lbListenerID, err, response)
+		return diag.FromErr(fmt.Errorf("[ERROR] Error Getting vpc load balancer listener(%s): %s\n%s", lbListenerID, err, response))
 	}
 	_, err = isWaitForLBAvailable(sess, lbID, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error checking for load balancer (%s) is active: %s", lbID, err)
+		return diag.FromErr(fmt.Errorf("[ERROR] Error checking for load balancer (%s) is active: %s", lbID, err))
 	}
 	deleteLoadBalancerListenerOptions := &vpcv1.DeleteLoadBalancerListenerOptions{
 		LoadBalancerID: &lbID,
@@ -699,15 +806,15 @@ func lbListenerDelete(d *schema.ResourceData, meta interface{}, lbID, lbListener
 	}
 	response, err = sess.DeleteLoadBalancerListener(deleteLoadBalancerListenerOptions)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error Deleting Load Balancer Pool : %s\n%s", err, response)
+		return diag.FromErr(fmt.Errorf("[ERROR] Error Deleting Load Balancer Pool : %s\n%s", err, response))
 	}
 	_, err = isWaitForLBListenerDeleted(sess, lbID, lbListenerID, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
-		return err
+		diag.FromErr(err)
 	}
 	_, err = isWaitForLBAvailable(sess, lbID, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error waiting for load balancer (%s) to be active: %s", lbID, err)
+		return diag.FromErr(fmt.Errorf("[ERROR] Error waiting for load balancer (%s) to be active: %s", lbID, err))
 	}
 
 	d.SetId("")
@@ -781,4 +888,59 @@ func lbListenerExists(d *schema.ResourceData, meta interface{}, lbID, lbListener
 		return false, fmt.Errorf("[ERROR] Error getting Load balancer Listener: %s\n%s", err, response)
 	}
 	return true, nil
+}
+
+func resourceIBMIsLbListenerMapToLoadBalancerListenerHTTPSRedirectPrototype(modelMap map[string]interface{}) (*vpcv1.LoadBalancerListenerHTTPSRedirectPrototype, error) {
+	model := &vpcv1.LoadBalancerListenerHTTPSRedirectPrototype{}
+	model.HTTPStatusCode = core.Int64Ptr(int64(modelMap["http_status_code"].(int)))
+	ListenerModel, err := resourceIBMIsLbListenerMapToLoadBalancerListenerIdentity(modelMap["listener"].([]interface{})[0].(map[string]interface{}))
+	if err != nil {
+		return model, err
+	}
+	model.Listener = ListenerModel
+	if modelMap["uri"] != nil && modelMap["uri"].(string) != "" {
+		model.URI = core.StringPtr(modelMap["uri"].(string))
+	}
+	return model, nil
+}
+
+func resourceIBMIsLbListenerMapToLoadBalancerListenerIdentity(modelMap map[string]interface{}) (vpcv1.LoadBalancerListenerIdentityIntf, error) {
+	model := &vpcv1.LoadBalancerListenerIdentity{}
+	if modelMap["id"] != nil && modelMap["id"].(string) != "" {
+		model.ID = core.StringPtr(modelMap["id"].(string))
+	}
+	return model, nil
+}
+
+func resourceIBMIsLbListenerLoadBalancerListenerHTTPSRedirectToMap(model *vpcv1.LoadBalancerListenerHTTPSRedirect) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["http_status_code"] = flex.IntValue(model.HTTPStatusCode)
+	listenerMap, err := resourceIBMIsLbListenerLoadBalancerListenerReferenceToMap(model.Listener)
+	if err != nil {
+		return modelMap, err
+	}
+	modelMap["listener"] = []map[string]interface{}{listenerMap}
+	if model.URI != nil {
+		modelMap["uri"] = model.URI
+	}
+	return modelMap, nil
+}
+
+func resourceIBMIsLbListenerLoadBalancerListenerReferenceToMap(model *vpcv1.LoadBalancerListenerReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Deleted != nil {
+		deletedMap, err := resourceIBMIsLbListenerLoadBalancerListenerReferenceDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = model.Href
+	modelMap["id"] = model.ID
+	return modelMap, nil
+}
+func resourceIBMIsLbListenerLoadBalancerListenerReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = model.MoreInfo
+	return modelMap, nil
 }

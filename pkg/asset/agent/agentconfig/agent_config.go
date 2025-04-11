@@ -1,6 +1,7 @@
 package agentconfig
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/types/agent/conversion"
+	"github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -40,7 +42,7 @@ func (*AgentConfig) Dependencies() []asset.Asset {
 }
 
 // Generate generates the Agent Config manifest.
-func (a *AgentConfig) Generate(dependencies asset.Parents) error {
+func (a *AgentConfig) Generate(_ context.Context, dependencies asset.Parents) error {
 	// TODO: We are temporarily generating a template of the agent-config.yaml
 	// Change this when its interactive survey is implemented.
 	agentConfigTemplate := `#
@@ -56,6 +58,7 @@ metadata:
 # All fields are optional
 rendezvousIP: your-node0-ip
 bootArtifactsBaseURL: http://user-specified-infra.com
+minimalISO: false
 additionalNTPSources:
 - 0.rhel.pool.ntp.org
 - 1.rhel.pool.ntp.org
@@ -165,7 +168,7 @@ func (a *AgentConfig) validateAgent() field.ErrorList {
 		allErrs = append(allErrs, err...)
 	}
 
-	if err := a.validateAdditionalNTPSources(field.NewPath("AdditionalNTPSources"), a.Config.AdditionalNTPSources); err != nil {
+	if err := validation.ValidateNTPServers(a.Config.AdditionalNTPSources, field.NewPath("additionalNTPSources")); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
@@ -188,22 +191,6 @@ func (a *AgentConfig) validateRendezvousIP() field.ErrorList {
 
 	if err := validate.IP(a.Config.RendezvousIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(rendezvousIPPath, a.Config.RendezvousIP, err.Error()))
-	}
-
-	return allErrs
-}
-
-func (a *AgentConfig) validateAdditionalNTPSources(additionalNTPSourcesPath *field.Path, sources []string) field.ErrorList {
-	var allErrs field.ErrorList
-
-	for i, source := range sources {
-		domainNameErr := validate.DomainName(source, true)
-		if domainNameErr != nil {
-			ipErr := validate.IP(source)
-			if ipErr != nil {
-				allErrs = append(allErrs, field.Invalid(additionalNTPSourcesPath.Index(i), source, "NTP source is not a valid domain name nor a valid IP"))
-			}
-		}
 	}
 
 	return allErrs

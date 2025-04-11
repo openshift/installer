@@ -201,8 +201,6 @@ func (c *SQS) CancelMessageMoveTaskRequest(input *CancelMessageMoveTaskInput) (r
 //     the messages were driven to the dead-letter-queue), or a custom destination
 //     queue.
 //
-//   - Currently, only standard queues are supported.
-//
 //   - Only one active message movement task is supported per queue at any
 //     given time.
 //
@@ -1516,8 +1514,6 @@ func (c *SQS) ListMessageMoveTasksRequest(input *ListMessageMoveTasksInput) (req
 //     the messages were driven to the dead-letter-queue), or a custom destination
 //     queue.
 //
-//   - Currently, only standard queues are supported.
-//
 //   - Only one active message movement task is supported per queue at any
 //     given time.
 //
@@ -2326,12 +2322,15 @@ func (c *SQS) SendMessageRequest(input *SendMessageInput) (req *request.Request,
 // Delivers a message to the specified queue.
 //
 // A message can include only XML, JSON, and unformatted text. The following
-// Unicode characters are allowed:
+// Unicode characters are allowed. For more information, see the W3C specification
+// for characters (http://www.w3.org/TR/REC-xml/#charsets).
 //
 // #x9 | #xA | #xD | #x20 to #xD7FF | #xE000 to #xFFFD | #x10000 to #x10FFFF
 //
-// Any characters not included in this list will be rejected. For more information,
-// see the W3C specification for characters (http://www.w3.org/TR/REC-xml/#charsets).
+// Amazon SQS does not throw an exception or completely reject the message if
+// it contains invalid characters. Instead, it replaces those invalid characters
+// with U+FFFD before storing the message in the queue, as long as the message
+// body contains at least one valid character.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2482,12 +2481,15 @@ func (c *SQS) SendMessageBatchRequest(input *SendMessageBatchInput) (req *reques
 // both 256 KiB (262,144 bytes).
 //
 // A message can include only XML, JSON, and unformatted text. The following
-// Unicode characters are allowed:
+// Unicode characters are allowed. For more information, see the W3C specification
+// for characters (http://www.w3.org/TR/REC-xml/#charsets).
 //
 // #x9 | #xA | #xD | #x20 to #xD7FF | #xE000 to #xFFFD | #x10000 to #x10FFFF
 //
-// Any characters not included in this list will be rejected. For more information,
-// see the W3C specification for characters (http://www.w3.org/TR/REC-xml/#charsets).
+// Amazon SQS does not throw an exception or completely reject the message if
+// it contains invalid characters. Instead, it replaces those invalid characters
+// with U+FFFD before storing the message in the queue, as long as the message
+// body contains at least one valid character.
 //
 // If you don't specify the DelaySeconds parameter for an entry, Amazon SQS
 // uses the default value for the queue.
@@ -2638,12 +2640,13 @@ func (c *SQS) SetQueueAttributesRequest(input *SetQueueAttributesInput) (req *re
 
 // SetQueueAttributes API operation for Amazon Simple Queue Service.
 //
-// Sets the value of one or more queue attributes. When you change a queue's
-// attributes, the change can take up to 60 seconds for most of the attributes
-// to propagate throughout the Amazon SQS system. Changes made to the MessageRetentionPeriod
-// attribute can take up to 15 minutes and will impact existing messages in
-// the queue potentially causing them to be expired and deleted if the MessageRetentionPeriod
-// is reduced below the age of existing messages.
+// Sets the value of one or more queue attributes, like a policy. When you change
+// a queue's attributes, the change can take up to 60 seconds for most of the
+// attributes to propagate throughout the Amazon SQS system. Changes made to
+// the MessageRetentionPeriod attribute can take up to 15 minutes and will impact
+// existing messages in the queue potentially causing them to be expired and
+// deleted if the MessageRetentionPeriod is reduced below the age of existing
+// messages.
 //
 //   - In the future, new attributes might be added. If you write code that
 //     calls this action, we recommend that you structure your code so that it
@@ -2782,9 +2785,6 @@ func (c *SQS) StartMessageMoveTaskRequest(input *StartMessageMoveTaskInput) (req
 //     source queue is the DLQ, while the destination queue can be the original
 //     source queue (from which the messages were driven to the dead-letter-queue),
 //     or a custom destination queue.
-//
-//   - Currently, only standard queues support redrive. FIFO queues don't support
-//     redrive.
 //
 //   - Only one active message movement task is supported per queue at any
 //     given time.
@@ -6133,7 +6133,8 @@ type ListMessageMoveTasksResultEntry struct {
 	ApproximateNumberOfMessagesMoved *int64 `type:"long"`
 
 	// The number of messages to be moved from the source queue. This number is
-	// obtained at the time of starting the message movement task.
+	// obtained at the time of starting the message movement task and is only included
+	// after the message movement task is selected to start.
 	ApproximateNumberOfMessagesToMove *int64 `type:"long"`
 
 	// The ARN of the destination queue if it has been specified in the StartMessageMoveTask
@@ -7316,6 +7317,10 @@ func (s *ReceiptHandleIsInvalid) RequestID() string {
 type ReceiveMessageInput struct {
 	_ struct{} `type:"structure"`
 
+	//
+	// This parameter has been deprecated but will be supported for backward compatibility.
+	// To provide attribute names, you are encouraged to use MessageSystemAttributeNames.
+	//
 	// A list of attributes that need to be returned along with each message. These
 	// attributes include:
 	//
@@ -7349,7 +7354,9 @@ type ReceiveMessageInput struct {
 	//    in sequence.
 	//
 	//    * SequenceNumber – Returns the value provided by Amazon SQS.
-	AttributeNames []*string `type:"list" flattened:"true" enum:"QueueAttributeName"`
+	//
+	// Deprecated: AttributeNames has been replaced by MessageSystemAttributeNames
+	AttributeNames []*string `deprecated:"true" type:"list" flattened:"true" enum:"QueueAttributeName"`
 
 	// The maximum number of messages to return. Amazon SQS never returns more messages
 	// than this value (however, fewer messages might be returned). Valid values:
@@ -7378,6 +7385,41 @@ type ReceiveMessageInput struct {
 	// bar.*.
 	MessageAttributeNames []*string `type:"list" flattened:"true"`
 
+	// A list of attributes that need to be returned along with each message. These
+	// attributes include:
+	//
+	//    * All – Returns all values.
+	//
+	//    * ApproximateFirstReceiveTimestamp – Returns the time the message was
+	//    first received from the queue (epoch time (http://en.wikipedia.org/wiki/Unix_time)
+	//    in milliseconds).
+	//
+	//    * ApproximateReceiveCount – Returns the number of times a message has
+	//    been received across all queues but not deleted.
+	//
+	//    * AWSTraceHeader – Returns the X-Ray trace header string.
+	//
+	//    * SenderId For a user, returns the user ID, for example ABCDEFGHI1JKLMNOPQ23R.
+	//    For an IAM role, returns the IAM role ID, for example ABCDE1F2GH3I4JK5LMNOP:i-a123b456.
+	//
+	//    * SentTimestamp – Returns the time the message was sent to the queue
+	//    (epoch time (http://en.wikipedia.org/wiki/Unix_time) in milliseconds).
+	//
+	//    * SqsManagedSseEnabled – Enables server-side queue encryption using
+	//    SQS owned encryption keys. Only one server-side encryption option is supported
+	//    per queue (for example, SSE-KMS (https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-sse-existing-queue.html)
+	//    or SSE-SQS (https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-sqs-sse-queue.html)).
+	//
+	//    * MessageDeduplicationId – Returns the value provided by the producer
+	//    that calls the SendMessage action.
+	//
+	//    * MessageGroupId – Returns the value provided by the producer that calls
+	//    the SendMessage action. Messages with the same MessageGroupId are returned
+	//    in sequence.
+	//
+	//    * SequenceNumber – Returns the value provided by Amazon SQS.
+	MessageSystemAttributeNames []*string `type:"list" flattened:"true" enum:"MessageSystemAttributeName"`
+
 	// The URL of the Amazon SQS queue from which messages are received.
 	//
 	// Queue URLs and names are case-sensitive.
@@ -7398,9 +7440,6 @@ type ReceiveMessageInput struct {
 	//
 	//    * When you set FifoQueue, a caller of the ReceiveMessage action can provide
 	//    a ReceiveRequestAttemptId explicitly.
-	//
-	//    * If a caller of the ReceiveMessage action doesn't provide a ReceiveRequestAttemptId,
-	//    Amazon SQS generates a ReceiveRequestAttemptId.
 	//
 	//    * It is possible to retry the ReceiveMessage action with the same ReceiveRequestAttemptId
 	//    if none of the messages have been modified (deleted or had their visibility
@@ -7443,7 +7482,7 @@ type ReceiveMessageInput struct {
 	// The duration (in seconds) for which the call waits for a message to arrive
 	// in the queue before returning. If a message is available, the call returns
 	// sooner than WaitTimeSeconds. If no messages are available and the wait time
-	// expires, the call returns successfully with an empty list of messages.
+	// expires, the call does not return a message list.
 	//
 	// To avoid HTTP errors, ensure that the HTTP response timeout for ReceiveMessage
 	// requests is longer than the WaitTimeSeconds parameter. For example, with
@@ -7500,6 +7539,12 @@ func (s *ReceiveMessageInput) SetMaxNumberOfMessages(v int64) *ReceiveMessageInp
 // SetMessageAttributeNames sets the MessageAttributeNames field's value.
 func (s *ReceiveMessageInput) SetMessageAttributeNames(v []*string) *ReceiveMessageInput {
 	s.MessageAttributeNames = v
+	return s
+}
+
+// SetMessageSystemAttributeNames sets the MessageSystemAttributeNames field's value.
+func (s *ReceiveMessageInput) SetMessageSystemAttributeNames(v []*string) *ReceiveMessageInput {
+	s.MessageSystemAttributeNames = v
 	return s
 }
 
@@ -8255,12 +8300,15 @@ type SendMessageInput struct {
 	// is 256 KiB.
 	//
 	// A message can include only XML, JSON, and unformatted text. The following
-	// Unicode characters are allowed:
+	// Unicode characters are allowed. For more information, see the W3C specification
+	// for characters (http://www.w3.org/TR/REC-xml/#charsets).
 	//
 	// #x9 | #xA | #xD | #x20 to #xD7FF | #xE000 to #xFFFD | #x10000 to #x10FFFF
 	//
-	// Any characters not included in this list will be rejected. For more information,
-	// see the W3C specification for characters (http://www.w3.org/TR/REC-xml/#charsets).
+	// Amazon SQS does not throw an exception or completely reject the message if
+	// it contains invalid characters. Instead, it replaces those invalid characters
+	// with U+FFFD before storing the message in the queue, as long as the message
+	// body contains at least one valid character.
 	//
 	// MessageBody is a required field
 	MessageBody *string `type:"string" required:"true"`
@@ -8327,7 +8375,7 @@ type SendMessageInput struct {
 	//    For each MessageGroupId, the messages are sorted by time sent. The caller
 	//    can't specify a MessageGroupId.
 	//
-	// The length of MessageGroupId is 128 characters. Valid values: alphanumeric
+	// The maximum length of MessageGroupId is 128 characters. Valid values: alphanumeric
 	// characters and punctuation (!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~).
 	//
 	// For best practices of using MessageGroupId, see Using the MessageGroupId
@@ -9177,6 +9225,9 @@ func (s UntagQueueOutput) GoString() string {
 }
 
 const (
+	// MessageSystemAttributeNameAll is a MessageSystemAttributeName enum value
+	MessageSystemAttributeNameAll = "All"
+
 	// MessageSystemAttributeNameSenderId is a MessageSystemAttributeName enum value
 	MessageSystemAttributeNameSenderId = "SenderId"
 
@@ -9208,6 +9259,7 @@ const (
 // MessageSystemAttributeName_Values returns all elements of the MessageSystemAttributeName enum
 func MessageSystemAttributeName_Values() []string {
 	return []string{
+		MessageSystemAttributeNameAll,
 		MessageSystemAttributeNameSenderId,
 		MessageSystemAttributeNameSentTimestamp,
 		MessageSystemAttributeNameApproximateReceiveCount,

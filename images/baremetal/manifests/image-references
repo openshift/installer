@@ -1,0 +1,12 @@
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+spec:
+  tags:
+  - name: baremetal-installer
+    from:
+      kind: DockerImage
+      name: registry.ci.openshift.org/openshift:baremetal-installer
+  - name: machine-os-images
+    from:
+      kind: DockerImage
+      name: registry.ci.openshift.org/openshift:machine-os-images

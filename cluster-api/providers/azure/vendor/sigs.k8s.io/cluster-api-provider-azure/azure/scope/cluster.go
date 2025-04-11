@@ -77,7 +77,7 @@ func NewClusterScope(ctx context.Context, params ClusterScopeParams) (*ClusterSc
 		return nil, errors.New("failed to generate new scope from nil AzureCluster")
 	}
 
-	credentialsProvider, err := NewAzureClusterCredentialsProvider(ctx, params.Client, params.AzureCluster)
+	credentialsProvider, err := NewAzureCredentialsProvider(ctx, params.Client, params.AzureCluster.Spec.IdentityRef, params.AzureCluster.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init credentials provider")
 	}
@@ -554,7 +554,7 @@ func (s *ClusterScope) AzureBastion() *infrav1.AzureBastion {
 // AzureBastionSpec returns the bastion spec.
 func (s *ClusterScope) AzureBastionSpec() azure.ASOResourceSpecGetter[*asonetworkv1api20220701.BastionHost] {
 	if s.IsAzureBastionEnabled() {
-		subnetID := azure.SubnetID(s.SubscriptionID(), s.ResourceGroup(), s.Vnet().Name, s.AzureBastion().Subnet.Name)
+		subnetID := azure.SubnetID(s.SubscriptionID(), s.Vnet().ResourceGroup, s.Vnet().Name, s.AzureBastion().Subnet.Name)
 		publicIPID := azure.PublicIPID(s.SubscriptionID(), s.ResourceGroup(), s.AzureBastion().PublicIP.Name)
 
 		return &bastionhosts.AzureBastionSpec{
@@ -582,9 +582,21 @@ func (s *ClusterScope) IsVnetManaged() bool {
 	if s.cache.isVnetManaged != nil {
 		return ptr.Deref(s.cache.isVnetManaged, false)
 	}
-	isVnetManaged := s.Vnet().ID == "" || s.Vnet().Tags.HasOwned(s.ClusterName())
-	s.cache.isVnetManaged = ptr.To(isVnetManaged)
-	return isVnetManaged
+	ctx := context.Background()
+	ctx, log, done := tele.StartSpanWithLogger(ctx, "scope.ClusterScope.IsVnetManaged")
+	defer done()
+
+	vnet := s.VNetSpec().ResourceRef()
+	vnet.SetNamespace(s.ASOOwner().GetNamespace())
+	err := s.Client.Get(ctx, client.ObjectKeyFromObject(vnet), vnet)
+	if err != nil {
+		log.Error(err, "Unable to determine if ClusterScope VNET is managed by capz, assuming unmanaged", "AzureCluster", s.ClusterName())
+		return false
+	}
+
+	isManaged := infrav1.Tags(vnet.Status.Tags).HasOwned(s.ClusterName())
+	s.cache.isVnetManaged = ptr.To(isManaged)
+	return isManaged
 }
 
 // IsIPv6Enabled returns true if IPv6 is enabled.
@@ -688,7 +700,11 @@ func (s *ClusterScope) ControlPlaneOutboundLB() *infrav1.LoadBalancerSpec {
 
 // APIServerLBName returns the API Server LB name.
 func (s *ClusterScope) APIServerLBName() string {
-	return s.APIServerLB().Name
+	apiServerLB := s.APIServerLB()
+	if apiServerLB != nil {
+		return apiServerLB.Name
+	}
+	return ""
 }
 
 // IsAPIServerPrivate returns true if the API Server LB is of type Internal.

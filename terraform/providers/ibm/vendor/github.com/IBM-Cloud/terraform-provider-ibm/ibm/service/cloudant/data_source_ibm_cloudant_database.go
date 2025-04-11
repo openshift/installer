@@ -5,10 +5,10 @@ package cloudant
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -150,12 +150,14 @@ func dataSourceIBMCloudantDatabaseRead(context context.Context, d *schema.Resour
 	instanceCRN := d.Get("instance_crn").(string)
 	cUrl, err := GetCloudantInstanceUrl(instanceCRN, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "read", "get-instance-url")
+		return tfErr.GetDiag()
 	}
 
 	cloudantClient, err := GetCloudantClientForUrl(cUrl, meta)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "read", "get-client")
+		return tfErr.GetDiag()
 	}
 
 	dbName := d.Get("db").(string)
@@ -164,7 +166,8 @@ func dataSourceIBMCloudantDatabaseRead(context context.Context, d *schema.Resour
 	databaseInformation, response, err := cloudantClient.GetDatabaseInformationWithContext(context, getDatabaseInformationOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetDatabaseInformationWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetDatabaseInformationWithContext failed %s\n%s", err, response))
+		tfErr := flex.DiscriminatedTerraformErrorf(err, response.String(), "ibm_cloudant_database", "read", "get-database-information")
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(dataSourceIBMCloudantDatabaseID(d))
@@ -172,7 +175,8 @@ func dataSourceIBMCloudantDatabaseRead(context context.Context, d *schema.Resour
 	if databaseInformation.Cluster != nil {
 		err = d.Set("cluster", dataSourceDatabaseInformationFlattenCluster(*databaseInformation.Cluster))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting cluster %s", err))
+			tfErr := flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_cloudant_database", "read", "set-cluster-property")
+			return tfErr.GetDiag()
 		}
 	}
 

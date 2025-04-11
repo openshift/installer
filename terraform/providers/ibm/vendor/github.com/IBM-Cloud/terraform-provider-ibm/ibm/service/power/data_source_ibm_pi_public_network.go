@@ -4,41 +4,47 @@
 package power
 
 import (
-	//"fmt"
 	"context"
 
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
-	"github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 )
 
 func DataSourceIBMPIPublicNetwork() *schema.Resource {
-
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPIPublicNetworkRead,
 		Schema: map[string]*schema.Schema{
-			helpers.PICloudInstanceId: {
-				Type:         schema.TypeString,
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
 
-			// Computed Attributes
-			"name": {
-				Type:     schema.TypeString,
-				Computed: true,
+			// Attributes
+			Attr_CRN: {
+				Computed:    true,
+				Description: "The CRN of this resource.",
+				Type:        schema.TypeString,
 			},
-			"type": {
-				Type:     schema.TypeString,
-				Computed: true,
+			Attr_Name: {
+				Computed:    true,
+				Description: "The name of the network.",
+				Type:        schema.TypeString,
 			},
-			"vlan_id": {
-				Type:     schema.TypeInt,
-				Computed: true,
+			Attr_Type: {
+				Computed:    true,
+				Description: "The type of VLAN that the network is connected to.",
+				Type:        schema.TypeString,
+			},
+			Attr_VLanID: {
+				Computed:    true,
+				Description: "The ID of the VLAN that the network is connected to.",
+				Type:        schema.TypeInt,
 			},
 		},
 	}
@@ -50,7 +56,7 @@ func dataSourceIBMPIPublicNetworkRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 
 	networkC := instance.NewIBMPINetworkClient(ctx, sess, cloudInstanceID)
 	networkdata, err := networkC.GetAllPublic()
@@ -62,14 +68,17 @@ func dataSourceIBMPIPublicNetworkRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.SetId(*networkdata.Networks[0].NetworkID)
-	if networkdata.Networks[0].Type != nil {
-		d.Set("type", networkdata.Networks[0].Type)
+	if networkdata.Networks[0].Crn != "" {
+		d.Set(Attr_CRN, networkdata.Networks[0].Crn)
 	}
 	if networkdata.Networks[0].Name != nil {
-		d.Set("name", networkdata.Networks[0].Name)
+		d.Set(Attr_Name, networkdata.Networks[0].Name)
+	}
+	if networkdata.Networks[0].Type != nil {
+		d.Set(Attr_Type, networkdata.Networks[0].Type)
 	}
 	if networkdata.Networks[0].VlanID != nil {
-		d.Set("vlan_id", networkdata.Networks[0].VlanID)
+		d.Set(Attr_VLanID, networkdata.Networks[0].VlanID)
 	}
 
 	return nil

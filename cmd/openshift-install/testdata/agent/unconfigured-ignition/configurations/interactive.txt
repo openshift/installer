@@ -1,0 +1,99 @@
+# Verify that the --interactive flag generates the expected resources required for the interactive workflow.
+
+expandFile cluster-manifests/cluster-image-set.yaml
+
+exec openshift-install agent create unconfigured-ignition --interactive --dir $WORK
+
+exists $WORK/unconfigured-agent.ign
+! exists $WORK/auth/kubeconfig
+! exists $WORK/auth/kubeadmin-password
+
+unconfiguredIgnContains /etc/assisted/manifests/pull-secret.yaml
+! unconfiguredIgnContains /etc/assisted/manifests/agent-cluster-install.yaml
+! unconfiguredIgnContains /etc/assisted/manifests/cluster-deployment.yaml
+
+unconfiguredIgnCmp /etc/assisted/manifests/cluster-image-set.yaml expected/cluster-image-set.yaml
+unconfiguredIgnCmp /etc/assisted/manifests/infraenv.yaml expected/infraenv.yaml
+unconfiguredIgnCmp /etc/assisted/rendezvous-host.env expected/rendezvous-host.env
+
+unconfiguredIgnContains /etc/assisted/no-config-image
+unconfiguredIgnContains /etc/assisted/interactive-ui
+
+-- cluster-manifests/infraenv.yaml --
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
+metadata:
+  name: ostest
+  namespace: cluster0
+spec:
+  cpuArchitecture: x86_64
+  pullSecretRef:
+    name: ostest-pull-secret
+  sshAuthorizedKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK6UTEydcEKzuNdPaofn8Z2DwgHqdcionLZBiPf/zIRNco++etLsat7Avv7yt04DINQd5zjxIFgG8jblaUB5E5C9ClUcMwb52GO0ay2Y9v1uBv1a4WhI3peKktAzYNk0EBMQlJtXPjRMrC9ylBPh+DsBHMu+KmDnfk7PIwyN4efC8k5kSRuPWoNdme1rz2+umU8FSmaWTHIajrbspf4GQbsntA5kuKEtDbfoNCU97o2KrRnUbeg3a8hwSjfh3u6MhlnGcg5K2Ij+zivEsWGCLKYUtE1ErqwfIzwWmJ6jnV66XCQGHf4Q1iIxqF7s2a1q24cgG2Z/iDXfqXrCIfy4P7b/Ztak3bdT9jfAdVZtdO5/r7I+O5hYhF86ayFlDWzZWP/ByiSb+q4CQbfVgK3BMmiAv2MqLHdhesmD/SmIcoOWUF6rFmRKZVFFpKpt5ATNTgUJ3JRowoXrrDruVXClUGRiCS6Zabd1rZ3VmTchaPJwtzQMdfIWISXj+Ig+C4UK0=
+
+-- cluster-manifests/pull-secret.yaml --
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ostest-pull-secret
+  namespace: cluster0
+stringData:
+  .dockerconfigjson: |-
+    {
+      "auths": {
+        "quay.io": {
+          "auth": "c3VwZXItc2VjcmV0Cg=="
+        }
+      }
+    }
+
+-- cluster-manifests/cluster-image-set.yaml --
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  name: cluster0-image-set
+  namespace: cluster0
+spec:
+  releaseImage: $RELEASE_IMAGE
+
+-- expected/cluster-image-set.yaml --
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  name: cluster0-image-set
+  namespace: cluster0
+spec:
+  releaseImage: $RELEASE_IMAGE
+
+-- expected/infraenv.yaml --
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
+metadata:
+  creationTimestamp: null
+  name: ostest
+  namespace: cluster0
+spec:
+  cpuArchitecture: x86_64
+  ipxeScriptType: ""
+  nmStateConfigLabelSelector: {}
+  pullSecretRef:
+    name: ostest-pull-secret
+  sshAuthorizedKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK6UTEydcEKzuNdPaofn8Z2DwgHqdcionLZBiPf/zIRNco++etLsat7Avv7yt04DINQd5zjxIFgG8jblaUB5E5C9ClUcMwb52GO0ay2Y9v1uBv1a4WhI3peKktAzYNk0EBMQlJtXPjRMrC9ylBPh+DsBHMu+KmDnfk7PIwyN4efC8k5kSRuPWoNdme1rz2+umU8FSmaWTHIajrbspf4GQbsntA5kuKEtDbfoNCU97o2KrRnUbeg3a8hwSjfh3u6MhlnGcg5K2Ij+zivEsWGCLKYUtE1ErqwfIzwWmJ6jnV66XCQGHf4Q1iIxqF7s2a1q24cgG2Z/iDXfqXrCIfy4P7b/Ztak3bdT9jfAdVZtdO5/r7I+O5hYhF86ayFlDWzZWP/ByiSb+q4CQbfVgK3BMmiAv2MqLHdhesmD/SmIcoOWUF6rFmRKZVFFpKpt5ATNTgUJ3JRowoXrrDruVXClUGRiCS6Zabd1rZ3VmTchaPJwtzQMdfIWISXj+Ig+C4UK0=
+status:
+  agentLabelSelector: {}
+  bootArtifacts:
+    initrd: ""
+    ipxeScript: ""
+    kernel: ""
+    rootfs: ""
+  debugInfo:
+    eventsURL: ""
+-- expected/rendezvous-host.env --
+NODE_ZERO_IP={{.RendezvousIP}}
+SERVICE_BASE_URL=http://{{.RendezvousIP}}:8090/
+IMAGE_SERVICE_BASE_URL=http://{{.RendezvousIP}}:8888/
+PULL_SECRET_TOKEN=
+USER_AUTH_TOKEN=
+WORKFLOW_TYPE=install-interactive-disconnected
+AIUI_APP_API_URL=http://{{.RendezvousIP}}:8090/
+AIUI_URL=http://{{.RendezvousIP}}:3001/

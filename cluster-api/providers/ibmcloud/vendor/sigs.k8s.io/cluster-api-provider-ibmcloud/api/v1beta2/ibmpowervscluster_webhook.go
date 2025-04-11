@@ -17,7 +17,10 @@ limitations under the License.
 package v1beta2
 
 import (
+	"fmt"
 	"strconv"
+
+	regionUtil "github.com/ppc64le-cloud/powervs-utils"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,6 +31,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	genUtil "sigs.k8s.io/cluster-api-provider-ibmcloud/util"
 )
 
 // log is for logging in this package.
@@ -78,7 +83,7 @@ func (r *IBMPowerVSCluster) validateIBMPowerVSCluster() (admission.Warnings, err
 	}
 
 	if err := r.validateIBMPowerVSClusterCreateInfraPrereq(); err != nil {
-		allErrs = append(allErrs, err)
+		allErrs = append(allErrs, err...)
 	}
 
 	if len(allErrs) == 0 {
@@ -97,7 +102,71 @@ func (r *IBMPowerVSCluster) validateIBMPowerVSClusterNetwork() *field.Error {
 	return nil
 }
 
-func (r *IBMPowerVSCluster) validateIBMPowerVSClusterCreateInfraPrereq() *field.Error {
+func (r *IBMPowerVSCluster) validateIBMPowerVSClusterLoadBalancers() (allErrs field.ErrorList) {
+	if err := r.validateIBMPowerVSClusterLoadBalancerNames(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	if len(r.Spec.LoadBalancers) == 0 {
+		return allErrs
+	}
+
+	for _, loadbalancer := range r.Spec.LoadBalancers {
+		if *loadbalancer.Public {
+			return allErrs
+		}
+	}
+
+	return append(allErrs, field.Invalid(field.NewPath("spec.LoadBalancers"), r.Spec.LoadBalancers, "Expect atleast one of the load balancer to be public"))
+}
+
+func (r *IBMPowerVSCluster) validateIBMPowerVSClusterLoadBalancerNames() (allErrs field.ErrorList) {
+	found := make(map[string]bool)
+	for i, loadbalancer := range r.Spec.LoadBalancers {
+		if loadbalancer.Name == "" {
+			continue
+		}
+
+		if found[loadbalancer.Name] {
+			allErrs = append(allErrs, field.Duplicate(field.NewPath("spec", fmt.Sprintf("loadbalancers[%d]", i)), map[string]interface{}{"Name": loadbalancer.Name}))
+			continue
+		}
+		found[loadbalancer.Name] = true
+	}
+
+	return allErrs
+}
+
+func (r *IBMPowerVSCluster) validateIBMPowerVSClusterVPCSubnetNames() (allErrs field.ErrorList) {
+	found := make(map[string]bool)
+	for i, subnet := range r.Spec.VPCSubnets {
+		if subnet.Name == nil {
+			continue
+		}
+		if found[*subnet.Name] {
+			allErrs = append(allErrs, field.Duplicate(field.NewPath("spec", fmt.Sprintf("vpcSubnets[%d]", i)), map[string]interface{}{"Name": *subnet.Name}))
+			continue
+		}
+		found[*subnet.Name] = true
+	}
+
+	return allErrs
+}
+
+func (r *IBMPowerVSCluster) validateIBMPowerVSClusterTransitGateway() *field.Error {
+	if r.Spec.Zone == nil && r.Spec.VPC == nil {
+		return nil
+	}
+	if r.Spec.TransitGateway == nil {
+		return nil
+	}
+	if _, globalRouting, _ := genUtil.GetTransitGatewayLocationAndRouting(r.Spec.Zone, r.Spec.VPC.Region); r.Spec.TransitGateway.GlobalRouting != nil && !*r.Spec.TransitGateway.GlobalRouting && globalRouting != nil && *globalRouting {
+		return field.Invalid(field.NewPath("spec.transitGateway.globalRouting"), r.Spec.TransitGateway.GlobalRouting, "global routing is required since PowerVS and VPC region are from different region")
+	}
+	return nil
+}
+
+func (r *IBMPowerVSCluster) validateIBMPowerVSClusterCreateInfraPrereq() (allErrs field.ErrorList) {
 	annotations := r.GetAnnotations()
 	if len(annotations) == 0 {
 		return nil
@@ -110,7 +179,7 @@ func (r *IBMPowerVSCluster) validateIBMPowerVSClusterCreateInfraPrereq() *field.
 
 	createInfra, err := strconv.ParseBool(value)
 	if err != nil {
-		return field.Invalid(field.NewPath("annotations"), r.Annotations, "value of powervs.cluster.x-k8s.io/create-infra should be boolean")
+		allErrs = append(allErrs, field.Invalid(field.NewPath("annotations"), r.Annotations, "value of powervs.cluster.x-k8s.io/create-infra should be boolean"))
 	}
 
 	if !createInfra {
@@ -118,20 +187,39 @@ func (r *IBMPowerVSCluster) validateIBMPowerVSClusterCreateInfraPrereq() *field.
 	}
 
 	if r.Spec.Zone == nil {
-		return field.Invalid(field.NewPath("spec.zone"), r.Spec.Zone, "value of zone is empty")
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.zone"), r.Spec.Zone, "value of zone is empty"))
+	}
+
+	if r.Spec.Zone != nil && !regionUtil.ValidateZone(*r.Spec.Zone) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.zone"), r.Spec.Zone, fmt.Sprintf("zone '%s' is not supported", *r.Spec.Zone)))
 	}
 
 	if r.Spec.VPC == nil {
-		return field.Invalid(field.NewPath("spec.vpc"), r.Spec.VPC, "value of VPC is empty")
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.vpc"), r.Spec.VPC, "value of VPC is empty"))
 	}
 
-	if r.Spec.VPC.Region == nil {
-		return field.Invalid(field.NewPath("spec.vpc.region"), r.Spec.VPC.Region, "value of VPC region is empty")
+	if r.Spec.VPC != nil && r.Spec.VPC.Region == nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.vpc.region"), r.Spec.VPC.Region, "value of VPC region is empty"))
+	}
+
+	if r.Spec.VPC != nil && r.Spec.VPC.Region != nil && !regionUtil.ValidateVPCRegion(*r.Spec.VPC.Region) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.vpc.region"), r.Spec.VPC.Region, fmt.Sprintf("vpc region '%s' is not supported", *r.Spec.VPC.Region)))
 	}
 
 	if r.Spec.ResourceGroup == nil {
-		return field.Invalid(field.NewPath("spec.resourceGroup"), r.Spec.ResourceGroup, "value of resource group is empty")
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.resourceGroup"), r.Spec.ResourceGroup, "value of resource group is empty"))
+	}
+	if err := r.validateIBMPowerVSClusterVPCSubnetNames(); err != nil {
+		allErrs = append(allErrs, err...)
 	}
 
-	return nil
+	if err := r.validateIBMPowerVSClusterLoadBalancers(); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
+	if err := r.validateIBMPowerVSClusterTransitGateway(); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	return allErrs
 }

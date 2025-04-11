@@ -2,13 +2,17 @@ package clusterapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
-	iam "google.golang.org/api/iam/v1"
+	"google.golang.org/api/googleapi"
+	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	gcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 )
@@ -41,6 +45,15 @@ func GetWorkerRoles() []string {
 	return []string{
 		"roles/compute.viewer",
 		"roles/storage.admin",
+		"roles/artifactregistry.reader",
+	}
+}
+
+// GetSharedVPCRoles returns the pre-defined roles for a shared VPC installation.
+func GetSharedVPCRoles() []string {
+	return []string{
+		"roles/compute.networkAdmin",
+		"roles/compute.securityAdmin",
 	}
 }
 
@@ -90,7 +103,8 @@ func CreateServiceAccount(ctx context.Context, infraID, projectID, role string) 
 // AddServiceAccountRoles adds predefined roles for service account.
 func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID string, roles []string) error {
 	// Get cloudresourcemanager service
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
+	// The context timeout must be greater in time than the exponential backoff below
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*2)
 	defer cancel()
 
 	ssn, err := gcp.GetSession(ctx)
@@ -102,36 +116,67 @@ func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID str
 		return fmt.Errorf("failed to create resourcemanager service: %w", err)
 	}
 
-	policy, err := getPolicy(ctx, service, projectID)
-	if err != nil {
-		return err
+	backoff := wait.Backoff{
+		Duration: 2 * time.Second,
+		Factor:   2.0,
+		Jitter:   1.0,
+		Steps:    retryCount,
 	}
-
-	member := fmt.Sprintf("serviceAccount:%s", serviceAccountID)
-	for _, role := range roles {
-		err = addMemberToRole(policy, role, member)
-		if err != nil {
-			return fmt.Errorf("failed to add role %s to %s: %w", role, member, err)
+	// Get and set the policy in a backoff loop.
+	// If the policy set fails, the policy must be retrieved again via the get before retrying the set.
+	var lastErr error
+	if waitErr := wait.ExponentialBackoffWithContext(ctx, backoff, func(ctx context.Context) (bool, error) {
+		policy, err := getPolicy(ctx, service, projectID)
+		if isQuotaExceededError(err) {
+			lastErr = err
+			logrus.Debugf("Failed to get IAM policy, retrying after backoff")
+			return false, nil
+		} else if err != nil {
+			return false, fmt.Errorf("failed to get IAM policy, unexpected error: %w", err)
 		}
-	}
 
-	err = setPolicy(ctx, service, projectID, policy)
-	if err != nil {
-		return err
-	}
+		member := fmt.Sprintf("serviceAccount:%s", serviceAccountID)
+		for _, role := range roles {
+			if err := addMemberToRole(policy, role, member); err != nil {
+				return false, fmt.Errorf("failed to add role %s to %s: %w", role, member, err)
+			}
+		}
 
+		err = setPolicy(ctx, service, projectID, policy)
+		if err != nil {
+			if isConflictError(err) {
+				lastErr = err
+				logrus.Debugf("Concurrent IAM policy changes, restarting read/modify/write")
+				return false, nil
+			} else if isBadStatusError(err) {
+				// Documented here, https://cloud.google.com/iam/docs/retry-strategy, google
+				// indicates that a service account may be created but not active for up to
+				// 60 seconds. This behavior was causing a failure here when setting the policy
+				// resulting in a 400 error from the API. If this error occurs retry with an
+				// exponential backoff.
+				lastErr = err
+				logrus.Debugf("bad request, unexpected error: %s", err.Error())
+				return false, nil
+			}
+			return false, fmt.Errorf("failed to set IAM policy, unexpected error: %w", err)
+		}
+		logrus.Debugf("Successfully set IAM policy")
+		return true, nil
+	}); waitErr != nil {
+		if wait.Interrupted(waitErr) {
+			return fmt.Errorf("failed to set IAM policy: %w", lastErr)
+		}
+		return waitErr
+	}
 	return nil
 }
 
 // getPolicy gets the project's IAM policy.
 func getPolicy(ctx context.Context, crmService *resourcemanager.Service, projectID string) (*resourcemanager.Policy, error) {
+	logrus.Debugf("Getting policy for %s", projectID)
 	request := &resourcemanager.GetIamPolicyRequest{}
 	policy, err := crmService.Projects.GetIamPolicy(projectID, request).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch project IAM policy: %w", err)
-	}
-
-	return policy, nil
+	return policy, err
 }
 
 // setPolicy sets the project's IAM policy.
@@ -139,15 +184,13 @@ func setPolicy(ctx context.Context, crmService *resourcemanager.Service, project
 	request := &resourcemanager.SetIamPolicyRequest{}
 	request.Policy = policy
 	_, err := crmService.Projects.SetIamPolicy(projectID, request).Context(ctx).Do()
-	if err != nil {
-		return fmt.Errorf("failed to set project IAM policy: %w", err)
-	}
-
-	return nil
+	return err
 }
 
 // addMemberToRole adds a member to a role binding.
 func addMemberToRole(policy *resourcemanager.Policy, role, member string) error {
+	var policyBinding *resourcemanager.Binding
+
 	for _, binding := range policy.Bindings {
 		if binding.Role == role {
 			for _, m := range binding.Members {
@@ -156,11 +199,43 @@ func addMemberToRole(policy *resourcemanager.Policy, role, member string) error 
 					return nil
 				}
 			}
-			binding.Members = append(binding.Members, member)
-			logrus.Debugf("found %s role, added %s member", role, member)
-			return nil
+			policyBinding = binding
 		}
 	}
 
-	return fmt.Errorf("role %s not found, member %s not added", role, member)
+	if policyBinding == nil {
+		policyBinding = &resourcemanager.Binding{
+			Role:    role,
+			Members: []string{member},
+		}
+		logrus.Debugf("creating new policy binding for %s role and %s member", role, member)
+		policy.Bindings = append(policy.Bindings, policyBinding)
+	}
+
+	policyBinding.Members = append(policyBinding.Members, member)
+	logrus.Debugf("adding %s role, added %s member", role, member)
+	return nil
+}
+
+// isConflictError returns true if error matches conflict on concurrent policy sets.
+func isConflictError(err error) bool {
+	var ae *googleapi.Error
+	if errors.As(err, &ae) && (ae.Code == http.StatusConflict || ae.Code == http.StatusPreconditionFailed) {
+		return true
+	}
+	return false
+}
+
+// isQuotaExceededError returns true if the error matches quota exceeded.
+func isQuotaExceededError(err error) bool {
+	var ae *googleapi.Error
+	if errors.As(err, &ae) && (ae.Code == http.StatusTooManyRequests) {
+		return true
+	}
+	return false
+}
+
+func isBadStatusError(err error) bool {
+	var ae *googleapi.Error
+	return errors.As(err, &ae) && (ae.Code == http.StatusBadRequest)
 }

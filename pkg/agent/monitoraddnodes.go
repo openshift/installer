@@ -8,13 +8,16 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	certificatesv1 "k8s.io/api/certificates/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
+)
+
+var (
+	timeout = 90 * time.Minute
 )
 
 const (
@@ -36,9 +39,10 @@ type addNodeMonitor struct {
 	hostnames     []string
 	cluster       *Cluster
 	status        addNodeStatusHistory
+	ch            chan logEntry
 }
 
-func newAddNodeMonitor(nodeIP string, cluster *Cluster) (*addNodeMonitor, error) {
+func newAddNodeMonitor(nodeIP string, cluster *Cluster, ch chan logEntry) (*addNodeMonitor, error) {
 	parsedIPAddress := net.ParseIP(nodeIP)
 	if parsedIPAddress == nil {
 		return nil, fmt.Errorf("%s is not valid IP Address", nodeIP)
@@ -54,50 +58,70 @@ func newAddNodeMonitor(nodeIP string, cluster *Cluster) (*addNodeMonitor, error)
 			NodeJoinedCluster:      false,
 			NodeIsReady:            false,
 		},
+		ch: ch,
 	}
 	hostnames, err := net.LookupAddr(nodeIP)
 	if err != nil {
-		logrus.Infof("Cannot resolve IP address %v to a hostname. Skipping checks for pending CSRs.", nodeIP)
+		mon.logStatus(Info, fmt.Sprintf("Cannot resolve IP address %v to a hostname. Skipping checks for pending CSRs.", nodeIP))
 	} else {
 		mon.hostnames = hostnames
 	}
 	return &mon, nil
 }
 
-func (mon *addNodeMonitor) logStatus(status string) {
-	logrus.Infof("Node %s: %s", mon.nodeIPAddress, status)
-}
-
-// MonitorAddNodes waits for the a node to be added to the cluster
-// and reports its status until it becomes Ready.
-func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
-	timeout := 90 * time.Minute
-	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
+// MonitorAddNodes display the progress of one or more nodes being
+// added to a cluster. ipAddresses is an array of IP addresses to be
+// monitored. clusters is an array of their corresponding initialized Cluster
+// struct used to interact with the assisted-service and k8s APIs.
+func MonitorAddNodes(ctx context.Context, clusters []*Cluster, ipAddresses []string) {
+	waitContext, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
+	var wg sync.WaitGroup
+	ipChanMap := make(map[string]chan logEntry)
 
-	mon, err := newAddNodeMonitor(nodeIPAddress, cluster)
-	if err != nil {
-		return err
+	for i, ipAddress := range ipAddresses {
+		wg.Add(1)
+		ch := make(chan logEntry, 100)
+		ipChanMap[ipAddress] = ch
+		go MonitorSingleNode(waitContext, clusters[i], ipAddress, &wg, ch)
 	}
 
-	wait.Until(func() {
+	wg.Add(1)
+	go printLogs(&wg, ipChanMap)
+
+	wg.Wait()
+}
+
+// MonitorSingleNode waits for the a node to be added to the cluster
+// and reports its status until it becomes Ready.
+func MonitorSingleNode(waitContext context.Context, cluster *Cluster, nodeIPAddress string, wg *sync.WaitGroup, ch chan logEntry) {
+	defer wg.Done()
+	defer close(ch)
+
+	mon, err := newAddNodeMonitor(nodeIPAddress, cluster, ch)
+	if err != nil {
+		mon.logStatus(Error, fmt.Sprintf("Could not initialize node monitor: %v", err))
+		return
+	}
+
+	for {
 		if !mon.status.RestAPISeen &&
 			mon.cluster.API.Rest.IsRestAPILive() {
 			mon.status.RestAPISeen = true
-			mon.logStatus("Assisted Service API is available")
+			mon.logStatus(Info, "Assisted Service API is available")
 		}
 
 		if !mon.status.KubeletIsRunningOnNode &&
 			mon.isKubeletRunningOnNode() {
 			mon.status.KubeletIsRunningOnNode = true
-			mon.logStatus("Kubelet is running")
+			mon.logStatus(Info, "Kubelet is running")
 		}
 
 		if mon.status.KubeletIsRunningOnNode &&
 			!mon.status.FirstCSRSeen &&
 			mon.clusterHasFirstCSRPending() {
 			mon.status.FirstCSRSeen = true
-			mon.logStatus("First CSR Pending approval")
+			mon.logStatus(Info, "First CSR Pending approval")
 			mon.logCSRsPendingApproval(firstCSRSignerName)
 		}
 
@@ -105,56 +129,68 @@ func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
 			!mon.status.SecondCSRSeen &&
 			mon.clusterHasSecondCSRPending() {
 			mon.status.SecondCSRSeen = true
-			mon.logStatus("Second CSR Pending approval")
+			mon.logStatus(Info, "Second CSR Pending approval")
 			mon.logCSRsPendingApproval(secondCSRSignerName)
 		}
 
 		hasJoined, isReady, err := mon.nodeHasJoinedClusterAndIsReady()
 		if err != nil {
-			logrus.Debugf("nodeHasJoinedClusterAndIsReady returned err: %v", err)
+			mon.logStatus(Debug, fmt.Sprintf("Node joined cluster and is ready check returned err: %v", err))
 		}
 
 		if !mon.status.NodeJoinedCluster && hasJoined {
 			mon.status.NodeJoinedCluster = true
-			mon.logStatus("Node joined cluster")
+			mon.logStatus(Info, "Node joined cluster")
 		}
 
 		if !mon.status.NodeIsReady && isReady {
 			mon.status.NodeIsReady = true
-			mon.logStatus("Node is Ready")
-			// TODO: There appears to be a bug where the node becomes Ready
-			// before second CSR is approved. Log Pending CSRs for now, so users
-			// are aware there are still some waiting their approval even
-			// though the node status is Ready.
-			mon.logCSRsPendingApproval(secondCSRSignerName)
-			cancel()
+			if !mon.clusterHasSecondCSRPending() {
+				mon.logStatus(Info, "Node is Ready")
+			} else {
+				// The node becomes Ready before second CSR is approved. Log Pending CSRs
+				// so users are aware there are still some waiting their approval even
+				// though the node status is Ready.
+				mon.logStatus(Info, "Node is Ready but has CSRs pending approval. Until all CSRs are approved, the node may not be fully functional.")
+				mon.logCSRsPendingApproval(secondCSRSignerName)
+			}
+			break
 		}
 
 		if mon.cluster.API.Rest.IsRestAPILive() {
-			_, err = cluster.MonitorStatusFromAssistedService()
+			_, err = cluster.MonitorStatusFromAssistedService(mon.ch)
 			if err != nil {
-				logrus.Warnf("Node %s: %s", nodeIPAddress, err)
+				mon.logStatus(Warning, fmt.Sprintf("Error fetching status from assisted-service for node %s: %s", nodeIPAddress, err))
 			}
 		}
-	}, 5*time.Second, waitContext.Done())
 
-	waitErr := waitContext.Err()
-	if waitErr != nil {
-		if errors.Is(waitErr, context.Canceled) {
-			cancel()
+		waitErr := waitContext.Err()
+		if waitErr != nil {
+			if errors.Is(waitErr, context.Canceled) {
+				mon.logStatus(Info, fmt.Sprintf("Node monitoring cancelled: %v", waitErr))
+				break
+			}
+			if errors.Is(waitErr, context.DeadlineExceeded) {
+				mon.logStatus(Info, fmt.Sprintf("Node monitoring timed out after %v minutes", timeout))
+				break
+			}
 		}
-		if errors.Is(waitErr, context.DeadlineExceeded) {
-			return errors.Wrap(waitErr, "monitor-add-nodes process timed out")
-		}
+
+		time.Sleep(logInterval * time.Second)
 	}
 
-	return nil
+	// print out logs before channel is closed
+	printChannelLogs(nodeIPAddress, ch)
+}
+
+func (mon *addNodeMonitor) logStatus(level, message string) {
+	mon.ch <- logEntry{level: level, message: message}
 }
 
 func (mon *addNodeMonitor) nodeHasJoinedClusterAndIsReady() (bool, bool, error) {
 	nodes, err := mon.cluster.API.Kube.ListNodes()
 	if err != nil {
-		logrus.Debugf("error getting node list %v", err)
+		mon.logStatus(Debug, fmt.Sprintf("Error getting node list %v", err))
 		return false, false, nil
 	}
 
@@ -173,19 +209,19 @@ func (mon *addNodeMonitor) nodeHasJoinedClusterAndIsReady() (bool, bool, error) 
 
 	isReady := false
 	if hasJoined {
-		logrus.Debugf("Node %v (%s) has joined cluster", mon.nodeIPAddress, joinedNode.Name)
+		mon.logStatus(Debug, fmt.Sprintf("%s has joined cluster", joinedNode.Name))
 		for _, cond := range joinedNode.Status.Conditions {
 			if cond.Type == corev1.NodeReady && cond.Status == corev1.ConditionTrue {
 				isReady = true
 			}
 		}
 		if isReady {
-			logrus.Debugf("Node %s (%s) is Ready", mon.nodeIPAddress, joinedNode.Name)
+			mon.logStatus(Debug, fmt.Sprintf("%s is Ready", joinedNode.Name))
 		} else {
-			logrus.Debugf("Node %s (%s) is not Ready", mon.nodeIPAddress, joinedNode.Name)
+			mon.logStatus(Debug, fmt.Sprintf("%s is not Ready", joinedNode.Name))
 		}
 	} else {
-		logrus.Debugf("Node %s has not joined cluster", mon.nodeIPAddress)
+		mon.logStatus(Debug, "Node has not joined cluster")
 	}
 
 	return hasJoined, isReady, nil
@@ -195,7 +231,7 @@ func (mon *addNodeMonitor) logCSRsPendingApproval(signerName string) {
 	csrsPendingApproval := mon.getCSRsPendingApproval(signerName)
 
 	for _, csr := range csrsPendingApproval {
-		mon.logStatus(fmt.Sprintf("CSR %s with signerName %s and username %s is Pending and awaiting approval",
+		mon.logStatus(Info, fmt.Sprintf("CSR %s with signerName %s and username %s is Pending and awaiting approval",
 			csr.Name, csr.Spec.SignerName, csr.Spec.Username))
 	}
 }
@@ -215,15 +251,15 @@ func (mon *addNodeMonitor) getCSRsPendingApproval(signerName string) []certifica
 
 	csrs, err := mon.cluster.API.Kube.ListCSRs()
 	if err != nil {
-		logrus.Debugf("error calling listCSRs(): %v", err)
-		logrus.Infof("Cannot retrieve CSRs from Kube API. Skipping checks for pending CSRs")
+		mon.logStatus(Debug, fmt.Sprintf("Error calling listCSRs(): %v", err))
+		mon.logStatus(Info, "Cannot retrieve CSRs from Kube API. Skipping checks for pending CSRs")
 		return []certificatesv1.CertificateSigningRequest{}
 	}
 
-	return filterCSRsMatchingHostname(signerName, csrs, mon.hostnames)
+	return filterCSRsMatchingHostname(signerName, csrs, mon.hostnames, mon.ch)
 }
 
-func filterCSRsMatchingHostname(signerName string, csrs *certificatesv1.CertificateSigningRequestList, hostnames []string) []certificatesv1.CertificateSigningRequest {
+func filterCSRsMatchingHostname(signerName string, csrs *certificatesv1.CertificateSigningRequestList, hostnames []string, ch chan logEntry) []certificatesv1.CertificateSigningRequest {
 	matchedCSRs := []certificatesv1.CertificateSigningRequest{}
 	for _, csr := range csrs.Items {
 		if len(csr.Status.Conditions) > 0 {
@@ -231,7 +267,7 @@ func filterCSRsMatchingHostname(signerName string, csrs *certificatesv1.Certific
 			continue
 		}
 		if signerName == firstCSRSignerName && csr.Spec.SignerName == firstCSRSignerName &&
-			containsHostname(decodedFirstCSRSubject(csr.Spec.Request), hostnames) {
+			containsHostname(decodedFirstCSRSubject(csr.Spec.Request, ch), hostnames) {
 			matchedCSRs = append(matchedCSRs, csr)
 		}
 		if signerName == secondCSRSignerName && csr.Spec.SignerName == secondCSRSignerName &&
@@ -264,7 +300,7 @@ func (mon *addNodeMonitor) isKubeletRunningOnNode() bool {
 	// http get without authentication
 	resp, err := http.Get(url) //nolint mon.nodeIPAddress is prevalidated to be IP address
 	if err != nil {
-		logrus.Debugf("kubelet http err: %v", err)
+		mon.logStatus(Debug, fmt.Sprintf("kubelet http err: %v", err))
 		if strings.Contains(err.Error(), "remote error: tls: internal error") {
 			// nodes being added will return this error
 			return true
@@ -277,7 +313,7 @@ func (mon *addNodeMonitor) isKubeletRunningOnNode() bool {
 			return false
 		}
 	} else {
-		logrus.Debugf("kubelet http status code: %v", resp.StatusCode)
+		mon.logStatus(Debug, fmt.Sprintf("kubelet http status code: %v", resp.StatusCode))
 	}
 	return false
 }
@@ -306,7 +342,7 @@ func (mon *addNodeMonitor) isKubeletRunningOnNode() bool {
 // Signature Algorithm: ecdsa-with-SHA256
 //
 //	*snip*
-func decodedFirstCSRSubject(request []byte) string {
+func decodedFirstCSRSubject(request []byte, ch chan logEntry) string {
 	block, _ := pem.Decode(request)
 	if block == nil {
 		return ""
@@ -314,7 +350,9 @@ func decodedFirstCSRSubject(request []byte) string {
 	csrDER := block.Bytes
 	decodedRequest, err := x509.ParseCertificateRequest(csrDER)
 	if err != nil {
-		logrus.Warn("error in x509.ParseCertificateRequest(csrDER)")
+		if ch != nil {
+			log(Warning, "error in x509.ParseCertificateRequest(csrDER)", nil, ch)
+		}
 		return ""
 	}
 	return decodedRequest.Subject.String()

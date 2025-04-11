@@ -53,6 +53,13 @@ func ResourceIbmIsShare() *schema.Resource {
 		),
 
 		Schema: map[string]*schema.Schema{
+			"allowed_transit_encryption_modes": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Allowed transit encryption modes",
+			},
 			"encryption_key": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -104,8 +111,8 @@ func ResourceIbmIsShare() *schema.Resource {
 				Type:          schema.TypeInt,
 				Optional:      true,
 				Computed:      true,
-				ExactlyOneOf:  []string{"size", "source_share", "source_share_crn"},
-				ConflictsWith: []string{"replication_cron_spec", "source_share", "source_share_crn"},
+				ExactlyOneOf:  []string{"size", "source_share", "source_share_crn", "origin_share.0.id", "origin_share.0.crn"},
+				ConflictsWith: []string{"replication_cron_spec", "source_share", "source_share_crn", "origin_share.0.id", "origin_share.0.crn"},
 				ValidateFunc:  validate.InvokeValidator("ibm_is_share", "size"),
 				Description:   "The size of the file share rounded up to the next gigabyte.",
 			},
@@ -155,6 +162,7 @@ func ResourceIbmIsShare() *schema.Resource {
 									},
 									"id": {
 										Type:        schema.TypeString,
+										Optional:    true,
 										Computed:    true,
 										Description: "ID of this VNI",
 									},
@@ -163,6 +171,29 @@ func ResourceIbmIsShare() *schema.Resource {
 										Optional:    true,
 										Computed:    true,
 										Description: "Name of this VNI",
+									},
+									"allow_ip_spoofing": &schema.Schema{
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Indicates whether source IP spoofing is allowed on this interface. If `false`, source IP spoofing is prevented on this interface. If `true`, source IP spoofing is allowed on this interface.",
+									},
+									"auto_delete": &schema.Schema{
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Computed:    true,
+										Description: "Indicates whether this virtual network interface will be automatically deleted when`target` is deleted.",
+									},
+									"enable_infrastructure_nat": &schema.Schema{
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "If `true`:- The VPC infrastructure performs any needed NAT operations.- `floating_ips` must not have more than one floating IP.If `false`:- Packets are passed unchanged to/from the network interface,  allowing the workload to perform any needed NAT operations.- `allow_ip_spoofing` must be `false`.- If the virtual network interface is attached:  - The target `resource_type` must be `bare_metal_server_network_attachment`.  - The target `interface_type` must not be `hipersocket`.",
+									},
+									"protocol_state_filtering_mode": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										Computed:     true,
+										ValidateFunc: validate.InvokeValidator("ibm_is_virtual_network_interface", "protocol_state_filtering_mode"),
+										Description:  "The protocol state filtering mode used for this virtual network interface.",
 									},
 									"primary_ip": {
 										Type:        schema.TypeList,
@@ -230,6 +261,7 @@ func ResourceIbmIsShare() *schema.Resource {
 									"subnet": {
 										Type:        schema.TypeString,
 										Optional:    true,
+										Computed:    true,
 										Description: "The associated subnet. Required if primary_ip is not specified.",
 									},
 								},
@@ -264,14 +296,15 @@ func ResourceIbmIsShare() *schema.Resource {
 			},
 			"profile": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
 				Description: "The globally unique name for this share profile.",
 			},
 			"replica_share": &schema.Schema{
 				Type:          schema.TypeList,
 				MaxItems:      1,
 				Optional:      true,
-				ConflictsWith: []string{"source_share"},
+				ConflictsWith: []string{"source_share", "origin_share.0.id", "origin_share.0.crn"},
 				Description:   "Configuration for a replica file share to create and associate with this file share. Ifunspecified, a replica may be subsequently added by creating a new file share with a`source_share` referencing this file share.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -370,6 +403,12 @@ func ResourceIbmIsShare() *schema.Resource {
 										Computed:    true,
 										Description: "The user-defined name for this share target. Names must be unique within the share the share target resides in. If unspecified, the name will be a hyphenated list of randomly-selected words.",
 									},
+									"transit_encryption": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: "The transit encryption mode.",
+									},
 									"virtual_network_interface": {
 										Type:        schema.TypeList,
 										Optional:    true,
@@ -388,6 +427,7 @@ func ResourceIbmIsShare() *schema.Resource {
 												},
 												"id": {
 													Type:        schema.TypeString,
+													Optional:    true,
 													Computed:    true,
 													Description: "ID of this VNI",
 												},
@@ -396,6 +436,29 @@ func ResourceIbmIsShare() *schema.Resource {
 													Optional:    true,
 													Computed:    true,
 													Description: "Name of this VNI",
+												},
+												"allow_ip_spoofing": &schema.Schema{
+													Type:        schema.TypeBool,
+													Computed:    true,
+													Description: "Indicates whether source IP spoofing is allowed on this interface. If `false`, source IP spoofing is prevented on this interface. If `true`, source IP spoofing is allowed on this interface.",
+												},
+												"auto_delete": &schema.Schema{
+													Type:        schema.TypeBool,
+													Optional:    true,
+													Computed:    true,
+													Description: "Indicates whether this virtual network interface will be automatically deleted when`target` is deleted.",
+												},
+												"enable_infrastructure_nat": &schema.Schema{
+													Type:        schema.TypeBool,
+													Computed:    true,
+													Description: "If `true`:- The VPC infrastructure performs any needed NAT operations.- `floating_ips` must not have more than one floating IP.If `false`:- Packets are passed unchanged to/from the network interface,  allowing the workload to perform any needed NAT operations.- `allow_ip_spoofing` must be `false`.- If the virtual network interface is attached:  - The target `resource_type` must be `bare_metal_server_network_attachment`.  - The target `interface_type` must not be `hipersocket`.",
+												},
+												"protocol_state_filtering_mode": {
+													Type:         schema.TypeString,
+													Optional:     true,
+													Computed:     true,
+													ValidateFunc: validate.InvokeValidator("ibm_is_virtual_network_interface", "protocol_state_filtering_mode"),
+													Description:  "The protocol state filtering mode used for this virtual network interface.",
 												},
 												"primary_ip": {
 													Type:        schema.TypeList,
@@ -463,6 +526,7 @@ func ResourceIbmIsShare() *schema.Resource {
 												"subnet": {
 													Type:        schema.TypeString,
 													Optional:    true,
+													Computed:    true,
 													Description: "The associated subnet. Required if primary_ip is not specified.",
 												},
 											},
@@ -476,6 +540,7 @@ func ResourceIbmIsShare() *schema.Resource {
 									"vpc": {
 										Type:        schema.TypeString,
 										Optional:    true,
+										Computed:    true,
 										Description: "The ID of the VPC in which instances can mount the file share using this share target.This property will be removed in a future release.The `subnet` property should be used instead.",
 									},
 								},
@@ -511,7 +576,7 @@ func ResourceIbmIsShare() *schema.Resource {
 				Optional:      true,
 				ForceNew:      true,
 				Computed:      true,
-				ConflictsWith: []string{"replica_share", "size", "source_share_crn"},
+				ConflictsWith: []string{"replica_share", "size", "source_share_crn", "origin_share.0.id", "origin_share.0.crn", "source_snapshot.0.id", "source_snapshot.0.crn"},
 				RequiredWith:  []string{"replication_cron_spec"},
 				Description:   "The ID of the source file share for this replica file share. The specified file share must not already have a replica, and must not be a replica.",
 			},
@@ -520,16 +585,183 @@ func ResourceIbmIsShare() *schema.Resource {
 				Optional:      true,
 				ForceNew:      true,
 				Computed:      true,
-				ConflictsWith: []string{"replica_share", "size", "source_share"},
+				ConflictsWith: []string{"replica_share", "size", "source_share", "origin_share.0.id", "origin_share.0.crn", "source_snapshot.0.id", "source_snapshot.0.crn"},
 				RequiredWith:  []string{"replication_cron_spec"},
 				Description:   "The CRN of the source file share for this replica file share. The specified file share must not already have a replica, and must not be a replica.",
+			},
+			"source_snapshot": &schema.Schema{
+				Type:          schema.TypeList,
+				MaxItems:      1,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"zone", "source_share", "source_share_crn", "origin_share.0.id", "origin_share.0.crn"},
+				Description:   "The snapshot from which this share was cloned.This property will be present when the share was created from a snapshot.The resources supported by this property may[expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in thefuture.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"crn": &schema.Schema{
+							Type:          schema.TypeString,
+							Optional:      true,
+							Computed:      true,
+							ConflictsWith: []string{"source_snapshot.0.id"},
+							Description:   "The CRN for this share snapshot.",
+						},
+						"deleted": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						"href": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this share snapshot.",
+						},
+						"id": &schema.Schema{
+							Type:          schema.TypeString,
+							Optional:      true,
+							Computed:      true,
+							ConflictsWith: []string{"source_snapshot.0.crn"},
+							Description:   "The unique identifier for this share snapshot.",
+						},
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name for this share snapshot. The name is unique across all snapshots for the file share.",
+						},
+						"resource_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
+			},
+			"snapshot_count": &schema.Schema{
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The total number of snapshots for this share.",
+			},
+			"snapshot_size": &schema.Schema{
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The total size (in gigabytes) of snapshots used for this file share.",
+			},
+			"origin_share": &schema.Schema{
+				Type:          schema.TypeList,
+				MaxItems:      1,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"replica_share", "size", "source_share", "source_share_crn", "source_snapshot.0.id", "source_snapshot.0.crn"},
+				Description:   "The origin share this accessor share is referring to.This property will be present when the `accessor_binding_role` is `accessor`.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"crn": &schema.Schema{
+							Type:          schema.TypeString,
+							Optional:      true,
+							Computed:      true,
+							ConflictsWith: []string{"origin_share.0.id"},
+							Description:   "The CRN for this file share.",
+						},
+						"deleted": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						"href": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this file share.",
+						},
+						"id": &schema.Schema{
+							Type:          schema.TypeString,
+							Optional:      true,
+							Computed:      true,
+							ConflictsWith: []string{"origin_share.0.crn"},
+							Description:   "The unique identifier for this file share.",
+						},
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name for this share. The name is unique across all shares in the region.",
+						},
+						"remote": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates that the resource associated with this referenceis remote and therefore may not be directly retrievable.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"account": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates that the referenced resource is remote to thisaccount, and identifies the owning account.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"id": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The unique identifier for this account.",
+												},
+												"resource_type": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The resource type.",
+												},
+											},
+										},
+									},
+									"region": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates that the referenced resource is remote to thisregion, and identifies the native region.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"href": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The URL for this region.",
+												},
+												"name": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The globally unique name for this region.",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"resource_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
 			},
 			"replication_cron_spec": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
 				DiffSuppressFunc: suppressCronSpecDiff,
 				Computed:         true,
-				ConflictsWith:    []string{"replica_share", "size"},
+				ConflictsWith:    []string{"replica_share", "size", "origin_share.0.id", "origin_share.0.crn"},
 				Description:      "The cron specification for the file share replication schedule.Replication of a share can be scheduled to occur at most once per hour.",
 			},
 			"replication_role": &schema.Schema{
@@ -638,6 +870,32 @@ func ResourceIbmIsShare() *schema.Resource {
 					},
 				},
 			},
+			"lifecycle_reasons": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current lifecycle_state (if any).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A reason code for this lifecycle state",
+						},
+
+						"message": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the reason for this lifecycle state.",
+						},
+
+						"more_info": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about the reason for this lifecycle state.",
+						},
+					},
+				},
+			},
 			"lifecycle_state": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -645,7 +903,8 @@ func ResourceIbmIsShare() *schema.Resource {
 			},
 			"zone": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
 				ForceNew:    true,
 				Description: "The globally unique name of the zone this file share will reside in.",
 			},
@@ -690,11 +949,41 @@ func ResourceIbmIsShare() *schema.Resource {
 				Computed:    true,
 				Description: "The type of resource referenced.",
 			},
+			"accessor_binding_role": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The accessor binding role of this file share:- `none`: This file share is not participating in access with another file share- `origin`: This file share is the origin for one or more file shares  (which may be in other accounts)- `accessor`: This file share is providing access to another file share  (which may be in another account).",
+			},
+			"accessor_bindings": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The accessor bindings for this file share. Each accessor binding identifies a resource (possibly in another account) with access to this file share's data.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"href": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this share accessor binding.",
+						},
+						"id": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for this share accessor binding.",
+						},
+						"resource_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
+			},
 		},
 	}
 }
 
 func ResourceIbmIsShareValidator() *validate.ResourceValidator {
+	allowed_transit_encryption_modes := "none, user_managed"
 	validateSchema := make([]validate.ValidateSchema, 1)
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
@@ -740,6 +1029,14 @@ func ResourceIbmIsShareValidator() *validate.ResourceValidator {
 			MinValueLength:             1,
 			MaxValueLength:             128,
 		},
+
+		validate.ValidateSchema{
+			Identifier:                 isIpSecAuthenticationAlg,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			AllowedValues:              allowed_transit_encryption_modes,
+		},
 	)
 
 	resourceValidator := validate.ResourceValidator{ResourceName: "ibm_is_share", Schema: validateSchema}
@@ -759,6 +1056,13 @@ func resourceIbmIsShareCreate(context context.Context, d *schema.ResourceData, m
 		accessControlMode := accessControlModeIntf.(string)
 		sharePrototype.AccessControlMode = &accessControlMode
 	}
+	if allowedTransitEncryptionModesIntf, ok := d.GetOk("allowed_transit_encryption_modes"); ok {
+		allowedTransitEncryptionModes := []string{}
+		for _, allowedTransitEncryptionModesItem := range allowedTransitEncryptionModesIntf.([]interface{}) {
+			allowedTransitEncryptionModes = append(allowedTransitEncryptionModes, allowedTransitEncryptionModesItem.(string))
+		}
+		sharePrototype.AllowedTransitEncryptionModes = allowedTransitEncryptionModes
+	}
 	if encryptionKeyIntf, ok := d.GetOk("encryption_key"); ok {
 		encryptionKey := encryptionKeyIntf.(string)
 		encryptionKeyIdentity := &vpcv1.EncryptionKeyIdentity{
@@ -766,10 +1070,26 @@ func resourceIbmIsShareCreate(context context.Context, d *schema.ResourceData, m
 		}
 		sharePrototype.EncryptionKey = encryptionKeyIdentity
 	}
-	if sizeIntf, ok := d.GetOk("size"); ok {
-
-		size := int64(sizeIntf.(int))
-		sharePrototype.Size = &size
+	if resgrp, ok := d.GetOk("resource_group"); ok {
+		resgrpstr := resgrp.(string)
+		resourceGroup := &vpcv1.ResourceGroupIdentity{
+			ID: &resgrpstr,
+		}
+		sharePrototype.ResourceGroup = resourceGroup
+	}
+	_, snapshotOk := d.GetOk("source_snapshot")
+	_, sizeOk := d.GetOk("size")
+	if snapshotOk || sizeOk {
+		if sourceSnapshotIntf, snapOk := d.GetOk("source_snapshot"); snapOk {
+			if len(sourceSnapshotIntf.([]interface{})) > 0 {
+				SourceSnapshotModel := ResourceIBMIsShareMapToShareSourceSnapshotPrototype(sourceSnapshotIntf.([]interface{})[0].(map[string]interface{}))
+				sharePrototype.SourceSnapshot = SourceSnapshotModel
+			}
+		}
+		if sizeIntf, sizeIntfOk := d.GetOk("size"); sizeIntfOk {
+			size := int64(sizeIntf.(int))
+			sharePrototype.Size = &size
+		}
 
 		initial_owner := &vpcv1.ShareInitialOwner{}
 		if initialOwnerIntf, ok := d.GetOk("initial_owner"); ok {
@@ -783,13 +1103,7 @@ func resourceIbmIsShareCreate(context context.Context, d *schema.ResourceData, m
 				initial_owner.Uid = &initialOwnerUID
 			}
 		}
-		if resgrp, ok := d.GetOk("resource_group"); ok {
-			resgrpstr := resgrp.(string)
-			resourceGroup := &vpcv1.ResourceGroupIdentity{
-				ID: &resgrpstr,
-			}
-			sharePrototype.ResourceGroup = resourceGroup
-		}
+
 		if replicaShareIntf, ok := d.GetOk("replica_share"); ok {
 			replicaShareMap := replicaShareIntf.([]interface{})[0].(map[string]interface{})
 			replicaShare := &vpcv1.SharePrototypeShareContext{}
@@ -819,9 +1133,10 @@ func resourceIbmIsShareCreate(context context.Context, d *schema.ResourceData, m
 			if ok {
 				var targets []vpcv1.ShareMountTargetPrototypeIntf
 				targetsIntf := replicaTargets.([]interface{})
-				for _, targetIntf := range targetsIntf {
+				for tergetIdx, targetIntf := range targetsIntf {
 					target := targetIntf.(map[string]interface{})
-					targetsItem, err := resourceIbmIsShareMapToShareMountTargetPrototype(d, target)
+					autoDeleteSchema := fmt.Sprintf("replica_share.0.mount_targets.%d.virtual_network_interface.0.auto_delete", tergetIdx)
+					targetsItem, err := resourceIbmIsShareMapToShareMountTargetPrototype(d, target, autoDeleteSchema)
 					if err != nil {
 						return diag.FromErr(err)
 					}
@@ -850,25 +1165,31 @@ func resourceIbmIsShareCreate(context context.Context, d *schema.ResourceData, m
 			}
 			sharePrototype.ReplicaShare = replicaShare
 		}
-	} else {
-		sourceShare := d.Get("source_share").(string)
+	} else if sourceShareIntf, sShareok := d.GetOk("source_share"); sShareok {
+		sourceShare := sourceShareIntf.(string)
 		if sourceShare != "" {
 			sharePrototype.SourceShare = &vpcv1.ShareIdentity{
 				ID: &sourceShare,
 			}
-		} else {
-			sourceShareCRN := d.Get("source_share_crn").(string)
-			if sourceShareCRN != "" {
-				sharePrototype.SourceShare = &vpcv1.ShareIdentity{
-					CRN: &sourceShareCRN,
-				}
-			}
 		}
-
 		replicationCronSpec := d.Get("replication_cron_spec").(string)
 		sharePrototype.ReplicationCronSpec = &replicationCronSpec
+	} else if sourceShareCrnIntf, sShareCrnok := d.GetOk("source_share_crn"); sShareCrnok {
+		sourceShareCRN := sourceShareCrnIntf.(string)
+		if sourceShareCRN != "" {
+			sharePrototype.SourceShare = &vpcv1.ShareIdentity{
+				CRN: &sourceShareCRN,
+			}
+		}
+		replicationCronSpec := d.Get("replication_cron_spec").(string)
+		sharePrototype.ReplicationCronSpec = &replicationCronSpec
+	} else if _, originShareOk := d.GetOk("origin_share"); originShareOk {
+		originShare := d.Get("origin_share")
+		if len(originShare.([]interface{})) > 0 {
+			OriginShareModel := ResourceIBMIsShareMapToShareIdentity(originShare.([]interface{})[0].(map[string]interface{}))
+			sharePrototype.OriginShare = OriginShareModel
+		}
 	}
-
 	if iopsIntf, ok := d.GetOk("iops"); ok {
 		iops := int64(iopsIntf.(int))
 		sharePrototype.Iops = &iops
@@ -887,9 +1208,10 @@ func resourceIbmIsShareCreate(context context.Context, d *schema.ResourceData, m
 
 	if shareTargetPrototypeIntf, ok := d.GetOk("mount_targets"); ok {
 		var targets []vpcv1.ShareMountTargetPrototypeIntf
-		for _, e := range shareTargetPrototypeIntf.([]interface{}) {
+		for targetIdx, e := range shareTargetPrototypeIntf.([]interface{}) {
 			value := e.(map[string]interface{})
-			targetsItem, err := resourceIbmIsShareMapToShareMountTargetPrototype(d, value)
+			autoDeleteSchema := fmt.Sprintf("mount_targets.%d.virtual_network_interface.0.auto_delete", targetIdx)
+			targetsItem, err := resourceIbmIsShareMapToShareMountTargetPrototype(d, value, autoDeleteSchema)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -962,7 +1284,7 @@ func resourceIbmIsShareCreate(context context.Context, d *schema.ResourceData, m
 	return resourceIbmIsShareRead(context, d, meta)
 }
 
-func resourceIbmIsShareMapToShareMountTargetPrototype(d *schema.ResourceData, shareTargetPrototypeMap map[string]interface{}) (vpcv1.ShareMountTargetPrototype, error) {
+func resourceIbmIsShareMapToShareMountTargetPrototype(d *schema.ResourceData, shareTargetPrototypeMap map[string]interface{}, autoDeleteSchema string) (vpcv1.ShareMountTargetPrototype, error) {
 	shareTargetPrototype := vpcv1.ShareMountTargetPrototype{}
 
 	if nameIntf, ok := shareTargetPrototypeMap["name"]; ok && nameIntf != "" {
@@ -977,11 +1299,20 @@ func resourceIbmIsShareMapToShareMountTargetPrototype(d *schema.ResourceData, sh
 	} else if vniIntf, ok := shareTargetPrototypeMap["virtual_network_interface"]; ok {
 		vniPrototype := vpcv1.ShareMountTargetVirtualNetworkInterfacePrototype{}
 		vniMap := vniIntf.([]interface{})[0].(map[string]interface{})
-		vniPrototype, err := ShareMountTargetMapToShareMountTargetPrototype(d, vniMap)
-		if err != nil {
-			return shareTargetPrototype, err
+
+		VNIIdIntf, ok := vniMap["id"]
+		VNIId := VNIIdIntf.(string)
+		if ok && VNIId != "" {
+			vniPrototype.ID = &VNIId
+			shareTargetPrototype.VirtualNetworkInterface = &vniPrototype
+		} else {
+			vniPrototype, err := ShareMountTargetMapToShareMountTargetPrototype(d, vniMap, autoDeleteSchema)
+			if err != nil {
+				return shareTargetPrototype, err
+			}
+			shareTargetPrototype.VirtualNetworkInterface = &vniPrototype
 		}
-		shareTargetPrototype.VirtualNetworkInterface = &vniPrototype
+
 	}
 	if transitEncryptionIntf, ok := shareTargetPrototypeMap["transit_encryption"]; ok && transitEncryptionIntf != "" {
 		transitEncryption := transitEncryptionIntf.(string)
@@ -1020,6 +1351,19 @@ func resourceIbmIsShareRead(context context.Context, d *schema.ResourceData, met
 			return diag.FromErr(fmt.Errorf("Error setting access_control_mode: %s", err))
 		}
 	}
+	if !core.IsNil(share.AllowedTransitEncryptionModes) {
+		if err = d.Set("allowed_transit_encryption_modes", share.AllowedTransitEncryptionModes); err != nil {
+			err = fmt.Errorf("Error setting allowed_transit_encryption_modes: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_is_share", "read", "set-allowed_transit_encryption_modes").GetDiag()
+		}
+	}
+	if !core.IsNil(share.OriginShare) {
+		originShareMap := ResourceIBMIsShareShareReferenceToMap(share.OriginShare)
+		if err = d.Set("origin_share", []map[string]interface{}{originShareMap}); err != nil {
+			err = fmt.Errorf("Error setting origin_share: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_is_share", "read", "set-origin_share").GetDiag()
+		}
+	}
 	if err = d.Set("iops", flex.IntValue(share.Iops)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting iops: %s", err))
 	}
@@ -1038,6 +1382,21 @@ func resourceIbmIsShareRead(context context.Context, d *schema.ResourceData, met
 	}
 	if err = d.Set("size", flex.IntValue(share.Size)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting size: %s", err))
+	}
+	if err = d.Set("accessor_binding_role", share.AccessorBindingRole); err != nil {
+		err = fmt.Errorf("Error setting accessor_binding_role: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_is_share", "read", "set-accessor_binding_role").GetDiag()
+	}
+	accessorBindings := []map[string]interface{}{}
+	for _, accessorBindingsItem := range share.AccessorBindings {
+
+		accessorBindingsItemMap := ResourceIBMIsShareShareAccessorBindingReferenceToMap(&accessorBindingsItem)
+		accessorBindings = append(accessorBindings, accessorBindingsItemMap)
+
+	}
+	if err = d.Set("accessor_bindings", accessorBindings); err != nil {
+		err = fmt.Errorf("Error setting accessor_bindings: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_is_share", "read", "set-accessor_bindings").GetDiag()
 	}
 	targets := make([]map[string]interface{}, 0)
 	if share.MountTargets != nil {
@@ -1109,13 +1468,35 @@ func resourceIbmIsShareRead(context context.Context, d *schema.ResourceData, met
 	if err = d.Set("href", share.Href); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
 	}
+	if share.LifecycleReasons != nil {
+		if err := d.Set("lifecycle_reasons", resourceShareLifecycleReasons(share.LifecycleReasons)); err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting lifecycle_reasons: %s", err))
+		}
+	}
 	if err = d.Set("lifecycle_state", share.LifecycleState); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting lifecycle_state: %s", err))
 	}
 	if err = d.Set("resource_type", share.ResourceType); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting resource_type: %s", err))
 	}
-
+	if err = d.Set("snapshot_count", flex.IntValue(share.SnapshotCount)); err != nil {
+		err = fmt.Errorf("Error setting snapshot_count: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_is_share", "read", "set-snapshot_count").GetDiag()
+	}
+	if err = d.Set("snapshot_size", flex.IntValue(share.SnapshotSize)); err != nil {
+		err = fmt.Errorf("Error setting snapshot_size: %s", err)
+		return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_is_share", "read", "set-snapshot_size").GetDiag()
+	}
+	if !core.IsNil(share.SourceSnapshot) {
+		sourceSnapshotMap, err := ResourceIBMIsShareShareSourceSnapshotToMap(share.SourceSnapshot)
+		if err != nil {
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_is_share", "read", "source_snapshot-to-map").GetDiag()
+		}
+		if err = d.Set("source_snapshot", []map[string]interface{}{sourceSnapshotMap}); err != nil {
+			err = fmt.Errorf("Error setting source_snapshot: %s", err)
+			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_is_share", "read", "set-source_snapshot").GetDiag()
+		}
+	}
 	latest_syncs := []map[string]interface{}{}
 	if share.LatestSync != nil {
 		latest_sync := make(map[string]interface{})
@@ -1564,6 +1945,7 @@ func shareUpdate(vpcClient *vpcv1.VpcV1, context context.Context, d *schema.Reso
 		shareCRN = "replica_share.0.crn"
 		replicationCronSpec = "replica_share.0.replication_cron_spec"
 	}
+
 	if d.HasChange(shareNameSchema) {
 		name := d.Get(shareNameSchema).(string)
 		sharePatchModel.Name = &name
@@ -1584,6 +1966,15 @@ func shareUpdate(vpcClient *vpcv1.VpcV1, context context.Context, d *schema.Reso
 				sharePatchModel.AccessControlMode = &accessControlMode
 				hasChange = true
 			}
+		}
+		if d.HasChange("allowed_transit_encryption_modes") {
+			var allowedTransitEncryptionModes []string
+			for _, v := range d.Get("allowed_transit_encryption_modes").([]interface{}) {
+				allowedTransitEncryptionModesItem := v.(string)
+				allowedTransitEncryptionModes = append(allowedTransitEncryptionModes, allowedTransitEncryptionModesItem)
+			}
+			sharePatchModel.AllowedTransitEncryptionModes = allowedTransitEncryptionModes
+			hasChange = true
 		}
 	}
 	if d.HasChange(replicationCronSpec) {
@@ -1663,6 +2054,7 @@ func shareUpdate(vpcClient *vpcv1.VpcV1, context context.Context, d *schema.Reso
 		for targetIdx := range target_prototype {
 			targetName := fmt.Sprintf("%s.%d.name", shareMountTargetSchema, targetIdx)
 			vniName := fmt.Sprintf("%s.%d.virtual_network_interface.0.name", shareMountTargetSchema, targetIdx)
+			vniAutoDelete := fmt.Sprintf("%s.%d.virtual_network_interface.0.auto_delete", shareMountTargetSchema, targetIdx)
 			vniId := fmt.Sprintf("%s.%d.virtual_network_interface.0.id", shareMountTargetSchema, targetIdx)
 			targetId := fmt.Sprintf("%s.%d.id", shareMountTargetSchema, targetIdx)
 			securityGroups := fmt.Sprintf("%s.%d.virtual_network_interface.0.security_groups", shareMountTargetSchema, targetIdx)
@@ -1670,6 +2062,7 @@ func shareUpdate(vpcClient *vpcv1.VpcV1, context context.Context, d *schema.Reso
 			vniPrimaryIpAutoDelete := fmt.Sprintf("%s.%d.virtual_network_interface.0.primary_ip.0.auto_delete", shareMountTargetSchema, targetIdx)
 			vniSubnet := fmt.Sprintf("%s.%d.virtual_network_interface.0.subnet", shareMountTargetSchema, targetIdx)
 			vniResvedIp := fmt.Sprintf("%s.%d.virtual_network_interface.0.primary_ip.0.reserved_ip", shareMountTargetSchema, targetIdx)
+			vniPSFM := fmt.Sprintf("%s.%d.virtual_network_interface.0.protocol_state_filtering_mode", shareMountTargetSchema, targetIdx)
 			mountTargetId := d.Get(targetId).(string)
 			if d.HasChange(targetName) {
 				updateShareTargetOptions := &vpcv1.UpdateShareMountTargetOptions{}
@@ -1699,10 +2092,19 @@ func shareUpdate(vpcClient *vpcv1.VpcV1, context context.Context, d *schema.Reso
 				}
 			}
 
-			if d.HasChange(vniName) {
-				vniNameStr := d.Get(vniName).(string)
-				vniPatchModel := &vpcv1.VirtualNetworkInterfacePatch{
-					Name: &vniNameStr,
+			if d.HasChange(vniName) || d.HasChange(vniAutoDelete) || d.HasChange(vniPSFM) {
+				vniPatchModel := &vpcv1.VirtualNetworkInterfacePatch{}
+				if d.HasChange(vniName) {
+					vniNameStr := d.Get(vniName).(string)
+					vniPatchModel.Name = &vniNameStr
+				}
+				if d.HasChange(vniAutoDelete) {
+					autoDelete := d.Get(vniAutoDelete).(bool)
+					vniPatchModel.AutoDelete = &autoDelete
+				}
+				if d.HasChange(vniPSFM) {
+					psfm := d.Get(vniPSFM).(string)
+					vniPatchModel.ProtocolStateFilteringMode = &psfm
 				}
 				vniPatch, err := vniPatchModel.AsPatch()
 				if err != nil {
@@ -1832,4 +2234,151 @@ func shareUpdate(vpcClient *vpcv1.VpcV1, context context.Context, d *schema.Reso
 		}
 	}
 	return nil
+}
+func ResourceIBMIsShareShareAccessorBindingReferenceToMap(model *vpcv1.ShareAccessorBindingReference) map[string]interface{} {
+	modelMap := make(map[string]interface{})
+	modelMap["href"] = *model.Href
+	modelMap["id"] = *model.ID
+	modelMap["resource_type"] = *model.ResourceType
+	return modelMap
+}
+func ResourceIBMIsShareMapToShareIdentity(modelMap map[string]interface{}) vpcv1.ShareIdentityIntf {
+	model := &vpcv1.ShareIdentity{}
+	if modelMap["id"] != nil && modelMap["id"].(string) != "" {
+		model.ID = core.StringPtr(modelMap["id"].(string))
+	}
+	if modelMap["crn"] != nil && modelMap["crn"].(string) != "" {
+		model.CRN = core.StringPtr(modelMap["crn"].(string))
+	}
+	return model
+}
+func ResourceIBMIsShareMapToShareSourceSnapshotPrototype(modelMap map[string]interface{}) vpcv1.ShareSourceSnapshotPrototypeIntf {
+	model := &vpcv1.ShareSourceSnapshotPrototype{}
+	if modelMap["id"] != nil && modelMap["id"].(string) != "" {
+		model.ID = core.StringPtr(modelMap["id"].(string))
+	}
+	if modelMap["crn"] != nil && modelMap["crn"].(string) != "" {
+		model.CRN = core.StringPtr(modelMap["crn"].(string))
+	}
+	return model
+}
+func ResourceIBMIsShareShareReferenceToMap(model *vpcv1.ShareReference) map[string]interface{} {
+	modelMap := make(map[string]interface{})
+	modelMap["crn"] = *model.CRN
+	if model.Deleted != nil {
+		deletedMap := ResourceIBMIsShareShareReferenceDeletedToMap(model.Deleted)
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = *model.Href
+	modelMap["id"] = *model.ID
+	modelMap["name"] = *model.Name
+	if model.Remote != nil {
+		remoteMap := ResourceIBMIsShareShareRemoteToMap(model.Remote)
+		modelMap["remote"] = []map[string]interface{}{remoteMap}
+	}
+	modelMap["resource_type"] = *model.ResourceType
+	return modelMap
+}
+func ResourceIBMIsShareShareRemoteToMap(model *vpcv1.ShareRemote) map[string]interface{} {
+	modelMap := make(map[string]interface{})
+	if model.Account != nil {
+		accountMap := ResourceIBMIsShareAccountReferenceToMap(model.Account)
+
+		modelMap["account"] = []map[string]interface{}{accountMap}
+	}
+	if model.Region != nil {
+		regionMap := ResourceIBMIsShareRegionReferenceToMap(model.Region)
+
+		modelMap["region"] = []map[string]interface{}{regionMap}
+	}
+	return modelMap
+}
+
+func ResourceIBMIsShareAccountReferenceToMap(model *vpcv1.AccountReference) map[string]interface{} {
+	modelMap := make(map[string]interface{})
+	modelMap["id"] = *model.ID
+	modelMap["resource_type"] = *model.ResourceType
+	return modelMap
+}
+
+func ResourceIBMIsShareRegionReferenceToMap(model *vpcv1.RegionReference) map[string]interface{} {
+	modelMap := make(map[string]interface{})
+	modelMap["href"] = *model.Href
+	modelMap["name"] = *model.Name
+	return modelMap
+}
+func ResourceIBMIsShareShareReferenceDeletedToMap(model *vpcv1.Deleted) map[string]interface{} {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = *model.MoreInfo
+	return modelMap
+}
+func resourceShareLifecycleReasons(lifecycleReasons []vpcv1.ShareLifecycleReason) (lifecycleReasonsList []map[string]interface{}) {
+	lifecycleReasonsList = make([]map[string]interface{}, 0)
+	for _, lr := range lifecycleReasons {
+		currentLR := map[string]interface{}{}
+		if lr.Code != nil && lr.Message != nil {
+			currentLR["code"] = *lr.Code
+			currentLR["message"] = *lr.Message
+			if lr.MoreInfo != nil {
+				currentLR["more_info"] = *lr.MoreInfo
+			}
+			lifecycleReasonsList = append(lifecycleReasonsList, currentLR)
+		}
+	}
+	return lifecycleReasonsList
+}
+
+func ResourceIBMIsShareShareSourceSnapshotToMap(model vpcv1.ShareSourceSnapshotIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*vpcv1.ShareSourceSnapshotShareSnapshotReference); ok {
+		return ResourceIBMIsShareShareSourceSnapshotShareSnapshotReferenceToMap(model.(*vpcv1.ShareSourceSnapshotShareSnapshotReference))
+	} else if _, ok := model.(*vpcv1.ShareSourceSnapshot); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*vpcv1.ShareSourceSnapshot)
+		if model.CRN != nil {
+			modelMap["crn"] = *model.CRN
+		}
+		if model.Deleted != nil {
+			deletedMap, err := ResourceIBMIsShareDeletedToMap(model.Deleted)
+			if err != nil {
+				return modelMap, err
+			}
+			modelMap["deleted"] = []map[string]interface{}{deletedMap}
+		}
+		if model.Href != nil {
+			modelMap["href"] = *model.Href
+		}
+		if model.ID != nil {
+			modelMap["id"] = *model.ID
+		}
+		if model.Name != nil {
+			modelMap["name"] = *model.Name
+		}
+		if model.ResourceType != nil {
+			modelMap["resource_type"] = *model.ResourceType
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized vpcv1.ShareSourceSnapshotIntf subtype encountered")
+	}
+}
+func ResourceIBMIsShareShareSourceSnapshotShareSnapshotReferenceToMap(model *vpcv1.ShareSourceSnapshotShareSnapshotReference) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["crn"] = *model.CRN
+	if model.Deleted != nil {
+		deletedMap, err := ResourceIBMIsShareDeletedToMap(model.Deleted)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["deleted"] = []map[string]interface{}{deletedMap}
+	}
+	modelMap["href"] = *model.Href
+	modelMap["id"] = *model.ID
+	modelMap["name"] = *model.Name
+	modelMap["resource_type"] = *model.ResourceType
+	return modelMap, nil
+}
+func ResourceIBMIsShareDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["more_info"] = *model.MoreInfo
+	return modelMap, nil
 }

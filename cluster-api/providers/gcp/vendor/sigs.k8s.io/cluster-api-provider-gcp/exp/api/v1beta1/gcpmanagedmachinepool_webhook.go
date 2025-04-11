@@ -89,16 +89,16 @@ func (r *GCPManagedMachinePool) validateScaling() field.ErrorList {
 		maxField := field.NewPath("spec", "scaling", "maxCount")
 		locationPolicyField := field.NewPath("spec", "scaling", "locationPolicy")
 
-		min := r.Spec.Scaling.MinCount
-		max := r.Spec.Scaling.MaxCount
+		minCount := r.Spec.Scaling.MinCount
+		maxCount := r.Spec.Scaling.MaxCount
 		locationPolicy := r.Spec.Scaling.LocationPolicy
 
 		// cannot specify autoscaling config if autoscaling is disabled
 		if r.Spec.Scaling.EnableAutoscaling != nil && !*r.Spec.Scaling.EnableAutoscaling {
-			if min != nil {
+			if minCount != nil {
 				allErrs = append(allErrs, field.Forbidden(minField, "minCount cannot be specified when autoscaling is disabled"))
 			}
-			if max != nil {
+			if maxCount != nil {
 				allErrs = append(allErrs, field.Forbidden(maxField, "maxCount cannot be specified when autoscaling is disabled"))
 			}
 			if locationPolicy != nil {
@@ -106,14 +106,14 @@ func (r *GCPManagedMachinePool) validateScaling() field.ErrorList {
 			}
 		}
 
-		if min != nil {
+		if minCount != nil {
 			// validates min >= 0
-			if *min < 0 {
-				allErrs = append(allErrs, field.Invalid(minField, *min, "must be greater or equal zero"))
+			if *minCount < 0 {
+				allErrs = append(allErrs, field.Invalid(minField, *minCount, "must be greater or equal zero"))
 			}
 			// validates min <= max
-			if max != nil && *max < *min {
-				allErrs = append(allErrs, field.Invalid(maxField, *max, fmt.Sprintf("must be greater than field %s", minField.String())))
+			if maxCount != nil && *maxCount < *minCount {
+				allErrs = append(allErrs, field.Invalid(maxField, *maxCount, "must be greater than field "+minField.String()))
 			}
 		}
 	}

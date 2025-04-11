@@ -31,13 +31,13 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/aso"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -175,6 +175,8 @@ func (r *reconciler[T]) CreateOrUpdateResource(ctx context.Context, spec azure.A
 	if labels == nil {
 		labels = make(map[string]string)
 	}
+	labels[clusterv1.ClusterNameLabel] = r.clusterName
+
 	annotations := parameters.GetAnnotations()
 	if annotations == nil {
 		annotations = make(map[string]string)
@@ -250,7 +252,7 @@ func applyPatches[T genruntime.MetaObject](scheme *runtime.Scheme, spec azure.AS
 		return zero, errors.Wrap(err, "failed to get GroupVersionKind for object")
 	}
 
-	(genruntime.MetaObject)(parameters).(interface{ SetGroupVersionKind(schema.GroupVersionKind) }).SetGroupVersionKind(gvk)
+	parameters.GetObjectKind().SetGroupVersionKind(gvk)
 	paramData, err := json.Marshal(parameters)
 	if err != nil {
 		return zero, errors.Wrap(err, "failed to marshal JSON for patch")

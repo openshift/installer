@@ -18,10 +18,38 @@ package errors
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
-	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/v2"
 )
+
+var (
+	ErrFilterMatch     = fmt.Errorf("filter match error")
+	ErrMultipleMatches = multipleMatchesError{}
+	ErrNoMatches       = noMatchesError{}
+)
+
+type (
+	multipleMatchesError struct{}
+	noMatchesError       struct{}
+)
+
+func (e multipleMatchesError) Error() string {
+	return "filter matched more than one resource"
+}
+
+func (e multipleMatchesError) Is(err error) bool {
+	return err == ErrFilterMatch
+}
+
+func (e noMatchesError) Error() string {
+	return "filter matched no resources"
+}
+
+func (e noMatchesError) Is(err error) bool {
+	return err == ErrFilterMatch
+}
 
 func IsRetryable(err error) bool {
 	var errUnexpectedResponseCode gophercloud.ErrUnexpectedResponseCode
@@ -40,64 +68,24 @@ func IsNotFound(err error) bool {
 	// Gophercloud is not consistent in how it returns 404 errors. Sometimes
 	// it returns a pointer to the error, sometimes it returns the error
 	// directly.
-	// Some discussion here: https://github.com/gophercloud/gophercloud/issues/2279
-	var errDefault404 gophercloud.ErrDefault404
-	var pErrDefault404 *gophercloud.ErrDefault404
+	// Some discussion here: https://github.com/gophercloud/gophercloud/v2/issues/2279
 	var errNotFound gophercloud.ErrResourceNotFound
 	var pErrNotFound *gophercloud.ErrResourceNotFound
-	if errors.As(err, &errDefault404) || errors.As(err, &pErrDefault404) || errors.As(err, &errNotFound) || errors.As(err, &pErrNotFound) {
+	if errors.As(err, &errNotFound) || errors.As(err, &pErrNotFound) {
 		return true
 	}
 
-	var errUnexpectedResponseCode gophercloud.ErrUnexpectedResponseCode
-	if errors.As(err, &errUnexpectedResponseCode) {
-		if errUnexpectedResponseCode.Actual == http.StatusNotFound {
-			return true
-		}
-	}
-
-	return false
+	return gophercloud.ResponseCodeIs(err, http.StatusNotFound)
 }
 
 func IsInvalidError(err error) bool {
-	var errDefault400 gophercloud.ErrDefault400
-	if errors.As(err, &errDefault400) {
-		return true
-	}
-
-	var errUnexpectedResponseCode gophercloud.ErrUnexpectedResponseCode
-	if errors.As(err, &errUnexpectedResponseCode) {
-		if errUnexpectedResponseCode.Actual == http.StatusBadRequest {
-			return true
-		}
-	}
-
-	return false
+	return gophercloud.ResponseCodeIs(err, http.StatusBadRequest)
 }
 
 func IsConflict(err error) bool {
-	var errDefault409 gophercloud.ErrDefault409
-	if errors.As(err, &errDefault409) {
-		return true
-	}
-
-	var errUnexpectedResponseCode gophercloud.ErrUnexpectedResponseCode
-	if errors.As(err, &errUnexpectedResponseCode) {
-		if errUnexpectedResponseCode.Actual == http.StatusConflict {
-			return true
-		}
-	}
-
-	return false
+	return gophercloud.ResponseCodeIs(err, http.StatusConflict)
 }
 
 func IsNotImplementedError(err error) bool {
-	var errUnexpectedResponseCode gophercloud.ErrUnexpectedResponseCode
-	if errors.As(err, &errUnexpectedResponseCode) {
-		if errUnexpectedResponseCode.Actual == http.StatusNotImplemented {
-			return true
-		}
-	}
-
-	return false
+	return gophercloud.ResponseCodeIs(err, http.StatusNotImplemented)
 }

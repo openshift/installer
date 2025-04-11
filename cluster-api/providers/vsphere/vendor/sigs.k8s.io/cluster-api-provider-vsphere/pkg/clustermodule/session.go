@@ -42,11 +42,7 @@ func (s *service) fetchSessionForObject(ctx context.Context, clusterCtx *capvcon
 func (s *service) newParams(clusterCtx capvcontext.ClusterContext) *session.Params {
 	return session.NewParams().
 		WithServer(clusterCtx.VSphereCluster.Spec.Server).
-		WithThumbprint(clusterCtx.VSphereCluster.Spec.Thumbprint).
-		WithFeatures(session.Feature{
-			EnableKeepAlive:   s.ControllerManagerContext.EnableKeepAlive,
-			KeepAliveDuration: s.ControllerManagerContext.KeepAliveDuration,
-		})
+		WithThumbprint(clusterCtx.VSphereCluster.Spec.Thumbprint)
 }
 
 func (s *service) fetchSession(ctx context.Context, clusterCtx *capvcontext.ClusterContext, params *session.Params) (*session.Session, error) {

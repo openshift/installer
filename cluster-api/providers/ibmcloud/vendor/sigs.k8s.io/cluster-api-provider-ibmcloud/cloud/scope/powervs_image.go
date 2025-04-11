@@ -50,6 +50,7 @@ type PowerVSImageScopeParams struct {
 	Logger          logr.Logger
 	IBMPowerVSImage *infrav1beta2.IBMPowerVSImage
 	ServiceEndpoint []endpoints.ServiceEndpoint
+	Zone            *string
 }
 
 // PowerVSImageScope defines a scope defined around a Power VS Cluster.
@@ -116,7 +117,7 @@ func NewPowerVSImageScope(params PowerVSImageScopeParams) (scope *PowerVSImageSc
 		if params.IBMPowerVSImage.Spec.ServiceInstance != nil && params.IBMPowerVSImage.Spec.ServiceInstance.Name != nil {
 			name = *params.IBMPowerVSImage.Spec.ServiceInstance.Name
 		}
-		serviceInstance, err := rc.GetServiceInstance("", name)
+		serviceInstance, err := rc.GetServiceInstance("", name, params.Zone)
 		if err != nil {
 			params.Logger.Error(err, "error failed to get service instance id from name", "name", name)
 			return nil, err

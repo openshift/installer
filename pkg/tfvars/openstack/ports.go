@@ -1,12 +1,13 @@
 package openstack
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
-	"github.com/gophercloud/gophercloud/pagination"
-	network_utils "github.com/gophercloud/utils/openstack/networking/v2/networks"
+	"github.com/gophercloud/gophercloud/v2"
+	"github.com/gophercloud/gophercloud/v2/openstack/networking/v2/subnets"
+	"github.com/gophercloud/gophercloud/v2/pagination"
+	network_utils "github.com/gophercloud/utils/v2/openstack/networking/v2/networks"
 
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	types_openstack "github.com/openshift/installer/pkg/types/openstack"
@@ -22,11 +23,11 @@ type terraformPort struct {
 	FixedIP   []terraformFixedIP `json:"fixed_ips"`
 }
 
-func portTargetToTerraformPort(networkClient *gophercloud.ServiceClient, portTarget types_openstack.PortTarget) (terraformPort, error) {
+func portTargetToTerraformPort(ctx context.Context, networkClient *gophercloud.ServiceClient, portTarget types_openstack.PortTarget) (terraformPort, error) {
 	networkID := portTarget.Network.ID
 	if networkID == "" && portTarget.Network.Name != "" {
 		var err error
-		networkID, err = network_utils.IDFromName(networkClient, portTarget.Network.Name)
+		networkID, err = network_utils.IDFromName(ctx, networkClient, portTarget.Network.Name)
 		if err != nil {
 			return terraformPort{}, fmt.Errorf("failed to resolve network ID for network name %q: %w", portTarget.Network.Name, err)
 		}
@@ -38,7 +39,7 @@ func portTargetToTerraformPort(networkClient *gophercloud.ServiceClient, portTar
 			ID:   fixedIP.Subnet.ID,
 			Name: fixedIP.Subnet.Name,
 		}
-		resolvedSubnetID, resolvedNetworkID, err := resolveSubnetFilter(networkClient, networkID, subnetFilter)
+		resolvedSubnetID, resolvedNetworkID, err := resolveSubnetFilter(ctx, networkClient, networkID, subnetFilter)
 		if err != nil {
 			return terraformPort{}, fmt.Errorf("failed to resolve the subnet filter: %w", err)
 		}
@@ -62,7 +63,7 @@ func portTargetToTerraformPort(networkClient *gophercloud.ServiceClient, portTar
 	}, nil
 }
 
-func resolveSubnetFilter(networkClient *gophercloud.ServiceClient, networkID string, subnetFilter machinev1alpha1.SubnetFilter) (resolvedSubnetID, resolvedNetworkID string, err error) {
+func resolveSubnetFilter(ctx context.Context, networkClient *gophercloud.ServiceClient, networkID string, subnetFilter machinev1alpha1.SubnetFilter) (resolvedSubnetID, resolvedNetworkID string, err error) {
 	if subnetFilter.ProjectID != "" {
 		subnetFilter.TenantID = ""
 	}
@@ -70,7 +71,7 @@ func resolveSubnetFilter(networkClient *gophercloud.ServiceClient, networkID str
 		NetworkID: networkID,
 		Name:      subnetFilter.Name,
 		ID:        subnetFilter.ID,
-	}).EachPage(func(page pagination.Page) (bool, error) {
+	}).EachPage(ctx, func(ctx context.Context, page pagination.Page) (bool, error) {
 		returnedSubnets, err := subnets.ExtractSubnets(page)
 		if err != nil {
 			return false, err

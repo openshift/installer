@@ -55,8 +55,8 @@ func (f *IBMPIInstanceClient) GetAll() (*models.PVMInstances, error) {
 // Create an Instance
 func (f *IBMPIInstanceClient) Create(body *models.PVMInstanceCreate) (*models.PVMInstanceList, error) {
 	// Check for satellite differences in this endpoint
-	if f.session.IsOnPrem() && (body.SoftwareLicenses != nil || body.SharedProcessorPool != "") {
-		return nil, fmt.Errorf("software licenses and shared processor pool parameters are not supported in satellite location, check documentation")
+	if f.session.IsOnPrem() && (body.DeploymentTarget != nil || body.DeploymentType != "") {
+		return nil, fmt.Errorf("deployment target and deployment type parameters are not supported in satellite location")
 	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -89,11 +89,23 @@ func (f *IBMPIInstanceClient) Delete(id string) error {
 	return nil
 }
 
+// Delete an Instance with body
+func (f *IBMPIInstanceClient) DeleteWithBody(id string, body *models.PVMInstanceDelete) error {
+	params := p_cloud_p_vm_instances.NewPcloudPvminstancesDeleteParams().
+		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
+		WithCloudInstanceID(f.cloudInstanceID).WithPvmInstanceID(id).WithBody(body)
+	_, err := f.session.Power.PCloudpVMInstances.PcloudPvminstancesDelete(params, f.session.AuthInfo(f.cloudInstanceID))
+	if err != nil {
+		return fmt.Errorf("failed to Delete PVM Instance %s :%w", id, err)
+	}
+	return nil
+}
+
 // Update an Instance
 func (f *IBMPIInstanceClient) Update(id string, body *models.PVMInstanceUpdate) (*models.PVMInstanceUpdateResponse, error) {
 	// Check for satellite differences in this endpoint
 	if f.session.IsOnPrem() && body.SapProfileID != "" {
-		return nil, fmt.Errorf("sap profile id parameter is not supported in satellite location, check documentation")
+		return nil, fmt.Errorf("sap profile id parameter is not supported in satellite location")
 	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -140,7 +152,7 @@ func (f *IBMPIInstanceClient) PostConsoleURL(id string) (*models.PVMInstanceCons
 // List the available Console Languages for an Instance
 func (f *IBMPIInstanceClient) GetConsoleLanguages(id string) (*models.ConsoleLanguages, error) {
 	if f.session.IsOnPrem() {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+		return nil, fmt.Errorf(helpers.NotOnPremSupported)
 	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesConsoleGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
@@ -158,7 +170,7 @@ func (f *IBMPIInstanceClient) GetConsoleLanguages(id string) (*models.ConsoleLan
 // Update the available Console Languages for an Instance
 func (f *IBMPIInstanceClient) UpdateConsoleLanguage(id string, body *models.ConsoleLanguage) (*models.ConsoleLanguage, error) {
 	if f.session.IsOnPrem() {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+		return nil, fmt.Errorf(helpers.NotOnPremSupported)
 	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesConsolePutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
@@ -176,6 +188,10 @@ func (f *IBMPIInstanceClient) UpdateConsoleLanguage(id string, body *models.Cons
 
 // Capture an Instance
 func (f *IBMPIInstanceClient) CaptureInstanceToImageCatalog(id string, body *models.PVMInstanceCapture) error {
+	// Check for satellite differences in this endpoint
+	if !f.session.IsOnPrem() && body.Checksum {
+		return fmt.Errorf("checksum parameter is not supported in off-prem location")
+	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesCapturePostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithPvmInstanceID(id).
@@ -286,10 +302,10 @@ func (f *IBMPIInstanceClient) AddNetwork(id string, body *models.PVMInstanceAddN
 }
 
 // Delete a Network from an Instance
-func (f *IBMPIInstanceClient) DeleteNetwork(id string, body *models.PVMInstanceRemoveNetwork) error {
+func (f *IBMPIInstanceClient) DeleteNetwork(id, networkID string, body *models.PVMInstanceRemoveNetwork) error {
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesNetworksDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
-		WithCloudInstanceID(f.cloudInstanceID).WithPvmInstanceID(id).
+		WithCloudInstanceID(f.cloudInstanceID).WithPvmInstanceID(id).WithNetworkID(networkID).
 		WithBody(body)
 	_, err := f.session.Power.PCloudpVMInstances.PcloudPvminstancesNetworksDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {

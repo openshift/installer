@@ -19,7 +19,7 @@
       - "{{ os_sg_master }}"
       allowed_address_pairs:
       - ip_address: "{{ os_apiVIP }}"
-    when: os_subnet6 is not defined
+    when: os_subnet6_range is not defined
 
   - name: 'Create the bootstrap dualstack server port'
     os_port:
@@ -30,7 +30,7 @@
       allowed_address_pairs:
       - ip_address: "{{ os_apiVIP }}"
       - ip_address: "{{ os_apiVIP6 }}"
-    when: os_subnet6 is defined
+    when: os_subnet6_range is defined
 
   - name: 'Set bootstrap port tag'
     command:

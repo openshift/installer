@@ -178,71 +178,79 @@ func (r Reconciler) Reconcile(ctx context.Context, clusterCtx *capvcontext.Clust
 	return reconcile.Result{}, err
 }
 
-func (r Reconciler) toAffinityInput(ctx context.Context, obj client.Object) []reconcile.Request {
-	log := ctrl.LoggerFrom(ctx)
+func toAffinityInput[T client.Object](c client.Client) handler.TypedMapFunc[T, ctrl.Request] {
+	return func(ctx context.Context, obj T) []ctrl.Request {
+		log := ctrl.LoggerFrom(ctx)
 
-	cluster, err := util.GetClusterFromMetadata(ctx, r.Client, metav1.ObjectMeta{
-		Namespace:       obj.GetNamespace(),
-		Labels:          obj.GetLabels(),
-		OwnerReferences: obj.GetOwnerReferences(),
-	})
-	if err != nil {
-		log.V(4).Error(err, "Failed to get owner Cluster")
-		return nil
-	}
-	log = log.WithValues("Cluster", klog.KObj(cluster))
-	ctx = ctrl.LoggerInto(ctx, log)
+		cluster, err := util.GetClusterFromMetadata(ctx, c, metav1.ObjectMeta{
+			Namespace:       obj.GetNamespace(),
+			Labels:          obj.GetLabels(),
+			OwnerReferences: obj.GetOwnerReferences(),
+		})
+		if err != nil {
+			log.V(4).Error(err, "Failed to get owner Cluster")
+			return nil
+		}
+		log = log.WithValues("Cluster", klog.KObj(cluster))
+		ctx = ctrl.LoggerInto(ctx, log)
 
-	if cluster.Spec.InfrastructureRef == nil {
-		log.V(4).Error(err, "Failed to get VSphereCluster: Cluster.spec.infrastructureRef not set")
-		return nil
-	}
+		if cluster.Spec.InfrastructureRef == nil {
+			log.V(4).Error(err, "Failed to get VSphereCluster: Cluster.spec.infrastructureRef not set")
+			return nil
+		}
 
-	log = log.WithValues("VSphereCluster", klog.KRef(cluster.Namespace, cluster.Spec.InfrastructureRef.Name))
-	ctx = ctrl.LoggerInto(ctx, log)
+		log = log.WithValues("VSphereCluster", klog.KRef(cluster.Namespace, cluster.Spec.InfrastructureRef.Name))
+		ctx = ctrl.LoggerInto(ctx, log)
 
-	vsphereCluster := &infrav1.VSphereCluster{}
-	if err := r.Client.Get(ctx, client.ObjectKey{
-		Name:      cluster.Spec.InfrastructureRef.Name,
-		Namespace: cluster.Namespace,
-	}, vsphereCluster); err != nil {
-		log.V(4).Error(err, "Failed to get VSphereCluster")
-		return nil
-	}
+		vsphereCluster := &infrav1.VSphereCluster{}
+		if err := c.Get(ctx, client.ObjectKey{
+			Name:      cluster.Spec.InfrastructureRef.Name,
+			Namespace: cluster.Namespace,
+		}, vsphereCluster); err != nil {
+			log.V(4).Error(err, "Failed to get VSphereCluster")
+			return nil
+		}
 
-	return []reconcile.Request{
-		{NamespacedName: client.ObjectKeyFromObject(vsphereCluster)},
+		return []reconcile.Request{
+			{NamespacedName: client.ObjectKeyFromObject(vsphereCluster)},
+		}
 	}
 }
 
 // PopulateWatchesOnController adds watches to the ClusterModule reconciler.
 func (r Reconciler) PopulateWatchesOnController(mgr manager.Manager, controller controller.Controller) error {
 	if err := controller.Watch(
-		source.Kind(mgr.GetCache(), &controlplanev1.KubeadmControlPlane{}),
-		handler.EnqueueRequestsFromMapFunc(r.toAffinityInput),
-		predicate.Funcs{
-			GenericFunc: func(genericEvent event.GenericEvent) bool {
-				return false
+		source.Kind(
+			mgr.GetCache(),
+			&controlplanev1.KubeadmControlPlane{},
+			handler.TypedEnqueueRequestsFromMapFunc(toAffinityInput[*controlplanev1.KubeadmControlPlane](r.Client)),
+			predicate.TypedFuncs[*controlplanev1.KubeadmControlPlane]{
+				GenericFunc: func(event.TypedGenericEvent[*controlplanev1.KubeadmControlPlane]) bool {
+					return false
+				},
+				UpdateFunc: func(event.TypedUpdateEvent[*controlplanev1.KubeadmControlPlane]) bool {
+					return false
+				},
 			},
-			UpdateFunc: func(updateEvent event.UpdateEvent) bool {
-				return false
-			},
-		},
+		),
 	); err != nil {
 		return err
 	}
 
 	return controller.Watch(
-		source.Kind(mgr.GetCache(), &clusterv1.MachineDeployment{}),
-		handler.EnqueueRequestsFromMapFunc(r.toAffinityInput),
-		predicate.Funcs{
-			GenericFunc: func(genericEvent event.GenericEvent) bool {
-				return false
+		source.Kind(
+			mgr.GetCache(),
+			&clusterv1.MachineDeployment{},
+			handler.TypedEnqueueRequestsFromMapFunc(toAffinityInput[*clusterv1.MachineDeployment](r.Client)),
+			predicate.TypedFuncs[*clusterv1.MachineDeployment]{
+				GenericFunc: func(event.TypedGenericEvent[*clusterv1.MachineDeployment]) bool {
+					return false
+				},
+				UpdateFunc: func(event.TypedUpdateEvent[*clusterv1.MachineDeployment]) bool {
+					return false
+				},
 			},
-			UpdateFunc: func(updateEvent event.UpdateEvent) bool {
-				return false
-			},
-		},
+		),
 	)
 }
 

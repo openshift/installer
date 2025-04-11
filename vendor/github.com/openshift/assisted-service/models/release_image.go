@@ -13,6 +13,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 	"github.com/go-openapi/validate"
+	"github.com/lib/pq"
 )
 
 // ReleaseImage release image
@@ -26,7 +27,7 @@ type ReleaseImage struct {
 	CPUArchitecture *string `json:"cpu_architecture" gorm:"default:'x86_64'"`
 
 	// List of CPU architectures provided by the image.
-	CPUArchitectures []string `json:"cpu_architectures"`
+	CPUArchitectures pq.StringArray `json:"cpu_architectures" gorm:"type:text[]"`
 
 	// Indication that the version is the recommended one.
 	Default bool `json:"default,omitempty"`
@@ -36,12 +37,12 @@ type ReleaseImage struct {
 	OpenshiftVersion *string `json:"openshift_version"`
 
 	// Level of support of the version.
-	// Enum: [beta production maintenance]
+	// Enum: [beta production maintenance end-of-life]
 	SupportLevel string `json:"support_level,omitempty"`
 
 	// The installation image of the OpenShift cluster.
 	// Required: true
-	URL *string `json:"url"`
+	URL *string `json:"url" gorm:"primarykey"`
 
 	// OCP version from the release metadata.
 	// Required: true
@@ -146,7 +147,7 @@ var releaseImageTypeSupportLevelPropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["beta","production","maintenance"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["beta","production","maintenance","end-of-life"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -164,6 +165,9 @@ const (
 
 	// ReleaseImageSupportLevelMaintenance captures enum value "maintenance"
 	ReleaseImageSupportLevelMaintenance string = "maintenance"
+
+	// ReleaseImageSupportLevelEndOfLife captures enum value "end-of-life"
+	ReleaseImageSupportLevelEndOfLife string = "end-of-life"
 )
 
 // prop value enum

@@ -6,60 +6,61 @@ package power
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	st "github.com/IBM-Cloud/power-go-client/clients/instance"
-	"github.com/IBM-Cloud/power-go-client/helpers"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func DataSourceIBMPISPPPlacementGroup() *schema.Resource {
-
 	return &schema.Resource{
 		ReadContext: dataSourceIBMPISPPPlacementGroupRead,
 		Schema: map[string]*schema.Schema{
-			Arg_SPPPlacementGroupID: {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-
-			Attr_SPPPlacementGroupName: {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-
-			Attr_SPPPlacementGroupPolicy: {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-
-			helpers.PICloudInstanceId: {
-				Type:         schema.TypeString,
+			// Arguments
+			Arg_CloudInstanceID: {
+				Description:  "The GUID of the service instance associated with an account.",
 				Required:     true,
+				Type:         schema.TypeString,
+				ValidateFunc: validation.NoZeroValues,
+			},
+			Arg_SPPPlacementGroupID: {
+				Description:  "The ID of the shared processor pool placement group.",
+				Required:     true,
+				Type:         schema.TypeString,
 				ValidateFunc: validation.NoZeroValues,
 			},
 
-			Attr_SPPPlacementGroupMembers: {
-				Type:     schema.TypeList,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Computed: true,
+			// Attributes
+			Attr_Members: {
+				Computed:    true,
+				Description: "List of shared processor pool IDs that are members of the placement group.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+			},
+			Attr_Name: {
+				Computed:    true,
+				Description: "The name of the shared processor pool placement group.",
+				Type:        schema.TypeString,
+			},
+			Attr_Policy: {
+				Computed:    true,
+				Description: "The value of the group's affinity policy. Valid values are affinity and anti-affinity.",
+				Type:        schema.TypeString,
 			},
 		},
 	}
 }
 
 func dataSourceIBMPISPPPlacementGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	cloudInstanceID := d.Get(helpers.PICloudInstanceId).(string)
+	cloudInstanceID := d.Get(Arg_CloudInstanceID).(string)
 	placementGroupID := d.Get(Arg_SPPPlacementGroupID).(string)
-	client := st.NewIBMPISPPPlacementGroupClient(ctx, sess, cloudInstanceID)
+	client := instance.NewIBMPISPPPlacementGroupClient(ctx, sess, cloudInstanceID)
 
 	response, err := client.Get(placementGroupID)
 	if err != nil || response == nil {
@@ -67,9 +68,9 @@ func dataSourceIBMPISPPPlacementGroupRead(ctx context.Context, d *schema.Resourc
 	}
 
 	d.SetId(*response.ID)
-	d.Set(Attr_SPPPlacementGroupName, response.Name)
-	d.Set(Attr_SPPPlacementGroupPolicy, response.Policy)
-	d.Set(Attr_SPPPlacementGroupMembers, response.MemberSharedProcessorPools)
+	d.Set(Attr_Members, response.MemberSharedProcessorPools)
+	d.Set(Attr_Name, response.Name)
+	d.Set(Attr_Policy, response.Policy)
 
 	return nil
 }

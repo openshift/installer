@@ -2051,27 +2051,6 @@ func ResourceIBMCmOffering() *schema.Resource {
 				Description: "A list of account IDs to add to this offering's access list.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"permit_request_ibm_public_publish": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-				Deprecated:  "This argument is deprecated",
-				Description: "Is it permitted to request publishing to IBM or Public.",
-			},
-			"ibm_publish_approved": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-				Deprecated:  "This argument is deprecated",
-				Description: "Indicates if this offering has been approved for use by all IBMers.",
-			},
-			"public_publish_approved": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-				Deprecated:  "This argument is deprecated",
-				Description: "Indicates if this offering has been approved for use by all IBM Cloud users.",
-			},
 			"public_original_crn": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -2570,7 +2549,9 @@ func ResourceIBMCmOffering() *schema.Resource {
 func resourceIBMCmOfferingCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	catalogManagementClient, err := meta.(conns.ClientSession).CatalogManagementV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if _, ok := d.GetOk("offering_id"); ok {
@@ -2578,21 +2559,26 @@ func resourceIBMCmOfferingCreate(context context.Context, d *schema.ResourceData
 		getOfferingOptions.SetCatalogIdentifier(d.Get("catalog_id").(string))
 		getOfferingOptions.SetOfferingID(d.Get("offering_id").(string))
 
+		// Don't need to get full offering with all versions here because we call resourceIBMCmOfferingRead which does
+		// This get is just to see if the offering exists and set state id
 		offering, response, err := catalogManagementClient.GetOfferingWithContext(context, getOfferingOptions)
 		if err != nil {
 			if response != nil && response.StatusCode == 404 {
 				d.SetId("")
 				return nil
 			}
-			log.Printf("[DEBUG] GetOfferingWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("GetOfferingWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetOfferingWithContext failed %s\n%s", err, response), "ibm_cm_offering", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		d.SetId(*offering.ID)
 
 		err = handleShareOfferingAfterCreate(catalogManagementClient, *offering, d, context)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 
 		return resourceIBMCmOfferingRead(context, d, meta)
@@ -2631,21 +2617,27 @@ func resourceIBMCmOfferingCreate(context context.Context, d *schema.ResourceData
 	if _, ok := d.GetOk("rating"); ok {
 		ratingModel, err := resourceIBMCmOfferingMapToRating(d.Get("rating.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		createOfferingOptions.SetRating(ratingModel)
 	}
 	if _, ok := d.GetOk("created"); ok {
 		fmtDateTimeCreated, err := core.ParseDateTime(d.Get("created").(string))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		createOfferingOptions.SetCreated(&fmtDateTimeCreated)
 	}
 	if _, ok := d.GetOk("updated"); ok {
 		fmtDateTimeUpdated, err := core.ParseDateTime(d.Get("updated").(string))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		createOfferingOptions.SetUpdated(&fmtDateTimeUpdated)
 	}
@@ -2661,7 +2653,9 @@ func resourceIBMCmOfferingCreate(context context.Context, d *schema.ResourceData
 			value := e.(map[string]interface{})
 			featuresItem, err := resourceIBMCmOfferingMapToFeature(value)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			features = append(features, *featuresItem)
 		}
@@ -2673,7 +2667,9 @@ func resourceIBMCmOfferingCreate(context context.Context, d *schema.ResourceData
 			value := e.(map[string]interface{})
 			kindsItem, err := resourceIBMCmOfferingMapToKind(value)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			kinds = append(kinds, *kindsItem)
 		}
@@ -2693,15 +2689,6 @@ func resourceIBMCmOfferingCreate(context context.Context, d *schema.ResourceData
 	}
 	if _, ok := d.GetOk("share_enabled"); ok {
 		createOfferingOptions.SetShareEnabled(d.Get("share_enabled").(bool))
-	}
-	if _, ok := d.GetOk("permit_request_ibm_public_publish"); ok {
-		createOfferingOptions.SetPermitRequestIBMPublicPublish(d.Get("permit_request_ibm_public_publish").(bool))
-	}
-	if _, ok := d.GetOk("ibm_publish_approved"); ok {
-		createOfferingOptions.SetIBMPublishApproved(d.Get("ibm_publish_approved").(bool))
-	}
-	if _, ok := d.GetOk("public_publish_approved"); ok {
-		createOfferingOptions.SetPublicPublishApproved(d.Get("public_publish_approved").(bool))
 	}
 	if _, ok := d.GetOk("public_original_crn"); ok {
 		createOfferingOptions.SetPublicOriginalCRN(d.Get("public_original_crn").(string))
@@ -2730,14 +2717,18 @@ func resourceIBMCmOfferingCreate(context context.Context, d *schema.ResourceData
 	if _, ok := d.GetOk("provider_info"); ok {
 		providerInfoModel, err := resourceIBMCmOfferingMapToProviderInfo(d.Get("provider_info.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		createOfferingOptions.SetProviderInfo(providerInfoModel)
 	}
 	if _, ok := d.GetOk("repo_info"); ok {
 		repoInfoModel, err := resourceIBMCmOfferingMapToRepoInfo(d.Get("repo_info.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		createOfferingOptions.SetRepoInfo(repoInfoModel)
 	}
@@ -2747,7 +2738,9 @@ func resourceIBMCmOfferingCreate(context context.Context, d *schema.ResourceData
 			value := e.(map[string]interface{})
 			imagePullKeysItem, err := resourceIBMCmOfferingMapToImagePullKey(value)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			imagePullKeys = append(imagePullKeys, *imagePullKeysItem)
 		}
@@ -2756,7 +2749,9 @@ func resourceIBMCmOfferingCreate(context context.Context, d *schema.ResourceData
 	if _, ok := d.GetOk("support"); ok {
 		supportModel, err := resourceIBMCmOfferingMapToSupport(d.Get("support.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		createOfferingOptions.SetSupport(supportModel)
 	}
@@ -2766,7 +2761,9 @@ func resourceIBMCmOfferingCreate(context context.Context, d *schema.ResourceData
 			value := e.(map[string]interface{})
 			mediaItem, err := resourceIBMCmOfferingMapToMediaItem(value)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			media = append(media, *mediaItem)
 		}
@@ -2781,7 +2778,9 @@ func resourceIBMCmOfferingCreate(context context.Context, d *schema.ResourceData
 			value := e.(map[string]interface{})
 			badgesItem, err := resourceIBMCmOfferingMapToBadge(value)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			badges = append(badges, *badgesItem)
 		}
@@ -2790,15 +2789,18 @@ func resourceIBMCmOfferingCreate(context context.Context, d *schema.ResourceData
 
 	offering, response, err := catalogManagementClient.CreateOfferingWithContext(context, createOfferingOptions)
 	if err != nil {
-		log.Printf("[DEBUG] CreateOfferingWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("CreateOfferingWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("CreateOfferingWithContext failed %s\n%s", err, response), "ibm_cm_offering", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId(*offering.ID)
 
 	err = handleShareOfferingAfterCreate(catalogManagementClient, *offering, d, context)
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "create")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return resourceIBMCmOfferingRead(context, d, meta)
@@ -2807,7 +2809,9 @@ func resourceIBMCmOfferingCreate(context context.Context, d *schema.ResourceData
 func resourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	catalogManagementClient, err := meta.(conns.ClientSession).CatalogManagementV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	getOfferingOptions := &catalogmanagementv1.GetOfferingOptions{}
@@ -2815,42 +2819,61 @@ func resourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData, 
 	getOfferingOptions.SetCatalogIdentifier(d.Get("catalog_id").(string))
 	getOfferingOptions.SetOfferingID(d.Id())
 
-	offering, response, err := catalogManagementClient.GetOfferingWithContext(context, getOfferingOptions)
+	offering, response, err := FetchOfferingWithAllVersions(context, catalogManagementClient, getOfferingOptions)
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetOfferingWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetOfferingWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetOfferingWithContext failed %s\n%s", err, response), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	if err = d.Set("catalog_id", getOfferingOptions.CatalogIdentifier); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting catalog_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting catalog_id: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("url", offering.URL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting url: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("crn", offering.CRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting crn: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("label", offering.Label); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting label: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting label: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("label_i18n", offering.LabelI18n); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting label_i18n: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting label_i18n: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("name", offering.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting name: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("offering_icon_url", offering.OfferingIconURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting offering_icon_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting offering_icon_url: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("offering_docs_url", offering.OfferingDocsURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting offering_docs_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting offering_docs_url: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("offering_support_url", offering.OfferingSupportURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting offering_support_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting offering_support_url: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	tags := []string{}
 	if offering.Tags != nil {
@@ -2865,135 +2888,190 @@ func resourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData, 
 		}
 	}
 	if err = d.Set("tags", tags); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting tags: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting tags: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	keywords := []string{}
 	if offering.Keywords != nil {
 		keywords = offering.Keywords
 	}
 	if err = d.Set("keywords", keywords); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting keywords: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting keywords: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("metadata", offering.Metadata); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting offering metadata: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting offering metadata: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if offering.Rating != nil {
 		ratingMap, err := resourceIBMCmOfferingRatingToMap(offering.Rating)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("rating", []map[string]interface{}{ratingMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting rating: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting rating: %s", err), "ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("created", flex.DateTimeToString(offering.Created)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting created: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting created: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("updated", flex.DateTimeToString(offering.Updated)); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting updated: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting updated: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("short_description", offering.ShortDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting short_description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting short_description: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("short_description_i18n", offering.ShortDescriptionI18n); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting short_description_i18n: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting short_description_i18n: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("long_description", offering.LongDescription); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting long_description: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting long_description: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("long_description_i18n", offering.LongDescriptionI18n); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting long_description_i18n: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting long_description_i18n: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	features := []map[string]interface{}{}
 	if offering.Features != nil {
 		for _, featuresItem := range offering.Features {
 			featuresItemMap, err := resourceIBMCmOfferingFeatureToMap(&featuresItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			features = append(features, featuresItemMap)
 		}
 	}
 	if err = d.Set("features", features); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting features: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting features: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	kinds := []map[string]interface{}{}
 	if offering.Kinds != nil {
 		for _, kindsItem := range offering.Kinds {
 			kindsItemMap, err := resourceIBMCmOfferingKindToMap(&kindsItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			kinds = append(kinds, kindsItemMap)
 		}
 	}
 	if err = d.Set("kinds", kinds); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting kinds: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting kinds: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("pc_managed", offering.PcManaged); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting pc_managed: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting pc_managed: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("publish_approved", offering.PublishApproved); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting publish_approved: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting publish_approved: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("share_with_all", offering.ShareWithAll); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting share_with_all: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting share_with_all: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("share_with_ibm", offering.ShareWithIBM); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting share_with_ibm: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting share_with_ibm: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("share_enabled", offering.ShareEnabled); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting share_enabled: %s", err))
-	}
-	if err = d.Set("permit_request_ibm_public_publish", offering.PermitRequestIBMPublicPublish); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting permit_request_ibm_public_publish: %s", err))
-	}
-	if err = d.Set("ibm_publish_approved", offering.IBMPublishApproved); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting ibm_publish_approved: %s", err))
-	}
-	if err = d.Set("public_publish_approved", offering.PublicPublishApproved); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting public_publish_approved: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting share_enabled: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("public_original_crn", offering.PublicOriginalCRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting public_original_crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting public_original_crn: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("publish_public_crn", offering.PublishPublicCRN); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting publish_public_crn: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting publish_public_crn: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("portal_approval_record", offering.PortalApprovalRecord); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting portal_approval_record: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting portal_approval_record: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("portal_ui_url", offering.PortalUIURL); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting portal_ui_url: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting portal_ui_url: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("catalog_id", offering.CatalogID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting catalog_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting catalog_id: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("catalog_name", offering.CatalogName); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting catalog_name: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting catalog_name: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("disclaimer", offering.Disclaimer); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting disclaimer: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting disclaimer: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("hidden", offering.Hidden); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting hidden: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting hidden: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if offering.ProviderInfo != nil {
 		providerInfoMap, err := resourceIBMCmOfferingProviderInfoToMap(offering.ProviderInfo)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("provider_info", []map[string]interface{}{providerInfoMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting provider_info: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting provider_info: %s", err), "ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if offering.RepoInfo != nil {
 		repoInfoMap, err := resourceIBMCmOfferingRepoInfoToMap(offering.RepoInfo)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("repo_info", []map[string]interface{}{repoInfoMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting repo_info: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting repo_info: %s", err), "ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	imagePullKeys := []map[string]interface{}{}
@@ -3001,21 +3079,29 @@ func resourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData, 
 		for _, imagePullKeysItem := range offering.ImagePullKeys {
 			imagePullKeysItemMap, err := resourceIBMCmOfferingImagePullKeyToMap(&imagePullKeysItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			imagePullKeys = append(imagePullKeys, imagePullKeysItemMap)
 		}
 	}
 	if err = d.Set("image_pull_keys", imagePullKeys); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting image_pull_keys: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting image_pull_keys: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if offering.Support != nil {
 		supportMap, err := resourceIBMCmOfferingSupportToMap(offering.Support)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		if err = d.Set("support", []map[string]interface{}{supportMap}); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting support: %s", err))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting support: %s", err), "ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	media := []map[string]interface{}{}
@@ -3023,45 +3109,63 @@ func resourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData, 
 		for _, mediaItem := range offering.Media {
 			mediaItemMap, err := resourceIBMCmOfferingMediaItemToMap(&mediaItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			media = append(media, mediaItemMap)
 		}
 	}
 	if err = d.Set("media", media); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting media: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting media: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	deprecatePendingMap := make(map[string]interface{})
 	if offering.DeprecatePending != nil {
 		deprecatePendingMap, err = resourceIBMCmOfferingDeprecatePendingToMap(offering.DeprecatePending)
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "read")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 	if err = d.Set("deprecate_pending", []map[string]interface{}{deprecatePendingMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting deprecate_pending: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting deprecate_pending: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("product_kind", offering.ProductKind); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting product_kind: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting product_kind: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	badges := []map[string]interface{}{}
 	if offering.Badges != nil {
 		for _, badgesItem := range offering.Badges {
 			badgesItemMap, err := resourceIBMCmOfferingBadgeToMap(&badgesItem)
 			if err != nil {
-				return diag.FromErr(err)
+				tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "read")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 			badges = append(badges, badgesItemMap)
 		}
 	}
 	if err = d.Set("badges", badges); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting badges: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting badges: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("rev", offering.Rev); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting rev: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting rev: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 	if err = d.Set("offering_identifier", offering.ID); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting offering_id: %s", err))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("Error setting offering_id: %s", err), "ibm_cm_offering", "read")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	return nil
@@ -3070,7 +3174,9 @@ func resourceIBMCmOfferingRead(context context.Context, d *schema.ResourceData, 
 func resourceIBMCmOfferingUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	catalogManagementClient, err := meta.(conns.ClientSession).CatalogManagementV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	updateOfferingOptions := &catalogmanagementv1.UpdateOfferingOptions{}
@@ -3085,8 +3191,9 @@ func resourceIBMCmOfferingUpdate(context context.Context, d *schema.ResourceData
 			d.SetId("")
 			return nil
 		}
-		log.Printf("[DEBUG] GetOfferingWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetOfferingWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("GetOfferingWithContext failed %s\n%s", err, response), "ibm_cm_offering", "update")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	updateOfferingOptions.SetCatalogIdentifier(*offering.CatalogID)
@@ -3490,7 +3597,9 @@ func resourceIBMCmOfferingUpdate(context context.Context, d *schema.ResourceData
 		path := "/support"
 		supportModel, err := resourceIBMCmOfferingMapToSupport(d.Get("support.0").(map[string]interface{}))
 		if err != nil {
-			return diag.FromErr(err)
+			tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 		update := catalogmanagementv1.JSONPatchOperation{
 			Op:    &method,
@@ -3558,8 +3667,9 @@ func resourceIBMCmOfferingUpdate(context context.Context, d *schema.ResourceData
 			deleteOfferingAccessListOptions.SetAccesses(accountsToRemove)
 			_, response, err = catalogManagementClient.DeleteOfferingAccessListWithContext(context, &deleteOfferingAccessListOptions)
 			if err != nil {
-				log.Printf("[DEBUG] DeleteOfferingAccessListWithContext failed %s\n%s", err, response)
-				return diag.FromErr(fmt.Errorf("DeleteOfferingAccessListWithContext failed %s\n%s", err, response))
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteOfferingAccessListWithContext failed %s\n%s", err, response), "ibm_cm_offering", "update")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 		}
 
@@ -3571,8 +3681,9 @@ func resourceIBMCmOfferingUpdate(context context.Context, d *schema.ResourceData
 			addOfferingAccessListOptions.SetAccesses(SIToSS(newAccountList.([]interface{})))
 			_, response, err = catalogManagementClient.AddOfferingAccessListWithContext(context, &addOfferingAccessListOptions)
 			if err != nil {
-				log.Printf("[DEBUG] AddOfferingAccessListWithContext failed %s\n%s", err, response)
-				return diag.FromErr(fmt.Errorf("AddOfferingAccessListWithContext failed %s\n%s", err, response))
+				tfErr := flex.TerraformErrorf(err, fmt.Sprintf("AddOfferingAccessListWithContext failed %s\n%s", err, response), "ibm_cm_offering", "update")
+				log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+				return tfErr.GetDiag()
 			}
 		}
 	}
@@ -3600,8 +3711,9 @@ func resourceIBMCmOfferingUpdate(context context.Context, d *schema.ResourceData
 	if publishStatusChanged {
 		_, response, err = catalogManagementClient.ShareOfferingWithContext(context, &shareOfferingOptions)
 		if err != nil {
-			log.Printf("[DEBUG] ShareOfferingWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("ShareOfferingWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("ShareOfferingWithContext failed %s\n%s", err, response), "ibm_cm_offering", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -3613,16 +3725,18 @@ func resourceIBMCmOfferingUpdate(context context.Context, d *schema.ResourceData
 
 		response, err := catalogManagementClient.DeprecateOfferingWithContext(context, deprecateOfferingOptions)
 		if err != nil {
-			log.Printf("[DEBUG] UpdateOfferingWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateOfferingWithContext failed trying to deprecate offering - %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateOfferingWithContext failed trying to deprecate offering %s\n%s", err, response), "ibm_cm_offering", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
 	if hasChange {
 		_, response, err := catalogManagementClient.UpdateOfferingWithContext(context, updateOfferingOptions)
 		if err != nil {
-			log.Printf("[DEBUG] UpdateOfferingWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("UpdateOfferingWithContext failed %s\n%s", err, response))
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("UpdateOfferingWithContext failed %s\n%s", err, response), "ibm_cm_offering", "update")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
 		}
 	}
 
@@ -3632,7 +3746,9 @@ func resourceIBMCmOfferingUpdate(context context.Context, d *schema.ResourceData
 func resourceIBMCmOfferingDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	catalogManagementClient, err := meta.(conns.ClientSession).CatalogManagementV1()
 	if err != nil {
-		return diag.FromErr(err)
+		tfErr := flex.TerraformErrorf(err, err.Error(), "ibm_cm_offering", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	deleteOfferingOptions := &catalogmanagementv1.DeleteOfferingOptions{}
@@ -3642,8 +3758,9 @@ func resourceIBMCmOfferingDelete(context context.Context, d *schema.ResourceData
 
 	response, err := catalogManagementClient.DeleteOfferingWithContext(context, deleteOfferingOptions)
 	if err != nil {
-		log.Printf("[DEBUG] DeleteOfferingWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("DeleteOfferingWithContext failed %s\n%s", err, response))
+		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeleteOfferingWithContext failed %s\n%s", err, response), "ibm_cm_offering", "delete")
+		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+		return tfErr.GetDiag()
 	}
 
 	d.SetId("")
@@ -5073,7 +5190,7 @@ func resourceIBMCmOfferingConfigurationToMap(model *catalogmanagementv1.Configur
 	if model.DefaultValue != nil {
 		defaultValueJson, err := json.Marshal(model.DefaultValue)
 		if err != nil {
-			return nil, fmt.Errorf("[ERROR] Error marshalling the version configuration default_value: %s", err)
+			return nil, flex.FmtErrorf("[ERROR] Error marshalling the version configuration default_value: %s", err)
 		}
 		modelMap["default_value"] = string(defaultValueJson)
 	}
@@ -5874,7 +5991,7 @@ func handleShareOfferingAfterCreate(catalogManagementClient *catalogmanagementv1
 			_, response, err := catalogManagementClient.AddOfferingAccessListWithContext(context, &addOfferingAccessListOptions)
 			if err != nil {
 				log.Printf("[DEBUG] AddOfferingAccessListWithContext failed %s\n%s", err, response)
-				return fmt.Errorf("AddOfferingAccessListWithContext failed %s\n%s", err, response)
+				return flex.FmtErrorf("AddOfferingAccessListWithContext failed %s\n%s", err, response)
 			}
 		}
 	}
@@ -5903,7 +6020,7 @@ func handleShareOfferingAfterCreate(catalogManagementClient *catalogmanagementv1
 		_, response, err := catalogManagementClient.ShareOfferingWithContext(context, &shareOfferingOptions)
 		if err != nil {
 			log.Printf("[DEBUG] ShareOfferingWithContext failed %s\n%s", err, response)
-			return fmt.Errorf("ShareOfferingWithContext failed %s\n%s", err, response)
+			return flex.FmtErrorf("ShareOfferingWithContext failed %s\n%s", err, response)
 		}
 	}
 
