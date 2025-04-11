@@ -31,8 +31,11 @@ type Subnet struct {
 	Public bool
 }
 
-// Subnets is the map for the Subnet metadata indexed by zone.
+// Subnets is the map for the Subnet metadata indexed by subnetID.
 type Subnets map[string]Subnet
+
+// SubnetsByZone is the map for the Subnet metadata indexed by zone.
+type SubnetsByZone map[string]Subnet
 
 // SubnetGroups is the group of subnets used by installer.
 type SubnetGroups struct {

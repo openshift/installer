@@ -174,15 +174,9 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 	var controlPlaneMachineSet *machinev1.ControlPlaneMachineSet
 	switch ic.Platform.Name() {
 	case awstypes.Name:
-		subnets := map[string]string{}
-		if len(ic.Platform.AWS.VPC.Subnets) > 0 {
-			subnetMeta, err := installConfig.AWS.PrivateSubnets(ctx)
-			if err != nil {
-				return err
-			}
-			for id, subnet := range subnetMeta {
-				subnets[subnet.Zone.Name] = id
-			}
+		subnets, err := aws.MachineSubnetsByZones(ctx, installConfig, awstypes.ClusterNodeSubnetRole)
+		if err != nil {
+			return err
 		}
 
 		mpool := defaultAWSMachinePoolPlatform("master")
