@@ -504,6 +504,11 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				return err
 			}
 
+			session, err := installConfig.Azure.Session()
+			if err != nil {
+				return err
+			}
+
 			if len(mpool.Zones) == 0 {
 				azs, err := client.GetAvailabilityZones(ctx, ic.Platform.Azure.Region, mpool.InstanceType)
 				if err != nil {
@@ -537,7 +542,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 			}
 
 			useImageGallery := ic.Platform.Azure.CloudName != azuretypes.StackCloud
-			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName, capabilities, useImageGallery)
+			sets, err := azure.MachineSets(clusterID.InfraID, ic, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName, capabilities, useImageGallery, session)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}

@@ -284,6 +284,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		azureMachines, err := azure.GenerateMachines(clusterID.InfraID,
 			installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID),
 			session.Credentials.SubscriptionID,
+			session,
 			&azure.MachineInput{
 				Subnet:          subnet,
 				Role:            "master",
