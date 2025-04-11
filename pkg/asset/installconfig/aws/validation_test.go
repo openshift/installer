@@ -665,7 +665,7 @@ func TestValidate(t *testing.T) {
 				Public:  validSubnets("public"),
 				VPC:     validVPCID,
 			},
-			expectErr: `^platform\.aws\.vpc\.subnets: Forbidden: additional subnets \[subnet-valid-private-a1 subnet-valid-private-b1\] without tag prefix kubernetes\.io/cluster/ are found in vpc vpc-valid-id of provided subnets\. Please add a tag kubernetes\.io/cluster/unmanaged to those subnets to exclude them from cluster installation or explicitly assign roles to provided subnets$`,
+			expectErr: `^platform\.aws\.vpc\.subnets: Forbidden: additional subnets \[subnet-valid-private-a1 subnet-valid-private-b1\] without tag prefix kubernetes\.io/cluster/ are found in vpc vpc-valid-id of provided subnets\. Please add a tag kubernetes\.io/cluster/unmanaged to those subnets to exclude them from cluster installation or explicitly assign roles in the install-config to provided subnets$`,
 		},
 		{
 			name: "valid byo subnets with roles",
@@ -730,6 +730,59 @@ func TestValidate(t *testing.T) {
 				Public:  validSubnets("public"),
 				VPC:     validVPCID,
 			},
+		},
+		{
+			name: "invalid byo subnets with roles, public subnet assigned ClusterNode",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withVPCSubnets(byoSubnetsWithRoles(), true),
+				icBuild.withVPCSubnets([]aws.Subnet{
+					{
+						ID:    "subnet-valid-public-a1",
+						Roles: []aws.SubnetRole{{Type: aws.ClusterNodeSubnetRole}},
+					},
+				}, false),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: validSubnets("private"),
+				Public: mergeSubnets(validSubnets("public"), Subnets{
+					"subnet-valid-public-a1": {
+						ID:     "subnet-valid-public-a1",
+						Zone:   &Zone{Name: "a"},
+						CIDR:   "10.0.6.0/24",
+						Public: true,
+					},
+				}),
+				VPC: validVPCID,
+			},
+			expectErr: `^\Q[platform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-public-a1": public subnet subnet-valid-public-a is also in zone a, platform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-public-a1": subnet subnet-valid-public-a1 has role ClusterNode, but is public, expected to be private]\E$`,
+		},
+		{
+			name: "invalid byo subnets with roles, private subnet assigned Bootstrap in external cluster",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withVPCSubnets(byoSubnetsWithRoles(), true),
+				icBuild.withVPCSubnets([]aws.Subnet{
+					{
+						ID:    "subnet-valid-private-a1",
+						Roles: []aws.SubnetRole{{Type: aws.BootstrapNodeSubnetRole}},
+					},
+				}, false),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: mergeSubnets(validSubnets("private"), Subnets{
+					"subnet-valid-private-a1": {
+						ID:   "subnet-valid-private-a1",
+						Zone: &Zone{Name: "a"},
+						CIDR: "10.0.6.0/24",
+					},
+				}),
+				Public: validSubnets("public"),
+				VPC:    validVPCID,
+			},
+			expectErr: `^\Q[platform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-private-a1": private subnet subnet-valid-private-a is also in zone a, platform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-private-a1": subnet subnet-valid-private-a1 has role BootstrapNode, but is private, expected to be public]\E$`,
 		},
 		{
 			name: "invalid byo subnets with roles, private subnet assigned ControlPlaneExternalLB",
@@ -1388,7 +1441,8 @@ func byoSubnetsWithRoles() []aws.Subnet {
 		{
 			ID: "subnet-valid-private-c",
 			Roles: []aws.SubnetRole{
-				{Type: aws.BootstrapNodeSubnetRole},
+				{Type: aws.ClusterNodeSubnetRole},
+				{Type: aws.ControlPlaneInternalLBSubnetRole},
 			},
 		},
 		{
@@ -1408,6 +1462,8 @@ func byoSubnetsWithRoles() []aws.Subnet {
 		{
 			ID: "subnet-valid-public-c",
 			Roles: []aws.SubnetRole{
+				{Type: aws.ControlPlaneExternalLBSubnetRole},
+				{Type: aws.IngressControllerLBSubnetRole},
 				{Type: aws.BootstrapNodeSubnetRole},
 			},
 		},
