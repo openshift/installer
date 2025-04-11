@@ -258,7 +258,7 @@ func validateSubnets(subnets []aws.Subnet, publish types.PublishingStrategy, fld
 			allErrs = append(allErrs, field.Forbidden(fldPath, "must not include subnets with the ControlPlaneExternalLB role in a private cluster"))
 		}
 
-		// ClusterNode, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB
+		// ClusterNode, BootstrapNode, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB
 		// must be assigned to at least 1 subnet.
 		missingRoles := sets.New[aws.SubnetRoleType]()
 		for rType := range supportedRoles {

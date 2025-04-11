@@ -158,7 +158,7 @@ type VPC struct {
 	// In this case, the VPC must not contain any other non-cluster subnets without the kubernetes.io/cluster/<cluster-id> tag.
 	//
 	// For manually specified subnet role selection, each subnet must have at least one assigned role,
-	// and the ClusterNode, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB roles must be assigned to at least one subnet.
+	// and the ClusterNode, BootstrapNode, IngressControllerLB, ControlPlaneExternalLB, and ControlPlaneInternalLB roles must be assigned to at least one subnet.
 	// However, if the cluster scope is internal, then ControlPlaneExternalLB is not required.
 	//
 	// Subnets must contain unique IDs, and can include no more than 10 subnets with the IngressController role.
