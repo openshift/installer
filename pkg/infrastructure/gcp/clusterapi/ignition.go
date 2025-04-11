@@ -11,7 +11,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
-	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
@@ -46,8 +45,16 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi
 		project = in.InstallConfig.Config.GCP.NetworkProjectID
 	}
 
+	apiIntIPAddress := *gcpCluster.Status.Network.APIInternalAddress
+	addressIntCut := apiIntIPAddress[strings.LastIndex(apiIntIPAddress, "/")+1:]
+	computeIntAddressObj, err := svc.Addresses.Get(project, in.InstallConfig.Config.GCP.Region, addressIntCut).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get compute address: %w", err)
+	}
+	computeIntAddress := computeIntAddressObj.Address
+
 	computeAddress := ""
-	if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
+	if in.InstallConfig.Config.PublicAPI() {
 		apiIPAddress := *gcpCluster.Status.Network.APIServerAddress
 		addressCut := apiIPAddress[strings.LastIndex(apiIPAddress, "/")+1:]
 		computeAddressObj, err := svc.GlobalAddresses.Get(project, addressCut).Context(ctx).Do()
@@ -56,14 +63,11 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi
 		}
 
 		computeAddress = computeAddressObj.Address
+	} else {
+		// In private clusters, the API and API-Int servers both point to the same internal load balancer
+		computeAddress = computeIntAddressObj.Address
 	}
 
-	apiIntIPAddress := *gcpCluster.Status.Network.APIInternalAddress
-	addressIntCut := apiIntIPAddress[strings.LastIndex(apiIntIPAddress, "/")+1:]
-	computeIntAddress, err := svc.Addresses.Get(project, in.InstallConfig.Config.GCP.Region, addressIntCut).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get compute address: %w", err)
-	}
 	logrus.Debugf("GCP: Editing Ignition files to start in-cluster DNS when UserProvisionedDNS is enabled")
-	return clusterapi.EditIgnition(in, gcp.Name, []string{computeAddress}, []string{computeIntAddress.Address})
+	return clusterapi.EditIgnition(in, gcp.Name, []string{computeAddress}, []string{computeIntAddress})
 }
