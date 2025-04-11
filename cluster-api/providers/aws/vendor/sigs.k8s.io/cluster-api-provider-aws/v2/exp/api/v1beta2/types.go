@@ -22,6 +22,11 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 )
 
+const (
+	// KindMachinePool is a MachinePool resource Kind
+	KindMachinePool string = "MachinePool"
+)
+
 // EBS can be used to automatically set up EBS volumes when an instance is launched.
 type EBS struct {
 	// Encrypted is whether the volume should be encrypted or not.
@@ -128,6 +133,19 @@ type AWSLaunchTemplate struct {
 	// PrivateDNSName is the options for the instance hostname.
 	// +optional
 	PrivateDNSName *infrav1.PrivateDNSName `json:"privateDnsName,omitempty"`
+
+	// CapacityReservationID specifies the target Capacity Reservation into which the instance should be launched.
+	// +optional
+	CapacityReservationID *string `json:"capacityReservationId,omitempty"`
+
+	// MarketType specifies the type of market for the EC2 instance. Valid values include:
+	// "OnDemand" (default): The instance runs as a standard OnDemand instance.
+	// "Spot": The instance runs as a Spot instance. When SpotMarketOptions is provided, the marketType defaults to "Spot".
+	// "CapacityBlock": The instance utilizes pre-purchased compute capacity (capacity blocks) with AWS Capacity Reservations.
+	//  If this value is selected, CapacityReservationID must be specified to identify the target reservation.
+	// If marketType is not specified and spotMarketOptions is provided, the marketType defaults to "Spot".
+	// +optional
+	MarketType infrav1.MarketType `json:"marketType,omitempty"`
 }
 
 // Overrides are used to override the instance type specified by the launch template with multiple

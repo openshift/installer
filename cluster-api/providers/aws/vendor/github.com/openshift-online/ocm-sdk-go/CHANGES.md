@@ -3,6 +3,39 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+## 0.1.447
+- Update model version v0.0.400
+  - Update ocm-sdk-go examples for Addons
+  - Update `Parameters` attribute in addon_installation_type.model to the List of `AddonInstallationParameter` type.
+  - Update `Parameters` attribute in addon_type.model to the  List of `AddonParameter` type.
+
+## 0.1.446
+- Update model version v0.0.399
+  - Improve Clusters Azure API type documentation
+  - Add Azure Operators Authentication related types
+  - Add `AzureOperatorsAuthentication` type to `Azure` type
+
+## 0.1.445
+- Update model version v0.0.398
+  - Add updates for GCP Private Service Connect feature
+  
+## 0.1.444
+- Update model version v0.0.397
+  - Add `FlapDetection` field to `status_board.statuses` model
+
+## 0.1.443
+- Update model version v0.0.396
+  - Add `FlapDetection` field to `status_board.status_updates` model
+
+## 0.1.442
+- Update model version v0.0.395
+  - Add `ASWShard` struct
+  - Add `WifEnabled` field to `Version` model
+
+## 0.1.441
+- Update model version v0.0.394
+  - Add `WifTemplates` field to `WifConfig` model
+
 ## 0.1.440
 - Update model version v0.0.393
   - Include missing field to hypershift model

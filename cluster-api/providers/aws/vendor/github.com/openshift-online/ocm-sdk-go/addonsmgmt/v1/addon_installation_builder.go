@@ -38,7 +38,7 @@ type AddonInstallationBuilder struct {
 	deletedTimestamp  time.Time
 	desiredVersion    string
 	operatorVersion   string
-	parameters        *AddonInstallationParametersBuilder
+	parameters        *AddonInstallationParameterListBuilder
 	state             AddonInstallationState
 	stateDescription  string
 	subscription      *ObjectReferenceBuilder
@@ -149,16 +149,10 @@ func (b *AddonInstallationBuilder) OperatorVersion(value string) *AddonInstallat
 	return b
 }
 
-// Parameters sets the value of the 'parameters' attribute to the given value.
-//
-// representation of addon installation parameter
-func (b *AddonInstallationBuilder) Parameters(value *AddonInstallationParametersBuilder) *AddonInstallationBuilder {
+// Parameters sets the value of the 'parameters' attribute to the given values.
+func (b *AddonInstallationBuilder) Parameters(value *AddonInstallationParameterListBuilder) *AddonInstallationBuilder {
 	b.parameters = value
-	if value != nil {
-		b.bitmap_ |= 2048
-	} else {
-		b.bitmap_ &^= 2048
-	}
+	b.bitmap_ |= 2048
 	return b
 }
 
@@ -227,7 +221,7 @@ func (b *AddonInstallationBuilder) Copy(object *AddonInstallation) *AddonInstall
 	b.desiredVersion = object.desiredVersion
 	b.operatorVersion = object.operatorVersion
 	if object.parameters != nil {
-		b.parameters = NewAddonInstallationParameters().Copy(object.parameters)
+		b.parameters = NewAddonInstallationParameterList().Copy(object.parameters)
 	} else {
 		b.parameters = nil
 	}

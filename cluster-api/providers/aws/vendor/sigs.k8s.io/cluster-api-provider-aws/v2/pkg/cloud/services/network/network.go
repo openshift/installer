@@ -32,56 +32,56 @@ func (s *Service) ReconcileNetwork() (err error) {
 
 	// VPC.
 	if err := s.reconcileVPC(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcReadyCondition, infrav1.VpcReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcReadyCondition, infrav1.VpcReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
 	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.VpcReadyCondition)
 
 	// Secondary CIDRs
 	if err := s.associateSecondaryCidrs(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SecondaryCidrsReadyCondition, infrav1.SecondaryCidrReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SecondaryCidrsReadyCondition, infrav1.SecondaryCidrReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
 
 	// Subnets.
 	if err := s.reconcileSubnets(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SubnetsReadyCondition, infrav1.SubnetsReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SubnetsReadyCondition, infrav1.SubnetsReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
 
 	// Internet Gateways.
 	if err := s.reconcileInternetGateways(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.InternetGatewayReadyCondition, infrav1.InternetGatewayFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.InternetGatewayReadyCondition, infrav1.InternetGatewayFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
 
 	// Carrier Gateway.
 	if err := s.reconcileCarrierGateway(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.CarrierGatewayReadyCondition, infrav1.CarrierGatewayFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.CarrierGatewayReadyCondition, infrav1.CarrierGatewayFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
 
 	// Egress Only Internet Gateways.
 	if err := s.reconcileEgressOnlyInternetGateways(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.EgressOnlyInternetGatewayReadyCondition, infrav1.EgressOnlyInternetGatewayFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.EgressOnlyInternetGatewayReadyCondition, infrav1.EgressOnlyInternetGatewayFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
 
 	// NAT Gateways.
 	if err := s.reconcileNatGateways(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.NatGatewaysReadyCondition, infrav1.NatGatewaysReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.NatGatewaysReadyCondition, infrav1.NatGatewaysReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
 
 	// Routing tables.
 	if err := s.reconcileRouteTables(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.RouteTablesReadyCondition, infrav1.RouteTableReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.RouteTablesReadyCondition, infrav1.RouteTableReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
 
 	// VPC Endpoints.
 	if err := s.reconcileVPCEndpoints(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, infrav1.VpcEndpointsReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, infrav1.VpcEndpointsReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), "%s", err.Error())
 		return err
 	}
 
@@ -118,7 +118,7 @@ func (s *Service) DeleteNetwork() (err error) {
 	}
 
 	if err := s.deleteVPCEndpoints(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
 		return err
 	}
 	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
@@ -130,7 +130,7 @@ func (s *Service) DeleteNetwork() (err error) {
 	}
 
 	if err := s.deleteRouteTables(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.RouteTablesReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.RouteTablesReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
 		return err
 	}
 	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.RouteTablesReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
@@ -142,7 +142,7 @@ func (s *Service) DeleteNetwork() (err error) {
 	}
 
 	if err := s.deleteNatGateways(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.NatGatewaysReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.NatGatewaysReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
 		return err
 	}
 	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.NatGatewaysReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
@@ -159,7 +159,7 @@ func (s *Service) DeleteNetwork() (err error) {
 	}
 
 	if err := s.deleteInternetGateways(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.InternetGatewayReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.InternetGatewayReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
 		return err
 	}
 	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.InternetGatewayReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
@@ -167,7 +167,7 @@ func (s *Service) DeleteNetwork() (err error) {
 	// Carrier Gateway.
 	if s.scope.VPC().CarrierGatewayID != nil {
 		if err := s.deleteCarrierGateway(); err != nil {
-			conditions.MarkFalse(s.scope.InfraCluster(), infrav1.CarrierGatewayReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, err.Error())
+			conditions.MarkFalse(s.scope.InfraCluster(), infrav1.CarrierGatewayReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
 			return err
 		}
 		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.CarrierGatewayReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
@@ -180,7 +180,7 @@ func (s *Service) DeleteNetwork() (err error) {
 	}
 
 	if err := s.deleteEgressOnlyInternetGateways(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.EgressOnlyInternetGatewayReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.EgressOnlyInternetGatewayReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
 		return err
 	}
 	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.EgressOnlyInternetGatewayReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
@@ -192,7 +192,7 @@ func (s *Service) DeleteNetwork() (err error) {
 	}
 
 	if err := s.deleteSubnets(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SubnetsReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SubnetsReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
 		return err
 	}
 	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SubnetsReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
@@ -200,7 +200,7 @@ func (s *Service) DeleteNetwork() (err error) {
 	// Secondary CIDR.
 	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SecondaryCidrsReadyCondition, clusterv1.DeletingReason, clusterv1.ConditionSeverityInfo, "")
 	if err := s.disassociateSecondaryCidrs(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SecondaryCidrsReadyCondition, "DisassociateFailed", clusterv1.ConditionSeverityWarning, err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.SecondaryCidrsReadyCondition, "DisassociateFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
 		return err
 	}
 
@@ -211,7 +211,7 @@ func (s *Service) DeleteNetwork() (err error) {
 	}
 
 	if err := s.deleteVPC(); err != nil {
-		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, err.Error())
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, "%s", err.Error())
 		return err
 	}
 	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
