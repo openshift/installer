@@ -274,7 +274,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 	}
 
 	if platform.CloudName == azure.StackCloud {
-		spec.AvailabilitySet = fmt.Sprintf("%s-cluster", clusterID)
+		spec.AvailabilitySet = fmt.Sprintf("%s_control-plane-as", clusterID)
 	}
 
 	return spec, nil
