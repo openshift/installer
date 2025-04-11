@@ -46,6 +46,7 @@ import (
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/dns"
@@ -897,7 +898,12 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 		return fmt.Errorf("failed to fetch %s: %w", lbConfig.Name(), err)
 	}
 
-	_, ipAddrs, err := lbConfig.ParseDNSDataFromConfig(lbconfig.PublicLoadBalancer)
+	lbType := lbconfig.PublicLoadBalancer
+	if installConfig.Config.Publish == types.InternalPublishingStrategy {
+		lbType = lbconfig.PrivateLoadBalancer
+	}
+
+	_, ipAddrs, err := lbConfig.ParseDNSDataFromConfig(lbType)
 	if err != nil {
 		return fmt.Errorf("failed to parse lbconfig: %w", err)
 	}
