@@ -48,6 +48,21 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
 }
 
+// AttachFloatingIP mocks base method.
+func (m *MockAPI) AttachFloatingIP(ctx context.Context, instanceName, instanceID, region, resourceGroupName string) (*vpcv1.FloatingIP, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AttachFloatingIP", ctx, instanceName, instanceID, region, resourceGroupName)
+	ret0, _ := ret[0].(*vpcv1.FloatingIP)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AttachFloatingIP indicates an expected call of AttachFloatingIP.
+func (mr *MockAPIMockRecorder) AttachFloatingIP(ctx, instanceName, instanceID, region, resourceGroupName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttachFloatingIP", reflect.TypeOf((*MockAPI)(nil).AttachFloatingIP), ctx, instanceName, instanceID, region, resourceGroupName)
+}
+
 // CreateCISDNSRecord mocks base method.
 func (m *MockAPI) CreateCISDNSRecord(ctx context.Context, cisInstanceCRN, zoneID, recordName, cname string) error {
 	m.ctrl.T.Helper()
@@ -128,7 +143,7 @@ func (m *MockAPI) CreateDNSServicesPermittedNetwork(ctx context.Context, dnsInst
 }
 
 // CreateDNSServicesPermittedNetwork indicates an expected call of CreateDNSServicesPermittedNetwork.
-func (mr *MockAPIMockRecorder) CreateDNSServicesPermittedNetwork(ctx, dnsInstanceID, dnsZoneID, vpcCRN interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) CreateDNSServicesPermittedNetwork(ctx, dnsInstanceID, dnsZoneID, vpcCRN any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDNSServicesPermittedNetwork", reflect.TypeOf((*MockAPI)(nil).CreateDNSServicesPermittedNetwork), ctx, dnsInstanceID, dnsZoneID, vpcCRN)
 }
@@ -159,6 +174,90 @@ func (m *MockAPI) CreateResourceGroup(ctx context.Context, rgName string) error 
 func (mr *MockAPIMockRecorder) CreateResourceGroup(ctx, rgName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateResourceGroup", reflect.TypeOf((*MockAPI)(nil).CreateResourceGroup), ctx, rgName)
+}
+
+// DeleteCOSBucket mocks base method.
+func (m *MockAPI) DeleteCOSBucket(ctx context.Context, cosInstanceID, bucketName, region string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteCOSBucket", ctx, cosInstanceID, bucketName, region)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteCOSBucket indicates an expected call of DeleteCOSBucket.
+func (mr *MockAPIMockRecorder) DeleteCOSBucket(ctx, cosInstanceID, bucketName, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCOSBucket", reflect.TypeOf((*MockAPI)(nil).DeleteCOSBucket), ctx, cosInstanceID, bucketName, region)
+}
+
+// DeleteCOSInstance mocks base method.
+func (m *MockAPI) DeleteCOSInstance(ctx context.Context, cosInstanceID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteCOSInstance", ctx, cosInstanceID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteCOSInstance indicates an expected call of DeleteCOSInstance.
+func (mr *MockAPIMockRecorder) DeleteCOSInstance(ctx, cosInstanceID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCOSInstance", reflect.TypeOf((*MockAPI)(nil).DeleteCOSInstance), ctx, cosInstanceID)
+}
+
+// DeleteCOSObject mocks base method.
+func (m *MockAPI) DeleteCOSObject(ctx context.Context, cosInstanceID, bucketName, objectKey, region string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteCOSObject", ctx, cosInstanceID, bucketName, objectKey, region)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteCOSObject indicates an expected call of DeleteCOSObject.
+func (mr *MockAPIMockRecorder) DeleteCOSObject(ctx, cosInstanceID, bucketName, objectKey, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCOSObject", reflect.TypeOf((*MockAPI)(nil).DeleteCOSObject), ctx, cosInstanceID, bucketName, objectKey, region)
+}
+
+// DeleteFloatingIP mocks base method.
+func (m *MockAPI) DeleteFloatingIP(ctx context.Context, floatingIPID, region string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFloatingIP", ctx, floatingIPID, region)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFloatingIP indicates an expected call of DeleteFloatingIP.
+func (mr *MockAPIMockRecorder) DeleteFloatingIP(ctx, floatingIPID, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFloatingIP", reflect.TypeOf((*MockAPI)(nil).DeleteFloatingIP), ctx, floatingIPID, region)
+}
+
+// DeleteSecurityGroup mocks base method.
+func (m *MockAPI) DeleteSecurityGroup(ctx context.Context, securityGroupID, region string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSecurityGroup", ctx, securityGroupID, region)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSecurityGroup indicates an expected call of DeleteSecurityGroup.
+func (mr *MockAPIMockRecorder) DeleteSecurityGroup(ctx, securityGroupID, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSecurityGroup", reflect.TypeOf((*MockAPI)(nil).DeleteSecurityGroup), ctx, securityGroupID, region)
+}
+
+// DeleteSecurityGroupTargetBinding mocks base method.
+func (m *MockAPI) DeleteSecurityGroupTargetBinding(ctx context.Context, securityGroupID, targetID, region string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSecurityGroupTargetBinding", ctx, securityGroupID, targetID, region)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSecurityGroupTargetBinding indicates an expected call of DeleteSecurityGroupTargetBinding.
+func (mr *MockAPIMockRecorder) DeleteSecurityGroupTargetBinding(ctx, securityGroupID, targetID, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSecurityGroupTargetBinding", reflect.TypeOf((*MockAPI)(nil).DeleteSecurityGroupTargetBinding), ctx, securityGroupID, targetID, region)
 }
 
 // GetAPIKey mocks base method.
@@ -355,6 +454,21 @@ func (mr *MockAPIMockRecorder) GetEncryptionKey(ctx, keyCRN any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEncryptionKey", reflect.TypeOf((*MockAPI)(nil).GetEncryptionKey), ctx, keyCRN)
 }
 
+// GetFloatingIPByName mocks base method.
+func (m *MockAPI) GetFloatingIPByName(ctx context.Context, floatingIPName, region string) (*vpcv1.FloatingIP, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFloatingIPByName", ctx, floatingIPName, region)
+	ret0, _ := ret[0].(*vpcv1.FloatingIP)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFloatingIPByName indicates an expected call of GetFloatingIPByName.
+func (mr *MockAPIMockRecorder) GetFloatingIPByName(ctx, floatingIPName, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFloatingIPByName", reflect.TypeOf((*MockAPI)(nil).GetFloatingIPByName), ctx, floatingIPName, region)
+}
+
 // GetIBMCloudRegions mocks base method.
 func (m *MockAPI) GetIBMCloudRegions(ctx context.Context) (map[string]string, error) {
 	m.ctrl.T.Helper()
@@ -365,7 +479,7 @@ func (m *MockAPI) GetIBMCloudRegions(ctx context.Context) (map[string]string, er
 }
 
 // GetIBMCloudRegions indicates an expected call of GetIBMCloudRegions.
-func (mr *MockAPIMockRecorder) GetIBMCloudRegions(ctx interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetIBMCloudRegions(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIBMCloudRegions", reflect.TypeOf((*MockAPI)(nil).GetIBMCloudRegions), ctx)
 }
@@ -428,6 +542,21 @@ func (m *MockAPI) GetSSHKeyByPublicKey(ctx context.Context, publicKey string) (*
 func (mr *MockAPIMockRecorder) GetSSHKeyByPublicKey(ctx, publicKey any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSSHKeyByPublicKey", reflect.TypeOf((*MockAPI)(nil).GetSSHKeyByPublicKey), ctx, publicKey)
+}
+
+// GetSecurityGroupByName mocks base method.
+func (m *MockAPI) GetSecurityGroupByName(ctx context.Context, sgName, vpcID, region string) (*vpcv1.SecurityGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSecurityGroupByName", ctx, sgName, vpcID, region)
+	ret0, _ := ret[0].(*vpcv1.SecurityGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSecurityGroupByName indicates an expected call of GetSecurityGroupByName.
+func (mr *MockAPIMockRecorder) GetSecurityGroupByName(ctx, sgName, vpcID, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecurityGroupByName", reflect.TypeOf((*MockAPI)(nil).GetSecurityGroupByName), ctx, sgName, vpcID, region)
 }
 
 // GetSubnet mocks base method.
@@ -520,6 +649,21 @@ func (mr *MockAPIMockRecorder) GetVPCs(ctx, region any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCs", reflect.TypeOf((*MockAPI)(nil).GetVPCs), ctx, region)
 }
 
+// GetVSI mocks base method.
+func (m *MockAPI) GetVSI(ctx context.Context, instanceID, region string) (*vpcv1.Instance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVSI", ctx, instanceID, region)
+	ret0, _ := ret[0].(*vpcv1.Instance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVSI indicates an expected call of GetVSI.
+func (mr *MockAPIMockRecorder) GetVSI(ctx, instanceID, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVSI", reflect.TypeOf((*MockAPI)(nil).GetVSI), ctx, instanceID, region)
+}
+
 // GetVSIProfiles mocks base method.
 func (m *MockAPI) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error) {
 	m.ctrl.T.Helper()
@@ -533,6 +677,36 @@ func (m *MockAPI) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, 
 func (mr *MockAPIMockRecorder) GetVSIProfiles(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVSIProfiles", reflect.TypeOf((*MockAPI)(nil).GetVSIProfiles), ctx)
+}
+
+// ListCOSBuckets mocks base method.
+func (m *MockAPI) ListCOSBuckets(ctx context.Context, cosInstanceID, region string) (*s3.ListBucketsOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListCOSBuckets", ctx, cosInstanceID, region)
+	ret0, _ := ret[0].(*s3.ListBucketsOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListCOSBuckets indicates an expected call of ListCOSBuckets.
+func (mr *MockAPIMockRecorder) ListCOSBuckets(ctx, cosInstanceID, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCOSBuckets", reflect.TypeOf((*MockAPI)(nil).ListCOSBuckets), ctx, cosInstanceID, region)
+}
+
+// ListCOSObjects mocks base method.
+func (m *MockAPI) ListCOSObjects(ctx context.Context, cosInstanceID, bucketName, region string) (*s3.ListObjectsOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListCOSObjects", ctx, cosInstanceID, bucketName, region)
+	ret0, _ := ret[0].(*s3.ListObjectsOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListCOSObjects indicates an expected call of ListCOSObjects.
+func (mr *MockAPIMockRecorder) ListCOSObjects(ctx, cosInstanceID, bucketName, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCOSObjects", reflect.TypeOf((*MockAPI)(nil).ListCOSObjects), ctx, cosInstanceID, bucketName, region)
 }
 
 // SetVPCServiceURLForRegion mocks base method.
