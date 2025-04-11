@@ -16,7 +16,6 @@ import (
 	openstackcapi "github.com/openshift/installer/pkg/infrastructure/openstack/clusterapi"
 	powervscapi "github.com/openshift/installer/pkg/infrastructure/powervs/clusterapi"
 	vspherecapi "github.com/openshift/installer/pkg/infrastructure/vsphere/clusterapi"
-	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/featuregates"
@@ -38,10 +37,7 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case gcptypes.Name:
 		return clusterapi.InitializeProvider(gcpcapi.Provider{}), nil
 	case ibmcloudtypes.Name:
-		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
-			return clusterapi.InitializeProvider(ibmcloudcapi.Provider{}), nil
-		}
-		return nil, nil
+		return clusterapi.InitializeProvider(ibmcloudcapi.Provider{}), nil
 	case vspheretypes.Name:
 		return clusterapi.InitializeProvider(vspherecapi.Provider{}), nil
 	case powervstypes.Name:
