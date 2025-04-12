@@ -116,7 +116,7 @@ func (s *Service) forceDeleteSecretEntry(name string) error {
 // Delete the secret belonging to a machine from AWS Secrets Manager.
 func (s *Service) Delete(m *scope.MachineScope) error {
 	var errs []error
-	for i := int32(0); i < m.GetSecretCount(); i++ {
+	for i := range m.GetSecretCount() {
 		if err := s.forceDeleteSecretEntry(fmt.Sprintf("%s-%d", m.GetSecretPrefix(), i)); err != nil {
 			errs = append(errs, err)
 		}

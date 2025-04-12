@@ -34,6 +34,7 @@ import (
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/openshift-online/ocm-sdk-go/authentication/securestore"
 
+	"github.com/openshift/rosa/pkg/constants"
 	"github.com/openshift/rosa/pkg/debug"
 	"github.com/openshift/rosa/pkg/properties"
 )
@@ -224,7 +225,7 @@ func Remove() error {
 // use the XDG config directory.
 func Location() (path string, err error) {
 	// Use env variable
-	if ocmconfig := os.Getenv("OCM_CONFIG"); ocmconfig != "" {
+	if ocmconfig := os.Getenv(constants.OcmConfig); ocmconfig != "" {
 		return ocmconfig, nil
 	}
 

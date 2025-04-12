@@ -32,6 +32,7 @@ type GCPBuilder struct {
 	clientEmail             string
 	privateKey              string
 	privateKeyID            string
+	privateServiceConnect   *GcpPrivateServiceConnectBuilder
 	projectID               string
 	security                *GcpSecurityBuilder
 	tokenURI                string
@@ -110,10 +111,23 @@ func (b *GCPBuilder) PrivateKeyID(value string) *GCPBuilder {
 	return b
 }
 
+// PrivateServiceConnect sets the value of the 'private_service_connect' attribute to the given value.
+//
+// Google cloud platform private service connect configuration of a cluster.
+func (b *GCPBuilder) PrivateServiceConnect(value *GcpPrivateServiceConnectBuilder) *GCPBuilder {
+	b.privateServiceConnect = value
+	if value != nil {
+		b.bitmap_ |= 256
+	} else {
+		b.bitmap_ &^= 256
+	}
+	return b
+}
+
 // ProjectID sets the value of the 'project_ID' attribute to the given value.
 func (b *GCPBuilder) ProjectID(value string) *GCPBuilder {
 	b.projectID = value
-	b.bitmap_ |= 256
+	b.bitmap_ |= 512
 	return b
 }
 
@@ -123,9 +137,9 @@ func (b *GCPBuilder) ProjectID(value string) *GCPBuilder {
 func (b *GCPBuilder) Security(value *GcpSecurityBuilder) *GCPBuilder {
 	b.security = value
 	if value != nil {
-		b.bitmap_ |= 512
+		b.bitmap_ |= 1024
 	} else {
-		b.bitmap_ &^= 512
+		b.bitmap_ &^= 1024
 	}
 	return b
 }
@@ -133,14 +147,14 @@ func (b *GCPBuilder) Security(value *GcpSecurityBuilder) *GCPBuilder {
 // TokenURI sets the value of the 'token_URI' attribute to the given value.
 func (b *GCPBuilder) TokenURI(value string) *GCPBuilder {
 	b.tokenURI = value
-	b.bitmap_ |= 1024
+	b.bitmap_ |= 2048
 	return b
 }
 
 // Type sets the value of the 'type' attribute to the given value.
 func (b *GCPBuilder) Type(value string) *GCPBuilder {
 	b.type_ = value
-	b.bitmap_ |= 2048
+	b.bitmap_ |= 4096
 	return b
 }
 
@@ -162,6 +176,11 @@ func (b *GCPBuilder) Copy(object *GCP) *GCPBuilder {
 	b.clientEmail = object.clientEmail
 	b.privateKey = object.privateKey
 	b.privateKeyID = object.privateKeyID
+	if object.privateServiceConnect != nil {
+		b.privateServiceConnect = NewGcpPrivateServiceConnect().Copy(object.privateServiceConnect)
+	} else {
+		b.privateServiceConnect = nil
+	}
 	b.projectID = object.projectID
 	if object.security != nil {
 		b.security = NewGcpSecurity().Copy(object.security)
@@ -190,6 +209,12 @@ func (b *GCPBuilder) Build() (object *GCP, err error) {
 	object.clientEmail = b.clientEmail
 	object.privateKey = b.privateKey
 	object.privateKeyID = b.privateKeyID
+	if b.privateServiceConnect != nil {
+		object.privateServiceConnect, err = b.privateServiceConnect.Build()
+		if err != nil {
+			return
+		}
+	}
 	object.projectID = b.projectID
 	if b.security != nil {
 		object.security, err = b.security.Build()

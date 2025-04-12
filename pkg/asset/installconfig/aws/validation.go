@@ -110,8 +110,6 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 
 	if len(platform.VPC.Subnets) > 0 {
 		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("vpc").Child("subnets"), platform.VPC.Subnets, networking, publish)...)
-	} else if awstypes.IsPublicOnlySubnetsEnabled() {
-		allErrs = append(allErrs, field.Required(fldPath.Child("subnets"), "subnets must be specified for public-only subnets clusters"))
 	}
 	if platform.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform, controlPlaneReq, "", "")...)

@@ -49,6 +49,11 @@ var (
 	DefaultPrefix         = "ManagedOpenShift"
 )
 
+type PolicyVersion struct {
+	VersionID        string
+	IsDefaultVersion bool
+}
+
 type Operator struct {
 	Name                string
 	Namespace           string
@@ -130,6 +135,7 @@ const (
 	InstallerCoreKey        = "sts_installer_core_permission_policy"
 	InstallerVPCKey         = "sts_installer_vpc_permission_policy"
 	InstallerPrivateLinkKey = "sts_installer_privatelink_permission_policy"
+	WorkerEC2RegistryKey    = "sts_hcp_ec2_registry_permission_policy"
 )
 
 var AccountRoles = map[string]AccountRole{
@@ -2003,10 +2009,12 @@ func (c *awsClient) ValidateHCPAccountRolesManagedPolicies(prefix string,
 	for roleType, accountRole := range HCPAccountRoles {
 		roleName := common.GetRoleName(prefix, accountRole.Name)
 
-		policyKey := fmt.Sprintf("sts_hcp_%s_permission_policy", roleType)
-		err := c.validateManagedPolicy(policies, policyKey, roleName)
-		if err != nil {
-			return err
+		policyKeys := GetHcpAccountRolePolicyKeys(roleType)
+		for _, policyKey := range policyKeys {
+			err := c.validateManagedPolicy(policies, policyKey, roleName)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -2065,6 +2073,11 @@ func (c *awsClient) validateManagedPolicy(policies map[string]*cmv1.AWSSTSPolicy
 	roleName string) error {
 	managedPolicyARN, err := GetManagedPolicyARN(policies, policyKey)
 	if err != nil {
+		// EC2 policy is only available to orgs for zero-egress feature toggle enabled
+		if policyKey == WorkerEC2RegistryKey {
+			c.logger.Infof("Ignored check for policy key '%s' (zero egress feature toggle is not enabled)", policyKey)
+			return nil
+		}
 		return err
 	}
 
@@ -2190,4 +2203,24 @@ func getOperatorRolePolicyTags(c client.IamApiClient, roleName string) (map[stri
 
 func isAwsManagedPolicy(policyArn string) bool {
 	return awsManagedPolicyRegex.MatchString(policyArn)
+}
+
+func (c *awsClient) ListPolicyVersions(policyArn string) ([]PolicyVersion, error) {
+	policyVersionsOutput, err := c.iamClient.ListPolicyVersions(context.TODO(), &iam.ListPolicyVersionsInput{
+		PolicyArn: aws.String(policyArn),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list policy versions, %v", err)
+	}
+
+	// Convert the output to a slice of PolicyVersion
+	var policyVersions []PolicyVersion
+	for _, version := range policyVersionsOutput.Versions {
+		policyVersions = append(policyVersions, PolicyVersion{
+			VersionID:        aws.ToString(version.VersionId),
+			IsDefaultVersion: version.IsDefaultVersion,
+		})
+	}
+
+	return policyVersions, nil
 }

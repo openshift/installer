@@ -35,6 +35,6 @@ func handleErr(res *ocmerrors.Error, err error) error {
 			"Go to https://www.redhat.com/wapps/tnc/ackrequired?site=ocm&event=register\n" +
 			"Once you accept the terms, you will need to retry the action that was blocked."
 	}
-	errType := errors.ErrorType(res.Status())
+	errType := errors.ErrorType(res.Status()) //#nosec G115
 	return errType.Set(errors.Errorf("%s", msg))
 }

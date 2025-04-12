@@ -178,6 +178,7 @@ func (s *FargateProfileScope) IAMReadyFalse(reason string, err string) error {
 		expinfrav1.IAMFargateRolesReadyCondition,
 		reason,
 		severity,
+		"%s",
 		err,
 	)
 	if err := s.PatchObject(); err != nil {

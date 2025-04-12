@@ -37,7 +37,7 @@ type machineProviderInput struct {
 }
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, role, userDataSecret string, userTags map[string]string) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
+func Machines(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, role, userDataSecret string, userTags map[string]string, publicSubnet bool) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if poolPlatform := pool.Platform.Name(); poolPlatform != aws.Name {
 		return nil, nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
 	}
@@ -74,7 +74,7 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 			root:             &mpool.EC2RootVolume,
 			imds:             mpool.EC2Metadata,
 			userTags:         userTags,
-			publicSubnet:     false,
+			publicSubnet:     publicSubnet,
 			securityGroupIDs: pool.Platform.AWS.AdditionalSecurityGroupIDs,
 		})
 		if err != nil {
@@ -119,12 +119,14 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 		}
 		if subnet == "" {
 			domain.Subnet.Type = machinev1.AWSFiltersReferenceType
+			subnetFilterValue := fmt.Sprintf("%s-subnet-private-%s", clusterID, zone)
+			if publicSubnet {
+				subnetFilterValue = fmt.Sprintf("%s-subnet-public-%s", clusterID, zone)
+			}
 			domain.Subnet.Filters = &[]machinev1.AWSResourceFilter{
 				{
-					Name: "tag:Name",
-					Values: []string{
-						fmt.Sprintf("%s-subnet-private-%s", clusterID, zone),
-					},
+					Name:   "tag:Name",
+					Values: []string{subnetFilterValue},
 				},
 			}
 		} else {

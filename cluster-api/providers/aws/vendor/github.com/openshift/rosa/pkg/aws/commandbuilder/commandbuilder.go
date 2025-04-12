@@ -29,6 +29,7 @@ const (
 	DeleteRolePolicy              Command = "delete-role-policy"
 	AttachRolePolicy              Command = "attach-role-policy"
 	DetachRolePolicy              Command = "detach-role-policy"
+	DeletePolicyVersion           Command = "delete-policy-version"
 	TagPolicy                     Command = "tag-policy"
 	TagRole                       Command = "tag-role"
 	CreateOpenIdConnectProvider   Command = "create-open-id-connect-provider"
@@ -65,6 +66,7 @@ const (
 	ThumbprintList           Param = "thumbprint-list"
 	OpenIdConnectProviderArn Param = "open-id-connect-provider-arn"
 	SetAsDefault             Param = "set-as-default"
+	VersionID                Param = "version-id"
 
 	//S3
 	Bucket                         Param = "bucket"

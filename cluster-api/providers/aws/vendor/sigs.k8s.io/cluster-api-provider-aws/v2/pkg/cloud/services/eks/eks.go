@@ -37,28 +37,28 @@ func (s *Service) ReconcileControlPlane(ctx context.Context) error {
 
 	// Control Plane IAM Role
 	if err := s.reconcileControlPlaneIAMRole(); err != nil {
-		conditions.MarkFalse(s.scope.ControlPlane, ekscontrolplanev1.IAMControlPlaneRolesReadyCondition, ekscontrolplanev1.IAMControlPlaneRolesReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
+		conditions.MarkFalse(s.scope.ControlPlane, ekscontrolplanev1.IAMControlPlaneRolesReadyCondition, ekscontrolplanev1.IAMControlPlaneRolesReconciliationFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 		return err
 	}
 	conditions.MarkTrue(s.scope.ControlPlane, ekscontrolplanev1.IAMControlPlaneRolesReadyCondition)
 
 	// EKS Cluster
 	if err := s.reconcileCluster(ctx); err != nil {
-		conditions.MarkFalse(s.scope.ControlPlane, ekscontrolplanev1.EKSControlPlaneReadyCondition, ekscontrolplanev1.EKSControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, err.Error())
+		conditions.MarkFalse(s.scope.ControlPlane, ekscontrolplanev1.EKSControlPlaneReadyCondition, ekscontrolplanev1.EKSControlPlaneReconciliationFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 		return err
 	}
 	conditions.MarkTrue(s.scope.ControlPlane, ekscontrolplanev1.EKSControlPlaneReadyCondition)
 
 	// EKS Addons
 	if err := s.reconcileAddons(ctx); err != nil {
-		conditions.MarkFalse(s.scope.ControlPlane, ekscontrolplanev1.EKSAddonsConfiguredCondition, ekscontrolplanev1.EKSAddonsConfiguredFailedReason, clusterv1.ConditionSeverityError, err.Error())
+		conditions.MarkFalse(s.scope.ControlPlane, ekscontrolplanev1.EKSAddonsConfiguredCondition, ekscontrolplanev1.EKSAddonsConfiguredFailedReason, clusterv1.ConditionSeverityError, "%s", err.Error())
 		return errors.Wrap(err, "failed reconciling eks addons")
 	}
 	conditions.MarkTrue(s.scope.ControlPlane, ekscontrolplanev1.EKSAddonsConfiguredCondition)
 
 	// EKS Identity Provider
 	if err := s.reconcileIdentityProvider(ctx); err != nil {
-		conditions.MarkFalse(s.scope.ControlPlane, ekscontrolplanev1.EKSIdentityProviderConfiguredCondition, ekscontrolplanev1.EKSIdentityProviderConfiguredFailedReason, clusterv1.ConditionSeverityWarning, err.Error())
+		conditions.MarkFalse(s.scope.ControlPlane, ekscontrolplanev1.EKSIdentityProviderConfiguredCondition, ekscontrolplanev1.EKSIdentityProviderConfiguredFailedReason, clusterv1.ConditionSeverityWarning, "%s", err.Error())
 		return errors.Wrap(err, "failed reconciling eks identity provider")
 	}
 	conditions.MarkTrue(s.scope.ControlPlane, ekscontrolplanev1.EKSIdentityProviderConfiguredCondition)
@@ -100,6 +100,7 @@ func (s *NodegroupService) ReconcilePool(ctx context.Context) error {
 			expinfrav1.IAMNodegroupRolesReadyCondition,
 			expinfrav1.IAMNodegroupRolesReconciliationFailedReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			err.Error(),
 		)
 		return err
@@ -112,6 +113,7 @@ func (s *NodegroupService) ReconcilePool(ctx context.Context) error {
 			expinfrav1.EKSNodegroupReadyCondition,
 			expinfrav1.EKSNodegroupReconciliationFailedReason,
 			clusterv1.ConditionSeverityError,
+			"%s",
 			err.Error(),
 		)
 		return err

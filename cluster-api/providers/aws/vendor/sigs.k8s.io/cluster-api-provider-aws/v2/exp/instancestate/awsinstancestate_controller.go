@@ -118,8 +118,9 @@ func (r *AwsInstanceStateReconciler) SetupWithManager(ctx context.Context, mgr c
 	}()
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1.AWSCluster{}).
+		Named("awsinstancestate").
 		WithOptions(options).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(logger.FromContext(ctx).GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), logger.FromContext(ctx).GetLogger(), r.WatchFilterValue)).
 		Complete(r)
 }
 

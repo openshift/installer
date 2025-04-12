@@ -54,6 +54,11 @@ const (
 	InstanceRefreshNotReadyReason = "InstanceRefreshNotReady"
 	// InstanceRefreshFailedReason used to report when there instance refresh is not initiated.
 	InstanceRefreshFailedReason = "InstanceRefreshFailed"
+
+	// AWSMachineCreationFailed reports if creating AWSMachines to represent ASG (machine pool) machines failed.
+	AWSMachineCreationFailed = "AWSMachineCreationFailed"
+	// AWSMachineDeletionFailed reports if deleting AWSMachines failed.
+	AWSMachineDeletionFailed = "AWSMachineDeletionFailed"
 )
 
 const (
@@ -105,9 +110,9 @@ const (
 
 const (
 	// RosaMachinePoolReadyCondition condition reports on the successful reconciliation of rosa machinepool.
-	RosaMachinePoolReadyCondition clusterv1.ConditionType = "RosaMchinePoolReady"
+	RosaMachinePoolReadyCondition clusterv1.ConditionType = "RosaMachinePoolReady"
 	// RosaMachinePoolUpgradingCondition condition reports whether ROSAMachinePool is upgrading or not.
-	RosaMachinePoolUpgradingCondition clusterv1.ConditionType = "RosaMchinePoolUpgrading"
+	RosaMachinePoolUpgradingCondition clusterv1.ConditionType = "RosaMachinePoolUpgrading"
 
 	// WaitingForRosaControlPlaneReason used when the machine pool is waiting for
 	// ROSA control plane infrastructure to be ready before proceeding.
