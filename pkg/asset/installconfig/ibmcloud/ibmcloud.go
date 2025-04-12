@@ -116,9 +116,19 @@ func selectRegion(regions map[string]string) (string, error) {
 	return selectedRegion, nil
 }
 
+// BootstrapSecurityGroupName creates a VPC Security Group name using the provided InfraID and bootstrap SG name suffix.
+func BootstrapSecurityGroupName(infraID string) string {
+	return fmt.Sprintf("%s-%s", infraID, BootstrapSGNameSuffix)
+}
+
 // COSInstanceName creates a COS Instance name based on provided InfraID.
 func COSInstanceName(infraID string) string {
 	return fmt.Sprintf("%s-cos", infraID)
+}
+
+// VPCName creates a VPC name based on provided InfraID.
+func VPCName(infraID string) string {
+	return fmt.Sprintf("%s-vpc", infraID)
 }
 
 // VSIImageCOSBucketName creates a COS Bucket name for the VSI Image, based on provided InfraID.
