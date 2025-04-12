@@ -19,9 +19,7 @@ import (
 	vspherecapi "github.com/openshift/installer/pkg/infrastructure/vsphere/clusterapi"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/stages/azure"
-	"github.com/openshift/installer/pkg/terraform/stages/ibmcloud"
 	"github.com/openshift/installer/pkg/terraform/stages/ovirt"
-	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -51,10 +49,7 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case gcptypes.Name:
 		return clusterapi.InitializeProvider(gcpcapi.Provider{}), nil
 	case ibmcloudtypes.Name:
-		if types.ClusterAPIFeatureGateEnabled(platform, fg) {
-			return clusterapi.InitializeProvider(ibmcloudcapi.Provider{}), nil
-		}
-		return terraform.InitializeProvider(ibmcloud.PlatformStages), nil
+		return clusterapi.InitializeProvider(ibmcloudcapi.Provider{}), nil
 	case nutanixtypes.Name:
 		return clusterapi.InitializeProvider(nutanixcapi.Provider{}), nil
 	case powervstypes.Name:
