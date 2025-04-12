@@ -292,11 +292,12 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 				Role:            "master",
 				UserDataSecret:  "master-user-data",
 				HyperVGen:       hyperVGen,
-				UseImageGallery: false,
+				UseImageGallery: installConfig.Azure.CloudName != azuretypes.StackCloud,
 				Private:         installConfig.Config.Publish == types.InternalPublishingStrategy,
 				UserTags:        installConfig.Config.Platform.Azure.UserTags,
 				Platform:        installConfig.Config.Platform.Azure,
 				Pool:            &pool,
+				StorageSuffix:   session.Environment.StorageEndpointSuffix,
 			},
 		)
 		if err != nil {

@@ -171,7 +171,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}
 
 	resourceGroupName := p.ResourceGroupName
-	storageAccountName := getStorageAccountName(in.InfraID)
+	storageAccountName := azure.GetStorageAccountName(in.InfraID)
 	containerName := "vhd"
 	blobName := fmt.Sprintf("rhcos%s.vhd", randomString(5))
 
@@ -649,19 +649,6 @@ func getControlPlaneIDs(cl client.Client, replicas *int64, infraID string) ([]st
 		return nil, fmt.Errorf("%s .Spec.ProviderID is empty", bootstrapName)
 	}
 	return res, nil
-}
-
-// Storage account names can't be more than 24 characters.
-func getStorageAccountName(infraID string) string {
-	storageAccountNameMax := 24
-
-	storageAccountName := strings.ReplaceAll(infraID, "-", "")
-	if len(storageAccountName) > storageAccountNameMax-2 {
-		storageAccountName = storageAccountName[:storageAccountNameMax-2]
-	}
-	storageAccountName = fmt.Sprintf("%ssa", storageAccountName)
-
-	return storageAccountName
 }
 
 func randomString(length int) string {
