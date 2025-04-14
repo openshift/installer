@@ -36,20 +36,25 @@ func (a *Kargs) Generate(_ context.Context, dependencies asset.Parents) error {
 	agentClusterInstall := &manifests.AgentClusterInstall{}
 	dependencies.Get(agentClusterInstall, agentWorkflow, clusterInfo)
 
+	var externalPlatformName string
+
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
 		a.fips = agentClusterInstall.FIPSEnabled()
-		// Add kernel args for external oci platform
-		if agentClusterInstall.GetExternalPlatformName() == agent.ExternalPlatformNameOci {
-			logrus.Debugf("Added kernel args to enable serial console for %s %s platform", hiveext.ExternalPlatformType, agent.ExternalPlatformNameOci)
-			a.consoleArgs = " console=ttyS0"
-		}
+		externalPlatformName = agentClusterInstall.GetExternalPlatformName()
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		a.fips = clusterInfo.FIPS
+		externalPlatformName = clusterInfo.ExternalPlatformName
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
+	}
+
+	// Add kernel args for external oci platform
+	if externalPlatformName == agent.ExternalPlatformNameOci {
+		logrus.Debugf("Added kernel args to enable serial console for %s %s platform", hiveext.ExternalPlatformType, agent.ExternalPlatformNameOci)
+		a.consoleArgs = " console=ttyS0"
 	}
 
 	return nil

@@ -72,11 +72,10 @@ func (a *AgentArtifacts) Generate(ctx context.Context, dependencies asset.Parent
 	kargs := &Kargs{}
 	baseIso := &BaseIso{}
 	agentManifests := &manifests.AgentManifests{}
-	agentClusterInstall := &manifests.AgentClusterInstall{}
 	registriesConf := &mirror.RegistriesConf{}
 	agentconfig := &config.AgentConfig{}
 	agentWorkflow := &workflow.AgentWorkflow{}
-	dependencies.Get(ignition, kargs, baseIso, agentManifests, agentClusterInstall, registriesConf, agentconfig, agentWorkflow)
+	dependencies.Get(ignition, kargs, baseIso, agentManifests, registriesConf, agentconfig, agentWorkflow)
 
 	if err := workflowreport.GetReport(ctx).Stage(workflow.StageAgentArtifacts); err != nil {
 		return err
@@ -93,12 +92,14 @@ func (a *AgentArtifacts) Generate(ctx context.Context, dependencies asset.Parent
 	a.ISOPath = baseIso.File.Filename
 	a.Kargs = kargs.KernelCmdLine()
 	a.MirrorConfig = registriesConf.MirrorConfig
-	a.ExternalPlatformName = agentClusterInstall.GetExternalPlatformName()
 	a.ReleaseImage = agentManifests.ClusterImageSet.Spec.ReleaseImage
 	a.PullSecret = agentManifests.GetPullSecretData()
 
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
+		agentClusterInstall := &manifests.AgentClusterInstall{}
+		dependencies.Get(agentClusterInstall)
+		a.ExternalPlatformName = agentClusterInstall.GetExternalPlatformName()
 		if agentconfig.Config != nil {
 			a.BootArtifactsBaseURL = strings.Trim(agentconfig.Config.BootArtifactsBaseURL, "/")
 			// External platform will always create a minimal ISO
@@ -112,6 +113,7 @@ func (a *AgentArtifacts) Generate(ctx context.Context, dependencies asset.Parent
 	case workflow.AgentWorkflowTypeAddNodes:
 		clusterInfo := &joiner.ClusterInfo{}
 		dependencies.Get(clusterInfo)
+		a.ExternalPlatformName = clusterInfo.ExternalPlatformName
 		if clusterInfo.BootArtifactsBaseURL != "" {
 			a.BootArtifactsBaseURL = strings.Trim(clusterInfo.BootArtifactsBaseURL, "/")
 		}

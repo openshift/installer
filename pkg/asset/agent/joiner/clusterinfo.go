@@ -67,6 +67,7 @@ type ClusterInfo struct {
 	ImageDigestSources            []types.ImageDigestSource
 	DeprecatedImageContentSources []types.ImageContentSource
 	PlatformType                  hiveext.PlatformType
+	ExternalPlatformName          string
 	SSHKey                        string
 	IgnitionEndpointWorker        *models.IgnitionEndpoint
 	FIPS                          bool
@@ -527,6 +528,9 @@ func (ci *ClusterInfo) retrievePlatformType() error {
 	}
 
 	ci.PlatformType = agent.HivePlatformType(platform)
+	if ci.PlatformType == hiveext.ExternalPlatformType && infra.Spec.PlatformSpec.External != nil {
+		ci.ExternalPlatformName = infra.Spec.PlatformSpec.External.PlatformName
+	}
 	return nil
 }
 
