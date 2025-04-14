@@ -21,7 +21,7 @@ import (
 // swagger:model PVMInstanceCreate
 type PVMInstanceCreate struct {
 
-	// Custom Deployment Type Information (For Internal Use Only)
+	// The custom deployment type
 	DeploymentType string `json:"deploymentType,omitempty"`
 
 	// Image ID of the image to use for the server

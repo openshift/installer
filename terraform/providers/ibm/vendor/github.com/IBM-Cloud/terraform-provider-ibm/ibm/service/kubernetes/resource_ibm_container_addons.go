@@ -5,6 +5,7 @@ package kubernetes
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -12,11 +13,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	yaml "gopkg.in/yaml.v3"
 
 	v1 "github.com/IBM-Cloud/bluemix-go/api/container/containerv1"
 	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
 func ResourceIBMContainerAddOns() *schema.Resource {
@@ -37,6 +40,9 @@ func ResourceIBMContainerAddOns() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Cluster Name or ID",
+				ValidateFunc: validate.InvokeValidator(
+					"ibm_container_addons",
+					"cluster"),
 			},
 			"resource_group_id": {
 				Type:        schema.TypeString,
@@ -44,6 +50,18 @@ func ResourceIBMContainerAddOns() *schema.Resource {
 				Description: "ID of the resource group.",
 				ForceNew:    true,
 				Computed:    true,
+			},
+			"manage_all_addons": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "To manage all add-ons installed in the cluster using terraform by importing it into the state file",
+			},
+			"managed_addons": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Used to keep track of the add-on names",
 			},
 			"addons": {
 				Type:     schema.TypeSet,
@@ -109,11 +127,43 @@ func ResourceIBMContainerAddOns() *schema.Resource {
 							Computed:    true,
 							Description: "VLAN spanning required for multi-zone clusters",
 						},
+						"options": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The add-on options",
+						},
+						"parameters_json": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  "",
+							StateFunc: func(v interface{}) string {
+								json, err := flex.NormalizeJSONString(v)
+								if err != nil {
+									return fmt.Sprintf("%q", err.Error())
+								}
+								return json
+							},
+							Description: "Add-On parameters to pass in a JSON string format.",
+						},
 					},
 				},
 			},
 		},
 	}
+}
+func ResourceIBMContainerAddOnsValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMContainerAddOnsValidator := validate.ResourceValidator{ResourceName: "ibm_container_addons", Schema: validateSchema}
+	return &iBMContainerAddOnsValidator
 }
 func resourceIBMContainerAddOnsCreate(d *schema.ResourceData, meta interface{}) error {
 	csClient, err := meta.(conns.ClientSession).ContainerAPI()
@@ -126,20 +176,25 @@ func resourceIBMContainerAddOnsCreate(d *schema.ResourceData, meta interface{}) 
 	if err != nil {
 		return err
 	}
+
 	cluster := d.Get("cluster").(string)
 	existingAddons, err := addOnAPI.GetAddons(cluster, targetEnv)
+
 	if err != nil {
 		log.Println("[ WARN ] Error getting Addons.")
 	}
+
 	payload, err := expandAddOns(d, meta, cluster, targetEnv, existingAddons)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error in getting addons from expandAddOns during Create: %s", err)
 	}
 	payload.Enable = true
+
 	_, err = addOnAPI.ConfigureAddons(cluster, &payload, targetEnv)
 	if err != nil {
 		return err
 	}
+
 	_, err = waitForContainerAddOns(d, meta, cluster, schema.TimeoutCreate)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error waiting for Addon to reach normal during create (%s) : %s", d.Id(), err)
@@ -148,8 +203,76 @@ func resourceIBMContainerAddOnsCreate(d *schema.ResourceData, meta interface{}) 
 
 	return resourceIBMContainerAddOnsRead(d, meta)
 }
+
+// Function to get an Add On's Parameters and Set them with the users value
+func getOptions(addOn map[string]interface{}, d *schema.ResourceData, meta interface{}) (string, error) {
+
+	// Check if parameters are given in terraform, if no, then return
+	if addOn["parameters_json"] == "" {
+		return "", nil
+	}
+
+	csClient, err := meta.(conns.ClientSession).ContainerAPI()
+	if err != nil {
+		return "", err
+	}
+
+	addOnAPI := csClient.AddOns()
+
+	var addonParams map[string]interface{}
+	json.Unmarshal([]byte(addOn["parameters_json"].(string)), &addonParams)
+
+	// Get the list of Addons with their parameters
+	addOnList, err := addOnAPI.ListAddons()
+
+	if err != nil {
+		return "", err
+	}
+
+	// Get the parameter list for the given AddOn Name and Version
+	configMap, err := getAddonTemplateOptions(addOn, d, addOnList)
+
+	if err != nil {
+
+		return "", err
+
+	}
+
+	var optionParams map[string]interface{}
+	yaml.Unmarshal([]byte(configMap["content"].(string)), &optionParams)
+
+	// Check if correct AddOn Parameters are provided by the user
+	result, err := validateAddonOptions(&addonParams, &optionParams)
+
+	if result && err == nil {
+
+		updateAddOnOptions(&addonParams, &optionParams)
+		x, _ := yaml.Marshal(&optionParams)
+		return string(x), nil
+
+	}
+
+	return "", err
+
+}
+
+// Function to get the required addOn Params, by iterating through the list of AddOns
+func getAddonTemplateOptions(addOn map[string]interface{}, d *schema.ResourceData, result []v1.AddOn) (options map[string]interface{}, err error) {
+	for _, value := range result {
+		if (value.Name == addOn["name"].(string)) && (value.Version == addOn["version"].(string)) {
+
+			return value.InstallOptionsTemplate.(map[string]interface{}), nil
+
+		}
+
+	}
+	return nil, fmt.Errorf("[ERROR] Incorrect AddOn Name or Version provided")
+}
+
 func expandAddOns(d *schema.ResourceData, meta interface{}, cluster string, targetEnv v1.ClusterTargetHeader, existingAddons []v1.AddOn) (addOns v1.ConfigureAddOns, err error) {
 	addOnSet := d.Get("addons").(*schema.Set).List()
+	manageAllAddons := d.Get("manage_all_addons").(bool)
+	var addOnName []string
 	if existingAddons == nil || len(existingAddons) < 1 {
 		for _, aoSet := range addOnSet {
 			ao, _ := aoSet.(map[string]interface{})
@@ -159,7 +282,20 @@ func expandAddOns(d *schema.ResourceData, meta interface{}, cluster string, targ
 			if ao["version"] != nil {
 				addOn.Version = ao["version"].(string)
 			}
+			addonOptions, err := getOptions(ao, d, meta)
+			if err != nil {
+				return addOns, err
+			}
+			if addonOptions != "" {
+				addOn.Options = addonOptions
+			}
+
+			if !manageAllAddons {
+				addOnName = append(addOnName, ao["name"].(string))
+			}
+
 			addOns.AddonsList = append(addOns.AddonsList, addOn)
+
 		}
 	}
 	if len(existingAddons) > 0 {
@@ -202,12 +338,15 @@ func expandAddOns(d *schema.ResourceData, meta interface{}, cluster string, targ
 							addParam := v1.AddOn{
 								Name: ao["name"].(string),
 							}
+
 							if ao["version"] != nil {
-								rmParam.Version = ao["version"].(string)
+								addParam.Version = ao["version"].(string)
 							}
+
 							addParams.AddonsList = append(addParams.AddonsList, addParam)
 							addParams.Enable = true
 							_, err = addOnAPI.ConfigureAddons(cluster, &addParams, targetEnv)
+
 							if err != nil {
 								return addOns, fmt.Errorf("[ERROR] Error installing addon %s  on %s during update : %s", d.Id(), ao["name"], err)
 							}
@@ -222,12 +361,30 @@ func expandAddOns(d *schema.ResourceData, meta interface{}, cluster string, targ
 				addOn := v1.AddOn{
 					Name: ao["name"].(string),
 				}
+
 				if ao["version"] != nil {
 					addOn.Version = ao["version"].(string)
 				}
+				addonOptions, err := getOptions(ao, d, meta)
+				if err != nil {
+					return addOns, err
+				}
+
+				if addonOptions != "" {
+					addOn.Options = addonOptions
+				}
 				addOns.AddonsList = append(addOns.AddonsList, addOn)
 			}
+			if !manageAllAddons {
+				addOnName = append(addOnName, ao["name"].(string))
+			}
 		}
+	}
+
+	if !manageAllAddons {
+		d.Set("managed_addons", flex.FlattenStringList(addOnName))
+	} else {
+		d.Set("managed_addons", nil)
 	}
 
 	return addOns, nil
@@ -255,6 +412,7 @@ func updateAddOnVersion(d *schema.ResourceData, meta interface{}, u map[string]i
 
 	return nil
 }
+
 func resourceIBMContainerAddOnsRead(d *schema.ResourceData, meta interface{}) error {
 	csClient, err := meta.(conns.ClientSession).ContainerAPI()
 	if err != nil {
@@ -269,17 +427,69 @@ func resourceIBMContainerAddOnsRead(d *schema.ResourceData, meta interface{}) er
 	cluster := d.Id()
 
 	result, err := addOnAPI.GetAddons(cluster, targetEnv)
+
 	if err != nil {
 		return err
 	}
 	d.Set("cluster", cluster)
-	addOns, err := flattenAddOns(result)
+	var addOns *schema.Set
+	manageAllAddons := d.Get("manage_all_addons")
+	managed_addons := d.Get("managed_addons").([]interface{})
+	if manageAllAddons.(bool) || len(managed_addons) == 0 {
+		addOns, err = flattenAddOns(result)
+		d.Set("managed_addons", nil)
+	} else {
+		addOns, err = flattenAddOn(d, result)
+	}
 	if err != nil {
 		fmt.Printf("Error Flattening Addons list %s", err)
 	}
 	d.Set("resource_group_id", targetEnv.ResourceGroup)
 	d.Set("addons", addOns)
 	return nil
+}
+
+func flattenAddOn(d *schema.ResourceData, result []v1.AddOn) (resp *schema.Set, err error) {
+	managed_addons := d.Get("managed_addons").([]interface{})
+	addOns := []interface{}{}
+	for _, aoSet := range managed_addons {
+		for _, addOn := range result {
+			if aoSet.(string) == addOn.Name {
+				record := map[string]interface{}{}
+				record["name"] = addOn.Name
+				record["version"] = addOn.Version
+				if len(addOn.AllowedUpgradeVersion) > 0 {
+					record["allowed_upgrade_versions"] = addOn.AllowedUpgradeVersion
+				}
+				record["deprecated"] = addOn.Deprecated
+				record["health_state"] = addOn.HealthState
+				record["health_status"] = addOn.HealthStatus
+
+				if addOn.MinKubeVersion != "" {
+					record["min_kube_version"] = addOn.MinKubeVersion
+				}
+				if addOn.MinOCPVersion != "" {
+					record["min_ocp_version"] = addOn.MinOCPVersion
+				}
+				if addOn.SupportedKubeRange != "" {
+					record["supported_kube_range"] = addOn.SupportedKubeRange
+				}
+				if addOn.TargetVersion != "" {
+					record["target_version"] = addOn.TargetVersion
+				}
+
+				record["vlan_spanning_required"] = addOn.VlanSpanningRequired
+
+				record["options"] = addOn.Options
+
+				addOns = append(addOns, record)
+				break
+			}
+		}
+	}
+
+	return schema.NewSet(resourceIBMContainerAddonsHash, addOns), nil
+
 }
 func flattenAddOns(result []v1.AddOn) (resp *schema.Set, err error) {
 	addOns := []interface{}{}
@@ -309,12 +519,34 @@ func flattenAddOns(result []v1.AddOn) (resp *schema.Set, err error) {
 
 		record["vlan_spanning_required"] = addOn.VlanSpanningRequired
 
+		record["options"] = addOn.Options
+
 		addOns = append(addOns, record)
 	}
 
 	return schema.NewSet(resourceIBMContainerAddonsHash, addOns), nil
 }
 func resourceIBMContainerAddOnsUpdate(d *schema.ResourceData, meta interface{}) error {
+	manageAllAddons := d.Get("manage_all_addons").(bool)
+	managed_addons := d.Get("managed_addons").([]interface{})
+	var addOnName []string
+	// If the user wants terraform to manage the defined addons
+	if !manageAllAddons {
+		// User has requested to manage addons after terraform creation and initialisation, but there is no change in the addon configuration
+		if len(managed_addons) == 0 {
+			if !d.HasChange("addons") {
+				addOnSet := d.Get("addons").(*schema.Set).List()
+				for _, aoSet := range addOnSet {
+					ao, _ := aoSet.(map[string]interface{})
+					addOnName = append(addOnName, ao["name"].(string))
+				}
+			}
+		}
+		for _, v := range managed_addons {
+			addOnName = append(addOnName, v.(string))
+		}
+	}
+
 	csClient, err := meta.(conns.ClientSession).ContainerAPI()
 	if err != nil {
 		return err
@@ -336,6 +568,14 @@ func resourceIBMContainerAddOnsUpdate(d *schema.ResourceData, meta interface{}) 
 			newList = new(schema.Set)
 		}
 		os := oldList.(*schema.Set)
+		// manage_all_addons was not previously set to false and the user has added additional or upgraded the existing addons, we set managed_addons to hold the old values
+		if !manageAllAddons && len(managed_addons) == 0 {
+			addOnSet := os.List()
+			for _, aoSet := range addOnSet {
+				ao, _ := aoSet.(map[string]interface{})
+				addOnName = append(addOnName, ao["name"].(string))
+			}
+		}
 		ns := newList.(*schema.Set)
 		for _, nA := range ns.List() {
 			newPack := nA.(map[string]interface{})
@@ -372,7 +612,7 @@ func resourceIBMContainerAddOnsUpdate(d *schema.ResourceData, meta interface{}) 
 							Name: newPack["name"].(string),
 						}
 						if newPack["version"] != nil {
-							rmParam.Version = newPack["version"].(string)
+							addParam.Version = newPack["version"].(string)
 						}
 						addParams.AddonsList = append(addParams.AddonsList, addParam)
 						addParams.Enable = true
@@ -403,6 +643,9 @@ func resourceIBMContainerAddOnsUpdate(d *schema.ResourceData, meta interface{}) 
 					addOnParam.Version = newAddon["version"].(string)
 				}
 				addOnParams.AddonsList = append(addOnParams.AddonsList, addOnParam)
+				if !manageAllAddons {
+					addOnName = append(addOnName, newAddon["name"].(string))
+				}
 
 			}
 			addOnParams.Enable = true
@@ -422,6 +665,10 @@ func resourceIBMContainerAddOnsUpdate(d *schema.ResourceData, meta interface{}) 
 					addOnParam.Version = oldAddOn["version"].(string)
 				}
 				addOnParams.AddonsList = append(addOnParams.AddonsList, addOnParam)
+				if !manageAllAddons {
+					addOnName = removeAddOnName(addOnName, oldAddOn["name"].(string))
+				}
+
 			}
 			addOnParams.Enable = false
 			_, err = addOnAPI.ConfigureAddons(cluster, &addOnParams, targetEnv)
@@ -433,6 +680,12 @@ func resourceIBMContainerAddOnsUpdate(d *schema.ResourceData, meta interface{}) 
 		if err != nil {
 			return fmt.Errorf("[ERROR] Error waiting for Addon to reach normal during update (%s) : %s", d.Id(), err)
 		}
+	}
+
+	if !manageAllAddons {
+		d.Set("managed_addons", flex.FlattenStringList(addOnName))
+	} else {
+		d.Set("managed_addons", nil)
 	}
 
 	return resourceIBMContainerAddOnsRead(d, meta)
@@ -478,6 +731,7 @@ func waitForContainerAddOns(d *schema.ResourceData, meta interface{}, cluster, t
 				return nil, "", err
 			}
 			addOns, err := addOnClient.AddOns().GetAddons(cluster, targetEnv)
+
 			if err != nil {
 				if apiErr, ok := err.(bmxerror.RequestFailure); ok && apiErr.StatusCode() == 404 {
 					return nil, "", fmt.Errorf("[ERROR] The resource addons %s does not exist anymore: %v", d.Id(), err)
@@ -513,6 +767,7 @@ func resourceIBMContainerAddOnsExists(d *schema.ResourceData, meta interface{}) 
 	cluster := d.Id()
 
 	_, err = addOnAPI.GetAddons(cluster, targetEnv)
+
 	if err != nil {
 		if apiErr, ok := err.(bmxerror.RequestFailure); ok {
 			if apiErr.StatusCode() == 404 {
@@ -532,4 +787,38 @@ func resourceIBMContainerAddonsHash(v interface{}) int {
 	buf.WriteString(fmt.Sprintf("%s-", a["version"].(string)))
 
 	return conns.String(buf.String())
+}
+
+// Check if correct parameters are provided by the user
+func validateAddonOptions(jsonInput *map[string]interface{}, yamlDefault *map[string]interface{}) (bool, error) {
+
+	for i, _ := range *jsonInput {
+		if _, ok := (*yamlDefault)["data"].(map[string]interface{})[i]; ok {
+			continue
+		} else {
+			return false, fmt.Errorf("[ERROR] Parameter Mismatch - %s not found", i)
+		}
+
+	}
+
+	return true, nil
+}
+
+// Set the Value of the Parameters provided by the user in terraform in the config map through index matching
+
+func updateAddOnOptions(jsonInput *map[string]interface{}, yamlDefault *map[string]interface{}) {
+
+	for i, v := range *jsonInput {
+		(*yamlDefault)["data"].(map[string]interface{})[i] = v.(string)
+	}
+
+}
+
+func removeAddOnName(l []string, item string) []string {
+	for i, other := range l {
+		if other == item {
+			return append(l[:i], l[i+1:]...)
+		}
+	}
+	return nil
 }

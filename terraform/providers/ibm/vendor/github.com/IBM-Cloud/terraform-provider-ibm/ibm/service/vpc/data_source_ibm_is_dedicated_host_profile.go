@@ -302,6 +302,24 @@ func DataSourceIbmIsDedicatedHostProfile() *schema.Resource {
 					},
 				},
 			},
+			"vcpu_manufacturer": &schema.Schema{
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type for this profile field.",
+						},
+						"value": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The VCPU manufacturer for a dedicated host with this profile.",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -376,6 +394,14 @@ func dataSourceIbmIsDedicatedHostProfileRead(context context.Context, d *schema.
 		err = d.Set("vcpu_count", dataSourceDedicatedHostProfileFlattenVcpuCount(*dedicatedHostProfile.VcpuCount.(*vpcv1.DedicatedHostProfileVcpu)))
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting vcpu_count %s", err))
+		}
+	}
+
+	// Changes for the AMD Support, manufacturer information.
+	if dedicatedHostProfile.VcpuManufacturer != nil {
+		err = d.Set("vcpu_manufacturer", dataSourceDedicatedHostProfileFlattenVcpuManufacturer(*dedicatedHostProfile.VcpuManufacturer))
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting vcpu_architecture %s", err))
 		}
 	}
 
@@ -500,6 +526,29 @@ func dataSourceDedicatedHostProfileVcpuArchitectureToMap(vcpuArchitectureItem vp
 	}
 
 	return vcpuArchitectureMap
+}
+
+// Changes for AMD Support, manufacturer details.
+func dataSourceDedicatedHostProfileFlattenVcpuManufacturer(result vpcv1.DedicatedHostProfileVcpuManufacturer) (finalList []map[string]interface{}) {
+	finalList = []map[string]interface{}{}
+	finalMap := dataSourceDedicatedHostProfileVcpuManufacturerToMap(result)
+	finalList = append(finalList, finalMap)
+
+	return finalList
+}
+
+// AMD Support for manufacturer
+func dataSourceDedicatedHostProfileVcpuManufacturerToMap(vcpuManufacturerItem vpcv1.DedicatedHostProfileVcpuManufacturer) (vcpuManufacturerMap map[string]interface{}) {
+	vcpuManufacturerMap = map[string]interface{}{}
+
+	if vcpuManufacturerItem.Type != nil {
+		vcpuManufacturerMap["type"] = vcpuManufacturerItem.Type
+	}
+	if vcpuManufacturerItem.Value != nil {
+		vcpuManufacturerMap["value"] = vcpuManufacturerItem.Value
+	}
+
+	return vcpuManufacturerMap
 }
 
 func dataSourceDedicatedHostProfileFlattenVcpuCount(result vpcv1.DedicatedHostProfileVcpu) (finalList []map[string]interface{}) {

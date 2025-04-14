@@ -41,6 +41,7 @@ func flatten(result map[string]string, prefix string, v reflect.Value) {
 			result[prefix] = "false"
 		}
 	case reflect.Int:
+	case reflect.Int64:
 		result[prefix] = fmt.Sprintf("%d", v.Int())
 	case reflect.Map:
 		flattenMap(result, prefix, v)

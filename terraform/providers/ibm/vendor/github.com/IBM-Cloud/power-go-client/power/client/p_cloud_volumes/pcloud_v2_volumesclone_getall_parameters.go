@@ -52,10 +52,12 @@ func NewPcloudV2VolumescloneGetallParamsWithHTTPClient(client *http.Client) *Pcl
 	}
 }
 
-/* PcloudV2VolumescloneGetallParams contains all the parameters to send to the API endpoint
-   for the pcloud v2 volumesclone getall operation.
+/*
+PcloudV2VolumescloneGetallParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud v2 volumesclone getall operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudV2VolumescloneGetallParams struct {
 

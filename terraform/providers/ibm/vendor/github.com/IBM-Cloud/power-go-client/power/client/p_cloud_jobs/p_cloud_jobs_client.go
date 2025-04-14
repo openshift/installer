@@ -40,7 +40,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudCloudinstancesJobsDelete deletes a cloud instance job
+PcloudCloudinstancesJobsDelete deletes a cloud instance job
 */
 func (a *Client) PcloudCloudinstancesJobsDelete(params *PcloudCloudinstancesJobsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesJobsDeleteOK, error) {
 	// TODO: Validate the params before sending
@@ -79,7 +79,7 @@ func (a *Client) PcloudCloudinstancesJobsDelete(params *PcloudCloudinstancesJobs
 }
 
 /*
-  PcloudCloudinstancesJobsGet lists the detail of a job
+PcloudCloudinstancesJobsGet lists the detail of a job
 */
 func (a *Client) PcloudCloudinstancesJobsGet(params *PcloudCloudinstancesJobsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesJobsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -118,7 +118,7 @@ func (a *Client) PcloudCloudinstancesJobsGet(params *PcloudCloudinstancesJobsGet
 }
 
 /*
-  PcloudCloudinstancesJobsGetall lists up to the last 5 jobs initiated by the cloud instance
+PcloudCloudinstancesJobsGetall lists up to the last 5 jobs initiated by the cloud instance
 */
 func (a *Client) PcloudCloudinstancesJobsGetall(params *PcloudCloudinstancesJobsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesJobsGetallOK, error) {
 	// TODO: Validate the params before sending

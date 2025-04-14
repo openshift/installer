@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -21,6 +22,7 @@ import (
 const (
 	isInstanceId                             = "instance"
 	isInstanceVolAttVol                      = "volume"
+	isInstanceVolAttTags                     = "tags"
 	isInstanceVolAttId                       = "volume_attachment_id"
 	isInstanceVolAttIops                     = "volume_iops"
 	isInstanceExistingVolume                 = "existing"
@@ -52,6 +54,10 @@ func ResourceIBMISInstanceVolumeAttachment() *schema.Resource {
 			customdiff.Sequence(
 				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
 					return flex.ResourceVolumeValidate(diff)
+				}),
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceTagsCustomizeDiff(diff)
 				}),
 		),
 		Schema: map[string]*schema.Schema{
@@ -93,7 +99,7 @@ func ResourceIBMISInstanceVolumeAttachment() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				ForceNew:      true,
-				ConflictsWith: []string{isInstanceVolIops, isInstanceVolumeAttVolumeReferenceName, isInstanceVolProfile, isInstanceVolCapacity, isInstanceVolumeSnapshot},
+				ConflictsWith: []string{isInstanceVolIops, isInstanceVolumeAttVolumeReferenceName, isInstanceVolProfile, isInstanceVolCapacity, isInstanceVolumeSnapshot, isInstanceVolAttTags},
 				ValidateFunc:  validate.InvokeValidator("ibm_is_instance_volume_attachment", isInstanceName),
 				Description:   "Instance id",
 			},
@@ -112,6 +118,16 @@ func ResourceIBMISInstanceVolumeAttachment() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_is_instance_volume_attachment", isInstanceVolumeAttVolumeReferenceName),
 				Description:  "The unique user-defined name for this volume",
+			},
+
+			isInstanceVolAttTags: {
+				Type:          schema.TypeSet,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{isInstanceVolAttVol},
+				Elem:          &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_instance_volume_attachment", "tags")},
+				Set:           flex.ResourceIBMVPCHash,
+				Description:   "UserTags for the volume instance",
 			},
 
 			isInstanceVolProfile: {
@@ -187,6 +203,11 @@ func ResourceIBMISInstanceVolumeAttachment() *schema.Resource {
 				Computed:    true,
 				Description: "The type of volume attachment one of [ boot, data ]",
 			},
+
+			"version": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -235,6 +256,15 @@ func ResourceIBMISInstanceVolumeAttachmentValidator() *validate.ResourceValidato
 			Optional:                   true,
 			AllowedValues:              "general-purpose, 5iops-tier, 10iops-tier, custom",
 		})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "tags",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^[A-Za-z0-9:_ .-]+$`,
+			MinValueLength:             1,
+			MaxValueLength:             128})
 
 	ibmISInstanceVolumeAttachmentValidator := validate.ResourceValidator{ResourceName: "ibm_is_instance_volume_attachment", Schema: validateSchema}
 	return &ibmISInstanceVolumeAttachmentValidator
@@ -263,7 +293,24 @@ func instanceVolAttachmentCreate(d *schema.ResourceData, meta interface{}, insta
 			volnamestr := volname.(string)
 			volProtoVol.Name = &volnamestr
 		}
-
+		var userTags *schema.Set
+		if v, ok := d.GetOk(isInstanceVolAttTags); ok {
+			userTags = v.(*schema.Set)
+			if userTags != nil && userTags.Len() != 0 {
+				userTagsArray := make([]string, userTags.Len())
+				for i, userTag := range userTags.List() {
+					userTagStr := userTag.(string)
+					userTagsArray[i] = userTagStr
+				}
+				schematicTags := os.Getenv("IC_ENV_TAGS")
+				var envTags []string
+				if schematicTags != "" {
+					envTags = strings.Split(schematicTags, ",")
+					userTagsArray = append(userTagsArray, envTags...)
+				}
+				volProtoVol.UserTags = userTagsArray
+			}
+		}
 		volSnapshotStr := ""
 		if volSnapshot, ok := d.GetOk(isInstanceVolumeSnapshot); ok {
 			volSnapshotStr = volSnapshot.(string)
@@ -407,7 +454,9 @@ func instanceVolumeAttachmentGet(d *schema.ResourceData, meta interface{}, insta
 	d.Set(isInstanceVolAttId, *volumeAtt.ID)
 	d.Set(isInstanceVolumeAttStatus, *volumeAtt.Status)
 	d.Set(isInstanceVolumeAttType, *volumeAtt.Type)
-
+	if err = d.Set("version", response.Headers.Get("Etag")); err != nil {
+		return fmt.Errorf("Error setting version: %s", err)
+	}
 	volId := *volumeAtt.Volume.ID
 	getVolOptions := &vpcv1.GetVolumeOptions{
 		ID: &volId,
@@ -499,7 +548,7 @@ func instanceVolAttUpdate(d *schema.ResourceData, meta interface{}) error {
 		volId = volIdOk.(string)
 	}
 
-	if volId != "" && (d.HasChange(isInstanceVolIops) || d.HasChange(isInstanceVolProfile)) {
+	if volId != "" && (d.HasChange(isInstanceVolIops) || d.HasChange(isInstanceVolProfile) || d.HasChange(isInstanceVolAttTags)) {
 		insId := d.Get(isInstanceId).(string)
 		getinsOptions := &vpcv1.GetInstanceOptions{
 			ID: &insId,
@@ -541,15 +590,44 @@ func instanceVolAttUpdate(d *schema.ResourceData, meta interface{}) error {
 			iops := int64(d.Get(isVolumeIops).(int))
 			volumeProfilePatchModel.Iops = &iops
 		}
+		if d.HasChange(isInstanceVolAttTags) && !d.IsNewResource() {
+			if v, ok := d.GetOk(isInstanceVolAttTags); ok {
+				userTags := v.(*schema.Set)
+				if userTags != nil && userTags.Len() != 0 {
+					userTagsArray := make([]string, userTags.Len())
+					for i, userTag := range userTags.List() {
+						userTagStr := userTag.(string)
+						userTagsArray[i] = userTagStr
+					}
+					schematicTags := os.Getenv("IC_ENV_TAGS")
+					var envTags []string
+					if schematicTags != "" {
+						envTags = strings.Split(schematicTags, ",")
+						userTagsArray = append(userTagsArray, envTags...)
+					}
+					volumeProfilePatchModel.UserTags = userTagsArray
+				}
+			}
+
+		}
 
 		volumeProfilePatch, err := volumeProfilePatchModel.AsPatch()
 		if err != nil {
 			return fmt.Errorf("[ERROR] Error calling asPatch for volumeProfilePatch: %s", err)
 		}
+		optionsget := &vpcv1.GetVolumeOptions{
+			ID: &volId,
+		}
+		_, response, err = instanceC.GetVolume(optionsget)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error getting Boot Volume (%s): %s\n%s", id, err, response)
+		}
+		eTag := response.Headers.Get("ETag")
+		updateVolumeProfileOptions.IfMatch = &eTag
 		updateVolumeProfileOptions.VolumePatch = volumeProfilePatch
 		_, response, err = instanceC.UpdateVolume(updateVolumeProfileOptions)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error updating volume profile/iops: %s\n%s", err, response)
+			return fmt.Errorf("[ERROR] Error updating volume profile/iops/userTags: %s\n%s", err, response)
 		}
 		isWaitForVolumeAvailable(instanceC, volId, d.Timeout(schema.TimeoutCreate))
 	}

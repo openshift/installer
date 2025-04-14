@@ -103,6 +103,10 @@ func ResourceIBMCISFirewallrulesCreate(context context.Context, d *schema.Resour
 		action := a.(string)
 		newFirewallRules.Action = &action
 	}
+	if p, ok := d.GetOk(cisFirewallrulesPaused); ok {
+		paused := p.(bool)
+		newFirewallRules.Paused = &paused
+	}
 	if des, ok := d.GetOk(cisFilterDescription); ok {
 		description := des.(string)
 		newFirewallRules.Description = &description
@@ -273,7 +277,7 @@ func ResourceIBMCISFirewallrulesValidator() *validate.ResourceValidator {
 			Identifier:                 "cis_id",
 			ValidateFunctionIdentifier: validate.ValidateCloudData,
 			Type:                       validate.TypeString,
-			CloudDataType:              "ResourceInstance",
+			CloudDataType:              "resource_instance",
 			CloudDataRange:             []string{"service:internet-svcs"},
 			Required:                   true})
 	validateSchema = append(validateSchema,

@@ -26,13 +26,11 @@ import (
 	"time"
 )
 
-//
 // CloudPakForDataAuthenticator uses either a username/password pair or a
 // username/apikey pair to obtain a suitable bearer token from the CP4D authentication service,
 // and adds the bearer token to requests via an Authorization header of the form:
 //
-// 		Authorization: Bearer <bearer-token>
-//
+//	Authorization: Bearer <bearer-token>
 type CloudPakForDataAuthenticator struct {
 	// The URL representing the Cloud Pak for Data token service endpoint [required].
 	URL string
@@ -183,8 +181,7 @@ func (authenticator *CloudPakForDataAuthenticator) client() *http.Client {
 //
 // The CP4D bearer token will be added to the request's headers in the form:
 //
-// 		Authorization: Bearer <bearer-token>
-//
+//	Authorization: Bearer <bearer-token>
 func (authenticator *CloudPakForDataAuthenticator) Authenticate(request *http.Request) error {
 	token, err := authenticator.GetToken()
 	if err != nil {
@@ -359,7 +356,7 @@ func (authenticator *CloudPakForDataAuthenticator) requestToken() (tokenResponse
 
 	tokenResponse = &cp4dTokenServerResponse{}
 	err = json.NewDecoder(resp.Body).Decode(tokenResponse)
-	defer resp.Body.Close()
+	defer resp.Body.Close() // #nosec G307
 	if err != nil {
 		err = fmt.Errorf(ERRORMSG_UNMARSHAL_AUTH_RESPONSE, err.Error())
 		tokenResponse = nil

@@ -157,6 +157,11 @@ func ResourceIBMEnSafariDestination() *schema.Resource {
 										Optional:    true,
 										Description: "The Bundle ID In case of P8 Certificate",
 									},
+									"pre_prod": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "The flag to enable destination as pre-prod or prod",
+									},
 								},
 							},
 						},
@@ -616,7 +621,7 @@ func resourceIBMEnSafariDestinationDelete(context context.Context, d *schema.Res
 }
 
 func SafaridestinationConfigMapToDestinationConfig(configParams map[string]interface{}) en.DestinationConfig {
-	params := new(en.DestinationConfigParams)
+	params := new(en.DestinationConfigOneOf)
 	if configParams["cert_type"] != nil {
 		params.CertType = core.StringPtr(configParams["cert_type"].(string))
 	}
@@ -639,6 +644,10 @@ func SafaridestinationConfigMapToDestinationConfig(configParams map[string]inter
 
 	if configParams["website_url"] != nil {
 		params.WebsiteURL = core.StringPtr(configParams["website_url"].(string))
+	}
+
+	if configParams["pre_prod"] != nil {
+		params.PreProd = core.BoolPtr(configParams["pre_prod"].(bool))
 	}
 
 	destinationConfig := new(en.DestinationConfig)

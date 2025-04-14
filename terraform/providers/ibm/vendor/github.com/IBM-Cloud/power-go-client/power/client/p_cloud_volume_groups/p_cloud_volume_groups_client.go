@@ -42,7 +42,7 @@ type ClientService interface {
 
 	PcloudVolumegroupsGetallDetails(params *PcloudVolumegroupsGetallDetailsParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsGetallDetailsOK, error)
 
-	PcloudVolumegroupsPost(params *PcloudVolumegroupsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsPostAccepted, error)
+	PcloudVolumegroupsPost(params *PcloudVolumegroupsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsPostAccepted, *PcloudVolumegroupsPostPartialContent, error)
 
 	PcloudVolumegroupsPut(params *PcloudVolumegroupsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsPutAccepted, error)
 
@@ -54,7 +54,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudVolumegroupsActionPost performs an action start stop reset on a volume group
+PcloudVolumegroupsActionPost performs an action start stop reset on a volume group
 */
 func (a *Client) PcloudVolumegroupsActionPost(params *PcloudVolumegroupsActionPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsActionPostAccepted, error) {
 	// TODO: Validate the params before sending
@@ -93,7 +93,7 @@ func (a *Client) PcloudVolumegroupsActionPost(params *PcloudVolumegroupsActionPo
 }
 
 /*
-  PcloudVolumegroupsDelete deletes a cloud instance volume group
+PcloudVolumegroupsDelete deletes a cloud instance volume group
 */
 func (a *Client) PcloudVolumegroupsDelete(params *PcloudVolumegroupsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsDeleteAccepted, error) {
 	// TODO: Validate the params before sending
@@ -132,7 +132,7 @@ func (a *Client) PcloudVolumegroupsDelete(params *PcloudVolumegroupsDeleteParams
 }
 
 /*
-  PcloudVolumegroupsGet gets volume group
+PcloudVolumegroupsGet gets volume group
 */
 func (a *Client) PcloudVolumegroupsGet(params *PcloudVolumegroupsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -171,7 +171,7 @@ func (a *Client) PcloudVolumegroupsGet(params *PcloudVolumegroupsGetParams, auth
 }
 
 /*
-  PcloudVolumegroupsGetDetails gets volume group details
+PcloudVolumegroupsGetDetails gets volume group details
 */
 func (a *Client) PcloudVolumegroupsGetDetails(params *PcloudVolumegroupsGetDetailsParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsGetDetailsOK, error) {
 	// TODO: Validate the params before sending
@@ -210,7 +210,7 @@ func (a *Client) PcloudVolumegroupsGetDetails(params *PcloudVolumegroupsGetDetai
 }
 
 /*
-  PcloudVolumegroupsGetall gets all volume groups
+PcloudVolumegroupsGetall gets all volume groups
 */
 func (a *Client) PcloudVolumegroupsGetall(params *PcloudVolumegroupsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsGetallOK, error) {
 	// TODO: Validate the params before sending
@@ -249,7 +249,7 @@ func (a *Client) PcloudVolumegroupsGetall(params *PcloudVolumegroupsGetallParams
 }
 
 /*
-  PcloudVolumegroupsGetallDetails gets all volume groups with details
+PcloudVolumegroupsGetallDetails gets all volume groups with details
 */
 func (a *Client) PcloudVolumegroupsGetallDetails(params *PcloudVolumegroupsGetallDetailsParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsGetallDetailsOK, error) {
 	// TODO: Validate the params before sending
@@ -288,9 +288,9 @@ func (a *Client) PcloudVolumegroupsGetallDetails(params *PcloudVolumegroupsGetal
 }
 
 /*
-  PcloudVolumegroupsPost creates a new volume group
+PcloudVolumegroupsPost creates a new volume group
 */
-func (a *Client) PcloudVolumegroupsPost(params *PcloudVolumegroupsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsPostAccepted, error) {
+func (a *Client) PcloudVolumegroupsPost(params *PcloudVolumegroupsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsPostAccepted, *PcloudVolumegroupsPostPartialContent, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPcloudVolumegroupsPostParams()
@@ -314,20 +314,21 @@ func (a *Client) PcloudVolumegroupsPost(params *PcloudVolumegroupsPostParams, au
 
 	result, err := a.transport.Submit(op)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	success, ok := result.(*PcloudVolumegroupsPostAccepted)
-	if ok {
-		return success, nil
+	switch value := result.(type) {
+	case *PcloudVolumegroupsPostAccepted:
+		return value, nil, nil
+	case *PcloudVolumegroupsPostPartialContent:
+		return nil, value, nil
 	}
-	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for pcloud.volumegroups.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for p_cloud_volume_groups: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
 /*
-  PcloudVolumegroupsPut updates the volume group
+PcloudVolumegroupsPut updates the volume group
 */
 func (a *Client) PcloudVolumegroupsPut(params *PcloudVolumegroupsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsPutAccepted, error) {
 	// TODO: Validate the params before sending
@@ -366,7 +367,7 @@ func (a *Client) PcloudVolumegroupsPut(params *PcloudVolumegroupsPutParams, auth
 }
 
 /*
-  PcloudVolumegroupsRemoteCopyRelationshipsGet gets remote copy relationships of the volume belonging to volume group
+PcloudVolumegroupsRemoteCopyRelationshipsGet gets remote copy relationships of the volume belonging to volume group
 */
 func (a *Client) PcloudVolumegroupsRemoteCopyRelationshipsGet(params *PcloudVolumegroupsRemoteCopyRelationshipsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsRemoteCopyRelationshipsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -405,7 +406,7 @@ func (a *Client) PcloudVolumegroupsRemoteCopyRelationshipsGet(params *PcloudVolu
 }
 
 /*
-  PcloudVolumegroupsStorageDetailsGet gets storage details of volume group
+PcloudVolumegroupsStorageDetailsGet gets storage details of volume group
 */
 func (a *Client) PcloudVolumegroupsStorageDetailsGet(params *PcloudVolumegroupsStorageDetailsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsStorageDetailsGetOK, error) {
 	// TODO: Validate the params before sending

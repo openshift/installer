@@ -52,10 +52,12 @@ func NewPcloudTenantsSshkeysDeleteParamsWithHTTPClient(client *http.Client) *Pcl
 	}
 }
 
-/* PcloudTenantsSshkeysDeleteParams contains all the parameters to send to the API endpoint
-   for the pcloud tenants sshkeys delete operation.
+/*
+PcloudTenantsSshkeysDeleteParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud tenants sshkeys delete operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudTenantsSshkeysDeleteParams struct {
 

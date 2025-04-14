@@ -8,6 +8,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -21,6 +22,8 @@ func DataSourceIBMIAMServiceID() *schema.Resource {
 				Description: "Name of the serviceID",
 				Type:        schema.TypeString,
 				Required:    true,
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_iam_service_id",
+					"name"),
 			},
 
 			"service_ids": {
@@ -74,6 +77,20 @@ func DataSourceIBMIAMServiceID() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMIAMServiceIDValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "name",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "iam",
+			CloudDataRange:             []string{"service:service_id", "resolved_to:name"},
+			Required:                   true})
+
+	iBMIAMServiceIDValidator := validate.ResourceValidator{ResourceName: "ibm_iam_service_id", Schema: validateSchema}
+	return &iBMIAMServiceIDValidator
 }
 
 func dataSourceIBMIAMServiceIDRead(d *schema.ResourceData, meta interface{}) error {

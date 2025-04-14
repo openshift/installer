@@ -36,6 +36,7 @@ const (
 	isLBListenerHTTPSRedirectListener   = "https_redirect_listener"
 	isLBListenerHTTPSRedirectStatusCode = "https_redirect_status_code"
 	isLBListenerHTTPSRedirectURI        = "https_redirect_uri"
+	isLBListenerIdleConnectionTimeout   = "idle_connection_timeout"
 )
 
 func ResourceIBMISLBListener() *schema.Resource {
@@ -60,6 +61,14 @@ func ResourceIBMISLBListener() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "Loadbalancer listener ID",
+			},
+
+			isLBListenerIdleConnectionTimeout: {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				Description:  "idle connection timeout of listener",
+				ValidateFunc: validate.InvokeValidator("ibm_is_lb_listener", isLBListenerIdleConnectionTimeout),
 			},
 
 			isLBListenerPort: {
@@ -189,7 +198,13 @@ func ResourceIBMISLBListenerValidator() *validate.ResourceValidator {
 			Type:                       validate.TypeString,
 			Required:                   true,
 			AllowedValues:              protocol})
-
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 isLBListenerIdleConnectionTimeout,
+			ValidateFunctionIdentifier: validate.IntBetween,
+			Type:                       validate.TypeInt,
+			MinValue:                   "50",
+			MaxValue:                   "7200"})
 	ibmISLBListenerResourceValidator := validate.ResourceValidator{ResourceName: "ibm_is_lb_listener", Schema: validateSchema}
 	return &ibmISLBListenerResourceValidator
 }
@@ -303,7 +318,10 @@ func lbListenerCreate(d *schema.ResourceData, meta interface{}, lbID, protocol, 
 			}
 		}
 	}
-
+	if idleconnectiontimeout, ok := d.GetOk(isLBListenerIdleConnectionTimeout); ok {
+		idleConnectionTimeout := int64(idleconnectiontimeout.(int))
+		options.IdleConnectionTimeout = &idleConnectionTimeout
+	}
 	if app, ok := d.GetOk(isLBListenerAcceptProxyProtocol); ok {
 		acceptProxyProtocol := app.(bool)
 		options.AcceptProxyProtocol = &acceptProxyProtocol
@@ -458,6 +476,10 @@ func lbListenerGet(d *schema.ResourceData, meta interface{}, lbID, lbListenerID 
 		d.Set(isLBListenerConnectionLimit, *lbListener.ConnectionLimit)
 	}
 	d.Set(isLBListenerStatus, *lbListener.ProvisioningStatus)
+
+	if lbListener.IdleConnectionTimeout != nil {
+		d.Set(isLBListenerIdleConnectionTimeout, *lbListener.IdleConnectionTimeout)
+	}
 	getLoadBalancerOptions := &vpcv1.GetLoadBalancerOptions{
 		ID: &lbID,
 	}
@@ -580,7 +602,11 @@ func lbListenerUpdate(d *schema.ResourceData, meta interface{}, lbID, lbListener
 		loadBalancerListenerPatchModel.ConnectionLimit = &connLimit
 		hasChanged = true
 	}
-
+	if d.HasChange(isLBListenerIdleConnectionTimeout) {
+		idleConnectionTimeout := int64(d.Get(isLBListenerIdleConnectionTimeout).(int))
+		loadBalancerListenerPatchModel.IdleConnectionTimeout = &idleConnectionTimeout
+		hasChanged = true
+	}
 	if hasChanged {
 		loadBalancerListenerPatch, err := loadBalancerListenerPatchModel.AsPatch()
 		if err != nil {

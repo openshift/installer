@@ -52,10 +52,12 @@ func NewPcloudVolumegroupsGetParamsWithHTTPClient(client *http.Client) *PcloudVo
 	}
 }
 
-/* PcloudVolumegroupsGetParams contains all the parameters to send to the API endpoint
-   for the pcloud volumegroups get operation.
+/*
+PcloudVolumegroupsGetParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud volumegroups get operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudVolumegroupsGetParams struct {
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -25,6 +26,8 @@ func DataSourceIBMIamTrustedProfileClaimRule() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "ID of the trusted profile.",
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_iam_trusted_profile_claim_rule",
+					"profile_id"),
 			},
 			"rule_id": {
 				Type:        schema.TypeString,
@@ -97,6 +100,21 @@ func DataSourceIBMIamTrustedProfileClaimRule() *schema.Resource {
 			},
 		},
 	}
+}
+
+func DataSourceIBMIamTrustedProfileClaimRuleValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "profile_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "iam",
+			CloudDataRange:             []string{"service:trusted_profile", "resolved_to:id"},
+			Required:                   true})
+
+	iBMIamTrustedProfileClaimRuleValidator := validate.ResourceValidator{ResourceName: "ibm_iam_trusted_profile_claim_rule", Schema: validateSchema}
+	return &iBMIamTrustedProfileClaimRuleValidator
 }
 
 func dataSourceIBMIamTrustedProfileClaimRuleRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

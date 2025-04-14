@@ -36,7 +36,7 @@ type ClientService interface {
 }
 
 /*
-  ServiceBrokerSwaggerspec gets swagger json spec
+ServiceBrokerSwaggerspec gets swagger json spec
 */
 func (a *Client) ServiceBrokerSwaggerspec(params *ServiceBrokerSwaggerspecParams, opts ...ClientOption) (*ServiceBrokerSwaggerspecOK, error) {
 	// TODO: Validate the params before sending

@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/cloud-databases-go-sdk/clouddatabasesv5"
 )
 
@@ -25,6 +26,9 @@ func DataSourceIBMDatabaseBackups() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "ID of the deployment this backup relates to.",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_database_backups",
+					"deployment_id"),
 			},
 			"backups": &schema.Schema{
 				Type:        schema.TypeList,
@@ -77,6 +81,22 @@ func DataSourceIBMDatabaseBackups() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMDatabaseBackupsValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "deployment_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			CloudDataType:              "cloud-database",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMDatabaseBackupsValidator := validate.ResourceValidator{ResourceName: "ibm_database_backups", Schema: validateSchema}
+	return &iBMDatabaseBackupsValidator
 }
 
 func DataSourceIBMDatabaseBackupsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

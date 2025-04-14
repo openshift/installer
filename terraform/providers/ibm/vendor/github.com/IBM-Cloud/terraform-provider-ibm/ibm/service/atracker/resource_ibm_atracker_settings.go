@@ -123,7 +123,7 @@ func resourceIBMAtrackerSettingsCreate(context context.Context, d *schema.Resour
 }
 
 func resourceIBMAtrackerSettingsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	_, atrackerClient, err := getAtrackerClients(meta)
+	atrackerClient, err := getAtrackerClients(meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}

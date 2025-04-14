@@ -53,10 +53,12 @@ func NewPcloudCloudinstancesVolumesGetallParamsWithHTTPClient(client *http.Clien
 	}
 }
 
-/* PcloudCloudinstancesVolumesGetallParams contains all the parameters to send to the API endpoint
-   for the pcloud cloudinstances volumes getall operation.
+/*
+PcloudCloudinstancesVolumesGetallParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud cloudinstances volumes getall operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudCloudinstancesVolumesGetallParams struct {
 

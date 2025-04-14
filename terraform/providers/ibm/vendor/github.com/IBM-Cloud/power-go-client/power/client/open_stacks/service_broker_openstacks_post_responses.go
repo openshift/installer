@@ -69,7 +69,8 @@ func NewServiceBrokerOpenstacksPostOK() *ServiceBrokerOpenstacksPostOK {
 	return &ServiceBrokerOpenstacksPostOK{}
 }
 
-/* ServiceBrokerOpenstacksPostOK describes a response with status code 200, with default header values.
+/*
+ServiceBrokerOpenstacksPostOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -77,9 +78,39 @@ type ServiceBrokerOpenstacksPostOK struct {
 	Payload *models.OpenStack
 }
 
+// IsSuccess returns true when this service broker openstacks post o k response has a 2xx status code
+func (o *ServiceBrokerOpenstacksPostOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service broker openstacks post o k response has a 3xx status code
+func (o *ServiceBrokerOpenstacksPostOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker openstacks post o k response has a 4xx status code
+func (o *ServiceBrokerOpenstacksPostOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker openstacks post o k response has a 5xx status code
+func (o *ServiceBrokerOpenstacksPostOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker openstacks post o k response a status code equal to that given
+func (o *ServiceBrokerOpenstacksPostOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceBrokerOpenstacksPostOK) Error() string {
 	return fmt.Sprintf("[POST /broker/v1/openstacks][%d] serviceBrokerOpenstacksPostOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceBrokerOpenstacksPostOK) String() string {
+	return fmt.Sprintf("[POST /broker/v1/openstacks][%d] serviceBrokerOpenstacksPostOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceBrokerOpenstacksPostOK) GetPayload() *models.OpenStack {
 	return o.Payload
 }
@@ -101,7 +132,8 @@ func NewServiceBrokerOpenstacksPostCreated() *ServiceBrokerOpenstacksPostCreated
 	return &ServiceBrokerOpenstacksPostCreated{}
 }
 
-/* ServiceBrokerOpenstacksPostCreated describes a response with status code 201, with default header values.
+/*
+ServiceBrokerOpenstacksPostCreated describes a response with status code 201, with default header values.
 
 Created
 */
@@ -109,9 +141,39 @@ type ServiceBrokerOpenstacksPostCreated struct {
 	Payload *models.OpenStack
 }
 
+// IsSuccess returns true when this service broker openstacks post created response has a 2xx status code
+func (o *ServiceBrokerOpenstacksPostCreated) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service broker openstacks post created response has a 3xx status code
+func (o *ServiceBrokerOpenstacksPostCreated) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker openstacks post created response has a 4xx status code
+func (o *ServiceBrokerOpenstacksPostCreated) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker openstacks post created response has a 5xx status code
+func (o *ServiceBrokerOpenstacksPostCreated) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker openstacks post created response a status code equal to that given
+func (o *ServiceBrokerOpenstacksPostCreated) IsCode(code int) bool {
+	return code == 201
+}
+
 func (o *ServiceBrokerOpenstacksPostCreated) Error() string {
 	return fmt.Sprintf("[POST /broker/v1/openstacks][%d] serviceBrokerOpenstacksPostCreated  %+v", 201, o.Payload)
 }
+
+func (o *ServiceBrokerOpenstacksPostCreated) String() string {
+	return fmt.Sprintf("[POST /broker/v1/openstacks][%d] serviceBrokerOpenstacksPostCreated  %+v", 201, o.Payload)
+}
+
 func (o *ServiceBrokerOpenstacksPostCreated) GetPayload() *models.OpenStack {
 	return o.Payload
 }
@@ -133,7 +195,8 @@ func NewServiceBrokerOpenstacksPostBadRequest() *ServiceBrokerOpenstacksPostBadR
 	return &ServiceBrokerOpenstacksPostBadRequest{}
 }
 
-/* ServiceBrokerOpenstacksPostBadRequest describes a response with status code 400, with default header values.
+/*
+ServiceBrokerOpenstacksPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -141,9 +204,39 @@ type ServiceBrokerOpenstacksPostBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker openstacks post bad request response has a 2xx status code
+func (o *ServiceBrokerOpenstacksPostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker openstacks post bad request response has a 3xx status code
+func (o *ServiceBrokerOpenstacksPostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker openstacks post bad request response has a 4xx status code
+func (o *ServiceBrokerOpenstacksPostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker openstacks post bad request response has a 5xx status code
+func (o *ServiceBrokerOpenstacksPostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker openstacks post bad request response a status code equal to that given
+func (o *ServiceBrokerOpenstacksPostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *ServiceBrokerOpenstacksPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /broker/v1/openstacks][%d] serviceBrokerOpenstacksPostBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *ServiceBrokerOpenstacksPostBadRequest) String() string {
+	return fmt.Sprintf("[POST /broker/v1/openstacks][%d] serviceBrokerOpenstacksPostBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *ServiceBrokerOpenstacksPostBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -165,7 +258,8 @@ func NewServiceBrokerOpenstacksPostConflict() *ServiceBrokerOpenstacksPostConfli
 	return &ServiceBrokerOpenstacksPostConflict{}
 }
 
-/* ServiceBrokerOpenstacksPostConflict describes a response with status code 409, with default header values.
+/*
+ServiceBrokerOpenstacksPostConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -173,9 +267,39 @@ type ServiceBrokerOpenstacksPostConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker openstacks post conflict response has a 2xx status code
+func (o *ServiceBrokerOpenstacksPostConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker openstacks post conflict response has a 3xx status code
+func (o *ServiceBrokerOpenstacksPostConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker openstacks post conflict response has a 4xx status code
+func (o *ServiceBrokerOpenstacksPostConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker openstacks post conflict response has a 5xx status code
+func (o *ServiceBrokerOpenstacksPostConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker openstacks post conflict response a status code equal to that given
+func (o *ServiceBrokerOpenstacksPostConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *ServiceBrokerOpenstacksPostConflict) Error() string {
 	return fmt.Sprintf("[POST /broker/v1/openstacks][%d] serviceBrokerOpenstacksPostConflict  %+v", 409, o.Payload)
 }
+
+func (o *ServiceBrokerOpenstacksPostConflict) String() string {
+	return fmt.Sprintf("[POST /broker/v1/openstacks][%d] serviceBrokerOpenstacksPostConflict  %+v", 409, o.Payload)
+}
+
 func (o *ServiceBrokerOpenstacksPostConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -197,7 +321,8 @@ func NewServiceBrokerOpenstacksPostUnprocessableEntity() *ServiceBrokerOpenstack
 	return &ServiceBrokerOpenstacksPostUnprocessableEntity{}
 }
 
-/* ServiceBrokerOpenstacksPostUnprocessableEntity describes a response with status code 422, with default header values.
+/*
+ServiceBrokerOpenstacksPostUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -205,9 +330,39 @@ type ServiceBrokerOpenstacksPostUnprocessableEntity struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker openstacks post unprocessable entity response has a 2xx status code
+func (o *ServiceBrokerOpenstacksPostUnprocessableEntity) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker openstacks post unprocessable entity response has a 3xx status code
+func (o *ServiceBrokerOpenstacksPostUnprocessableEntity) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker openstacks post unprocessable entity response has a 4xx status code
+func (o *ServiceBrokerOpenstacksPostUnprocessableEntity) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker openstacks post unprocessable entity response has a 5xx status code
+func (o *ServiceBrokerOpenstacksPostUnprocessableEntity) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker openstacks post unprocessable entity response a status code equal to that given
+func (o *ServiceBrokerOpenstacksPostUnprocessableEntity) IsCode(code int) bool {
+	return code == 422
+}
+
 func (o *ServiceBrokerOpenstacksPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /broker/v1/openstacks][%d] serviceBrokerOpenstacksPostUnprocessableEntity  %+v", 422, o.Payload)
 }
+
+func (o *ServiceBrokerOpenstacksPostUnprocessableEntity) String() string {
+	return fmt.Sprintf("[POST /broker/v1/openstacks][%d] serviceBrokerOpenstacksPostUnprocessableEntity  %+v", 422, o.Payload)
+}
+
 func (o *ServiceBrokerOpenstacksPostUnprocessableEntity) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -229,7 +384,8 @@ func NewServiceBrokerOpenstacksPostInternalServerError() *ServiceBrokerOpenstack
 	return &ServiceBrokerOpenstacksPostInternalServerError{}
 }
 
-/* ServiceBrokerOpenstacksPostInternalServerError describes a response with status code 500, with default header values.
+/*
+ServiceBrokerOpenstacksPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -237,9 +393,39 @@ type ServiceBrokerOpenstacksPostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker openstacks post internal server error response has a 2xx status code
+func (o *ServiceBrokerOpenstacksPostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker openstacks post internal server error response has a 3xx status code
+func (o *ServiceBrokerOpenstacksPostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker openstacks post internal server error response has a 4xx status code
+func (o *ServiceBrokerOpenstacksPostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker openstacks post internal server error response has a 5xx status code
+func (o *ServiceBrokerOpenstacksPostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this service broker openstacks post internal server error response a status code equal to that given
+func (o *ServiceBrokerOpenstacksPostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *ServiceBrokerOpenstacksPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /broker/v1/openstacks][%d] serviceBrokerOpenstacksPostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *ServiceBrokerOpenstacksPostInternalServerError) String() string {
+	return fmt.Sprintf("[POST /broker/v1/openstacks][%d] serviceBrokerOpenstacksPostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *ServiceBrokerOpenstacksPostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

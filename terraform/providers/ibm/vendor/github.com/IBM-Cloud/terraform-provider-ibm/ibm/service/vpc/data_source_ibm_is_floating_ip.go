@@ -5,6 +5,7 @@ package vpc
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -168,6 +169,14 @@ func DataSourceIBMISFloatingIP() *schema.Resource {
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "Floating IP tags",
 			},
+
+			isFloatingIPAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access management tags",
+			},
 		},
 	}
 }
@@ -221,12 +230,19 @@ func floatingIPGet(d *schema.ResourceData, meta interface{}, name string) error 
 				targetList = append(targetList, targetMap)
 				d.Set(floatingIPTargets, targetList)
 			}
-			tags, err := flex.GetTagsUsingCRN(meta, *ip.CRN)
+
+			tags, err := flex.GetGlobalTagsUsingCRN(meta, *ip.CRN, "", isUserTagType)
 			if err != nil {
 				fmt.Printf("[ERROR] Error on get of vpc Floating IP (%s) tags: %s", *ip.Address, err)
 			}
 
 			d.Set(floatingIPTags, tags)
+			accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *ip.CRN, "", isAccessTagType)
+			if err != nil {
+				log.Printf(
+					"Error on get of resource floating ip (%s) access tags: %s", d.Id(), err)
+			}
+			d.Set(isFloatingIPAccessTags, accesstags)
 			d.SetId(*ip.ID)
 
 			return nil
