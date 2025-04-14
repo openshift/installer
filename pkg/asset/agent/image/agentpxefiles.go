@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -52,6 +53,10 @@ func (a *AgentPXEFiles) Generate(ctx context.Context, dependencies asset.Parents
 
 	var err error
 	if a.tmpPath, err = agentArtifacts.PrepareArtifacts(ctx); err != nil {
+		return err
+	}
+
+	if err := workflowreport.GetReport(ctx).Stage(workflow.StageGeneratePXE); err != nil {
 		return err
 	}
 
