@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
@@ -201,6 +202,10 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 				for zone := range subnets {
 					mpool.Zones = append(mpool.Zones, zone)
 				}
+				// Since zones are extracted from map keys, order is not guaranteed.
+				// Thus, sort the zones by lexical order to ensure CAPI and MAPI machines
+				// are distributed to zones in the same order.
+				slices.Sort(mpool.Zones)
 			} else {
 				mpool.Zones, err = installConfig.AWS.AvailabilityZones(ctx)
 				if err != nil {
