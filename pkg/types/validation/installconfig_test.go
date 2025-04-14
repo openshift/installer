@@ -2814,6 +2814,7 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
+				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
 					Credential(c1(), c2())).
 				CpReplicas(2).
@@ -2831,6 +2832,7 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
+				PlatformBMWithHosts().
 				MachinePoolArbiter(machinePool()).
 				MachinePoolCP(machinePool().Credential(c1(), c2())).
 				ArbiterReplicas(1).
@@ -2840,6 +2842,7 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
+				PlatformBMWithHosts().
 				MachinePoolArbiter(machinePool()).
 				MachinePoolCP(machinePool().Credential(c1(), c2(), c3())).
 				ArbiterReplicas(1).
@@ -2920,8 +2923,8 @@ func TestValidateTNF(t *testing.T) {
 					Credential(c1(), c2())).
 				CpReplicas(2).
 				build(),
-			name:     "fencing_hosts_mutually_exclusive",
-			expected: "controlPlane.fencing: Forbidden: fencing is mutually exclusive with hosts, please remove either of them",
+			name:     "tnf_supported_platforms",
+			expected: "",
 		},
 		{
 			config: installConfig().
@@ -2930,7 +2933,7 @@ func TestValidateTNF(t *testing.T) {
 					Credential(c1(), c2())).
 				CpReplicas(2).
 				build(),
-			name:     "supported_platforms",
+			name:     "tnf_unsupported_platform",
 			expected: "controlPlane.fencing: Forbidden: fencing is only supported on baremetal, external or none platforms, instead aws platform was found",
 		},
 	}
@@ -3060,10 +3063,8 @@ type installConfigBuilder struct {
 }
 
 func installConfig() *installConfigBuilder {
-	bmPlatform := validBareMetalPlatform()
-	bmPlatform.Hosts = nil
 	return &installConfigBuilder{
-		InstallConfig: types.InstallConfig{Platform: types.Platform{BareMetal: bmPlatform}},
+		InstallConfig: types.InstallConfig{},
 	}
 }
 

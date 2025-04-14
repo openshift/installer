@@ -17,6 +17,24 @@ while [ "$(oc get bmh -n openshift-machine-api -l installer.openshift.io/role=co
     sleep 20
 done
 
+# Pause control-plane management via ironic for Two-Node OpenShift with Fencing (TNF), since this conflicts with how TNF achieves HA
+TNF_TOPOLOGY="DualReplica"
+
+echo "Looking up control-plane topology"
+CONTROL_PLANE_TOPOLOGY=$(oc get infrastructures.config.openshift.io cluster -o json | jq -r '.status.controlPlaneTopology')
+if [ -z "${CONTROL_PLANE_TOPOLOGY}" ]; then
+    echo "Error: couldn't lookup control-plane topology" >&2
+    exit 1
+elif [ "${CONTROL_PLANE_TOPOLOGY}" = "${TNF_TOPOLOGY}" ]; then
+    echo "Control-plane topology set to '${TNF_TOPOLOGY}'; setting the control-plane hosts to detached"
+    while ! oc annotate --overwrite bmh -n openshift-machine-api -l installer.openshift.io/role=control-plane baremetalhost.metal3.io/detached="" ; do
+        sleep 5
+        echo "Setting control-plane nodes to detached failed, retrying"
+    done
+else
+    echo "Control-plane topology set to '${CONTROL_PLANE_TOPOLOGY}'; no further actions required"
+fi
+
 # Shut down ironic containers so that the API VIP can fail over to the control
 # plane.
 echo "Stopping provisioning services..."
