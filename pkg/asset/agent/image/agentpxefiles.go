@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	workflowreport "github.com/openshift/installer/pkg/asset/agent/workflow/report"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -51,6 +52,10 @@ func (a *AgentPXEFiles) Generate(_ context.Context, dependencies asset.Parents) 
 	dependencies.Get(agentArtifacts, agentWorkflow)
 
 	a.tmpPath = agentArtifacts.TmpPath
+
+	if err := workflowreport.GetReport(ctx).Stage(workflow.StageGeneratePXE); err != nil {
+		return err
+	}
 
 	ignitionContent := &isoeditor.IgnitionContent{Config: agentArtifacts.IgnitionByte}
 	initrdImgPath := filepath.Join(a.tmpPath, "images", "pxeboot", "initrd.img")
