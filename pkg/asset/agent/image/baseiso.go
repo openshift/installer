@@ -35,8 +35,8 @@ func (i *BaseIso) Name() string {
 	return "Base ISO Image"
 }
 
-// Fetch RootFS URL using the rhcos.json.
-func (i *BaseIso) getRootFSURL(ctx context.Context, archName string) (string, error) {
+// getRootFSURL fetches the rootfs URL using the rhcos.json.
+func getRootFSURL(ctx context.Context, archName string) (string, error) {
 	metal, err := rhcos.GetMetalArtifact(ctx, archName)
 	if err != nil {
 		return "", err
