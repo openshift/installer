@@ -136,14 +136,10 @@ func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, 
 }
 
 func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig) ([]byte, error) {
-	switch config.Publish {
-	case types.MixedPublishingStrategy:
-		if config.OperatorPublishingStrategy.Ingress != "Internal" {
-			break
-		}
-		fallthrough
-	case types.InternalPublishingStrategy:
-		obj := &operatorv1.IngressController{
+	// getDefaultIngressController returns an object representing the default Ingress Controller
+	// with empty LoadBalancer spec.
+	getDefaultIngressController := func() *operatorv1.IngressController {
+		return &operatorv1.IngressController{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: operatorv1.GroupVersion.String(),
 				Kind:       "IngressController",
@@ -154,13 +150,76 @@ func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig
 			},
 			Spec: operatorv1.IngressControllerSpec{
 				EndpointPublishingStrategy: &operatorv1.EndpointPublishingStrategy{
-					Type: operatorv1.LoadBalancerServiceStrategyType,
-					LoadBalancer: &operatorv1.LoadBalancerStrategy{
-						Scope: operatorv1.InternalLoadBalancer,
-					},
+					Type:         operatorv1.LoadBalancerServiceStrategyType,
+					LoadBalancer: &operatorv1.LoadBalancerStrategy{},
 				},
 			},
 		}
+	}
+
+	var obj *operatorv1.IngressController
+
+	switch config.Platform.Name() {
+	case aws.Name:
+		subnetIDsByRole := make(map[aws.SubnetRoleType][]operatorv1.AWSSubnetID)
+		for _, subnet := range config.AWS.VPC.Subnets {
+			for _, role := range subnet.Roles {
+				subnetIDsByRole[role.Type] = append(subnetIDsByRole[role.Type], operatorv1.AWSSubnetID(subnet.ID))
+			}
+		}
+
+		// BYO-subnet install case and subnet roles are specified.
+		if len(subnetIDsByRole) > 0 {
+			obj = getDefaultIngressController()
+			lbSpec := obj.Spec.EndpointPublishingStrategy.LoadBalancer
+
+			if config.PublicIngress() {
+				lbSpec.Scope = operatorv1.ExternalLoadBalancer
+			} else {
+				lbSpec.Scope = operatorv1.InternalLoadBalancer
+			}
+
+			if config.AWS.LBType == configv1.NLB {
+				lbSpec.ProviderParameters = &operatorv1.ProviderLoadBalancerParameters{
+					Type: operatorv1.AWSLoadBalancerProvider,
+					AWS: &operatorv1.AWSLoadBalancerParameters{
+						Type: operatorv1.AWSNetworkLoadBalancer,
+						NetworkLoadBalancerParameters: &operatorv1.AWSNetworkLoadBalancerParameters{
+							Subnets: &operatorv1.AWSSubnets{
+								IDs: subnetIDsByRole[aws.IngressControllerLBSubnetRole],
+							},
+						},
+					},
+				}
+			} else {
+				lbSpec.ProviderParameters = &operatorv1.ProviderLoadBalancerParameters{
+					Type: operatorv1.AWSLoadBalancerProvider,
+					AWS: &operatorv1.AWSLoadBalancerParameters{
+						Type: operatorv1.AWSClassicLoadBalancer,
+						ClassicLoadBalancerParameters: &operatorv1.AWSClassicLoadBalancerParameters{
+							Subnets: &operatorv1.AWSSubnets{
+								IDs: subnetIDsByRole[aws.IngressControllerLBSubnetRole],
+							},
+						},
+					},
+				}
+			}
+			break
+		}
+		// Fall back to existing logic similar to other platforms otherwise.
+		// i.e. managed subnets or no subnet roles are specified.
+		fallthrough
+	default:
+		// The Ingress Operator creates the default Ingress Controller with scope External if none is provided.
+		// https://github.com/openshift/cluster-ingress-operator/blob/81e314f2e9b41b6616ad2c3db657e869915577a8/pkg/operator/operator.go#L470-L516
+		// Thus, if ingress LB scope is configured to be internal, we need to generate the default Ingress Controller with scope Internal.
+		if !config.PublicIngress() {
+			obj = getDefaultIngressController()
+			obj.Spec.EndpointPublishingStrategy.LoadBalancer.Scope = operatorv1.InternalLoadBalancer
+		}
+	}
+
+	if obj != nil {
 		return yaml.Marshal(obj)
 	}
 	return nil, nil
