@@ -2,8 +2,10 @@ package azure
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/pkg/errors"
@@ -11,10 +13,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	azic "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	capzash "github.com/openshift/installer/pkg/asset/manifests/azure/stack/v1beta1"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils/cidr"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -169,6 +173,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
+	azEnv := string(installConfig.Azure.CloudName)
+
 	azureCluster := &capz.AzureCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -180,7 +186,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				SubscriptionID:   session.Credentials.SubscriptionID,
 				Location:         installConfig.Config.Azure.Region,
 				AdditionalTags:   installConfig.Config.Platform.Azure.UserTags,
-				AzureEnvironment: string(installConfig.Azure.CloudName),
+				AzureEnvironment: azEnv,
 				IdentityRef: &corev1.ObjectReference{
 					APIVersion: capz.GroupVersion.String(),
 					Kind:       "AzureClusterIdentity",
@@ -234,9 +240,26 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}
-	azureCluster.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureCluster"))
+
+	// We are maintaining a fork of CAPZ for azurestack. The only API difference
+	// is the ARMEndpoint field, so we can use the CAPZ cluster object, and if
+	// running on ASH convert to the fork API, and add the field.
+	var cluster client.Object
+	if !strings.EqualFold(azEnv, string(azure.StackCloud)) {
+		azureCluster.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureCluster"))
+		cluster = azureCluster
+	} else {
+		var ashCluster capzash.AzureCluster
+		if err := deepCopy(azureCluster, &ashCluster); err != nil {
+			return nil, fmt.Errorf("failed to convert azureCluster to azure-stack cluster: %w", err)
+		}
+		ashCluster.Spec.ARMEndpoint = session.Environment.ServiceManagementEndpoint
+		ashCluster.SetGroupVersionKind(capzash.GroupVersion.WithKind("AzureCluster"))
+		cluster = &ashCluster
+	}
+
 	manifests = append(manifests, &asset.RuntimeFile{
-		Object: azureCluster,
+		Object: cluster,
 		File:   asset.File{Filename: "02_azure-cluster.yaml"},
 	})
 
@@ -358,6 +381,16 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 		}
 		machineCidr = cidrRange
 	}
+	// AzureStack does not support the call to CheckIPAddressAvailability.
+	if installConfig.Azure.CloudName == azure.StackCloud {
+		cidr := machineCidr[0]
+		if cidr.CIDR.Contains(net.IP(lbip)) {
+			return lbip, nil
+		}
+		ipSubnets := cidr.CIDR.IP
+		ipSubnets[len(ipSubnets)-1] += 4
+		return ipSubnets.String(), nil
+	}
 	availableIP, err := client.CheckIPAddressAvailability(ctx, networkResourceGroupName, virtualNetworkName, lbip)
 	if err != nil {
 		return "", fmt.Errorf("failed to get azure ip availability: %w", err)
@@ -384,4 +417,12 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 		}
 	}
 	return "", fmt.Errorf("failed to get an IP that's available and in the given machine network: this error may be caused by lack of necessary permissions")
+}
+
+func deepCopy(src, dst interface{}) error {
+	bytes, err := json.Marshal(src)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(bytes, dst)
 }

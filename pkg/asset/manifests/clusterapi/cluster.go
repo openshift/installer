@@ -33,8 +33,10 @@ import (
 	"github.com/openshift/installer/pkg/clusterapi"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	externaltypes "github.com/openshift/installer/pkg/types/external"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
+	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
@@ -143,6 +145,8 @@ func (c *Cluster) Generate(_ context.Context, dependencies asset.Parents) error 
 		if err != nil {
 			return fmt.Errorf("failed to generate IBM Cloud VPC manifests: %w", err)
 		}
+	case externaltypes.Name, nonetypes.Name:
+		return nil
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)
 	}

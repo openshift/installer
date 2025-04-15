@@ -166,4 +166,5 @@ issues:
     - ^scripts
     - ^terraform
     - ^upi
+    - ^pkg/asset/manifests/azure/stack/v1beta1 # local copy of capi azurestack provider fork api
   uniq-by-line: false
