@@ -331,14 +331,14 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, c
 
 	allErrs = append(allErrs, validateSubnetCIDR(fldPath, subnetDataGroups.Private, networking.MachineNetwork)...)
 	allErrs = append(allErrs, validateSubnetCIDR(fldPath, subnetDataGroups.Public, networking.MachineNetwork)...)
-	allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Private, "private")...)
-	allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Public, "public")...)
-	allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Edge, "edge")...)
 
 	if len(subnetsWithRole) > 0 {
 		allErrs = append(allErrs, validateSubnetRoles(fldPath, subnetsWithRole, subnetDataGroups, config)...)
 	} else {
 		allErrs = append(allErrs, validateUntaggedSubnets(ctx, fldPath, meta, subnetDataGroups)...)
+		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Private, "private")...)
+		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Public, "public")...)
+		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Edge, "edge")...)
 	}
 
 	privateZones := sets.New[string]()
@@ -557,6 +557,29 @@ func validateDuplicateSubnetZones(fldPath *field.Path, subnetDataGroup map[strin
 func validateSubnetRoles(fldPath *field.Path, subnetsWithRole map[awstypes.SubnetRoleType][]subnetData, subnetDataGroups subnetDataGroups, config *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	supportedRoles := []awstypes.SubnetRoleType{
+		awstypes.ClusterNodeSubnetRole,
+		awstypes.EdgeNodeSubnetRole,
+		awstypes.BootstrapNodeSubnetRole,
+		awstypes.IngressControllerLBSubnetRole,
+		awstypes.ControlPlaneExternalLBSubnetRole,
+		awstypes.ControlPlaneInternalLBSubnetRole,
+	}
+
+	// Subnets of the same role must be in different AZs.
+	// Especially, IngressControllerLB subnets must be in different AZs as required by AWS CCM.
+	for _, role := range supportedRoles {
+		snZones := make(map[string]string)
+		for _, subnetData := range subnetsWithRole[role] {
+			if conflictingSubnet, ok := snZones[subnetData.Zone.Name]; ok {
+				allErrs = append(allErrs, field.Invalid(fldPath.Index(subnetData.Idx), subnetData.ID,
+					fmt.Sprintf("subnets %s and %s have role %s and are both in zone %s", conflictingSubnet, subnetData.ID, role, subnetData.Zone.Name)))
+			} else {
+				snZones[subnetData.Zone.Name] = subnetData.ID
+			}
+		}
+	}
+
 	// BootstrapNode subnets must be assigned to public subnets
 	// in external cluster.
 	for _, bstrSubnet := range subnetsWithRole[awstypes.BootstrapNodeSubnetRole] {
@@ -627,23 +650,12 @@ func validateSubnetRoles(fldPath *field.Path, subnetsWithRole map[awstypes.Subne
 		}
 	}
 
-	// IngressControllerLB subnets must be in different AZs as required by AWS CCM.
-	ingressZones := make(map[string]string)
-	for _, subnetData := range subnetsWithRole[awstypes.IngressControllerLBSubnetRole] {
-		if conflictingSubnet, ok := ingressZones[subnetData.Zone.Name]; ok {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(subnetData.Idx), subnetData.ID,
-				fmt.Sprintf("subnets %s and %s have role %s and are both in zone %s", conflictingSubnet, subnetData.ID, awstypes.IngressControllerLBSubnetRole, subnetData.Zone.Name)))
-		} else {
-			ingressZones[subnetData.Zone.Name] = subnetData.ID
-		}
-	}
-
 	// AZs of LB subnets match AZs of ClusterNode subnets.
 	lbRoles := []awstypes.SubnetRoleType{
 		awstypes.ControlPlaneInternalLBSubnetRole,
 		awstypes.IngressControllerLBSubnetRole,
 	}
-	if config.Publish == types.ExternalPublishingStrategy {
+	if config.PublicAPI() {
 		lbRoles = append(lbRoles, awstypes.ControlPlaneExternalLBSubnetRole)
 	}
 	for _, role := range lbRoles {

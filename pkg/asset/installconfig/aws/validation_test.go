@@ -428,7 +428,7 @@ func TestValidate(t *testing.T) {
 			expectErr: `^platform\.aws\.vpc\.subnets: Invalid value: \[\]aws\.Subnet\{aws\.Subnet\{ID:\"subnet-valid-private-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-private-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-private-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-a\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-b\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"subnet-valid-public-c\", Roles:\[\]aws\.SubnetRole\(nil\)\}, aws\.Subnet\{ID:\"no-matching-public-private-zone\", Roles:\[\]aws\.SubnetRole\(nil\)\}\}: No public subnet provided for zones \[f\]$`,
 		},
 		{
-			name: "invalid byo subnets, multiple private in same zone",
+			name: "invalid byo subnets with no roles, multiple private in same zone",
 			installConfig: icBuild.build(
 				icBuild.withBaseBYO(),
 				icBuild.withVPCSubnetIDs([]string{"valid-private-zone-c-2"}, false),
@@ -447,7 +447,7 @@ func TestValidate(t *testing.T) {
 			expectErr: `^platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"valid-private-zone-c-2\": private subnet subnet-valid-private-c is also in zone c$`,
 		},
 		{
-			name: "invalid byo subnets, multiple public in same zone",
+			name: "invalid byo subnets with no roles, multiple public in same zone",
 			installConfig: icBuild.build(
 				icBuild.withBaseBYO(),
 				icBuild.withVPCSubnetIDs([]string{"valid-public-zone-c-2"}, false),
@@ -466,7 +466,7 @@ func TestValidate(t *testing.T) {
 			expectErr: `^platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"valid-public-zone-c-2\": public subnet subnet-valid-public-c is also in zone c$`,
 		},
 		{
-			name: "invalid byo subnets, multiple public edge in same zone",
+			name: "invalid byo subnets with no roles, multiple public edge in same zone",
 			installConfig: icBuild.build(
 				icBuild.withBaseBYO(),
 				icBuild.withVPCEdgeSubnetIDs(validSubnets("edge").IDs(), false),
@@ -727,6 +727,117 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
+			name: "valid byo subnets with roles, dedicated subnets for LBs",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withControlPlanePlatformZones([]string{"a"}, true),
+				icBuild.withComputePlatformZones([]string{"a"}, true, 0),
+				icBuild.withVPCSubnets(
+					[]aws.Subnet{
+						{
+							ID: "subnet-valid-private-a",
+							Roles: []aws.SubnetRole{
+								{Type: aws.ClusterNodeSubnetRole},
+							},
+						},
+						{
+							ID: "subnet-valid-private-a1",
+							Roles: []aws.SubnetRole{
+								{Type: aws.ControlPlaneInternalLBSubnetRole},
+							},
+						},
+						{
+							ID: "subnet-valid-public-a",
+							Roles: []aws.SubnetRole{
+								{Type: aws.ControlPlaneExternalLBSubnetRole},
+								{Type: aws.BootstrapNodeSubnetRole},
+							},
+						},
+						{
+							ID: "subnet-valid-public-a1",
+							Roles: []aws.SubnetRole{
+								{Type: aws.IngressControllerLBSubnetRole},
+							},
+						},
+					}, true),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: Subnets{
+					"subnet-valid-private-a": {
+						ID:     "subnet-valid-private-a",
+						Zone:   &Zone{Name: "a"},
+						CIDR:   "10.0.1.0/24",
+						Public: false,
+					},
+					"subnet-valid-private-a1": {
+						ID:   "subnet-valid-private-a1",
+						Zone: &Zone{Name: "a"},
+						CIDR: "10.0.2.0/24",
+					},
+				},
+				Public: Subnets{
+					"subnet-valid-public-a": {
+						ID:     "subnet-valid-public-a",
+						Zone:   &Zone{Name: "a"},
+						CIDR:   "10.0.3.0/24",
+						Public: true,
+					},
+					"subnet-valid-public-a1": {
+						ID:     "subnet-valid-public-a1",
+						Zone:   &Zone{Name: "a"},
+						CIDR:   "10.0.4.0/24",
+						Public: true,
+					},
+				},
+				VPC: validVPCID,
+			},
+		},
+		{
+			name: "invalid byo subnets with roles, subnets of the same role in the same AZs",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withVPCSubnets(byoSubnetsWithRoles(), true),
+				icBuild.withVPCSubnets([]aws.Subnet{
+					{
+						ID: "subnet-valid-private-a1",
+						Roles: []aws.SubnetRole{
+							{Type: aws.ClusterNodeSubnetRole},
+							{Type: aws.ControlPlaneInternalLBSubnetRole},
+						},
+					},
+					{
+						ID: "subnet-valid-public-a1",
+						Roles: []aws.SubnetRole{
+							{Type: aws.BootstrapNodeSubnetRole},
+							{Type: aws.ControlPlaneExternalLBSubnetRole},
+							{Type: aws.IngressControllerLBSubnetRole},
+						},
+					},
+				}, false),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: mergeSubnets(validSubnets("private"), Subnets{
+					"subnet-valid-private-a1": {
+						ID:   "subnet-valid-private-a1",
+						Zone: &Zone{Name: "a"},
+						CIDR: "10.0.6.0/24",
+					},
+				}),
+				Public: mergeSubnets(validSubnets("public"), Subnets{
+					"subnet-valid-public-a1": {
+						ID:     "subnet-valid-public-a1",
+						Zone:   &Zone{Name: "a"},
+						CIDR:   "10.0.6.0/24",
+						Public: true,
+					},
+				}),
+				VPC: validVPCID,
+			},
+			expectErr: `^\Q[platform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-private-a1": subnets subnet-valid-private-a and subnet-valid-private-a1 have role ClusterNode and are both in zone a, platform.aws.vpc.subnets[7]: Invalid value: "subnet-valid-public-a1": subnets subnet-valid-public-a and subnet-valid-public-a1 have role BootstrapNode and are both in zone a, platform.aws.vpc.subnets[7]: Invalid value: "subnet-valid-public-a1": subnets subnet-valid-public-a and subnet-valid-public-a1 have role IngressControllerLB and are both in zone a, platform.aws.vpc.subnets[7]: Invalid value: "subnet-valid-public-a1": subnets subnet-valid-public-a and subnet-valid-public-a1 have role ControlPlaneExternalLB and are both in zone a, platform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-private-a1": subnets subnet-valid-private-a and subnet-valid-private-a1 have role ControlPlaneInternalLB and are both in zone a]\E$`,
+		},
+		{
 			name: "invalid byo subnets with roles, public subnet assigned ClusterNode",
 			installConfig: icBuild.build(
 				icBuild.withBaseBYO(),
@@ -751,7 +862,7 @@ func TestValidate(t *testing.T) {
 				}),
 				VPC: validVPCID,
 			},
-			expectErr: `^\Q[platform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-public-a1": public subnet subnet-valid-public-a is also in zone a, platform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-public-a1": subnet subnet-valid-public-a1 has role ClusterNode, but is public, expected to be private]\E$`,
+			expectErr: `\Qplatform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-public-a1": subnet subnet-valid-public-a1 has role ClusterNode, but is public, expected to be private\E`,
 		},
 		{
 			name: "invalid byo subnets with roles, private subnet assigned Bootstrap in external cluster",
@@ -777,7 +888,7 @@ func TestValidate(t *testing.T) {
 				Public: validSubnets("public"),
 				VPC:    validVPCID,
 			},
-			expectErr: `^\Q[platform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-private-a1": private subnet subnet-valid-private-a is also in zone a, platform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-private-a1": subnet subnet-valid-private-a1 has role BootstrapNode, but is private, expected to be public]\E$`,
+			expectErr: `\Qplatform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-private-a1": subnet subnet-valid-private-a1 has role BootstrapNode, but is private, expected to be public\E`,
 		},
 		{
 			name: "invalid byo subnets with roles, private subnet assigned ControlPlaneExternalLB",
@@ -803,7 +914,7 @@ func TestValidate(t *testing.T) {
 				Public: validSubnets("public"),
 				VPC:    validVPCID,
 			},
-			expectErr: `^\[platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"subnet-valid-private-a1\": private subnet subnet-valid-private-a is also in zone a, platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"subnet-valid-private-a1\": subnet subnet-valid-private-a1 has role ControlPlaneExternalLB, but is private, expected to be public\]$`,
+			expectErr: `\Qplatform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-private-a1": subnet subnet-valid-private-a1 has role ControlPlaneExternalLB, but is private, expected to be public\E`,
 		},
 		{
 			name: "invalid byo subnets with roles, public subnet assigned ControlPlaneInternalLB",
@@ -830,7 +941,7 @@ func TestValidate(t *testing.T) {
 				}),
 				VPC: validVPCID,
 			},
-			expectErr: `^\[platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"subnet-valid-public-a1\": public subnet subnet-valid-public-a is also in zone a, platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"subnet-valid-public-a1\": subnet subnet-valid-public-a1 has role ControlPlaneInternalLB, but is public, expected to be private\]$`,
+			expectErr: `\Qplatform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-public-a1": subnet subnet-valid-public-a1 has role ControlPlaneInternalLB, but is public, expected to be private\E`,
 		},
 		{
 			name: "valid byo subnets with roles, public subnet assigned ControlPlaneInternalLB, ClusterNode and public-only cluster",
@@ -912,7 +1023,7 @@ func TestValidate(t *testing.T) {
 				}),
 				VPC: validVPCID,
 			},
-			expectErr: `platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"subnet-valid-public-a1\": public subnet subnet-valid-public-a is also in zone a, platform\.aws\.vpc\.subnets\[6\]: Invalid value: \"subnet-valid-public-a1\": subnets subnet-valid-public-a and subnet-valid-public-a1 have role IngressControllerLB and are both in zone a`,
+			expectErr: `^\Qplatform.aws.vpc.subnets[6]: Invalid value: "subnet-valid-public-a1": subnets subnet-valid-public-a and subnet-valid-public-a1 have role IngressControllerLB and are both in zone a\E$`,
 		},
 		{
 			name: "invalid byo subnets with roles, AZs of IngressControllerLB and ControlPlaneLB not match AZs of ClusterNode",
@@ -1445,6 +1556,7 @@ func byoSubnetsWithRoles() []aws.Subnet {
 			Roles: []aws.SubnetRole{
 				{Type: aws.ControlPlaneExternalLBSubnetRole},
 				{Type: aws.IngressControllerLBSubnetRole},
+				{Type: aws.BootstrapNodeSubnetRole},
 			},
 		},
 		{
@@ -1459,7 +1571,6 @@ func byoSubnetsWithRoles() []aws.Subnet {
 			Roles: []aws.SubnetRole{
 				{Type: aws.ControlPlaneExternalLBSubnetRole},
 				{Type: aws.IngressControllerLBSubnetRole},
-				{Type: aws.BootstrapNodeSubnetRole},
 			},
 		},
 	}
