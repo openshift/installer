@@ -3,6 +3,12 @@ variable "cluster_id" {
   description = "The ID created by the installer to uniquely identify the created cluster."
 }
 
+variable "enable_snat" {
+  type        = bool
+  description = "Boolean indicating if SNAT should be enabled or disabled."
+  default     = true
+}
+
 variable "master_count" {
   type        = string
   description = "The number of master nodes."
