@@ -15,7 +15,6 @@ EnvironmentFile=/etc/assisted/rendezvous-host.env
 ExecStartPre=/usr/local/bin/wait-for-assisted-service.sh
 ExecStart=/usr/local/bin/add-node.sh
 
-KillMode=none
 Type=oneshot
 RemainAfterExit=true
 

@@ -7,7 +7,6 @@ Before=agent-interactive-console.service
 [Service]
 ExecStart=/usr/local/bin/set-hostname.sh
 
-KillMode=none
 Type=oneshot
 RemainAfterExit=true
 
