@@ -37,17 +37,23 @@ func GetComputeService(ctx context.Context, serviceEndpoints []configv1.GCPServi
 		return nil, fmt.Errorf("failed to get compute service options: %w", err)
 	}
 
+	for _, endpoint := range serviceEndpoints {
+		if endpoint.Name == configv1.GCPServiceEndpointNameCompute {
+			genOptions = append(genOptions, option.WithEndpoint(endpoint.URL))
+		}
+	}
+
 	options = append(options, genOptions...)
 	svc, err := compute.NewService(ctx, options...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create compute service: %w", err)
 	}
 
-	for _, endpoint := range serviceEndpoints {
-		if endpoint.Name == configv1.GCPServiceEndpointNameCompute {
-			svc.BasePath = endpoint.URL
-		}
-	}
+	//for _, endpoint := range serviceEndpoints {
+	//	if endpoint.Name == configv1.GCPServiceEndpointNameCompute {
+	//		svc.BasePath = endpoint.URL
+	//	}
+	//}
 
 	return svc, nil
 }
@@ -60,17 +66,23 @@ func GetDNSService(ctx context.Context, serviceEndpoints []configv1.GCPServiceEn
 		return nil, fmt.Errorf("failed to get dns service options: %w", err)
 	}
 
+	for _, endpoint := range serviceEndpoints {
+		if endpoint.Name == configv1.GCPServiceEndpointNameDNS {
+			genOptions = append(genOptions, option.WithEndpoint(endpoint.URL))
+		}
+	}
+
 	options = append(options, genOptions...)
 	svc, err := dns.NewService(ctx, options...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dns service: %w", err)
 	}
 
-	for _, endpoint := range serviceEndpoints {
-		if endpoint.Name == configv1.GCPServiceEndpointNameDNS {
-			svc.BasePath = endpoint.URL
-		}
-	}
+	//for _, endpoint := range serviceEndpoints {
+	//	if endpoint.Name == configv1.GCPServiceEndpointNameDNS {
+	//		svc.BasePath = endpoint.URL
+	//	}
+	//}
 	return svc, nil
 }
 
@@ -82,17 +94,23 @@ func GetCloudResourceService(ctx context.Context, serviceEndpoints []configv1.GC
 		return nil, fmt.Errorf("failed to get cloud resource service options: %w", err)
 	}
 
+	for _, endpoint := range serviceEndpoints {
+		if endpoint.Name == configv1.GCPServiceEndpointNameCloudResource {
+			genOptions = append(genOptions, option.WithEndpoint(endpoint.URL))
+		}
+	}
+
 	options = append(options, genOptions...)
 	svc, err := cloudresourcemanager.NewService(ctx, options...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cloud resource service: %w", err)
 	}
 
-	for _, endpoint := range serviceEndpoints {
-		if endpoint.Name == configv1.GCPServiceEndpointNameCloudResource {
-			svc.BasePath = endpoint.URL
-		}
-	}
+	//for _, endpoint := range serviceEndpoints {
+	//	if endpoint.Name == configv1.GCPServiceEndpointNameCloudResource {
+	//		svc.BasePath = endpoint.URL
+	//	}
+	//}
 	return svc, nil
 }
 
@@ -104,17 +122,23 @@ func GetServiceUsageService(ctx context.Context, serviceEndpoints []configv1.GCP
 		return nil, fmt.Errorf("failed to get service usage service options: %w", err)
 	}
 
+	for _, endpoint := range serviceEndpoints {
+		if endpoint.Name == configv1.GCPServiceEndpointNameServiceUsage {
+			genOptions = append(genOptions, option.WithEndpoint(endpoint.URL))
+		}
+	}
+
 	options = append(options, genOptions...)
 	svc, err := serviceusage.NewService(ctx, options...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create service usage service: %w", err)
 	}
 
-	for _, endpoint := range serviceEndpoints {
-		if endpoint.Name == configv1.GCPServiceEndpointNameServiceUsage {
-			svc.BasePath = endpoint.URL
-		}
-	}
+	//for _, endpoint := range serviceEndpoints {
+	//	if endpoint.Name == configv1.GCPServiceEndpointNameServiceUsage {
+	//		svc.BasePath = endpoint.URL
+	//	}
+	//}
 	return svc, nil
 }
 
@@ -126,17 +150,23 @@ func GetIAMService(ctx context.Context, serviceEndpoints []configv1.GCPServiceEn
 		return nil, fmt.Errorf("failed to get IAM service options: %w", err)
 	}
 
+	for _, endpoint := range serviceEndpoints {
+		if endpoint.Name == configv1.GCPServiceEndpointNameIAM {
+			genOptions = append(genOptions, option.WithEndpoint(endpoint.URL))
+		}
+	}
+
 	options = append(options, genOptions...)
 	svc, err := iam.NewService(ctx, options...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create IAM service: %w", err)
 	}
 
-	for _, endpoint := range serviceEndpoints {
-		if endpoint.Name == configv1.GCPServiceEndpointNameIAM {
-			svc.BasePath = endpoint.URL
-		}
-	}
+	//for _, endpoint := range serviceEndpoints {
+	//	if endpoint.Name == configv1.GCPServiceEndpointNameIAM {
+	//		svc.BasePath = endpoint.URL
+	//	}
+	//}
 	return svc, nil
 }
 
@@ -148,17 +178,23 @@ func GetStorageService(ctx context.Context, serviceEndpoints []configv1.GCPServi
 		return nil, fmt.Errorf("failed to get storage service options: %w", err)
 	}
 
+	for _, endpoint := range serviceEndpoints {
+		if endpoint.Name == configv1.GCPServiceEndpointNameStorage {
+			genOptions = append(genOptions, option.WithEndpoint(endpoint.URL))
+		}
+	}
+
 	options = append(options, genOptions...)
 	svc, err := storage.NewService(ctx, options...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage service: %w", err)
 	}
 
-	for _, endpoint := range serviceEndpoints {
-		if endpoint.Name == configv1.GCPServiceEndpointNameStorage {
-			svc.BasePath = endpoint.URL
-		}
-	}
+	//for _, endpoint := range serviceEndpoints {
+	//	if endpoint.Name == configv1.GCPServiceEndpointNameStorage {
+	//		svc.BasePath = endpoint.URL
+	//	}
+	//}
 	return svc, nil
 }
 
