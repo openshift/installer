@@ -635,10 +635,6 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 
 	azureClient.EXPECT().CheckIfExistsStorageAccount(gomock.Any(), validBootDiagnosticsResourceGroup, validBootDiagnosticsStorageAccount, validRegion).Return(nil)
 
-	// ARO specific code
-	azureClient.EXPECT().CheckIfARO(gomock.Any(), gomock.Not("valid-resource-group-with-resources-aro")).Return(false, nil).AnyTimes()
-	azureClient.EXPECT().CheckIfARO(gomock.Any(), "valid-resource-group-with-resources-aro").Return(true, nil).AnyTimes()
-
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			editedInstallConfig := validInstallConfig()
