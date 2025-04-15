@@ -52,10 +52,12 @@ func NewPcloudVpnconnectionsGetallParamsWithHTTPClient(client *http.Client) *Pcl
 	}
 }
 
-/* PcloudVpnconnectionsGetallParams contains all the parameters to send to the API endpoint
-   for the pcloud vpnconnections getall operation.
+/*
+PcloudVpnconnectionsGetallParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud vpnconnections getall operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudVpnconnectionsGetallParams struct {
 

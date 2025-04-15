@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -37,6 +38,13 @@ func ResourceIBMSchematicsResourceQuery() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Resource query name.",
+			},
+			"location": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_schematics_resource_query", "location"),
+				Description:  "List of locations supported by IBM Cloud Schematics service.  While creating your workspace or action, choose the right region, since it cannot be changed.  Note, this does not limit the location of the IBM Cloud resources, provisioned using Schematics.",
 			},
 			"queries": {
 				Type:     schema.TypeList,
@@ -114,7 +122,13 @@ func ResourceIBMSchematicsResourceQueryValidator() *validate.ResourceValidator {
 			Optional:                   true,
 			AllowedValues:              "vsi",
 		},
-	)
+		validate.ValidateSchema{
+			Identifier:                 "location",
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			AllowedValues:              "eu-de, eu-gb, us-east, us-south",
+		})
 
 	resourceValidator := validate.ResourceValidator{ResourceName: "ibm_schematics_resource_query", Schema: validateSchema}
 	return &resourceValidator
@@ -125,7 +139,13 @@ func resourceIBMSchematicsResourceQueryCreate(context context.Context, d *schema
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	if r, ok := d.GetOk("location"); ok {
+		region := r.(string)
+		schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+		if updatedURL {
+			schematicsClient.Service.Options.URL = schematicsURL
+		}
+	}
 	createResourceQueryOptions := &schematicsv1.CreateResourceQueryOptions{}
 
 	if _, ok := d.GetOk("type"); ok {
@@ -201,7 +221,12 @@ func resourceIBMSchematicsResourceQueryRead(context context.Context, d *schema.R
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	actionIDSplit := strings.Split(d.Id(), ".")
+	region := actionIDSplit[0]
+	schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+	if updatedURL {
+		schematicsClient.Service.Options.URL = schematicsURL
+	}
 	getResourcesQueryOptions := &schematicsv1.GetResourcesQueryOptions{}
 
 	getResourcesQueryOptions.SetQueryID(d.Id())
@@ -215,7 +240,6 @@ func resourceIBMSchematicsResourceQueryRead(context context.Context, d *schema.R
 		log.Printf("[DEBUG] GetResourcesQueryWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetResourcesQueryWithContext failed %s\n%s", err, response))
 	}
-
 	if err = d.Set("type", resourceQueryRecord.Type); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting type: %s", err))
 	}
@@ -291,7 +315,12 @@ func resourceIBMSchematicsResourceQueryUpdate(context context.Context, d *schema
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	actionIDSplit := strings.Split(d.Id(), ".")
+	region := actionIDSplit[0]
+	schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+	if updatedURL {
+		schematicsClient.Service.Options.URL = schematicsURL
+	}
 	replaceResourcesQueryOptions := &schematicsv1.ReplaceResourcesQueryOptions{}
 
 	replaceResourcesQueryOptions.SetQueryID(d.Id())
@@ -325,7 +354,12 @@ func resourceIBMSchematicsResourceQueryDelete(context context.Context, d *schema
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	actionIDSplit := strings.Split(d.Id(), ".")
+	region := actionIDSplit[0]
+	schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+	if updatedURL {
+		schematicsClient.Service.Options.URL = schematicsURL
+	}
 	deleteResourcesQueryOptions := &schematicsv1.DeleteResourcesQueryOptions{}
 
 	deleteResourcesQueryOptions.SetQueryID(d.Id())

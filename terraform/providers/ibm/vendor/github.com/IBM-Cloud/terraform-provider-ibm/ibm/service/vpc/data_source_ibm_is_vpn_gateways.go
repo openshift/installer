@@ -5,6 +5,7 @@ package vpc
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -23,7 +24,16 @@ func DataSourceIBMISVPNGateways() *schema.Resource {
 		Read: dataSourceIBMVPNGatewaysRead,
 
 		Schema: map[string]*schema.Schema{
-
+			"resource_group": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The unique identifier of the resource group this vpn gateway belongs to",
+			},
+			"mode": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The mode of this vpn gateway.",
+			},
 			isvpnGateways: {
 				Type:        schema.TypeList,
 				Description: "Collection of VPN Gateways",
@@ -104,6 +114,63 @@ func DataSourceIBMISVPNGateways() *schema.Resource {
 							Computed:    true,
 							Description: " VPN gateway mode(policy/route) ",
 						},
+						"vpc": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "VPC for the VPN Gateway",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"crn": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this VPC.",
+									},
+									"deleted": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this VPC.",
+									},
+									"id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this VPC.",
+									},
+									"name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique user-defined name for this VPC.",
+									},
+								},
+							},
+						},
+						isVPNGatewayTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "VPN Gateway tags list",
+						},
+						isVPNGatewayAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "List of access management tags",
+						},
 					},
 				},
 			},
@@ -119,7 +186,14 @@ func dataSourceIBMVPNGatewaysRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	listvpnGWOptions := sess.NewListVPNGatewaysOptions()
-
+	if resgroupintf, ok := d.GetOk("resource_group"); ok {
+		resGroup := resgroupintf.(string)
+		listvpnGWOptions.ResourceGroupID = &resGroup
+	}
+	if modeIntf, ok := d.GetOk("mode"); ok {
+		mode := modeIntf.(string)
+		listvpnGWOptions.Mode = &mode
+	}
 	start := ""
 	allrecs := []vpcv1.VPNGatewayIntf{}
 	for {
@@ -149,7 +223,19 @@ func dataSourceIBMVPNGatewaysRead(d *schema.ResourceData, meta interface{}) erro
 		gateway[isVPNGatewayResourceGroup] = *data.ResourceGroup.ID
 		gateway[isVPNGatewaySubnet] = *data.Subnet.ID
 		gateway[isVPNGatewayCrn] = *data.CRN
+		tags, err := flex.GetGlobalTagsUsingCRN(meta, *data.CRN, "", isUserTagType)
+		if err != nil {
+			log.Printf(
+				"Error on get of resource vpc VPN Gateway (%s) tags: %s", d.Id(), err)
+		}
+		gateway[isVPNGatewayTags] = tags
 
+		accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *data.CRN, "", isAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on get of resource VPC VPN Gateway (%s) access tags: %s", d.Id(), err)
+		}
+		gateway[isVPNGatewayAccessTags] = accesstags
 		if data.Members != nil {
 			vpcMembersIpsList := make([]map[string]interface{}, 0)
 			for _, memberIP := range data.Members {
@@ -167,6 +253,12 @@ func dataSourceIBMVPNGatewaysRead(d *schema.ResourceData, meta interface{}) erro
 			gateway[isVPNGatewayMembers] = vpcMembersIpsList
 		}
 
+		if data.VPC != nil {
+			vpcList := []map[string]interface{}{}
+			vpcList = append(vpcList, dataSourceVPNServerCollectionVPNGatewayVpcReferenceToMap(data.VPC))
+			gateway["vpc"] = vpcList
+		}
+
 		vpngateways = append(vpngateways, gateway)
 	}
 
@@ -178,4 +270,39 @@ func dataSourceIBMVPNGatewaysRead(d *schema.ResourceData, meta interface{}) erro
 // dataSourceIBMVPNGatewaysID returns a reasonable ID  list.
 func dataSourceIBMVPNGatewaysID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
+}
+
+func dataSourceVPNServerCollectionVPNGatewayVpcReferenceToMap(vpcsItem *vpcv1.VPCReference) (vpcsMap map[string]interface{}) {
+	vpcsMap = map[string]interface{}{}
+
+	if vpcsItem.CRN != nil {
+		vpcsMap["crn"] = vpcsItem.CRN
+	}
+	if vpcsItem.Deleted != nil {
+		deletedList := []map[string]interface{}{}
+		deletedMap := dataSourceVPNGatewayCollectionVpcsDeletedToMap(*vpcsItem.Deleted)
+		deletedList = append(deletedList, deletedMap)
+		vpcsMap["deleted"] = deletedList
+	}
+	if vpcsItem.Href != nil {
+		vpcsMap["href"] = vpcsItem.Href
+	}
+	if vpcsItem.ID != nil {
+		vpcsMap["id"] = vpcsItem.ID
+	}
+	if vpcsItem.Name != nil {
+		vpcsMap["name"] = vpcsItem.Name
+	}
+
+	return vpcsMap
+}
+
+func dataSourceVPNGatewayCollectionVpcsDeletedToMap(deletedItem vpcv1.VPCReferenceDeleted) (deletedMap map[string]interface{}) {
+	deletedMap = map[string]interface{}{}
+
+	if deletedItem.MoreInfo != nil {
+		deletedMap["more_info"] = deletedItem.MoreInfo
+	}
+
+	return deletedMap
 }

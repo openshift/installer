@@ -193,6 +193,12 @@ func resourceIBMISInstanceGroupManagerPolicyUpdate(d *schema.ResourceData, meta 
 		updateInstanceGroupManagerPolicyOptions.InstanceGroupID = &instanceGroupID
 		updateInstanceGroupManagerPolicyOptions.InstanceGroupManagerID = &instanceGroupManagerID
 
+		instanceGroupManagerPolicyAsPatch, asPatchErr := instanceGroupManagerPolicyPatchModel.AsPatch()
+		if asPatchErr != nil {
+			return fmt.Errorf("[ERROR] Error calling asPatch for InstanceGroupManagerPolicyPatchModel: %s", asPatchErr)
+		}
+		updateInstanceGroupManagerPolicyOptions.InstanceGroupManagerPolicyPatch = instanceGroupManagerPolicyAsPatch
+
 		isInsGrpKey := "Instance_Group_Key_" + instanceGroupID
 		conns.IbmMutexKV.Lock(isInsGrpKey)
 		defer conns.IbmMutexKV.Unlock(isInsGrpKey)

@@ -40,7 +40,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudSapGet gets the information on an s a p profile
+PcloudSapGet gets the information on an s a p profile
 */
 func (a *Client) PcloudSapGet(params *PcloudSapGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSapGetOK, error) {
 	// TODO: Validate the params before sending
@@ -79,7 +79,7 @@ func (a *Client) PcloudSapGet(params *PcloudSapGetParams, authInfo runtime.Clien
 }
 
 /*
-  PcloudSapGetall gets list of s a p profiles
+PcloudSapGetall gets list of s a p profiles
 */
 func (a *Client) PcloudSapGetall(params *PcloudSapGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSapGetallOK, error) {
 	// TODO: Validate the params before sending
@@ -118,7 +118,7 @@ func (a *Client) PcloudSapGetall(params *PcloudSapGetallParams, authInfo runtime
 }
 
 /*
-  PcloudSapPost creates a new s a p p VM instance
+PcloudSapPost creates a new s a p p VM instance
 */
 func (a *Client) PcloudSapPost(params *PcloudSapPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSapPostOK, *PcloudSapPostCreated, *PcloudSapPostAccepted, error) {
 	// TODO: Validate the params before sending

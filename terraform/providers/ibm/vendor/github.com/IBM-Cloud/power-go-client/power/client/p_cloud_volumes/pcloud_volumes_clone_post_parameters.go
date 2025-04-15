@@ -54,10 +54,12 @@ func NewPcloudVolumesClonePostParamsWithHTTPClient(client *http.Client) *PcloudV
 	}
 }
 
-/* PcloudVolumesClonePostParams contains all the parameters to send to the API endpoint
-   for the pcloud volumes clone post operation.
+/*
+PcloudVolumesClonePostParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud volumes clone post operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudVolumesClonePostParams struct {
 

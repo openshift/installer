@@ -69,7 +69,8 @@ func NewPcloudV2VolumescloneDeleteOK() *PcloudV2VolumescloneDeleteOK {
 	return &PcloudV2VolumescloneDeleteOK{}
 }
 
-/* PcloudV2VolumescloneDeleteOK describes a response with status code 200, with default header values.
+/*
+PcloudV2VolumescloneDeleteOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -77,9 +78,39 @@ type PcloudV2VolumescloneDeleteOK struct {
 	Payload models.Object
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone delete o k response has a 2xx status code
+func (o *PcloudV2VolumescloneDeleteOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone delete o k response has a 3xx status code
+func (o *PcloudV2VolumescloneDeleteOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone delete o k response has a 4xx status code
+func (o *PcloudV2VolumescloneDeleteOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone delete o k response has a 5xx status code
+func (o *PcloudV2VolumescloneDeleteOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone delete o k response a status code equal to that given
+func (o *PcloudV2VolumescloneDeleteOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *PcloudV2VolumescloneDeleteOK) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneDeleteOK) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneDeleteOK) GetPayload() models.Object {
 	return o.Payload
 }
@@ -99,7 +130,8 @@ func NewPcloudV2VolumescloneDeleteBadRequest() *PcloudV2VolumescloneDeleteBadReq
 	return &PcloudV2VolumescloneDeleteBadRequest{}
 }
 
-/* PcloudV2VolumescloneDeleteBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudV2VolumescloneDeleteBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -107,9 +139,39 @@ type PcloudV2VolumescloneDeleteBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone delete bad request response has a 2xx status code
+func (o *PcloudV2VolumescloneDeleteBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone delete bad request response has a 3xx status code
+func (o *PcloudV2VolumescloneDeleteBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone delete bad request response has a 4xx status code
+func (o *PcloudV2VolumescloneDeleteBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone delete bad request response has a 5xx status code
+func (o *PcloudV2VolumescloneDeleteBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone delete bad request response a status code equal to that given
+func (o *PcloudV2VolumescloneDeleteBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *PcloudV2VolumescloneDeleteBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneDeleteBadRequest) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneDeleteBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -131,7 +193,8 @@ func NewPcloudV2VolumescloneDeleteUnauthorized() *PcloudV2VolumescloneDeleteUnau
 	return &PcloudV2VolumescloneDeleteUnauthorized{}
 }
 
-/* PcloudV2VolumescloneDeleteUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudV2VolumescloneDeleteUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -139,9 +202,39 @@ type PcloudV2VolumescloneDeleteUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone delete unauthorized response has a 2xx status code
+func (o *PcloudV2VolumescloneDeleteUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone delete unauthorized response has a 3xx status code
+func (o *PcloudV2VolumescloneDeleteUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone delete unauthorized response has a 4xx status code
+func (o *PcloudV2VolumescloneDeleteUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone delete unauthorized response has a 5xx status code
+func (o *PcloudV2VolumescloneDeleteUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone delete unauthorized response a status code equal to that given
+func (o *PcloudV2VolumescloneDeleteUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *PcloudV2VolumescloneDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneDeleteUnauthorized) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneDeleteUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -163,7 +256,8 @@ func NewPcloudV2VolumescloneDeleteForbidden() *PcloudV2VolumescloneDeleteForbidd
 	return &PcloudV2VolumescloneDeleteForbidden{}
 }
 
-/* PcloudV2VolumescloneDeleteForbidden describes a response with status code 403, with default header values.
+/*
+PcloudV2VolumescloneDeleteForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -171,9 +265,39 @@ type PcloudV2VolumescloneDeleteForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone delete forbidden response has a 2xx status code
+func (o *PcloudV2VolumescloneDeleteForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone delete forbidden response has a 3xx status code
+func (o *PcloudV2VolumescloneDeleteForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone delete forbidden response has a 4xx status code
+func (o *PcloudV2VolumescloneDeleteForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone delete forbidden response has a 5xx status code
+func (o *PcloudV2VolumescloneDeleteForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone delete forbidden response a status code equal to that given
+func (o *PcloudV2VolumescloneDeleteForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *PcloudV2VolumescloneDeleteForbidden) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteForbidden  %+v", 403, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneDeleteForbidden) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteForbidden  %+v", 403, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneDeleteForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -195,7 +319,8 @@ func NewPcloudV2VolumescloneDeleteNotFound() *PcloudV2VolumescloneDeleteNotFound
 	return &PcloudV2VolumescloneDeleteNotFound{}
 }
 
-/* PcloudV2VolumescloneDeleteNotFound describes a response with status code 404, with default header values.
+/*
+PcloudV2VolumescloneDeleteNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -203,9 +328,39 @@ type PcloudV2VolumescloneDeleteNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone delete not found response has a 2xx status code
+func (o *PcloudV2VolumescloneDeleteNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone delete not found response has a 3xx status code
+func (o *PcloudV2VolumescloneDeleteNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone delete not found response has a 4xx status code
+func (o *PcloudV2VolumescloneDeleteNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone delete not found response has a 5xx status code
+func (o *PcloudV2VolumescloneDeleteNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone delete not found response a status code equal to that given
+func (o *PcloudV2VolumescloneDeleteNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *PcloudV2VolumescloneDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneDeleteNotFound) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneDeleteNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -227,7 +382,8 @@ func NewPcloudV2VolumescloneDeleteInternalServerError() *PcloudV2VolumescloneDel
 	return &PcloudV2VolumescloneDeleteInternalServerError{}
 }
 
-/* PcloudV2VolumescloneDeleteInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudV2VolumescloneDeleteInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -235,9 +391,39 @@ type PcloudV2VolumescloneDeleteInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone delete internal server error response has a 2xx status code
+func (o *PcloudV2VolumescloneDeleteInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone delete internal server error response has a 3xx status code
+func (o *PcloudV2VolumescloneDeleteInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone delete internal server error response has a 4xx status code
+func (o *PcloudV2VolumescloneDeleteInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone delete internal server error response has a 5xx status code
+func (o *PcloudV2VolumescloneDeleteInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud v2 volumesclone delete internal server error response a status code equal to that given
+func (o *PcloudV2VolumescloneDeleteInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudV2VolumescloneDeleteInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneDeleteInternalServerError) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneDeleteInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

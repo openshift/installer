@@ -14,6 +14,7 @@ import (
 	v1 "github.com/IBM-Cloud/bluemix-go/api/container/containerv1"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
 const (
@@ -42,6 +43,9 @@ func ResourceIBMContainerClusterFeature() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "Cluster name of ID",
+				ValidateFunc: validate.InvokeValidator(
+					"ibm_container_cluster_feature",
+					"cluster"),
 			},
 
 			"public_service_endpoint": {
@@ -89,6 +93,21 @@ func ResourceIBMContainerClusterFeature() *schema.Resource {
 			},
 		},
 	}
+}
+
+func ResourceIBMContainerClusterFeatureValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMContainerClusterFeatureValidator := validate.ResourceValidator{ResourceName: "ibm_container_cluster_feature", Schema: validateSchema}
+	return &iBMContainerClusterFeatureValidator
 }
 
 func resourceIBMContainerClusterFeatureCreate(d *schema.ResourceData, meta interface{}) error {

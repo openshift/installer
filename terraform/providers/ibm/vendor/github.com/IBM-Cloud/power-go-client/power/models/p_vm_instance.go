@@ -31,7 +31,7 @@ type PVMInstance struct {
 	// Format: date-time
 	CreationDate strfmt.DateTime `json:"creationDate,omitempty"`
 
-	// Custom Deployment Type Information (For Internal Use Only)
+	// The custom deployment type
 	DeploymentType string `json:"deploymentType,omitempty"`
 
 	// Size of allocated disk (in GB)

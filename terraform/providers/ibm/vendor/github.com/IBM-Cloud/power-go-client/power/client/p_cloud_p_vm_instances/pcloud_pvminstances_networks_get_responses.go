@@ -57,7 +57,8 @@ func NewPcloudPvminstancesNetworksGetOK() *PcloudPvminstancesNetworksGetOK {
 	return &PcloudPvminstancesNetworksGetOK{}
 }
 
-/* PcloudPvminstancesNetworksGetOK describes a response with status code 200, with default header values.
+/*
+PcloudPvminstancesNetworksGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -65,9 +66,39 @@ type PcloudPvminstancesNetworksGetOK struct {
 	Payload *models.PVMInstanceNetworks
 }
 
+// IsSuccess returns true when this pcloud pvminstances networks get o k response has a 2xx status code
+func (o *PcloudPvminstancesNetworksGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud pvminstances networks get o k response has a 3xx status code
+func (o *PcloudPvminstancesNetworksGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances networks get o k response has a 4xx status code
+func (o *PcloudPvminstancesNetworksGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud pvminstances networks get o k response has a 5xx status code
+func (o *PcloudPvminstancesNetworksGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances networks get o k response a status code equal to that given
+func (o *PcloudPvminstancesNetworksGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *PcloudPvminstancesNetworksGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks/{network_id}][%d] pcloudPvminstancesNetworksGetOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudPvminstancesNetworksGetOK) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks/{network_id}][%d] pcloudPvminstancesNetworksGetOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudPvminstancesNetworksGetOK) GetPayload() *models.PVMInstanceNetworks {
 	return o.Payload
 }
@@ -89,7 +120,8 @@ func NewPcloudPvminstancesNetworksGetUnauthorized() *PcloudPvminstancesNetworksG
 	return &PcloudPvminstancesNetworksGetUnauthorized{}
 }
 
-/* PcloudPvminstancesNetworksGetUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudPvminstancesNetworksGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -97,9 +129,39 @@ type PcloudPvminstancesNetworksGetUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances networks get unauthorized response has a 2xx status code
+func (o *PcloudPvminstancesNetworksGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances networks get unauthorized response has a 3xx status code
+func (o *PcloudPvminstancesNetworksGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances networks get unauthorized response has a 4xx status code
+func (o *PcloudPvminstancesNetworksGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances networks get unauthorized response has a 5xx status code
+func (o *PcloudPvminstancesNetworksGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances networks get unauthorized response a status code equal to that given
+func (o *PcloudPvminstancesNetworksGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *PcloudPvminstancesNetworksGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks/{network_id}][%d] pcloudPvminstancesNetworksGetUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudPvminstancesNetworksGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks/{network_id}][%d] pcloudPvminstancesNetworksGetUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudPvminstancesNetworksGetUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -121,7 +183,8 @@ func NewPcloudPvminstancesNetworksGetNotFound() *PcloudPvminstancesNetworksGetNo
 	return &PcloudPvminstancesNetworksGetNotFound{}
 }
 
-/* PcloudPvminstancesNetworksGetNotFound describes a response with status code 404, with default header values.
+/*
+PcloudPvminstancesNetworksGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -129,9 +192,39 @@ type PcloudPvminstancesNetworksGetNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances networks get not found response has a 2xx status code
+func (o *PcloudPvminstancesNetworksGetNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances networks get not found response has a 3xx status code
+func (o *PcloudPvminstancesNetworksGetNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances networks get not found response has a 4xx status code
+func (o *PcloudPvminstancesNetworksGetNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances networks get not found response has a 5xx status code
+func (o *PcloudPvminstancesNetworksGetNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances networks get not found response a status code equal to that given
+func (o *PcloudPvminstancesNetworksGetNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *PcloudPvminstancesNetworksGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks/{network_id}][%d] pcloudPvminstancesNetworksGetNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudPvminstancesNetworksGetNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks/{network_id}][%d] pcloudPvminstancesNetworksGetNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudPvminstancesNetworksGetNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -153,7 +246,8 @@ func NewPcloudPvminstancesNetworksGetInternalServerError() *PcloudPvminstancesNe
 	return &PcloudPvminstancesNetworksGetInternalServerError{}
 }
 
-/* PcloudPvminstancesNetworksGetInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudPvminstancesNetworksGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -161,9 +255,39 @@ type PcloudPvminstancesNetworksGetInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances networks get internal server error response has a 2xx status code
+func (o *PcloudPvminstancesNetworksGetInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances networks get internal server error response has a 3xx status code
+func (o *PcloudPvminstancesNetworksGetInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances networks get internal server error response has a 4xx status code
+func (o *PcloudPvminstancesNetworksGetInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud pvminstances networks get internal server error response has a 5xx status code
+func (o *PcloudPvminstancesNetworksGetInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud pvminstances networks get internal server error response a status code equal to that given
+func (o *PcloudPvminstancesNetworksGetInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudPvminstancesNetworksGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks/{network_id}][%d] pcloudPvminstancesNetworksGetInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudPvminstancesNetworksGetInternalServerError) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks/{network_id}][%d] pcloudPvminstancesNetworksGetInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudPvminstancesNetworksGetInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

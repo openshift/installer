@@ -607,13 +607,15 @@ func nwaclRuleUpdate(d *schema.ResourceData, meta interface{}, id, nwACLId strin
 			updateNetworkACLOptionsPatchModel.Action = &action
 		}
 	}
-
+	aclRuleBeforeNull := false
 	if d.HasChange(isNwACLRuleBefore) {
 		hasChanged = true
-		if beforeVar, ok := d.GetOk(isNwACLRuleBefore); ok {
-			beforeStr := beforeVar.(string)
+		beforeVar := d.Get(isNwACLRuleBefore).(string)
+		if beforeVar == "null" {
+			aclRuleBeforeNull = true
+		} else if beforeVar != "" {
 			updateNetworkACLOptionsPatchModel.Before = &vpcv1.NetworkACLRuleBeforePatchNetworkACLRuleIdentityByID{
-				ID: &beforeStr,
+				ID: &beforeVar,
 			}
 		}
 	}
@@ -743,6 +745,9 @@ func nwaclRuleUpdate(d *schema.ResourceData, meta interface{}, id, nwACLId strin
 		updateNetworkACLOptionsPatch, err := updateNetworkACLOptionsPatchModel.AsPatch()
 		if err != nil {
 			return fmt.Errorf("[ERROR] Error calling asPatch for NetworkACLOptionsPatch : %s", err)
+		}
+		if aclRuleBeforeNull {
+			updateNetworkACLOptionsPatch["before"] = nil
 		}
 		updateNetworkACLRuleOptions.NetworkACLRulePatch = updateNetworkACLOptionsPatch
 		_, response, err := sess.UpdateNetworkACLRule(updateNetworkACLRuleOptions)

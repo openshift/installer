@@ -18,7 +18,7 @@ import (
 
 func DataSourceIBMCdToolchainToolJenkins() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: DataSourceIBMCdToolchainToolJenkinsRead,
+		ReadContext: dataSourceIBMCdToolchainToolJenkinsRead,
 
 		Schema: map[string]*schema.Schema{
 			"toolchain_id": &schema.Schema{
@@ -34,7 +34,7 @@ func DataSourceIBMCdToolchainToolJenkins() *schema.Resource {
 			"resource_group_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Resource group where tool can be found.",
+				Description: "Resource group where the tool is located.",
 			},
 			"crn": &schema.Schema{
 				Type:        schema.TypeString,
@@ -60,12 +60,12 @@ func DataSourceIBMCdToolchainToolJenkins() *schema.Resource {
 						"ui_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "URI representing the this resource through the UI.",
+							Description: "URI representing this resource through the UI.",
 						},
 						"api_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "URI representing the this resource through an API.",
+							Description: "URI representing this resource through an API.",
 						},
 					},
 				},
@@ -83,34 +83,35 @@ func DataSourceIBMCdToolchainToolJenkins() *schema.Resource {
 			"parameters": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "Parameters to be used to create the tool.",
+				Description: "Unique key-value pairs representing parameters to be used to create the tool. A list of parameters for each tool integration can be found in the <a href=\"https://cloud.ibm.com/docs/ContinuousDelivery?topic=ContinuousDelivery-integrations\">Configuring tool integrations page</a>.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type a name for this tool integration, for example: my-jenkins. This name displays on your toolchain.",
+							Description: "The name for this tool integration.",
 						},
 						"dashboard_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type the URL of the Jenkins server that you want to open when you click the Jenkins card in your toolchain.",
+							Description: "The URL of the Jenkins server dashboard for this integration. In the graphical UI, this is the dashboard that the browser will navigate to when you click the Jenkins integration tile.",
 						},
 						"webhook_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Use this webhook in your Jenkins jobs to send notifications to other tools in your toolchain. For details, see the Configuring Jenkins instructions.",
+							Sensitive:   true,
+							Description: "The webhook to use in your Jenkins jobs to send notifications to other tools in your toolchain.",
 						},
 						"api_user_name": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type the user name to use with the Jenkins server's API token, which is required so that DevOps Insights can collect data from Jenkins. You can find your API user name on the configuration page of your Jenkins instance.",
+							Description: "The user name to use with the Jenkins server's API token, which is required so that DevOps Insights can collect data from Jenkins. You can find your API user name on the configuration page of your Jenkins instance.",
 						},
 						"api_token": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Sensitive:   true,
-							Description: "Type the API token to use for Jenkins REST API calls so that DevOps Insights can collect data from Jenkins. You can find the API token on the configuration page of your Jenkins instance.",
+							Description: "The API token to use for Jenkins REST API calls so that DevOps Insights can collect data from Jenkins. You can find the API token on the configuration page of your Jenkins instance. You can use a toolchain secret reference for this parameter. For more information, see [Protecting your sensitive data in Continuous Delivery](https://cloud.ibm.com/docs/ContinuousDelivery?topic=ContinuousDelivery-cd_data_security#cd_secure_credentials).",
 						},
 					},
 				},
@@ -124,7 +125,7 @@ func DataSourceIBMCdToolchainToolJenkins() *schema.Resource {
 	}
 }
 
-func DataSourceIBMCdToolchainToolJenkinsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceIBMCdToolchainToolJenkinsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -135,37 +136,37 @@ func DataSourceIBMCdToolchainToolJenkinsRead(context context.Context, d *schema.
 	getToolByIDOptions.SetToolchainID(d.Get("toolchain_id").(string))
 	getToolByIDOptions.SetToolID(d.Get("tool_id").(string))
 
-	getToolByIDResponse, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
+	toolchainTool, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetToolByIDWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetToolByIDWithContext failed %s\n%s", err, response))
 	}
 
-	if *getToolByIDResponse.ToolTypeID != "jenkins" {
-		return diag.FromErr(fmt.Errorf("Retrieved tool is not the correct type: %s", *getToolByIDResponse.ToolTypeID))
+	if *toolchainTool.ToolTypeID != "jenkins" {
+		return diag.FromErr(fmt.Errorf("Retrieved tool is not the correct type: %s", *toolchainTool.ToolTypeID))
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *getToolByIDOptions.ToolchainID, *getToolByIDOptions.ToolID))
 
-	if err = d.Set("resource_group_id", getToolByIDResponse.ResourceGroupID); err != nil {
+	if err = d.Set("resource_group_id", toolchainTool.ResourceGroupID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
 	}
 
-	if err = d.Set("crn", getToolByIDResponse.CRN); err != nil {
+	if err = d.Set("crn", toolchainTool.CRN); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
 	}
 
-	if err = d.Set("toolchain_crn", getToolByIDResponse.ToolchainCRN); err != nil {
+	if err = d.Set("toolchain_crn", toolchainTool.ToolchainCRN); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting toolchain_crn: %s", err))
 	}
 
-	if err = d.Set("href", getToolByIDResponse.Href); err != nil {
+	if err = d.Set("href", toolchainTool.Href); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
 	}
 
 	referent := []map[string]interface{}{}
-	if getToolByIDResponse.Referent != nil {
-		modelMap, err := DataSourceIBMCdToolchainToolJenkinsToolReferentToMap(getToolByIDResponse.Referent)
+	if toolchainTool.Referent != nil {
+		modelMap, err := dataSourceIBMCdToolchainToolJenkinsToolModelReferentToMap(toolchainTool.Referent)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -175,31 +176,31 @@ func DataSourceIBMCdToolchainToolJenkinsRead(context context.Context, d *schema.
 		return diag.FromErr(fmt.Errorf("Error setting referent %s", err))
 	}
 
-	if err = d.Set("name", getToolByIDResponse.Name); err != nil {
+	if err = d.Set("name", toolchainTool.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
 
-	if err = d.Set("updated_at", flex.DateTimeToString(getToolByIDResponse.UpdatedAt)); err != nil {
+	if err = d.Set("updated_at", flex.DateTimeToString(toolchainTool.UpdatedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
 	}
 
 	parameters := []map[string]interface{}{}
-	if getToolByIDResponse.Parameters != nil {
-		modelMap := GetParametersFromRead(getToolByIDResponse.Parameters, DataSourceIBMCdToolchainToolJenkins(), nil)
+	if toolchainTool.Parameters != nil {
+		modelMap := GetParametersFromRead(toolchainTool.Parameters, DataSourceIBMCdToolchainToolJenkins(), nil)
 		parameters = append(parameters, modelMap)
 	}
 	if err = d.Set("parameters", parameters); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting parameters %s", err))
 	}
 
-	if err = d.Set("state", getToolByIDResponse.State); err != nil {
+	if err = d.Set("state", toolchainTool.State); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
 	}
 
 	return nil
 }
 
-func DataSourceIBMCdToolchainToolJenkinsToolReferentToMap(model *cdtoolchainv2.ToolReferent) (map[string]interface{}, error) {
+func dataSourceIBMCdToolchainToolJenkinsToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.UIHref != nil {
 		modelMap["ui_href"] = *model.UIHref

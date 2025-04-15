@@ -37,6 +37,8 @@ func ResourceIBMIAMTrustedProfileClaimRule() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "ID of the trusted profile to create a claim rule.",
+				ValidateFunc: validate.InvokeValidator("ibm_iam_trusted_profile_claim_rule",
+					"profile_id"),
 			},
 			"rule_id": {
 				Type:        schema.TypeString,
@@ -111,6 +113,20 @@ func ResourceIBMIAMTrustedProfileClaimRule() *schema.Resource {
 			},
 		},
 	}
+}
+func ResourceIBMIAMTrustedProfileClaimRuleValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "profile_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "iam",
+			CloudDataRange:             []string{"service:trusted_profile", "resolved_to:id"},
+			Required:                   true})
+
+	iBMIAMTrustedProfileClaimRuleValidator := validate.ResourceValidator{ResourceName: "ibm_iam_trusted_profile_claim_rule", Schema: validateSchema}
+	return &iBMIAMTrustedProfileClaimRuleValidator
 }
 
 func resourceIBMIamTrustedProfileClaimRuleCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

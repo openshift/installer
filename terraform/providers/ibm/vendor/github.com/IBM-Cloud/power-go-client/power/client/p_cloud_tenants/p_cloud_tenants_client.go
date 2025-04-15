@@ -38,7 +38,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudTenantsGet gets a tenant s current state information
+PcloudTenantsGet gets a tenant s current state information
 */
 func (a *Client) PcloudTenantsGet(params *PcloudTenantsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -77,7 +77,7 @@ func (a *Client) PcloudTenantsGet(params *PcloudTenantsGetParams, authInfo runti
 }
 
 /*
-  PcloudTenantsPut updates a tenant
+PcloudTenantsPut updates a tenant
 */
 func (a *Client) PcloudTenantsPut(params *PcloudTenantsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTenantsPutOK, error) {
 	// TODO: Validate the params before sending

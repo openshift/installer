@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2021.
+ * (C) Copyright IBM Corp. 2023.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.43.0-49eab5c7-20211117-152138
+ * IBM OpenAPI SDK Code Generator Version: 3.68.2-ac7def68-20230310-195410
  */
 
 // Package catalogmanagementv1 : Operations and models for the CatalogManagementV1 service
@@ -28,6 +28,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -217,12 +218,12 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAccountWithContext(ctx c
 
 // UpdateCatalogAccount : Update account settings
 // Update the account level settings for the account for private catalog.
-func (catalogManagement *CatalogManagementV1) UpdateCatalogAccount(updateCatalogAccountOptions *UpdateCatalogAccountOptions) (response *core.DetailedResponse, err error) {
+func (catalogManagement *CatalogManagementV1) UpdateCatalogAccount(updateCatalogAccountOptions *UpdateCatalogAccountOptions) (result *Account, response *core.DetailedResponse, err error) {
 	return catalogManagement.UpdateCatalogAccountWithContext(context.Background(), updateCatalogAccountOptions)
 }
 
 // UpdateCatalogAccountWithContext is an alternate form of the UpdateCatalogAccount method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) UpdateCatalogAccountWithContext(ctx context.Context, updateCatalogAccountOptions *UpdateCatalogAccountOptions) (response *core.DetailedResponse, err error) {
+func (catalogManagement *CatalogManagementV1) UpdateCatalogAccountWithContext(ctx context.Context, updateCatalogAccountOptions *UpdateCatalogAccountOptions) (result *Account, response *core.DetailedResponse, err error) {
 	err = core.ValidateStruct(updateCatalogAccountOptions, "updateCatalogAccountOptions")
 	if err != nil {
 		return
@@ -244,11 +245,15 @@ func (catalogManagement *CatalogManagementV1) UpdateCatalogAccountWithContext(ct
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
+	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
 
 	body := make(map[string]interface{})
 	if updateCatalogAccountOptions.ID != nil {
 		body["id"] = updateCatalogAccountOptions.ID
+	}
+	if updateCatalogAccountOptions.Rev != nil {
+		body["_rev"] = updateCatalogAccountOptions.Rev
 	}
 	if updateCatalogAccountOptions.HideIBMCloudCatalog != nil {
 		body["hide_IBM_cloud_catalog"] = updateCatalogAccountOptions.HideIBMCloudCatalog
@@ -266,20 +271,31 @@ func (catalogManagement *CatalogManagementV1) UpdateCatalogAccountWithContext(ct
 		return
 	}
 
-	response, err = catalogManagement.Service.Request(request, nil)
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccount)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
 
 	return
 }
 
-// GetCatalogAccountAudit : Get catalog account audit log
-// Get the audit log associated with a catalog account.
-func (catalogManagement *CatalogManagementV1) GetCatalogAccountAudit(getCatalogAccountAuditOptions *GetCatalogAccountAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetCatalogAccountAuditWithContext(context.Background(), getCatalogAccountAuditOptions)
+// ListCatalogAccountAudits : Get catalog account audit logs
+// Get the audit logs associated with a catalog account.
+func (catalogManagement *CatalogManagementV1) ListCatalogAccountAudits(listCatalogAccountAuditsOptions *ListCatalogAccountAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
+	return catalogManagement.ListCatalogAccountAuditsWithContext(context.Background(), listCatalogAccountAuditsOptions)
 }
 
-// GetCatalogAccountAuditWithContext is an alternate form of the GetCatalogAccountAudit method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) GetCatalogAccountAuditWithContext(ctx context.Context, getCatalogAccountAuditOptions *GetCatalogAccountAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
-	err = core.ValidateStruct(getCatalogAccountAuditOptions, "getCatalogAccountAuditOptions")
+// ListCatalogAccountAuditsWithContext is an alternate form of the ListCatalogAccountAudits method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ListCatalogAccountAuditsWithContext(ctx context.Context, listCatalogAccountAuditsOptions *ListCatalogAccountAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(listCatalogAccountAuditsOptions, "listCatalogAccountAuditsOptions")
 	if err != nil {
 		return
 	}
@@ -287,7 +303,77 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAccountAuditWithContext(
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogaccount/audit`, nil)
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogaccount/audits`, nil)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listCatalogAccountAuditsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ListCatalogAccountAudits")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listCatalogAccountAuditsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listCatalogAccountAuditsOptions.Start))
+	}
+	if listCatalogAccountAuditsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listCatalogAccountAuditsOptions.Limit))
+	}
+	if listCatalogAccountAuditsOptions.Lookupnames != nil {
+		builder.AddQuery("lookupnames", fmt.Sprint(*listCatalogAccountAuditsOptions.Lookupnames))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLogs)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetCatalogAccountAudit : Get a catalog account audit log entry
+// Get the full audit log entry associated with a catalog account.
+func (catalogManagement *CatalogManagementV1) GetCatalogAccountAudit(getCatalogAccountAuditOptions *GetCatalogAccountAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
+	return catalogManagement.GetCatalogAccountAuditWithContext(context.Background(), getCatalogAccountAuditOptions)
+}
+
+// GetCatalogAccountAuditWithContext is an alternate form of the GetCatalogAccountAudit method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetCatalogAccountAuditWithContext(ctx context.Context, getCatalogAccountAuditOptions *GetCatalogAccountAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getCatalogAccountAuditOptions, "getCatalogAccountAuditOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(getCatalogAccountAuditOptions, "getCatalogAccountAuditOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"auditlog_identifier": *getCatalogAccountAuditOptions.AuditlogIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogaccount/audits/{auditlog_identifier}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -301,6 +387,10 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAccountAuditWithContext(
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+
+	if getCatalogAccountAuditOptions.Lookupnames != nil {
+		builder.AddQuery("lookupnames", fmt.Sprint(*getCatalogAccountAuditOptions.Lookupnames))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -465,20 +555,23 @@ func (catalogManagement *CatalogManagementV1) CreateCatalogWithContext(ctx conte
 	builder.AddHeader("Content-Type", "application/json")
 
 	body := make(map[string]interface{})
-	if createCatalogOptions.ID != nil {
-		body["id"] = createCatalogOptions.ID
-	}
-	if createCatalogOptions.Rev != nil {
-		body["_rev"] = createCatalogOptions.Rev
-	}
 	if createCatalogOptions.Label != nil {
 		body["label"] = createCatalogOptions.Label
+	}
+	if createCatalogOptions.LabelI18n != nil {
+		body["label_i18n"] = createCatalogOptions.LabelI18n
 	}
 	if createCatalogOptions.ShortDescription != nil {
 		body["short_description"] = createCatalogOptions.ShortDescription
 	}
+	if createCatalogOptions.ShortDescriptionI18n != nil {
+		body["short_description_i18n"] = createCatalogOptions.ShortDescriptionI18n
+	}
 	if createCatalogOptions.CatalogIconURL != nil {
 		body["catalog_icon_url"] = createCatalogOptions.CatalogIconURL
+	}
+	if createCatalogOptions.CatalogBannerURL != nil {
+		body["catalog_banner_url"] = createCatalogOptions.CatalogBannerURL
 	}
 	if createCatalogOptions.Tags != nil {
 		body["tags"] = createCatalogOptions.Tags
@@ -503,6 +596,9 @@ func (catalogManagement *CatalogManagementV1) CreateCatalogWithContext(ctx conte
 	}
 	if createCatalogOptions.Kind != nil {
 		body["kind"] = createCatalogOptions.Kind
+	}
+	if createCatalogOptions.Metadata != nil {
+		body["metadata"] = createCatalogOptions.Metadata
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -640,11 +736,20 @@ func (catalogManagement *CatalogManagementV1) ReplaceCatalogWithContext(ctx cont
 	if replaceCatalogOptions.Label != nil {
 		body["label"] = replaceCatalogOptions.Label
 	}
+	if replaceCatalogOptions.LabelI18n != nil {
+		body["label_i18n"] = replaceCatalogOptions.LabelI18n
+	}
 	if replaceCatalogOptions.ShortDescription != nil {
 		body["short_description"] = replaceCatalogOptions.ShortDescription
 	}
+	if replaceCatalogOptions.ShortDescriptionI18n != nil {
+		body["short_description_i18n"] = replaceCatalogOptions.ShortDescriptionI18n
+	}
 	if replaceCatalogOptions.CatalogIconURL != nil {
 		body["catalog_icon_url"] = replaceCatalogOptions.CatalogIconURL
+	}
+	if replaceCatalogOptions.CatalogBannerURL != nil {
+		body["catalog_banner_url"] = replaceCatalogOptions.CatalogBannerURL
 	}
 	if replaceCatalogOptions.Tags != nil {
 		body["tags"] = replaceCatalogOptions.Tags
@@ -669,6 +774,9 @@ func (catalogManagement *CatalogManagementV1) ReplaceCatalogWithContext(ctx cont
 	}
 	if replaceCatalogOptions.Kind != nil {
 		body["kind"] = replaceCatalogOptions.Kind
+	}
+	if replaceCatalogOptions.Metadata != nil {
+		body["metadata"] = replaceCatalogOptions.Metadata
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -744,8 +852,78 @@ func (catalogManagement *CatalogManagementV1) DeleteCatalogWithContext(ctx conte
 	return
 }
 
-// GetCatalogAudit : Get catalog audit log
-// Get the audit log associated with a catalog.
+// ListCatalogAudits : Get catalog audit logs
+// Get the audit logs associated with a catalog.
+func (catalogManagement *CatalogManagementV1) ListCatalogAudits(listCatalogAuditsOptions *ListCatalogAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
+	return catalogManagement.ListCatalogAuditsWithContext(context.Background(), listCatalogAuditsOptions)
+}
+
+// ListCatalogAuditsWithContext is an alternate form of the ListCatalogAudits method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ListCatalogAuditsWithContext(ctx context.Context, listCatalogAuditsOptions *ListCatalogAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listCatalogAuditsOptions, "listCatalogAuditsOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(listCatalogAuditsOptions, "listCatalogAuditsOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"catalog_identifier": *listCatalogAuditsOptions.CatalogIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/audits`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listCatalogAuditsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ListCatalogAudits")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listCatalogAuditsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listCatalogAuditsOptions.Start))
+	}
+	if listCatalogAuditsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listCatalogAuditsOptions.Limit))
+	}
+	if listCatalogAuditsOptions.Lookupnames != nil {
+		builder.AddQuery("lookupnames", fmt.Sprint(*listCatalogAuditsOptions.Lookupnames))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLogs)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetCatalogAudit : Get a catalog audit log entry
+// Get the full audit log entry associated with a catalog.
 func (catalogManagement *CatalogManagementV1) GetCatalogAudit(getCatalogAuditOptions *GetCatalogAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
 	return catalogManagement.GetCatalogAuditWithContext(context.Background(), getCatalogAuditOptions)
 }
@@ -763,12 +941,13 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAuditWithContext(ctx con
 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *getCatalogAuditOptions.CatalogIdentifier,
+		"auditlog_identifier": *getCatalogAuditOptions.AuditlogIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/audit`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/audits/{auditlog_identifier}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -782,6 +961,145 @@ func (catalogManagement *CatalogManagementV1) GetCatalogAuditWithContext(ctx con
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+
+	if getCatalogAuditOptions.Lookupnames != nil {
+		builder.AddQuery("lookupnames", fmt.Sprint(*getCatalogAuditOptions.Lookupnames))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLog)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListEnterpriseAudits : Get enterprise audit logs
+// Get the audit logs associated with an enterprise.
+func (catalogManagement *CatalogManagementV1) ListEnterpriseAudits(listEnterpriseAuditsOptions *ListEnterpriseAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
+	return catalogManagement.ListEnterpriseAuditsWithContext(context.Background(), listEnterpriseAuditsOptions)
+}
+
+// ListEnterpriseAuditsWithContext is an alternate form of the ListEnterpriseAudits method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ListEnterpriseAuditsWithContext(ctx context.Context, listEnterpriseAuditsOptions *ListEnterpriseAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listEnterpriseAuditsOptions, "listEnterpriseAuditsOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(listEnterpriseAuditsOptions, "listEnterpriseAuditsOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"enterprise_identifier": *listEnterpriseAuditsOptions.EnterpriseIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/enterprises/{enterprise_identifier}/audits`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listEnterpriseAuditsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ListEnterpriseAudits")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listEnterpriseAuditsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listEnterpriseAuditsOptions.Start))
+	}
+	if listEnterpriseAuditsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listEnterpriseAuditsOptions.Limit))
+	}
+	if listEnterpriseAuditsOptions.Lookupnames != nil {
+		builder.AddQuery("lookupnames", fmt.Sprint(*listEnterpriseAuditsOptions.Lookupnames))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLogs)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetEnterpriseAudit : Get an enterprise audit log entry
+// Get the full audit log entry associated with an enterprise.
+func (catalogManagement *CatalogManagementV1) GetEnterpriseAudit(getEnterpriseAuditOptions *GetEnterpriseAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
+	return catalogManagement.GetEnterpriseAuditWithContext(context.Background(), getEnterpriseAuditOptions)
+}
+
+// GetEnterpriseAuditWithContext is an alternate form of the GetEnterpriseAudit method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetEnterpriseAuditWithContext(ctx context.Context, getEnterpriseAuditOptions *GetEnterpriseAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getEnterpriseAuditOptions, "getEnterpriseAuditOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(getEnterpriseAuditOptions, "getEnterpriseAuditOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"enterprise_identifier": *getEnterpriseAuditOptions.EnterpriseIdentifier,
+		"auditlog_identifier": *getEnterpriseAuditOptions.AuditlogIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/enterprises/{enterprise_identifier}/audits/{auditlog_identifier}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getEnterpriseAuditOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetEnterpriseAudit")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getEnterpriseAuditOptions.Lookupnames != nil {
+		builder.AddQuery("lookupnames", fmt.Sprint(*getEnterpriseAuditOptions.Lookupnames))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -932,6 +1250,9 @@ func (catalogManagement *CatalogManagementV1) ListOfferingsWithContext(ctx conte
 	if listOfferingsOptions.Sort != nil {
 		builder.AddQuery("sort", fmt.Sprint(*listOfferingsOptions.Sort))
 	}
+	if listOfferingsOptions.IncludeHidden != nil {
+		builder.AddQuery("includeHidden", fmt.Sprint(*listOfferingsOptions.IncludeHidden))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -995,12 +1316,6 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingWithContext(ctx cont
 	builder.AddHeader("Content-Type", "application/json")
 
 	body := make(map[string]interface{})
-	if createOfferingOptions.ID != nil {
-		body["id"] = createOfferingOptions.ID
-	}
-	if createOfferingOptions.Rev != nil {
-		body["_rev"] = createOfferingOptions.Rev
-	}
 	if createOfferingOptions.URL != nil {
 		body["url"] = createOfferingOptions.URL
 	}
@@ -1009,6 +1324,9 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingWithContext(ctx cont
 	}
 	if createOfferingOptions.Label != nil {
 		body["label"] = createOfferingOptions.Label
+	}
+	if createOfferingOptions.LabelI18n != nil {
+		body["label_i18n"] = createOfferingOptions.LabelI18n
 	}
 	if createOfferingOptions.Name != nil {
 		body["name"] = createOfferingOptions.Name
@@ -1040,14 +1358,35 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingWithContext(ctx cont
 	if createOfferingOptions.ShortDescription != nil {
 		body["short_description"] = createOfferingOptions.ShortDescription
 	}
+	if createOfferingOptions.ShortDescriptionI18n != nil {
+		body["short_description_i18n"] = createOfferingOptions.ShortDescriptionI18n
+	}
 	if createOfferingOptions.LongDescription != nil {
 		body["long_description"] = createOfferingOptions.LongDescription
+	}
+	if createOfferingOptions.LongDescriptionI18n != nil {
+		body["long_description_i18n"] = createOfferingOptions.LongDescriptionI18n
 	}
 	if createOfferingOptions.Features != nil {
 		body["features"] = createOfferingOptions.Features
 	}
 	if createOfferingOptions.Kinds != nil {
 		body["kinds"] = createOfferingOptions.Kinds
+	}
+	if createOfferingOptions.PcManaged != nil {
+		body["pc_managed"] = createOfferingOptions.PcManaged
+	}
+	if createOfferingOptions.PublishApproved != nil {
+		body["publish_approved"] = createOfferingOptions.PublishApproved
+	}
+	if createOfferingOptions.ShareWithAll != nil {
+		body["share_with_all"] = createOfferingOptions.ShareWithAll
+	}
+	if createOfferingOptions.ShareWithIBM != nil {
+		body["share_with_ibm"] = createOfferingOptions.ShareWithIBM
+	}
+	if createOfferingOptions.ShareEnabled != nil {
+		body["share_enabled"] = createOfferingOptions.ShareEnabled
 	}
 	if createOfferingOptions.PermitRequestIBMPublicPublish != nil {
 		body["permit_request_ibm_public_publish"] = createOfferingOptions.PermitRequestIBMPublicPublish
@@ -1094,11 +1433,23 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingWithContext(ctx cont
 	if createOfferingOptions.RepoInfo != nil {
 		body["repo_info"] = createOfferingOptions.RepoInfo
 	}
+	if createOfferingOptions.ImagePullKeys != nil {
+		body["image_pull_keys"] = createOfferingOptions.ImagePullKeys
+	}
 	if createOfferingOptions.Support != nil {
 		body["support"] = createOfferingOptions.Support
 	}
 	if createOfferingOptions.Media != nil {
 		body["media"] = createOfferingOptions.Media
+	}
+	if createOfferingOptions.DeprecatePending != nil {
+		body["deprecate_pending"] = createOfferingOptions.DeprecatePending
+	}
+	if createOfferingOptions.ProductKind != nil {
+		body["product_kind"] = createOfferingOptions.ProductKind
+	}
+	if createOfferingOptions.Badges != nil {
+		body["badges"] = createOfferingOptions.Badges
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1127,7 +1478,7 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingWithContext(ctx cont
 }
 
 // ImportOfferingVersion : Import offering version
-// Import new version to offering from a tgz.
+// Import new version to an offering.
 func (catalogManagement *CatalogManagementV1) ImportOfferingVersion(importOfferingVersionOptions *ImportOfferingVersionOptions) (result *Offering, response *core.DetailedResponse, err error) {
 	return catalogManagement.ImportOfferingVersionWithContext(context.Background(), importOfferingVersionOptions)
 }
@@ -1166,6 +1517,9 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingVersionWithContext(c
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
+	if importOfferingVersionOptions.XAuthToken != nil {
+		builder.AddHeader("X-Auth-Token", fmt.Sprint(*importOfferingVersionOptions.XAuthToken))
+	}
 
 	if importOfferingVersionOptions.Zipurl != nil {
 		builder.AddQuery("zipurl", fmt.Sprint(*importOfferingVersionOptions.Zipurl))
@@ -1179,19 +1533,49 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingVersionWithContext(c
 	if importOfferingVersionOptions.IsVsi != nil {
 		builder.AddQuery("isVSI", fmt.Sprint(*importOfferingVersionOptions.IsVsi))
 	}
-	if importOfferingVersionOptions.RepoType != nil {
-		builder.AddQuery("repoType", fmt.Sprint(*importOfferingVersionOptions.RepoType))
+	if importOfferingVersionOptions.Repotype != nil {
+		builder.AddQuery("repotype", fmt.Sprint(*importOfferingVersionOptions.Repotype))
 	}
 
 	body := make(map[string]interface{})
 	if importOfferingVersionOptions.Tags != nil {
 		body["tags"] = importOfferingVersionOptions.Tags
 	}
+	if importOfferingVersionOptions.Content != nil {
+		body["content"] = importOfferingVersionOptions.Content
+	}
+	if importOfferingVersionOptions.Name != nil {
+		body["name"] = importOfferingVersionOptions.Name
+	}
+	if importOfferingVersionOptions.Label != nil {
+		body["label"] = importOfferingVersionOptions.Label
+	}
+	if importOfferingVersionOptions.InstallKind != nil {
+		body["install_kind"] = importOfferingVersionOptions.InstallKind
+	}
 	if importOfferingVersionOptions.TargetKinds != nil {
 		body["target_kinds"] = importOfferingVersionOptions.TargetKinds
 	}
-	if importOfferingVersionOptions.Content != nil {
-		body["content"] = importOfferingVersionOptions.Content
+	if importOfferingVersionOptions.FormatKind != nil {
+		body["format_kind"] = importOfferingVersionOptions.FormatKind
+	}
+	if importOfferingVersionOptions.ProductKind != nil {
+		body["product_kind"] = importOfferingVersionOptions.ProductKind
+	}
+	if importOfferingVersionOptions.Sha != nil {
+		body["sha"] = importOfferingVersionOptions.Sha
+	}
+	if importOfferingVersionOptions.Version != nil {
+		body["version"] = importOfferingVersionOptions.Version
+	}
+	if importOfferingVersionOptions.Flavor != nil {
+		body["flavor"] = importOfferingVersionOptions.Flavor
+	}
+	if importOfferingVersionOptions.Metadata != nil {
+		body["metadata"] = importOfferingVersionOptions.Metadata
+	}
+	if importOfferingVersionOptions.WorkingDirectory != nil {
+		body["working_directory"] = importOfferingVersionOptions.WorkingDirectory
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1220,7 +1604,7 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingVersionWithContext(c
 }
 
 // ImportOffering : Import offering
-// Import a new offering from a tgz.
+// Import a new offering.
 func (catalogManagement *CatalogManagementV1) ImportOffering(importOfferingOptions *ImportOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
 	return catalogManagement.ImportOfferingWithContext(context.Background(), importOfferingOptions)
 }
@@ -1277,19 +1661,49 @@ func (catalogManagement *CatalogManagementV1) ImportOfferingWithContext(ctx cont
 	if importOfferingOptions.IsVsi != nil {
 		builder.AddQuery("isVSI", fmt.Sprint(*importOfferingOptions.IsVsi))
 	}
-	if importOfferingOptions.RepoType != nil {
-		builder.AddQuery("repoType", fmt.Sprint(*importOfferingOptions.RepoType))
+	if importOfferingOptions.Repotype != nil {
+		builder.AddQuery("repotype", fmt.Sprint(*importOfferingOptions.Repotype))
 	}
 
 	body := make(map[string]interface{})
 	if importOfferingOptions.Tags != nil {
 		body["tags"] = importOfferingOptions.Tags
 	}
+	if importOfferingOptions.Content != nil {
+		body["content"] = importOfferingOptions.Content
+	}
+	if importOfferingOptions.Name != nil {
+		body["name"] = importOfferingOptions.Name
+	}
+	if importOfferingOptions.Label != nil {
+		body["label"] = importOfferingOptions.Label
+	}
+	if importOfferingOptions.InstallKind != nil {
+		body["install_kind"] = importOfferingOptions.InstallKind
+	}
 	if importOfferingOptions.TargetKinds != nil {
 		body["target_kinds"] = importOfferingOptions.TargetKinds
 	}
-	if importOfferingOptions.Content != nil {
-		body["content"] = importOfferingOptions.Content
+	if importOfferingOptions.FormatKind != nil {
+		body["format_kind"] = importOfferingOptions.FormatKind
+	}
+	if importOfferingOptions.ProductKind != nil {
+		body["product_kind"] = importOfferingOptions.ProductKind
+	}
+	if importOfferingOptions.Sha != nil {
+		body["sha"] = importOfferingOptions.Sha
+	}
+	if importOfferingOptions.Version != nil {
+		body["version"] = importOfferingOptions.Version
+	}
+	if importOfferingOptions.Flavor != nil {
+		body["flavor"] = importOfferingOptions.Flavor
+	}
+	if importOfferingOptions.Metadata != nil {
+		body["metadata"] = importOfferingOptions.Metadata
+	}
+	if importOfferingOptions.WorkingDirectory != nil {
+		body["working_directory"] = importOfferingOptions.WorkingDirectory
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1370,11 +1784,20 @@ func (catalogManagement *CatalogManagementV1) ReloadOfferingWithContext(ctx cont
 	if reloadOfferingOptions.Tags != nil {
 		body["tags"] = reloadOfferingOptions.Tags
 	}
+	if reloadOfferingOptions.Content != nil {
+		body["content"] = reloadOfferingOptions.Content
+	}
 	if reloadOfferingOptions.TargetKinds != nil {
 		body["target_kinds"] = reloadOfferingOptions.TargetKinds
 	}
-	if reloadOfferingOptions.Content != nil {
-		body["content"] = reloadOfferingOptions.Content
+	if reloadOfferingOptions.FormatKind != nil {
+		body["format_kind"] = reloadOfferingOptions.FormatKind
+	}
+	if reloadOfferingOptions.Flavor != nil {
+		body["flavor"] = reloadOfferingOptions.Flavor
+	}
+	if reloadOfferingOptions.WorkingDirectory != nil {
+		body["working_directory"] = reloadOfferingOptions.WorkingDirectory
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1527,6 +1950,9 @@ func (catalogManagement *CatalogManagementV1) ReplaceOfferingWithContext(ctx con
 	if replaceOfferingOptions.Label != nil {
 		body["label"] = replaceOfferingOptions.Label
 	}
+	if replaceOfferingOptions.LabelI18n != nil {
+		body["label_i18n"] = replaceOfferingOptions.LabelI18n
+	}
 	if replaceOfferingOptions.Name != nil {
 		body["name"] = replaceOfferingOptions.Name
 	}
@@ -1557,14 +1983,35 @@ func (catalogManagement *CatalogManagementV1) ReplaceOfferingWithContext(ctx con
 	if replaceOfferingOptions.ShortDescription != nil {
 		body["short_description"] = replaceOfferingOptions.ShortDescription
 	}
+	if replaceOfferingOptions.ShortDescriptionI18n != nil {
+		body["short_description_i18n"] = replaceOfferingOptions.ShortDescriptionI18n
+	}
 	if replaceOfferingOptions.LongDescription != nil {
 		body["long_description"] = replaceOfferingOptions.LongDescription
+	}
+	if replaceOfferingOptions.LongDescriptionI18n != nil {
+		body["long_description_i18n"] = replaceOfferingOptions.LongDescriptionI18n
 	}
 	if replaceOfferingOptions.Features != nil {
 		body["features"] = replaceOfferingOptions.Features
 	}
 	if replaceOfferingOptions.Kinds != nil {
 		body["kinds"] = replaceOfferingOptions.Kinds
+	}
+	if replaceOfferingOptions.PcManaged != nil {
+		body["pc_managed"] = replaceOfferingOptions.PcManaged
+	}
+	if replaceOfferingOptions.PublishApproved != nil {
+		body["publish_approved"] = replaceOfferingOptions.PublishApproved
+	}
+	if replaceOfferingOptions.ShareWithAll != nil {
+		body["share_with_all"] = replaceOfferingOptions.ShareWithAll
+	}
+	if replaceOfferingOptions.ShareWithIBM != nil {
+		body["share_with_ibm"] = replaceOfferingOptions.ShareWithIBM
+	}
+	if replaceOfferingOptions.ShareEnabled != nil {
+		body["share_enabled"] = replaceOfferingOptions.ShareEnabled
 	}
 	if replaceOfferingOptions.PermitRequestIBMPublicPublish != nil {
 		body["permit_request_ibm_public_publish"] = replaceOfferingOptions.PermitRequestIBMPublicPublish
@@ -1611,11 +2058,23 @@ func (catalogManagement *CatalogManagementV1) ReplaceOfferingWithContext(ctx con
 	if replaceOfferingOptions.RepoInfo != nil {
 		body["repo_info"] = replaceOfferingOptions.RepoInfo
 	}
+	if replaceOfferingOptions.ImagePullKeys != nil {
+		body["image_pull_keys"] = replaceOfferingOptions.ImagePullKeys
+	}
 	if replaceOfferingOptions.Support != nil {
 		body["support"] = replaceOfferingOptions.Support
 	}
 	if replaceOfferingOptions.Media != nil {
 		body["media"] = replaceOfferingOptions.Media
+	}
+	if replaceOfferingOptions.DeprecatePending != nil {
+		body["deprecate_pending"] = replaceOfferingOptions.DeprecatePending
+	}
+	if replaceOfferingOptions.ProductKind != nil {
+		body["product_kind"] = replaceOfferingOptions.ProductKind
+	}
+	if replaceOfferingOptions.Badges != nil {
+		body["badges"] = replaceOfferingOptions.Badges
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1762,8 +2221,79 @@ func (catalogManagement *CatalogManagementV1) DeleteOfferingWithContext(ctx cont
 	return
 }
 
-// GetOfferingAudit : Get offering audit log
-// Get the audit log associated with an offering.
+// ListOfferingAudits : Get offering audit logs
+// Get the audit logs associated with an offering.
+func (catalogManagement *CatalogManagementV1) ListOfferingAudits(listOfferingAuditsOptions *ListOfferingAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
+	return catalogManagement.ListOfferingAuditsWithContext(context.Background(), listOfferingAuditsOptions)
+}
+
+// ListOfferingAuditsWithContext is an alternate form of the ListOfferingAudits method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ListOfferingAuditsWithContext(ctx context.Context, listOfferingAuditsOptions *ListOfferingAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listOfferingAuditsOptions, "listOfferingAuditsOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(listOfferingAuditsOptions, "listOfferingAuditsOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"catalog_identifier": *listOfferingAuditsOptions.CatalogIdentifier,
+		"offering_id": *listOfferingAuditsOptions.OfferingID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/audits`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listOfferingAuditsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ListOfferingAudits")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listOfferingAuditsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listOfferingAuditsOptions.Start))
+	}
+	if listOfferingAuditsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listOfferingAuditsOptions.Limit))
+	}
+	if listOfferingAuditsOptions.Lookupnames != nil {
+		builder.AddQuery("lookupnames", fmt.Sprint(*listOfferingAuditsOptions.Lookupnames))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLogs)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetOfferingAudit : Get an offering audit log entry
+// Get the full audit log entry associated with an offering.
 func (catalogManagement *CatalogManagementV1) GetOfferingAudit(getOfferingAuditOptions *GetOfferingAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
 	return catalogManagement.GetOfferingAuditWithContext(context.Background(), getOfferingAuditOptions)
 }
@@ -1782,12 +2312,13 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAuditWithContext(ctx co
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *getOfferingAuditOptions.CatalogIdentifier,
 		"offering_id": *getOfferingAuditOptions.OfferingID,
+		"auditlog_identifier": *getOfferingAuditOptions.AuditlogIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/audit`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/audits/{auditlog_identifier}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -1801,6 +2332,10 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAuditWithContext(ctx co
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+
+	if getOfferingAuditOptions.Lookupnames != nil {
+		builder.AddQuery("lookupnames", fmt.Sprint(*getOfferingAuditOptions.Lookupnames))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -1823,99 +2358,30 @@ func (catalogManagement *CatalogManagementV1) GetOfferingAuditWithContext(ctx co
 	return
 }
 
-// ReplaceOfferingIcon : Upload icon for offering
-// Upload an icon file to be stored in GC. File is uploaded as a binary payload - not as a form.
-func (catalogManagement *CatalogManagementV1) ReplaceOfferingIcon(replaceOfferingIconOptions *ReplaceOfferingIconOptions) (result *Offering, response *core.DetailedResponse, err error) {
-	return catalogManagement.ReplaceOfferingIconWithContext(context.Background(), replaceOfferingIconOptions)
+// SetOfferingPublish : Set offering publish approval settings
+// Approve or disapprove the offering to be allowed to publish to the IBM Public Catalog. This is used only by Partner
+// Center. Only users with Approval IAM authority can use this. Approvers should use the catalog and offering id from
+// the public catalog since they wouldn't have access to the private offering.
+func (catalogManagement *CatalogManagementV1) SetOfferingPublish(setOfferingPublishOptions *SetOfferingPublishOptions) (result *ApprovalResult, response *core.DetailedResponse, err error) {
+	return catalogManagement.SetOfferingPublishWithContext(context.Background(), setOfferingPublishOptions)
 }
 
-// ReplaceOfferingIconWithContext is an alternate form of the ReplaceOfferingIcon method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) ReplaceOfferingIconWithContext(ctx context.Context, replaceOfferingIconOptions *ReplaceOfferingIconOptions) (result *Offering, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(replaceOfferingIconOptions, "replaceOfferingIconOptions cannot be nil")
+// SetOfferingPublishWithContext is an alternate form of the SetOfferingPublish method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) SetOfferingPublishWithContext(ctx context.Context, setOfferingPublishOptions *SetOfferingPublishOptions) (result *ApprovalResult, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(setOfferingPublishOptions, "setOfferingPublishOptions cannot be nil")
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(replaceOfferingIconOptions, "replaceOfferingIconOptions")
+	err = core.ValidateStruct(setOfferingPublishOptions, "setOfferingPublishOptions")
 	if err != nil {
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"catalog_identifier": *replaceOfferingIconOptions.CatalogIdentifier,
-		"offering_id": *replaceOfferingIconOptions.OfferingID,
-		"file_name": *replaceOfferingIconOptions.FileName,
-	}
-
-	builder := core.NewRequestBuilder(core.PUT)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/icon/{file_name}`, pathParamsMap)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range replaceOfferingIconOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ReplaceOfferingIcon")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = catalogManagement.Service.Request(request, &rawResponse)
-	if err != nil {
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOffering)
-		if err != nil {
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// UpdateOfferingIBM : Allow offering to be published
-// Approve or disapprove the offering to be allowed to publish to the IBM Public Catalog. Options:
-// * `allow_request` - (Allow requesting to publish to IBM)
-// * `ibm` - (Allow publishing to be visible to IBM only)
-// * `public` - (Allow publishing to be visible to everyone, including IBM)
-//
-// If disapprove `public`, then `ibm` approval will not  be changed. If disapprove `ibm` then `public` will
-// automatically be disapproved. if disapprove `allow_request` then all rights to publish will be removed. This is
-// because the process steps always go first through `allow` to `ibm` and then to `public`. `ibm` cannot be skipped.
-// Only users with Approval IAM authority can use this. Approvers should use the catalog and offering id from the public
-// catalog since they wouldn't have access to the private offering.
-func (catalogManagement *CatalogManagementV1) UpdateOfferingIBM(updateOfferingIBMOptions *UpdateOfferingIBMOptions) (result *ApprovalResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.UpdateOfferingIBMWithContext(context.Background(), updateOfferingIBMOptions)
-}
-
-// UpdateOfferingIBMWithContext is an alternate form of the UpdateOfferingIBM method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) UpdateOfferingIBMWithContext(ctx context.Context, updateOfferingIBMOptions *UpdateOfferingIBMOptions) (result *ApprovalResult, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(updateOfferingIBMOptions, "updateOfferingIBMOptions cannot be nil")
-	if err != nil {
-		return
-	}
-	err = core.ValidateStruct(updateOfferingIBMOptions, "updateOfferingIBMOptions")
-	if err != nil {
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"catalog_identifier": *updateOfferingIBMOptions.CatalogIdentifier,
-		"offering_id": *updateOfferingIBMOptions.OfferingID,
-		"approval_type": *updateOfferingIBMOptions.ApprovalType,
-		"approved": *updateOfferingIBMOptions.Approved,
+		"catalog_identifier": *setOfferingPublishOptions.CatalogIdentifier,
+		"offering_id": *setOfferingPublishOptions.OfferingID,
+		"approval_type": *setOfferingPublishOptions.ApprovalType,
+		"approved": *setOfferingPublishOptions.Approved,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -1926,15 +2392,25 @@ func (catalogManagement *CatalogManagementV1) UpdateOfferingIBMWithContext(ctx c
 		return
 	}
 
-	for headerName, headerValue := range updateOfferingIBMOptions.Headers {
+	for headerName, headerValue := range setOfferingPublishOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "UpdateOfferingIBM")
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "SetOfferingPublish")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+	if setOfferingPublishOptions.XApproverToken != nil {
+		builder.AddHeader("X-Approver-Token", fmt.Sprint(*setOfferingPublishOptions.XApproverToken))
+	}
+
+	if setOfferingPublishOptions.PortalRecord != nil {
+		builder.AddQuery("portal_record", fmt.Sprint(*setOfferingPublishOptions.PortalRecord))
+	}
+	if setOfferingPublishOptions.PortalURL != nil {
+		builder.AddQuery("portal_url", fmt.Sprint(*setOfferingPublishOptions.PortalURL))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -2016,6 +2492,347 @@ func (catalogManagement *CatalogManagementV1) DeprecateOfferingWithContext(ctx c
 	}
 
 	response, err = catalogManagement.Service.Request(request, nil)
+
+	return
+}
+
+// ShareOffering : Allows offering to be shared
+// Set the share options on an offering.
+func (catalogManagement *CatalogManagementV1) ShareOffering(shareOfferingOptions *ShareOfferingOptions) (result *ShareSetting, response *core.DetailedResponse, err error) {
+	return catalogManagement.ShareOfferingWithContext(context.Background(), shareOfferingOptions)
+}
+
+// ShareOfferingWithContext is an alternate form of the ShareOffering method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ShareOfferingWithContext(ctx context.Context, shareOfferingOptions *ShareOfferingOptions) (result *ShareSetting, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(shareOfferingOptions, "shareOfferingOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(shareOfferingOptions, "shareOfferingOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"catalog_identifier": *shareOfferingOptions.CatalogIdentifier,
+		"offering_id": *shareOfferingOptions.OfferingID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/share`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range shareOfferingOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ShareOffering")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if shareOfferingOptions.IBM != nil {
+		body["ibm"] = shareOfferingOptions.IBM
+	}
+	if shareOfferingOptions.Public != nil {
+		body["public"] = shareOfferingOptions.Public
+	}
+	if shareOfferingOptions.Enabled != nil {
+		body["enabled"] = shareOfferingOptions.Enabled
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalShareSetting)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetOfferingAccess : Check for account ID in offering access list
+// Determine if an account ID is in an offering's access list.
+func (catalogManagement *CatalogManagementV1) GetOfferingAccess(getOfferingAccessOptions *GetOfferingAccessOptions) (result *Access, response *core.DetailedResponse, err error) {
+	return catalogManagement.GetOfferingAccessWithContext(context.Background(), getOfferingAccessOptions)
+}
+
+// GetOfferingAccessWithContext is an alternate form of the GetOfferingAccess method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetOfferingAccessWithContext(ctx context.Context, getOfferingAccessOptions *GetOfferingAccessOptions) (result *Access, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getOfferingAccessOptions, "getOfferingAccessOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(getOfferingAccessOptions, "getOfferingAccessOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"catalog_identifier": *getOfferingAccessOptions.CatalogIdentifier,
+		"offering_id": *getOfferingAccessOptions.OfferingID,
+		"access_identifier": *getOfferingAccessOptions.AccessIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/access/{access_identifier}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getOfferingAccessOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetOfferingAccess")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccess)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetOfferingAccessList : Get offering access list
+// Get the access list associated with the specified offering.
+func (catalogManagement *CatalogManagementV1) GetOfferingAccessList(getOfferingAccessListOptions *GetOfferingAccessListOptions) (result *AccessListResult, response *core.DetailedResponse, err error) {
+	return catalogManagement.GetOfferingAccessListWithContext(context.Background(), getOfferingAccessListOptions)
+}
+
+// GetOfferingAccessListWithContext is an alternate form of the GetOfferingAccessList method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetOfferingAccessListWithContext(ctx context.Context, getOfferingAccessListOptions *GetOfferingAccessListOptions) (result *AccessListResult, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getOfferingAccessListOptions, "getOfferingAccessListOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(getOfferingAccessListOptions, "getOfferingAccessListOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"catalog_identifier": *getOfferingAccessListOptions.CatalogIdentifier,
+		"offering_id": *getOfferingAccessListOptions.OfferingID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/access`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getOfferingAccessListOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetOfferingAccessList")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getOfferingAccessListOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*getOfferingAccessListOptions.Start))
+	}
+	if getOfferingAccessListOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*getOfferingAccessListOptions.Limit))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessListResult)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteOfferingAccessList : Delete accesses from offering access list
+// Delete all or a set of accesses from an offering's access list.
+func (catalogManagement *CatalogManagementV1) DeleteOfferingAccessList(deleteOfferingAccessListOptions *DeleteOfferingAccessListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
+	return catalogManagement.DeleteOfferingAccessListWithContext(context.Background(), deleteOfferingAccessListOptions)
+}
+
+// DeleteOfferingAccessListWithContext is an alternate form of the DeleteOfferingAccessList method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) DeleteOfferingAccessListWithContext(ctx context.Context, deleteOfferingAccessListOptions *DeleteOfferingAccessListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteOfferingAccessListOptions, "deleteOfferingAccessListOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(deleteOfferingAccessListOptions, "deleteOfferingAccessListOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"catalog_identifier": *deleteOfferingAccessListOptions.CatalogIdentifier,
+		"offering_id": *deleteOfferingAccessListOptions.OfferingID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/access`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range deleteOfferingAccessListOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "DeleteOfferingAccessList")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	_, err = builder.SetBodyContentJSON(deleteOfferingAccessListOptions.Accesses)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessListBulkResponse)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// AddOfferingAccessList : Add accesses to offering access list
+// Add one or more accesses to the specified offering's access list.
+func (catalogManagement *CatalogManagementV1) AddOfferingAccessList(addOfferingAccessListOptions *AddOfferingAccessListOptions) (result *AccessListResult, response *core.DetailedResponse, err error) {
+	return catalogManagement.AddOfferingAccessListWithContext(context.Background(), addOfferingAccessListOptions)
+}
+
+// AddOfferingAccessListWithContext is an alternate form of the AddOfferingAccessList method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) AddOfferingAccessListWithContext(ctx context.Context, addOfferingAccessListOptions *AddOfferingAccessListOptions) (result *AccessListResult, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(addOfferingAccessListOptions, "addOfferingAccessListOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(addOfferingAccessListOptions, "addOfferingAccessListOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"catalog_identifier": *addOfferingAccessListOptions.CatalogIdentifier,
+		"offering_id": *addOfferingAccessListOptions.OfferingID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/offerings/{offering_id}/access`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range addOfferingAccessListOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "AddOfferingAccessList")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	_, err = builder.SetBodyContentJSON(addOfferingAccessListOptions.Accesses)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessListResult)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
 
 	return
 }
@@ -2169,6 +2986,77 @@ func (catalogManagement *CatalogManagementV1) GetOfferingSourceWithContext(ctx c
 	}
 	if getOfferingSourceOptions.Channel != nil {
 		builder.AddQuery("channel", fmt.Sprint(*getOfferingSourceOptions.Channel))
+	}
+	if getOfferingSourceOptions.Flavor != nil {
+		builder.AddQuery("flavor", fmt.Sprint(*getOfferingSourceOptions.Flavor))
+	}
+	if getOfferingSourceOptions.AsIs != nil {
+		builder.AddQuery("asIs", fmt.Sprint(*getOfferingSourceOptions.AsIs))
+	}
+	if getOfferingSourceOptions.InstallType != nil {
+		builder.AddQuery("installType", fmt.Sprint(*getOfferingSourceOptions.InstallType))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = catalogManagement.Service.Request(request, &result)
+
+	return
+}
+
+// GetOfferingSourceURL : Get offering source URL
+// Get an offering's private source image.
+func (catalogManagement *CatalogManagementV1) GetOfferingSourceURL(getOfferingSourceURLOptions *GetOfferingSourceURLOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
+	return catalogManagement.GetOfferingSourceURLWithContext(context.Background(), getOfferingSourceURLOptions)
+}
+
+// GetOfferingSourceURLWithContext is an alternate form of the GetOfferingSourceURL method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetOfferingSourceURLWithContext(ctx context.Context, getOfferingSourceURLOptions *GetOfferingSourceURLOptions) (result io.ReadCloser, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getOfferingSourceURLOptions, "getOfferingSourceURLOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(getOfferingSourceURLOptions, "getOfferingSourceURLOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"key_identifier": *getOfferingSourceURLOptions.KeyIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/offering/source/url/{key_identifier}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getOfferingSourceURLOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetOfferingSourceURL")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/yaml")
+	if getOfferingSourceURLOptions.Accept != nil {
+		builder.AddHeader("Accept", fmt.Sprint(*getOfferingSourceURLOptions.Accept))
+	}
+
+	if getOfferingSourceURLOptions.CatalogID != nil {
+		builder.AddQuery("catalogID", fmt.Sprint(*getOfferingSourceURLOptions.CatalogID))
+	}
+	if getOfferingSourceURLOptions.Name != nil {
+		builder.AddQuery("name", fmt.Sprint(*getOfferingSourceURLOptions.Name))
+	}
+	if getOfferingSourceURLOptions.ID != nil {
+		builder.AddQuery("id", fmt.Sprint(*getOfferingSourceURLOptions.ID))
 	}
 
 	request, err := builder.Build()
@@ -2341,40 +3229,40 @@ func (catalogManagement *CatalogManagementV1) GetOfferingContainerImagesWithCont
 	return
 }
 
-// DeprecateVersion : Deprecate version immediately
-// Deprecate the specified version.
-func (catalogManagement *CatalogManagementV1) DeprecateVersion(deprecateVersionOptions *DeprecateVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.DeprecateVersionWithContext(context.Background(), deprecateVersionOptions)
+// ArchiveVersion : Archive version immediately
+// Archive the specified version.
+func (catalogManagement *CatalogManagementV1) ArchiveVersion(archiveVersionOptions *ArchiveVersionOptions) (response *core.DetailedResponse, err error) {
+	return catalogManagement.ArchiveVersionWithContext(context.Background(), archiveVersionOptions)
 }
 
-// DeprecateVersionWithContext is an alternate form of the DeprecateVersion method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) DeprecateVersionWithContext(ctx context.Context, deprecateVersionOptions *DeprecateVersionOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(deprecateVersionOptions, "deprecateVersionOptions cannot be nil")
+// ArchiveVersionWithContext is an alternate form of the ArchiveVersion method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ArchiveVersionWithContext(ctx context.Context, archiveVersionOptions *ArchiveVersionOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(archiveVersionOptions, "archiveVersionOptions cannot be nil")
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(deprecateVersionOptions, "deprecateVersionOptions")
+	err = core.ValidateStruct(archiveVersionOptions, "archiveVersionOptions")
 	if err != nil {
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"version_loc_id": *deprecateVersionOptions.VersionLocID,
+		"version_loc_id": *archiveVersionOptions.VersionLocID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/deprecate`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/archive`, pathParamsMap)
 	if err != nil {
 		return
 	}
 
-	for headerName, headerValue := range deprecateVersionOptions.Headers {
+	for headerName, headerValue := range archiveVersionOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "DeprecateVersion")
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ArchiveVersion")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
@@ -2451,40 +3339,40 @@ func (catalogManagement *CatalogManagementV1) SetDeprecateVersionWithContext(ctx
 	return
 }
 
-// AccountPublishVersion : Publish version to account members
-// Publish the specified version so it is viewable by account members.
-func (catalogManagement *CatalogManagementV1) AccountPublishVersion(accountPublishVersionOptions *AccountPublishVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.AccountPublishVersionWithContext(context.Background(), accountPublishVersionOptions)
+// ConsumableVersion : Make version consumable for sharing
+// Set the version as consumable in order to inherit the offering sharing permissions.
+func (catalogManagement *CatalogManagementV1) ConsumableVersion(consumableVersionOptions *ConsumableVersionOptions) (response *core.DetailedResponse, err error) {
+	return catalogManagement.ConsumableVersionWithContext(context.Background(), consumableVersionOptions)
 }
 
-// AccountPublishVersionWithContext is an alternate form of the AccountPublishVersion method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) AccountPublishVersionWithContext(ctx context.Context, accountPublishVersionOptions *AccountPublishVersionOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(accountPublishVersionOptions, "accountPublishVersionOptions cannot be nil")
+// ConsumableVersionWithContext is an alternate form of the ConsumableVersion method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ConsumableVersionWithContext(ctx context.Context, consumableVersionOptions *ConsumableVersionOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(consumableVersionOptions, "consumableVersionOptions cannot be nil")
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(accountPublishVersionOptions, "accountPublishVersionOptions")
+	err = core.ValidateStruct(consumableVersionOptions, "consumableVersionOptions")
 	if err != nil {
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"version_loc_id": *accountPublishVersionOptions.VersionLocID,
+		"version_loc_id": *consumableVersionOptions.VersionLocID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/account-publish`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/consume-publish`, pathParamsMap)
 	if err != nil {
 		return
 	}
 
-	for headerName, headerValue := range accountPublishVersionOptions.Headers {
+	for headerName, headerValue := range consumableVersionOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "AccountPublishVersion")
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ConsumableVersion")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
@@ -2499,88 +3387,40 @@ func (catalogManagement *CatalogManagementV1) AccountPublishVersionWithContext(c
 	return
 }
 
-// IBMPublishVersion : Publish version to IBMers in public catalog
-// Publish the specified version so that it is visible to IBMers in the public catalog.
-func (catalogManagement *CatalogManagementV1) IBMPublishVersion(ibmPublishVersionOptions *IBMPublishVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.IBMPublishVersionWithContext(context.Background(), ibmPublishVersionOptions)
+// SuspendVersion : Suspend a version
+// Limits the visibility of a version by moving a version state from consumable back to validated.
+func (catalogManagement *CatalogManagementV1) SuspendVersion(suspendVersionOptions *SuspendVersionOptions) (response *core.DetailedResponse, err error) {
+	return catalogManagement.SuspendVersionWithContext(context.Background(), suspendVersionOptions)
 }
 
-// IBMPublishVersionWithContext is an alternate form of the IBMPublishVersion method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) IBMPublishVersionWithContext(ctx context.Context, ibmPublishVersionOptions *IBMPublishVersionOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(ibmPublishVersionOptions, "ibmPublishVersionOptions cannot be nil")
+// SuspendVersionWithContext is an alternate form of the SuspendVersion method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) SuspendVersionWithContext(ctx context.Context, suspendVersionOptions *SuspendVersionOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(suspendVersionOptions, "suspendVersionOptions cannot be nil")
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(ibmPublishVersionOptions, "ibmPublishVersionOptions")
+	err = core.ValidateStruct(suspendVersionOptions, "suspendVersionOptions")
 	if err != nil {
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"version_loc_id": *ibmPublishVersionOptions.VersionLocID,
+		"version_loc_id": *suspendVersionOptions.VersionLocID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/ibm-publish`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/suspend`, pathParamsMap)
 	if err != nil {
 		return
 	}
 
-	for headerName, headerValue := range ibmPublishVersionOptions.Headers {
+	for headerName, headerValue := range suspendVersionOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "IBMPublishVersion")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	response, err = catalogManagement.Service.Request(request, nil)
-
-	return
-}
-
-// PublicPublishVersion : Publish version to all users in public catalog
-// Publish the specified version so it is visible to all users in the public catalog.
-func (catalogManagement *CatalogManagementV1) PublicPublishVersion(publicPublishVersionOptions *PublicPublishVersionOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.PublicPublishVersionWithContext(context.Background(), publicPublishVersionOptions)
-}
-
-// PublicPublishVersionWithContext is an alternate form of the PublicPublishVersion method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) PublicPublishVersionWithContext(ctx context.Context, publicPublishVersionOptions *PublicPublishVersionOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(publicPublishVersionOptions, "publicPublishVersionOptions cannot be nil")
-	if err != nil {
-		return
-	}
-	err = core.ValidateStruct(publicPublishVersionOptions, "publicPublishVersionOptions")
-	if err != nil {
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"version_loc_id": *publicPublishVersionOptions.VersionLocID,
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/public-publish`, pathParamsMap)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range publicPublishVersionOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "PublicPublishVersion")
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "SuspendVersion")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
@@ -2686,11 +3526,20 @@ func (catalogManagement *CatalogManagementV1) CopyVersionWithContext(ctx context
 	if copyVersionOptions.Tags != nil {
 		body["tags"] = copyVersionOptions.Tags
 	}
+	if copyVersionOptions.Content != nil {
+		body["content"] = copyVersionOptions.Content
+	}
 	if copyVersionOptions.TargetKinds != nil {
 		body["target_kinds"] = copyVersionOptions.TargetKinds
 	}
-	if copyVersionOptions.Content != nil {
-		body["content"] = copyVersionOptions.Content
+	if copyVersionOptions.FormatKind != nil {
+		body["format_kind"] = copyVersionOptions.FormatKind
+	}
+	if copyVersionOptions.Flavor != nil {
+		body["flavor"] = copyVersionOptions.Flavor
+	}
+	if copyVersionOptions.WorkingDirectory != nil {
+		body["working_directory"] = copyVersionOptions.WorkingDirectory
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -2763,6 +3612,56 @@ func (catalogManagement *CatalogManagementV1) GetOfferingWorkingCopyWithContext(
 		}
 		response.Result = result
 	}
+
+	return
+}
+
+// CopyFromPreviousVersion : Copy values from a previous version
+// Copy values from a specified previous version.
+func (catalogManagement *CatalogManagementV1) CopyFromPreviousVersion(copyFromPreviousVersionOptions *CopyFromPreviousVersionOptions) (response *core.DetailedResponse, err error) {
+	return catalogManagement.CopyFromPreviousVersionWithContext(context.Background(), copyFromPreviousVersionOptions)
+}
+
+// CopyFromPreviousVersionWithContext is an alternate form of the CopyFromPreviousVersion method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) CopyFromPreviousVersionWithContext(ctx context.Context, copyFromPreviousVersionOptions *CopyFromPreviousVersionOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(copyFromPreviousVersionOptions, "copyFromPreviousVersionOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(copyFromPreviousVersionOptions, "copyFromPreviousVersionOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"version_loc_id": *copyFromPreviousVersionOptions.VersionLocID,
+		"type": *copyFromPreviousVersionOptions.Type,
+		"version_loc_id_to_copy_from": *copyFromPreviousVersionOptions.VersionLocIDToCopyFrom,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/copy/{type}/{version_loc_id_to_copy_from}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range copyFromPreviousVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "CopyFromPreviousVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = catalogManagement.Service.Request(request, nil)
 
 	return
 }
@@ -2862,6 +3761,57 @@ func (catalogManagement *CatalogManagementV1) DeleteVersionWithContext(ctx conte
 	}
 
 	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "DeleteVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = catalogManagement.Service.Request(request, nil)
+
+	return
+}
+
+// DeprecateVersion : Deprecate version immediately - use /archive instead
+// Deprecate the specified version.
+// Deprecated: this method is deprecated and may be removed in a future release.
+func (catalogManagement *CatalogManagementV1) DeprecateVersion(deprecateVersionOptions *DeprecateVersionOptions) (response *core.DetailedResponse, err error) {
+	return catalogManagement.DeprecateVersionWithContext(context.Background(), deprecateVersionOptions)
+}
+
+// DeprecateVersionWithContext is an alternate form of the DeprecateVersion method which supports a Context parameter
+// Deprecated: this method is deprecated and may be removed in a future release.
+func (catalogManagement *CatalogManagementV1) DeprecateVersionWithContext(ctx context.Context, deprecateVersionOptions *DeprecateVersionOptions) (response *core.DetailedResponse, err error) {
+	core.GetLogger().Warn("A deprecated operation has been invoked: DeprecateVersion")
+	err = core.ValidateNotNil(deprecateVersionOptions, "deprecateVersionOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(deprecateVersionOptions, "deprecateVersionOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"version_loc_id": *deprecateVersionOptions.VersionLocID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/deprecate`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range deprecateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "DeprecateVersion")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
@@ -3067,6 +4017,12 @@ func (catalogManagement *CatalogManagementV1) DeployOperatorsWithContext(ctx con
 	if deployOperatorsOptions.VersionLocatorID != nil {
 		body["version_locator_id"] = deployOperatorsOptions.VersionLocatorID
 	}
+	if deployOperatorsOptions.Channel != nil {
+		body["channel"] = deployOperatorsOptions.Channel
+	}
+	if deployOperatorsOptions.InstallPlan != nil {
+		body["install_plan"] = deployOperatorsOptions.InstallPlan
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
@@ -3211,6 +4167,12 @@ func (catalogManagement *CatalogManagementV1) ReplaceOperatorsWithContext(ctx co
 	if replaceOperatorsOptions.VersionLocatorID != nil {
 		body["version_locator_id"] = replaceOperatorsOptions.VersionLocatorID
 	}
+	if replaceOperatorsOptions.Channel != nil {
+		body["channel"] = replaceOperatorsOptions.Channel
+	}
+	if replaceOperatorsOptions.InstallPlan != nil {
+		body["install_plan"] = replaceOperatorsOptions.InstallPlan
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
@@ -3343,6 +4305,9 @@ func (catalogManagement *CatalogManagementV1) InstallVersionWithContext(ctx cont
 	if installVersionOptions.OverrideValues != nil {
 		body["override_values"] = installVersionOptions.OverrideValues
 	}
+	if installVersionOptions.EnvironmentVariables != nil {
+		body["environment_variables"] = installVersionOptions.EnvironmentVariables
+	}
 	if installVersionOptions.EntitlementApikey != nil {
 		body["entitlement_apikey"] = installVersionOptions.EntitlementApikey
 	}
@@ -3361,14 +4326,14 @@ func (catalogManagement *CatalogManagementV1) InstallVersionWithContext(ctx cont
 	if installVersionOptions.VcenterID != nil {
 		body["vcenter_id"] = installVersionOptions.VcenterID
 	}
+	if installVersionOptions.VcenterLocation != nil {
+		body["vcenter_location"] = installVersionOptions.VcenterLocation
+	}
 	if installVersionOptions.VcenterUser != nil {
 		body["vcenter_user"] = installVersionOptions.VcenterUser
 	}
 	if installVersionOptions.VcenterPassword != nil {
 		body["vcenter_password"] = installVersionOptions.VcenterPassword
-	}
-	if installVersionOptions.VcenterLocation != nil {
-		body["vcenter_location"] = installVersionOptions.VcenterLocation
 	}
 	if installVersionOptions.VcenterDatastore != nil {
 		body["vcenter_datastore"] = installVersionOptions.VcenterDatastore
@@ -3443,6 +4408,9 @@ func (catalogManagement *CatalogManagementV1) PreinstallVersionWithContext(ctx c
 	if preinstallVersionOptions.OverrideValues != nil {
 		body["override_values"] = preinstallVersionOptions.OverrideValues
 	}
+	if preinstallVersionOptions.EnvironmentVariables != nil {
+		body["environment_variables"] = preinstallVersionOptions.EnvironmentVariables
+	}
 	if preinstallVersionOptions.EntitlementApikey != nil {
 		body["entitlement_apikey"] = preinstallVersionOptions.EntitlementApikey
 	}
@@ -3461,14 +4429,14 @@ func (catalogManagement *CatalogManagementV1) PreinstallVersionWithContext(ctx c
 	if preinstallVersionOptions.VcenterID != nil {
 		body["vcenter_id"] = preinstallVersionOptions.VcenterID
 	}
+	if preinstallVersionOptions.VcenterLocation != nil {
+		body["vcenter_location"] = preinstallVersionOptions.VcenterLocation
+	}
 	if preinstallVersionOptions.VcenterUser != nil {
 		body["vcenter_user"] = preinstallVersionOptions.VcenterUser
 	}
 	if preinstallVersionOptions.VcenterPassword != nil {
 		body["vcenter_password"] = preinstallVersionOptions.VcenterPassword
-	}
-	if preinstallVersionOptions.VcenterLocation != nil {
-		body["vcenter_location"] = preinstallVersionOptions.VcenterLocation
 	}
 	if preinstallVersionOptions.VcenterDatastore != nil {
 		body["vcenter_datastore"] = preinstallVersionOptions.VcenterDatastore
@@ -3616,6 +4584,9 @@ func (catalogManagement *CatalogManagementV1) ValidateInstallWithContext(ctx con
 	if validateInstallOptions.OverrideValues != nil {
 		body["override_values"] = validateInstallOptions.OverrideValues
 	}
+	if validateInstallOptions.EnvironmentVariables != nil {
+		body["environment_variables"] = validateInstallOptions.EnvironmentVariables
+	}
 	if validateInstallOptions.EntitlementApikey != nil {
 		body["entitlement_apikey"] = validateInstallOptions.EntitlementApikey
 	}
@@ -3634,14 +4605,14 @@ func (catalogManagement *CatalogManagementV1) ValidateInstallWithContext(ctx con
 	if validateInstallOptions.VcenterID != nil {
 		body["vcenter_id"] = validateInstallOptions.VcenterID
 	}
+	if validateInstallOptions.VcenterLocation != nil {
+		body["vcenter_location"] = validateInstallOptions.VcenterLocation
+	}
 	if validateInstallOptions.VcenterUser != nil {
 		body["vcenter_user"] = validateInstallOptions.VcenterUser
 	}
 	if validateInstallOptions.VcenterPassword != nil {
 		body["vcenter_password"] = validateInstallOptions.VcenterPassword
-	}
-	if validateInstallOptions.VcenterLocation != nil {
-		body["vcenter_location"] = validateInstallOptions.VcenterLocation
 	}
 	if validateInstallOptions.VcenterDatastore != nil {
 		body["vcenter_datastore"] = validateInstallOptions.VcenterDatastore
@@ -3810,6 +4781,9 @@ func (catalogManagement *CatalogManagementV1) SearchObjectsWithContext(ctx conte
 	builder.AddHeader("Accept", "application/json")
 
 	builder.AddQuery("query", fmt.Sprint(*searchObjectsOptions.Query))
+	if searchObjectsOptions.Kind != nil {
+		builder.AddQuery("kind", fmt.Sprint(*searchObjectsOptions.Kind))
+	}
 	if searchObjectsOptions.Limit != nil {
 		builder.AddQuery("limit", fmt.Sprint(*searchObjectsOptions.Limit))
 	}
@@ -3958,14 +4932,8 @@ func (catalogManagement *CatalogManagementV1) CreateObjectWithContext(ctx contex
 	builder.AddHeader("Content-Type", "application/json")
 
 	body := make(map[string]interface{})
-	if createObjectOptions.ID != nil {
-		body["id"] = createObjectOptions.ID
-	}
 	if createObjectOptions.Name != nil {
 		body["name"] = createObjectOptions.Name
-	}
-	if createObjectOptions.Rev != nil {
-		body["_rev"] = createObjectOptions.Rev
 	}
 	if createObjectOptions.CRN != nil {
 		body["crn"] = createObjectOptions.CRN
@@ -4147,11 +5115,11 @@ func (catalogManagement *CatalogManagementV1) ReplaceObjectWithContext(ctx conte
 	if replaceObjectOptions.ID != nil {
 		body["id"] = replaceObjectOptions.ID
 	}
-	if replaceObjectOptions.Name != nil {
-		body["name"] = replaceObjectOptions.Name
-	}
 	if replaceObjectOptions.Rev != nil {
 		body["_rev"] = replaceObjectOptions.Rev
+	}
+	if replaceObjectOptions.Name != nil {
+		body["name"] = replaceObjectOptions.Name
 	}
 	if replaceObjectOptions.CRN != nil {
 		body["crn"] = replaceObjectOptions.CRN
@@ -4276,8 +5244,79 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectWithContext(ctx contex
 	return
 }
 
-// GetObjectAudit : Get catalog object audit log
-// Get the audit log associated with a specific catalog object.
+// ListObjectAudits : Get object audit logs
+// Get the audit logs associated with an object.
+func (catalogManagement *CatalogManagementV1) ListObjectAudits(listObjectAuditsOptions *ListObjectAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
+	return catalogManagement.ListObjectAuditsWithContext(context.Background(), listObjectAuditsOptions)
+}
+
+// ListObjectAuditsWithContext is an alternate form of the ListObjectAudits method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ListObjectAuditsWithContext(ctx context.Context, listObjectAuditsOptions *ListObjectAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listObjectAuditsOptions, "listObjectAuditsOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(listObjectAuditsOptions, "listObjectAuditsOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"catalog_identifier": *listObjectAuditsOptions.CatalogIdentifier,
+		"object_identifier": *listObjectAuditsOptions.ObjectIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/audits`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listObjectAuditsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ListObjectAudits")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listObjectAuditsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listObjectAuditsOptions.Start))
+	}
+	if listObjectAuditsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listObjectAuditsOptions.Limit))
+	}
+	if listObjectAuditsOptions.Lookupnames != nil {
+		builder.AddQuery("lookupnames", fmt.Sprint(*listObjectAuditsOptions.Lookupnames))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLogs)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetObjectAudit : Get an object audit log entry
+// Get the full audit log entry associated with an object.
 func (catalogManagement *CatalogManagementV1) GetObjectAudit(getObjectAuditOptions *GetObjectAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
 	return catalogManagement.GetObjectAuditWithContext(context.Background(), getObjectAuditOptions)
 }
@@ -4296,12 +5335,13 @@ func (catalogManagement *CatalogManagementV1) GetObjectAuditWithContext(ctx cont
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *getObjectAuditOptions.CatalogIdentifier,
 		"object_identifier": *getObjectAuditOptions.ObjectIdentifier,
+		"auditlog_identifier": *getObjectAuditOptions.AuditlogIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/audit`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/audits/{auditlog_identifier}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -4315,6 +5355,10 @@ func (catalogManagement *CatalogManagementV1) GetObjectAuditWithContext(ctx cont
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+
+	if getObjectAuditOptions.Lookupnames != nil {
+		builder.AddQuery("lookupnames", fmt.Sprint(*getObjectAuditOptions.Lookupnames))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -4337,41 +5381,41 @@ func (catalogManagement *CatalogManagementV1) GetObjectAuditWithContext(ctx cont
 	return
 }
 
-// AccountPublishObject : Publish object to account
-// Publish a catalog object to account.
-func (catalogManagement *CatalogManagementV1) AccountPublishObject(accountPublishObjectOptions *AccountPublishObjectOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.AccountPublishObjectWithContext(context.Background(), accountPublishObjectOptions)
+// ConsumableShareObject : Make object consumable for sharing
+// Set the object as consumable in order to use the object sharing permissions.
+func (catalogManagement *CatalogManagementV1) ConsumableShareObject(consumableShareObjectOptions *ConsumableShareObjectOptions) (response *core.DetailedResponse, err error) {
+	return catalogManagement.ConsumableShareObjectWithContext(context.Background(), consumableShareObjectOptions)
 }
 
-// AccountPublishObjectWithContext is an alternate form of the AccountPublishObject method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) AccountPublishObjectWithContext(ctx context.Context, accountPublishObjectOptions *AccountPublishObjectOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(accountPublishObjectOptions, "accountPublishObjectOptions cannot be nil")
+// ConsumableShareObjectWithContext is an alternate form of the ConsumableShareObject method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ConsumableShareObjectWithContext(ctx context.Context, consumableShareObjectOptions *ConsumableShareObjectOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(consumableShareObjectOptions, "consumableShareObjectOptions cannot be nil")
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(accountPublishObjectOptions, "accountPublishObjectOptions")
+	err = core.ValidateStruct(consumableShareObjectOptions, "consumableShareObjectOptions")
 	if err != nil {
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"catalog_identifier": *accountPublishObjectOptions.CatalogIdentifier,
-		"object_identifier": *accountPublishObjectOptions.ObjectIdentifier,
+		"catalog_identifier": *consumableShareObjectOptions.CatalogIdentifier,
+		"object_identifier": *consumableShareObjectOptions.ObjectIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/account-publish`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/consume-publish`, pathParamsMap)
 	if err != nil {
 		return
 	}
 
-	for headerName, headerValue := range accountPublishObjectOptions.Headers {
+	for headerName, headerValue := range consumableShareObjectOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "AccountPublishObject")
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ConsumableShareObject")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
@@ -4386,43 +5430,60 @@ func (catalogManagement *CatalogManagementV1) AccountPublishObjectWithContext(ct
 	return
 }
 
-// SharedPublishObject : Publish object to share with allow list
-// Publish the specified object so that it is visible to those in the allow list.
-func (catalogManagement *CatalogManagementV1) SharedPublishObject(sharedPublishObjectOptions *SharedPublishObjectOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.SharedPublishObjectWithContext(context.Background(), sharedPublishObjectOptions)
+// ShareObject : Allows object to be shared
+// Set the share options on an object.
+func (catalogManagement *CatalogManagementV1) ShareObject(shareObjectOptions *ShareObjectOptions) (result *ShareSetting, response *core.DetailedResponse, err error) {
+	return catalogManagement.ShareObjectWithContext(context.Background(), shareObjectOptions)
 }
 
-// SharedPublishObjectWithContext is an alternate form of the SharedPublishObject method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) SharedPublishObjectWithContext(ctx context.Context, sharedPublishObjectOptions *SharedPublishObjectOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(sharedPublishObjectOptions, "sharedPublishObjectOptions cannot be nil")
+// ShareObjectWithContext is an alternate form of the ShareObject method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ShareObjectWithContext(ctx context.Context, shareObjectOptions *ShareObjectOptions) (result *ShareSetting, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(shareObjectOptions, "shareObjectOptions cannot be nil")
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(sharedPublishObjectOptions, "sharedPublishObjectOptions")
+	err = core.ValidateStruct(shareObjectOptions, "shareObjectOptions")
 	if err != nil {
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"catalog_identifier": *sharedPublishObjectOptions.CatalogIdentifier,
-		"object_identifier": *sharedPublishObjectOptions.ObjectIdentifier,
+		"catalog_identifier": *shareObjectOptions.CatalogIdentifier,
+		"object_identifier": *shareObjectOptions.ObjectIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/shared-publish`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/share`, pathParamsMap)
 	if err != nil {
 		return
 	}
 
-	for headerName, headerValue := range sharedPublishObjectOptions.Headers {
+	for headerName, headerValue := range shareObjectOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "SharedPublishObject")
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ShareObject")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if shareObjectOptions.IBM != nil {
+		body["ibm"] = shareObjectOptions.IBM
+	}
+	if shareObjectOptions.Public != nil {
+		body["public"] = shareObjectOptions.Public
+	}
+	if shareObjectOptions.Enabled != nil {
+		body["enabled"] = shareObjectOptions.Enabled
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
 	}
 
 	request, err := builder.Build()
@@ -4430,48 +5491,67 @@ func (catalogManagement *CatalogManagementV1) SharedPublishObjectWithContext(ctx
 		return
 	}
 
-	response, err = catalogManagement.Service.Request(request, nil)
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalShareSetting)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
 
 	return
 }
 
-// IBMPublishObject : Publish object to share with IBMers
-// Publish the specified object so that it is visible to IBMers in the public catalog.
-func (catalogManagement *CatalogManagementV1) IBMPublishObject(ibmPublishObjectOptions *IBMPublishObjectOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.IBMPublishObjectWithContext(context.Background(), ibmPublishObjectOptions)
+// GetObjectAccessList : Get object access list
+// Get the access list associated with the specified object.
+func (catalogManagement *CatalogManagementV1) GetObjectAccessList(getObjectAccessListOptions *GetObjectAccessListOptions) (result *AccessListResult, response *core.DetailedResponse, err error) {
+	return catalogManagement.GetObjectAccessListWithContext(context.Background(), getObjectAccessListOptions)
 }
 
-// IBMPublishObjectWithContext is an alternate form of the IBMPublishObject method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) IBMPublishObjectWithContext(ctx context.Context, ibmPublishObjectOptions *IBMPublishObjectOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(ibmPublishObjectOptions, "ibmPublishObjectOptions cannot be nil")
+// GetObjectAccessListWithContext is an alternate form of the GetObjectAccessList method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetObjectAccessListWithContext(ctx context.Context, getObjectAccessListOptions *GetObjectAccessListOptions) (result *AccessListResult, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getObjectAccessListOptions, "getObjectAccessListOptions cannot be nil")
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(ibmPublishObjectOptions, "ibmPublishObjectOptions")
+	err = core.ValidateStruct(getObjectAccessListOptions, "getObjectAccessListOptions")
 	if err != nil {
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"catalog_identifier": *ibmPublishObjectOptions.CatalogIdentifier,
-		"object_identifier": *ibmPublishObjectOptions.ObjectIdentifier,
+		"catalog_identifier": *getObjectAccessListOptions.CatalogIdentifier,
+		"object_identifier": *getObjectAccessListOptions.ObjectIdentifier,
 	}
 
-	builder := core.NewRequestBuilder(core.POST)
+	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/ibm-publish`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/accessv1`, pathParamsMap)
 	if err != nil {
 		return
 	}
 
-	for headerName, headerValue := range ibmPublishObjectOptions.Headers {
+	for headerName, headerValue := range getObjectAccessListOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "IBMPublishObject")
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetObjectAccessList")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getObjectAccessListOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*getObjectAccessListOptions.Start))
+	}
+	if getObjectAccessListOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*getObjectAccessListOptions.Limit))
 	}
 
 	request, err := builder.Build()
@@ -4479,118 +5559,30 @@ func (catalogManagement *CatalogManagementV1) IBMPublishObjectWithContext(ctx co
 		return
 	}
 
-	response, err = catalogManagement.Service.Request(request, nil)
-
-	return
-}
-
-// PublicPublishObject : Publish object to share with all users
-// Publish the specified object so it is visible to all users in the public catalog.
-func (catalogManagement *CatalogManagementV1) PublicPublishObject(publicPublishObjectOptions *PublicPublishObjectOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.PublicPublishObjectWithContext(context.Background(), publicPublishObjectOptions)
-}
-
-// PublicPublishObjectWithContext is an alternate form of the PublicPublishObject method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) PublicPublishObjectWithContext(ctx context.Context, publicPublishObjectOptions *PublicPublishObjectOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(publicPublishObjectOptions, "publicPublishObjectOptions cannot be nil")
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(publicPublishObjectOptions, "publicPublishObjectOptions")
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccessListResult)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-
-	pathParamsMap := map[string]string{
-		"catalog_identifier": *publicPublishObjectOptions.CatalogIdentifier,
-		"object_identifier": *publicPublishObjectOptions.ObjectIdentifier,
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/public-publish`, pathParamsMap)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range publicPublishObjectOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "PublicPublishObject")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	response, err = catalogManagement.Service.Request(request, nil)
-
-	return
-}
-
-// CreateObjectAccess : Add account ID to object access list
-// Add an account ID to an object's access list.
-func (catalogManagement *CatalogManagementV1) CreateObjectAccess(createObjectAccessOptions *CreateObjectAccessOptions) (response *core.DetailedResponse, err error) {
-	return catalogManagement.CreateObjectAccessWithContext(context.Background(), createObjectAccessOptions)
-}
-
-// CreateObjectAccessWithContext is an alternate form of the CreateObjectAccess method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) CreateObjectAccessWithContext(ctx context.Context, createObjectAccessOptions *CreateObjectAccessOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(createObjectAccessOptions, "createObjectAccessOptions cannot be nil")
-	if err != nil {
-		return
-	}
-	err = core.ValidateStruct(createObjectAccessOptions, "createObjectAccessOptions")
-	if err != nil {
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"catalog_identifier": *createObjectAccessOptions.CatalogIdentifier,
-		"object_identifier": *createObjectAccessOptions.ObjectIdentifier,
-		"account_identifier": *createObjectAccessOptions.AccountIdentifier,
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/access/{account_identifier}`, pathParamsMap)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range createObjectAccessOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "CreateObjectAccess")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	response, err = catalogManagement.Service.Request(request, nil)
 
 	return
 }
 
 // GetObjectAccess : Check for account ID in object access list
 // Determine if an account ID is in an object's access list.
-func (catalogManagement *CatalogManagementV1) GetObjectAccess(getObjectAccessOptions *GetObjectAccessOptions) (result *ObjectAccess, response *core.DetailedResponse, err error) {
+func (catalogManagement *CatalogManagementV1) GetObjectAccess(getObjectAccessOptions *GetObjectAccessOptions) (result *Access, response *core.DetailedResponse, err error) {
 	return catalogManagement.GetObjectAccessWithContext(context.Background(), getObjectAccessOptions)
 }
 
 // GetObjectAccessWithContext is an alternate form of the GetObjectAccess method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) GetObjectAccessWithContext(ctx context.Context, getObjectAccessOptions *GetObjectAccessOptions) (result *ObjectAccess, response *core.DetailedResponse, err error) {
+func (catalogManagement *CatalogManagementV1) GetObjectAccessWithContext(ctx context.Context, getObjectAccessOptions *GetObjectAccessOptions) (result *Access, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getObjectAccessOptions, "getObjectAccessOptions cannot be nil")
 	if err != nil {
 		return
@@ -4603,13 +5595,13 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessWithContext(ctx con
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *getObjectAccessOptions.CatalogIdentifier,
 		"object_identifier": *getObjectAccessOptions.ObjectIdentifier,
-		"account_identifier": *getObjectAccessOptions.AccountIdentifier,
+		"access_identifier": *getObjectAccessOptions.AccessIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/access/{account_identifier}`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/access/{access_identifier}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -4635,7 +5627,7 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessWithContext(ctx con
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalObjectAccess)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccess)
 		if err != nil {
 			return
 		}
@@ -4645,14 +5637,70 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessWithContext(ctx con
 	return
 }
 
+// CreateObjectAccess : Add account ID to object access list
+// Add an account ID to an object's access list.
+// Deprecated: this method is deprecated and may be removed in a future release.
+func (catalogManagement *CatalogManagementV1) CreateObjectAccess(createObjectAccessOptions *CreateObjectAccessOptions) (response *core.DetailedResponse, err error) {
+	return catalogManagement.CreateObjectAccessWithContext(context.Background(), createObjectAccessOptions)
+}
+
+// CreateObjectAccessWithContext is an alternate form of the CreateObjectAccess method which supports a Context parameter
+// Deprecated: this method is deprecated and may be removed in a future release.
+func (catalogManagement *CatalogManagementV1) CreateObjectAccessWithContext(ctx context.Context, createObjectAccessOptions *CreateObjectAccessOptions) (response *core.DetailedResponse, err error) {
+	core.GetLogger().Warn("A deprecated operation has been invoked: CreateObjectAccess")
+	err = core.ValidateNotNil(createObjectAccessOptions, "createObjectAccessOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(createObjectAccessOptions, "createObjectAccessOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"catalog_identifier": *createObjectAccessOptions.CatalogIdentifier,
+		"object_identifier": *createObjectAccessOptions.ObjectIdentifier,
+		"access_identifier": *createObjectAccessOptions.AccessIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/access/{access_identifier}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range createObjectAccessOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "CreateObjectAccess")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = catalogManagement.Service.Request(request, nil)
+
+	return
+}
+
 // DeleteObjectAccess : Remove account ID from object access list
 // Delete the specified account ID from the specified object's access list.
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (catalogManagement *CatalogManagementV1) DeleteObjectAccess(deleteObjectAccessOptions *DeleteObjectAccessOptions) (response *core.DetailedResponse, err error) {
 	return catalogManagement.DeleteObjectAccessWithContext(context.Background(), deleteObjectAccessOptions)
 }
 
 // DeleteObjectAccessWithContext is an alternate form of the DeleteObjectAccess method which supports a Context parameter
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (catalogManagement *CatalogManagementV1) DeleteObjectAccessWithContext(ctx context.Context, deleteObjectAccessOptions *DeleteObjectAccessOptions) (response *core.DetailedResponse, err error) {
+	core.GetLogger().Warn("A deprecated operation has been invoked: DeleteObjectAccess")
 	err = core.ValidateNotNil(deleteObjectAccessOptions, "deleteObjectAccessOptions cannot be nil")
 	if err != nil {
 		return
@@ -4665,13 +5713,13 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectAccessWithContext(ctx 
 	pathParamsMap := map[string]string{
 		"catalog_identifier": *deleteObjectAccessOptions.CatalogIdentifier,
 		"object_identifier": *deleteObjectAccessOptions.ObjectIdentifier,
-		"account_identifier": *deleteObjectAccessOptions.AccountIdentifier,
+		"access_identifier": *deleteObjectAccessOptions.AccessIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/access/{account_identifier}`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/catalogs/{catalog_identifier}/objects/{object_identifier}/access/{access_identifier}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -4695,26 +5743,29 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectAccessWithContext(ctx 
 	return
 }
 
-// GetObjectAccessList : Get object access list
-// Get the access list associated with the specified object.
-func (catalogManagement *CatalogManagementV1) GetObjectAccessList(getObjectAccessListOptions *GetObjectAccessListOptions) (result *ObjectAccessListResult, response *core.DetailedResponse, err error) {
-	return catalogManagement.GetObjectAccessListWithContext(context.Background(), getObjectAccessListOptions)
+// GetObjectAccessListDeprecated : Get object access list
+// Deprecated - use /accessv1 instead.
+// Deprecated: this method is deprecated and may be removed in a future release.
+func (catalogManagement *CatalogManagementV1) GetObjectAccessListDeprecated(getObjectAccessListDeprecatedOptions *GetObjectAccessListDeprecatedOptions) (result *ObjectAccessListResult, response *core.DetailedResponse, err error) {
+	return catalogManagement.GetObjectAccessListDeprecatedWithContext(context.Background(), getObjectAccessListDeprecatedOptions)
 }
 
-// GetObjectAccessListWithContext is an alternate form of the GetObjectAccessList method which supports a Context parameter
-func (catalogManagement *CatalogManagementV1) GetObjectAccessListWithContext(ctx context.Context, getObjectAccessListOptions *GetObjectAccessListOptions) (result *ObjectAccessListResult, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getObjectAccessListOptions, "getObjectAccessListOptions cannot be nil")
+// GetObjectAccessListDeprecatedWithContext is an alternate form of the GetObjectAccessListDeprecated method which supports a Context parameter
+// Deprecated: this method is deprecated and may be removed in a future release.
+func (catalogManagement *CatalogManagementV1) GetObjectAccessListDeprecatedWithContext(ctx context.Context, getObjectAccessListDeprecatedOptions *GetObjectAccessListDeprecatedOptions) (result *ObjectAccessListResult, response *core.DetailedResponse, err error) {
+	core.GetLogger().Warn("A deprecated operation has been invoked: GetObjectAccessListDeprecated")
+	err = core.ValidateNotNil(getObjectAccessListDeprecatedOptions, "getObjectAccessListDeprecatedOptions cannot be nil")
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(getObjectAccessListOptions, "getObjectAccessListOptions")
+	err = core.ValidateStruct(getObjectAccessListDeprecatedOptions, "getObjectAccessListDeprecatedOptions")
 	if err != nil {
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"catalog_identifier": *getObjectAccessListOptions.CatalogIdentifier,
-		"object_identifier": *getObjectAccessListOptions.ObjectIdentifier,
+		"catalog_identifier": *getObjectAccessListDeprecatedOptions.CatalogIdentifier,
+		"object_identifier": *getObjectAccessListDeprecatedOptions.ObjectIdentifier,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -4725,21 +5776,21 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessListWithContext(ctx
 		return
 	}
 
-	for headerName, headerValue := range getObjectAccessListOptions.Headers {
+	for headerName, headerValue := range getObjectAccessListDeprecatedOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetObjectAccessList")
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetObjectAccessListDeprecated")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
 
-	if getObjectAccessListOptions.Limit != nil {
-		builder.AddQuery("limit", fmt.Sprint(*getObjectAccessListOptions.Limit))
+	if getObjectAccessListDeprecatedOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*getObjectAccessListDeprecatedOptions.Limit))
 	}
-	if getObjectAccessListOptions.Offset != nil {
-		builder.AddQuery("offset", fmt.Sprint(*getObjectAccessListOptions.Offset))
+	if getObjectAccessListDeprecatedOptions.Offset != nil {
+		builder.AddQuery("offset", fmt.Sprint(*getObjectAccessListDeprecatedOptions.Offset))
 	}
 
 	request, err := builder.Build()
@@ -4763,8 +5814,8 @@ func (catalogManagement *CatalogManagementV1) GetObjectAccessListWithContext(ctx
 	return
 }
 
-// DeleteObjectAccessList : Delete accounts from object access list
-// Delete all or a set of accounts from an object's access list.
+// DeleteObjectAccessList : Delete accesses from object access list
+// Delete all or a set of accesses from an object's access list.
 func (catalogManagement *CatalogManagementV1) DeleteObjectAccessList(deleteObjectAccessListOptions *DeleteObjectAccessListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
 	return catalogManagement.DeleteObjectAccessListWithContext(context.Background(), deleteObjectAccessListOptions)
 }
@@ -4804,7 +5855,7 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectAccessListWithContext(
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
 
-	_, err = builder.SetBodyContentJSON(deleteObjectAccessListOptions.Accounts)
+	_, err = builder.SetBodyContentJSON(deleteObjectAccessListOptions.Accesses)
 	if err != nil {
 		return
 	}
@@ -4830,8 +5881,8 @@ func (catalogManagement *CatalogManagementV1) DeleteObjectAccessListWithContext(
 	return
 }
 
-// AddObjectAccessList : Add accounts to object access list
-// Add one or more accounts to the specified object's access list.
+// AddObjectAccessList : Add accesses to object access list
+// Add one or more accesses to the specified object's access list.
 func (catalogManagement *CatalogManagementV1) AddObjectAccessList(addObjectAccessListOptions *AddObjectAccessListOptions) (result *AccessListBulkResponse, response *core.DetailedResponse, err error) {
 	return catalogManagement.AddObjectAccessListWithContext(context.Background(), addObjectAccessListOptions)
 }
@@ -4871,7 +5922,7 @@ func (catalogManagement *CatalogManagementV1) AddObjectAccessListWithContext(ctx
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
 
-	_, err = builder.SetBodyContentJSON(addObjectAccessListOptions.Accounts)
+	_, err = builder.SetBodyContentJSON(addObjectAccessListOptions.Accesses)
 	if err != nil {
 		return
 	}
@@ -4964,6 +6015,9 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingInstanceWithContext(
 	if createOfferingInstanceOptions.Version != nil {
 		body["version"] = createOfferingInstanceOptions.Version
 	}
+	if createOfferingInstanceOptions.VersionID != nil {
+		body["version_id"] = createOfferingInstanceOptions.VersionID
+	}
 	if createOfferingInstanceOptions.ClusterID != nil {
 		body["cluster_id"] = createOfferingInstanceOptions.ClusterID
 	}
@@ -4979,20 +6033,41 @@ func (catalogManagement *CatalogManagementV1) CreateOfferingInstanceWithContext(
 	if createOfferingInstanceOptions.SchematicsWorkspaceID != nil {
 		body["schematics_workspace_id"] = createOfferingInstanceOptions.SchematicsWorkspaceID
 	}
-	if createOfferingInstanceOptions.ResourceGroupID != nil {
-		body["resource_group_id"] = createOfferingInstanceOptions.ResourceGroupID
-	}
 	if createOfferingInstanceOptions.InstallPlan != nil {
 		body["install_plan"] = createOfferingInstanceOptions.InstallPlan
 	}
 	if createOfferingInstanceOptions.Channel != nil {
 		body["channel"] = createOfferingInstanceOptions.Channel
 	}
+	if createOfferingInstanceOptions.Created != nil {
+		body["created"] = createOfferingInstanceOptions.Created
+	}
+	if createOfferingInstanceOptions.Updated != nil {
+		body["updated"] = createOfferingInstanceOptions.Updated
+	}
 	if createOfferingInstanceOptions.Metadata != nil {
 		body["metadata"] = createOfferingInstanceOptions.Metadata
 	}
+	if createOfferingInstanceOptions.ResourceGroupID != nil {
+		body["resource_group_id"] = createOfferingInstanceOptions.ResourceGroupID
+	}
+	if createOfferingInstanceOptions.Location != nil {
+		body["location"] = createOfferingInstanceOptions.Location
+	}
+	if createOfferingInstanceOptions.Disabled != nil {
+		body["disabled"] = createOfferingInstanceOptions.Disabled
+	}
+	if createOfferingInstanceOptions.Account != nil {
+		body["account"] = createOfferingInstanceOptions.Account
+	}
 	if createOfferingInstanceOptions.LastOperation != nil {
 		body["last_operation"] = createOfferingInstanceOptions.LastOperation
+	}
+	if createOfferingInstanceOptions.KindTarget != nil {
+		body["kind_target"] = createOfferingInstanceOptions.KindTarget
+	}
+	if createOfferingInstanceOptions.Sha != nil {
+		body["sha"] = createOfferingInstanceOptions.Sha
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -5151,6 +6226,9 @@ func (catalogManagement *CatalogManagementV1) PutOfferingInstanceWithContext(ctx
 	if putOfferingInstanceOptions.Version != nil {
 		body["version"] = putOfferingInstanceOptions.Version
 	}
+	if putOfferingInstanceOptions.VersionID != nil {
+		body["version_id"] = putOfferingInstanceOptions.VersionID
+	}
 	if putOfferingInstanceOptions.ClusterID != nil {
 		body["cluster_id"] = putOfferingInstanceOptions.ClusterID
 	}
@@ -5166,20 +6244,41 @@ func (catalogManagement *CatalogManagementV1) PutOfferingInstanceWithContext(ctx
 	if putOfferingInstanceOptions.SchematicsWorkspaceID != nil {
 		body["schematics_workspace_id"] = putOfferingInstanceOptions.SchematicsWorkspaceID
 	}
-	if putOfferingInstanceOptions.ResourceGroupID != nil {
-		body["resource_group_id"] = putOfferingInstanceOptions.ResourceGroupID
-	}
 	if putOfferingInstanceOptions.InstallPlan != nil {
 		body["install_plan"] = putOfferingInstanceOptions.InstallPlan
 	}
 	if putOfferingInstanceOptions.Channel != nil {
 		body["channel"] = putOfferingInstanceOptions.Channel
 	}
+	if putOfferingInstanceOptions.Created != nil {
+		body["created"] = putOfferingInstanceOptions.Created
+	}
+	if putOfferingInstanceOptions.Updated != nil {
+		body["updated"] = putOfferingInstanceOptions.Updated
+	}
 	if putOfferingInstanceOptions.Metadata != nil {
 		body["metadata"] = putOfferingInstanceOptions.Metadata
 	}
+	if putOfferingInstanceOptions.ResourceGroupID != nil {
+		body["resource_group_id"] = putOfferingInstanceOptions.ResourceGroupID
+	}
+	if putOfferingInstanceOptions.Location != nil {
+		body["location"] = putOfferingInstanceOptions.Location
+	}
+	if putOfferingInstanceOptions.Disabled != nil {
+		body["disabled"] = putOfferingInstanceOptions.Disabled
+	}
+	if putOfferingInstanceOptions.Account != nil {
+		body["account"] = putOfferingInstanceOptions.Account
+	}
 	if putOfferingInstanceOptions.LastOperation != nil {
 		body["last_operation"] = putOfferingInstanceOptions.LastOperation
+	}
+	if putOfferingInstanceOptions.KindTarget != nil {
+		body["kind_target"] = putOfferingInstanceOptions.KindTarget
+	}
+	if putOfferingInstanceOptions.Sha != nil {
+		body["sha"] = putOfferingInstanceOptions.Sha
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -5258,6 +6357,214 @@ func (catalogManagement *CatalogManagementV1) DeleteOfferingInstanceWithContext(
 	return
 }
 
+// ListOfferingInstanceAudits : Get offering instance audit logs
+// Get the audit logs associated with an offering instance.
+func (catalogManagement *CatalogManagementV1) ListOfferingInstanceAudits(listOfferingInstanceAuditsOptions *ListOfferingInstanceAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
+	return catalogManagement.ListOfferingInstanceAuditsWithContext(context.Background(), listOfferingInstanceAuditsOptions)
+}
+
+// ListOfferingInstanceAuditsWithContext is an alternate form of the ListOfferingInstanceAudits method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) ListOfferingInstanceAuditsWithContext(ctx context.Context, listOfferingInstanceAuditsOptions *ListOfferingInstanceAuditsOptions) (result *AuditLogs, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listOfferingInstanceAuditsOptions, "listOfferingInstanceAuditsOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(listOfferingInstanceAuditsOptions, "listOfferingInstanceAuditsOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_identifier": *listOfferingInstanceAuditsOptions.InstanceIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/instances/offerings/{instance_identifier}/audits`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listOfferingInstanceAuditsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ListOfferingInstanceAudits")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listOfferingInstanceAuditsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listOfferingInstanceAuditsOptions.Start))
+	}
+	if listOfferingInstanceAuditsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listOfferingInstanceAuditsOptions.Limit))
+	}
+	if listOfferingInstanceAuditsOptions.Lookupnames != nil {
+		builder.AddQuery("lookupnames", fmt.Sprint(*listOfferingInstanceAuditsOptions.Lookupnames))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLogs)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetOfferingInstanceAudit : Get an offering instance audit log entry
+// Get the full audit log entry associated with an offering instance.
+func (catalogManagement *CatalogManagementV1) GetOfferingInstanceAudit(getOfferingInstanceAuditOptions *GetOfferingInstanceAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
+	return catalogManagement.GetOfferingInstanceAuditWithContext(context.Background(), getOfferingInstanceAuditOptions)
+}
+
+// GetOfferingInstanceAuditWithContext is an alternate form of the GetOfferingInstanceAudit method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) GetOfferingInstanceAuditWithContext(ctx context.Context, getOfferingInstanceAuditOptions *GetOfferingInstanceAuditOptions) (result *AuditLog, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getOfferingInstanceAuditOptions, "getOfferingInstanceAuditOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(getOfferingInstanceAuditOptions, "getOfferingInstanceAuditOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_identifier": *getOfferingInstanceAuditOptions.InstanceIdentifier,
+		"auditlog_identifier": *getOfferingInstanceAuditOptions.AuditlogIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/instances/offerings/{instance_identifier}/audits/{auditlog_identifier}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getOfferingInstanceAuditOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "GetOfferingInstanceAudit")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getOfferingInstanceAuditOptions.Lookupnames != nil {
+		builder.AddQuery("lookupnames", fmt.Sprint(*getOfferingInstanceAuditOptions.Lookupnames))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = catalogManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAuditLog)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// Access : access.
+type Access struct {
+	// unique id.
+	ID *string `json:"id,omitempty"`
+
+	// account id.
+	Account *string `json:"account,omitempty"`
+
+	// Normal account or enterprise.
+	AccountType *int64 `json:"account_type,omitempty"`
+
+	// unique id.
+	CatalogID *string `json:"catalog_id,omitempty"`
+
+	// object ID.
+	TargetID *string `json:"target_id,omitempty"`
+
+	// object's owner's account.
+	TargetAccount *string `json:"target_account,omitempty"`
+
+	// entity type.
+	TargetKind *string `json:"target_kind,omitempty"`
+
+	// accessible to the private object.
+	PrivateAccessible *bool `json:"private_accessible,omitempty"`
+
+	// date and time create.
+	Created *strfmt.DateTime `json:"created,omitempty"`
+}
+
+// UnmarshalAccess unmarshals an instance of Access from the specified map of raw messages.
+func UnmarshalAccess(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Access)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account", &obj.Account)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account_type", &obj.AccountType)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_id", &obj.TargetID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_account", &obj.TargetAccount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_kind", &obj.TargetKind)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "private_accessible", &obj.PrivateAccessible)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // AccessListBulkResponse : Access List Add/Remove result.
 type AccessListBulkResponse struct {
 	// in the case of error on an account add/remove - account: error.
@@ -5275,10 +6582,94 @@ func UnmarshalAccessListBulkResponse(m map[string]json.RawMessage, result interf
 	return
 }
 
+// AccessListResult : Paginated Offering search result.
+type AccessListResult struct {
+	// The start token used for this response.
+	Start *string `json:"start,omitempty"`
+
+	// The limit that was applied to this response. It may be smaller than in the request because that was too large.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// The total count of resources in the system that matches the request.
+	TotalCount *int64 `json:"total_count,omitempty"`
+
+	// The number of resources returned in this response.
+	ResourceCount *int64 `json:"resource_count" validate:"required"`
+
+	// Link response on a token paginated query.
+	First *PaginationTokenLink `json:"first" validate:"required"`
+
+	// Link response on a token paginated query.
+	Next *PaginationTokenLink `json:"next,omitempty"`
+
+	// Link response on a token paginated query.
+	Prev *PaginationTokenLink `json:"prev,omitempty"`
+
+	// Link response on a token paginated query.
+	Last *PaginationTokenLink `json:"last,omitempty"`
+
+	// A list of access records.
+	Resources []Access `json:"resources" validate:"required"`
+}
+
+// UnmarshalAccessListResult unmarshals an instance of AccessListResult from the specified map of raw messages.
+func UnmarshalAccessListResult(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AccessListResult)
+	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationTokenLink)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationTokenLink)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "prev", &obj.Prev, UnmarshalPaginationTokenLink)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationTokenLink)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalAccess)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *AccessListResult) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
+}
+
 // Account : Account information.
 type Account struct {
 	// Account identification.
 	ID *string `json:"id,omitempty"`
+
+	// Cloudant revision.
+	Rev *string `json:"_rev,omitempty"`
 
 	// Hide the public catalog in this account.
 	HideIBMCloudCatalog *bool `json:"hide_IBM_cloud_catalog,omitempty"`
@@ -5294,6 +6685,10 @@ func UnmarshalAccount(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "hide_IBM_cloud_catalog", &obj.HideIBMCloudCatalog)
 	if err != nil {
 		return
@@ -5306,75 +6701,12 @@ func UnmarshalAccount(m map[string]json.RawMessage, result interface{}) (err err
 	return
 }
 
-// AccountPublishObjectOptions : The AccountPublishObject options.
-type AccountPublishObjectOptions struct {
-	// Catalog identifier.
-	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
-
-	// Object identifier.
-	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewAccountPublishObjectOptions : Instantiate AccountPublishObjectOptions
-func (*CatalogManagementV1) NewAccountPublishObjectOptions(catalogIdentifier string, objectIdentifier string) *AccountPublishObjectOptions {
-	return &AccountPublishObjectOptions{
-		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
-	}
-}
-
-// SetCatalogIdentifier : Allow user to set CatalogIdentifier
-func (_options *AccountPublishObjectOptions) SetCatalogIdentifier(catalogIdentifier string) *AccountPublishObjectOptions {
-	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
-	return _options
-}
-
-// SetObjectIdentifier : Allow user to set ObjectIdentifier
-func (_options *AccountPublishObjectOptions) SetObjectIdentifier(objectIdentifier string) *AccountPublishObjectOptions {
-	_options.ObjectIdentifier = core.StringPtr(objectIdentifier)
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *AccountPublishObjectOptions) SetHeaders(param map[string]string) *AccountPublishObjectOptions {
-	options.Headers = param
-	return options
-}
-
-// AccountPublishVersionOptions : The AccountPublishVersion options.
-type AccountPublishVersionOptions struct {
-	// A dotted value of `catalogID`.`versionID`.
-	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewAccountPublishVersionOptions : Instantiate AccountPublishVersionOptions
-func (*CatalogManagementV1) NewAccountPublishVersionOptions(versionLocID string) *AccountPublishVersionOptions {
-	return &AccountPublishVersionOptions{
-		VersionLocID: core.StringPtr(versionLocID),
-	}
-}
-
-// SetVersionLocID : Allow user to set VersionLocID
-func (_options *AccountPublishVersionOptions) SetVersionLocID(versionLocID string) *AccountPublishVersionOptions {
-	_options.VersionLocID = core.StringPtr(versionLocID)
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *AccountPublishVersionOptions) SetHeaders(param map[string]string) *AccountPublishVersionOptions {
-	options.Headers = param
-	return options
-}
-
 // AccumulatedFilters : The accumulated filters for an account. This will return the account filters plus a filter for each catalog the user
 // has access to.
 type AccumulatedFilters struct {
+	// Hide the public catalog in this account.
+	HideIBMCloudCatalog *bool `json:"hide_IBM_cloud_catalog,omitempty"`
+
 	// Filters for accounts (at this time this will always be just one item array).
 	AccountFilters []Filters `json:"account_filters,omitempty"`
 
@@ -5385,6 +6717,10 @@ type AccumulatedFilters struct {
 // UnmarshalAccumulatedFilters unmarshals an instance of AccumulatedFilters from the specified map of raw messages.
 func UnmarshalAccumulatedFilters(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(AccumulatedFilters)
+	err = core.UnmarshalPrimitive(m, "hide_IBM_cloud_catalog", &obj.HideIBMCloudCatalog)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalModel(m, "account_filters", &obj.AccountFilters, UnmarshalFilters)
 	if err != nil {
 		return
@@ -5453,19 +6789,19 @@ type AddObjectAccessListOptions struct {
 	// Object identifier.
 	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
 
-	// A list of accounts to add.
-	Accounts []string `json:"accounts" validate:"required"`
+	// A list of accesses to add.
+	Accesses []string `json:"accesses" validate:"required"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewAddObjectAccessListOptions : Instantiate AddObjectAccessListOptions
-func (*CatalogManagementV1) NewAddObjectAccessListOptions(catalogIdentifier string, objectIdentifier string, accounts []string) *AddObjectAccessListOptions {
+func (*CatalogManagementV1) NewAddObjectAccessListOptions(catalogIdentifier string, objectIdentifier string, accesses []string) *AddObjectAccessListOptions {
 	return &AddObjectAccessListOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
 		ObjectIdentifier: core.StringPtr(objectIdentifier),
-		Accounts: accounts,
+		Accesses: accesses,
 	}
 }
 
@@ -5481,9 +6817,9 @@ func (_options *AddObjectAccessListOptions) SetObjectIdentifier(objectIdentifier
 	return _options
 }
 
-// SetAccounts : Allow user to set Accounts
-func (_options *AddObjectAccessListOptions) SetAccounts(accounts []string) *AddObjectAccessListOptions {
-	_options.Accounts = accounts
+// SetAccesses : Allow user to set Accesses
+func (_options *AddObjectAccessListOptions) SetAccesses(accesses []string) *AddObjectAccessListOptions {
+	_options.Accesses = accesses
 	return _options
 }
 
@@ -5493,25 +6829,88 @@ func (options *AddObjectAccessListOptions) SetHeaders(param map[string]string) *
 	return options
 }
 
+// AddOfferingAccessListOptions : The AddOfferingAccessList options.
+type AddOfferingAccessListOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Offering identification.
+	OfferingID *string `json:"offering_id" validate:"required,ne="`
+
+	// A list of accesses to add.
+	Accesses []string `json:"accesses" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewAddOfferingAccessListOptions : Instantiate AddOfferingAccessListOptions
+func (*CatalogManagementV1) NewAddOfferingAccessListOptions(catalogIdentifier string, offeringID string, accesses []string) *AddOfferingAccessListOptions {
+	return &AddOfferingAccessListOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		OfferingID: core.StringPtr(offeringID),
+		Accesses: accesses,
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *AddOfferingAccessListOptions) SetCatalogIdentifier(catalogIdentifier string) *AddOfferingAccessListOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetOfferingID : Allow user to set OfferingID
+func (_options *AddOfferingAccessListOptions) SetOfferingID(offeringID string) *AddOfferingAccessListOptions {
+	_options.OfferingID = core.StringPtr(offeringID)
+	return _options
+}
+
+// SetAccesses : Allow user to set Accesses
+func (_options *AddOfferingAccessListOptions) SetAccesses(accesses []string) *AddOfferingAccessListOptions {
+	_options.Accesses = accesses
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *AddOfferingAccessListOptions) SetHeaders(param map[string]string) *AddOfferingAccessListOptions {
+	options.Headers = param
+	return options
+}
+
 // ApprovalResult : Result of approval.
 type ApprovalResult struct {
-	// Allowed to request to publish.
-	AllowRequest *bool `json:"allow_request,omitempty"`
+	// Shared - object is shared using access list - not set when using PC Managed objects.
+	// Deprecated: this field is deprecated and may be removed in a future release.
+	Shared *bool `json:"shared,omitempty"`
 
-	// Visible to IBM.
+	// Shared with IBM only - access list is also applicable - not set when using PC Managed objects.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	IBM *bool `json:"ibm,omitempty"`
 
-	// Visible to everyone.
+	// Shared with everyone - not set when using PC Managed objects.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	Public *bool `json:"public,omitempty"`
 
-	// Denotes whether approval has changed.
+	// Published to Partner Center (pc_managed) or for objects, allowed to request publishing.
+	AllowRequest *bool `json:"allow_request,omitempty"`
+
+	// Approvers have approved publishing to public catalog.
+	Approved *bool `json:"approved,omitempty"`
+
+	// Partner Center document ID.
+	PortalRecord *string `json:"portal_record,omitempty"`
+
+	// Partner Center URL for this product.
+	PortalURL *string `json:"portal_url,omitempty"`
+
+	// Denotes whether approvals have changed.
 	Changed *bool `json:"changed,omitempty"`
 }
 
 // UnmarshalApprovalResult unmarshals an instance of ApprovalResult from the specified map of raw messages.
 func UnmarshalApprovalResult(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ApprovalResult)
-	err = core.UnmarshalPrimitive(m, "allow_request", &obj.AllowRequest)
+	err = core.UnmarshalPrimitive(m, "shared", &obj.Shared)
 	if err != nil {
 		return
 	}
@@ -5523,6 +6922,22 @@ func UnmarshalApprovalResult(m map[string]json.RawMessage, result interface{}) (
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "allow_request", &obj.AllowRequest)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "approved", &obj.Approved)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "portal_record", &obj.PortalRecord)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "portal_url", &obj.PortalURL)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "changed", &obj.Changed)
 	if err != nil {
 		return
@@ -5531,16 +6946,30 @@ func UnmarshalApprovalResult(m map[string]json.RawMessage, result interface{}) (
 	return
 }
 
-// AuditLog : A collection of audit records.
-type AuditLog struct {
-	// A list of audit records.
-	List []AuditRecord `json:"list,omitempty"`
+// ArchitectureDiagram : An Architecture Diagram.
+type ArchitectureDiagram struct {
+	// Offering Media information.
+	Diagram *MediaItem `json:"diagram,omitempty"`
+
+	// Description of this diagram.
+	Description *string `json:"description,omitempty"`
+
+	// A map of translated strings, by language code.
+	DescriptionI18n map[string]string `json:"description_i18n,omitempty"`
 }
 
-// UnmarshalAuditLog unmarshals an instance of AuditLog from the specified map of raw messages.
-func UnmarshalAuditLog(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(AuditLog)
-	err = core.UnmarshalModel(m, "list", &obj.List, UnmarshalAuditRecord)
+// UnmarshalArchitectureDiagram unmarshals an instance of ArchitectureDiagram from the specified map of raw messages.
+func UnmarshalArchitectureDiagram(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ArchitectureDiagram)
+	err = core.UnmarshalModel(m, "diagram", &obj.Diagram, UnmarshalMediaItem)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description_i18n", &obj.DescriptionI18n)
 	if err != nil {
 		return
 	}
@@ -5548,10 +6977,41 @@ func UnmarshalAuditLog(m map[string]json.RawMessage, result interface{}) (err er
 	return
 }
 
-// AuditRecord : An audit record which describes a change made to a catalog or associated resource.
-type AuditRecord struct {
+// ArchiveVersionOptions : The ArchiveVersion options.
+type ArchiveVersionOptions struct {
+	// A dotted value of `catalogID`.`versionID`.
+	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewArchiveVersionOptions : Instantiate ArchiveVersionOptions
+func (*CatalogManagementV1) NewArchiveVersionOptions(versionLocID string) *ArchiveVersionOptions {
+	return &ArchiveVersionOptions{
+		VersionLocID: core.StringPtr(versionLocID),
+	}
+}
+
+// SetVersionLocID : Allow user to set VersionLocID
+func (_options *ArchiveVersionOptions) SetVersionLocID(versionLocID string) *ArchiveVersionOptions {
+	_options.VersionLocID = core.StringPtr(versionLocID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ArchiveVersionOptions) SetHeaders(param map[string]string) *ArchiveVersionOptions {
+	options.Headers = param
+	return options
+}
+
+// AuditLog : An audit log which describes a change made to a catalog or associated resource.
+type AuditLog struct {
 	// The identifier of the audit record.
 	ID *string `json:"id,omitempty"`
+
+	// Cloudant revision.
+	Rev *string `json:"_rev,omitempty"`
 
 	// The time at which the change was made.
 	Created *strfmt.DateTime `json:"created,omitempty"`
@@ -5566,16 +7026,42 @@ type AuditRecord struct {
 	TargetID *string `json:"target_id,omitempty"`
 
 	// The email address of the user that made the change.
+	WhoEmail *string `json:"who_email,omitempty"`
+
+	// The email address of the delegate user that made the change. This happens when a service makes a change onbehalf of
+	// the user.
 	WhoDelegateEmail *string `json:"who_delegate_email,omitempty"`
 
 	// A message which describes the change.
 	Message *string `json:"message,omitempty"`
+
+	// Transaction id for this change.
+	Gid *string `json:"gid,omitempty"`
+
+	// IAM identifier of the user who made the change.
+	WhoID *string `json:"who_id,omitempty"`
+
+	// Name of the user who made the change.
+	WhoName *string `json:"who_name,omitempty"`
+
+	// IAM identifier of the delegate user who made the change.
+	WhoDelegateID *string `json:"who_delegate_id,omitempty"`
+
+	// Name of the delegate user who made the change.
+	WhoDelegateName *string `json:"who_delegate_name,omitempty"`
+
+	// Data about the change. Usually a change log of what was changed, both before and after. Can be of any type.
+	Data interface{} `json:"data,omitempty"`
 }
 
-// UnmarshalAuditRecord unmarshals an instance of AuditRecord from the specified map of raw messages.
-func UnmarshalAuditRecord(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(AuditRecord)
+// UnmarshalAuditLog unmarshals an instance of AuditLog from the specified map of raw messages.
+func UnmarshalAuditLog(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AuditLog)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
 		return
 	}
@@ -5595,11 +7081,274 @@ func UnmarshalAuditRecord(m map[string]json.RawMessage, result interface{}) (err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "who_email", &obj.WhoEmail)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "who_delegate_email", &obj.WhoDelegateEmail)
 	if err != nil {
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "gid", &obj.Gid)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "who_id", &obj.WhoID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "who_name", &obj.WhoName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "who_delegate_id", &obj.WhoDelegateID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "who_delegate_name", &obj.WhoDelegateName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "data", &obj.Data)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AuditLogDigest : An reduced audit log which describes a change made to a catalog or associated resource.
+type AuditLogDigest struct {
+	// The identifier of the audit record.
+	ID *string `json:"id,omitempty"`
+
+	// Cloudant revision.
+	Rev *string `json:"_rev,omitempty"`
+
+	// The time at which the change was made.
+	Created *strfmt.DateTime `json:"created,omitempty"`
+
+	// The type of change described by the audit record.
+	ChangeType *string `json:"change_type,omitempty"`
+
+	// The resource type associated with the change.
+	TargetType *string `json:"target_type,omitempty"`
+
+	// The identifier of the resource that was changed.
+	TargetID *string `json:"target_id,omitempty"`
+
+	// The email address of the user that made the change.
+	WhoEmail *string `json:"who_email,omitempty"`
+
+	// The email address of the delegate user that made the change. This happens when a service makes a change onbehalf of
+	// the user.
+	WhoDelegateEmail *string `json:"who_delegate_email,omitempty"`
+
+	// A message which describes the change.
+	Message *string `json:"message,omitempty"`
+}
+
+// UnmarshalAuditLogDigest unmarshals an instance of AuditLogDigest from the specified map of raw messages.
+func UnmarshalAuditLogDigest(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AuditLogDigest)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "change_type", &obj.ChangeType)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_type", &obj.TargetType)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_id", &obj.TargetID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "who_email", &obj.WhoEmail)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "who_delegate_email", &obj.WhoDelegateEmail)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AuditLogs : A collection of audit records.
+type AuditLogs struct {
+	// The start token used for this response.
+	Start *string `json:"start,omitempty"`
+
+	// The limit that was applied to this response. It may be smaller than in the request because that was too large.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// The total count of resources in the system that matches the request.
+	TotalCount *int64 `json:"total_count,omitempty"`
+
+	// The number of resources returned in this response.
+	ResourceCount *int64 `json:"resource_count" validate:"required"`
+
+	// Link response on a token paginated query.
+	First *PaginationTokenLink `json:"first" validate:"required"`
+
+	// Link response on a token paginated query.
+	Next *PaginationTokenLink `json:"next,omitempty"`
+
+	// Link response on a token paginated query.
+	Prev *PaginationTokenLink `json:"prev,omitempty"`
+
+	// Link response on a token paginated query.
+	Last *PaginationTokenLink `json:"last,omitempty"`
+
+	// A list of audit records.
+	Audits []AuditLogDigest `json:"audits" validate:"required"`
+}
+
+// UnmarshalAuditLogs unmarshals an instance of AuditLogs from the specified map of raw messages.
+func UnmarshalAuditLogs(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AuditLogs)
+	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_count", &obj.ResourceCount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationTokenLink)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationTokenLink)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "prev", &obj.Prev, UnmarshalPaginationTokenLink)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationTokenLink)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "audits", &obj.Audits, UnmarshalAuditLogDigest)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *AuditLogs) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	return resp.Next.Start, nil
+}
+
+// Badge : Badge information.
+type Badge struct {
+	// ID of the current badge.
+	ID *string `json:"id,omitempty"`
+
+	// Display name for the current badge.
+	Label *string `json:"label,omitempty"`
+
+	// A map of translated strings, by language code.
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
+
+	// Description of the current badge.
+	Description *string `json:"description,omitempty"`
+
+	// A map of translated strings, by language code.
+	DescriptionI18n map[string]string `json:"description_i18n,omitempty"`
+
+	// Icon for the current badge.
+	Icon *string `json:"icon,omitempty"`
+
+	// Authority for the current badge.
+	Authority *string `json:"authority,omitempty"`
+
+	// Tag for the current badge.
+	Tag *string `json:"tag,omitempty"`
+
+	// Learn more links for a badge.
+	LearnMoreLinks *LearnMoreLinks `json:"learn_more_links,omitempty"`
+
+	// An optional set of constraints indicating which versions in an Offering have this particular badge.
+	Constraints []Constraint `json:"constraints,omitempty"`
+}
+
+// UnmarshalBadge unmarshals an instance of Badge from the specified map of raw messages.
+func UnmarshalBadge(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Badge)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label_i18n", &obj.LabelI18n)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description_i18n", &obj.DescriptionI18n)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "icon", &obj.Icon)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "authority", &obj.Authority)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "tag", &obj.Tag)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "learn_more_links", &obj.LearnMoreLinks, UnmarshalLearnMoreLinks)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "constraints", &obj.Constraints, UnmarshalConstraint)
 	if err != nil {
 		return
 	}
@@ -5618,11 +7367,20 @@ type Catalog struct {
 	// Display Name in the requested language.
 	Label *string `json:"label,omitempty"`
 
+	// A map of translated strings, by language code.
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
+
 	// Description in the requested language.
 	ShortDescription *string `json:"short_description,omitempty"`
 
+	// A map of translated strings, by language code.
+	ShortDescriptionI18n map[string]string `json:"short_description_i18n,omitempty"`
+
 	// URL for an icon associated with this catalog.
 	CatalogIconURL *string `json:"catalog_icon_url,omitempty"`
+
+	// URL for a banner image for this catalog.
+	CatalogBannerURL *string `json:"catalog_banner_url,omitempty"`
 
 	// List of tags associated with this catalog.
 	Tags []string `json:"tags,omitempty"`
@@ -5662,6 +7420,9 @@ type Catalog struct {
 
 	// Kind of catalog. Supported kinds are offering and vpe.
 	Kind *string `json:"kind,omitempty"`
+
+	// Catalog specific metadata.
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // UnmarshalCatalog unmarshals an instance of Catalog from the specified map of raw messages.
@@ -5679,11 +7440,23 @@ func UnmarshalCatalog(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "label_i18n", &obj.LabelI18n)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "short_description", &obj.ShortDescription)
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "short_description_i18n", &obj.ShortDescriptionI18n)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "catalog_icon_url", &obj.CatalogIconURL)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "catalog_banner_url", &obj.CatalogBannerURL)
 	if err != nil {
 		return
 	}
@@ -5739,6 +7512,10 @@ func UnmarshalCatalog(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -5748,11 +7525,11 @@ type CatalogObject struct {
 	// unique id.
 	ID *string `json:"id,omitempty"`
 
-	// The programmatic name of this offering.
-	Name *string `json:"name,omitempty"`
-
 	// Cloudant revision.
 	Rev *string `json:"_rev,omitempty"`
+
+	// The programmatic name of this object.
+	Name *string `json:"name,omitempty"`
 
 	// The crn for this specific object.
 	CRN *string `json:"crn,omitempty"`
@@ -5763,8 +7540,8 @@ type CatalogObject struct {
 	// The parent for this specific object.
 	ParentID *string `json:"parent_id,omitempty"`
 
-	// Translated display name in the requested language.
-	LabelI18n *string `json:"label_i18n,omitempty"`
+	// A map of translated strings, by language code.
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
 
 	// Display name in the requested language.
 	Label *string `json:"label,omitempty"`
@@ -5781,8 +7558,8 @@ type CatalogObject struct {
 	// Short description in the requested language.
 	ShortDescription *string `json:"short_description,omitempty"`
 
-	// Short description translation.
-	ShortDescriptionI18n *string `json:"short_description_i18n,omitempty"`
+	// A map of translated strings, by language code.
+	ShortDescriptionI18n map[string]string `json:"short_description_i18n,omitempty"`
 
 	// Kind of object.
 	Kind *string `json:"kind,omitempty"`
@@ -5810,11 +7587,11 @@ func UnmarshalCatalogObject(m map[string]json.RawMessage, result interface{}) (e
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "_rev", &obj.Rev)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		return
 	}
@@ -5950,6 +7727,15 @@ type ClusterInfo struct {
 
 	// Cluster region.
 	Region *string `json:"region,omitempty"`
+
+	// Cluster Ingress hostname.
+	IngressHostname *string `json:"ingress_hostname,omitempty"`
+
+	// Cluster provider.
+	Provider *string `json:"provider,omitempty"`
+
+	// Cluster status.
+	Status *string `json:"status,omitempty"`
 }
 
 // UnmarshalClusterInfo unmarshals an instance of ClusterInfo from the specified map of raw messages.
@@ -5972,6 +7758,18 @@ func UnmarshalClusterInfo(m map[string]json.RawMessage, result interface{}) (err
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "region", &obj.Region)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ingress_hostname", &obj.IngressHostname)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "provider", &obj.Provider)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
 	if err != nil {
 		return
 	}
@@ -6007,6 +7805,123 @@ func (options *CommitVersionOptions) SetHeaders(param map[string]string) *Commit
 	return options
 }
 
+// ComplianceControl : Control that can be added to a version.
+type ComplianceControl struct {
+	// SCC profile.
+	SccProfile *ComplianceControlSccProfile `json:"scc_profile,omitempty"`
+
+	// Control family.
+	Family *ComplianceControlFamily `json:"family,omitempty"`
+
+	// Control goals.
+	Goals []Goal `json:"goals,omitempty"`
+
+	// Control validation.
+	Validation *ComplianceControlValidation `json:"validation,omitempty"`
+}
+
+// UnmarshalComplianceControl unmarshals an instance of ComplianceControl from the specified map of raw messages.
+func UnmarshalComplianceControl(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ComplianceControl)
+	err = core.UnmarshalModel(m, "scc_profile", &obj.SccProfile, UnmarshalComplianceControlSccProfile)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "family", &obj.Family, UnmarshalComplianceControlFamily)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "goals", &obj.Goals, UnmarshalGoal)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "validation", &obj.Validation, UnmarshalComplianceControlValidation)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ComplianceControlFamily : Control family.
+type ComplianceControlFamily struct {
+	// ID.
+	ID *string `json:"id,omitempty"`
+
+	// External ID.
+	ExternalID *string `json:"external_id,omitempty"`
+
+	// Description.
+	Description *string `json:"description,omitempty"`
+
+	// UI href.
+	UIHref *string `json:"ui_href,omitempty"`
+}
+
+// UnmarshalComplianceControlFamily unmarshals an instance of ComplianceControlFamily from the specified map of raw messages.
+func UnmarshalComplianceControlFamily(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ComplianceControlFamily)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "external_id", &obj.ExternalID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ComplianceControlSccProfile : SCC profile.
+type ComplianceControlSccProfile struct {
+	// Profile type.
+	Type *string `json:"type,omitempty"`
+}
+
+// UnmarshalComplianceControlSccProfile unmarshals an instance of ComplianceControlSccProfile from the specified map of raw messages.
+func UnmarshalComplianceControlSccProfile(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ComplianceControlSccProfile)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ComplianceControlValidation : Control validation.
+type ComplianceControlValidation struct {
+	// Validation certified bool.
+	Certified *bool `json:"certified,omitempty"`
+
+	// Map of validation results.
+	Results map[string]interface{} `json:"results,omitempty"`
+}
+
+// UnmarshalComplianceControlValidation unmarshals an instance of ComplianceControlValidation from the specified map of raw messages.
+func UnmarshalComplianceControlValidation(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ComplianceControlValidation)
+	err = core.UnmarshalPrimitive(m, "certified", &obj.Certified)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "results", &obj.Results)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // Configuration : Configuration description.
 type Configuration struct {
 	// Configuration key.
@@ -6018,6 +7933,9 @@ type Configuration struct {
 	// The default value.  To use a secret when the type is password, specify a JSON encoded value of
 	// $ref:#/components/schemas/SecretInstance, prefixed with `cmsm_v1:`.
 	DefaultValue interface{} `json:"default_value,omitempty"`
+
+	// Display name for configuration type.
+	DisplayName *string `json:"display_name,omitempty"`
 
 	// Constraint associated with value, e.g., for string type - regx:[a-z].
 	ValueConstraint *string `json:"value_constraint,omitempty"`
@@ -6033,6 +7951,12 @@ type Configuration struct {
 
 	// Hide values.
 	Hidden *bool `json:"hidden,omitempty"`
+
+	// Render type.
+	CustomConfig *RenderType `json:"custom_config,omitempty"`
+
+	// The original type, as found in the source being onboarded.
+	TypeMetadata *string `json:"type_metadata,omitempty"`
 }
 
 // UnmarshalConfiguration unmarshals an instance of Configuration from the specified map of raw messages.
@@ -6047,6 +7971,10 @@ func UnmarshalConfiguration(m map[string]json.RawMessage, result interface{}) (e
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "default_value", &obj.DefaultValue)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
 	if err != nil {
 		return
 	}
@@ -6070,8 +7998,154 @@ func UnmarshalConfiguration(m map[string]json.RawMessage, result interface{}) (e
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalModel(m, "custom_config", &obj.CustomConfig, UnmarshalRenderType)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type_metadata", &obj.TypeMetadata)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Constraint : Constraint information.
+type Constraint struct {
+	// Type of the current constraint.
+	Type *string `json:"type,omitempty"`
+
+	// Rule for the current constraint.
+	Rule interface{} `json:"rule,omitempty"`
+}
+
+// UnmarshalConstraint unmarshals an instance of Constraint from the specified map of raw messages.
+func UnmarshalConstraint(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Constraint)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "rule", &obj.Rule)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ConsumableShareObjectOptions : The ConsumableShareObject options.
+type ConsumableShareObjectOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Object identifier.
+	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewConsumableShareObjectOptions : Instantiate ConsumableShareObjectOptions
+func (*CatalogManagementV1) NewConsumableShareObjectOptions(catalogIdentifier string, objectIdentifier string) *ConsumableShareObjectOptions {
+	return &ConsumableShareObjectOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		ObjectIdentifier: core.StringPtr(objectIdentifier),
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *ConsumableShareObjectOptions) SetCatalogIdentifier(catalogIdentifier string) *ConsumableShareObjectOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetObjectIdentifier : Allow user to set ObjectIdentifier
+func (_options *ConsumableShareObjectOptions) SetObjectIdentifier(objectIdentifier string) *ConsumableShareObjectOptions {
+	_options.ObjectIdentifier = core.StringPtr(objectIdentifier)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ConsumableShareObjectOptions) SetHeaders(param map[string]string) *ConsumableShareObjectOptions {
+	options.Headers = param
+	return options
+}
+
+// ConsumableVersionOptions : The ConsumableVersion options.
+type ConsumableVersionOptions struct {
+	// A dotted value of `catalogID`.`versionID`.
+	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewConsumableVersionOptions : Instantiate ConsumableVersionOptions
+func (*CatalogManagementV1) NewConsumableVersionOptions(versionLocID string) *ConsumableVersionOptions {
+	return &ConsumableVersionOptions{
+		VersionLocID: core.StringPtr(versionLocID),
+	}
+}
+
+// SetVersionLocID : Allow user to set VersionLocID
+func (_options *ConsumableVersionOptions) SetVersionLocID(versionLocID string) *ConsumableVersionOptions {
+	_options.VersionLocID = core.StringPtr(versionLocID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ConsumableVersionOptions) SetHeaders(param map[string]string) *ConsumableVersionOptions {
+	options.Headers = param
+	return options
+}
+
+// CopyFromPreviousVersionOptions : The CopyFromPreviousVersion options.
+type CopyFromPreviousVersionOptions struct {
+	// A dotted value of `catalogID`.`versionID`.
+	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
+
+	// The type of data you would like to copy from a previous version. Valid values are 'configuration' or 'licenses'.
+	Type *string `json:"type" validate:"required,ne="`
+
+	// The version locator id of the version you wish to copy data from.
+	VersionLocIDToCopyFrom *string `json:"version_loc_id_to_copy_from" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewCopyFromPreviousVersionOptions : Instantiate CopyFromPreviousVersionOptions
+func (*CatalogManagementV1) NewCopyFromPreviousVersionOptions(versionLocID string, typeVar string, versionLocIDToCopyFrom string) *CopyFromPreviousVersionOptions {
+	return &CopyFromPreviousVersionOptions{
+		VersionLocID: core.StringPtr(versionLocID),
+		Type: core.StringPtr(typeVar),
+		VersionLocIDToCopyFrom: core.StringPtr(versionLocIDToCopyFrom),
+	}
+}
+
+// SetVersionLocID : Allow user to set VersionLocID
+func (_options *CopyFromPreviousVersionOptions) SetVersionLocID(versionLocID string) *CopyFromPreviousVersionOptions {
+	_options.VersionLocID = core.StringPtr(versionLocID)
+	return _options
+}
+
+// SetType : Allow user to set Type
+func (_options *CopyFromPreviousVersionOptions) SetType(typeVar string) *CopyFromPreviousVersionOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetVersionLocIDToCopyFrom : Allow user to set VersionLocIDToCopyFrom
+func (_options *CopyFromPreviousVersionOptions) SetVersionLocIDToCopyFrom(versionLocIDToCopyFrom string) *CopyFromPreviousVersionOptions {
+	_options.VersionLocIDToCopyFrom = core.StringPtr(versionLocIDToCopyFrom)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CopyFromPreviousVersionOptions) SetHeaders(param map[string]string) *CopyFromPreviousVersionOptions {
+	options.Headers = param
+	return options
 }
 
 // CopyVersionOptions : The CopyVersion options.
@@ -6082,11 +8156,20 @@ type CopyVersionOptions struct {
 	// Tags array.
 	Tags []string `json:"tags,omitempty"`
 
-	// Target kinds.  Current valid values are 'iks', 'roks', 'vcenter', and 'terraform'.
-	TargetKinds []string `json:"target_kinds,omitempty"`
-
 	// byte array representing the content to be imported.  Only supported for OVA images at this time.
 	Content *[]byte `json:"content,omitempty"`
+
+	// Target kinds.  Current valid values are 'iks', 'roks', 'vcenter', 'power-iaas', and 'terraform'.
+	TargetKinds []string `json:"target_kinds,omitempty"`
+
+	// Format of content being onboarded. Example: vsi-image. Required for virtual server image for VPC.
+	FormatKind *string `json:"format_kind,omitempty"`
+
+	// Version Flavor Information.  Only supported for Product kind Solution.
+	Flavor *Flavor `json:"flavor,omitempty"`
+
+	// Optional - The sub-folder within the specified tgz file that contains the software being onboarded.
+	WorkingDirectory *string `json:"working_directory,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -6111,15 +8194,33 @@ func (_options *CopyVersionOptions) SetTags(tags []string) *CopyVersionOptions {
 	return _options
 }
 
+// SetContent : Allow user to set Content
+func (_options *CopyVersionOptions) SetContent(content []byte) *CopyVersionOptions {
+	_options.Content = &content
+	return _options
+}
+
 // SetTargetKinds : Allow user to set TargetKinds
 func (_options *CopyVersionOptions) SetTargetKinds(targetKinds []string) *CopyVersionOptions {
 	_options.TargetKinds = targetKinds
 	return _options
 }
 
-// SetContent : Allow user to set Content
-func (_options *CopyVersionOptions) SetContent(content []byte) *CopyVersionOptions {
-	_options.Content = &content
+// SetFormatKind : Allow user to set FormatKind
+func (_options *CopyVersionOptions) SetFormatKind(formatKind string) *CopyVersionOptions {
+	_options.FormatKind = core.StringPtr(formatKind)
+	return _options
+}
+
+// SetFlavor : Allow user to set Flavor
+func (_options *CopyVersionOptions) SetFlavor(flavor *Flavor) *CopyVersionOptions {
+	_options.Flavor = flavor
+	return _options
+}
+
+// SetWorkingDirectory : Allow user to set WorkingDirectory
+func (_options *CopyVersionOptions) SetWorkingDirectory(workingDirectory string) *CopyVersionOptions {
+	_options.WorkingDirectory = core.StringPtr(workingDirectory)
 	return _options
 }
 
@@ -6129,22 +8230,306 @@ func (options *CopyVersionOptions) SetHeaders(param map[string]string) *CopyVers
 	return options
 }
 
+// CostBreakdown : Cost breakdown definition.
+type CostBreakdown struct {
+	// Total hourly cost.
+	TotalHourlyCost *string `json:"totalHourlyCost,omitempty"`
+
+	// Total monthly cost.
+	TotalMonthlyCost *string `json:"totalMonthlyCost,omitempty"`
+
+	// Resources.
+	Resources []CostResource `json:"resources,omitempty"`
+}
+
+// UnmarshalCostBreakdown unmarshals an instance of CostBreakdown from the specified map of raw messages.
+func UnmarshalCostBreakdown(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(CostBreakdown)
+	err = core.UnmarshalPrimitive(m, "totalHourlyCost", &obj.TotalHourlyCost)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "totalMonthlyCost", &obj.TotalMonthlyCost)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalCostResource)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// CostComponent : Cost component definition.
+type CostComponent struct {
+	// Cost component name.
+	Name *string `json:"name,omitempty"`
+
+	// Cost component unit.
+	Unit *string `json:"unit,omitempty"`
+
+	// Cost component hourly quantity.
+	HourlyQuantity *string `json:"hourlyQuantity,omitempty"`
+
+	// Cost component monthly quantity.
+	MonthlyQuantity *string `json:"monthlyQuantity,omitempty"`
+
+	// Cost component price.
+	Price *string `json:"price,omitempty"`
+
+	// Cost component hourly cost.
+	HourlyCost *string `json:"hourlyCost,omitempty"`
+
+	// Cost component monthly cist.
+	MonthlyCost *string `json:"monthlyCost,omitempty"`
+}
+
+// UnmarshalCostComponent unmarshals an instance of CostComponent from the specified map of raw messages.
+func UnmarshalCostComponent(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(CostComponent)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "unit", &obj.Unit)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "hourlyQuantity", &obj.HourlyQuantity)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "monthlyQuantity", &obj.MonthlyQuantity)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "price", &obj.Price)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "hourlyCost", &obj.HourlyCost)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "monthlyCost", &obj.MonthlyCost)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// CostEstimate : Cost estimate definition.
+type CostEstimate struct {
+	// Cost estimate version.
+	Version *string `json:"version,omitempty"`
+
+	// Cost estimate currency.
+	Currency *string `json:"currency,omitempty"`
+
+	// Cost estimate projects.
+	Projects []Project `json:"projects,omitempty"`
+
+	// Cost summary definition.
+	Summary *CostSummary `json:"summary,omitempty"`
+
+	// Total hourly cost.
+	TotalHourlyCost *string `json:"totalHourlyCost,omitempty"`
+
+	// Total monthly cost.
+	TotalMonthlyCost *string `json:"totalMonthlyCost,omitempty"`
+
+	// Past total hourly cost.
+	PastTotalHourlyCost *string `json:"pastTotalHourlyCost,omitempty"`
+
+	// Past total monthly cost.
+	PastTotalMonthlyCost *string `json:"pastTotalMonthlyCost,omitempty"`
+
+	// Difference in total hourly cost.
+	DiffTotalHourlyCost *string `json:"diffTotalHourlyCost,omitempty"`
+
+	// Difference in total monthly cost.
+	DiffTotalMonthlyCost *string `json:"diffTotalMonthlyCost,omitempty"`
+
+	// When this estimate was generated.
+	TimeGenerated *strfmt.DateTime `json:"timeGenerated,omitempty"`
+}
+
+// UnmarshalCostEstimate unmarshals an instance of CostEstimate from the specified map of raw messages.
+func UnmarshalCostEstimate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(CostEstimate)
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "currency", &obj.Currency)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "projects", &obj.Projects, UnmarshalProject)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "summary", &obj.Summary, UnmarshalCostSummary)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "totalHourlyCost", &obj.TotalHourlyCost)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "totalMonthlyCost", &obj.TotalMonthlyCost)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "pastTotalHourlyCost", &obj.PastTotalHourlyCost)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "pastTotalMonthlyCost", &obj.PastTotalMonthlyCost)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "diffTotalHourlyCost", &obj.DiffTotalHourlyCost)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "diffTotalMonthlyCost", &obj.DiffTotalMonthlyCost)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "timeGenerated", &obj.TimeGenerated)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// CostResource : Cost resource definition.
+type CostResource struct {
+	// Resource name.
+	Name *string `json:"name,omitempty"`
+
+	// Resource metadata.
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+
+	// Hourly cost.
+	HourlyCost *string `json:"hourlyCost,omitempty"`
+
+	// Monthly cost.
+	MonthlyCost *string `json:"monthlyCost,omitempty"`
+
+	// Cost components.
+	CostComponents []CostComponent `json:"costComponents,omitempty"`
+}
+
+// UnmarshalCostResource unmarshals an instance of CostResource from the specified map of raw messages.
+func UnmarshalCostResource(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(CostResource)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "hourlyCost", &obj.HourlyCost)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "monthlyCost", &obj.MonthlyCost)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "costComponents", &obj.CostComponents, UnmarshalCostComponent)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// CostSummary : Cost summary definition.
+type CostSummary struct {
+	// Total detected resources.
+	TotalDetectedResources *int64 `json:"totalDetectedResources,omitempty"`
+
+	// Total supported resources.
+	TotalSupportedResources *int64 `json:"totalSupportedResources,omitempty"`
+
+	// Total unsupported resources.
+	TotalUnsupportedResources *int64 `json:"totalUnsupportedResources,omitempty"`
+
+	// Total usage based resources.
+	TotalUsageBasedResources *int64 `json:"totalUsageBasedResources,omitempty"`
+
+	// Total no price resources.
+	TotalNoPriceResources *int64 `json:"totalNoPriceResources,omitempty"`
+
+	// Unsupported resource counts.
+	UnsupportedResourceCounts map[string]int64 `json:"unsupportedResourceCounts,omitempty"`
+
+	// No price resource counts.
+	NoPriceResourceCounts map[string]int64 `json:"noPriceResourceCounts,omitempty"`
+}
+
+// UnmarshalCostSummary unmarshals an instance of CostSummary from the specified map of raw messages.
+func UnmarshalCostSummary(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(CostSummary)
+	err = core.UnmarshalPrimitive(m, "totalDetectedResources", &obj.TotalDetectedResources)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "totalSupportedResources", &obj.TotalSupportedResources)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "totalUnsupportedResources", &obj.TotalUnsupportedResources)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "totalUsageBasedResources", &obj.TotalUsageBasedResources)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "totalNoPriceResources", &obj.TotalNoPriceResources)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "unsupportedResourceCounts", &obj.UnsupportedResourceCounts)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "noPriceResourceCounts", &obj.NoPriceResourceCounts)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // CreateCatalogOptions : The CreateCatalog options.
 type CreateCatalogOptions struct {
-	// Unique ID.
-	ID *string `json:"id,omitempty"`
-
-	// Cloudant revision.
-	Rev *string `json:"_rev,omitempty"`
-
 	// Display Name in the requested language.
 	Label *string `json:"label,omitempty"`
+
+	// A map of translated strings, by language code.
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
 
 	// Description in the requested language.
 	ShortDescription *string `json:"short_description,omitempty"`
 
+	// A map of translated strings, by language code.
+	ShortDescriptionI18n map[string]string `json:"short_description_i18n,omitempty"`
+
 	// URL for an icon associated with this catalog.
 	CatalogIconURL *string `json:"catalog_icon_url,omitempty"`
+
+	// URL for a banner image for this catalog.
+	CatalogBannerURL *string `json:"catalog_banner_url,omitempty"`
 
 	// List of tags associated with this catalog.
 	Tags []string `json:"tags,omitempty"`
@@ -6170,6 +8555,9 @@ type CreateCatalogOptions struct {
 	// Kind of catalog. Supported kinds are offering and vpe.
 	Kind *string `json:"kind,omitempty"`
 
+	// Catalog specific metadata.
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -6179,21 +8567,15 @@ func (*CatalogManagementV1) NewCreateCatalogOptions() *CreateCatalogOptions {
 	return &CreateCatalogOptions{}
 }
 
-// SetID : Allow user to set ID
-func (_options *CreateCatalogOptions) SetID(id string) *CreateCatalogOptions {
-	_options.ID = core.StringPtr(id)
-	return _options
-}
-
-// SetRev : Allow user to set Rev
-func (_options *CreateCatalogOptions) SetRev(rev string) *CreateCatalogOptions {
-	_options.Rev = core.StringPtr(rev)
-	return _options
-}
-
 // SetLabel : Allow user to set Label
 func (_options *CreateCatalogOptions) SetLabel(label string) *CreateCatalogOptions {
 	_options.Label = core.StringPtr(label)
+	return _options
+}
+
+// SetLabelI18n : Allow user to set LabelI18n
+func (_options *CreateCatalogOptions) SetLabelI18n(labelI18n map[string]string) *CreateCatalogOptions {
+	_options.LabelI18n = labelI18n
 	return _options
 }
 
@@ -6203,9 +8585,21 @@ func (_options *CreateCatalogOptions) SetShortDescription(shortDescription strin
 	return _options
 }
 
+// SetShortDescriptionI18n : Allow user to set ShortDescriptionI18n
+func (_options *CreateCatalogOptions) SetShortDescriptionI18n(shortDescriptionI18n map[string]string) *CreateCatalogOptions {
+	_options.ShortDescriptionI18n = shortDescriptionI18n
+	return _options
+}
+
 // SetCatalogIconURL : Allow user to set CatalogIconURL
 func (_options *CreateCatalogOptions) SetCatalogIconURL(catalogIconURL string) *CreateCatalogOptions {
 	_options.CatalogIconURL = core.StringPtr(catalogIconURL)
+	return _options
+}
+
+// SetCatalogBannerURL : Allow user to set CatalogBannerURL
+func (_options *CreateCatalogOptions) SetCatalogBannerURL(catalogBannerURL string) *CreateCatalogOptions {
+	_options.CatalogBannerURL = core.StringPtr(catalogBannerURL)
 	return _options
 }
 
@@ -6257,6 +8651,12 @@ func (_options *CreateCatalogOptions) SetKind(kind string) *CreateCatalogOptions
 	return _options
 }
 
+// SetMetadata : Allow user to set Metadata
+func (_options *CreateCatalogOptions) SetMetadata(metadata map[string]interface{}) *CreateCatalogOptions {
+	_options.Metadata = metadata
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *CreateCatalogOptions) SetHeaders(param map[string]string) *CreateCatalogOptions {
 	options.Headers = param
@@ -6271,19 +8671,20 @@ type CreateObjectAccessOptions struct {
 	// Object identifier.
 	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
 
-	// Account identifier.
-	AccountIdentifier *string `json:"account_identifier" validate:"required,ne="`
+	// Identifier for access. Use 'accountId' for an account, '-ent-enterpriseid' for an enterprise, and
+	// '-entgroup-enterprisegroupid' for an enterprise group.
+	AccessIdentifier *string `json:"access_identifier" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewCreateObjectAccessOptions : Instantiate CreateObjectAccessOptions
-func (*CatalogManagementV1) NewCreateObjectAccessOptions(catalogIdentifier string, objectIdentifier string, accountIdentifier string) *CreateObjectAccessOptions {
+func (*CatalogManagementV1) NewCreateObjectAccessOptions(catalogIdentifier string, objectIdentifier string, accessIdentifier string) *CreateObjectAccessOptions {
 	return &CreateObjectAccessOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
 		ObjectIdentifier: core.StringPtr(objectIdentifier),
-		AccountIdentifier: core.StringPtr(accountIdentifier),
+		AccessIdentifier: core.StringPtr(accessIdentifier),
 	}
 }
 
@@ -6299,9 +8700,9 @@ func (_options *CreateObjectAccessOptions) SetObjectIdentifier(objectIdentifier 
 	return _options
 }
 
-// SetAccountIdentifier : Allow user to set AccountIdentifier
-func (_options *CreateObjectAccessOptions) SetAccountIdentifier(accountIdentifier string) *CreateObjectAccessOptions {
-	_options.AccountIdentifier = core.StringPtr(accountIdentifier)
+// SetAccessIdentifier : Allow user to set AccessIdentifier
+func (_options *CreateObjectAccessOptions) SetAccessIdentifier(accessIdentifier string) *CreateObjectAccessOptions {
+	_options.AccessIdentifier = core.StringPtr(accessIdentifier)
 	return _options
 }
 
@@ -6316,14 +8717,8 @@ type CreateObjectOptions struct {
 	// Catalog identifier.
 	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
 
-	// unique id.
-	ID *string `json:"id,omitempty"`
-
-	// The programmatic name of this offering.
+	// The programmatic name of this object.
 	Name *string `json:"name,omitempty"`
-
-	// Cloudant revision.
-	Rev *string `json:"_rev,omitempty"`
 
 	// The crn for this specific object.
 	CRN *string `json:"crn,omitempty"`
@@ -6334,8 +8729,8 @@ type CreateObjectOptions struct {
 	// The parent for this specific object.
 	ParentID *string `json:"parent_id,omitempty"`
 
-	// Translated display name in the requested language.
-	LabelI18n *string `json:"label_i18n,omitempty"`
+	// A map of translated strings, by language code.
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
 
 	// Display name in the requested language.
 	Label *string `json:"label,omitempty"`
@@ -6352,8 +8747,8 @@ type CreateObjectOptions struct {
 	// Short description in the requested language.
 	ShortDescription *string `json:"short_description,omitempty"`
 
-	// Short description translation.
-	ShortDescriptionI18n *string `json:"short_description_i18n,omitempty"`
+	// A map of translated strings, by language code.
+	ShortDescriptionI18n map[string]string `json:"short_description_i18n,omitempty"`
 
 	// Kind of object.
 	Kind *string `json:"kind,omitempty"`
@@ -6390,21 +8785,9 @@ func (_options *CreateObjectOptions) SetCatalogIdentifier(catalogIdentifier stri
 	return _options
 }
 
-// SetID : Allow user to set ID
-func (_options *CreateObjectOptions) SetID(id string) *CreateObjectOptions {
-	_options.ID = core.StringPtr(id)
-	return _options
-}
-
 // SetName : Allow user to set Name
 func (_options *CreateObjectOptions) SetName(name string) *CreateObjectOptions {
 	_options.Name = core.StringPtr(name)
-	return _options
-}
-
-// SetRev : Allow user to set Rev
-func (_options *CreateObjectOptions) SetRev(rev string) *CreateObjectOptions {
-	_options.Rev = core.StringPtr(rev)
 	return _options
 }
 
@@ -6427,8 +8810,8 @@ func (_options *CreateObjectOptions) SetParentID(parentID string) *CreateObjectO
 }
 
 // SetLabelI18n : Allow user to set LabelI18n
-func (_options *CreateObjectOptions) SetLabelI18n(labelI18n string) *CreateObjectOptions {
-	_options.LabelI18n = core.StringPtr(labelI18n)
+func (_options *CreateObjectOptions) SetLabelI18n(labelI18n map[string]string) *CreateObjectOptions {
+	_options.LabelI18n = labelI18n
 	return _options
 }
 
@@ -6463,8 +8846,8 @@ func (_options *CreateObjectOptions) SetShortDescription(shortDescription string
 }
 
 // SetShortDescriptionI18n : Allow user to set ShortDescriptionI18n
-func (_options *CreateObjectOptions) SetShortDescriptionI18n(shortDescriptionI18n string) *CreateObjectOptions {
-	_options.ShortDescriptionI18n = core.StringPtr(shortDescriptionI18n)
+func (_options *CreateObjectOptions) SetShortDescriptionI18n(shortDescriptionI18n map[string]string) *CreateObjectOptions {
+	_options.ShortDescriptionI18n = shortDescriptionI18n
 	return _options
 }
 
@@ -6539,8 +8922,11 @@ type CreateOfferingInstanceOptions struct {
 	// the format this instance has (helm, operator, ova...).
 	KindFormat *string `json:"kind_format,omitempty"`
 
-	// The version this instance was installed from (not version id).
+	// The version this instance was installed from (semver - not version id).
 	Version *string `json:"version,omitempty"`
+
+	// The version id this instance was installed from (version id - not semver).
+	VersionID *string `json:"version_id,omitempty"`
 
 	// Cluster ID.
 	ClusterID *string `json:"cluster_id,omitempty"`
@@ -6557,9 +8943,6 @@ type CreateOfferingInstanceOptions struct {
 	// Id of the schematics workspace, for offering instances provisioned through schematics.
 	SchematicsWorkspaceID *string `json:"schematics_workspace_id,omitempty"`
 
-	// Id of the resource group to provision the offering instance into.
-	ResourceGroupID *string `json:"resource_group_id,omitempty"`
-
 	// Type of install plan (also known as approval strategy) for operator subscriptions. Can be either automatic, which
 	// automatically upgrades operators to the latest in a channel, or manual, which requires approval on the cluster.
 	InstallPlan *string `json:"install_plan,omitempty"`
@@ -6567,11 +8950,35 @@ type CreateOfferingInstanceOptions struct {
 	// Channel to pin the operator subscription to.
 	Channel *string `json:"channel,omitempty"`
 
+	// date and time create.
+	Created *strfmt.DateTime `json:"created,omitempty"`
+
+	// date and time updated.
+	Updated *strfmt.DateTime `json:"updated,omitempty"`
+
 	// Map of metadata values for this offering instance.
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 
+	// Id of the resource group to provision the offering instance into.
+	ResourceGroupID *string `json:"resource_group_id,omitempty"`
+
+	// String location of OfferingInstance deployment.
+	Location *string `json:"location,omitempty"`
+
+	// Indicates if Resource Controller has disabled this instance.
+	Disabled *bool `json:"disabled,omitempty"`
+
+	// The account this instance is owned by.
+	Account *string `json:"account,omitempty"`
+
 	// the last operation performed and status.
 	LastOperation *OfferingInstanceLastOperation `json:"last_operation,omitempty"`
+
+	// The target kind for the installed software version.
+	KindTarget *string `json:"kind_target,omitempty"`
+
+	// The digest value of the installed software version.
+	Sha *string `json:"sha,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -6644,6 +9051,12 @@ func (_options *CreateOfferingInstanceOptions) SetVersion(version string) *Creat
 	return _options
 }
 
+// SetVersionID : Allow user to set VersionID
+func (_options *CreateOfferingInstanceOptions) SetVersionID(versionID string) *CreateOfferingInstanceOptions {
+	_options.VersionID = core.StringPtr(versionID)
+	return _options
+}
+
 // SetClusterID : Allow user to set ClusterID
 func (_options *CreateOfferingInstanceOptions) SetClusterID(clusterID string) *CreateOfferingInstanceOptions {
 	_options.ClusterID = core.StringPtr(clusterID)
@@ -6674,12 +9087,6 @@ func (_options *CreateOfferingInstanceOptions) SetSchematicsWorkspaceID(schemati
 	return _options
 }
 
-// SetResourceGroupID : Allow user to set ResourceGroupID
-func (_options *CreateOfferingInstanceOptions) SetResourceGroupID(resourceGroupID string) *CreateOfferingInstanceOptions {
-	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return _options
-}
-
 // SetInstallPlan : Allow user to set InstallPlan
 func (_options *CreateOfferingInstanceOptions) SetInstallPlan(installPlan string) *CreateOfferingInstanceOptions {
 	_options.InstallPlan = core.StringPtr(installPlan)
@@ -6692,15 +9099,63 @@ func (_options *CreateOfferingInstanceOptions) SetChannel(channel string) *Creat
 	return _options
 }
 
+// SetCreated : Allow user to set Created
+func (_options *CreateOfferingInstanceOptions) SetCreated(created *strfmt.DateTime) *CreateOfferingInstanceOptions {
+	_options.Created = created
+	return _options
+}
+
+// SetUpdated : Allow user to set Updated
+func (_options *CreateOfferingInstanceOptions) SetUpdated(updated *strfmt.DateTime) *CreateOfferingInstanceOptions {
+	_options.Updated = updated
+	return _options
+}
+
 // SetMetadata : Allow user to set Metadata
 func (_options *CreateOfferingInstanceOptions) SetMetadata(metadata map[string]interface{}) *CreateOfferingInstanceOptions {
 	_options.Metadata = metadata
 	return _options
 }
 
+// SetResourceGroupID : Allow user to set ResourceGroupID
+func (_options *CreateOfferingInstanceOptions) SetResourceGroupID(resourceGroupID string) *CreateOfferingInstanceOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
+}
+
+// SetLocation : Allow user to set Location
+func (_options *CreateOfferingInstanceOptions) SetLocation(location string) *CreateOfferingInstanceOptions {
+	_options.Location = core.StringPtr(location)
+	return _options
+}
+
+// SetDisabled : Allow user to set Disabled
+func (_options *CreateOfferingInstanceOptions) SetDisabled(disabled bool) *CreateOfferingInstanceOptions {
+	_options.Disabled = core.BoolPtr(disabled)
+	return _options
+}
+
+// SetAccount : Allow user to set Account
+func (_options *CreateOfferingInstanceOptions) SetAccount(account string) *CreateOfferingInstanceOptions {
+	_options.Account = core.StringPtr(account)
+	return _options
+}
+
 // SetLastOperation : Allow user to set LastOperation
 func (_options *CreateOfferingInstanceOptions) SetLastOperation(lastOperation *OfferingInstanceLastOperation) *CreateOfferingInstanceOptions {
 	_options.LastOperation = lastOperation
+	return _options
+}
+
+// SetKindTarget : Allow user to set KindTarget
+func (_options *CreateOfferingInstanceOptions) SetKindTarget(kindTarget string) *CreateOfferingInstanceOptions {
+	_options.KindTarget = core.StringPtr(kindTarget)
+	return _options
+}
+
+// SetSha : Allow user to set Sha
+func (_options *CreateOfferingInstanceOptions) SetSha(sha string) *CreateOfferingInstanceOptions {
+	_options.Sha = core.StringPtr(sha)
 	return _options
 }
 
@@ -6715,12 +9170,6 @@ type CreateOfferingOptions struct {
 	// Catalog identifier.
 	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
 
-	// unique id.
-	ID *string `json:"id,omitempty"`
-
-	// Cloudant revision.
-	Rev *string `json:"_rev,omitempty"`
-
 	// The url for this specific offering.
 	URL *string `json:"url,omitempty"`
 
@@ -6729,6 +9178,9 @@ type CreateOfferingOptions struct {
 
 	// Display Name in the requested language.
 	Label *string `json:"label,omitempty"`
+
+	// A map of translated strings, by language code.
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
 
 	// The programmatic name of this offering.
 	Name *string `json:"name,omitempty"`
@@ -6761,8 +9213,14 @@ type CreateOfferingOptions struct {
 	// Short description in the requested language.
 	ShortDescription *string `json:"short_description,omitempty"`
 
+	// A map of translated strings, by language code.
+	ShortDescriptionI18n map[string]string `json:"short_description_i18n,omitempty"`
+
 	// Long description in the requested language.
 	LongDescription *string `json:"long_description,omitempty"`
+
+	// A map of translated strings, by language code.
+	LongDescriptionI18n map[string]string `json:"long_description_i18n,omitempty"`
 
 	// list of features associated with this offering.
 	Features []Feature `json:"features,omitempty"`
@@ -6770,13 +9228,31 @@ type CreateOfferingOptions struct {
 	// Array of kind.
 	Kinds []Kind `json:"kinds,omitempty"`
 
+	// Offering is managed by Partner Center.
+	PcManaged *bool `json:"pc_managed,omitempty"`
+
+	// Offering has been approved to publish to permitted to IBM or Public Catalog.
+	PublishApproved *bool `json:"publish_approved,omitempty"`
+
+	// Denotes public availability of an Offering - if share_enabled is true.
+	ShareWithAll *bool `json:"share_with_all,omitempty"`
+
+	// Denotes IBM employee availability of an Offering - if share_enabled is true.
+	ShareWithIBM *bool `json:"share_with_ibm,omitempty"`
+
+	// Denotes sharing including access list availability of an Offering is enabled.
+	ShareEnabled *bool `json:"share_enabled,omitempty"`
+
 	// Is it permitted to request publishing to IBM or Public.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	PermitRequestIBMPublicPublish *bool `json:"permit_request_ibm_public_publish,omitempty"`
 
 	// Indicates if this offering has been approved for use by all IBMers.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	IBMPublishApproved *bool `json:"ibm_publish_approved,omitempty"`
 
 	// Indicates if this offering has been approved for use by all IBM Cloud users.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	PublicPublishApproved *bool `json:"public_publish_approved,omitempty"`
 
 	// The original offering CRN that this publish entry came from.
@@ -6807,6 +9283,7 @@ type CreateOfferingOptions struct {
 	Hidden *bool `json:"hidden,omitempty"`
 
 	// Deprecated - Provider of this offering.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	Provider *string `json:"provider,omitempty"`
 
 	// Information on the provider for this offering, or omitted if no provider information is given.
@@ -6815,11 +9292,23 @@ type CreateOfferingOptions struct {
 	// Repository info for offerings.
 	RepoInfo *RepoInfo `json:"repo_info,omitempty"`
 
+	// Image pull keys for this offering.
+	ImagePullKeys []ImagePullKey `json:"image_pull_keys,omitempty"`
+
 	// Offering Support information.
 	Support *Support `json:"support,omitempty"`
 
 	// A list of media items related to this offering.
 	Media []MediaItem `json:"media,omitempty"`
+
+	// Deprecation information for an Offering.
+	DeprecatePending *DeprecatePending `json:"deprecate_pending,omitempty"`
+
+	// The product kind.  Valid values are module, solution, or empty string.
+	ProductKind *string `json:"product_kind,omitempty"`
+
+	// A list of badges for this offering.
+	Badges []Badge `json:"badges,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -6838,18 +9327,6 @@ func (_options *CreateOfferingOptions) SetCatalogIdentifier(catalogIdentifier st
 	return _options
 }
 
-// SetID : Allow user to set ID
-func (_options *CreateOfferingOptions) SetID(id string) *CreateOfferingOptions {
-	_options.ID = core.StringPtr(id)
-	return _options
-}
-
-// SetRev : Allow user to set Rev
-func (_options *CreateOfferingOptions) SetRev(rev string) *CreateOfferingOptions {
-	_options.Rev = core.StringPtr(rev)
-	return _options
-}
-
 // SetURL : Allow user to set URL
 func (_options *CreateOfferingOptions) SetURL(url string) *CreateOfferingOptions {
 	_options.URL = core.StringPtr(url)
@@ -6865,6 +9342,12 @@ func (_options *CreateOfferingOptions) SetCRN(crn string) *CreateOfferingOptions
 // SetLabel : Allow user to set Label
 func (_options *CreateOfferingOptions) SetLabel(label string) *CreateOfferingOptions {
 	_options.Label = core.StringPtr(label)
+	return _options
+}
+
+// SetLabelI18n : Allow user to set LabelI18n
+func (_options *CreateOfferingOptions) SetLabelI18n(labelI18n map[string]string) *CreateOfferingOptions {
+	_options.LabelI18n = labelI18n
 	return _options
 }
 
@@ -6928,9 +9411,21 @@ func (_options *CreateOfferingOptions) SetShortDescription(shortDescription stri
 	return _options
 }
 
+// SetShortDescriptionI18n : Allow user to set ShortDescriptionI18n
+func (_options *CreateOfferingOptions) SetShortDescriptionI18n(shortDescriptionI18n map[string]string) *CreateOfferingOptions {
+	_options.ShortDescriptionI18n = shortDescriptionI18n
+	return _options
+}
+
 // SetLongDescription : Allow user to set LongDescription
 func (_options *CreateOfferingOptions) SetLongDescription(longDescription string) *CreateOfferingOptions {
 	_options.LongDescription = core.StringPtr(longDescription)
+	return _options
+}
+
+// SetLongDescriptionI18n : Allow user to set LongDescriptionI18n
+func (_options *CreateOfferingOptions) SetLongDescriptionI18n(longDescriptionI18n map[string]string) *CreateOfferingOptions {
+	_options.LongDescriptionI18n = longDescriptionI18n
 	return _options
 }
 
@@ -6946,19 +9441,52 @@ func (_options *CreateOfferingOptions) SetKinds(kinds []Kind) *CreateOfferingOpt
 	return _options
 }
 
+// SetPcManaged : Allow user to set PcManaged
+func (_options *CreateOfferingOptions) SetPcManaged(pcManaged bool) *CreateOfferingOptions {
+	_options.PcManaged = core.BoolPtr(pcManaged)
+	return _options
+}
+
+// SetPublishApproved : Allow user to set PublishApproved
+func (_options *CreateOfferingOptions) SetPublishApproved(publishApproved bool) *CreateOfferingOptions {
+	_options.PublishApproved = core.BoolPtr(publishApproved)
+	return _options
+}
+
+// SetShareWithAll : Allow user to set ShareWithAll
+func (_options *CreateOfferingOptions) SetShareWithAll(shareWithAll bool) *CreateOfferingOptions {
+	_options.ShareWithAll = core.BoolPtr(shareWithAll)
+	return _options
+}
+
+// SetShareWithIBM : Allow user to set ShareWithIBM
+func (_options *CreateOfferingOptions) SetShareWithIBM(shareWithIBM bool) *CreateOfferingOptions {
+	_options.ShareWithIBM = core.BoolPtr(shareWithIBM)
+	return _options
+}
+
+// SetShareEnabled : Allow user to set ShareEnabled
+func (_options *CreateOfferingOptions) SetShareEnabled(shareEnabled bool) *CreateOfferingOptions {
+	_options.ShareEnabled = core.BoolPtr(shareEnabled)
+	return _options
+}
+
 // SetPermitRequestIBMPublicPublish : Allow user to set PermitRequestIBMPublicPublish
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *CreateOfferingOptions) SetPermitRequestIBMPublicPublish(permitRequestIBMPublicPublish bool) *CreateOfferingOptions {
 	_options.PermitRequestIBMPublicPublish = core.BoolPtr(permitRequestIBMPublicPublish)
 	return _options
 }
 
 // SetIBMPublishApproved : Allow user to set IBMPublishApproved
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *CreateOfferingOptions) SetIBMPublishApproved(ibmPublishApproved bool) *CreateOfferingOptions {
 	_options.IBMPublishApproved = core.BoolPtr(ibmPublishApproved)
 	return _options
 }
 
 // SetPublicPublishApproved : Allow user to set PublicPublishApproved
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *CreateOfferingOptions) SetPublicPublishApproved(publicPublishApproved bool) *CreateOfferingOptions {
 	_options.PublicPublishApproved = core.BoolPtr(publicPublishApproved)
 	return _options
@@ -7019,6 +9547,7 @@ func (_options *CreateOfferingOptions) SetHidden(hidden bool) *CreateOfferingOpt
 }
 
 // SetProvider : Allow user to set Provider
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *CreateOfferingOptions) SetProvider(provider string) *CreateOfferingOptions {
 	_options.Provider = core.StringPtr(provider)
 	return _options
@@ -7036,6 +9565,12 @@ func (_options *CreateOfferingOptions) SetRepoInfo(repoInfo *RepoInfo) *CreateOf
 	return _options
 }
 
+// SetImagePullKeys : Allow user to set ImagePullKeys
+func (_options *CreateOfferingOptions) SetImagePullKeys(imagePullKeys []ImagePullKey) *CreateOfferingOptions {
+	_options.ImagePullKeys = imagePullKeys
+	return _options
+}
+
 // SetSupport : Allow user to set Support
 func (_options *CreateOfferingOptions) SetSupport(support *Support) *CreateOfferingOptions {
 	_options.Support = support
@@ -7045,6 +9580,24 @@ func (_options *CreateOfferingOptions) SetSupport(support *Support) *CreateOffer
 // SetMedia : Allow user to set Media
 func (_options *CreateOfferingOptions) SetMedia(media []MediaItem) *CreateOfferingOptions {
 	_options.Media = media
+	return _options
+}
+
+// SetDeprecatePending : Allow user to set DeprecatePending
+func (_options *CreateOfferingOptions) SetDeprecatePending(deprecatePending *DeprecatePending) *CreateOfferingOptions {
+	_options.DeprecatePending = deprecatePending
+	return _options
+}
+
+// SetProductKind : Allow user to set ProductKind
+func (_options *CreateOfferingOptions) SetProductKind(productKind string) *CreateOfferingOptions {
+	_options.ProductKind = core.StringPtr(productKind)
+	return _options
+}
+
+// SetBadges : Allow user to set Badges
+func (_options *CreateOfferingOptions) SetBadges(badges []Badge) *CreateOfferingOptions {
+	_options.Badges = badges
 	return _options
 }
 
@@ -7090,19 +9643,19 @@ type DeleteObjectAccessListOptions struct {
 	// Object identifier.
 	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
 
-	// A list of accounts to delete.  An entry with star["*"] will remove all accounts.
-	Accounts []string `json:"accounts" validate:"required"`
+	// A list of accesses to delete.  An entry with star["*"] will remove all accesses.
+	Accesses []string `json:"accesses" validate:"required"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewDeleteObjectAccessListOptions : Instantiate DeleteObjectAccessListOptions
-func (*CatalogManagementV1) NewDeleteObjectAccessListOptions(catalogIdentifier string, objectIdentifier string, accounts []string) *DeleteObjectAccessListOptions {
+func (*CatalogManagementV1) NewDeleteObjectAccessListOptions(catalogIdentifier string, objectIdentifier string, accesses []string) *DeleteObjectAccessListOptions {
 	return &DeleteObjectAccessListOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
 		ObjectIdentifier: core.StringPtr(objectIdentifier),
-		Accounts: accounts,
+		Accesses: accesses,
 	}
 }
 
@@ -7118,9 +9671,9 @@ func (_options *DeleteObjectAccessListOptions) SetObjectIdentifier(objectIdentif
 	return _options
 }
 
-// SetAccounts : Allow user to set Accounts
-func (_options *DeleteObjectAccessListOptions) SetAccounts(accounts []string) *DeleteObjectAccessListOptions {
-	_options.Accounts = accounts
+// SetAccesses : Allow user to set Accesses
+func (_options *DeleteObjectAccessListOptions) SetAccesses(accesses []string) *DeleteObjectAccessListOptions {
+	_options.Accesses = accesses
 	return _options
 }
 
@@ -7138,19 +9691,20 @@ type DeleteObjectAccessOptions struct {
 	// Object identifier.
 	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
 
-	// Account identifier.
-	AccountIdentifier *string `json:"account_identifier" validate:"required,ne="`
+	// Identifier for access. Use 'accountId' for an account, '-ent-enterpriseid' for an enterprise, and
+	// '-entgroup-enterprisegroupid' for an enterprise group.
+	AccessIdentifier *string `json:"access_identifier" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewDeleteObjectAccessOptions : Instantiate DeleteObjectAccessOptions
-func (*CatalogManagementV1) NewDeleteObjectAccessOptions(catalogIdentifier string, objectIdentifier string, accountIdentifier string) *DeleteObjectAccessOptions {
+func (*CatalogManagementV1) NewDeleteObjectAccessOptions(catalogIdentifier string, objectIdentifier string, accessIdentifier string) *DeleteObjectAccessOptions {
 	return &DeleteObjectAccessOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
 		ObjectIdentifier: core.StringPtr(objectIdentifier),
-		AccountIdentifier: core.StringPtr(accountIdentifier),
+		AccessIdentifier: core.StringPtr(accessIdentifier),
 	}
 }
 
@@ -7166,9 +9720,9 @@ func (_options *DeleteObjectAccessOptions) SetObjectIdentifier(objectIdentifier 
 	return _options
 }
 
-// SetAccountIdentifier : Allow user to set AccountIdentifier
-func (_options *DeleteObjectAccessOptions) SetAccountIdentifier(accountIdentifier string) *DeleteObjectAccessOptions {
-	_options.AccountIdentifier = core.StringPtr(accountIdentifier)
+// SetAccessIdentifier : Allow user to set AccessIdentifier
+func (_options *DeleteObjectAccessOptions) SetAccessIdentifier(accessIdentifier string) *DeleteObjectAccessOptions {
+	_options.AccessIdentifier = core.StringPtr(accessIdentifier)
 	return _options
 }
 
@@ -7212,6 +9766,54 @@ func (_options *DeleteObjectOptions) SetObjectIdentifier(objectIdentifier string
 
 // SetHeaders : Allow user to set Headers
 func (options *DeleteObjectOptions) SetHeaders(param map[string]string) *DeleteObjectOptions {
+	options.Headers = param
+	return options
+}
+
+// DeleteOfferingAccessListOptions : The DeleteOfferingAccessList options.
+type DeleteOfferingAccessListOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Offering identification.
+	OfferingID *string `json:"offering_id" validate:"required,ne="`
+
+	// A list of accesses to delete.  An entry with star["*"] will remove all accesses.
+	Accesses []string `json:"accesses" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewDeleteOfferingAccessListOptions : Instantiate DeleteOfferingAccessListOptions
+func (*CatalogManagementV1) NewDeleteOfferingAccessListOptions(catalogIdentifier string, offeringID string, accesses []string) *DeleteOfferingAccessListOptions {
+	return &DeleteOfferingAccessListOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		OfferingID: core.StringPtr(offeringID),
+		Accesses: accesses,
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *DeleteOfferingAccessListOptions) SetCatalogIdentifier(catalogIdentifier string) *DeleteOfferingAccessListOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetOfferingID : Allow user to set OfferingID
+func (_options *DeleteOfferingAccessListOptions) SetOfferingID(offeringID string) *DeleteOfferingAccessListOptions {
+	_options.OfferingID = core.StringPtr(offeringID)
+	return _options
+}
+
+// SetAccesses : Allow user to set Accesses
+func (_options *DeleteOfferingAccessListOptions) SetAccesses(accesses []string) *DeleteOfferingAccessListOptions {
+	_options.Accesses = accesses
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteOfferingAccessListOptions) SetHeaders(param map[string]string) *DeleteOfferingAccessListOptions {
 	options.Headers = param
 	return options
 }
@@ -7398,6 +10000,12 @@ type DeployOperatorsOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocatorID *string `json:"version_locator_id,omitempty"`
 
+	// Operator channel.
+	Channel *string `json:"channel,omitempty"`
+
+	// Plan.
+	InstallPlan *string `json:"install_plan,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -7445,10 +10053,190 @@ func (_options *DeployOperatorsOptions) SetVersionLocatorID(versionLocatorID str
 	return _options
 }
 
+// SetChannel : Allow user to set Channel
+func (_options *DeployOperatorsOptions) SetChannel(channel string) *DeployOperatorsOptions {
+	_options.Channel = core.StringPtr(channel)
+	return _options
+}
+
+// SetInstallPlan : Allow user to set InstallPlan
+func (_options *DeployOperatorsOptions) SetInstallPlan(installPlan string) *DeployOperatorsOptions {
+	_options.InstallPlan = core.StringPtr(installPlan)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *DeployOperatorsOptions) SetHeaders(param map[string]string) *DeployOperatorsOptions {
 	options.Headers = param
 	return options
+}
+
+// DeployRequestBodyEnvironmentVariablesItem : DeployRequestBodyEnvironmentVariablesItem struct
+type DeployRequestBodyEnvironmentVariablesItem struct {
+	// Variable name.
+	Name *string `json:"name,omitempty"`
+
+	// Variable value.
+	Value interface{} `json:"value,omitempty"`
+
+	// Does this variable contain a secure value.
+	Secure *bool `json:"secure,omitempty"`
+}
+
+// UnmarshalDeployRequestBodyEnvironmentVariablesItem unmarshals an instance of DeployRequestBodyEnvironmentVariablesItem from the specified map of raw messages.
+func UnmarshalDeployRequestBodyEnvironmentVariablesItem(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DeployRequestBodyEnvironmentVariablesItem)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "secure", &obj.Secure)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// DeployRequestBodyOverrideValues : Validation override values. Required for virtual server image for VPC.
+type DeployRequestBodyOverrideValues struct {
+	// Name of virtual server image instance to create. Required for virtual server image for VPC.
+	VsiInstanceName *string `json:"vsi_instance_name,omitempty"`
+
+	// Profile to use when validating virtual server image. Required for virtual server image for VPC.
+	VPCProfile *string `json:"vpc_profile,omitempty"`
+
+	// ID of subnet to use when validating virtual server image. Required for virtual server image for VPC.
+	SubnetID *string `json:"subnet_id,omitempty"`
+
+	// ID of VPC to use when validating virtual server image. Required for virtual server image for VPC.
+	VPCID *string `json:"vpc_id,omitempty"`
+
+	// Zone of subnet to use when validating virtual server image. Required for virtual server image for VPC.
+	SubnetZone *string `json:"subnet_zone,omitempty"`
+
+	// ID off SSH key to use when validating virtual server image. Required for virtual server image for VPC.
+	SSHKeyID *string `json:"ssh_key_id,omitempty"`
+
+	// Region virtual server image exists in. Required for virtual server image for VPC.
+	VPCRegion *string `json:"vpc_region,omitempty"`
+
+	// Allows users to set arbitrary properties
+	additionalProperties map[string]interface{}
+}
+
+// SetProperty allows the user to set an arbitrary property on an instance of DeployRequestBodyOverrideValues
+func (o *DeployRequestBodyOverrideValues) SetProperty(key string, value interface{}) {
+	if o.additionalProperties == nil {
+		o.additionalProperties = make(map[string]interface{})
+	}
+	o.additionalProperties[key] = value
+}
+
+// SetProperties allows the user to set a map of arbitrary properties on an instance of DeployRequestBodyOverrideValues
+func (o *DeployRequestBodyOverrideValues) SetProperties(m map[string]interface{}) {
+	o.additionalProperties = make(map[string]interface{})
+	for k, v := range m {
+		o.additionalProperties[k] = v
+	}
+}
+
+// GetProperty allows the user to retrieve an arbitrary property from an instance of DeployRequestBodyOverrideValues
+func (o *DeployRequestBodyOverrideValues) GetProperty(key string) interface{} {
+	return o.additionalProperties[key]
+}
+
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of DeployRequestBodyOverrideValues
+func (o *DeployRequestBodyOverrideValues) GetProperties() map[string]interface{} {
+	return o.additionalProperties
+}
+
+// MarshalJSON performs custom serialization for instances of DeployRequestBodyOverrideValues
+func (o *DeployRequestBodyOverrideValues) MarshalJSON() (buffer []byte, err error) {
+	m := make(map[string]interface{})
+	if len(o.additionalProperties) > 0 {
+		for k, v := range o.additionalProperties {
+			m[k] = v
+		}
+	}
+	if o.VsiInstanceName != nil {
+		m["vsi_instance_name"] = o.VsiInstanceName
+	}
+	if o.VPCProfile != nil {
+		m["vpc_profile"] = o.VPCProfile
+	}
+	if o.SubnetID != nil {
+		m["subnet_id"] = o.SubnetID
+	}
+	if o.VPCID != nil {
+		m["vpc_id"] = o.VPCID
+	}
+	if o.SubnetZone != nil {
+		m["subnet_zone"] = o.SubnetZone
+	}
+	if o.SSHKeyID != nil {
+		m["ssh_key_id"] = o.SSHKeyID
+	}
+	if o.VPCRegion != nil {
+		m["vpc_region"] = o.VPCRegion
+	}
+	buffer, err = json.Marshal(m)
+	return
+}
+
+// UnmarshalDeployRequestBodyOverrideValues unmarshals an instance of DeployRequestBodyOverrideValues from the specified map of raw messages.
+func UnmarshalDeployRequestBodyOverrideValues(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DeployRequestBodyOverrideValues)
+	err = core.UnmarshalPrimitive(m, "vsi_instance_name", &obj.VsiInstanceName)
+	if err != nil {
+		return
+	}
+	delete(m, "vsi_instance_name")
+	err = core.UnmarshalPrimitive(m, "vpc_profile", &obj.VPCProfile)
+	if err != nil {
+		return
+	}
+	delete(m, "vpc_profile")
+	err = core.UnmarshalPrimitive(m, "subnet_id", &obj.SubnetID)
+	if err != nil {
+		return
+	}
+	delete(m, "subnet_id")
+	err = core.UnmarshalPrimitive(m, "vpc_id", &obj.VPCID)
+	if err != nil {
+		return
+	}
+	delete(m, "vpc_id")
+	err = core.UnmarshalPrimitive(m, "subnet_zone", &obj.SubnetZone)
+	if err != nil {
+		return
+	}
+	delete(m, "subnet_zone")
+	err = core.UnmarshalPrimitive(m, "ssh_key_id", &obj.SSHKeyID)
+	if err != nil {
+		return
+	}
+	delete(m, "ssh_key_id")
+	err = core.UnmarshalPrimitive(m, "vpc_region", &obj.VPCRegion)
+	if err != nil {
+		return
+	}
+	delete(m, "vpc_region")
+	for k := range m {
+		var v interface{}
+		e := core.UnmarshalPrimitive(m, k, &v)
+		if e != nil {
+			err = e
+			return
+		}
+		obj.SetProperty(k, v)
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // DeployRequestBodySchematics : Schematics workspace configuration.
@@ -7464,6 +10252,12 @@ type DeployRequestBodySchematics struct {
 
 	// Resource group to use when creating the schematics workspace.
 	ResourceGroupID *string `json:"resource_group_id,omitempty"`
+
+	// Terraform version override.
+	TerraformVersion *string `json:"terraform_version,omitempty"`
+
+	// Schematics workspace region.
+	Region *string `json:"region,omitempty"`
 }
 
 // UnmarshalDeployRequestBodySchematics unmarshals an instance of DeployRequestBodySchematics from the specified map of raw messages.
@@ -7482,6 +10276,14 @@ func UnmarshalDeployRequestBodySchematics(m map[string]json.RawMessage, result i
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_group_id", &obj.ResourceGroupID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "terraform_version", &obj.TerraformVersion)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "region", &obj.Region)
 	if err != nil {
 		return
 	}
@@ -7635,6 +10437,36 @@ func (options *DeprecateOfferingOptions) SetHeaders(param map[string]string) *De
 	return options
 }
 
+// DeprecatePending : Deprecation information for an Offering.
+type DeprecatePending struct {
+	// Date of deprecation.
+	DeprecateDate *strfmt.DateTime `json:"deprecate_date,omitempty"`
+
+	// Deprecation state.
+	DeprecateState *string `json:"deprecate_state,omitempty"`
+
+	Description *string `json:"description,omitempty"`
+}
+
+// UnmarshalDeprecatePending unmarshals an instance of DeprecatePending from the specified map of raw messages.
+func UnmarshalDeprecatePending(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DeprecatePending)
+	err = core.UnmarshalPrimitive(m, "deprecate_date", &obj.DeprecateDate)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "deprecate_state", &obj.DeprecateState)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // DeprecateVersionOptions : The DeprecateVersion options.
 type DeprecateVersionOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
@@ -7668,8 +10500,14 @@ type Feature struct {
 	// Heading.
 	Title *string `json:"title,omitempty"`
 
+	// A map of translated strings, by language code.
+	TitleI18n map[string]string `json:"title_i18n,omitempty"`
+
 	// Feature description.
 	Description *string `json:"description,omitempty"`
+
+	// A map of translated strings, by language code.
+	DescriptionI18n map[string]string `json:"description_i18n,omitempty"`
 }
 
 // UnmarshalFeature unmarshals an instance of Feature from the specified map of raw messages.
@@ -7679,7 +10517,15 @@ func UnmarshalFeature(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "title_i18n", &obj.TitleI18n)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description_i18n", &obj.DescriptionI18n)
 	if err != nil {
 		return
 	}
@@ -7738,16 +10584,73 @@ func UnmarshalFilters(m map[string]json.RawMessage, result interface{}) (err err
 	return
 }
 
+// Flavor : Version Flavor Information.  Only supported for Product kind Solution.
+type Flavor struct {
+	// Programmatic name for this flavor.
+	Name *string `json:"name,omitempty"`
+
+	// Label for this flavor.
+	Label *string `json:"label,omitempty"`
+
+	// A map of translated strings, by language code.
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
+
+	// Order that this flavor should appear when listed for a single version.
+	Index *int64 `json:"index,omitempty"`
+}
+
+// UnmarshalFlavor unmarshals an instance of Flavor from the specified map of raw messages.
+func UnmarshalFlavor(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Flavor)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label_i18n", &obj.LabelI18n)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "index", &obj.Index)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // GetCatalogAccountAuditOptions : The GetCatalogAccountAudit options.
 type GetCatalogAccountAuditOptions struct {
+	// Auditlog ID.
+	AuditlogIdentifier *string `json:"auditlog_identifier" validate:"required,ne="`
+
+	// Auditlog Lookup Names - by default names are not returned in auditlog.
+	Lookupnames *bool `json:"lookupnames,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewGetCatalogAccountAuditOptions : Instantiate GetCatalogAccountAuditOptions
-func (*CatalogManagementV1) NewGetCatalogAccountAuditOptions() *GetCatalogAccountAuditOptions {
-	return &GetCatalogAccountAuditOptions{}
+func (*CatalogManagementV1) NewGetCatalogAccountAuditOptions(auditlogIdentifier string) *GetCatalogAccountAuditOptions {
+	return &GetCatalogAccountAuditOptions{
+		AuditlogIdentifier: core.StringPtr(auditlogIdentifier),
+	}
+}
+
+// SetAuditlogIdentifier : Allow user to set AuditlogIdentifier
+func (_options *GetCatalogAccountAuditOptions) SetAuditlogIdentifier(auditlogIdentifier string) *GetCatalogAccountAuditOptions {
+	_options.AuditlogIdentifier = core.StringPtr(auditlogIdentifier)
+	return _options
+}
+
+// SetLookupnames : Allow user to set Lookupnames
+func (_options *GetCatalogAccountAuditOptions) SetLookupnames(lookupnames bool) *GetCatalogAccountAuditOptions {
+	_options.Lookupnames = core.BoolPtr(lookupnames)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -7805,20 +10708,39 @@ type GetCatalogAuditOptions struct {
 	// Catalog identifier.
 	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
 
+	// Auditlog ID.
+	AuditlogIdentifier *string `json:"auditlog_identifier" validate:"required,ne="`
+
+	// Auditlog Lookup Names - by default names are not returned in auditlog.
+	Lookupnames *bool `json:"lookupnames,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewGetCatalogAuditOptions : Instantiate GetCatalogAuditOptions
-func (*CatalogManagementV1) NewGetCatalogAuditOptions(catalogIdentifier string) *GetCatalogAuditOptions {
+func (*CatalogManagementV1) NewGetCatalogAuditOptions(catalogIdentifier string, auditlogIdentifier string) *GetCatalogAuditOptions {
 	return &GetCatalogAuditOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		AuditlogIdentifier: core.StringPtr(auditlogIdentifier),
 	}
 }
 
 // SetCatalogIdentifier : Allow user to set CatalogIdentifier
 func (_options *GetCatalogAuditOptions) SetCatalogIdentifier(catalogIdentifier string) *GetCatalogAuditOptions {
 	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetAuditlogIdentifier : Allow user to set AuditlogIdentifier
+func (_options *GetCatalogAuditOptions) SetAuditlogIdentifier(auditlogIdentifier string) *GetCatalogAuditOptions {
+	_options.AuditlogIdentifier = core.StringPtr(auditlogIdentifier)
+	return _options
+}
+
+// SetLookupnames : Allow user to set Lookupnames
+func (_options *GetCatalogAuditOptions) SetLookupnames(lookupnames bool) *GetCatalogAuditOptions {
+	_options.Lookupnames = core.BoolPtr(lookupnames)
 	return _options
 }
 
@@ -7988,6 +10910,53 @@ func (options *GetConsumptionOfferingsOptions) SetHeaders(param map[string]strin
 	return options
 }
 
+// GetEnterpriseAuditOptions : The GetEnterpriseAudit options.
+type GetEnterpriseAuditOptions struct {
+	// Enterprise ID.
+	EnterpriseIdentifier *string `json:"enterprise_identifier" validate:"required,ne="`
+
+	// Auditlog ID.
+	AuditlogIdentifier *string `json:"auditlog_identifier" validate:"required,ne="`
+
+	// Auditlog Lookup Names - by default names are not returned in auditlog.
+	Lookupnames *bool `json:"lookupnames,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetEnterpriseAuditOptions : Instantiate GetEnterpriseAuditOptions
+func (*CatalogManagementV1) NewGetEnterpriseAuditOptions(enterpriseIdentifier string, auditlogIdentifier string) *GetEnterpriseAuditOptions {
+	return &GetEnterpriseAuditOptions{
+		EnterpriseIdentifier: core.StringPtr(enterpriseIdentifier),
+		AuditlogIdentifier: core.StringPtr(auditlogIdentifier),
+	}
+}
+
+// SetEnterpriseIdentifier : Allow user to set EnterpriseIdentifier
+func (_options *GetEnterpriseAuditOptions) SetEnterpriseIdentifier(enterpriseIdentifier string) *GetEnterpriseAuditOptions {
+	_options.EnterpriseIdentifier = core.StringPtr(enterpriseIdentifier)
+	return _options
+}
+
+// SetAuditlogIdentifier : Allow user to set AuditlogIdentifier
+func (_options *GetEnterpriseAuditOptions) SetAuditlogIdentifier(auditlogIdentifier string) *GetEnterpriseAuditOptions {
+	_options.AuditlogIdentifier = core.StringPtr(auditlogIdentifier)
+	return _options
+}
+
+// SetLookupnames : Allow user to set Lookupnames
+func (_options *GetEnterpriseAuditOptions) SetLookupnames(lookupnames bool) *GetEnterpriseAuditOptions {
+	_options.Lookupnames = core.BoolPtr(lookupnames)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetEnterpriseAuditOptions) SetHeaders(param map[string]string) *GetEnterpriseAuditOptions {
+	options.Headers = param
+	return options
+}
+
 // GetNamespacesOptions : The GetNamespaces options.
 type GetNamespacesOptions struct {
 	// ID of the cluster.
@@ -8054,8 +11023,8 @@ func (options *GetNamespacesOptions) SetHeaders(param map[string]string) *GetNam
 	return options
 }
 
-// GetObjectAccessListOptions : The GetObjectAccessList options.
-type GetObjectAccessListOptions struct {
+// GetObjectAccessListDeprecatedOptions : The GetObjectAccessListDeprecated options.
+type GetObjectAccessListDeprecatedOptions struct {
 	// Catalog identifier.
 	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
 
@@ -8067,6 +11036,62 @@ type GetObjectAccessListOptions struct {
 
 	// The number of results to skip before returning values.
 	Offset *int64 `json:"offset,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetObjectAccessListDeprecatedOptions : Instantiate GetObjectAccessListDeprecatedOptions
+func (*CatalogManagementV1) NewGetObjectAccessListDeprecatedOptions(catalogIdentifier string, objectIdentifier string) *GetObjectAccessListDeprecatedOptions {
+	return &GetObjectAccessListDeprecatedOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		ObjectIdentifier: core.StringPtr(objectIdentifier),
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *GetObjectAccessListDeprecatedOptions) SetCatalogIdentifier(catalogIdentifier string) *GetObjectAccessListDeprecatedOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetObjectIdentifier : Allow user to set ObjectIdentifier
+func (_options *GetObjectAccessListDeprecatedOptions) SetObjectIdentifier(objectIdentifier string) *GetObjectAccessListDeprecatedOptions {
+	_options.ObjectIdentifier = core.StringPtr(objectIdentifier)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *GetObjectAccessListDeprecatedOptions) SetLimit(limit int64) *GetObjectAccessListDeprecatedOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetOffset : Allow user to set Offset
+func (_options *GetObjectAccessListDeprecatedOptions) SetOffset(offset int64) *GetObjectAccessListDeprecatedOptions {
+	_options.Offset = core.Int64Ptr(offset)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetObjectAccessListDeprecatedOptions) SetHeaders(param map[string]string) *GetObjectAccessListDeprecatedOptions {
+	options.Headers = param
+	return options
+}
+
+// GetObjectAccessListOptions : The GetObjectAccessList options.
+type GetObjectAccessListOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Object identifier.
+	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
+
+	// Start token for a query.
+	Start *string `json:"start,omitempty"`
+
+	// number or results to return in the query.
+	Limit *int64 `json:"limit,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -8092,15 +11117,15 @@ func (_options *GetObjectAccessListOptions) SetObjectIdentifier(objectIdentifier
 	return _options
 }
 
-// SetLimit : Allow user to set Limit
-func (_options *GetObjectAccessListOptions) SetLimit(limit int64) *GetObjectAccessListOptions {
-	_options.Limit = core.Int64Ptr(limit)
+// SetStart : Allow user to set Start
+func (_options *GetObjectAccessListOptions) SetStart(start string) *GetObjectAccessListOptions {
+	_options.Start = core.StringPtr(start)
 	return _options
 }
 
-// SetOffset : Allow user to set Offset
-func (_options *GetObjectAccessListOptions) SetOffset(offset int64) *GetObjectAccessListOptions {
-	_options.Offset = core.Int64Ptr(offset)
+// SetLimit : Allow user to set Limit
+func (_options *GetObjectAccessListOptions) SetLimit(limit int64) *GetObjectAccessListOptions {
+	_options.Limit = core.Int64Ptr(limit)
 	return _options
 }
 
@@ -8118,19 +11143,20 @@ type GetObjectAccessOptions struct {
 	// Object identifier.
 	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
 
-	// Account identifier.
-	AccountIdentifier *string `json:"account_identifier" validate:"required,ne="`
+	// Identifier for access. Use 'accountId' for an account, '-ent-enterpriseid' for an enterprise, and
+	// '-entgroup-enterprisegroupid' for an enterprise group.
+	AccessIdentifier *string `json:"access_identifier" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewGetObjectAccessOptions : Instantiate GetObjectAccessOptions
-func (*CatalogManagementV1) NewGetObjectAccessOptions(catalogIdentifier string, objectIdentifier string, accountIdentifier string) *GetObjectAccessOptions {
+func (*CatalogManagementV1) NewGetObjectAccessOptions(catalogIdentifier string, objectIdentifier string, accessIdentifier string) *GetObjectAccessOptions {
 	return &GetObjectAccessOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
 		ObjectIdentifier: core.StringPtr(objectIdentifier),
-		AccountIdentifier: core.StringPtr(accountIdentifier),
+		AccessIdentifier: core.StringPtr(accessIdentifier),
 	}
 }
 
@@ -8146,9 +11172,9 @@ func (_options *GetObjectAccessOptions) SetObjectIdentifier(objectIdentifier str
 	return _options
 }
 
-// SetAccountIdentifier : Allow user to set AccountIdentifier
-func (_options *GetObjectAccessOptions) SetAccountIdentifier(accountIdentifier string) *GetObjectAccessOptions {
-	_options.AccountIdentifier = core.StringPtr(accountIdentifier)
+// SetAccessIdentifier : Allow user to set AccessIdentifier
+func (_options *GetObjectAccessOptions) SetAccessIdentifier(accessIdentifier string) *GetObjectAccessOptions {
+	_options.AccessIdentifier = core.StringPtr(accessIdentifier)
 	return _options
 }
 
@@ -8166,15 +11192,22 @@ type GetObjectAuditOptions struct {
 	// Object identifier.
 	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
 
+	// Auditlog ID.
+	AuditlogIdentifier *string `json:"auditlog_identifier" validate:"required,ne="`
+
+	// Auditlog Lookup Names - by default names are not returned in auditlog.
+	Lookupnames *bool `json:"lookupnames,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewGetObjectAuditOptions : Instantiate GetObjectAuditOptions
-func (*CatalogManagementV1) NewGetObjectAuditOptions(catalogIdentifier string, objectIdentifier string) *GetObjectAuditOptions {
+func (*CatalogManagementV1) NewGetObjectAuditOptions(catalogIdentifier string, objectIdentifier string, auditlogIdentifier string) *GetObjectAuditOptions {
 	return &GetObjectAuditOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
 		ObjectIdentifier: core.StringPtr(objectIdentifier),
+		AuditlogIdentifier: core.StringPtr(auditlogIdentifier),
 	}
 }
 
@@ -8187,6 +11220,18 @@ func (_options *GetObjectAuditOptions) SetCatalogIdentifier(catalogIdentifier st
 // SetObjectIdentifier : Allow user to set ObjectIdentifier
 func (_options *GetObjectAuditOptions) SetObjectIdentifier(objectIdentifier string) *GetObjectAuditOptions {
 	_options.ObjectIdentifier = core.StringPtr(objectIdentifier)
+	return _options
+}
+
+// SetAuditlogIdentifier : Allow user to set AuditlogIdentifier
+func (_options *GetObjectAuditOptions) SetAuditlogIdentifier(auditlogIdentifier string) *GetObjectAuditOptions {
+	_options.AuditlogIdentifier = core.StringPtr(auditlogIdentifier)
+	return _options
+}
+
+// SetLookupnames : Allow user to set Lookupnames
+func (_options *GetObjectAuditOptions) SetLookupnames(lookupnames bool) *GetObjectAuditOptions {
+	_options.Lookupnames = core.BoolPtr(lookupnames)
 	return _options
 }
 
@@ -8262,23 +11307,135 @@ func (options *GetOfferingAboutOptions) SetHeaders(param map[string]string) *Get
 	return options
 }
 
+// GetOfferingAccessListOptions : The GetOfferingAccessList options.
+type GetOfferingAccessListOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Offering identification.
+	OfferingID *string `json:"offering_id" validate:"required,ne="`
+
+	// Start token for a query.
+	Start *string `json:"start,omitempty"`
+
+	// number or results to return in the query.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetOfferingAccessListOptions : Instantiate GetOfferingAccessListOptions
+func (*CatalogManagementV1) NewGetOfferingAccessListOptions(catalogIdentifier string, offeringID string) *GetOfferingAccessListOptions {
+	return &GetOfferingAccessListOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		OfferingID: core.StringPtr(offeringID),
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *GetOfferingAccessListOptions) SetCatalogIdentifier(catalogIdentifier string) *GetOfferingAccessListOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetOfferingID : Allow user to set OfferingID
+func (_options *GetOfferingAccessListOptions) SetOfferingID(offeringID string) *GetOfferingAccessListOptions {
+	_options.OfferingID = core.StringPtr(offeringID)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *GetOfferingAccessListOptions) SetStart(start string) *GetOfferingAccessListOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *GetOfferingAccessListOptions) SetLimit(limit int64) *GetOfferingAccessListOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetOfferingAccessListOptions) SetHeaders(param map[string]string) *GetOfferingAccessListOptions {
+	options.Headers = param
+	return options
+}
+
+// GetOfferingAccessOptions : The GetOfferingAccess options.
+type GetOfferingAccessOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Offering identification.
+	OfferingID *string `json:"offering_id" validate:"required,ne="`
+
+	// Identifier for access. Use 'accountId' for an account, '-ent-enterpriseid' for an enterprise, and
+	// '-entgroup-enterprisegroupid' for an enterprise group.
+	AccessIdentifier *string `json:"access_identifier" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetOfferingAccessOptions : Instantiate GetOfferingAccessOptions
+func (*CatalogManagementV1) NewGetOfferingAccessOptions(catalogIdentifier string, offeringID string, accessIdentifier string) *GetOfferingAccessOptions {
+	return &GetOfferingAccessOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		OfferingID: core.StringPtr(offeringID),
+		AccessIdentifier: core.StringPtr(accessIdentifier),
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *GetOfferingAccessOptions) SetCatalogIdentifier(catalogIdentifier string) *GetOfferingAccessOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetOfferingID : Allow user to set OfferingID
+func (_options *GetOfferingAccessOptions) SetOfferingID(offeringID string) *GetOfferingAccessOptions {
+	_options.OfferingID = core.StringPtr(offeringID)
+	return _options
+}
+
+// SetAccessIdentifier : Allow user to set AccessIdentifier
+func (_options *GetOfferingAccessOptions) SetAccessIdentifier(accessIdentifier string) *GetOfferingAccessOptions {
+	_options.AccessIdentifier = core.StringPtr(accessIdentifier)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetOfferingAccessOptions) SetHeaders(param map[string]string) *GetOfferingAccessOptions {
+	options.Headers = param
+	return options
+}
+
 // GetOfferingAuditOptions : The GetOfferingAudit options.
 type GetOfferingAuditOptions struct {
 	// Catalog identifier.
 	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
 
-	// Offering identifier.
+	// Offering identification.
 	OfferingID *string `json:"offering_id" validate:"required,ne="`
+
+	// Auditlog ID.
+	AuditlogIdentifier *string `json:"auditlog_identifier" validate:"required,ne="`
+
+	// Auditlog Lookup Names - by default names are not returned in auditlog.
+	Lookupnames *bool `json:"lookupnames,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewGetOfferingAuditOptions : Instantiate GetOfferingAuditOptions
-func (*CatalogManagementV1) NewGetOfferingAuditOptions(catalogIdentifier string, offeringID string) *GetOfferingAuditOptions {
+func (*CatalogManagementV1) NewGetOfferingAuditOptions(catalogIdentifier string, offeringID string, auditlogIdentifier string) *GetOfferingAuditOptions {
 	return &GetOfferingAuditOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
 		OfferingID: core.StringPtr(offeringID),
+		AuditlogIdentifier: core.StringPtr(auditlogIdentifier),
 	}
 }
 
@@ -8291,6 +11448,18 @@ func (_options *GetOfferingAuditOptions) SetCatalogIdentifier(catalogIdentifier 
 // SetOfferingID : Allow user to set OfferingID
 func (_options *GetOfferingAuditOptions) SetOfferingID(offeringID string) *GetOfferingAuditOptions {
 	_options.OfferingID = core.StringPtr(offeringID)
+	return _options
+}
+
+// SetAuditlogIdentifier : Allow user to set AuditlogIdentifier
+func (_options *GetOfferingAuditOptions) SetAuditlogIdentifier(auditlogIdentifier string) *GetOfferingAuditOptions {
+	_options.AuditlogIdentifier = core.StringPtr(auditlogIdentifier)
+	return _options
+}
+
+// SetLookupnames : Allow user to set Lookupnames
+func (_options *GetOfferingAuditOptions) SetLookupnames(lookupnames bool) *GetOfferingAuditOptions {
+	_options.Lookupnames = core.BoolPtr(lookupnames)
 	return _options
 }
 
@@ -8324,6 +11493,53 @@ func (_options *GetOfferingContainerImagesOptions) SetVersionLocID(versionLocID 
 
 // SetHeaders : Allow user to set Headers
 func (options *GetOfferingContainerImagesOptions) SetHeaders(param map[string]string) *GetOfferingContainerImagesOptions {
+	options.Headers = param
+	return options
+}
+
+// GetOfferingInstanceAuditOptions : The GetOfferingInstanceAudit options.
+type GetOfferingInstanceAuditOptions struct {
+	// Version Instance identifier.
+	InstanceIdentifier *string `json:"instance_identifier" validate:"required,ne="`
+
+	// Auditlog ID.
+	AuditlogIdentifier *string `json:"auditlog_identifier" validate:"required,ne="`
+
+	// Auditlog Lookup Names - by default names are not returned in auditlog.
+	Lookupnames *bool `json:"lookupnames,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetOfferingInstanceAuditOptions : Instantiate GetOfferingInstanceAuditOptions
+func (*CatalogManagementV1) NewGetOfferingInstanceAuditOptions(instanceIdentifier string, auditlogIdentifier string) *GetOfferingInstanceAuditOptions {
+	return &GetOfferingInstanceAuditOptions{
+		InstanceIdentifier: core.StringPtr(instanceIdentifier),
+		AuditlogIdentifier: core.StringPtr(auditlogIdentifier),
+	}
+}
+
+// SetInstanceIdentifier : Allow user to set InstanceIdentifier
+func (_options *GetOfferingInstanceAuditOptions) SetInstanceIdentifier(instanceIdentifier string) *GetOfferingInstanceAuditOptions {
+	_options.InstanceIdentifier = core.StringPtr(instanceIdentifier)
+	return _options
+}
+
+// SetAuditlogIdentifier : Allow user to set AuditlogIdentifier
+func (_options *GetOfferingInstanceAuditOptions) SetAuditlogIdentifier(auditlogIdentifier string) *GetOfferingInstanceAuditOptions {
+	_options.AuditlogIdentifier = core.StringPtr(auditlogIdentifier)
+	return _options
+}
+
+// SetLookupnames : Allow user to set Lookupnames
+func (_options *GetOfferingInstanceAuditOptions) SetLookupnames(lookupnames bool) *GetOfferingInstanceAuditOptions {
+	_options.Lookupnames = core.BoolPtr(lookupnames)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetOfferingInstanceAuditOptions) SetHeaders(param map[string]string) *GetOfferingInstanceAuditOptions {
 	options.Headers = param
 	return options
 }
@@ -8458,7 +11674,7 @@ type GetOfferingSourceOptions struct {
 	// The type of the response: application/yaml, application/json, or application/x-gzip.
 	Accept *string `json:"Accept,omitempty"`
 
-	// Catlaog ID.  If not specified, this value will default to the public catalog.
+	// Catalog ID.  If not specified, this value will default to the public catalog.
 	CatalogID *string `json:"catalogID,omitempty"`
 
 	// Offering name.  An offering name or ID must be specified.
@@ -8472,6 +11688,16 @@ type GetOfferingSourceOptions struct {
 
 	// The channel value of the specified version.
 	Channel *string `json:"channel,omitempty"`
+
+	// The programmatic flavor name of the specified version.
+	Flavor *string `json:"flavor,omitempty"`
+
+	// If false (the default), the root folder from the original onboarded tgz file is removed.  If true, the root folder
+	// is returned.
+	AsIs *bool `json:"asIs,omitempty"`
+
+	// The install type of the specified version.
+	InstallType *string `json:"installType,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -8526,8 +11752,90 @@ func (_options *GetOfferingSourceOptions) SetChannel(channel string) *GetOfferin
 	return _options
 }
 
+// SetFlavor : Allow user to set Flavor
+func (_options *GetOfferingSourceOptions) SetFlavor(flavor string) *GetOfferingSourceOptions {
+	_options.Flavor = core.StringPtr(flavor)
+	return _options
+}
+
+// SetAsIs : Allow user to set AsIs
+func (_options *GetOfferingSourceOptions) SetAsIs(asIs bool) *GetOfferingSourceOptions {
+	_options.AsIs = core.BoolPtr(asIs)
+	return _options
+}
+
+// SetInstallType : Allow user to set InstallType
+func (_options *GetOfferingSourceOptions) SetInstallType(installType string) *GetOfferingSourceOptions {
+	_options.InstallType = core.StringPtr(installType)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *GetOfferingSourceOptions) SetHeaders(param map[string]string) *GetOfferingSourceOptions {
+	options.Headers = param
+	return options
+}
+
+// GetOfferingSourceURLOptions : The GetOfferingSourceURL options.
+type GetOfferingSourceURLOptions struct {
+	// Unique key identifying an image.
+	KeyIdentifier *string `json:"key_identifier" validate:"required,ne="`
+
+	// The type of the response: application/yaml, application/json, or application/x-gzip.
+	Accept *string `json:"Accept,omitempty"`
+
+	// Catalog ID. If not specified, this value will default to the public catalog.
+	CatalogID *string `json:"catalogID,omitempty"`
+
+	// Offering name. An offering name or ID must be specified.
+	Name *string `json:"name,omitempty"`
+
+	// Offering id. An offering name or ID must be specified.
+	ID *string `json:"id,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetOfferingSourceURLOptions : Instantiate GetOfferingSourceURLOptions
+func (*CatalogManagementV1) NewGetOfferingSourceURLOptions(keyIdentifier string) *GetOfferingSourceURLOptions {
+	return &GetOfferingSourceURLOptions{
+		KeyIdentifier: core.StringPtr(keyIdentifier),
+	}
+}
+
+// SetKeyIdentifier : Allow user to set KeyIdentifier
+func (_options *GetOfferingSourceURLOptions) SetKeyIdentifier(keyIdentifier string) *GetOfferingSourceURLOptions {
+	_options.KeyIdentifier = core.StringPtr(keyIdentifier)
+	return _options
+}
+
+// SetAccept : Allow user to set Accept
+func (_options *GetOfferingSourceURLOptions) SetAccept(accept string) *GetOfferingSourceURLOptions {
+	_options.Accept = core.StringPtr(accept)
+	return _options
+}
+
+// SetCatalogID : Allow user to set CatalogID
+func (_options *GetOfferingSourceURLOptions) SetCatalogID(catalogID string) *GetOfferingSourceURLOptions {
+	_options.CatalogID = core.StringPtr(catalogID)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *GetOfferingSourceURLOptions) SetName(name string) *GetOfferingSourceURLOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetOfferingSourceURLOptions) SetID(id string) *GetOfferingSourceURLOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetOfferingSourceURLOptions) SetHeaders(param map[string]string) *GetOfferingSourceURLOptions {
 	options.Headers = param
 	return options
 }
@@ -8867,6 +12175,99 @@ func (options *GetVersionOptions) SetHeaders(param map[string]string) *GetVersio
 	return options
 }
 
+// Goal : Compliance control goal.
+type Goal struct {
+	// Goal ID.
+	ID *string `json:"id,omitempty"`
+
+	// Goal description.
+	Description *string `json:"description,omitempty"`
+
+	// Goal UI href.
+	UIHref *string `json:"ui_href,omitempty"`
+}
+
+// UnmarshalGoal unmarshals an instance of Goal from the specified map of raw messages.
+func UnmarshalGoal(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Goal)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// IamPermission : IAM Permission definition.
+type IamPermission struct {
+	// Service name.
+	ServiceName *string `json:"service_name,omitempty"`
+
+	// Role CRNs for this permission.
+	RoleCrns []string `json:"role_crns,omitempty"`
+
+	// Resources for this permission.
+	Resources []IamResource `json:"resources,omitempty"`
+}
+
+// UnmarshalIamPermission unmarshals an instance of IamPermission from the specified map of raw messages.
+func UnmarshalIamPermission(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IamPermission)
+	err = core.UnmarshalPrimitive(m, "service_name", &obj.ServiceName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "role_crns", &obj.RoleCrns)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalIamResource)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// IamResource : IAM Resource definition.
+type IamResource struct {
+	// Resource name.
+	Name *string `json:"name,omitempty"`
+
+	// Resource description.
+	Description *string `json:"description,omitempty"`
+
+	// Role CRNs for this permission.
+	RoleCrns []string `json:"role_crns,omitempty"`
+}
+
+// UnmarshalIamResource unmarshals an instance of IamResource from the specified map of raw messages.
+func UnmarshalIamResource(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IamResource)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "role_crns", &obj.RoleCrns)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // IDFilter : Filter on offering ID's. There is an include filter and an exclule filter. Both can be set.
 type IDFilter struct {
 	// Offering filter terms.
@@ -8889,72 +12290,6 @@ func UnmarshalIDFilter(m map[string]json.RawMessage, result interface{}) (err er
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
-}
-
-// IBMPublishObjectOptions : The IBMPublishObject options.
-type IBMPublishObjectOptions struct {
-	// Catalog identifier.
-	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
-
-	// Object identifier.
-	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewIBMPublishObjectOptions : Instantiate IBMPublishObjectOptions
-func (*CatalogManagementV1) NewIBMPublishObjectOptions(catalogIdentifier string, objectIdentifier string) *IBMPublishObjectOptions {
-	return &IBMPublishObjectOptions{
-		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
-	}
-}
-
-// SetCatalogIdentifier : Allow user to set CatalogIdentifier
-func (_options *IBMPublishObjectOptions) SetCatalogIdentifier(catalogIdentifier string) *IBMPublishObjectOptions {
-	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
-	return _options
-}
-
-// SetObjectIdentifier : Allow user to set ObjectIdentifier
-func (_options *IBMPublishObjectOptions) SetObjectIdentifier(objectIdentifier string) *IBMPublishObjectOptions {
-	_options.ObjectIdentifier = core.StringPtr(objectIdentifier)
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *IBMPublishObjectOptions) SetHeaders(param map[string]string) *IBMPublishObjectOptions {
-	options.Headers = param
-	return options
-}
-
-// IBMPublishVersionOptions : The IBMPublishVersion options.
-type IBMPublishVersionOptions struct {
-	// A dotted value of `catalogID`.`versionID`.
-	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewIBMPublishVersionOptions : Instantiate IBMPublishVersionOptions
-func (*CatalogManagementV1) NewIBMPublishVersionOptions(versionLocID string) *IBMPublishVersionOptions {
-	return &IBMPublishVersionOptions{
-		VersionLocID: core.StringPtr(versionLocID),
-	}
-}
-
-// SetVersionLocID : Allow user to set VersionLocID
-func (_options *IBMPublishVersionOptions) SetVersionLocID(versionLocID string) *IBMPublishVersionOptions {
-	_options.VersionLocID = core.StringPtr(versionLocID)
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *IBMPublishVersionOptions) SetHeaders(param map[string]string) *IBMPublishVersionOptions {
-	options.Headers = param
-	return options
 }
 
 // Image : Image.
@@ -8998,6 +12333,191 @@ func UnmarshalImageManifest(m map[string]json.RawMessage, result interface{}) (e
 	return
 }
 
+// ImagePullKey : Image pull keys for an offering.
+type ImagePullKey struct {
+	// Key name.
+	Name *string `json:"name,omitempty"`
+
+	// Key value.
+	Value *string `json:"value,omitempty"`
+
+	// Key description.
+	Description *string `json:"description,omitempty"`
+}
+
+// UnmarshalImagePullKey unmarshals an instance of ImagePullKey from the specified map of raw messages.
+func UnmarshalImagePullKey(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ImagePullKey)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ImportOfferingBodyMetadata : Generic data to be included with content being onboarded. Required for virtual server image for VPC.
+type ImportOfferingBodyMetadata struct {
+	// Operating system included in this image. Required for virtual server image for VPC.
+	OperatingSystem *ImportOfferingBodyMetadataOperatingSystem `json:"operating_system,omitempty"`
+
+	// Details for the stored image file. Required for virtual server image for VPC.
+	File *ImportOfferingBodyMetadataFile `json:"file,omitempty"`
+
+	// Minimum size (in gigabytes) of a volume onto which this image may be provisioned. Required for virtual server image
+	// for VPC.
+	MinimumProvisionedSize *int64 `json:"minimum_provisioned_size,omitempty"`
+
+	// Image operating system. Required for virtual server image for VPC.
+	Images []ImportOfferingBodyMetadataImagesItem `json:"images,omitempty"`
+}
+
+// UnmarshalImportOfferingBodyMetadata unmarshals an instance of ImportOfferingBodyMetadata from the specified map of raw messages.
+func UnmarshalImportOfferingBodyMetadata(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ImportOfferingBodyMetadata)
+	err = core.UnmarshalModel(m, "operating_system", &obj.OperatingSystem, UnmarshalImportOfferingBodyMetadataOperatingSystem)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "file", &obj.File, UnmarshalImportOfferingBodyMetadataFile)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "minimum_provisioned_size", &obj.MinimumProvisionedSize)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "images", &obj.Images, UnmarshalImportOfferingBodyMetadataImagesItem)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ImportOfferingBodyMetadataFile : Details for the stored image file. Required for virtual server image for VPC.
+type ImportOfferingBodyMetadataFile struct {
+	// Size of the stored image file rounded up to the next gigabyte. Required for virtual server image for VPC.
+	Size *int64 `json:"size,omitempty"`
+}
+
+// UnmarshalImportOfferingBodyMetadataFile unmarshals an instance of ImportOfferingBodyMetadataFile from the specified map of raw messages.
+func UnmarshalImportOfferingBodyMetadataFile(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ImportOfferingBodyMetadataFile)
+	err = core.UnmarshalPrimitive(m, "size", &obj.Size)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ImportOfferingBodyMetadataImagesItem : A list of details that identify a virtual server image. Required for virtual server image for VPC.
+type ImportOfferingBodyMetadataImagesItem struct {
+	// Programmatic ID of virtual server image. Required for virtual server image for VPC.
+	ID *string `json:"id,omitempty"`
+
+	// Programmatic name of virtual server image. Required for virtual server image for VPC.
+	Name *string `json:"name,omitempty"`
+
+	// Region the virtual server image is available in. Required for virtual server image for VPC.
+	Region *string `json:"region,omitempty"`
+}
+
+// UnmarshalImportOfferingBodyMetadataImagesItem unmarshals an instance of ImportOfferingBodyMetadataImagesItem from the specified map of raw messages.
+func UnmarshalImportOfferingBodyMetadataImagesItem(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ImportOfferingBodyMetadataImagesItem)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "region", &obj.Region)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ImportOfferingBodyMetadataOperatingSystem : Operating system included in this image. Required for virtual server image for VPC.
+type ImportOfferingBodyMetadataOperatingSystem struct {
+	// Images with this operating system can only be used on dedicated hosts or dedicated host groups. Required for virtual
+	// server image for VPC.
+	DedicatedHostOnly *bool `json:"dedicated_host_only,omitempty"`
+
+	// Vendor of the operating system. Required for virtual server image for VPC.
+	Vendor *string `json:"vendor,omitempty"`
+
+	// Globally unique name for this operating system Required for virtual server image for VPC.
+	Name *string `json:"name,omitempty"`
+
+	// URL for this operating system. Required for virtual server image for VPC.
+	Href *string `json:"href,omitempty"`
+
+	// Unique, display-friendly name for the operating system. Required for virtual server image for VPC.
+	DisplayName *string `json:"display_name,omitempty"`
+
+	// Software family for this operating system. Required for virtual server image for VPC.
+	Family *string `json:"family,omitempty"`
+
+	// Major release version of this operating system. Required for virtual server image for VPC.
+	Version *string `json:"version,omitempty"`
+
+	// Operating system architecture. Required for virtual server image for VPC.
+	Architecture *string `json:"architecture,omitempty"`
+}
+
+// UnmarshalImportOfferingBodyMetadataOperatingSystem unmarshals an instance of ImportOfferingBodyMetadataOperatingSystem from the specified map of raw messages.
+func UnmarshalImportOfferingBodyMetadataOperatingSystem(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ImportOfferingBodyMetadataOperatingSystem)
+	err = core.UnmarshalPrimitive(m, "dedicated_host_only", &obj.DedicatedHostOnly)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "vendor", &obj.Vendor)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "family", &obj.Family)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "architecture", &obj.Architecture)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // ImportOfferingOptions : The ImportOffering options.
 type ImportOfferingOptions struct {
 	// Catalog identifier.
@@ -9006,11 +12526,43 @@ type ImportOfferingOptions struct {
 	// Tags array.
 	Tags []string `json:"tags,omitempty"`
 
-	// Target kinds.  Current valid values are 'iks', 'roks', 'vcenter', and 'terraform'.
+	// Byte array representing the content to be imported. Only supported for OVA images at this time.
+	Content *[]byte `json:"content,omitempty"`
+
+	// Name of version. Required for virtual server image for VPC.
+	Name *string `json:"name,omitempty"`
+
+	// Display name of version. Required for virtual server image for VPC.
+	Label *string `json:"label,omitempty"`
+
+	// Install type. Example: instance. Required for virtual server image for VPC.
+	InstallKind *string `json:"install_kind,omitempty"`
+
+	// Deployment target of the content being onboarded. Current valid values are iks, roks, vcenter, power-iaas,
+	// terraform, and vpc-x86. Required for virtual server image for VPC.
 	TargetKinds []string `json:"target_kinds,omitempty"`
 
-	// byte array representing the content to be imported.  Only supported for OVA images at this time.
-	Content *[]byte `json:"content,omitempty"`
+	// Format of content being onboarded. Example: vsi-image. Required for virtual server image for VPC.
+	FormatKind *string `json:"format_kind,omitempty"`
+
+	// Optional product kind for the software being onboarded.  Valid values are software, module, or solution.  Default
+	// value is software.
+	ProductKind *string `json:"product_kind,omitempty"`
+
+	// SHA256 fingerprint of the image file. Required for virtual server image for VPC.
+	Sha *string `json:"sha,omitempty"`
+
+	// Semantic version of the software being onboarded. Required for virtual server image for VPC.
+	Version *string `json:"version,omitempty"`
+
+	// Version Flavor Information.  Only supported for Product kind Solution.
+	Flavor *Flavor `json:"flavor,omitempty"`
+
+	// Generic data to be included with content being onboarded. Required for virtual server image for VPC.
+	Metadata *ImportOfferingBodyMetadata `json:"metadata,omitempty"`
+
+	// Optional - The sub-folder within the specified tgz file that contains the software being onboarded.
+	WorkingDirectory *string `json:"working_directory,omitempty"`
 
 	// URL path to zip location.  If not specified, must provide content in this post body.
 	Zipurl *string `json:"zipurl,omitempty"`
@@ -9024,11 +12576,11 @@ type ImportOfferingOptions struct {
 	// Add all possible configuration items when creating this version.
 	IncludeConfig *bool `json:"includeConfig,omitempty"`
 
-	// Indicates that the current terraform template is used to install a VSI Image.
+	// Indicates that the current terraform template is used to install a virtual server image.
 	IsVsi *bool `json:"isVSI,omitempty"`
 
 	// The type of repository containing this version.  Valid values are 'public_git' or 'enterprise_git'.
-	RepoType *string `json:"repoType,omitempty"`
+	Repotype *string `json:"repotype,omitempty"`
 
 	// Authentication token used to access the specified zip file.
 	XAuthToken *string `json:"X-Auth-Token,omitempty"`
@@ -9056,15 +12608,75 @@ func (_options *ImportOfferingOptions) SetTags(tags []string) *ImportOfferingOpt
 	return _options
 }
 
+// SetContent : Allow user to set Content
+func (_options *ImportOfferingOptions) SetContent(content []byte) *ImportOfferingOptions {
+	_options.Content = &content
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *ImportOfferingOptions) SetName(name string) *ImportOfferingOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetLabel : Allow user to set Label
+func (_options *ImportOfferingOptions) SetLabel(label string) *ImportOfferingOptions {
+	_options.Label = core.StringPtr(label)
+	return _options
+}
+
+// SetInstallKind : Allow user to set InstallKind
+func (_options *ImportOfferingOptions) SetInstallKind(installKind string) *ImportOfferingOptions {
+	_options.InstallKind = core.StringPtr(installKind)
+	return _options
+}
+
 // SetTargetKinds : Allow user to set TargetKinds
 func (_options *ImportOfferingOptions) SetTargetKinds(targetKinds []string) *ImportOfferingOptions {
 	_options.TargetKinds = targetKinds
 	return _options
 }
 
-// SetContent : Allow user to set Content
-func (_options *ImportOfferingOptions) SetContent(content []byte) *ImportOfferingOptions {
-	_options.Content = &content
+// SetFormatKind : Allow user to set FormatKind
+func (_options *ImportOfferingOptions) SetFormatKind(formatKind string) *ImportOfferingOptions {
+	_options.FormatKind = core.StringPtr(formatKind)
+	return _options
+}
+
+// SetProductKind : Allow user to set ProductKind
+func (_options *ImportOfferingOptions) SetProductKind(productKind string) *ImportOfferingOptions {
+	_options.ProductKind = core.StringPtr(productKind)
+	return _options
+}
+
+// SetSha : Allow user to set Sha
+func (_options *ImportOfferingOptions) SetSha(sha string) *ImportOfferingOptions {
+	_options.Sha = core.StringPtr(sha)
+	return _options
+}
+
+// SetVersion : Allow user to set Version
+func (_options *ImportOfferingOptions) SetVersion(version string) *ImportOfferingOptions {
+	_options.Version = core.StringPtr(version)
+	return _options
+}
+
+// SetFlavor : Allow user to set Flavor
+func (_options *ImportOfferingOptions) SetFlavor(flavor *Flavor) *ImportOfferingOptions {
+	_options.Flavor = flavor
+	return _options
+}
+
+// SetMetadata : Allow user to set Metadata
+func (_options *ImportOfferingOptions) SetMetadata(metadata *ImportOfferingBodyMetadata) *ImportOfferingOptions {
+	_options.Metadata = metadata
+	return _options
+}
+
+// SetWorkingDirectory : Allow user to set WorkingDirectory
+func (_options *ImportOfferingOptions) SetWorkingDirectory(workingDirectory string) *ImportOfferingOptions {
+	_options.WorkingDirectory = core.StringPtr(workingDirectory)
 	return _options
 }
 
@@ -9098,9 +12710,9 @@ func (_options *ImportOfferingOptions) SetIsVsi(isVsi bool) *ImportOfferingOptio
 	return _options
 }
 
-// SetRepoType : Allow user to set RepoType
-func (_options *ImportOfferingOptions) SetRepoType(repoType string) *ImportOfferingOptions {
-	_options.RepoType = core.StringPtr(repoType)
+// SetRepotype : Allow user to set Repotype
+func (_options *ImportOfferingOptions) SetRepotype(repotype string) *ImportOfferingOptions {
+	_options.Repotype = core.StringPtr(repotype)
 	return _options
 }
 
@@ -9127,11 +12739,43 @@ type ImportOfferingVersionOptions struct {
 	// Tags array.
 	Tags []string `json:"tags,omitempty"`
 
-	// Target kinds.  Current valid values are 'iks', 'roks', 'vcenter', and 'terraform'.
+	// Byte array representing the content to be imported. Only supported for OVA images at this time.
+	Content *[]byte `json:"content,omitempty"`
+
+	// Name of version. Required for virtual server image for VPC.
+	Name *string `json:"name,omitempty"`
+
+	// Display name of version. Required for virtual server image for VPC.
+	Label *string `json:"label,omitempty"`
+
+	// Install type. Example: instance. Required for virtual server image for VPC.
+	InstallKind *string `json:"install_kind,omitempty"`
+
+	// Deployment target of the content being onboarded. Current valid values are iks, roks, vcenter, power-iaas,
+	// terraform, and vpc-x86. Required for virtual server image for VPC.
 	TargetKinds []string `json:"target_kinds,omitempty"`
 
-	// byte array representing the content to be imported.  Only supported for OVA images at this time.
-	Content *[]byte `json:"content,omitempty"`
+	// Format of content being onboarded. Example: vsi-image. Required for virtual server image for VPC.
+	FormatKind *string `json:"format_kind,omitempty"`
+
+	// Optional product kind for the software being onboarded.  Valid values are software, module, or solution.  Default
+	// value is software.
+	ProductKind *string `json:"product_kind,omitempty"`
+
+	// SHA256 fingerprint of the image file. Required for virtual server image for VPC.
+	Sha *string `json:"sha,omitempty"`
+
+	// Semantic version of the software being onboarded. Required for virtual server image for VPC.
+	Version *string `json:"version,omitempty"`
+
+	// Version Flavor Information.  Only supported for Product kind Solution.
+	Flavor *Flavor `json:"flavor,omitempty"`
+
+	// Generic data to be included with content being onboarded. Required for virtual server image for VPC.
+	Metadata *ImportOfferingBodyMetadata `json:"metadata,omitempty"`
+
+	// Optional - The sub-folder within the specified tgz file that contains the software being onboarded.
+	WorkingDirectory *string `json:"working_directory,omitempty"`
 
 	// URL path to zip location.  If not specified, must provide content in the body of this call.
 	Zipurl *string `json:"zipurl,omitempty"`
@@ -9142,11 +12786,14 @@ type ImportOfferingVersionOptions struct {
 	// Add all possible configuration values to this version when importing.
 	IncludeConfig *bool `json:"includeConfig,omitempty"`
 
-	// Indicates that the current terraform template is used to install a VSI Image.
+	// Indicates that the current terraform template is used to install a virtual server image.
 	IsVsi *bool `json:"isVSI,omitempty"`
 
 	// The type of repository containing this version.  Valid values are 'public_git' or 'enterprise_git'.
-	RepoType *string `json:"repoType,omitempty"`
+	Repotype *string `json:"repotype,omitempty"`
+
+	// Authentication token used to access the specified zip file.
+	XAuthToken *string `json:"X-Auth-Token,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -9178,15 +12825,75 @@ func (_options *ImportOfferingVersionOptions) SetTags(tags []string) *ImportOffe
 	return _options
 }
 
+// SetContent : Allow user to set Content
+func (_options *ImportOfferingVersionOptions) SetContent(content []byte) *ImportOfferingVersionOptions {
+	_options.Content = &content
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *ImportOfferingVersionOptions) SetName(name string) *ImportOfferingVersionOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetLabel : Allow user to set Label
+func (_options *ImportOfferingVersionOptions) SetLabel(label string) *ImportOfferingVersionOptions {
+	_options.Label = core.StringPtr(label)
+	return _options
+}
+
+// SetInstallKind : Allow user to set InstallKind
+func (_options *ImportOfferingVersionOptions) SetInstallKind(installKind string) *ImportOfferingVersionOptions {
+	_options.InstallKind = core.StringPtr(installKind)
+	return _options
+}
+
 // SetTargetKinds : Allow user to set TargetKinds
 func (_options *ImportOfferingVersionOptions) SetTargetKinds(targetKinds []string) *ImportOfferingVersionOptions {
 	_options.TargetKinds = targetKinds
 	return _options
 }
 
-// SetContent : Allow user to set Content
-func (_options *ImportOfferingVersionOptions) SetContent(content []byte) *ImportOfferingVersionOptions {
-	_options.Content = &content
+// SetFormatKind : Allow user to set FormatKind
+func (_options *ImportOfferingVersionOptions) SetFormatKind(formatKind string) *ImportOfferingVersionOptions {
+	_options.FormatKind = core.StringPtr(formatKind)
+	return _options
+}
+
+// SetProductKind : Allow user to set ProductKind
+func (_options *ImportOfferingVersionOptions) SetProductKind(productKind string) *ImportOfferingVersionOptions {
+	_options.ProductKind = core.StringPtr(productKind)
+	return _options
+}
+
+// SetSha : Allow user to set Sha
+func (_options *ImportOfferingVersionOptions) SetSha(sha string) *ImportOfferingVersionOptions {
+	_options.Sha = core.StringPtr(sha)
+	return _options
+}
+
+// SetVersion : Allow user to set Version
+func (_options *ImportOfferingVersionOptions) SetVersion(version string) *ImportOfferingVersionOptions {
+	_options.Version = core.StringPtr(version)
+	return _options
+}
+
+// SetFlavor : Allow user to set Flavor
+func (_options *ImportOfferingVersionOptions) SetFlavor(flavor *Flavor) *ImportOfferingVersionOptions {
+	_options.Flavor = flavor
+	return _options
+}
+
+// SetMetadata : Allow user to set Metadata
+func (_options *ImportOfferingVersionOptions) SetMetadata(metadata *ImportOfferingBodyMetadata) *ImportOfferingVersionOptions {
+	_options.Metadata = metadata
+	return _options
+}
+
+// SetWorkingDirectory : Allow user to set WorkingDirectory
+func (_options *ImportOfferingVersionOptions) SetWorkingDirectory(workingDirectory string) *ImportOfferingVersionOptions {
+	_options.WorkingDirectory = core.StringPtr(workingDirectory)
 	return _options
 }
 
@@ -9214,9 +12921,15 @@ func (_options *ImportOfferingVersionOptions) SetIsVsi(isVsi bool) *ImportOfferi
 	return _options
 }
 
-// SetRepoType : Allow user to set RepoType
-func (_options *ImportOfferingVersionOptions) SetRepoType(repoType string) *ImportOfferingVersionOptions {
-	_options.RepoType = core.StringPtr(repoType)
+// SetRepotype : Allow user to set Repotype
+func (_options *ImportOfferingVersionOptions) SetRepotype(repotype string) *ImportOfferingVersionOptions {
+	_options.Repotype = core.StringPtr(repotype)
+	return _options
+}
+
+// SetXAuthToken : Allow user to set XAuthToken
+func (_options *ImportOfferingVersionOptions) SetXAuthToken(xAuthToken string) *ImportOfferingVersionOptions {
+	_options.XAuthToken = core.StringPtr(xAuthToken)
 	return _options
 }
 
@@ -9388,9 +13101,11 @@ type InstallVersionOptions struct {
 	// Kube namespace.
 	Namespace *string `json:"namespace,omitempty"`
 
-	// Object containing Helm chart override values.  To use a secret for items of type password, specify a JSON encoded
-	// value of $ref:#/components/schemas/SecretInstance, prefixed with `cmsm_v1:`.
-	OverrideValues map[string]interface{} `json:"override_values,omitempty"`
+	// Validation override values. Required for virtual server image for VPC.
+	OverrideValues *DeployRequestBodyOverrideValues `json:"override_values,omitempty"`
+
+	// Schematics environment variables to use with this workspace.
+	EnvironmentVariables []DeployRequestBodyEnvironmentVariablesItem `json:"environment_variables,omitempty"`
 
 	// Entitlement API Key for this offering.
 	EntitlementApikey *string `json:"entitlement_apikey,omitempty"`
@@ -9410,14 +13125,14 @@ type InstallVersionOptions struct {
 	// VCenter ID.
 	VcenterID *string `json:"vcenter_id,omitempty"`
 
+	// VCenter Location.
+	VcenterLocation *string `json:"vcenter_location,omitempty"`
+
 	// VCenter User.
 	VcenterUser *string `json:"vcenter_user,omitempty"`
 
 	// VCenter Password.
 	VcenterPassword *string `json:"vcenter_password,omitempty"`
-
-	// VCenter Location.
-	VcenterLocation *string `json:"vcenter_location,omitempty"`
 
 	// VCenter Datastore.
 	VcenterDatastore *string `json:"vcenter_datastore,omitempty"`
@@ -9465,8 +13180,14 @@ func (_options *InstallVersionOptions) SetNamespace(namespace string) *InstallVe
 }
 
 // SetOverrideValues : Allow user to set OverrideValues
-func (_options *InstallVersionOptions) SetOverrideValues(overrideValues map[string]interface{}) *InstallVersionOptions {
+func (_options *InstallVersionOptions) SetOverrideValues(overrideValues *DeployRequestBodyOverrideValues) *InstallVersionOptions {
 	_options.OverrideValues = overrideValues
+	return _options
+}
+
+// SetEnvironmentVariables : Allow user to set EnvironmentVariables
+func (_options *InstallVersionOptions) SetEnvironmentVariables(environmentVariables []DeployRequestBodyEnvironmentVariablesItem) *InstallVersionOptions {
+	_options.EnvironmentVariables = environmentVariables
 	return _options
 }
 
@@ -9506,6 +13227,12 @@ func (_options *InstallVersionOptions) SetVcenterID(vcenterID string) *InstallVe
 	return _options
 }
 
+// SetVcenterLocation : Allow user to set VcenterLocation
+func (_options *InstallVersionOptions) SetVcenterLocation(vcenterLocation string) *InstallVersionOptions {
+	_options.VcenterLocation = core.StringPtr(vcenterLocation)
+	return _options
+}
+
 // SetVcenterUser : Allow user to set VcenterUser
 func (_options *InstallVersionOptions) SetVcenterUser(vcenterUser string) *InstallVersionOptions {
 	_options.VcenterUser = core.StringPtr(vcenterUser)
@@ -9515,12 +13242,6 @@ func (_options *InstallVersionOptions) SetVcenterUser(vcenterUser string) *Insta
 // SetVcenterPassword : Allow user to set VcenterPassword
 func (_options *InstallVersionOptions) SetVcenterPassword(vcenterPassword string) *InstallVersionOptions {
 	_options.VcenterPassword = core.StringPtr(vcenterPassword)
-	return _options
-}
-
-// SetVcenterLocation : Allow user to set VcenterLocation
-func (_options *InstallVersionOptions) SetVcenterLocation(vcenterLocation string) *InstallVersionOptions {
-	_options.VcenterLocation = core.StringPtr(vcenterLocation)
 	return _options
 }
 
@@ -9536,19 +13257,19 @@ func (options *InstallVersionOptions) SetHeaders(param map[string]string) *Insta
 	return options
 }
 
-// JSONPatchOperation : This model represents an individual patch operation to be performed on a JSON document, as defined by RFC 6902.
+// JSONPatchOperation : A JSONPatch document as defined by RFC 6902.
 type JSONPatchOperation struct {
 	// The operation to be performed.
 	Op *string `json:"op" validate:"required"`
 
-	// The JSON Pointer that identifies the field that is the target of the operation.
+	// A JSON-Pointer.
 	Path *string `json:"path" validate:"required"`
 
-	// The JSON Pointer that identifies the field that is the source of the operation.
-	From *string `json:"from,omitempty"`
-
-	// The value to be used within the operation.
+	// The value to be used within the operations.
 	Value interface{} `json:"value,omitempty"`
+
+	// A string containing a JSON Pointer value.
+	From *string `json:"from,omitempty"`
 }
 
 // Constants associated with the JSONPatchOperation.Op property.
@@ -9583,11 +13304,11 @@ func UnmarshalJSONPatchOperation(m map[string]json.RawMessage, result interface{
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "from", &obj.From)
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	err = core.UnmarshalPrimitive(m, "from", &obj.From)
 	if err != nil {
 		return
 	}
@@ -9603,14 +13324,14 @@ type Kind struct {
 	// content kind, e.g., helm, vm image.
 	FormatKind *string `json:"format_kind,omitempty"`
 
+	// install kind, e.g., helm, operator, terraform.
+	InstallKind *string `json:"install_kind,omitempty"`
+
 	// target cloud to install, e.g., iks, open_shift_iks.
 	TargetKind *string `json:"target_kind,omitempty"`
 
 	// Open ended metadata information.
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
-
-	// Installation instruction.
-	InstallDescription *string `json:"install_description,omitempty"`
 
 	// List of tags associated with this catalog.
 	Tags []string `json:"tags,omitempty"`
@@ -9642,15 +13363,15 @@ func UnmarshalKind(m map[string]json.RawMessage, result interface{}) (err error)
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "install_kind", &obj.InstallKind)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "target_kind", &obj.TargetKind)
 	if err != nil {
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "install_description", &obj.InstallDescription)
 	if err != nil {
 		return
 	}
@@ -9675,6 +13396,30 @@ func UnmarshalKind(m map[string]json.RawMessage, result interface{}) (err error)
 		return
 	}
 	err = core.UnmarshalModel(m, "plans", &obj.Plans, UnmarshalPlan)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// LearnMoreLinks : Learn more links for a badge.
+type LearnMoreLinks struct {
+	// First party link.
+	FirstParty *string `json:"first_party,omitempty"`
+
+	// Third party link.
+	ThirdParty *string `json:"third_party,omitempty"`
+}
+
+// UnmarshalLearnMoreLinks unmarshals an instance of LearnMoreLinks from the specified map of raw messages.
+func UnmarshalLearnMoreLinks(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LearnMoreLinks)
+	err = core.UnmarshalPrimitive(m, "first_party", &obj.FirstParty)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "third_party", &obj.ThirdParty)
 	if err != nil {
 		return
 	}
@@ -9727,6 +13472,105 @@ func UnmarshalLicense(m map[string]json.RawMessage, result interface{}) (err err
 	return
 }
 
+// ListCatalogAccountAuditsOptions : The ListCatalogAccountAudits options.
+type ListCatalogAccountAuditsOptions struct {
+	// Start token for a query.
+	Start *string `json:"start,omitempty"`
+
+	// number or results to return in the query.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Auditlog Lookup Names - by default names are not returned in auditlog.
+	Lookupnames *bool `json:"lookupnames,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListCatalogAccountAuditsOptions : Instantiate ListCatalogAccountAuditsOptions
+func (*CatalogManagementV1) NewListCatalogAccountAuditsOptions() *ListCatalogAccountAuditsOptions {
+	return &ListCatalogAccountAuditsOptions{}
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListCatalogAccountAuditsOptions) SetStart(start string) *ListCatalogAccountAuditsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListCatalogAccountAuditsOptions) SetLimit(limit int64) *ListCatalogAccountAuditsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetLookupnames : Allow user to set Lookupnames
+func (_options *ListCatalogAccountAuditsOptions) SetLookupnames(lookupnames bool) *ListCatalogAccountAuditsOptions {
+	_options.Lookupnames = core.BoolPtr(lookupnames)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListCatalogAccountAuditsOptions) SetHeaders(param map[string]string) *ListCatalogAccountAuditsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListCatalogAuditsOptions : The ListCatalogAudits options.
+type ListCatalogAuditsOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Start token for a query.
+	Start *string `json:"start,omitempty"`
+
+	// number or results to return in the query.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Auditlog Lookup Names - by default names are not returned in auditlog.
+	Lookupnames *bool `json:"lookupnames,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListCatalogAuditsOptions : Instantiate ListCatalogAuditsOptions
+func (*CatalogManagementV1) NewListCatalogAuditsOptions(catalogIdentifier string) *ListCatalogAuditsOptions {
+	return &ListCatalogAuditsOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *ListCatalogAuditsOptions) SetCatalogIdentifier(catalogIdentifier string) *ListCatalogAuditsOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListCatalogAuditsOptions) SetStart(start string) *ListCatalogAuditsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListCatalogAuditsOptions) SetLimit(limit int64) *ListCatalogAuditsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetLookupnames : Allow user to set Lookupnames
+func (_options *ListCatalogAuditsOptions) SetLookupnames(lookupnames bool) *ListCatalogAuditsOptions {
+	_options.Lookupnames = core.BoolPtr(lookupnames)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListCatalogAuditsOptions) SetHeaders(param map[string]string) *ListCatalogAuditsOptions {
+	options.Headers = param
+	return options
+}
+
 // ListCatalogsOptions : The ListCatalogs options.
 type ListCatalogsOptions struct {
 
@@ -9741,6 +13585,126 @@ func (*CatalogManagementV1) NewListCatalogsOptions() *ListCatalogsOptions {
 
 // SetHeaders : Allow user to set Headers
 func (options *ListCatalogsOptions) SetHeaders(param map[string]string) *ListCatalogsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListEnterpriseAuditsOptions : The ListEnterpriseAudits options.
+type ListEnterpriseAuditsOptions struct {
+	// Enterprise ID.
+	EnterpriseIdentifier *string `json:"enterprise_identifier" validate:"required,ne="`
+
+	// Start token for a query.
+	Start *string `json:"start,omitempty"`
+
+	// number or results to return in the query.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Auditlog Lookup Names - by default names are not returned in auditlog.
+	Lookupnames *bool `json:"lookupnames,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListEnterpriseAuditsOptions : Instantiate ListEnterpriseAuditsOptions
+func (*CatalogManagementV1) NewListEnterpriseAuditsOptions(enterpriseIdentifier string) *ListEnterpriseAuditsOptions {
+	return &ListEnterpriseAuditsOptions{
+		EnterpriseIdentifier: core.StringPtr(enterpriseIdentifier),
+	}
+}
+
+// SetEnterpriseIdentifier : Allow user to set EnterpriseIdentifier
+func (_options *ListEnterpriseAuditsOptions) SetEnterpriseIdentifier(enterpriseIdentifier string) *ListEnterpriseAuditsOptions {
+	_options.EnterpriseIdentifier = core.StringPtr(enterpriseIdentifier)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListEnterpriseAuditsOptions) SetStart(start string) *ListEnterpriseAuditsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListEnterpriseAuditsOptions) SetLimit(limit int64) *ListEnterpriseAuditsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetLookupnames : Allow user to set Lookupnames
+func (_options *ListEnterpriseAuditsOptions) SetLookupnames(lookupnames bool) *ListEnterpriseAuditsOptions {
+	_options.Lookupnames = core.BoolPtr(lookupnames)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListEnterpriseAuditsOptions) SetHeaders(param map[string]string) *ListEnterpriseAuditsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListObjectAuditsOptions : The ListObjectAudits options.
+type ListObjectAuditsOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Object identifier.
+	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
+
+	// Start token for a query.
+	Start *string `json:"start,omitempty"`
+
+	// number or results to return in the query.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Auditlog Lookup Names - by default names are not returned in auditlog.
+	Lookupnames *bool `json:"lookupnames,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListObjectAuditsOptions : Instantiate ListObjectAuditsOptions
+func (*CatalogManagementV1) NewListObjectAuditsOptions(catalogIdentifier string, objectIdentifier string) *ListObjectAuditsOptions {
+	return &ListObjectAuditsOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		ObjectIdentifier: core.StringPtr(objectIdentifier),
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *ListObjectAuditsOptions) SetCatalogIdentifier(catalogIdentifier string) *ListObjectAuditsOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetObjectIdentifier : Allow user to set ObjectIdentifier
+func (_options *ListObjectAuditsOptions) SetObjectIdentifier(objectIdentifier string) *ListObjectAuditsOptions {
+	_options.ObjectIdentifier = core.StringPtr(objectIdentifier)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListObjectAuditsOptions) SetStart(start string) *ListObjectAuditsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListObjectAuditsOptions) SetLimit(limit int64) *ListObjectAuditsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetLookupnames : Allow user to set Lookupnames
+func (_options *ListObjectAuditsOptions) SetLookupnames(lookupnames bool) *ListObjectAuditsOptions {
+	_options.Lookupnames = core.BoolPtr(lookupnames)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListObjectAuditsOptions) SetHeaders(param map[string]string) *ListObjectAuditsOptions {
 	options.Headers = param
 	return options
 }
@@ -9811,6 +13775,126 @@ func (options *ListObjectsOptions) SetHeaders(param map[string]string) *ListObje
 	return options
 }
 
+// ListOfferingAuditsOptions : The ListOfferingAudits options.
+type ListOfferingAuditsOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Offering identification.
+	OfferingID *string `json:"offering_id" validate:"required,ne="`
+
+	// Start token for a query.
+	Start *string `json:"start,omitempty"`
+
+	// number or results to return in the query.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Auditlog Lookup Names - by default names are not returned in auditlog.
+	Lookupnames *bool `json:"lookupnames,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListOfferingAuditsOptions : Instantiate ListOfferingAuditsOptions
+func (*CatalogManagementV1) NewListOfferingAuditsOptions(catalogIdentifier string, offeringID string) *ListOfferingAuditsOptions {
+	return &ListOfferingAuditsOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		OfferingID: core.StringPtr(offeringID),
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *ListOfferingAuditsOptions) SetCatalogIdentifier(catalogIdentifier string) *ListOfferingAuditsOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetOfferingID : Allow user to set OfferingID
+func (_options *ListOfferingAuditsOptions) SetOfferingID(offeringID string) *ListOfferingAuditsOptions {
+	_options.OfferingID = core.StringPtr(offeringID)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListOfferingAuditsOptions) SetStart(start string) *ListOfferingAuditsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListOfferingAuditsOptions) SetLimit(limit int64) *ListOfferingAuditsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetLookupnames : Allow user to set Lookupnames
+func (_options *ListOfferingAuditsOptions) SetLookupnames(lookupnames bool) *ListOfferingAuditsOptions {
+	_options.Lookupnames = core.BoolPtr(lookupnames)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListOfferingAuditsOptions) SetHeaders(param map[string]string) *ListOfferingAuditsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListOfferingInstanceAuditsOptions : The ListOfferingInstanceAudits options.
+type ListOfferingInstanceAuditsOptions struct {
+	// Version Instance identifier.
+	InstanceIdentifier *string `json:"instance_identifier" validate:"required,ne="`
+
+	// Start token for a query.
+	Start *string `json:"start,omitempty"`
+
+	// number or results to return in the query.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Auditlog Lookup Names - by default names are not returned in auditlog.
+	Lookupnames *bool `json:"lookupnames,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListOfferingInstanceAuditsOptions : Instantiate ListOfferingInstanceAuditsOptions
+func (*CatalogManagementV1) NewListOfferingInstanceAuditsOptions(instanceIdentifier string) *ListOfferingInstanceAuditsOptions {
+	return &ListOfferingInstanceAuditsOptions{
+		InstanceIdentifier: core.StringPtr(instanceIdentifier),
+	}
+}
+
+// SetInstanceIdentifier : Allow user to set InstanceIdentifier
+func (_options *ListOfferingInstanceAuditsOptions) SetInstanceIdentifier(instanceIdentifier string) *ListOfferingInstanceAuditsOptions {
+	_options.InstanceIdentifier = core.StringPtr(instanceIdentifier)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListOfferingInstanceAuditsOptions) SetStart(start string) *ListOfferingInstanceAuditsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListOfferingInstanceAuditsOptions) SetLimit(limit int64) *ListOfferingInstanceAuditsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetLookupnames : Allow user to set Lookupnames
+func (_options *ListOfferingInstanceAuditsOptions) SetLookupnames(lookupnames bool) *ListOfferingInstanceAuditsOptions {
+	_options.Lookupnames = core.BoolPtr(lookupnames)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListOfferingInstanceAuditsOptions) SetHeaders(param map[string]string) *ListOfferingInstanceAuditsOptions {
+	options.Headers = param
+	return options
+}
+
 // ListOfferingsOptions : The ListOfferings options.
 type ListOfferingsOptions struct {
 	// Catalog identifier.
@@ -9833,6 +13917,10 @@ type ListOfferingsOptions struct {
 	// **label**, **created**, and **updated**. By adding **-** (i.e. **-label**) in front of the query string, you can
 	// specify descending order. Default is ascending order.
 	Sort *string `json:"sort,omitempty"`
+
+	// true - include offerings which have been marked as hidden. The default is true. To not return hidden offerings false
+	// must be explicitly set.
+	IncludeHidden *bool `json:"includeHidden,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -9878,6 +13966,12 @@ func (_options *ListOfferingsOptions) SetName(name string) *ListOfferingsOptions
 // SetSort : Allow user to set Sort
 func (_options *ListOfferingsOptions) SetSort(sort string) *ListOfferingsOptions {
 	_options.Sort = core.StringPtr(sort)
+	return _options
+}
+
+// SetIncludeHidden : Allow user to set IncludeHidden
+func (_options *ListOfferingsOptions) SetIncludeHidden(includeHidden bool) *ListOfferingsOptions {
+	_options.IncludeHidden = core.BoolPtr(includeHidden)
 	return _options
 }
 
@@ -9950,8 +14044,17 @@ type MediaItem struct {
 	// URL of the specified media item.
 	URL *string `json:"url,omitempty"`
 
+	// CM API specific URL of the specified media item.
+	APIURL *string `json:"api_url,omitempty"`
+
+	// Offering URL proxy information.
+	URLProxy *URLProxy `json:"url_proxy,omitempty"`
+
 	// Caption for this media item.
 	Caption *string `json:"caption,omitempty"`
+
+	// A map of translated strings, by language code.
+	CaptionI18n map[string]string `json:"caption_i18n,omitempty"`
 
 	// Type of this media item.
 	Type *string `json:"type,omitempty"`
@@ -9967,7 +14070,19 @@ func UnmarshalMediaItem(m map[string]json.RawMessage, result interface{}) (err e
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "api_url", &obj.APIURL)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "url_proxy", &obj.URLProxy, UnmarshalURLProxy)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "caption", &obj.Caption)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "caption_i18n", &obj.CaptionI18n)
 	if err != nil {
 		return
 	}
@@ -10056,49 +14171,21 @@ func UnmarshalNamespaceSearchResult(m map[string]json.RawMessage, result interfa
 	return
 }
 
-// ObjectAccess : object access.
-type ObjectAccess struct {
-	// unique id.
-	ID *string `json:"id,omitempty"`
-
-	// account id.
-	Account *string `json:"account,omitempty"`
-
-	// unique id.
-	CatalogID *string `json:"catalog_id,omitempty"`
-
-	// object id.
-	TargetID *string `json:"target_id,omitempty"`
-
-	// date and time create.
-	Create *strfmt.DateTime `json:"create,omitempty"`
-}
-
-// UnmarshalObjectAccess unmarshals an instance of ObjectAccess from the specified map of raw messages.
-func UnmarshalObjectAccess(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ObjectAccess)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *NamespaceSearchResult) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
 	}
-	err = core.UnmarshalPrimitive(m, "account", &obj.Account)
-	if err != nil {
-		return
+	offset, err := core.GetQueryParam(resp.Next, "offset")
+	if err != nil || offset == nil {
+		return nil, err
 	}
-	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
 	if err != nil {
-		return
+		return nil, err
 	}
-	err = core.UnmarshalPrimitive(m, "target_id", &obj.TargetID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "create", &obj.Create)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
+	return core.Int64Ptr(offsetValue), nil
 }
 
 // ObjectAccessListResult : Paginated object search result.
@@ -10128,7 +14215,7 @@ type ObjectAccessListResult struct {
 	Next *string `json:"next,omitempty"`
 
 	// Resulting objects.
-	Resources []ObjectAccess `json:"resources,omitempty"`
+	Resources []Access `json:"resources,omitempty"`
 }
 
 // UnmarshalObjectAccessListResult unmarshals an instance of ObjectAccessListResult from the specified map of raw messages.
@@ -10166,12 +14253,29 @@ func UnmarshalObjectAccessListResult(m map[string]json.RawMessage, result interf
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalObjectAccess)
+	err = core.UnmarshalModel(m, "resources", &obj.Resources, UnmarshalAccess)
 	if err != nil {
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ObjectAccessListResult) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next, "offset")
+	if err != nil || offset == nil {
+		return nil, err
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
 }
 
 // ObjectListResult : Paginated object search result.
@@ -10247,6 +14351,23 @@ func UnmarshalObjectListResult(m map[string]json.RawMessage, result interface{})
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ObjectListResult) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next, "offset")
+	if err != nil || offset == nil {
+		return nil, err
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
+}
+
 // ObjectSearchResult : Paginated object search result.
 type ObjectSearchResult struct {
 	// The offset (origin 0) of the first resource in this page of search results.
@@ -10320,6 +14441,23 @@ func UnmarshalObjectSearchResult(m map[string]json.RawMessage, result interface{
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ObjectSearchResult) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next, "offset")
+	if err != nil || offset == nil {
+		return nil, err
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
+}
+
 // Offering : Offering information.
 type Offering struct {
 	// unique id.
@@ -10336,6 +14474,9 @@ type Offering struct {
 
 	// Display Name in the requested language.
 	Label *string `json:"label,omitempty"`
+
+	// A map of translated strings, by language code.
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
 
 	// The programmatic name of this offering.
 	Name *string `json:"name,omitempty"`
@@ -10368,8 +14509,14 @@ type Offering struct {
 	// Short description in the requested language.
 	ShortDescription *string `json:"short_description,omitempty"`
 
+	// A map of translated strings, by language code.
+	ShortDescriptionI18n map[string]string `json:"short_description_i18n,omitempty"`
+
 	// Long description in the requested language.
 	LongDescription *string `json:"long_description,omitempty"`
+
+	// A map of translated strings, by language code.
+	LongDescriptionI18n map[string]string `json:"long_description_i18n,omitempty"`
 
 	// list of features associated with this offering.
 	Features []Feature `json:"features,omitempty"`
@@ -10377,13 +14524,31 @@ type Offering struct {
 	// Array of kind.
 	Kinds []Kind `json:"kinds,omitempty"`
 
+	// Offering is managed by Partner Center.
+	PcManaged *bool `json:"pc_managed,omitempty"`
+
+	// Offering has been approved to publish to permitted to IBM or Public Catalog.
+	PublishApproved *bool `json:"publish_approved,omitempty"`
+
+	// Denotes public availability of an Offering - if share_enabled is true.
+	ShareWithAll *bool `json:"share_with_all,omitempty"`
+
+	// Denotes IBM employee availability of an Offering - if share_enabled is true.
+	ShareWithIBM *bool `json:"share_with_ibm,omitempty"`
+
+	// Denotes sharing including access list availability of an Offering is enabled.
+	ShareEnabled *bool `json:"share_enabled,omitempty"`
+
 	// Is it permitted to request publishing to IBM or Public.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	PermitRequestIBMPublicPublish *bool `json:"permit_request_ibm_public_publish,omitempty"`
 
 	// Indicates if this offering has been approved for use by all IBMers.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	IBMPublishApproved *bool `json:"ibm_publish_approved,omitempty"`
 
 	// Indicates if this offering has been approved for use by all IBM Cloud users.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	PublicPublishApproved *bool `json:"public_publish_approved,omitempty"`
 
 	// The original offering CRN that this publish entry came from.
@@ -10414,6 +14579,7 @@ type Offering struct {
 	Hidden *bool `json:"hidden,omitempty"`
 
 	// Deprecated - Provider of this offering.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	Provider *string `json:"provider,omitempty"`
 
 	// Information on the provider for this offering, or omitted if no provider information is given.
@@ -10422,11 +14588,23 @@ type Offering struct {
 	// Repository info for offerings.
 	RepoInfo *RepoInfo `json:"repo_info,omitempty"`
 
+	// Image pull keys for this offering.
+	ImagePullKeys []ImagePullKey `json:"image_pull_keys,omitempty"`
+
 	// Offering Support information.
 	Support *Support `json:"support,omitempty"`
 
 	// A list of media items related to this offering.
 	Media []MediaItem `json:"media,omitempty"`
+
+	// Deprecation information for an Offering.
+	DeprecatePending *DeprecatePending `json:"deprecate_pending,omitempty"`
+
+	// The product kind.  Valid values are module, solution, or empty string.
+	ProductKind *string `json:"product_kind,omitempty"`
+
+	// A list of badges for this offering.
+	Badges []Badge `json:"badges,omitempty"`
 }
 
 // UnmarshalOffering unmarshals an instance of Offering from the specified map of raw messages.
@@ -10449,6 +14627,10 @@ func UnmarshalOffering(m map[string]json.RawMessage, result interface{}) (err er
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label_i18n", &obj.LabelI18n)
 	if err != nil {
 		return
 	}
@@ -10492,7 +14674,15 @@ func UnmarshalOffering(m map[string]json.RawMessage, result interface{}) (err er
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "short_description_i18n", &obj.ShortDescriptionI18n)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "long_description", &obj.LongDescription)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "long_description_i18n", &obj.LongDescriptionI18n)
 	if err != nil {
 		return
 	}
@@ -10501,6 +14691,26 @@ func UnmarshalOffering(m map[string]json.RawMessage, result interface{}) (err er
 		return
 	}
 	err = core.UnmarshalModel(m, "kinds", &obj.Kinds, UnmarshalKind)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "pc_managed", &obj.PcManaged)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "publish_approved", &obj.PublishApproved)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "share_with_all", &obj.ShareWithAll)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "share_with_ibm", &obj.ShareWithIBM)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "share_enabled", &obj.ShareEnabled)
 	if err != nil {
 		return
 	}
@@ -10564,6 +14774,10 @@ func UnmarshalOffering(m map[string]json.RawMessage, result interface{}) (err er
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalModel(m, "image_pull_keys", &obj.ImagePullKeys, UnmarshalImagePullKey)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalModel(m, "support", &obj.Support, UnmarshalSupport)
 	if err != nil {
 		return
@@ -10572,256 +14786,19 @@ func UnmarshalOffering(m map[string]json.RawMessage, result interface{}) (err er
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalModel(m, "deprecate_pending", &obj.DeprecatePending, UnmarshalDeprecatePending)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "product_kind", &obj.ProductKind)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "badges", &obj.Badges, UnmarshalBadge)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-func (*CatalogManagementV1) NewOfferingPatch(offering *Offering) (_patch []JSONPatchOperation) {
-	if (offering.ID != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/id"),
-			Value: offering.ID,
-		})
-	}
-	if (offering.Rev != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/_rev"),
-			Value: offering.Rev,
-		})
-	}
-	if (offering.URL != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/url"),
-			Value: offering.URL,
-		})
-	}
-	if (offering.CRN != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/crn"),
-			Value: offering.CRN,
-		})
-	}
-	if (offering.Label != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/label"),
-			Value: offering.Label,
-		})
-	}
-	if (offering.Name != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/name"),
-			Value: offering.Name,
-		})
-	}
-	if (offering.OfferingIconURL != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/offering_icon_url"),
-			Value: offering.OfferingIconURL,
-		})
-	}
-	if (offering.OfferingDocsURL != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/offering_docs_url"),
-			Value: offering.OfferingDocsURL,
-		})
-	}
-	if (offering.OfferingSupportURL != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/offering_support_url"),
-			Value: offering.OfferingSupportURL,
-		})
-	}
-	if (offering.Tags != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/tags"),
-			Value: offering.Tags,
-		})
-	}
-	if (offering.Keywords != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/keywords"),
-			Value: offering.Keywords,
-		})
-	}
-	if (offering.Rating != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/rating"),
-			Value: offering.Rating,
-		})
-	}
-	if (offering.Created != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/created"),
-			Value: offering.Created,
-		})
-	}
-	if (offering.Updated != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/updated"),
-			Value: offering.Updated,
-		})
-	}
-	if (offering.ShortDescription != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/short_description"),
-			Value: offering.ShortDescription,
-		})
-	}
-	if (offering.LongDescription != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/long_description"),
-			Value: offering.LongDescription,
-		})
-	}
-	if (offering.Features != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/features"),
-			Value: offering.Features,
-		})
-	}
-	if (offering.Kinds != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/kinds"),
-			Value: offering.Kinds,
-		})
-	}
-	if (offering.PermitRequestIBMPublicPublish != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/permit_request_ibm_public_publish"),
-			Value: offering.PermitRequestIBMPublicPublish,
-		})
-	}
-	if (offering.IBMPublishApproved != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/ibm_publish_approved"),
-			Value: offering.IBMPublishApproved,
-		})
-	}
-	if (offering.PublicPublishApproved != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/public_publish_approved"),
-			Value: offering.PublicPublishApproved,
-		})
-	}
-	if (offering.PublicOriginalCRN != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/public_original_crn"),
-			Value: offering.PublicOriginalCRN,
-		})
-	}
-	if (offering.PublishPublicCRN != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/publish_public_crn"),
-			Value: offering.PublishPublicCRN,
-		})
-	}
-	if (offering.PortalApprovalRecord != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/portal_approval_record"),
-			Value: offering.PortalApprovalRecord,
-		})
-	}
-	if (offering.PortalUIURL != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/portal_ui_url"),
-			Value: offering.PortalUIURL,
-		})
-	}
-	if (offering.CatalogID != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/catalog_id"),
-			Value: offering.CatalogID,
-		})
-	}
-	if (offering.CatalogName != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/catalog_name"),
-			Value: offering.CatalogName,
-		})
-	}
-	if (offering.Metadata != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/metadata"),
-			Value: offering.Metadata,
-		})
-	}
-	if (offering.Disclaimer != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/disclaimer"),
-			Value: offering.Disclaimer,
-		})
-	}
-	if (offering.Hidden != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/hidden"),
-			Value: offering.Hidden,
-		})
-	}
-	if (offering.Provider != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/provider"),
-			Value: offering.Provider,
-		})
-	}
-	if (offering.ProviderInfo != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/provider_info"),
-			Value: offering.ProviderInfo,
-		})
-	}
-	if (offering.RepoInfo != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/repo_info"),
-			Value: offering.RepoInfo,
-		})
-	}
-	if (offering.Support != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/support"),
-			Value: offering.Support,
-		})
-	}
-	if (offering.Media != nil) {
-		_patch = append(_patch, JSONPatchOperation{
-			Op: core.StringPtr(JSONPatchOperationOpAddConst),
-			Path: core.StringPtr("/media"),
-			Value: offering.Media,
-		})
-	}
 	return
 }
 
@@ -10851,8 +14828,11 @@ type OfferingInstance struct {
 	// the format this instance has (helm, operator, ova...).
 	KindFormat *string `json:"kind_format,omitempty"`
 
-	// The version this instance was installed from (not version id).
+	// The version this instance was installed from (semver - not version id).
 	Version *string `json:"version,omitempty"`
+
+	// The version id this instance was installed from (version id - not semver).
+	VersionID *string `json:"version_id,omitempty"`
 
 	// Cluster ID.
 	ClusterID *string `json:"cluster_id,omitempty"`
@@ -10869,9 +14849,6 @@ type OfferingInstance struct {
 	// Id of the schematics workspace, for offering instances provisioned through schematics.
 	SchematicsWorkspaceID *string `json:"schematics_workspace_id,omitempty"`
 
-	// Id of the resource group to provision the offering instance into.
-	ResourceGroupID *string `json:"resource_group_id,omitempty"`
-
 	// Type of install plan (also known as approval strategy) for operator subscriptions. Can be either automatic, which
 	// automatically upgrades operators to the latest in a channel, or manual, which requires approval on the cluster.
 	InstallPlan *string `json:"install_plan,omitempty"`
@@ -10879,11 +14856,35 @@ type OfferingInstance struct {
 	// Channel to pin the operator subscription to.
 	Channel *string `json:"channel,omitempty"`
 
+	// date and time create.
+	Created *strfmt.DateTime `json:"created,omitempty"`
+
+	// date and time updated.
+	Updated *strfmt.DateTime `json:"updated,omitempty"`
+
 	// Map of metadata values for this offering instance.
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 
+	// Id of the resource group to provision the offering instance into.
+	ResourceGroupID *string `json:"resource_group_id,omitempty"`
+
+	// String location of OfferingInstance deployment.
+	Location *string `json:"location,omitempty"`
+
+	// Indicates if Resource Controller has disabled this instance.
+	Disabled *bool `json:"disabled,omitempty"`
+
+	// The account this instance is owned by.
+	Account *string `json:"account,omitempty"`
+
 	// the last operation performed and status.
 	LastOperation *OfferingInstanceLastOperation `json:"last_operation,omitempty"`
+
+	// The target kind for the installed software version.
+	KindTarget *string `json:"kind_target,omitempty"`
+
+	// The digest value of the installed software version.
+	Sha *string `json:"sha,omitempty"`
 }
 
 // UnmarshalOfferingInstance unmarshals an instance of OfferingInstance from the specified map of raw messages.
@@ -10925,6 +14926,10 @@ func UnmarshalOfferingInstance(m map[string]json.RawMessage, result interface{})
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "version_id", &obj.VersionID)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "cluster_id", &obj.ClusterID)
 	if err != nil {
 		return
@@ -10945,10 +14950,6 @@ func UnmarshalOfferingInstance(m map[string]json.RawMessage, result interface{})
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "resource_group_id", &obj.ResourceGroupID)
-	if err != nil {
-		return
-	}
 	err = core.UnmarshalPrimitive(m, "install_plan", &obj.InstallPlan)
 	if err != nil {
 		return
@@ -10957,11 +14958,43 @@ func UnmarshalOfferingInstance(m map[string]json.RawMessage, result interface{})
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "resource_group_id", &obj.ResourceGroupID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account", &obj.Account)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalModel(m, "last_operation", &obj.LastOperation, UnmarshalOfferingInstanceLastOperation)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "kind_target", &obj.KindTarget)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "sha", &obj.Sha)
 	if err != nil {
 		return
 	}
@@ -10984,7 +15017,10 @@ type OfferingInstanceLastOperation struct {
 	TransactionID *string `json:"transaction_id,omitempty"`
 
 	// Date and time last updated.
-	Updated *string `json:"updated,omitempty"`
+	Updated *strfmt.DateTime `json:"updated,omitempty"`
+
+	// Error code from the last operation, if applicable.
+	Code *string `json:"code,omitempty"`
 }
 
 // UnmarshalOfferingInstanceLastOperation unmarshals an instance of OfferingInstanceLastOperation from the specified map of raw messages.
@@ -11007,6 +15043,62 @@ func UnmarshalOfferingInstanceLastOperation(m map[string]json.RawMessage, result
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// OfferingReference : Offering reference definition.
+type OfferingReference struct {
+	// Optional - If not specified, assumes the Public Catalog.
+	CatalogID *string `json:"catalog_id,omitempty"`
+
+	// Optional - Offering ID - not required if name is set.
+	ID *string `json:"id,omitempty"`
+
+	// Optional - Programmatic Offering name.
+	Name *string `json:"name,omitempty"`
+
+	// Format kind.
+	Kind *string `json:"kind,omitempty"`
+
+	// Required - Semver value or range.
+	Version *string `json:"version,omitempty"`
+
+	// Optional - List of dependent flavors in the specified range.
+	Flavors []string `json:"flavors,omitempty"`
+}
+
+// UnmarshalOfferingReference unmarshals an instance of OfferingReference from the specified map of raw messages.
+func UnmarshalOfferingReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(OfferingReference)
+	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "kind", &obj.Kind)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "flavors", &obj.Flavors)
 	if err != nil {
 		return
 	}
@@ -11087,6 +15179,23 @@ func UnmarshalOfferingSearchResult(m map[string]json.RawMessage, result interfac
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *OfferingSearchResult) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next, "offset")
+	if err != nil || offset == nil {
+		return nil, err
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
+}
+
 // OperatorDeployResult : Operator deploy result.
 type OperatorDeployResult struct {
 	// Status phase.
@@ -11146,6 +15255,54 @@ func UnmarshalOperatorDeployResult(m map[string]json.RawMessage, result interfac
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "catalog_id", &obj.CatalogID)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Output : Outputs for a version.
+type Output struct {
+	// Output key.
+	Key *string `json:"key,omitempty"`
+
+	// Output description.
+	Description *string `json:"description,omitempty"`
+}
+
+// UnmarshalOutput unmarshals an instance of Output from the specified map of raw messages.
+func UnmarshalOutput(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Output)
+	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PaginationTokenLink : Link response on a token paginated query.
+type PaginationTokenLink struct {
+	// The href to the linked response.
+	Href *string `json:"href" validate:"required"`
+
+	// The start token used in this link. Will not be returned on First links.
+	Start *string `json:"start,omitempty"`
+}
+
+// UnmarshalPaginationTokenLink unmarshals an instance of PaginationTokenLink from the specified map of raw messages.
+func UnmarshalPaginationTokenLink(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PaginationTokenLink)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "start", &obj.Start)
 	if err != nil {
 		return
 	}
@@ -11257,9 +15414,11 @@ type PreinstallVersionOptions struct {
 	// Kube namespace.
 	Namespace *string `json:"namespace,omitempty"`
 
-	// Object containing Helm chart override values.  To use a secret for items of type password, specify a JSON encoded
-	// value of $ref:#/components/schemas/SecretInstance, prefixed with `cmsm_v1:`.
-	OverrideValues map[string]interface{} `json:"override_values,omitempty"`
+	// Validation override values. Required for virtual server image for VPC.
+	OverrideValues *DeployRequestBodyOverrideValues `json:"override_values,omitempty"`
+
+	// Schematics environment variables to use with this workspace.
+	EnvironmentVariables []DeployRequestBodyEnvironmentVariablesItem `json:"environment_variables,omitempty"`
 
 	// Entitlement API Key for this offering.
 	EntitlementApikey *string `json:"entitlement_apikey,omitempty"`
@@ -11279,14 +15438,14 @@ type PreinstallVersionOptions struct {
 	// VCenter ID.
 	VcenterID *string `json:"vcenter_id,omitempty"`
 
+	// VCenter Location.
+	VcenterLocation *string `json:"vcenter_location,omitempty"`
+
 	// VCenter User.
 	VcenterUser *string `json:"vcenter_user,omitempty"`
 
 	// VCenter Password.
 	VcenterPassword *string `json:"vcenter_password,omitempty"`
-
-	// VCenter Location.
-	VcenterLocation *string `json:"vcenter_location,omitempty"`
 
 	// VCenter Datastore.
 	VcenterDatastore *string `json:"vcenter_datastore,omitempty"`
@@ -11334,8 +15493,14 @@ func (_options *PreinstallVersionOptions) SetNamespace(namespace string) *Preins
 }
 
 // SetOverrideValues : Allow user to set OverrideValues
-func (_options *PreinstallVersionOptions) SetOverrideValues(overrideValues map[string]interface{}) *PreinstallVersionOptions {
+func (_options *PreinstallVersionOptions) SetOverrideValues(overrideValues *DeployRequestBodyOverrideValues) *PreinstallVersionOptions {
 	_options.OverrideValues = overrideValues
+	return _options
+}
+
+// SetEnvironmentVariables : Allow user to set EnvironmentVariables
+func (_options *PreinstallVersionOptions) SetEnvironmentVariables(environmentVariables []DeployRequestBodyEnvironmentVariablesItem) *PreinstallVersionOptions {
+	_options.EnvironmentVariables = environmentVariables
 	return _options
 }
 
@@ -11375,6 +15540,12 @@ func (_options *PreinstallVersionOptions) SetVcenterID(vcenterID string) *Preins
 	return _options
 }
 
+// SetVcenterLocation : Allow user to set VcenterLocation
+func (_options *PreinstallVersionOptions) SetVcenterLocation(vcenterLocation string) *PreinstallVersionOptions {
+	_options.VcenterLocation = core.StringPtr(vcenterLocation)
+	return _options
+}
+
 // SetVcenterUser : Allow user to set VcenterUser
 func (_options *PreinstallVersionOptions) SetVcenterUser(vcenterUser string) *PreinstallVersionOptions {
 	_options.VcenterUser = core.StringPtr(vcenterUser)
@@ -11384,12 +15555,6 @@ func (_options *PreinstallVersionOptions) SetVcenterUser(vcenterUser string) *Pr
 // SetVcenterPassword : Allow user to set VcenterPassword
 func (_options *PreinstallVersionOptions) SetVcenterPassword(vcenterPassword string) *PreinstallVersionOptions {
 	_options.VcenterPassword = core.StringPtr(vcenterPassword)
-	return _options
-}
-
-// SetVcenterLocation : Allow user to set VcenterLocation
-func (_options *PreinstallVersionOptions) SetVcenterLocation(vcenterLocation string) *PreinstallVersionOptions {
-	_options.VcenterLocation = core.StringPtr(vcenterLocation)
 	return _options
 }
 
@@ -11403,6 +15568,58 @@ func (_options *PreinstallVersionOptions) SetVcenterDatastore(vcenterDatastore s
 func (options *PreinstallVersionOptions) SetHeaders(param map[string]string) *PreinstallVersionOptions {
 	options.Headers = param
 	return options
+}
+
+// Project : Cost estimate project definition.
+type Project struct {
+	// Project name.
+	Name *string `json:"name,omitempty"`
+
+	// Project metadata.
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+
+	// Cost breakdown definition.
+	PastBreakdown *CostBreakdown `json:"pastBreakdown,omitempty"`
+
+	// Cost breakdown definition.
+	Breakdown *CostBreakdown `json:"breakdown,omitempty"`
+
+	// Cost breakdown definition.
+	Diff *CostBreakdown `json:"diff,omitempty"`
+
+	// Cost summary definition.
+	Summary *CostSummary `json:"summary,omitempty"`
+}
+
+// UnmarshalProject unmarshals an instance of Project from the specified map of raw messages.
+func UnmarshalProject(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Project)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "pastBreakdown", &obj.PastBreakdown, UnmarshalCostBreakdown)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "breakdown", &obj.Breakdown, UnmarshalCostBreakdown)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "diff", &obj.Diff, UnmarshalCostBreakdown)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "summary", &obj.Summary, UnmarshalCostSummary)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // ProviderInfo : Information on the provider for this offering, or omitted if no provider information is given.
@@ -11427,72 +15644,6 @@ func UnmarshalProviderInfo(m map[string]json.RawMessage, result interface{}) (er
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
-}
-
-// PublicPublishObjectOptions : The PublicPublishObject options.
-type PublicPublishObjectOptions struct {
-	// Catalog identifier.
-	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
-
-	// Object identifier.
-	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewPublicPublishObjectOptions : Instantiate PublicPublishObjectOptions
-func (*CatalogManagementV1) NewPublicPublishObjectOptions(catalogIdentifier string, objectIdentifier string) *PublicPublishObjectOptions {
-	return &PublicPublishObjectOptions{
-		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		ObjectIdentifier: core.StringPtr(objectIdentifier),
-	}
-}
-
-// SetCatalogIdentifier : Allow user to set CatalogIdentifier
-func (_options *PublicPublishObjectOptions) SetCatalogIdentifier(catalogIdentifier string) *PublicPublishObjectOptions {
-	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
-	return _options
-}
-
-// SetObjectIdentifier : Allow user to set ObjectIdentifier
-func (_options *PublicPublishObjectOptions) SetObjectIdentifier(objectIdentifier string) *PublicPublishObjectOptions {
-	_options.ObjectIdentifier = core.StringPtr(objectIdentifier)
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *PublicPublishObjectOptions) SetHeaders(param map[string]string) *PublicPublishObjectOptions {
-	options.Headers = param
-	return options
-}
-
-// PublicPublishVersionOptions : The PublicPublishVersion options.
-type PublicPublishVersionOptions struct {
-	// A dotted value of `catalogID`.`versionID`.
-	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewPublicPublishVersionOptions : Instantiate PublicPublishVersionOptions
-func (*CatalogManagementV1) NewPublicPublishVersionOptions(versionLocID string) *PublicPublishVersionOptions {
-	return &PublicPublishVersionOptions{
-		VersionLocID: core.StringPtr(versionLocID),
-	}
-}
-
-// SetVersionLocID : Allow user to set VersionLocID
-func (_options *PublicPublishVersionOptions) SetVersionLocID(versionLocID string) *PublicPublishVersionOptions {
-	_options.VersionLocID = core.StringPtr(versionLocID)
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *PublicPublishVersionOptions) SetHeaders(param map[string]string) *PublicPublishVersionOptions {
-	options.Headers = param
-	return options
 }
 
 // PublishObject : Publish information.
@@ -11572,8 +15723,11 @@ type PutOfferingInstanceOptions struct {
 	// the format this instance has (helm, operator, ova...).
 	KindFormat *string `json:"kind_format,omitempty"`
 
-	// The version this instance was installed from (not version id).
+	// The version this instance was installed from (semver - not version id).
 	Version *string `json:"version,omitempty"`
+
+	// The version id this instance was installed from (version id - not semver).
+	VersionID *string `json:"version_id,omitempty"`
 
 	// Cluster ID.
 	ClusterID *string `json:"cluster_id,omitempty"`
@@ -11590,9 +15744,6 @@ type PutOfferingInstanceOptions struct {
 	// Id of the schematics workspace, for offering instances provisioned through schematics.
 	SchematicsWorkspaceID *string `json:"schematics_workspace_id,omitempty"`
 
-	// Id of the resource group to provision the offering instance into.
-	ResourceGroupID *string `json:"resource_group_id,omitempty"`
-
 	// Type of install plan (also known as approval strategy) for operator subscriptions. Can be either automatic, which
 	// automatically upgrades operators to the latest in a channel, or manual, which requires approval on the cluster.
 	InstallPlan *string `json:"install_plan,omitempty"`
@@ -11600,11 +15751,35 @@ type PutOfferingInstanceOptions struct {
 	// Channel to pin the operator subscription to.
 	Channel *string `json:"channel,omitempty"`
 
+	// date and time create.
+	Created *strfmt.DateTime `json:"created,omitempty"`
+
+	// date and time updated.
+	Updated *strfmt.DateTime `json:"updated,omitempty"`
+
 	// Map of metadata values for this offering instance.
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 
+	// Id of the resource group to provision the offering instance into.
+	ResourceGroupID *string `json:"resource_group_id,omitempty"`
+
+	// String location of OfferingInstance deployment.
+	Location *string `json:"location,omitempty"`
+
+	// Indicates if Resource Controller has disabled this instance.
+	Disabled *bool `json:"disabled,omitempty"`
+
+	// The account this instance is owned by.
+	Account *string `json:"account,omitempty"`
+
 	// the last operation performed and status.
 	LastOperation *OfferingInstanceLastOperation `json:"last_operation,omitempty"`
+
+	// The target kind for the installed software version.
+	KindTarget *string `json:"kind_target,omitempty"`
+
+	// The digest value of the installed software version.
+	Sha *string `json:"sha,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -11684,6 +15859,12 @@ func (_options *PutOfferingInstanceOptions) SetVersion(version string) *PutOffer
 	return _options
 }
 
+// SetVersionID : Allow user to set VersionID
+func (_options *PutOfferingInstanceOptions) SetVersionID(versionID string) *PutOfferingInstanceOptions {
+	_options.VersionID = core.StringPtr(versionID)
+	return _options
+}
+
 // SetClusterID : Allow user to set ClusterID
 func (_options *PutOfferingInstanceOptions) SetClusterID(clusterID string) *PutOfferingInstanceOptions {
 	_options.ClusterID = core.StringPtr(clusterID)
@@ -11714,12 +15895,6 @@ func (_options *PutOfferingInstanceOptions) SetSchematicsWorkspaceID(schematicsW
 	return _options
 }
 
-// SetResourceGroupID : Allow user to set ResourceGroupID
-func (_options *PutOfferingInstanceOptions) SetResourceGroupID(resourceGroupID string) *PutOfferingInstanceOptions {
-	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
-	return _options
-}
-
 // SetInstallPlan : Allow user to set InstallPlan
 func (_options *PutOfferingInstanceOptions) SetInstallPlan(installPlan string) *PutOfferingInstanceOptions {
 	_options.InstallPlan = core.StringPtr(installPlan)
@@ -11732,15 +15907,63 @@ func (_options *PutOfferingInstanceOptions) SetChannel(channel string) *PutOffer
 	return _options
 }
 
+// SetCreated : Allow user to set Created
+func (_options *PutOfferingInstanceOptions) SetCreated(created *strfmt.DateTime) *PutOfferingInstanceOptions {
+	_options.Created = created
+	return _options
+}
+
+// SetUpdated : Allow user to set Updated
+func (_options *PutOfferingInstanceOptions) SetUpdated(updated *strfmt.DateTime) *PutOfferingInstanceOptions {
+	_options.Updated = updated
+	return _options
+}
+
 // SetMetadata : Allow user to set Metadata
 func (_options *PutOfferingInstanceOptions) SetMetadata(metadata map[string]interface{}) *PutOfferingInstanceOptions {
 	_options.Metadata = metadata
 	return _options
 }
 
+// SetResourceGroupID : Allow user to set ResourceGroupID
+func (_options *PutOfferingInstanceOptions) SetResourceGroupID(resourceGroupID string) *PutOfferingInstanceOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
+}
+
+// SetLocation : Allow user to set Location
+func (_options *PutOfferingInstanceOptions) SetLocation(location string) *PutOfferingInstanceOptions {
+	_options.Location = core.StringPtr(location)
+	return _options
+}
+
+// SetDisabled : Allow user to set Disabled
+func (_options *PutOfferingInstanceOptions) SetDisabled(disabled bool) *PutOfferingInstanceOptions {
+	_options.Disabled = core.BoolPtr(disabled)
+	return _options
+}
+
+// SetAccount : Allow user to set Account
+func (_options *PutOfferingInstanceOptions) SetAccount(account string) *PutOfferingInstanceOptions {
+	_options.Account = core.StringPtr(account)
+	return _options
+}
+
 // SetLastOperation : Allow user to set LastOperation
 func (_options *PutOfferingInstanceOptions) SetLastOperation(lastOperation *OfferingInstanceLastOperation) *PutOfferingInstanceOptions {
 	_options.LastOperation = lastOperation
+	return _options
+}
+
+// SetKindTarget : Allow user to set KindTarget
+func (_options *PutOfferingInstanceOptions) SetKindTarget(kindTarget string) *PutOfferingInstanceOptions {
+	_options.KindTarget = core.StringPtr(kindTarget)
+	return _options
+}
+
+// SetSha : Allow user to set Sha
+func (_options *PutOfferingInstanceOptions) SetSha(sha string) *PutOfferingInstanceOptions {
+	_options.Sha = core.StringPtr(sha)
 	return _options
 }
 
@@ -11802,11 +16025,20 @@ type ReloadOfferingOptions struct {
 	// Tags array.
 	Tags []string `json:"tags,omitempty"`
 
-	// Target kinds.  Current valid values are 'iks', 'roks', 'vcenter', and 'terraform'.
-	TargetKinds []string `json:"target_kinds,omitempty"`
-
 	// byte array representing the content to be imported.  Only supported for OVA images at this time.
 	Content *[]byte `json:"content,omitempty"`
+
+	// Target kinds.  Current valid values are 'iks', 'roks', 'vcenter', 'power-iaas', and 'terraform'.
+	TargetKinds []string `json:"target_kinds,omitempty"`
+
+	// Format of content being onboarded. Example: vsi-image. Required for virtual server image for VPC.
+	FormatKind *string `json:"format_kind,omitempty"`
+
+	// Version Flavor Information.  Only supported for Product kind Solution.
+	Flavor *Flavor `json:"flavor,omitempty"`
+
+	// Optional - The sub-folder within the specified tgz file that contains the software being onboarded.
+	WorkingDirectory *string `json:"working_directory,omitempty"`
 
 	// URL path to zip location.  If not specified, must provide content in this post body.
 	Zipurl *string `json:"zipurl,omitempty"`
@@ -11851,15 +16083,33 @@ func (_options *ReloadOfferingOptions) SetTags(tags []string) *ReloadOfferingOpt
 	return _options
 }
 
+// SetContent : Allow user to set Content
+func (_options *ReloadOfferingOptions) SetContent(content []byte) *ReloadOfferingOptions {
+	_options.Content = &content
+	return _options
+}
+
 // SetTargetKinds : Allow user to set TargetKinds
 func (_options *ReloadOfferingOptions) SetTargetKinds(targetKinds []string) *ReloadOfferingOptions {
 	_options.TargetKinds = targetKinds
 	return _options
 }
 
-// SetContent : Allow user to set Content
-func (_options *ReloadOfferingOptions) SetContent(content []byte) *ReloadOfferingOptions {
-	_options.Content = &content
+// SetFormatKind : Allow user to set FormatKind
+func (_options *ReloadOfferingOptions) SetFormatKind(formatKind string) *ReloadOfferingOptions {
+	_options.FormatKind = core.StringPtr(formatKind)
+	return _options
+}
+
+// SetFlavor : Allow user to set Flavor
+func (_options *ReloadOfferingOptions) SetFlavor(flavor *Flavor) *ReloadOfferingOptions {
+	_options.Flavor = flavor
+	return _options
+}
+
+// SetWorkingDirectory : Allow user to set WorkingDirectory
+func (_options *ReloadOfferingOptions) SetWorkingDirectory(workingDirectory string) *ReloadOfferingOptions {
+	_options.WorkingDirectory = core.StringPtr(workingDirectory)
 	return _options
 }
 
@@ -11881,6 +16131,99 @@ func (options *ReloadOfferingOptions) SetHeaders(param map[string]string) *Reloa
 	return options
 }
 
+// RenderType : Render type.
+type RenderType struct {
+	// ID of the widget type.
+	Type *string `json:"type,omitempty"`
+
+	// Determines where this configuration type is rendered (3 sections today - Target, Resource, and Deployment).
+	Grouping *string `json:"grouping,omitempty"`
+
+	// Original grouping type for this configuration (3 types - Target, Resource, and Deployment).
+	OriginalGrouping *string `json:"original_grouping,omitempty"`
+
+	// Determines the order that this configuration item shows in that particular grouping.
+	GroupingIndex *int64 `json:"grouping_index,omitempty"`
+
+	// Map of constraint parameters that will be passed to the custom widget.
+	ConfigConstraints map[string]interface{} `json:"config_constraints,omitempty"`
+
+	// List of parameters that are associated with this configuration.
+	Associations *RenderTypeAssociations `json:"associations,omitempty"`
+}
+
+// UnmarshalRenderType unmarshals an instance of RenderType from the specified map of raw messages.
+func UnmarshalRenderType(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RenderType)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "grouping", &obj.Grouping)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "original_grouping", &obj.OriginalGrouping)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "grouping_index", &obj.GroupingIndex)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "config_constraints", &obj.ConfigConstraints)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "associations", &obj.Associations, UnmarshalRenderTypeAssociations)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RenderTypeAssociations : List of parameters that are associated with this configuration.
+type RenderTypeAssociations struct {
+	// Parameters for this association.
+	Parameters []RenderTypeAssociationsParametersItem `json:"parameters,omitempty"`
+}
+
+// UnmarshalRenderTypeAssociations unmarshals an instance of RenderTypeAssociations from the specified map of raw messages.
+func UnmarshalRenderTypeAssociations(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RenderTypeAssociations)
+	err = core.UnmarshalModel(m, "parameters", &obj.Parameters, UnmarshalRenderTypeAssociationsParametersItem)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RenderTypeAssociationsParametersItem : RenderTypeAssociationsParametersItem struct
+type RenderTypeAssociationsParametersItem struct {
+	// Name of this parameter.
+	Name *string `json:"name,omitempty"`
+
+	// Refresh options.
+	OptionsRefresh *bool `json:"optionsRefresh,omitempty"`
+}
+
+// UnmarshalRenderTypeAssociationsParametersItem unmarshals an instance of RenderTypeAssociationsParametersItem from the specified map of raw messages.
+func UnmarshalRenderTypeAssociationsParametersItem(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RenderTypeAssociationsParametersItem)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "optionsRefresh", &obj.OptionsRefresh)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // ReplaceCatalogOptions : The ReplaceCatalog options.
 type ReplaceCatalogOptions struct {
 	// Catalog identifier.
@@ -11895,11 +16238,20 @@ type ReplaceCatalogOptions struct {
 	// Display Name in the requested language.
 	Label *string `json:"label,omitempty"`
 
+	// A map of translated strings, by language code.
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
+
 	// Description in the requested language.
 	ShortDescription *string `json:"short_description,omitempty"`
 
+	// A map of translated strings, by language code.
+	ShortDescriptionI18n map[string]string `json:"short_description_i18n,omitempty"`
+
 	// URL for an icon associated with this catalog.
 	CatalogIconURL *string `json:"catalog_icon_url,omitempty"`
+
+	// URL for a banner image for this catalog.
+	CatalogBannerURL *string `json:"catalog_banner_url,omitempty"`
 
 	// List of tags associated with this catalog.
 	Tags []string `json:"tags,omitempty"`
@@ -11924,6 +16276,9 @@ type ReplaceCatalogOptions struct {
 
 	// Kind of catalog. Supported kinds are offering and vpe.
 	Kind *string `json:"kind,omitempty"`
+
+	// Catalog specific metadata.
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -11960,15 +16315,33 @@ func (_options *ReplaceCatalogOptions) SetLabel(label string) *ReplaceCatalogOpt
 	return _options
 }
 
+// SetLabelI18n : Allow user to set LabelI18n
+func (_options *ReplaceCatalogOptions) SetLabelI18n(labelI18n map[string]string) *ReplaceCatalogOptions {
+	_options.LabelI18n = labelI18n
+	return _options
+}
+
 // SetShortDescription : Allow user to set ShortDescription
 func (_options *ReplaceCatalogOptions) SetShortDescription(shortDescription string) *ReplaceCatalogOptions {
 	_options.ShortDescription = core.StringPtr(shortDescription)
 	return _options
 }
 
+// SetShortDescriptionI18n : Allow user to set ShortDescriptionI18n
+func (_options *ReplaceCatalogOptions) SetShortDescriptionI18n(shortDescriptionI18n map[string]string) *ReplaceCatalogOptions {
+	_options.ShortDescriptionI18n = shortDescriptionI18n
+	return _options
+}
+
 // SetCatalogIconURL : Allow user to set CatalogIconURL
 func (_options *ReplaceCatalogOptions) SetCatalogIconURL(catalogIconURL string) *ReplaceCatalogOptions {
 	_options.CatalogIconURL = core.StringPtr(catalogIconURL)
+	return _options
+}
+
+// SetCatalogBannerURL : Allow user to set CatalogBannerURL
+func (_options *ReplaceCatalogOptions) SetCatalogBannerURL(catalogBannerURL string) *ReplaceCatalogOptions {
+	_options.CatalogBannerURL = core.StringPtr(catalogBannerURL)
 	return _options
 }
 
@@ -12020,6 +16393,12 @@ func (_options *ReplaceCatalogOptions) SetKind(kind string) *ReplaceCatalogOptio
 	return _options
 }
 
+// SetMetadata : Allow user to set Metadata
+func (_options *ReplaceCatalogOptions) SetMetadata(metadata map[string]interface{}) *ReplaceCatalogOptions {
+	_options.Metadata = metadata
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ReplaceCatalogOptions) SetHeaders(param map[string]string) *ReplaceCatalogOptions {
 	options.Headers = param
@@ -12037,11 +16416,11 @@ type ReplaceObjectOptions struct {
 	// unique id.
 	ID *string `json:"id,omitempty"`
 
-	// The programmatic name of this offering.
-	Name *string `json:"name,omitempty"`
-
 	// Cloudant revision.
 	Rev *string `json:"_rev,omitempty"`
+
+	// The programmatic name of this object.
+	Name *string `json:"name,omitempty"`
 
 	// The crn for this specific object.
 	CRN *string `json:"crn,omitempty"`
@@ -12052,8 +16431,8 @@ type ReplaceObjectOptions struct {
 	// The parent for this specific object.
 	ParentID *string `json:"parent_id,omitempty"`
 
-	// Translated display name in the requested language.
-	LabelI18n *string `json:"label_i18n,omitempty"`
+	// A map of translated strings, by language code.
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
 
 	// Display name in the requested language.
 	Label *string `json:"label,omitempty"`
@@ -12070,8 +16449,8 @@ type ReplaceObjectOptions struct {
 	// Short description in the requested language.
 	ShortDescription *string `json:"short_description,omitempty"`
 
-	// Short description translation.
-	ShortDescriptionI18n *string `json:"short_description_i18n,omitempty"`
+	// A map of translated strings, by language code.
+	ShortDescriptionI18n map[string]string `json:"short_description_i18n,omitempty"`
 
 	// Kind of object.
 	Kind *string `json:"kind,omitempty"`
@@ -12121,15 +16500,15 @@ func (_options *ReplaceObjectOptions) SetID(id string) *ReplaceObjectOptions {
 	return _options
 }
 
-// SetName : Allow user to set Name
-func (_options *ReplaceObjectOptions) SetName(name string) *ReplaceObjectOptions {
-	_options.Name = core.StringPtr(name)
-	return _options
-}
-
 // SetRev : Allow user to set Rev
 func (_options *ReplaceObjectOptions) SetRev(rev string) *ReplaceObjectOptions {
 	_options.Rev = core.StringPtr(rev)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *ReplaceObjectOptions) SetName(name string) *ReplaceObjectOptions {
+	_options.Name = core.StringPtr(name)
 	return _options
 }
 
@@ -12152,8 +16531,8 @@ func (_options *ReplaceObjectOptions) SetParentID(parentID string) *ReplaceObjec
 }
 
 // SetLabelI18n : Allow user to set LabelI18n
-func (_options *ReplaceObjectOptions) SetLabelI18n(labelI18n string) *ReplaceObjectOptions {
-	_options.LabelI18n = core.StringPtr(labelI18n)
+func (_options *ReplaceObjectOptions) SetLabelI18n(labelI18n map[string]string) *ReplaceObjectOptions {
+	_options.LabelI18n = labelI18n
 	return _options
 }
 
@@ -12188,8 +16567,8 @@ func (_options *ReplaceObjectOptions) SetShortDescription(shortDescription strin
 }
 
 // SetShortDescriptionI18n : Allow user to set ShortDescriptionI18n
-func (_options *ReplaceObjectOptions) SetShortDescriptionI18n(shortDescriptionI18n string) *ReplaceObjectOptions {
-	_options.ShortDescriptionI18n = core.StringPtr(shortDescriptionI18n)
+func (_options *ReplaceObjectOptions) SetShortDescriptionI18n(shortDescriptionI18n map[string]string) *ReplaceObjectOptions {
+	_options.ShortDescriptionI18n = shortDescriptionI18n
 	return _options
 }
 
@@ -12235,54 +16614,6 @@ func (options *ReplaceObjectOptions) SetHeaders(param map[string]string) *Replac
 	return options
 }
 
-// ReplaceOfferingIconOptions : The ReplaceOfferingIcon options.
-type ReplaceOfferingIconOptions struct {
-	// Catalog identifier.
-	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
-
-	// Offering identification.
-	OfferingID *string `json:"offering_id" validate:"required,ne="`
-
-	// Name of the file name that is being uploaded.
-	FileName *string `json:"file_name" validate:"required,ne="`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewReplaceOfferingIconOptions : Instantiate ReplaceOfferingIconOptions
-func (*CatalogManagementV1) NewReplaceOfferingIconOptions(catalogIdentifier string, offeringID string, fileName string) *ReplaceOfferingIconOptions {
-	return &ReplaceOfferingIconOptions{
-		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
-		FileName: core.StringPtr(fileName),
-	}
-}
-
-// SetCatalogIdentifier : Allow user to set CatalogIdentifier
-func (_options *ReplaceOfferingIconOptions) SetCatalogIdentifier(catalogIdentifier string) *ReplaceOfferingIconOptions {
-	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
-	return _options
-}
-
-// SetOfferingID : Allow user to set OfferingID
-func (_options *ReplaceOfferingIconOptions) SetOfferingID(offeringID string) *ReplaceOfferingIconOptions {
-	_options.OfferingID = core.StringPtr(offeringID)
-	return _options
-}
-
-// SetFileName : Allow user to set FileName
-func (_options *ReplaceOfferingIconOptions) SetFileName(fileName string) *ReplaceOfferingIconOptions {
-	_options.FileName = core.StringPtr(fileName)
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *ReplaceOfferingIconOptions) SetHeaders(param map[string]string) *ReplaceOfferingIconOptions {
-	options.Headers = param
-	return options
-}
-
 // ReplaceOfferingOptions : The ReplaceOffering options.
 type ReplaceOfferingOptions struct {
 	// Catalog identifier.
@@ -12305,6 +16636,9 @@ type ReplaceOfferingOptions struct {
 
 	// Display Name in the requested language.
 	Label *string `json:"label,omitempty"`
+
+	// A map of translated strings, by language code.
+	LabelI18n map[string]string `json:"label_i18n,omitempty"`
 
 	// The programmatic name of this offering.
 	Name *string `json:"name,omitempty"`
@@ -12337,8 +16671,14 @@ type ReplaceOfferingOptions struct {
 	// Short description in the requested language.
 	ShortDescription *string `json:"short_description,omitempty"`
 
+	// A map of translated strings, by language code.
+	ShortDescriptionI18n map[string]string `json:"short_description_i18n,omitempty"`
+
 	// Long description in the requested language.
 	LongDescription *string `json:"long_description,omitempty"`
+
+	// A map of translated strings, by language code.
+	LongDescriptionI18n map[string]string `json:"long_description_i18n,omitempty"`
 
 	// list of features associated with this offering.
 	Features []Feature `json:"features,omitempty"`
@@ -12346,13 +16686,31 @@ type ReplaceOfferingOptions struct {
 	// Array of kind.
 	Kinds []Kind `json:"kinds,omitempty"`
 
+	// Offering is managed by Partner Center.
+	PcManaged *bool `json:"pc_managed,omitempty"`
+
+	// Offering has been approved to publish to permitted to IBM or Public Catalog.
+	PublishApproved *bool `json:"publish_approved,omitempty"`
+
+	// Denotes public availability of an Offering - if share_enabled is true.
+	ShareWithAll *bool `json:"share_with_all,omitempty"`
+
+	// Denotes IBM employee availability of an Offering - if share_enabled is true.
+	ShareWithIBM *bool `json:"share_with_ibm,omitempty"`
+
+	// Denotes sharing including access list availability of an Offering is enabled.
+	ShareEnabled *bool `json:"share_enabled,omitempty"`
+
 	// Is it permitted to request publishing to IBM or Public.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	PermitRequestIBMPublicPublish *bool `json:"permit_request_ibm_public_publish,omitempty"`
 
 	// Indicates if this offering has been approved for use by all IBMers.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	IBMPublishApproved *bool `json:"ibm_publish_approved,omitempty"`
 
 	// Indicates if this offering has been approved for use by all IBM Cloud users.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	PublicPublishApproved *bool `json:"public_publish_approved,omitempty"`
 
 	// The original offering CRN that this publish entry came from.
@@ -12383,6 +16741,7 @@ type ReplaceOfferingOptions struct {
 	Hidden *bool `json:"hidden,omitempty"`
 
 	// Deprecated - Provider of this offering.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	Provider *string `json:"provider,omitempty"`
 
 	// Information on the provider for this offering, or omitted if no provider information is given.
@@ -12391,11 +16750,23 @@ type ReplaceOfferingOptions struct {
 	// Repository info for offerings.
 	RepoInfo *RepoInfo `json:"repo_info,omitempty"`
 
+	// Image pull keys for this offering.
+	ImagePullKeys []ImagePullKey `json:"image_pull_keys,omitempty"`
+
 	// Offering Support information.
 	Support *Support `json:"support,omitempty"`
 
 	// A list of media items related to this offering.
 	Media []MediaItem `json:"media,omitempty"`
+
+	// Deprecation information for an Offering.
+	DeprecatePending *DeprecatePending `json:"deprecate_pending,omitempty"`
+
+	// The product kind.  Valid values are module, solution, or empty string.
+	ProductKind *string `json:"product_kind,omitempty"`
+
+	// A list of badges for this offering.
+	Badges []Badge `json:"badges,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -12448,6 +16819,12 @@ func (_options *ReplaceOfferingOptions) SetCRN(crn string) *ReplaceOfferingOptio
 // SetLabel : Allow user to set Label
 func (_options *ReplaceOfferingOptions) SetLabel(label string) *ReplaceOfferingOptions {
 	_options.Label = core.StringPtr(label)
+	return _options
+}
+
+// SetLabelI18n : Allow user to set LabelI18n
+func (_options *ReplaceOfferingOptions) SetLabelI18n(labelI18n map[string]string) *ReplaceOfferingOptions {
+	_options.LabelI18n = labelI18n
 	return _options
 }
 
@@ -12511,9 +16888,21 @@ func (_options *ReplaceOfferingOptions) SetShortDescription(shortDescription str
 	return _options
 }
 
+// SetShortDescriptionI18n : Allow user to set ShortDescriptionI18n
+func (_options *ReplaceOfferingOptions) SetShortDescriptionI18n(shortDescriptionI18n map[string]string) *ReplaceOfferingOptions {
+	_options.ShortDescriptionI18n = shortDescriptionI18n
+	return _options
+}
+
 // SetLongDescription : Allow user to set LongDescription
 func (_options *ReplaceOfferingOptions) SetLongDescription(longDescription string) *ReplaceOfferingOptions {
 	_options.LongDescription = core.StringPtr(longDescription)
+	return _options
+}
+
+// SetLongDescriptionI18n : Allow user to set LongDescriptionI18n
+func (_options *ReplaceOfferingOptions) SetLongDescriptionI18n(longDescriptionI18n map[string]string) *ReplaceOfferingOptions {
+	_options.LongDescriptionI18n = longDescriptionI18n
 	return _options
 }
 
@@ -12529,19 +16918,52 @@ func (_options *ReplaceOfferingOptions) SetKinds(kinds []Kind) *ReplaceOfferingO
 	return _options
 }
 
+// SetPcManaged : Allow user to set PcManaged
+func (_options *ReplaceOfferingOptions) SetPcManaged(pcManaged bool) *ReplaceOfferingOptions {
+	_options.PcManaged = core.BoolPtr(pcManaged)
+	return _options
+}
+
+// SetPublishApproved : Allow user to set PublishApproved
+func (_options *ReplaceOfferingOptions) SetPublishApproved(publishApproved bool) *ReplaceOfferingOptions {
+	_options.PublishApproved = core.BoolPtr(publishApproved)
+	return _options
+}
+
+// SetShareWithAll : Allow user to set ShareWithAll
+func (_options *ReplaceOfferingOptions) SetShareWithAll(shareWithAll bool) *ReplaceOfferingOptions {
+	_options.ShareWithAll = core.BoolPtr(shareWithAll)
+	return _options
+}
+
+// SetShareWithIBM : Allow user to set ShareWithIBM
+func (_options *ReplaceOfferingOptions) SetShareWithIBM(shareWithIBM bool) *ReplaceOfferingOptions {
+	_options.ShareWithIBM = core.BoolPtr(shareWithIBM)
+	return _options
+}
+
+// SetShareEnabled : Allow user to set ShareEnabled
+func (_options *ReplaceOfferingOptions) SetShareEnabled(shareEnabled bool) *ReplaceOfferingOptions {
+	_options.ShareEnabled = core.BoolPtr(shareEnabled)
+	return _options
+}
+
 // SetPermitRequestIBMPublicPublish : Allow user to set PermitRequestIBMPublicPublish
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *ReplaceOfferingOptions) SetPermitRequestIBMPublicPublish(permitRequestIBMPublicPublish bool) *ReplaceOfferingOptions {
 	_options.PermitRequestIBMPublicPublish = core.BoolPtr(permitRequestIBMPublicPublish)
 	return _options
 }
 
 // SetIBMPublishApproved : Allow user to set IBMPublishApproved
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *ReplaceOfferingOptions) SetIBMPublishApproved(ibmPublishApproved bool) *ReplaceOfferingOptions {
 	_options.IBMPublishApproved = core.BoolPtr(ibmPublishApproved)
 	return _options
 }
 
 // SetPublicPublishApproved : Allow user to set PublicPublishApproved
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *ReplaceOfferingOptions) SetPublicPublishApproved(publicPublishApproved bool) *ReplaceOfferingOptions {
 	_options.PublicPublishApproved = core.BoolPtr(publicPublishApproved)
 	return _options
@@ -12602,6 +17024,7 @@ func (_options *ReplaceOfferingOptions) SetHidden(hidden bool) *ReplaceOfferingO
 }
 
 // SetProvider : Allow user to set Provider
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *ReplaceOfferingOptions) SetProvider(provider string) *ReplaceOfferingOptions {
 	_options.Provider = core.StringPtr(provider)
 	return _options
@@ -12619,6 +17042,12 @@ func (_options *ReplaceOfferingOptions) SetRepoInfo(repoInfo *RepoInfo) *Replace
 	return _options
 }
 
+// SetImagePullKeys : Allow user to set ImagePullKeys
+func (_options *ReplaceOfferingOptions) SetImagePullKeys(imagePullKeys []ImagePullKey) *ReplaceOfferingOptions {
+	_options.ImagePullKeys = imagePullKeys
+	return _options
+}
+
 // SetSupport : Allow user to set Support
 func (_options *ReplaceOfferingOptions) SetSupport(support *Support) *ReplaceOfferingOptions {
 	_options.Support = support
@@ -12628,6 +17057,24 @@ func (_options *ReplaceOfferingOptions) SetSupport(support *Support) *ReplaceOff
 // SetMedia : Allow user to set Media
 func (_options *ReplaceOfferingOptions) SetMedia(media []MediaItem) *ReplaceOfferingOptions {
 	_options.Media = media
+	return _options
+}
+
+// SetDeprecatePending : Allow user to set DeprecatePending
+func (_options *ReplaceOfferingOptions) SetDeprecatePending(deprecatePending *DeprecatePending) *ReplaceOfferingOptions {
+	_options.DeprecatePending = deprecatePending
+	return _options
+}
+
+// SetProductKind : Allow user to set ProductKind
+func (_options *ReplaceOfferingOptions) SetProductKind(productKind string) *ReplaceOfferingOptions {
+	_options.ProductKind = core.StringPtr(productKind)
+	return _options
+}
+
+// SetBadges : Allow user to set Badges
+func (_options *ReplaceOfferingOptions) SetBadges(badges []Badge) *ReplaceOfferingOptions {
+	_options.Badges = badges
 	return _options
 }
 
@@ -12656,6 +17103,12 @@ type ReplaceOperatorsOptions struct {
 
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocatorID *string `json:"version_locator_id,omitempty"`
+
+	// Operator channel.
+	Channel *string `json:"channel,omitempty"`
+
+	// Plan.
+	InstallPlan *string `json:"install_plan,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -12701,6 +17154,18 @@ func (_options *ReplaceOperatorsOptions) SetAllNamespaces(allNamespaces bool) *R
 // SetVersionLocatorID : Allow user to set VersionLocatorID
 func (_options *ReplaceOperatorsOptions) SetVersionLocatorID(versionLocatorID string) *ReplaceOperatorsOptions {
 	_options.VersionLocatorID = core.StringPtr(versionLocatorID)
+	return _options
+}
+
+// SetChannel : Allow user to set Channel
+func (_options *ReplaceOperatorsOptions) SetChannel(channel string) *ReplaceOperatorsOptions {
+	_options.Channel = core.StringPtr(channel)
+	return _options
+}
+
+// SetInstallPlan : Allow user to set InstallPlan
+func (_options *ReplaceOperatorsOptions) SetInstallPlan(installPlan string) *ReplaceOperatorsOptions {
+	_options.InstallPlan = core.StringPtr(installPlan)
 	return _options
 }
 
@@ -12774,6 +17239,9 @@ type Script struct {
 	// version.
 	Instructions *string `json:"instructions,omitempty"`
 
+	// A map of translated strings, by language code.
+	InstructionsI18n map[string]string `json:"instructions_i18n,omitempty"`
+
 	// Optional script that needs to be run post any pre-condition script.
 	Script *string `json:"script,omitempty"`
 
@@ -12791,6 +17259,10 @@ type Script struct {
 func UnmarshalScript(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(Script)
 	err = core.UnmarshalPrimitive(m, "instructions", &obj.Instructions)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "instructions_i18n", &obj.InstructionsI18n)
 	if err != nil {
 		return
 	}
@@ -12819,6 +17291,9 @@ type SearchObjectsOptions struct {
 	// Lucene query string.
 	Query *string `json:"query" validate:"required"`
 
+	// The kind of the object. It will default to "vpe".
+	Kind *string `json:"kind,omitempty"`
+
 	// The maximum number of results to return.
 	Limit *int64 `json:"limit,omitempty"`
 
@@ -12835,6 +17310,12 @@ type SearchObjectsOptions struct {
 	Headers map[string]string
 }
 
+// Constants associated with the SearchObjectsOptions.Kind property.
+// The kind of the object. It will default to "vpe".
+const (
+	SearchObjectsOptionsKindVpeConst = "vpe"
+)
+
 // NewSearchObjectsOptions : Instantiate SearchObjectsOptions
 func (*CatalogManagementV1) NewSearchObjectsOptions(query string) *SearchObjectsOptions {
 	return &SearchObjectsOptions{
@@ -12845,6 +17326,12 @@ func (*CatalogManagementV1) NewSearchObjectsOptions(query string) *SearchObjects
 // SetQuery : Allow user to set Query
 func (_options *SearchObjectsOptions) SetQuery(query string) *SearchObjectsOptions {
 	_options.Query = core.StringPtr(query)
+	return _options
+}
+
+// SetKind : Allow user to set Kind
+func (_options *SearchObjectsOptions) SetKind(kind string) *SearchObjectsOptions {
+	_options.Kind = core.StringPtr(kind)
 	return _options
 }
 
@@ -12941,59 +17428,337 @@ func (options *SetDeprecateVersionOptions) SetHeaders(param map[string]string) *
 	return options
 }
 
-// SharedPublishObjectOptions : The SharedPublishObject options.
-type SharedPublishObjectOptions struct {
+// SetOfferingPublishOptions : The SetOfferingPublish options.
+type SetOfferingPublishOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Offering identification.
+	OfferingID *string `json:"offering_id" validate:"required,ne="`
+
+	// Type of approval.
+	//  * `pc_managed` - Partner Center is managing this offering
+	//  * `publish_approved` - Publishing approved, offering owners can now set who sees the offering in public catalog
+	//  * `allow_request` - (deprecated)
+	//  * `ibm` - (deprecated)
+	//  * `public` - (deprecated).
+	ApprovalType *string `json:"approval_type" validate:"required,ne="`
+
+	// Approve (true) or disapprove (false).
+	Approved *string `json:"approved" validate:"required,ne="`
+
+	// Partner Center identifier for this offering.
+	PortalRecord *string `json:"portal_record,omitempty"`
+
+	// Partner Center url for this offering.
+	PortalURL *string `json:"portal_url,omitempty"`
+
+	// IAM token of partner center. Only needed when Partner Center accessing the private catalog offering. When accessing
+	// the public offering Partner Center only needs to use their token in the authorization header.
+	XApproverToken *string `json:"X-Approver-Token,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the SetOfferingPublishOptions.ApprovalType property.
+// Type of approval.
+//  * `pc_managed` - Partner Center is managing this offering
+//  * `publish_approved` - Publishing approved, offering owners can now set who sees the offering in public catalog
+//  * `allow_request` - (deprecated)
+//  * `ibm` - (deprecated)
+//  * `public` - (deprecated).
+const (
+	SetOfferingPublishOptionsApprovalTypePcManagedConst = "pc_managed"
+	SetOfferingPublishOptionsApprovalTypePublishApprovedConst = "publish_approved"
+)
+
+// Constants associated with the SetOfferingPublishOptions.Approved property.
+// Approve (true) or disapprove (false).
+const (
+	SetOfferingPublishOptionsApprovedFalseConst = "false"
+	SetOfferingPublishOptionsApprovedTrueConst = "true"
+)
+
+// NewSetOfferingPublishOptions : Instantiate SetOfferingPublishOptions
+func (*CatalogManagementV1) NewSetOfferingPublishOptions(catalogIdentifier string, offeringID string, approvalType string, approved string) *SetOfferingPublishOptions {
+	return &SetOfferingPublishOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		OfferingID: core.StringPtr(offeringID),
+		ApprovalType: core.StringPtr(approvalType),
+		Approved: core.StringPtr(approved),
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *SetOfferingPublishOptions) SetCatalogIdentifier(catalogIdentifier string) *SetOfferingPublishOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetOfferingID : Allow user to set OfferingID
+func (_options *SetOfferingPublishOptions) SetOfferingID(offeringID string) *SetOfferingPublishOptions {
+	_options.OfferingID = core.StringPtr(offeringID)
+	return _options
+}
+
+// SetApprovalType : Allow user to set ApprovalType
+func (_options *SetOfferingPublishOptions) SetApprovalType(approvalType string) *SetOfferingPublishOptions {
+	_options.ApprovalType = core.StringPtr(approvalType)
+	return _options
+}
+
+// SetApproved : Allow user to set Approved
+func (_options *SetOfferingPublishOptions) SetApproved(approved string) *SetOfferingPublishOptions {
+	_options.Approved = core.StringPtr(approved)
+	return _options
+}
+
+// SetPortalRecord : Allow user to set PortalRecord
+func (_options *SetOfferingPublishOptions) SetPortalRecord(portalRecord string) *SetOfferingPublishOptions {
+	_options.PortalRecord = core.StringPtr(portalRecord)
+	return _options
+}
+
+// SetPortalURL : Allow user to set PortalURL
+func (_options *SetOfferingPublishOptions) SetPortalURL(portalURL string) *SetOfferingPublishOptions {
+	_options.PortalURL = core.StringPtr(portalURL)
+	return _options
+}
+
+// SetXApproverToken : Allow user to set XApproverToken
+func (_options *SetOfferingPublishOptions) SetXApproverToken(xApproverToken string) *SetOfferingPublishOptions {
+	_options.XApproverToken = core.StringPtr(xApproverToken)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *SetOfferingPublishOptions) SetHeaders(param map[string]string) *SetOfferingPublishOptions {
+	options.Headers = param
+	return options
+}
+
+// ShareObjectOptions : The ShareObject options.
+type ShareObjectOptions struct {
 	// Catalog identifier.
 	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
 
 	// Object identifier.
 	ObjectIdentifier *string `json:"object_identifier" validate:"required,ne="`
 
+	// Visible to IBM employees.
+	IBM *bool `json:"ibm,omitempty"`
+
+	// Visible to everyone in the public catalog.
+	Public *bool `json:"public,omitempty"`
+
+	// Visible to access list.
+	Enabled *bool `json:"enabled,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
-// NewSharedPublishObjectOptions : Instantiate SharedPublishObjectOptions
-func (*CatalogManagementV1) NewSharedPublishObjectOptions(catalogIdentifier string, objectIdentifier string) *SharedPublishObjectOptions {
-	return &SharedPublishObjectOptions{
+// NewShareObjectOptions : Instantiate ShareObjectOptions
+func (*CatalogManagementV1) NewShareObjectOptions(catalogIdentifier string, objectIdentifier string) *ShareObjectOptions {
+	return &ShareObjectOptions{
 		CatalogIdentifier: core.StringPtr(catalogIdentifier),
 		ObjectIdentifier: core.StringPtr(objectIdentifier),
 	}
 }
 
 // SetCatalogIdentifier : Allow user to set CatalogIdentifier
-func (_options *SharedPublishObjectOptions) SetCatalogIdentifier(catalogIdentifier string) *SharedPublishObjectOptions {
+func (_options *ShareObjectOptions) SetCatalogIdentifier(catalogIdentifier string) *ShareObjectOptions {
 	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
 	return _options
 }
 
 // SetObjectIdentifier : Allow user to set ObjectIdentifier
-func (_options *SharedPublishObjectOptions) SetObjectIdentifier(objectIdentifier string) *SharedPublishObjectOptions {
+func (_options *ShareObjectOptions) SetObjectIdentifier(objectIdentifier string) *ShareObjectOptions {
 	_options.ObjectIdentifier = core.StringPtr(objectIdentifier)
 	return _options
 }
 
+// SetIBM : Allow user to set IBM
+func (_options *ShareObjectOptions) SetIBM(ibm bool) *ShareObjectOptions {
+	_options.IBM = core.BoolPtr(ibm)
+	return _options
+}
+
+// SetPublic : Allow user to set Public
+func (_options *ShareObjectOptions) SetPublic(public bool) *ShareObjectOptions {
+	_options.Public = core.BoolPtr(public)
+	return _options
+}
+
+// SetEnabled : Allow user to set Enabled
+func (_options *ShareObjectOptions) SetEnabled(enabled bool) *ShareObjectOptions {
+	_options.Enabled = core.BoolPtr(enabled)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
-func (options *SharedPublishObjectOptions) SetHeaders(param map[string]string) *SharedPublishObjectOptions {
+func (options *ShareObjectOptions) SetHeaders(param map[string]string) *ShareObjectOptions {
 	options.Headers = param
 	return options
 }
 
+// ShareOfferingOptions : The ShareOffering options.
+type ShareOfferingOptions struct {
+	// Catalog identifier.
+	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
+
+	// Offering identification.
+	OfferingID *string `json:"offering_id" validate:"required,ne="`
+
+	// Visible to IBM employees.
+	IBM *bool `json:"ibm,omitempty"`
+
+	// Visible to everyone in the public catalog.
+	Public *bool `json:"public,omitempty"`
+
+	// Visible to access list.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewShareOfferingOptions : Instantiate ShareOfferingOptions
+func (*CatalogManagementV1) NewShareOfferingOptions(catalogIdentifier string, offeringID string) *ShareOfferingOptions {
+	return &ShareOfferingOptions{
+		CatalogIdentifier: core.StringPtr(catalogIdentifier),
+		OfferingID: core.StringPtr(offeringID),
+	}
+}
+
+// SetCatalogIdentifier : Allow user to set CatalogIdentifier
+func (_options *ShareOfferingOptions) SetCatalogIdentifier(catalogIdentifier string) *ShareOfferingOptions {
+	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
+	return _options
+}
+
+// SetOfferingID : Allow user to set OfferingID
+func (_options *ShareOfferingOptions) SetOfferingID(offeringID string) *ShareOfferingOptions {
+	_options.OfferingID = core.StringPtr(offeringID)
+	return _options
+}
+
+// SetIBM : Allow user to set IBM
+func (_options *ShareOfferingOptions) SetIBM(ibm bool) *ShareOfferingOptions {
+	_options.IBM = core.BoolPtr(ibm)
+	return _options
+}
+
+// SetPublic : Allow user to set Public
+func (_options *ShareOfferingOptions) SetPublic(public bool) *ShareOfferingOptions {
+	_options.Public = core.BoolPtr(public)
+	return _options
+}
+
+// SetEnabled : Allow user to set Enabled
+func (_options *ShareOfferingOptions) SetEnabled(enabled bool) *ShareOfferingOptions {
+	_options.Enabled = core.BoolPtr(enabled)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ShareOfferingOptions) SetHeaders(param map[string]string) *ShareOfferingOptions {
+	options.Headers = param
+	return options
+}
+
+// ShareSetting : Share setting information.
+type ShareSetting struct {
+	// Visible to IBM employees.
+	IBM *bool `json:"ibm,omitempty"`
+
+	// Visible to everyone in the public catalog.
+	Public *bool `json:"public,omitempty"`
+
+	// Visible to access list.
+	Enabled *bool `json:"enabled,omitempty"`
+}
+
+// UnmarshalShareSetting unmarshals an instance of ShareSetting from the specified map of raw messages.
+func UnmarshalShareSetting(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareSetting)
+	err = core.UnmarshalPrimitive(m, "ibm", &obj.IBM)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "public", &obj.Public)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SolutionInfo : Version Solution Information.  Only supported for Product kind Solution.
+type SolutionInfo struct {
+	// Architecture diagrams for this solution.
+	ArchitectureDiagrams []ArchitectureDiagram `json:"architecture_diagrams,omitempty"`
+
+	// Features - titles only.
+	Features []Feature `json:"features,omitempty"`
+
+	// Cost estimate definition.
+	CostEstimate *CostEstimate `json:"cost_estimate,omitempty"`
+
+	// Dependencies for this solution.
+	Dependencies []OfferingReference `json:"dependencies,omitempty"`
+
+	// The install type for this solution.
+	InstallType *string `json:"install_type,omitempty"`
+}
+
+// UnmarshalSolutionInfo unmarshals an instance of SolutionInfo from the specified map of raw messages.
+func UnmarshalSolutionInfo(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SolutionInfo)
+	err = core.UnmarshalModel(m, "architecture_diagrams", &obj.ArchitectureDiagrams, UnmarshalArchitectureDiagram)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "features", &obj.Features, UnmarshalFeature)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "cost_estimate", &obj.CostEstimate, UnmarshalCostEstimate)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "dependencies", &obj.Dependencies, UnmarshalOfferingReference)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "install_type", &obj.InstallType)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // State : Offering state.
 type State struct {
-	// one of: new, validated, account-published, ibm-published, public-published.
+	// one of: new, validated, consumable.
 	Current *string `json:"current,omitempty"`
 
 	// Date and time of current request.
 	CurrentEntered *strfmt.DateTime `json:"current_entered,omitempty"`
 
-	// one of: new, validated, account-published, ibm-published, public-published.
+	// one of: new, validated, consumable.
 	Pending *string `json:"pending,omitempty"`
 
 	// Date and time of pending request.
 	PendingRequested *strfmt.DateTime `json:"pending_requested,omitempty"`
 
-	// one of: new, validated, account-published, ibm-published, public-published.
+	// one of: new, validated, consumable.
 	Previous *string `json:"previous,omitempty"`
 }
 
@@ -13032,8 +17797,20 @@ type Support struct {
 	// Support process as provided by an ISV.
 	Process *string `json:"process,omitempty"`
 
+	// A map of translated strings, by language code.
+	ProcessI18n map[string]string `json:"process_i18n,omitempty"`
+
 	// A list of country codes indicating where support is provided.
 	Locations []string `json:"locations,omitempty"`
+
+	// A list of support options (e.g. email, phone, slack, other).
+	SupportDetails []SupportDetail `json:"support_details,omitempty"`
+
+	// Support escalation policy.
+	SupportEscalation *SupportEscalation `json:"support_escalation,omitempty"`
+
+	// Support type for this product.
+	SupportType *string `json:"support_type,omitempty"`
 }
 
 // UnmarshalSupport unmarshals an instance of Support from the specified map of raw messages.
@@ -13047,12 +17824,211 @@ func UnmarshalSupport(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "process_i18n", &obj.ProcessI18n)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "locations", &obj.Locations)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "support_details", &obj.SupportDetails, UnmarshalSupportDetail)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "support_escalation", &obj.SupportEscalation, UnmarshalSupportEscalation)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "support_type", &obj.SupportType)
 	if err != nil {
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// SupportAvailability : Times when support is available.
+type SupportAvailability struct {
+	// A list of support times.
+	Times []SupportTime `json:"times,omitempty"`
+
+	// Timezone (e.g. America/New_York).
+	Timezone *string `json:"timezone,omitempty"`
+
+	// Is this support always available.
+	AlwaysAvailable *bool `json:"always_available,omitempty"`
+}
+
+// UnmarshalSupportAvailability unmarshals an instance of SupportAvailability from the specified map of raw messages.
+func UnmarshalSupportAvailability(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SupportAvailability)
+	err = core.UnmarshalModel(m, "times", &obj.Times, UnmarshalSupportTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "timezone", &obj.Timezone)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "always_available", &obj.AlwaysAvailable)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SupportDetail : A support option.
+type SupportDetail struct {
+	// Type of the current support detail.
+	Type *string `json:"type,omitempty"`
+
+	// Contact for the current support detail.
+	Contact *string `json:"contact,omitempty"`
+
+	// Time descriptor.
+	ResponseWaitTime *SupportWaitTime `json:"response_wait_time,omitempty"`
+
+	// Times when support is available.
+	Availability *SupportAvailability `json:"availability,omitempty"`
+}
+
+// UnmarshalSupportDetail unmarshals an instance of SupportDetail from the specified map of raw messages.
+func UnmarshalSupportDetail(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SupportDetail)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "contact", &obj.Contact)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "response_wait_time", &obj.ResponseWaitTime, UnmarshalSupportWaitTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "availability", &obj.Availability, UnmarshalSupportAvailability)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SupportEscalation : Support escalation policy.
+type SupportEscalation struct {
+	// Time descriptor.
+	EscalationWaitTime *SupportWaitTime `json:"escalation_wait_time,omitempty"`
+
+	// Time descriptor.
+	ResponseWaitTime *SupportWaitTime `json:"response_wait_time,omitempty"`
+
+	// Escalation contact.
+	Contact *string `json:"contact,omitempty"`
+}
+
+// UnmarshalSupportEscalation unmarshals an instance of SupportEscalation from the specified map of raw messages.
+func UnmarshalSupportEscalation(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SupportEscalation)
+	err = core.UnmarshalModel(m, "escalation_wait_time", &obj.EscalationWaitTime, UnmarshalSupportWaitTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "response_wait_time", &obj.ResponseWaitTime, UnmarshalSupportWaitTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "contact", &obj.Contact)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SupportTime : Time range for support on a given day.
+type SupportTime struct {
+	// The day of the week, represented as an integer.
+	Day *int64 `json:"day,omitempty"`
+
+	// HOURS:MINUTES:SECONDS using 24 hour time (e.g. 8:15:00).
+	StartTime *string `json:"start_time,omitempty"`
+
+	// HOURS:MINUTES:SECONDS using 24 hour time (e.g. 8:15:00).
+	EndTime *string `json:"end_time,omitempty"`
+}
+
+// UnmarshalSupportTime unmarshals an instance of SupportTime from the specified map of raw messages.
+func UnmarshalSupportTime(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SupportTime)
+	err = core.UnmarshalPrimitive(m, "day", &obj.Day)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "start_time", &obj.StartTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "end_time", &obj.EndTime)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SupportWaitTime : Time descriptor.
+type SupportWaitTime struct {
+	// Amount of time to wait in unit 'type'.
+	Value *int64 `json:"value,omitempty"`
+
+	// Valid values are hour or day.
+	Type *string `json:"type,omitempty"`
+}
+
+// UnmarshalSupportWaitTime unmarshals an instance of SupportWaitTime from the specified map of raw messages.
+func UnmarshalSupportWaitTime(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SupportWaitTime)
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SuspendVersionOptions : The SuspendVersion options.
+type SuspendVersionOptions struct {
+	// A dotted value of `catalogID`.`versionID`.
+	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewSuspendVersionOptions : Instantiate SuspendVersionOptions
+func (*CatalogManagementV1) NewSuspendVersionOptions(versionLocID string) *SuspendVersionOptions {
+	return &SuspendVersionOptions{
+		VersionLocID: core.StringPtr(versionLocID),
+	}
+}
+
+// SetVersionLocID : Allow user to set VersionLocID
+func (_options *SuspendVersionOptions) SetVersionLocID(versionLocID string) *SuspendVersionOptions {
+	_options.VersionLocID = core.StringPtr(versionLocID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *SuspendVersionOptions) SetHeaders(param map[string]string) *SuspendVersionOptions {
+	options.Headers = param
+	return options
 }
 
 // SyndicationAuthorization : Feature information.
@@ -13207,10 +18183,37 @@ func UnmarshalSyndicationResource(m map[string]json.RawMessage, result interface
 	return
 }
 
+// URLProxy : Offering URL proxy information.
+type URLProxy struct {
+	// URL of the specified media item being proxied.
+	URL *string `json:"url,omitempty"`
+
+	// SHA256 fingerprint of image.
+	Sha *string `json:"sha,omitempty"`
+}
+
+// UnmarshalURLProxy unmarshals an instance of URLProxy from the specified map of raw messages.
+func UnmarshalURLProxy(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(URLProxy)
+	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "sha", &obj.Sha)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // UpdateCatalogAccountOptions : The UpdateCatalogAccount options.
 type UpdateCatalogAccountOptions struct {
 	// Account identification.
 	ID *string `json:"id,omitempty"`
+
+	// Cloudant revision.
+	Rev *string `json:"_rev,omitempty"`
 
 	// Hide the public catalog in this account.
 	HideIBMCloudCatalog *bool `json:"hide_IBM_cloud_catalog,omitempty"`
@@ -13233,6 +18236,12 @@ func (_options *UpdateCatalogAccountOptions) SetID(id string) *UpdateCatalogAcco
 	return _options
 }
 
+// SetRev : Allow user to set Rev
+func (_options *UpdateCatalogAccountOptions) SetRev(rev string) *UpdateCatalogAccountOptions {
+	_options.Rev = core.StringPtr(rev)
+	return _options
+}
+
 // SetHideIBMCloudCatalog : Allow user to set HideIBMCloudCatalog
 func (_options *UpdateCatalogAccountOptions) SetHideIBMCloudCatalog(hideIBMCloudCatalog bool) *UpdateCatalogAccountOptions {
 	_options.HideIBMCloudCatalog = core.BoolPtr(hideIBMCloudCatalog)
@@ -13251,80 +18260,6 @@ func (options *UpdateCatalogAccountOptions) SetHeaders(param map[string]string) 
 	return options
 }
 
-// UpdateOfferingIBMOptions : The UpdateOfferingIBM options.
-type UpdateOfferingIBMOptions struct {
-	// Catalog identifier.
-	CatalogIdentifier *string `json:"catalog_identifier" validate:"required,ne="`
-
-	// Offering identification.
-	OfferingID *string `json:"offering_id" validate:"required,ne="`
-
-	// Type of approval, ibm or public.
-	ApprovalType *string `json:"approval_type" validate:"required,ne="`
-
-	// Approve (true) or disapprove (false).
-	Approved *string `json:"approved" validate:"required,ne="`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// Constants associated with the UpdateOfferingIBMOptions.ApprovalType property.
-// Type of approval, ibm or public.
-const (
-	UpdateOfferingIBMOptionsApprovalTypeAllowRequestConst = "allow_request"
-	UpdateOfferingIBMOptionsApprovalTypeIBMConst = "ibm"
-	UpdateOfferingIBMOptionsApprovalTypePcManagedConst = "pc_managed"
-	UpdateOfferingIBMOptionsApprovalTypePublicConst = "public"
-)
-
-// Constants associated with the UpdateOfferingIBMOptions.Approved property.
-// Approve (true) or disapprove (false).
-const (
-	UpdateOfferingIBMOptionsApprovedFalseConst = "false"
-	UpdateOfferingIBMOptionsApprovedTrueConst = "true"
-)
-
-// NewUpdateOfferingIBMOptions : Instantiate UpdateOfferingIBMOptions
-func (*CatalogManagementV1) NewUpdateOfferingIBMOptions(catalogIdentifier string, offeringID string, approvalType string, approved string) *UpdateOfferingIBMOptions {
-	return &UpdateOfferingIBMOptions{
-		CatalogIdentifier: core.StringPtr(catalogIdentifier),
-		OfferingID: core.StringPtr(offeringID),
-		ApprovalType: core.StringPtr(approvalType),
-		Approved: core.StringPtr(approved),
-	}
-}
-
-// SetCatalogIdentifier : Allow user to set CatalogIdentifier
-func (_options *UpdateOfferingIBMOptions) SetCatalogIdentifier(catalogIdentifier string) *UpdateOfferingIBMOptions {
-	_options.CatalogIdentifier = core.StringPtr(catalogIdentifier)
-	return _options
-}
-
-// SetOfferingID : Allow user to set OfferingID
-func (_options *UpdateOfferingIBMOptions) SetOfferingID(offeringID string) *UpdateOfferingIBMOptions {
-	_options.OfferingID = core.StringPtr(offeringID)
-	return _options
-}
-
-// SetApprovalType : Allow user to set ApprovalType
-func (_options *UpdateOfferingIBMOptions) SetApprovalType(approvalType string) *UpdateOfferingIBMOptions {
-	_options.ApprovalType = core.StringPtr(approvalType)
-	return _options
-}
-
-// SetApproved : Allow user to set Approved
-func (_options *UpdateOfferingIBMOptions) SetApproved(approved string) *UpdateOfferingIBMOptions {
-	_options.Approved = core.StringPtr(approved)
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *UpdateOfferingIBMOptions) SetHeaders(param map[string]string) *UpdateOfferingIBMOptions {
-	options.Headers = param
-	return options
-}
-
 // UpdateOfferingOptions : The UpdateOffering options.
 type UpdateOfferingOptions struct {
 	// Catalog identifier.
@@ -13336,7 +18271,6 @@ type UpdateOfferingOptions struct {
 	// Offering etag contained in quotes.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
-	// Array of patch operations as defined in RFC 6902.
 	Updates []JSONPatchOperation `json:"updates,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -13399,9 +18333,11 @@ type ValidateInstallOptions struct {
 	// Kube namespace.
 	Namespace *string `json:"namespace,omitempty"`
 
-	// Object containing Helm chart override values.  To use a secret for items of type password, specify a JSON encoded
-	// value of $ref:#/components/schemas/SecretInstance, prefixed with `cmsm_v1:`.
-	OverrideValues map[string]interface{} `json:"override_values,omitempty"`
+	// Validation override values. Required for virtual server image for VPC.
+	OverrideValues *DeployRequestBodyOverrideValues `json:"override_values,omitempty"`
+
+	// Schematics environment variables to use with this workspace.
+	EnvironmentVariables []DeployRequestBodyEnvironmentVariablesItem `json:"environment_variables,omitempty"`
 
 	// Entitlement API Key for this offering.
 	EntitlementApikey *string `json:"entitlement_apikey,omitempty"`
@@ -13421,14 +18357,14 @@ type ValidateInstallOptions struct {
 	// VCenter ID.
 	VcenterID *string `json:"vcenter_id,omitempty"`
 
+	// VCenter Location.
+	VcenterLocation *string `json:"vcenter_location,omitempty"`
+
 	// VCenter User.
 	VcenterUser *string `json:"vcenter_user,omitempty"`
 
 	// VCenter Password.
 	VcenterPassword *string `json:"vcenter_password,omitempty"`
-
-	// VCenter Location.
-	VcenterLocation *string `json:"vcenter_location,omitempty"`
 
 	// VCenter Datastore.
 	VcenterDatastore *string `json:"vcenter_datastore,omitempty"`
@@ -13476,8 +18412,14 @@ func (_options *ValidateInstallOptions) SetNamespace(namespace string) *Validate
 }
 
 // SetOverrideValues : Allow user to set OverrideValues
-func (_options *ValidateInstallOptions) SetOverrideValues(overrideValues map[string]interface{}) *ValidateInstallOptions {
+func (_options *ValidateInstallOptions) SetOverrideValues(overrideValues *DeployRequestBodyOverrideValues) *ValidateInstallOptions {
 	_options.OverrideValues = overrideValues
+	return _options
+}
+
+// SetEnvironmentVariables : Allow user to set EnvironmentVariables
+func (_options *ValidateInstallOptions) SetEnvironmentVariables(environmentVariables []DeployRequestBodyEnvironmentVariablesItem) *ValidateInstallOptions {
+	_options.EnvironmentVariables = environmentVariables
 	return _options
 }
 
@@ -13517,6 +18459,12 @@ func (_options *ValidateInstallOptions) SetVcenterID(vcenterID string) *Validate
 	return _options
 }
 
+// SetVcenterLocation : Allow user to set VcenterLocation
+func (_options *ValidateInstallOptions) SetVcenterLocation(vcenterLocation string) *ValidateInstallOptions {
+	_options.VcenterLocation = core.StringPtr(vcenterLocation)
+	return _options
+}
+
 // SetVcenterUser : Allow user to set VcenterUser
 func (_options *ValidateInstallOptions) SetVcenterUser(vcenterUser string) *ValidateInstallOptions {
 	_options.VcenterUser = core.StringPtr(vcenterUser)
@@ -13526,12 +18474,6 @@ func (_options *ValidateInstallOptions) SetVcenterUser(vcenterUser string) *Vali
 // SetVcenterPassword : Allow user to set VcenterPassword
 func (_options *ValidateInstallOptions) SetVcenterPassword(vcenterPassword string) *ValidateInstallOptions {
 	_options.VcenterPassword = core.StringPtr(vcenterPassword)
-	return _options
-}
-
-// SetVcenterLocation : Allow user to set VcenterLocation
-func (_options *ValidateInstallOptions) SetVcenterLocation(vcenterLocation string) *ValidateInstallOptions {
-	_options.VcenterLocation = core.StringPtr(vcenterLocation)
 	return _options
 }
 
@@ -13563,6 +18505,9 @@ type Validation struct {
 
 	// Validation target information (e.g. cluster_id, region, namespace, etc).  Values will vary by Content type.
 	Target map[string]interface{} `json:"target,omitempty"`
+
+	// Any message needing to be conveyed as part of the validation job.
+	Message *string `json:"message,omitempty"`
 }
 
 // UnmarshalValidation unmarshals an instance of Validation from the specified map of raw messages.
@@ -13588,6 +18533,10 @@ func UnmarshalValidation(m map[string]json.RawMessage, result interface{}) (err 
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -13605,6 +18554,9 @@ type Version struct {
 
 	// Version of content type.
 	Version *string `json:"version,omitempty"`
+
+	// Version Flavor Information.  Only supported for Product kind Solution.
+	Flavor *Flavor `json:"flavor,omitempty"`
 
 	// hash of the content.
 	Sha *string `json:"sha,omitempty"`
@@ -13638,6 +18590,12 @@ type Version struct {
 
 	// List of user solicited overrides.
 	Configuration []Configuration `json:"configuration,omitempty"`
+
+	// List of output values for this version.
+	Outputs []Output `json:"outputs,omitempty"`
+
+	// List of IAM permissions that are required to consume this version.
+	IamPermissions []IamPermission `json:"iam_permissions,omitempty"`
 
 	// Open ended metadata information.
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
@@ -13678,14 +18636,29 @@ type Version struct {
 	// A dotted value of `catalogID`.`versionID`.
 	VersionLocator *string `json:"version_locator,omitempty"`
 
-	// Console URL.
-	ConsoleURL *string `json:"console_url,omitempty"`
-
 	// Long description for version.
 	LongDescription *string `json:"long_description,omitempty"`
 
+	// A map of translated strings, by language code.
+	LongDescriptionI18n map[string]string `json:"long_description_i18n,omitempty"`
+
 	// Whitelisted accounts for version.
 	WhitelistedAccounts []string `json:"whitelisted_accounts,omitempty"`
+
+	// ID of the image pull key to use from Offering.ImagePullKeys.
+	ImagePullKeyName *string `json:"image_pull_key_name,omitempty"`
+
+	// Deprecation information for an Offering.
+	DeprecatePending *DeprecatePending `json:"deprecate_pending,omitempty"`
+
+	// Version Solution Information.  Only supported for Product kind Solution.
+	SolutionInfo *SolutionInfo `json:"solution_info,omitempty"`
+
+	// Is the version able to be shared.
+	IsConsumable *bool `json:"is_consumable,omitempty"`
+
+	// List of links to sec./compliance controls.
+	Compliance []ComplianceControl `json:"compliance,omitempty"`
 }
 
 // UnmarshalVersion unmarshals an instance of Version from the specified map of raw messages.
@@ -13704,6 +18677,10 @@ func UnmarshalVersion(m map[string]json.RawMessage, result interface{}) (err err
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "flavor", &obj.Flavor, UnmarshalFlavor)
 	if err != nil {
 		return
 	}
@@ -13748,6 +18725,14 @@ func UnmarshalVersion(m map[string]json.RawMessage, result interface{}) (err err
 		return
 	}
 	err = core.UnmarshalModel(m, "configuration", &obj.Configuration, UnmarshalConfiguration)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "outputs", &obj.Outputs, UnmarshalOutput)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "iam_permissions", &obj.IamPermissions, UnmarshalIamPermission)
 	if err != nil {
 		return
 	}
@@ -13803,15 +18788,35 @@ func UnmarshalVersion(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "console_url", &obj.ConsoleURL)
-	if err != nil {
-		return
-	}
 	err = core.UnmarshalPrimitive(m, "long_description", &obj.LongDescription)
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "long_description_i18n", &obj.LongDescriptionI18n)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "whitelisted_accounts", &obj.WhitelistedAccounts)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "image_pull_key_name", &obj.ImagePullKeyName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "deprecate_pending", &obj.DeprecatePending, UnmarshalDeprecatePending)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "solution_info", &obj.SolutionInfo, UnmarshalSolutionInfo)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "is_consumable", &obj.IsConsumable)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "compliance", &obj.Compliance, UnmarshalComplianceControl)
 	if err != nil {
 		return
 	}
@@ -13872,6 +18877,9 @@ type VersionUpdateDescriptor struct {
 	// the version number of this version.
 	Version *string `json:"version,omitempty"`
 
+	// Version Flavor Information.  Only supported for Product kind Solution.
+	Flavor *Flavor `json:"flavor,omitempty"`
+
 	// Offering state.
 	State *State `json:"state,omitempty"`
 
@@ -13903,6 +18911,10 @@ func UnmarshalVersionUpdateDescriptor(m map[string]json.RawMessage, result inter
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalModel(m, "flavor", &obj.Flavor, UnmarshalFlavor)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalModel(m, "state", &obj.State, UnmarshalState)
 	if err != nil {
 		return
@@ -13929,4 +18941,1174 @@ func UnmarshalVersionUpdateDescriptor(m map[string]json.RawMessage, result inter
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+//
+// CatalogAccountAuditsPager can be used to simplify the use of the "ListCatalogAccountAudits" method.
+//
+type CatalogAccountAuditsPager struct {
+	hasNext bool
+	options *ListCatalogAccountAuditsOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewCatalogAccountAuditsPager returns a new CatalogAccountAuditsPager instance.
+func (catalogManagement *CatalogManagementV1) NewCatalogAccountAuditsPager(options *ListCatalogAccountAuditsOptions) (pager *CatalogAccountAuditsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = fmt.Errorf("the 'options.Start' field should not be set")
+		return
+	}
+
+	var optionsCopy ListCatalogAccountAuditsOptions = *options
+	pager = &CatalogAccountAuditsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *CatalogAccountAuditsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *CatalogAccountAuditsPager) GetNextWithContext(ctx context.Context) (page []AuditLogDigest, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListCatalogAccountAuditsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Audits
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *CatalogAccountAuditsPager) GetAllWithContext(ctx context.Context) (allItems []AuditLogDigest, err error) {
+	for pager.HasNext() {
+		var nextPage []AuditLogDigest
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *CatalogAccountAuditsPager) GetNext() (page []AuditLogDigest, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *CatalogAccountAuditsPager) GetAll() (allItems []AuditLogDigest, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// CatalogAuditsPager can be used to simplify the use of the "ListCatalogAudits" method.
+//
+type CatalogAuditsPager struct {
+	hasNext bool
+	options *ListCatalogAuditsOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewCatalogAuditsPager returns a new CatalogAuditsPager instance.
+func (catalogManagement *CatalogManagementV1) NewCatalogAuditsPager(options *ListCatalogAuditsOptions) (pager *CatalogAuditsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = fmt.Errorf("the 'options.Start' field should not be set")
+		return
+	}
+
+	var optionsCopy ListCatalogAuditsOptions = *options
+	pager = &CatalogAuditsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *CatalogAuditsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *CatalogAuditsPager) GetNextWithContext(ctx context.Context) (page []AuditLogDigest, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListCatalogAuditsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Audits
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *CatalogAuditsPager) GetAllWithContext(ctx context.Context) (allItems []AuditLogDigest, err error) {
+	for pager.HasNext() {
+		var nextPage []AuditLogDigest
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *CatalogAuditsPager) GetNext() (page []AuditLogDigest, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *CatalogAuditsPager) GetAll() (allItems []AuditLogDigest, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// EnterpriseAuditsPager can be used to simplify the use of the "ListEnterpriseAudits" method.
+//
+type EnterpriseAuditsPager struct {
+	hasNext bool
+	options *ListEnterpriseAuditsOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewEnterpriseAuditsPager returns a new EnterpriseAuditsPager instance.
+func (catalogManagement *CatalogManagementV1) NewEnterpriseAuditsPager(options *ListEnterpriseAuditsOptions) (pager *EnterpriseAuditsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = fmt.Errorf("the 'options.Start' field should not be set")
+		return
+	}
+
+	var optionsCopy ListEnterpriseAuditsOptions = *options
+	pager = &EnterpriseAuditsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *EnterpriseAuditsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *EnterpriseAuditsPager) GetNextWithContext(ctx context.Context) (page []AuditLogDigest, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListEnterpriseAuditsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Audits
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *EnterpriseAuditsPager) GetAllWithContext(ctx context.Context) (allItems []AuditLogDigest, err error) {
+	for pager.HasNext() {
+		var nextPage []AuditLogDigest
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *EnterpriseAuditsPager) GetNext() (page []AuditLogDigest, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *EnterpriseAuditsPager) GetAll() (allItems []AuditLogDigest, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// GetConsumptionOfferingsPager can be used to simplify the use of the "GetConsumptionOfferings" method.
+//
+type GetConsumptionOfferingsPager struct {
+	hasNext bool
+	options *GetConsumptionOfferingsOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewGetConsumptionOfferingsPager returns a new GetConsumptionOfferingsPager instance.
+func (catalogManagement *CatalogManagementV1) NewGetConsumptionOfferingsPager(options *GetConsumptionOfferingsOptions) (pager *GetConsumptionOfferingsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy GetConsumptionOfferingsOptions = *options
+	pager = &GetConsumptionOfferingsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *GetConsumptionOfferingsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *GetConsumptionOfferingsPager) GetNextWithContext(ctx context.Context) (page []Offering, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.GetConsumptionOfferingsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Resources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *GetConsumptionOfferingsPager) GetAllWithContext(ctx context.Context) (allItems []Offering, err error) {
+	for pager.HasNext() {
+		var nextPage []Offering
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *GetConsumptionOfferingsPager) GetNext() (page []Offering, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *GetConsumptionOfferingsPager) GetAll() (allItems []Offering, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// OfferingsPager can be used to simplify the use of the "ListOfferings" method.
+//
+type OfferingsPager struct {
+	hasNext bool
+	options *ListOfferingsOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewOfferingsPager returns a new OfferingsPager instance.
+func (catalogManagement *CatalogManagementV1) NewOfferingsPager(options *ListOfferingsOptions) (pager *OfferingsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListOfferingsOptions = *options
+	pager = &OfferingsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *OfferingsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *OfferingsPager) GetNextWithContext(ctx context.Context) (page []Offering, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListOfferingsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Resources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *OfferingsPager) GetAllWithContext(ctx context.Context) (allItems []Offering, err error) {
+	for pager.HasNext() {
+		var nextPage []Offering
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *OfferingsPager) GetNext() (page []Offering, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *OfferingsPager) GetAll() (allItems []Offering, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// OfferingAuditsPager can be used to simplify the use of the "ListOfferingAudits" method.
+//
+type OfferingAuditsPager struct {
+	hasNext bool
+	options *ListOfferingAuditsOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewOfferingAuditsPager returns a new OfferingAuditsPager instance.
+func (catalogManagement *CatalogManagementV1) NewOfferingAuditsPager(options *ListOfferingAuditsOptions) (pager *OfferingAuditsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = fmt.Errorf("the 'options.Start' field should not be set")
+		return
+	}
+
+	var optionsCopy ListOfferingAuditsOptions = *options
+	pager = &OfferingAuditsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *OfferingAuditsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *OfferingAuditsPager) GetNextWithContext(ctx context.Context) (page []AuditLogDigest, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListOfferingAuditsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Audits
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *OfferingAuditsPager) GetAllWithContext(ctx context.Context) (allItems []AuditLogDigest, err error) {
+	for pager.HasNext() {
+		var nextPage []AuditLogDigest
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *OfferingAuditsPager) GetNext() (page []AuditLogDigest, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *OfferingAuditsPager) GetAll() (allItems []AuditLogDigest, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// GetOfferingAccessListPager can be used to simplify the use of the "GetOfferingAccessList" method.
+//
+type GetOfferingAccessListPager struct {
+	hasNext bool
+	options *GetOfferingAccessListOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewGetOfferingAccessListPager returns a new GetOfferingAccessListPager instance.
+func (catalogManagement *CatalogManagementV1) NewGetOfferingAccessListPager(options *GetOfferingAccessListOptions) (pager *GetOfferingAccessListPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = fmt.Errorf("the 'options.Start' field should not be set")
+		return
+	}
+
+	var optionsCopy GetOfferingAccessListOptions = *options
+	pager = &GetOfferingAccessListPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *GetOfferingAccessListPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *GetOfferingAccessListPager) GetNextWithContext(ctx context.Context) (page []Access, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.GetOfferingAccessListWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Resources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *GetOfferingAccessListPager) GetAllWithContext(ctx context.Context) (allItems []Access, err error) {
+	for pager.HasNext() {
+		var nextPage []Access
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *GetOfferingAccessListPager) GetNext() (page []Access, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *GetOfferingAccessListPager) GetAll() (allItems []Access, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// GetNamespacesPager can be used to simplify the use of the "GetNamespaces" method.
+//
+type GetNamespacesPager struct {
+	hasNext bool
+	options *GetNamespacesOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewGetNamespacesPager returns a new GetNamespacesPager instance.
+func (catalogManagement *CatalogManagementV1) NewGetNamespacesPager(options *GetNamespacesOptions) (pager *GetNamespacesPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy GetNamespacesOptions = *options
+	pager = &GetNamespacesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *GetNamespacesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *GetNamespacesPager) GetNextWithContext(ctx context.Context) (page []string, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.GetNamespacesWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Resources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *GetNamespacesPager) GetAllWithContext(ctx context.Context) (allItems []string, err error) {
+	for pager.HasNext() {
+		var nextPage []string
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *GetNamespacesPager) GetNext() (page []string, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *GetNamespacesPager) GetAll() (allItems []string, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// SearchObjectsPager can be used to simplify the use of the "SearchObjects" method.
+//
+type SearchObjectsPager struct {
+	hasNext bool
+	options *SearchObjectsOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewSearchObjectsPager returns a new SearchObjectsPager instance.
+func (catalogManagement *CatalogManagementV1) NewSearchObjectsPager(options *SearchObjectsOptions) (pager *SearchObjectsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy SearchObjectsOptions = *options
+	pager = &SearchObjectsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *SearchObjectsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *SearchObjectsPager) GetNextWithContext(ctx context.Context) (page []CatalogObject, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.SearchObjectsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Resources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *SearchObjectsPager) GetAllWithContext(ctx context.Context) (allItems []CatalogObject, err error) {
+	for pager.HasNext() {
+		var nextPage []CatalogObject
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *SearchObjectsPager) GetNext() (page []CatalogObject, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *SearchObjectsPager) GetAll() (allItems []CatalogObject, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// ObjectsPager can be used to simplify the use of the "ListObjects" method.
+//
+type ObjectsPager struct {
+	hasNext bool
+	options *ListObjectsOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewObjectsPager returns a new ObjectsPager instance.
+func (catalogManagement *CatalogManagementV1) NewObjectsPager(options *ListObjectsOptions) (pager *ObjectsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListObjectsOptions = *options
+	pager = &ObjectsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ObjectsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ObjectsPager) GetNextWithContext(ctx context.Context) (page []CatalogObject, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListObjectsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Resources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ObjectsPager) GetAllWithContext(ctx context.Context) (allItems []CatalogObject, err error) {
+	for pager.HasNext() {
+		var nextPage []CatalogObject
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ObjectsPager) GetNext() (page []CatalogObject, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ObjectsPager) GetAll() (allItems []CatalogObject, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// ObjectAuditsPager can be used to simplify the use of the "ListObjectAudits" method.
+//
+type ObjectAuditsPager struct {
+	hasNext bool
+	options *ListObjectAuditsOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewObjectAuditsPager returns a new ObjectAuditsPager instance.
+func (catalogManagement *CatalogManagementV1) NewObjectAuditsPager(options *ListObjectAuditsOptions) (pager *ObjectAuditsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = fmt.Errorf("the 'options.Start' field should not be set")
+		return
+	}
+
+	var optionsCopy ListObjectAuditsOptions = *options
+	pager = &ObjectAuditsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ObjectAuditsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ObjectAuditsPager) GetNextWithContext(ctx context.Context) (page []AuditLogDigest, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListObjectAuditsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Audits
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ObjectAuditsPager) GetAllWithContext(ctx context.Context) (allItems []AuditLogDigest, err error) {
+	for pager.HasNext() {
+		var nextPage []AuditLogDigest
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ObjectAuditsPager) GetNext() (page []AuditLogDigest, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ObjectAuditsPager) GetAll() (allItems []AuditLogDigest, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// GetObjectAccessListPager can be used to simplify the use of the "GetObjectAccessList" method.
+//
+type GetObjectAccessListPager struct {
+	hasNext bool
+	options *GetObjectAccessListOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewGetObjectAccessListPager returns a new GetObjectAccessListPager instance.
+func (catalogManagement *CatalogManagementV1) NewGetObjectAccessListPager(options *GetObjectAccessListOptions) (pager *GetObjectAccessListPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = fmt.Errorf("the 'options.Start' field should not be set")
+		return
+	}
+
+	var optionsCopy GetObjectAccessListOptions = *options
+	pager = &GetObjectAccessListPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *GetObjectAccessListPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *GetObjectAccessListPager) GetNextWithContext(ctx context.Context) (page []Access, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.GetObjectAccessListWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Resources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *GetObjectAccessListPager) GetAllWithContext(ctx context.Context) (allItems []Access, err error) {
+	for pager.HasNext() {
+		var nextPage []Access
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *GetObjectAccessListPager) GetNext() (page []Access, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *GetObjectAccessListPager) GetAll() (allItems []Access, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// GetObjectAccessListDeprecatedPager can be used to simplify the use of the "GetObjectAccessListDeprecated" method.
+//
+type GetObjectAccessListDeprecatedPager struct {
+	hasNext bool
+	options *GetObjectAccessListDeprecatedOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewGetObjectAccessListDeprecatedPager returns a new GetObjectAccessListDeprecatedPager instance.
+func (catalogManagement *CatalogManagementV1) NewGetObjectAccessListDeprecatedPager(options *GetObjectAccessListDeprecatedOptions) (pager *GetObjectAccessListDeprecatedPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy GetObjectAccessListDeprecatedOptions = *options
+	pager = &GetObjectAccessListDeprecatedPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *GetObjectAccessListDeprecatedPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *GetObjectAccessListDeprecatedPager) GetNextWithContext(ctx context.Context) (page []Access, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.GetObjectAccessListDeprecatedWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Resources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *GetObjectAccessListDeprecatedPager) GetAllWithContext(ctx context.Context) (allItems []Access, err error) {
+	for pager.HasNext() {
+		var nextPage []Access
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *GetObjectAccessListDeprecatedPager) GetNext() (page []Access, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *GetObjectAccessListDeprecatedPager) GetAll() (allItems []Access, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// OfferingInstanceAuditsPager can be used to simplify the use of the "ListOfferingInstanceAudits" method.
+//
+type OfferingInstanceAuditsPager struct {
+	hasNext bool
+	options *ListOfferingInstanceAuditsOptions
+	client  *CatalogManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewOfferingInstanceAuditsPager returns a new OfferingInstanceAuditsPager instance.
+func (catalogManagement *CatalogManagementV1) NewOfferingInstanceAuditsPager(options *ListOfferingInstanceAuditsOptions) (pager *OfferingInstanceAuditsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = fmt.Errorf("the 'options.Start' field should not be set")
+		return
+	}
+
+	var optionsCopy ListOfferingInstanceAuditsOptions = *options
+	pager = &OfferingInstanceAuditsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  catalogManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *OfferingInstanceAuditsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *OfferingInstanceAuditsPager) GetNextWithContext(ctx context.Context) (page []AuditLogDigest, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListOfferingInstanceAuditsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		next = result.Next.Start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Audits
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *OfferingInstanceAuditsPager) GetAllWithContext(ctx context.Context) (allItems []AuditLogDigest, err error) {
+	for pager.HasNext() {
+		var nextPage []AuditLogDigest
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *OfferingInstanceAuditsPager) GetNext() (page []AuditLogDigest, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *OfferingInstanceAuditsPager) GetAll() (allItems []AuditLogDigest, err error) {
+	return pager.GetAllWithContext(context.Background())
 }

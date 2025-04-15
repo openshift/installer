@@ -295,6 +295,14 @@ func DataSourceIBMIsSecurityGroups() *schema.Resource {
 								},
 							},
 						},
+
+						isSecurityGroupAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "List of access management tags",
+						},
 					},
 				},
 			},
@@ -348,7 +356,7 @@ func dataSourceIBMIsSecurityGroupsRead(context context.Context, d *schema.Resour
 	}
 
 	d.SetId(dataSourceIBMIsSecurityGroupsID(d))
-	err = d.Set("security_groups", dataSourceSecurityGroupCollectionFlattenSecurityGroups(allrecs))
+	err = d.Set("security_groups", dataSourceSecurityGroupCollectionFlattenSecurityGroups(allrecs, d, meta))
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting security_groups %s", err))
 	}
@@ -360,16 +368,16 @@ func dataSourceIBMIsSecurityGroupsID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceSecurityGroupCollectionFlattenSecurityGroups(modelSlice []vpcv1.SecurityGroup) (result []map[string]interface{}) {
+func dataSourceSecurityGroupCollectionFlattenSecurityGroups(modelSlice []vpcv1.SecurityGroup, d *schema.ResourceData, meta interface{}) (result []map[string]interface{}) {
 	result = []map[string]interface{}{}
 	for _, securityGroupsItem := range modelSlice {
-		mapItem := dataSourceSecurityGroupCollectionSecurityGroupsToMap(&securityGroupsItem)
+		mapItem := dataSourceSecurityGroupCollectionSecurityGroupsToMap(&securityGroupsItem, d, meta)
 		result = append(result, mapItem)
 	}
 	return result
 }
 
-func dataSourceSecurityGroupCollectionSecurityGroupsToMap(securityGroupsItem *vpcv1.SecurityGroup) (resultMap map[string]interface{}) {
+func dataSourceSecurityGroupCollectionSecurityGroupsToMap(securityGroupsItem *vpcv1.SecurityGroup, d *schema.ResourceData, meta interface{}) (resultMap map[string]interface{}) {
 	resultMap = map[string]interface{}{}
 
 	if securityGroupsItem.CreatedAt != nil {
@@ -415,6 +423,12 @@ func dataSourceSecurityGroupCollectionSecurityGroupsToMap(securityGroupsItem *vp
 		mapSlice = append(mapSlice, modelMap)
 		resultMap["vpc"] = mapSlice
 	}
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *securityGroupsItem.CRN, "", isAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of security group (%s) access tags: %s", d.Id(), err)
+	}
+	resultMap[isSecurityGroupAccessTags] = accesstags
 
 	return resultMap
 }

@@ -23,7 +23,11 @@ func DataSourceIBMISVPNGatewayConnections() *schema.Resource {
 		Read: dataSourceIBMVPNGatewayConnectionsRead,
 
 		Schema: map[string]*schema.Schema{
-
+			"status": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The status of the vpn gateway connection",
+			},
 			isVPNGatewayID: {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -161,7 +165,10 @@ func dataSourceIBMVPNGatewayConnectionsRead(d *schema.ResourceData, meta interfa
 	}
 	vpngatewayID := d.Get(isVPNGatewayID).(string)
 	listvpnGWConnectionOptions := sess.NewListVPNGatewayConnectionsOptions(vpngatewayID)
-
+	if statusIntf, ok := d.GetOk("status"); ok {
+		status := statusIntf.(string)
+		listvpnGWConnectionOptions.Status = &status
+	}
 	availableVPNGatewayConnections, detail, err := sess.ListVPNGatewayConnections(listvpnGWConnectionOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error reading list of VPN Gateway Connections:%s\n%s", err, detail)

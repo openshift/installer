@@ -54,10 +54,12 @@ func NewPcloudTenantsPutParamsWithHTTPClient(client *http.Client) *PcloudTenants
 	}
 }
 
-/* PcloudTenantsPutParams contains all the parameters to send to the API endpoint
-   for the pcloud tenants put operation.
+/*
+PcloudTenantsPutParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud tenants put operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudTenantsPutParams struct {
 

@@ -150,11 +150,11 @@ func dataSourceIBMPISystemPoolsRead(ctx context.Context, d *schema.ResourceData,
 	for s, sp := range sps {
 		data := map[string]interface{}{
 			SystemPoolName:     s,
-			Capacity:           flattenSystem(sp.Capacity),
+			Capacity:           flattenMax(sp.Capacity),
 			CoreMemoryRatio:    sp.CoreMemoryRatio,
-			MaxAvailable:       flattenSystem(sp.MaxAvailable),
-			MaxCoresAvailable:  flattenSystem(sp.MaxCoresAvailable),
-			MaxMemoryAvailable: flattenSystem(sp.MaxMemoryAvailable),
+			MaxAvailable:       flattenMax(sp.MaxAvailable),
+			MaxCoresAvailable:  flattenMax(sp.MaxCoresAvailable),
+			MaxMemoryAvailable: flattenMax(sp.MaxMemoryAvailable),
 			SharedCoreRatio:    flattenSharedCoreRatio(sp.SharedCoreRatio),
 			Type:               sp.Type,
 			Systems:            flattenSystems(sp.Systems),
@@ -167,18 +167,26 @@ func dataSourceIBMPISystemPoolsRead(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
+func flattenMax(s *models.System) map[string]string {
+	ret := map[string]interface{}{
+		Cores:  *s.Cores,
+		Memory: *s.Memory,
+	}
+	return flex.Flatten(ret)
+}
+
 func flattenSystem(s *models.System) map[string]string {
 	ret := map[string]interface{}{
-		Cores:  s.Cores,
+		Cores:  *s.Cores,
 		ID:     s.ID,
-		Memory: s.Memory,
+		Memory: *s.Memory,
 	}
 	return flex.Flatten(ret)
 }
 
 func flattenSystems(sl []*models.System) (systems []map[string]string) {
 	if sl != nil {
-		systems = make([]map[string]string, len(sl))
+		systems = make([]map[string]string, 0, len(sl))
 		for _, s := range sl {
 			systems = append(systems, flattenSystem(s))
 		}

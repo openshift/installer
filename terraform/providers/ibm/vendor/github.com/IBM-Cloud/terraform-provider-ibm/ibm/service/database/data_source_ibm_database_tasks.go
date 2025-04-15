@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -24,6 +25,9 @@ func DataSourceIBMDatabaseTasks() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Deployment ID.",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_database_tasks",
+					"deployment_id"),
 			},
 			"tasks": &schema.Schema{
 				Type:     schema.TypeList,
@@ -65,6 +69,23 @@ func DataSourceIBMDatabaseTasks() *schema.Resource {
 			},
 		},
 	}
+}
+
+func DataSourceIBMDatabaseTasksValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "deployment_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cloud-database",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMDatabaseTasksValidator := validate.ResourceValidator{ResourceName: "ibm_database_tasks", Schema: validateSchema}
+	return &iBMDatabaseTasksValidator
 }
 
 func dataSourceIBMDatabaseTasksRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

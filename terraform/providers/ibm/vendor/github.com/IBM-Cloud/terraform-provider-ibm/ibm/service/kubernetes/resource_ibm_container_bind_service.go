@@ -11,6 +11,7 @@ import (
 	v1 "github.com/IBM-Cloud/bluemix-go/api/container/containerv1"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
 func ResourceIBMContainerBindService() *schema.Resource {
@@ -27,6 +28,9 @@ func ResourceIBMContainerBindService() *schema.Resource {
 				ForceNew:    true,
 				Required:    true,
 				Description: "Cluster name or ID",
+				ValidateFunc: validate.InvokeValidator(
+					"ibm_container_bind_service",
+					"cluster_name_id"),
 			},
 			"service_instance_name": {
 				Type:          schema.TypeString,
@@ -103,6 +107,20 @@ func ResourceIBMContainerBindService() *schema.Resource {
 			},
 		},
 	}
+}
+func ResourceIBMContainerBindServiceValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster_name_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMContainerBindServiceValidator := validate.ResourceValidator{ResourceName: "ibm_container_bind_service", Schema: validateSchema}
+	return &iBMContainerBindServiceValidator
 }
 
 func getClusterTargetHeader(d *schema.ResourceData, meta interface{}) (v1.ClusterTargetHeader, error) {

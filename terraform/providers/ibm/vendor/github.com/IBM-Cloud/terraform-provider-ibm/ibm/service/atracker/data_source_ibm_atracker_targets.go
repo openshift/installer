@@ -7,13 +7,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/IBM/platform-services-go-sdk/atrackerv1"
 	"github.com/IBM/platform-services-go-sdk/atrackerv2"
 )
 
@@ -125,6 +123,39 @@ func DataSourceIBMAtrackerTargets() *schema.Resource {
 								},
 							},
 						},
+						"eventstreams_endpoint": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "Property values for the Event Streams Endpoint in responses.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"target_crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN of the Event Streams instance.",
+									},
+									"brokers": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "List of broker endpoints.",
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+									},
+									"topic": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The messsage hub topic defined in the Event Streams instance.",
+									},
+									"api_key": &schema.Schema{ // pragma: allowlist secret
+										Type:        schema.TypeString,
+										Computed:    true,
+										Sensitive:   true,
+										Description: "The user password (api key) for the message hub topic in the Event Streams instance.",
+									},
+								},
+							},
+						},
 						"cos_write_status": {
 							Type:        schema.TypeList,
 							Computed:    true,
@@ -209,102 +240,61 @@ func DataSourceIBMAtrackerTargets() *schema.Resource {
 }
 
 func DataSourceIBMAtrackerTargetsRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	atrackerClientv1, atrackerClientv2, err := getAtrackerClients(meta)
+	atrackerClientv2, err := getAtrackerClients(meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	// TODO: Remove after deprecation
-	listTargetsOptions := &atrackerv1.ListTargetsOptions{}
-	targetListV1, responseV1, err := atrackerClientv1.ListTargetsWithContext(context, listTargetsOptions)
-	if err == nil {
-		// Use the provided filter argument and construct a new list with only the requested resource(s)
-		var matchTargets []atrackerv1.Target
-		var name string
-		var suppliedFilter bool
 
-		if v, ok := d.GetOk("name"); ok {
-			name = v.(string)
-			suppliedFilter = true
-			for _, data := range targetListV1.Targets {
-				if *data.Name == name {
-					matchTargets = append(matchTargets, data)
-				}
-			}
-		} else {
-			matchTargets = targetListV1.Targets
-		}
-		targetListV1.Targets = matchTargets
+	listTargetsOptions := &atrackerv2.ListTargetsOptions{}
 
-		if suppliedFilter {
-			if len(targetListV1.Targets) == 0 {
-				return diag.FromErr(fmt.Errorf("no Targets found with name %s", name))
-			}
-			d.SetId(name)
-		} else {
-			d.SetId(DataSourceIBMAtrackerTargetsID(d))
-		}
-
-		if targetListV1.Targets != nil {
-			err = d.Set("targets", dataSourceTargetListFlattenTargetsV1(targetListV1.Targets))
-			if err != nil {
-				return diag.FromErr(fmt.Errorf("[ERROR] Error setting targets %s", err))
-			}
-		}
-		return nil
-	} else if err != nil && responseV1 != nil && strings.Contains(responseV1.String(), BLOCKED_V1_RESOURCE) {
-		listTargetsOptions := &atrackerv2.ListTargetsOptions{}
-
-		targetList, response, err := atrackerClientv2.ListTargetsWithContext(context, listTargetsOptions)
-		if err != nil {
-			log.Printf("[DEBUG] ListTargetsWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("ListTargetsWithContext failed %s\n%s", err, response))
-		}
-
-		// Use the provided filter argument and construct a new list with only the requested resource(s)
-		var matchTargets []atrackerv2.Target
-		var name string
-		var suppliedFilter bool
-
-		if v, ok := d.GetOk("name"); ok {
-			name = v.(string)
-			suppliedFilter = true
-			for _, data := range targetList.Targets {
-				if *data.Name == name {
-					matchTargets = append(matchTargets, data)
-				}
-			}
-		} else {
-			matchTargets = targetList.Targets
-		}
-		targetList.Targets = matchTargets
-
-		if suppliedFilter {
-			if len(targetList.Targets) == 0 {
-				return diag.FromErr(fmt.Errorf("no Targets found with name %s", name))
-			}
-			d.SetId(name)
-		} else {
-			d.SetId(DataSourceIBMAtrackerTargetsID(d))
-		}
-
-		targets := []map[string]interface{}{}
-		if targetList.Targets != nil {
-			for _, modelItem := range targetList.Targets {
-				modelMap, err := DataSourceIBMAtrackerTargetsTargetToMap(&modelItem)
-				if err != nil {
-					return diag.FromErr(err)
-				}
-				targets = append(targets, modelMap)
-			}
-		}
-		if err = d.Set("targets", targets); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting targets %s", err))
-		}
-		return nil
+	targetList, response, err := atrackerClientv2.ListTargetsWithContext(context, listTargetsOptions)
+	if err != nil {
+		log.Printf("[DEBUG] ListTargetsWithContext failed %s\n%s", err, response)
+		return diag.FromErr(fmt.Errorf("ListTargetsWithContext failed %s\n%s", err, response))
 	}
 
-	log.Printf("[DEBUG] ListTargetsWithContext failed %s\n%s", err, responseV1)
-	return diag.FromErr(fmt.Errorf("ListTargetsWithContext failed %s\n%s", err, responseV1))
+	// Use the provided filter argument and construct a new list with only the requested resource(s)
+	var matchTargets []atrackerv2.Target
+	var name string
+	var suppliedFilter bool
+
+	if v, ok := d.GetOk("name"); ok {
+		name = v.(string)
+		suppliedFilter = true
+		for _, data := range targetList.Targets {
+			if *data.Name == name {
+				matchTargets = append(matchTargets, data)
+			}
+		}
+	} else {
+		matchTargets = targetList.Targets
+	}
+	targetList.Targets = matchTargets
+
+	if suppliedFilter {
+		if len(targetList.Targets) == 0 {
+			return diag.FromErr(fmt.Errorf("no Targets found with name %s", name))
+		}
+		d.SetId(name)
+	} else {
+		d.SetId(DataSourceIBMAtrackerTargetsID(d))
+	}
+
+	targets := []map[string]interface{}{}
+	if targetList.Targets != nil {
+		for _, modelItem := range targetList.Targets {
+			modelMap, err := DataSourceIBMAtrackerTargetsTargetToMap(&modelItem)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			targets = append(targets, modelMap)
+		}
+	}
+	if err = d.Set("targets", targets); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting targets %s", err))
+	}
+	return nil
+
 }
 
 // DataSourceIBMAtrackerTargetsID returns a reasonable ID for the list.
@@ -342,6 +332,13 @@ func DataSourceIBMAtrackerTargetsTargetToMap(model *atrackerv2.Target) (map[stri
 			return modelMap, err
 		}
 		modelMap["logdna_endpoint"] = []map[string]interface{}{logdnaEndpointMap}
+	}
+	if model.EventstreamsEndpoint != nil {
+		eventstreamsEndpointMap, err := DataSourceIBMAtrackerTargetsEventstreamsEndpointToMap(model.EventstreamsEndpoint)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["eventstreams_endpoint"] = []map[string]interface{}{eventstreamsEndpointMap}
 	}
 	if model.WriteStatus != nil {
 		writeStatusMap, err := DataSourceIBMAtrackerTargetsWriteStatusToMap(model.WriteStatus)
@@ -389,6 +386,23 @@ func DataSourceIBMAtrackerTargetsLogdnaEndpointToMap(model *atrackerv2.LogdnaEnd
 	return modelMap, nil
 }
 
+func DataSourceIBMAtrackerTargetsEventstreamsEndpointToMap(model *atrackerv2.EventstreamsEndpoint) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.TargetCRN != nil {
+		modelMap["target_crn"] = *model.TargetCRN
+	}
+	if model.Brokers != nil {
+		modelMap["brokers"] = model.Brokers
+	}
+	if model.Topic != nil {
+		modelMap["topic"] = *model.Topic
+	}
+	if model.APIKey != nil {
+		modelMap["api_key"] = *model.APIKey // pragma: allowlist secret
+	}
+	return modelMap, nil
+}
+
 func DataSourceIBMAtrackerTargetsWriteStatusToMap(model *atrackerv2.WriteStatus) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Status != nil {
@@ -401,87 +415,4 @@ func DataSourceIBMAtrackerTargetsWriteStatusToMap(model *atrackerv2.WriteStatus)
 		modelMap["reason_for_last_failure"] = *model.ReasonForLastFailure
 	}
 	return modelMap, nil
-}
-
-func dataSourceTargetListFlattenTargetsV1(result []atrackerv1.Target) (targets []map[string]interface{}) {
-	for _, targetsItem := range result {
-		targets = append(targets, dataSourceTargetListTargetsToMapV1(targetsItem))
-	}
-
-	return targets
-}
-
-func dataSourceTargetListTargetsToMapV1(targetsItem atrackerv1.Target) (targetsMap map[string]interface{}) {
-	targetsMap = map[string]interface{}{}
-
-	if targetsItem.ID != nil {
-		targetsMap["id"] = targetsItem.ID
-	}
-	if targetsItem.Name != nil {
-		targetsMap["name"] = targetsItem.Name
-	}
-	if targetsItem.CRN != nil {
-		targetsMap["crn"] = targetsItem.CRN
-	}
-	if targetsItem.TargetType != nil {
-		targetsMap["target_type"] = targetsItem.TargetType
-	}
-	if targetsItem.EncryptKey != nil {
-		targetsMap["encrypt_key"] = targetsItem.EncryptKey
-	}
-	if targetsItem.CosEndpoint != nil {
-		cosEndpointList := []map[string]interface{}{}
-		cosEndpointMap := dataSourceTargetListTargetsCosEndpointToMapV1(*targetsItem.CosEndpoint)
-		cosEndpointList = append(cosEndpointList, cosEndpointMap)
-		targetsMap["cos_endpoint"] = cosEndpointList
-	}
-	if targetsItem.CosWriteStatus != nil {
-		cosWriteStatusList := []map[string]interface{}{}
-		cosWriteStatusMap := dataSourceTargetListTargetsCosWriteStatusToMapV1(*targetsItem.CosWriteStatus)
-		cosWriteStatusList = append(cosWriteStatusList, cosWriteStatusMap)
-		targetsMap["cos_write_status"] = cosWriteStatusList
-	}
-	if targetsItem.Created != nil {
-		targetsMap["created"] = targetsItem.Created.String()
-	}
-	if targetsItem.Updated != nil {
-		targetsMap["updated"] = targetsItem.Updated.String()
-	}
-
-	return targetsMap
-}
-
-func dataSourceTargetListTargetsCosEndpointToMapV1(cosEndpointItem atrackerv1.CosEndpoint) (cosEndpointMap map[string]interface{}) {
-	cosEndpointMap = map[string]interface{}{}
-
-	if cosEndpointItem.Endpoint != nil {
-		cosEndpointMap["endpoint"] = cosEndpointItem.Endpoint
-	}
-	if cosEndpointItem.TargetCRN != nil {
-		cosEndpointMap["target_crn"] = cosEndpointItem.TargetCRN
-	}
-	if cosEndpointItem.Bucket != nil {
-		cosEndpointMap["bucket"] = cosEndpointItem.Bucket
-	}
-	if cosEndpointItem.APIKey != nil {
-		cosEndpointMap["api_key"] = cosEndpointItem.APIKey
-	}
-
-	return cosEndpointMap
-}
-
-func dataSourceTargetListTargetsCosWriteStatusToMapV1(cosWriteStatusItem atrackerv1.CosWriteStatus) (cosWriteStatusMap map[string]interface{}) {
-	cosWriteStatusMap = map[string]interface{}{}
-
-	if cosWriteStatusItem.Status != nil {
-		cosWriteStatusMap["status"] = cosWriteStatusItem.Status
-	}
-	if cosWriteStatusItem.LastFailure != nil {
-		cosWriteStatusMap["last_failure"] = cosWriteStatusItem.LastFailure.String()
-	}
-	if cosWriteStatusItem.ReasonForLastFailure != nil {
-		cosWriteStatusMap["reason_for_last_failure"] = cosWriteStatusItem.ReasonForLastFailure
-	}
-
-	return cosWriteStatusMap
 }

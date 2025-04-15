@@ -64,6 +64,7 @@ const (
 	PIAffinityDiskCount       = "pi_volume_disk_count"
 	PIStoragePoolValue        = "pi_storage_pool_type"
 	PIStoragePoolName         = "pi_storage_pool_name"
+	PIReplicationEnabled      = "pi_replication_enabled"
 
 	// IBM PI Snapshots
 

@@ -36,7 +36,7 @@ type ClientService interface {
 }
 
 /*
-  InternalV1TransitgatewayGet gets the cloud instance transit gateway information
+InternalV1TransitgatewayGet gets the cloud instance transit gateway information
 */
 func (a *Client) InternalV1TransitgatewayGet(params *InternalV1TransitgatewayGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1TransitgatewayGetOK, error) {
 	// TODO: Validate the params before sending

@@ -4,8 +4,6 @@
 package power
 
 import (
-	//"fmt"
-
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -62,6 +60,56 @@ func DataSourceIBMPIVolume() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"replication_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates if the volume should be replication enabled or not",
+			},
+			"replication_type": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Replication type(metro,global)",
+			},
+			"replication_status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Replication status of a volume",
+			},
+			"auxiliary": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "true if volume is auxiliary otherwise false",
+			},
+			"consistency_group_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Consistency Group Name if volume is a part of volume group",
+			},
+			"group_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Volume Group ID",
+			},
+			"mirroring_state": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Mirroring state for replication enabled volume",
+			},
+			"primary_role": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Indicates whether master/aux volume is playing the primary role",
+			},
+			"auxiliary_volume_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Indicates auxiliary volume name",
+			},
+			"master_volume_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Indicates master volume name",
+			},
 		},
 	}
 }
@@ -87,6 +135,16 @@ func dataSourceIBMPIVolumeRead(ctx context.Context, d *schema.ResourceData, meta
 	d.Set("disk_type", volumedata.DiskType)
 	d.Set("volume_pool", volumedata.VolumePool)
 	d.Set("wwn", volumedata.Wwn)
+	d.Set("replication_enabled", volumedata.ReplicationEnabled)
+	d.Set("replication_type", volumedata.ReplicationType)
+	d.Set("replication_status", volumedata.ReplicationStatus)
+	d.Set("auxiliary", volumedata.Auxiliary)
+	d.Set("consistency_group_name", volumedata.ConsistencyGroupName)
+	d.Set("group_id", volumedata.GroupID)
+	d.Set("mirroring_state", volumedata.MirroringState)
+	d.Set("primary_role", volumedata.PrimaryRole)
+	d.Set("auxiliary_volume_name", volumedata.AuxVolumeName)
+	d.Set("master_volume_name", volumedata.MasterVolumeName)
 
 	return nil
 }

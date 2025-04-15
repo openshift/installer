@@ -41,6 +41,18 @@ func (o *PcloudPvminstancesSnapshotsRestorePostReader) ReadResponse(response run
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudPvminstancesSnapshotsRestorePostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudPvminstancesSnapshotsRestorePostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudPvminstancesSnapshotsRestorePostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -63,7 +75,8 @@ func NewPcloudPvminstancesSnapshotsRestorePostAccepted() *PcloudPvminstancesSnap
 	return &PcloudPvminstancesSnapshotsRestorePostAccepted{}
 }
 
-/* PcloudPvminstancesSnapshotsRestorePostAccepted describes a response with status code 202, with default header values.
+/*
+PcloudPvminstancesSnapshotsRestorePostAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -71,9 +84,39 @@ type PcloudPvminstancesSnapshotsRestorePostAccepted struct {
 	Payload *models.Snapshot
 }
 
+// IsSuccess returns true when this pcloud pvminstances snapshots restore post accepted response has a 2xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud pvminstances snapshots restore post accepted response has a 3xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances snapshots restore post accepted response has a 4xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud pvminstances snapshots restore post accepted response has a 5xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances snapshots restore post accepted response a status code equal to that given
+func (o *PcloudPvminstancesSnapshotsRestorePostAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
 func (o *PcloudPvminstancesSnapshotsRestorePostAccepted) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostAccepted  %+v", 202, o.Payload)
 }
+
+func (o *PcloudPvminstancesSnapshotsRestorePostAccepted) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostAccepted  %+v", 202, o.Payload)
+}
+
 func (o *PcloudPvminstancesSnapshotsRestorePostAccepted) GetPayload() *models.Snapshot {
 	return o.Payload
 }
@@ -95,7 +138,8 @@ func NewPcloudPvminstancesSnapshotsRestorePostBadRequest() *PcloudPvminstancesSn
 	return &PcloudPvminstancesSnapshotsRestorePostBadRequest{}
 }
 
-/* PcloudPvminstancesSnapshotsRestorePostBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudPvminstancesSnapshotsRestorePostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -103,9 +147,39 @@ type PcloudPvminstancesSnapshotsRestorePostBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances snapshots restore post bad request response has a 2xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances snapshots restore post bad request response has a 3xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances snapshots restore post bad request response has a 4xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances snapshots restore post bad request response has a 5xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances snapshots restore post bad request response a status code equal to that given
+func (o *PcloudPvminstancesSnapshotsRestorePostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *PcloudPvminstancesSnapshotsRestorePostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudPvminstancesSnapshotsRestorePostBadRequest) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudPvminstancesSnapshotsRestorePostBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -127,7 +201,8 @@ func NewPcloudPvminstancesSnapshotsRestorePostUnauthorized() *PcloudPvminstances
 	return &PcloudPvminstancesSnapshotsRestorePostUnauthorized{}
 }
 
-/* PcloudPvminstancesSnapshotsRestorePostUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudPvminstancesSnapshotsRestorePostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -135,9 +210,39 @@ type PcloudPvminstancesSnapshotsRestorePostUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances snapshots restore post unauthorized response has a 2xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances snapshots restore post unauthorized response has a 3xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances snapshots restore post unauthorized response has a 4xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances snapshots restore post unauthorized response has a 5xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances snapshots restore post unauthorized response a status code equal to that given
+func (o *PcloudPvminstancesSnapshotsRestorePostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *PcloudPvminstancesSnapshotsRestorePostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudPvminstancesSnapshotsRestorePostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudPvminstancesSnapshotsRestorePostUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -154,12 +259,139 @@ func (o *PcloudPvminstancesSnapshotsRestorePostUnauthorized) readResponse(respon
 	return nil
 }
 
+// NewPcloudPvminstancesSnapshotsRestorePostForbidden creates a PcloudPvminstancesSnapshotsRestorePostForbidden with default headers values
+func NewPcloudPvminstancesSnapshotsRestorePostForbidden() *PcloudPvminstancesSnapshotsRestorePostForbidden {
+	return &PcloudPvminstancesSnapshotsRestorePostForbidden{}
+}
+
+/*
+PcloudPvminstancesSnapshotsRestorePostForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudPvminstancesSnapshotsRestorePostForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances snapshots restore post forbidden response has a 2xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances snapshots restore post forbidden response has a 3xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances snapshots restore post forbidden response has a 4xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances snapshots restore post forbidden response has a 5xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances snapshots restore post forbidden response a status code equal to that given
+func (o *PcloudPvminstancesSnapshotsRestorePostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+func (o *PcloudPvminstancesSnapshotsRestorePostForbidden) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesSnapshotsRestorePostForbidden) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesSnapshotsRestorePostForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesSnapshotsRestorePostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesSnapshotsRestorePostNotFound creates a PcloudPvminstancesSnapshotsRestorePostNotFound with default headers values
+func NewPcloudPvminstancesSnapshotsRestorePostNotFound() *PcloudPvminstancesSnapshotsRestorePostNotFound {
+	return &PcloudPvminstancesSnapshotsRestorePostNotFound{}
+}
+
+/*
+PcloudPvminstancesSnapshotsRestorePostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudPvminstancesSnapshotsRestorePostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances snapshots restore post not found response has a 2xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances snapshots restore post not found response has a 3xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances snapshots restore post not found response has a 4xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances snapshots restore post not found response has a 5xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances snapshots restore post not found response a status code equal to that given
+func (o *PcloudPvminstancesSnapshotsRestorePostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+func (o *PcloudPvminstancesSnapshotsRestorePostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPvminstancesSnapshotsRestorePostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPvminstancesSnapshotsRestorePostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesSnapshotsRestorePostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudPvminstancesSnapshotsRestorePostConflict creates a PcloudPvminstancesSnapshotsRestorePostConflict with default headers values
 func NewPcloudPvminstancesSnapshotsRestorePostConflict() *PcloudPvminstancesSnapshotsRestorePostConflict {
 	return &PcloudPvminstancesSnapshotsRestorePostConflict{}
 }
 
-/* PcloudPvminstancesSnapshotsRestorePostConflict describes a response with status code 409, with default header values.
+/*
+PcloudPvminstancesSnapshotsRestorePostConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -167,9 +399,39 @@ type PcloudPvminstancesSnapshotsRestorePostConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances snapshots restore post conflict response has a 2xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances snapshots restore post conflict response has a 3xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances snapshots restore post conflict response has a 4xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances snapshots restore post conflict response has a 5xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances snapshots restore post conflict response a status code equal to that given
+func (o *PcloudPvminstancesSnapshotsRestorePostConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *PcloudPvminstancesSnapshotsRestorePostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostConflict  %+v", 409, o.Payload)
 }
+
+func (o *PcloudPvminstancesSnapshotsRestorePostConflict) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostConflict  %+v", 409, o.Payload)
+}
+
 func (o *PcloudPvminstancesSnapshotsRestorePostConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -191,7 +453,8 @@ func NewPcloudPvminstancesSnapshotsRestorePostInternalServerError() *PcloudPvmin
 	return &PcloudPvminstancesSnapshotsRestorePostInternalServerError{}
 }
 
-/* PcloudPvminstancesSnapshotsRestorePostInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudPvminstancesSnapshotsRestorePostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -199,9 +462,39 @@ type PcloudPvminstancesSnapshotsRestorePostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances snapshots restore post internal server error response has a 2xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances snapshots restore post internal server error response has a 3xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances snapshots restore post internal server error response has a 4xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud pvminstances snapshots restore post internal server error response has a 5xx status code
+func (o *PcloudPvminstancesSnapshotsRestorePostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud pvminstances snapshots restore post internal server error response a status code equal to that given
+func (o *PcloudPvminstancesSnapshotsRestorePostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudPvminstancesSnapshotsRestorePostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudPvminstancesSnapshotsRestorePostInternalServerError) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots/{snapshot_id}/restore][%d] pcloudPvminstancesSnapshotsRestorePostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudPvminstancesSnapshotsRestorePostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

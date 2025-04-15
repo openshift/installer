@@ -42,7 +42,7 @@ type ClientService interface {
 }
 
 /*
-  ServiceBindingBinding generations of a service binding
+ServiceBindingBinding generations of a service binding
 */
 func (a *Client) ServiceBindingBinding(params *ServiceBindingBindingParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBindingBindingOK, *ServiceBindingBindingCreated, *ServiceBindingBindingAccepted, error) {
 	// TODO: Validate the params before sending
@@ -84,7 +84,7 @@ func (a *Client) ServiceBindingBinding(params *ServiceBindingBindingParams, auth
 }
 
 /*
-  ServiceBindingGet gets a service binding
+ServiceBindingGet gets a service binding
 */
 func (a *Client) ServiceBindingGet(params *ServiceBindingGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBindingGetOK, error) {
 	// TODO: Validate the params before sending
@@ -123,7 +123,7 @@ func (a *Client) ServiceBindingGet(params *ServiceBindingGetParams, authInfo run
 }
 
 /*
-  ServiceBindingLastOperationGet lasts requested operation state for service binding
+ServiceBindingLastOperationGet lasts requested operation state for service binding
 */
 func (a *Client) ServiceBindingLastOperationGet(params *ServiceBindingLastOperationGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBindingLastOperationGetOK, error) {
 	// TODO: Validate the params before sending
@@ -162,7 +162,7 @@ func (a *Client) ServiceBindingLastOperationGet(params *ServiceBindingLastOperat
 }
 
 /*
-  ServiceBindingUnbinding deprovisions of a service binding
+ServiceBindingUnbinding deprovisions of a service binding
 */
 func (a *Client) ServiceBindingUnbinding(params *ServiceBindingUnbindingParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBindingUnbindingOK, *ServiceBindingUnbindingAccepted, error) {
 	// TODO: Validate the params before sending
