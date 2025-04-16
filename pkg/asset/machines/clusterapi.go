@@ -39,8 +39,10 @@ import (
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
+	externaltypes "github.com/openshift/installer/pkg/types/external"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
+	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
@@ -285,11 +287,12 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 				Role:            "master",
 				UserDataSecret:  "master-user-data",
 				HyperVGen:       hyperVGen,
-				UseImageGallery: false,
+				UseImageGallery: installConfig.Azure.CloudName != azuretypes.StackCloud,
 				Private:         installConfig.Config.Publish == types.InternalPublishingStrategy,
 				UserTags:        installConfig.Config.Platform.Azure.UserTags,
 				Platform:        installConfig.Config.Platform.Azure,
 				Pool:            &pool,
+				StorageSuffix:   session.Environment.StorageEndpointSuffix,
 			},
 		)
 		if err != nil {
@@ -495,8 +498,10 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		if err != nil {
 			return fmt.Errorf("failed to generate IBM Cloud VPC machine manifests: %w", err)
 		}
+	case externaltypes.Name, nonetypes.Name:
+		return nil
 	default:
-		// TODO: support other platforms
+		return fmt.Errorf("unrecognized platform: %q", ic.Platform.Name())
 	}
 
 	// Create the machine manifests.
