@@ -22,7 +22,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	"github.com/openshift/installer/pkg/asset/machines"
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
-	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/rhcos"
@@ -189,18 +188,11 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 			return err
 		}
 
-		cloudProviderConf, err := openstackmanifests.CloudProviderConfigSecret(cloud)
-		if err != nil {
-			return err
-		}
-
 		credsEncoded := base64.StdEncoding.EncodeToString(marshalled)
-		cloudProviderConfEncoded := base64.StdEncoding.EncodeToString(cloudProviderConf)
 		caCertEncoded := base64.StdEncoding.EncodeToString(caCert)
 		cloudCreds = cloudCredsSecretData{
 			OpenStack: &OpenStackCredsSecretData{
 				Base64encodeCloudsYAML: credsEncoded,
-				Base64encodeCloudsConf: cloudProviderConfEncoded,
 				Base64encodeCACert:     caCertEncoded,
 			},
 		}
