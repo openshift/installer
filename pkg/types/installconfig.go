@@ -619,6 +619,25 @@ func (c *InstallConfig) EnabledFeatureGates() featuregates.FeatureGate {
 	return fg
 }
 
+// ClusterAPIFeatureGateEnabled checks whether feature gates enabling
+// cluster api installs are enabled.
+func ClusterAPIFeatureGateEnabled(platform string, fgs featuregates.FeatureGate) bool {
+	// FeatureGateClusterAPIInstall enables for all platforms.
+	if fgs.Enabled(features.FeatureGateClusterAPIInstall) {
+		return true
+	}
+
+	// Check if CAPI install is enabled for individual platforms.
+	switch platform {
+	case aws.Name, azure.Name, gcp.Name, nutanix.Name, openstack.Name, powervs.Name, vsphere.Name, ibmcloud.Name:
+		return true
+	case azure.StackTerraformName, azure.StackCloud.Name():
+		return false
+	default:
+		return false
+	}
+}
+
 // MultiArchFeatureGateEnabled checks whether feature gate enabling multi-arch clusters is enabled.
 func MultiArchFeatureGateEnabled(platform string, fgs featuregates.FeatureGate) bool {
 	switch platform {

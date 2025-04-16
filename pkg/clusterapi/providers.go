@@ -36,9 +36,6 @@ var (
 	AWS = infrastructureProvider("aws")
 	// Azure is the provider for creating resources in Azure.
 	Azure = infrastructureProvider("azure")
-	// AzureStack is the provider for creating resources in AzureStack.
-	// The AzureStack provider is maintained in an OpenShift fork of CAPZ.
-	AzureStack = infrastructureProvider("azurestack")
 	// AzureASO is a companion component to Azure that is used to create resources declaratively.
 	AzureASO = infrastructureProvider("azureaso")
 	// GCP is the provider for creating resources in GCP.
