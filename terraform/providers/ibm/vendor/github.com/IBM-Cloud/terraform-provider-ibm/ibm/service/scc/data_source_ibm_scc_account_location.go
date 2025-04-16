@@ -18,7 +18,6 @@ import (
 func DataSourceIBMSccAccountLocation() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIbmSccAccountLocationRead,
-
 		Schema: map[string]*schema.Schema{
 			"location_id": {
 				Type:        schema.TypeString,

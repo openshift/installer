@@ -57,7 +57,7 @@ func DataSourceIBMCISFirewallRules() *schema.Resource {
 						cisFirewallrulesAction: {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The firewall action to perform, \"log\" action is only available for enterprise plan instances.",
+							Description: "The firewall action to perform, \"log\" action is only available for enterprise plans instances.",
 						},
 						cisFilter: {
 							Type:        schema.TypeMap,
@@ -79,7 +79,7 @@ func DataSourceIBMCISFirewallRulesValidator() *validate.ResourceValidator {
 			Identifier:                 "cis_id",
 			ValidateFunctionIdentifier: validate.ValidateCloudData,
 			Type:                       validate.TypeString,
-			CloudDataType:              "ResourceInstance",
+			CloudDataType:              "resource_instance",
 			CloudDataRange:             []string{"service:internet-svcs"},
 			Required:                   true})
 

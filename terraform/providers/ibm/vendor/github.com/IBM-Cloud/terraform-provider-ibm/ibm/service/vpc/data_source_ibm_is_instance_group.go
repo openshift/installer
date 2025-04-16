@@ -5,6 +5,7 @@ package vpc
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
@@ -84,6 +85,14 @@ func DataSourceIBMISInstanceGroup() *schema.Resource {
 				Computed:    true,
 				Description: "Instance group status - deleting, healthy, scaling, unhealthy",
 			},
+
+			isInstanceGroupAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access tags",
+			},
 		},
 	}
 }
@@ -143,6 +152,12 @@ func dataSourceIBMISInstanceGroupRead(d *schema.ResourceData, meta interface{}) 
 			d.Set("managers", managers)
 			d.Set("vpc", *instanceGroup.VPC.ID)
 			d.Set("status", *instanceGroup.Status)
+			accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *instanceGroup.CRN, "", isInstanceGroupAccessTagType)
+			if err != nil {
+				log.Printf(
+					"[ERROR] Error occured during reading of instance group (%s) access tags: %s", d.Id(), err)
+			}
+			d.Set(isInstanceGroupAccessTags, accesstags)
 			return nil
 		}
 	}

@@ -98,6 +98,14 @@ func ResourceIBMSatelliteCluster() *schema.Resource {
 				Computed:    true,
 				Description: "The lifecycle state of the cluster.",
 			},
+			"infrastructure_topology": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				ValidateFunc: validate.ValidateAllowedStringValues([]string{"single-replica", "highly-available"}),
+				Description:  "String value for single node cluster option. Available options: single-replica, highly-available (default: highly-available)",
+			},
 			"kube_version": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -115,6 +123,12 @@ func ResourceIBMSatelliteCluster() *schema.Resource {
 					return false
 				},
 				Description: "The OpenShift Container Platform version",
+			},
+			"operating_system": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Operating system of the default worker pool. Options are REDHAT_7_64, REDHAT_8_64, or RHCOS.",
 			},
 			"wait_for_worker_update": {
 				Type:        schema.TypeBool,
@@ -327,6 +341,16 @@ func resourceIBMSatelliteClusterCreate(d *schema.ResourceData, meta interface{})
 		createClusterOptions.KubeVersion = &kube_version
 	}
 
+	if v, ok := d.GetOk("operating_system"); ok {
+		operating_system := v.(string)
+		createClusterOptions.OperatingSystem = &operating_system
+	}
+
+	if v, ok := d.GetOk("infrastructure_topology"); ok {
+		infrastructure_topology := v.(string)
+		createClusterOptions.InfrastructureTopology = &infrastructure_topology
+	}
+
 	if res, ok := d.GetOk("zones"); ok {
 		zones := res.(*schema.Set).List()
 		for _, e := range zones {
@@ -493,6 +517,9 @@ func resourceIBMSatelliteClusterRead(d *schema.ResourceData, meta interface{}) e
 	d.Set("name", *cluster.Name)
 	d.Set("crn", *cluster.Crn)
 	d.Set("kube_version", *cluster.MasterKubeVersion)
+	if cluster.InfrastructureTopology != nil {
+		d.Set("infrastructure_topology", *cluster.InfrastructureTopology)
+	}
 	d.Set("state", *cluster.State)
 	if cluster.Lifecycle != nil {
 		d.Set("master_status", *cluster.Lifecycle.MasterStatus)
@@ -541,6 +568,7 @@ func resourceIBMSatelliteClusterRead(d *schema.ResourceData, meta interface{}) e
 	d.Set("tags", tags)
 	d.Set("default_worker_pool_labels", flex.IgnoreSystemLabels(workerPool.Labels))
 	d.Set("host_labels", flex.FlattenWorkerPoolHostLabels(workerPool.HostLabels))
+	d.Set("operating_system", workerPool.OperatingSystem)
 
 	return nil
 }
@@ -875,7 +903,7 @@ func waitForClusterToDelete(cluster string, d *schema.ResourceData, meta interfa
 	return stateConf.WaitForState()
 }
 
-//  WaitForSatelliteWorkerVersionUpdate Waits for worker creation
+// WaitForSatelliteWorkerVersionUpdate Waits for worker creation
 func WaitForSatelliteWorkerVersionUpdate(d *schema.ResourceData, meta interface{}, masterVersion string, target v1.ClusterTargetHeader) (interface{}, error) {
 	satClient, err := meta.(conns.ClientSession).SatelliteClientSession()
 	if err != nil {

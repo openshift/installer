@@ -70,6 +70,11 @@ func DataSourceIbmKeystore() *schema.Resource {
 				Computed:    true,
 				Description: "Name of the target keystore. It can be changed in the future.",
 			},
+			"location": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Geographic location of the keystore, if available.",
+			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -112,6 +117,31 @@ func DataSourceIbmKeystore() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "A URL that uniquely identifies your cloud resource.",
+			},
+			"google_credentials": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The value of the JSON key represented in the Base64 format.",
+			},
+			"google_location": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Location represents the geographical region where a Cloud KMS resource is stored and can be accessed. A key's location impacts the performance of applications using the key.",
+			},
+			"google_project_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The project id associated with this keystore.",
+			},
+			"google_private_key_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The private key id associated with this keystore.",
+			},
+			"google_key_ring": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "A key ring organizes keys in a specific Google Cloud location and allows you to manage access control on groups of keys.",
 			},
 			"aws_region": &schema.Schema{
 				Type:        schema.TypeString,
@@ -252,6 +282,10 @@ func DataSourceIbmKeystoreRead(context context.Context, d *schema.ResourceData, 
 		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
 
+	if err = d.Set("location", keystore.Location); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting location: %s", err))
+	}
+
 	if err = d.Set("description", keystore.Description); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
 	}
@@ -278,6 +312,26 @@ func DataSourceIbmKeystoreRead(context context.Context, d *schema.ResourceData, 
 
 	if err = d.Set("href", keystore.Href); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+	}
+
+	if err = d.Set("google_credentials", keystore.GoogleCredentials); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting google_credentials: %s", err))
+	}
+
+	if err = d.Set("google_location", keystore.GoogleLocation); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting google_location: %s", err))
+	}
+
+	if err = d.Set("google_project_id", keystore.GoogleProjectID); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting google_project_id: %s", err))
+	}
+
+	if err = d.Set("google_private_key_id", keystore.GooglePrivateKeyID); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting google_private_key_id: %s", err))
+	}
+
+	if err = d.Set("google_key_ring", keystore.GoogleKeyRing); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting google_key_ring: %s", err))
 	}
 
 	if err = d.Set("aws_region", keystore.AwsRegion); err != nil {

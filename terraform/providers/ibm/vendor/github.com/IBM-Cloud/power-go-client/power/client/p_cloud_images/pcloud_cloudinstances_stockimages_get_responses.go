@@ -63,7 +63,8 @@ func NewPcloudCloudinstancesStockimagesGetOK() *PcloudCloudinstancesStockimagesG
 	return &PcloudCloudinstancesStockimagesGetOK{}
 }
 
-/* PcloudCloudinstancesStockimagesGetOK describes a response with status code 200, with default header values.
+/*
+PcloudCloudinstancesStockimagesGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -71,9 +72,39 @@ type PcloudCloudinstancesStockimagesGetOK struct {
 	Payload *models.Image
 }
 
+// IsSuccess returns true when this pcloud cloudinstances stockimages get o k response has a 2xx status code
+func (o *PcloudCloudinstancesStockimagesGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud cloudinstances stockimages get o k response has a 3xx status code
+func (o *PcloudCloudinstancesStockimagesGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances stockimages get o k response has a 4xx status code
+func (o *PcloudCloudinstancesStockimagesGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud cloudinstances stockimages get o k response has a 5xx status code
+func (o *PcloudCloudinstancesStockimagesGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances stockimages get o k response a status code equal to that given
+func (o *PcloudCloudinstancesStockimagesGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *PcloudCloudinstancesStockimagesGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images/{image_id}][%d] pcloudCloudinstancesStockimagesGetOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudCloudinstancesStockimagesGetOK) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images/{image_id}][%d] pcloudCloudinstancesStockimagesGetOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudCloudinstancesStockimagesGetOK) GetPayload() *models.Image {
 	return o.Payload
 }
@@ -95,7 +126,8 @@ func NewPcloudCloudinstancesStockimagesGetBadRequest() *PcloudCloudinstancesStoc
 	return &PcloudCloudinstancesStockimagesGetBadRequest{}
 }
 
-/* PcloudCloudinstancesStockimagesGetBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudCloudinstancesStockimagesGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -103,9 +135,39 @@ type PcloudCloudinstancesStockimagesGetBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud cloudinstances stockimages get bad request response has a 2xx status code
+func (o *PcloudCloudinstancesStockimagesGetBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances stockimages get bad request response has a 3xx status code
+func (o *PcloudCloudinstancesStockimagesGetBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances stockimages get bad request response has a 4xx status code
+func (o *PcloudCloudinstancesStockimagesGetBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudinstances stockimages get bad request response has a 5xx status code
+func (o *PcloudCloudinstancesStockimagesGetBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances stockimages get bad request response a status code equal to that given
+func (o *PcloudCloudinstancesStockimagesGetBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *PcloudCloudinstancesStockimagesGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images/{image_id}][%d] pcloudCloudinstancesStockimagesGetBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudCloudinstancesStockimagesGetBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images/{image_id}][%d] pcloudCloudinstancesStockimagesGetBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudCloudinstancesStockimagesGetBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -127,7 +189,8 @@ func NewPcloudCloudinstancesStockimagesGetUnauthorized() *PcloudCloudinstancesSt
 	return &PcloudCloudinstancesStockimagesGetUnauthorized{}
 }
 
-/* PcloudCloudinstancesStockimagesGetUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudCloudinstancesStockimagesGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -135,9 +198,39 @@ type PcloudCloudinstancesStockimagesGetUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud cloudinstances stockimages get unauthorized response has a 2xx status code
+func (o *PcloudCloudinstancesStockimagesGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances stockimages get unauthorized response has a 3xx status code
+func (o *PcloudCloudinstancesStockimagesGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances stockimages get unauthorized response has a 4xx status code
+func (o *PcloudCloudinstancesStockimagesGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudinstances stockimages get unauthorized response has a 5xx status code
+func (o *PcloudCloudinstancesStockimagesGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances stockimages get unauthorized response a status code equal to that given
+func (o *PcloudCloudinstancesStockimagesGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *PcloudCloudinstancesStockimagesGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images/{image_id}][%d] pcloudCloudinstancesStockimagesGetUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudCloudinstancesStockimagesGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images/{image_id}][%d] pcloudCloudinstancesStockimagesGetUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudCloudinstancesStockimagesGetUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -159,7 +252,8 @@ func NewPcloudCloudinstancesStockimagesGetNotFound() *PcloudCloudinstancesStocki
 	return &PcloudCloudinstancesStockimagesGetNotFound{}
 }
 
-/* PcloudCloudinstancesStockimagesGetNotFound describes a response with status code 404, with default header values.
+/*
+PcloudCloudinstancesStockimagesGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -167,9 +261,39 @@ type PcloudCloudinstancesStockimagesGetNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud cloudinstances stockimages get not found response has a 2xx status code
+func (o *PcloudCloudinstancesStockimagesGetNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances stockimages get not found response has a 3xx status code
+func (o *PcloudCloudinstancesStockimagesGetNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances stockimages get not found response has a 4xx status code
+func (o *PcloudCloudinstancesStockimagesGetNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudinstances stockimages get not found response has a 5xx status code
+func (o *PcloudCloudinstancesStockimagesGetNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances stockimages get not found response a status code equal to that given
+func (o *PcloudCloudinstancesStockimagesGetNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *PcloudCloudinstancesStockimagesGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images/{image_id}][%d] pcloudCloudinstancesStockimagesGetNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudCloudinstancesStockimagesGetNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images/{image_id}][%d] pcloudCloudinstancesStockimagesGetNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudCloudinstancesStockimagesGetNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -191,7 +315,8 @@ func NewPcloudCloudinstancesStockimagesGetInternalServerError() *PcloudCloudinst
 	return &PcloudCloudinstancesStockimagesGetInternalServerError{}
 }
 
-/* PcloudCloudinstancesStockimagesGetInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudCloudinstancesStockimagesGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -199,9 +324,39 @@ type PcloudCloudinstancesStockimagesGetInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud cloudinstances stockimages get internal server error response has a 2xx status code
+func (o *PcloudCloudinstancesStockimagesGetInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances stockimages get internal server error response has a 3xx status code
+func (o *PcloudCloudinstancesStockimagesGetInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances stockimages get internal server error response has a 4xx status code
+func (o *PcloudCloudinstancesStockimagesGetInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud cloudinstances stockimages get internal server error response has a 5xx status code
+func (o *PcloudCloudinstancesStockimagesGetInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud cloudinstances stockimages get internal server error response a status code equal to that given
+func (o *PcloudCloudinstancesStockimagesGetInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudCloudinstancesStockimagesGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images/{image_id}][%d] pcloudCloudinstancesStockimagesGetInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudCloudinstancesStockimagesGetInternalServerError) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images/{image_id}][%d] pcloudCloudinstancesStockimagesGetInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudCloudinstancesStockimagesGetInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

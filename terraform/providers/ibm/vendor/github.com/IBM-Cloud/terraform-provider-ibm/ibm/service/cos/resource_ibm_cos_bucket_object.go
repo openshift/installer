@@ -26,6 +26,7 @@ import (
 	"github.com/IBM/ibm-cos-sdk-go/service/s3"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	validation "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func ResourceIBMCOSBucketObject() *schema.Resource {
@@ -126,6 +127,25 @@ func ResourceIBMCOSBucketObject() *schema.Resource {
 				Computed:    true,
 				Description: "Access the object using an SQL Query instance.The reference url is used to perform queries against objects storing structured data.",
 			},
+			"object_lock_legal_hold_status": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice(s3.ObjectLockLegalHoldStatus_Values(), false),
+				Description:  "An object lock configuration on the object, the valid states are ON/OFF. When ON prevents deletion of the object version.",
+			},
+			"object_lock_mode": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				RequiredWith: []string{"object_lock_retain_until_date"},
+				Description:  "Retention modes apply different levels of protection to the objects.",
+			},
+			"object_lock_retain_until_date": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				RequiredWith: []string{"object_lock_mode"},
+				ValidateFunc: validation.IsRFC3339Time,
+				Description:  "An object cannot be deleted when the current time is earlier than the retainUntilDate. After this date, the object can be deleted.",
+			},
 		},
 	}
 }
@@ -149,16 +169,6 @@ func resourceIBMCOSBucketObjectCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	objectKey := d.Get("key").(string)
-
-	// This check is to make sure new create does not
-	// overwrite objects that is not managed by Terraform
-	exists, err := objectExists(s3Client, bucketName, objectKey)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if exists {
-		return diag.FromErr(fmt.Errorf("[ERROR] Error COS bucket (%s) object (%s) already exists", bucketName, objectKey))
-	}
 
 	var body io.ReadSeeker
 
@@ -197,7 +207,38 @@ func resourceIBMCOSBucketObjectCreate(ctx context.Context, d *schema.ResourceDat
 	if _, err := s3Client.PutObject(putInput); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error putting object (%s) in COS bucket (%s): %s", objectKey, bucketName, err))
 	}
+	if v, ok := d.GetOk("object_lock_mode"); ok {
+		if d, ok := d.GetOk("object_lock_retain_until_date"); ok {
+			retainUntildate := parseDate(d.(string))
+			putObjectRetentionInput := &s3.PutObjectRetentionInput{
+				Bucket: aws.String(bucketName),
+				Key:    aws.String(objectKey),
+				Retention: &s3.ObjectLockRetention{
+					Mode:            aws.String(v.(string)),
+					RetainUntilDate: aws.Time(*retainUntildate),
+				},
+			}
+			_, err = s3Client.PutObjectRetention(putObjectRetentionInput)
+			if err != nil {
+				return diag.FromErr(fmt.Errorf("[ERROR] Error putting objectlock retention on (%s) in COS bucket (%s): %s", objectKey, bucketName, err))
+			}
 
+		}
+	}
+
+	if v, ok := d.GetOk("object_lock_legal_hold_status"); ok {
+		putObjectLegalHoldInput := &s3.PutObjectLegalHoldInput{
+			Bucket: aws.String(bucketName),
+			Key:    aws.String(objectKey),
+			LegalHold: &s3.ObjectLockLegalHold{
+				Status: aws.String(v.(string)),
+			},
+		}
+		_, err = s3Client.PutObjectLegalHold(putObjectLegalHoldInput)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error putting objectlock legalhold on (%s) in COS bucket (%s): %s", objectKey, bucketName, err))
+		}
+	}
 	objectID := getObjectId(bucketCRN, objectKey, bucketLocation)
 	d.SetId(objectID)
 
@@ -278,7 +319,15 @@ func resourceIBMCOSBucketObjectRead(ctx context.Context, d *schema.ResourceData,
 
 		log.Printf("[INFO] Ignoring body of COS bucket (%s) object (%s) with Content-Type %q", bucketName, objectKey, contentType)
 	}
-
+	if out.ObjectLockMode != nil {
+		d.Set("object_lock_mode", out.ObjectLockMode)
+	}
+	if out.ObjectLockRetainUntilDate != nil {
+		d.Set("object_lock_retain_until_date", out.ObjectLockRetainUntilDate.Format(time.RFC1123))
+	}
+	if out.ObjectLockLegalHoldStatus != nil {
+		d.Set("object_lock_legal_hold_status", out.ObjectLockLegalHoldStatus)
+	}
 	d.Set("key", objectKey)
 	d.Set("version_id", out.VersionId)
 	d.Set("object_sql_url", "cos://"+bucketLocation+"/"+bucketName+"/"+objectKey)
@@ -286,23 +335,22 @@ func resourceIBMCOSBucketObjectRead(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceIBMCOSBucketObjectUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	bucketCRN := d.Get("bucket_crn").(string)
+	bucketName := strings.Split(bucketCRN, ":bucket:")[1]
+	instanceCRN := fmt.Sprintf("%s::", strings.Split(bucketCRN, ":bucket:")[0])
+	objectKey := d.Get("key").(string)
+	bucketLocation := d.Get("bucket_location").(string)
+	endpointType := d.Get("endpoint_type").(string)
+	bxSession, err := m.(conns.ClientSession).BluemixSession()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	s3Client, err := getS3Client(bxSession, bucketLocation, endpointType, instanceCRN)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	if d.HasChanges("content", "content_base64", "content_file", "etag") {
-		bucketCRN := d.Get("bucket_crn").(string)
-		bucketName := strings.Split(bucketCRN, ":bucket:")[1]
-		instanceCRN := fmt.Sprintf("%s::", strings.Split(bucketCRN, ":bucket:")[0])
-
-		bucketLocation := d.Get("bucket_location").(string)
-		endpointType := d.Get("endpoint_type").(string)
-
-		bxSession, err := m.(conns.ClientSession).BluemixSession()
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		s3Client, err := getS3Client(bxSession, bucketLocation, endpointType, instanceCRN)
-		if err != nil {
-			return diag.FromErr(err)
-		}
 
 		var body io.ReadSeeker
 
@@ -344,9 +392,38 @@ func resourceIBMCOSBucketObjectUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(fmt.Errorf("[ERROR] Error putting object (%s) in COS bucket (%s): %s", objectKey, bucketName, err))
 		}
 
-		objectID := getObjectId(bucketCRN, objectKey, bucketLocation)
-		d.SetId(objectID)
 	}
+	if d.HasChange("object_lock_legal_hold_status") {
+		putObjectLegalHoldInput := &s3.PutObjectLegalHoldInput{
+			Bucket: aws.String(bucketName),
+			Key:    aws.String(objectKey),
+			LegalHold: &s3.ObjectLockLegalHold{
+				Status: aws.String((d.Get("object_lock_legal_hold_status").(string))),
+			},
+		}
+		_, err = s3Client.PutObjectLegalHold(putObjectLegalHoldInput)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error putting objectlock on legalhold (%s) in COS bucket (%s): %s", objectKey, bucketName, err))
+		}
+	}
+
+	if d.HasChanges("object_lock_mode", "object_lock_retain_until_date") {
+		putObjectRetentionInput := &s3.PutObjectRetentionInput{
+			Bucket: aws.String(bucketName),
+			Key:    aws.String(objectKey),
+			Retention: &s3.ObjectLockRetention{
+				Mode:            aws.String(d.Get("object_lock_mode").(string)),
+				RetainUntilDate: parseDate(d.Get("object_lock_retain_until_date").(string)),
+			},
+		}
+		_, err = s3Client.PutObjectRetention(putObjectRetentionInput)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error putting objectlock retention on (%s) in COS bucket (%s): %s", objectKey, bucketName, err))
+		}
+	}
+
+	objectID := getObjectId(bucketCRN, objectKey, bucketLocation)
+	d.SetId(objectID)
 
 	return resourceIBMCOSBucketObjectRead(ctx, d, m)
 }
@@ -624,4 +701,19 @@ func deleteCOSObjectVersion(conn *s3.S3, b, k, v string, force bool) error {
 	}
 
 	return err
+}
+func parseDate(v string) *time.Time {
+	t, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return nil
+	}
+
+	return aws.Time(t)
+}
+
+func objectDatetoString(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.Format(time.RFC3339)
 }

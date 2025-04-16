@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2022 All Rights Reserved.
+// Copyright IBM Corp. 2023 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package cdtoolchain
@@ -18,7 +18,7 @@ import (
 
 func DataSourceIBMCdToolchainToolArtifactory() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: DataSourceIBMCdToolchainToolArtifactoryRead,
+		ReadContext: dataSourceIBMCdToolchainToolArtifactoryRead,
 
 		Schema: map[string]*schema.Schema{
 			"toolchain_id": &schema.Schema{
@@ -34,7 +34,7 @@ func DataSourceIBMCdToolchainToolArtifactory() *schema.Resource {
 			"resource_group_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Resource group where tool can be found.",
+				Description: "Resource group where the tool is located.",
 			},
 			"crn": &schema.Schema{
 				Type:        schema.TypeString,
@@ -60,12 +60,12 @@ func DataSourceIBMCdToolchainToolArtifactory() *schema.Resource {
 						"ui_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "URI representing the this resource through the UI.",
+							Description: "URI representing this resource through the UI.",
 						},
 						"api_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "URI representing the this resource through an API.",
+							Description: "URI representing this resource through an API.",
 						},
 					},
 				},
@@ -83,59 +83,59 @@ func DataSourceIBMCdToolchainToolArtifactory() *schema.Resource {
 			"parameters": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "Parameters to be used to create the tool.",
+				Description: "Unique key-value pairs representing parameters to be used to create the tool. A list of parameters for each tool integration can be found in the <a href=\"https://cloud.ibm.com/docs/ContinuousDelivery?topic=ContinuousDelivery-integrations\">Configuring tool integrations page</a>.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type a name for this tool integration, for example: my-artifactory. This name displays on your toolchain.",
+							Description: "The name for this tool integration.",
 						},
 						"dashboard_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type the URL that you want to navigate to when you click the Artifactory integration tile.",
+							Description: "The URL of the Artifactory server dashboard for this integration. In the graphical UI, this is the dashboard that the browser will navigate to when you click the Artifactory integration tile.",
 						},
 						"type": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Choose the type of repository for your Artifactory integration.",
+							Description: "The type of repository for your Artifactory integration.",
 						},
 						"user_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type the User ID or email for your Artifactory repository.",
+							Description: "The User ID or email for your Artifactory repository.",
 						},
 						"token": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Sensitive:   true,
-							Description: "Type the API key for your Artifactory repository.",
+							Description: "The Access token for your Artifactory repository. You can use a toolchain secret reference for this parameter. For more information, see [Protecting your sensitive data in Continuous Delivery](https://cloud.ibm.com/docs/ContinuousDelivery?topic=ContinuousDelivery-cd_data_security#cd_secure_credentials).",
 						},
 						"release_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type the URL for your Artifactory release repository.",
+							Description: "The URL for your Artifactory release repository.",
 						},
 						"mirror_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type the URL for your Artifactory virtual repository, which is a repository that can see your private repositories and a cache of the public repositories.",
+							Description: "The URL for your Artifactory virtual repository, which is a repository that can see your private repositories and a cache of the public repositories.",
 						},
 						"snapshot_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type the URL for your Artifactory snapshot repository.",
+							Description: "The URL for your Artifactory snapshot repository.",
 						},
 						"repository_name": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type the name of your artifactory repository where your docker images are located.",
+							Description: "The name of your Artifactory repository where your docker images are located.",
 						},
 						"repository_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type the URL of your artifactory repository where your docker images are located.",
+							Description: "The URL of your Artifactory repository where your docker images are located.",
 						},
 					},
 				},
@@ -149,7 +149,7 @@ func DataSourceIBMCdToolchainToolArtifactory() *schema.Resource {
 	}
 }
 
-func DataSourceIBMCdToolchainToolArtifactoryRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceIBMCdToolchainToolArtifactoryRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -160,37 +160,37 @@ func DataSourceIBMCdToolchainToolArtifactoryRead(context context.Context, d *sch
 	getToolByIDOptions.SetToolchainID(d.Get("toolchain_id").(string))
 	getToolByIDOptions.SetToolID(d.Get("tool_id").(string))
 
-	getToolByIDResponse, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
+	toolchainTool, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetToolByIDWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetToolByIDWithContext failed %s\n%s", err, response))
 	}
 
-	if *getToolByIDResponse.ToolTypeID != "artifactory" {
-		return diag.FromErr(fmt.Errorf("Retrieved tool is not the correct type: %s", *getToolByIDResponse.ToolTypeID))
+	if *toolchainTool.ToolTypeID != "artifactory" {
+		return diag.FromErr(fmt.Errorf("Retrieved tool is not the correct type: %s", *toolchainTool.ToolTypeID))
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *getToolByIDOptions.ToolchainID, *getToolByIDOptions.ToolID))
 
-	if err = d.Set("resource_group_id", getToolByIDResponse.ResourceGroupID); err != nil {
+	if err = d.Set("resource_group_id", toolchainTool.ResourceGroupID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
 	}
 
-	if err = d.Set("crn", getToolByIDResponse.CRN); err != nil {
+	if err = d.Set("crn", toolchainTool.CRN); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
 	}
 
-	if err = d.Set("toolchain_crn", getToolByIDResponse.ToolchainCRN); err != nil {
+	if err = d.Set("toolchain_crn", toolchainTool.ToolchainCRN); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting toolchain_crn: %s", err))
 	}
 
-	if err = d.Set("href", getToolByIDResponse.Href); err != nil {
+	if err = d.Set("href", toolchainTool.Href); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
 	}
 
 	referent := []map[string]interface{}{}
-	if getToolByIDResponse.Referent != nil {
-		modelMap, err := DataSourceIBMCdToolchainToolArtifactoryToolReferentToMap(getToolByIDResponse.Referent)
+	if toolchainTool.Referent != nil {
+		modelMap, err := dataSourceIBMCdToolchainToolArtifactoryToolModelReferentToMap(toolchainTool.Referent)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -200,31 +200,31 @@ func DataSourceIBMCdToolchainToolArtifactoryRead(context context.Context, d *sch
 		return diag.FromErr(fmt.Errorf("Error setting referent %s", err))
 	}
 
-	if err = d.Set("name", getToolByIDResponse.Name); err != nil {
+	if err = d.Set("name", toolchainTool.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
 
-	if err = d.Set("updated_at", flex.DateTimeToString(getToolByIDResponse.UpdatedAt)); err != nil {
+	if err = d.Set("updated_at", flex.DateTimeToString(toolchainTool.UpdatedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
 	}
 
 	parameters := []map[string]interface{}{}
-	if getToolByIDResponse.Parameters != nil {
-		modelMap := GetParametersFromRead(getToolByIDResponse.Parameters, DataSourceIBMCdToolchainToolArtifactory(), nil)
+	if toolchainTool.Parameters != nil {
+		modelMap := GetParametersFromRead(toolchainTool.Parameters, DataSourceIBMCdToolchainToolArtifactory(), nil)
 		parameters = append(parameters, modelMap)
 	}
 	if err = d.Set("parameters", parameters); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting parameters %s", err))
 	}
 
-	if err = d.Set("state", getToolByIDResponse.State); err != nil {
+	if err = d.Set("state", toolchainTool.State); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
 	}
 
 	return nil
 }
 
-func DataSourceIBMCdToolchainToolArtifactoryToolReferentToMap(model *cdtoolchainv2.ToolReferent) (map[string]interface{}, error) {
+func dataSourceIBMCdToolchainToolArtifactoryToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.UIHref != nil {
 		modelMap["ui_href"] = *model.UIHref

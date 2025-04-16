@@ -363,21 +363,22 @@ func ResourceIBMResourceInstanceValidator() *validate.ResourceValidator {
 			Identifier:                 "resource_group_id",
 			ValidateFunctionIdentifier: validate.ValidateCloudData,
 			Type:                       validate.TypeString,
-			CloudDataType:              "ResourceGroup",
+			CloudDataType:              "resource_group",
+			CloudDataRange:             []string{"resolved_to:id"},
 			Optional:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 "tags",
 			ValidateFunctionIdentifier: validate.ValidateCloudData,
 			Type:                       validate.TypeString,
-			CloudDataType:              "Tags",
+			CloudDataType:              "tags",
 			Optional:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 "location",
 			ValidateFunctionIdentifier: validate.ValidateCloudData,
 			Type:                       validate.TypeString,
-			CloudDataType:              "Region",
+			CloudDataType:              "region",
 			Required:                   true})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
@@ -630,7 +631,10 @@ func ResourceIBMResourceInstanceRead(d *schema.ResourceData, meta interface{}) e
 	d.Set("resource_bindings_url", instance.ResourceBindingsURL)
 	d.Set("resource_aliases_url", instance.ResourceAliasesURL)
 	if instance.LastOperation != nil {
-		d.Set("last_operation", flex.Flatten(instance.LastOperation))
+		operation, err := flex.StructToMap(instance.LastOperation)
+		if err == nil {
+			d.Set("last_operation", flex.Flatten(operation))
+		}
 	}
 	d.Set("locked", instance.Locked)
 	d.Set("allow_cleanup", instance.AllowCleanup)

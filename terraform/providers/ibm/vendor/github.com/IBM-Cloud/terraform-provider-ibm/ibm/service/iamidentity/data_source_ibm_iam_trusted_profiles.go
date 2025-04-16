@@ -11,6 +11,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -31,6 +32,8 @@ func DataSourceIBMIamTrustedProfiles() *schema.Resource {
 				Description: "Name of the profile",
 				Type:        schema.TypeString,
 				Optional:    true,
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_iam_trusted_profiles",
+					"name"),
 			},
 			"include_history": {
 				Description: "Defines if the entity history is included in the response. Default is false",
@@ -147,6 +150,21 @@ func DataSourceIBMIamTrustedProfiles() *schema.Resource {
 	}
 }
 
+func DataSourceIBMIamTrustedProfilesValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "name",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "iam",
+			CloudDataRange:             []string{"service:trusted_profile", "resolved_to:name"},
+			Optional:                   true})
+
+	iBMIamTrustedProfilesValidator := validate.ResourceValidator{ResourceName: "ibm_iam_trusted_profiles", Schema: validateSchema}
+	return &iBMIamTrustedProfilesValidator
+}
+
 func dataSourceIBMIamTrustedProfileListRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	iamIdentityClient, err := meta.(conns.ClientSession).IAMIdentityV1API()
 	if err != nil {
@@ -194,10 +212,6 @@ func dataSourceIBMIamTrustedProfileListRead(context context.Context, d *schema.R
 		if start == "" {
 			break
 		}
-	}
-	if len(allrecs) == 0 {
-		return diag.FromErr(fmt.Errorf("[ERROR] No profiles found [%s]", accountID))
-
 	}
 
 	d.SetId(dataSourceIBMIamTrustedProfileListID(d))

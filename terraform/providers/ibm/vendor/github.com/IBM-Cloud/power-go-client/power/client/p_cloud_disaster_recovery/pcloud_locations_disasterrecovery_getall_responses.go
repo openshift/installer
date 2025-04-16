@@ -29,6 +29,12 @@ func (o *PcloudLocationsDisasterrecoveryGetallReader) ReadResponse(response runt
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewPcloudLocationsDisasterrecoveryGetallBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewPcloudLocationsDisasterrecoveryGetallUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -57,7 +63,8 @@ func NewPcloudLocationsDisasterrecoveryGetallOK() *PcloudLocationsDisasterrecove
 	return &PcloudLocationsDisasterrecoveryGetallOK{}
 }
 
-/* PcloudLocationsDisasterrecoveryGetallOK describes a response with status code 200, with default header values.
+/*
+PcloudLocationsDisasterrecoveryGetallOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -65,9 +72,39 @@ type PcloudLocationsDisasterrecoveryGetallOK struct {
 	Payload *models.DisasterRecoveryLocations
 }
 
+// IsSuccess returns true when this pcloud locations disasterrecovery getall o k response has a 2xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud locations disasterrecovery getall o k response has a 3xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud locations disasterrecovery getall o k response has a 4xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud locations disasterrecovery getall o k response has a 5xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud locations disasterrecovery getall o k response a status code equal to that given
+func (o *PcloudLocationsDisasterrecoveryGetallOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *PcloudLocationsDisasterrecoveryGetallOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudLocationsDisasterrecoveryGetallOK) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudLocationsDisasterrecoveryGetallOK) GetPayload() *models.DisasterRecoveryLocations {
 	return o.Payload
 }
@@ -84,12 +121,76 @@ func (o *PcloudLocationsDisasterrecoveryGetallOK) readResponse(response runtime.
 	return nil
 }
 
+// NewPcloudLocationsDisasterrecoveryGetallBadRequest creates a PcloudLocationsDisasterrecoveryGetallBadRequest with default headers values
+func NewPcloudLocationsDisasterrecoveryGetallBadRequest() *PcloudLocationsDisasterrecoveryGetallBadRequest {
+	return &PcloudLocationsDisasterrecoveryGetallBadRequest{}
+}
+
+/*
+PcloudLocationsDisasterrecoveryGetallBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type PcloudLocationsDisasterrecoveryGetallBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud locations disasterrecovery getall bad request response has a 2xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud locations disasterrecovery getall bad request response has a 3xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud locations disasterrecovery getall bad request response has a 4xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud locations disasterrecovery getall bad request response has a 5xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud locations disasterrecovery getall bad request response a status code equal to that given
+func (o *PcloudLocationsDisasterrecoveryGetallBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+func (o *PcloudLocationsDisasterrecoveryGetallBadRequest) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudLocationsDisasterrecoveryGetallBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudLocationsDisasterrecoveryGetallBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudLocationsDisasterrecoveryGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudLocationsDisasterrecoveryGetallUnauthorized creates a PcloudLocationsDisasterrecoveryGetallUnauthorized with default headers values
 func NewPcloudLocationsDisasterrecoveryGetallUnauthorized() *PcloudLocationsDisasterrecoveryGetallUnauthorized {
 	return &PcloudLocationsDisasterrecoveryGetallUnauthorized{}
 }
 
-/* PcloudLocationsDisasterrecoveryGetallUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudLocationsDisasterrecoveryGetallUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -97,9 +198,39 @@ type PcloudLocationsDisasterrecoveryGetallUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud locations disasterrecovery getall unauthorized response has a 2xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud locations disasterrecovery getall unauthorized response has a 3xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud locations disasterrecovery getall unauthorized response has a 4xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud locations disasterrecovery getall unauthorized response has a 5xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud locations disasterrecovery getall unauthorized response a status code equal to that given
+func (o *PcloudLocationsDisasterrecoveryGetallUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *PcloudLocationsDisasterrecoveryGetallUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudLocationsDisasterrecoveryGetallUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudLocationsDisasterrecoveryGetallUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -121,7 +252,8 @@ func NewPcloudLocationsDisasterrecoveryGetallNotFound() *PcloudLocationsDisaster
 	return &PcloudLocationsDisasterrecoveryGetallNotFound{}
 }
 
-/* PcloudLocationsDisasterrecoveryGetallNotFound describes a response with status code 404, with default header values.
+/*
+PcloudLocationsDisasterrecoveryGetallNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -129,9 +261,39 @@ type PcloudLocationsDisasterrecoveryGetallNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud locations disasterrecovery getall not found response has a 2xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud locations disasterrecovery getall not found response has a 3xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud locations disasterrecovery getall not found response has a 4xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud locations disasterrecovery getall not found response has a 5xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud locations disasterrecovery getall not found response a status code equal to that given
+func (o *PcloudLocationsDisasterrecoveryGetallNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *PcloudLocationsDisasterrecoveryGetallNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudLocationsDisasterrecoveryGetallNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudLocationsDisasterrecoveryGetallNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -153,7 +315,8 @@ func NewPcloudLocationsDisasterrecoveryGetallInternalServerError() *PcloudLocati
 	return &PcloudLocationsDisasterrecoveryGetallInternalServerError{}
 }
 
-/* PcloudLocationsDisasterrecoveryGetallInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudLocationsDisasterrecoveryGetallInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -161,9 +324,39 @@ type PcloudLocationsDisasterrecoveryGetallInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud locations disasterrecovery getall internal server error response has a 2xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud locations disasterrecovery getall internal server error response has a 3xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud locations disasterrecovery getall internal server error response has a 4xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud locations disasterrecovery getall internal server error response has a 5xx status code
+func (o *PcloudLocationsDisasterrecoveryGetallInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud locations disasterrecovery getall internal server error response a status code equal to that given
+func (o *PcloudLocationsDisasterrecoveryGetallInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudLocationsDisasterrecoveryGetallInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudLocationsDisasterrecoveryGetallInternalServerError) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/locations/disaster-recovery][%d] pcloudLocationsDisasterrecoveryGetallInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudLocationsDisasterrecoveryGetallInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

@@ -211,8 +211,8 @@ func resourceIBMPrivateDNSGLBRead(d *schema.ResourceData, meta interface{}) erro
 	d.Set(pdnsGLBHealth, response.Health)
 	d.Set(pdnsGLBFallbackPool, response.FallbackPool)
 	d.Set(pdnsGLBDefaultPool, response.DefaultPools)
-	d.Set(pdnsGLBCreatedOn, response.CreatedOn)
-	d.Set(pdnsGLBModifiedOn, response.ModifiedOn)
+	d.Set(pdnsGLBCreatedOn, response.CreatedOn.String())
+	d.Set(pdnsGLBModifiedOn, response.ModifiedOn.String())
 	d.Set(pdnsGLBAZPools, flattenPDNSGlbAZpool(response.AzPools))
 	return nil
 }

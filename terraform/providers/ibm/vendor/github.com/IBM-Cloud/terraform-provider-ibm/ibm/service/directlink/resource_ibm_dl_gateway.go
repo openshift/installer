@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2017, 2021 All Rights Reserved.
+// Copyright IBM Corp. 2017, 2021, 2023 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package directlink
@@ -12,64 +12,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
+	"github.com/IBM/go-sdk-core/v3/core"
 	"github.com/IBM/networking-go-sdk/directlinkv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-)
 
-const (
-	dlActive                       = "active"
-	dlAuthenticationKey            = "authentication_key"
-	dlBfdInterval                  = "bfd_interval"
-	dlBfdMultiplier                = "bfd_multiplier"
-	dlBfdStatus                    = "bfd_status"
-	dlBfdStatusUpdatedAt           = "bfd_status_updated_at"
-	dlBgpAsn                       = "bgp_asn"
-	dlBgpBaseCidr                  = "bgp_base_cidr"
-	dlBgpCerCidr                   = "bgp_cer_cidr"
-	dlBgpIbmAsn                    = "bgp_ibm_asn"
-	dlBgpIbmCidr                   = "bgp_ibm_cidr"
-	dlBgpStatus                    = "bgp_status"
-	dlCarrierName                  = "carrier_name"
-	dlChangeRequest                = "change_request"
-	dlCipherSuite                  = "cipher_suite"
-	dlCompletionNoticeRejectReason = "completion_notice_reject_reason"
-	dlConfidentialityOffset        = "confidentiality_offset"
-	dlGatewayProvisioning          = "configuring"
-	dlConnectionMode               = "connection_mode"
-	dlCreatedAt                    = "created_at"
-	dlGatewayProvisioningRejected  = "create_rejected"
-	dlCrossConnectRouter           = "cross_connect_router"
-	dlCrn                          = "crn"
-	dlCryptographicAlgorithm       = "cryptographic_algorithm"
-	dlCustomerName                 = "customer_name"
-	dlFallbackCak                  = "fallback_cak"
-	dlGlobal                       = "global"
-	dlKeyServerPriority            = "key_server_priority"
-	dlLoaRejectReason              = "loa_reject_reason"
-	dlLocationDisplayName          = "location_display_name"
-	dlLocationName                 = "location_name"
-	dlLinkStatus                   = "link_status"
-	dlMacSecConfig                 = "macsec_config"
-	dlMetered                      = "metered"
-	dlName                         = "name"
-	dlOperationalStatus            = "operational_status"
-	dlPort                         = "port"
-	dlPrimaryCak                   = "primary_cak"
-	dlProviderAPIManaged           = "provider_api_managed"
-	dlGatewayProvisioningDone      = "provisioned"
-	dlResourceGroup                = "resource_group"
-	dlSakExpiryTime                = "sak_expiry_time"
-	dlSpeedMbps                    = "speed_mbps"
-	dlMacSecConfigStatus           = "status"
-	dlTags                         = "tags"
-	dlType                         = "type"
-	dlVlan                         = "vlan"
-	dlWindowSize                   = "window_size"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
 func ResourceIBMDLGateway() *schema.Resource {
@@ -92,13 +43,187 @@ func ResourceIBMDLGateway() *schema.Resource {
 				return flex.ResourceTagsCustomizeDiff(diff)
 			},
 		),
-
 		Schema: map[string]*schema.Schema{
 			dlAuthenticationKey: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
 				Description: "BGP MD5 authentication key",
+			},
+			dlExportRouteFilters: {
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "List Export Route Filters for a Direct Link gateway",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						dlExportRouteFilterId: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Export route Filter identifier",
+						},
+						dlAction: {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validate.InvokeValidator("ibm_dl_gateway", dlAction),
+							Description:  "Determines whether the  routes that match the prefix-set will be permit or deny",
+						},
+						dlBefore: {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "Identifier of the next route filter to be considered",
+						},
+						dlCreatedAt: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The date and time of the export route filter was created",
+						},
+						dlGe: {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "The minimum matching length of the prefix-set",
+						},
+						dlLe: {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "The maximum matching length of the prefix-set",
+						},
+						dlPrefix: {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "IP prefix representing an address and mask length of the prefix-set",
+						},
+						dlUpdatedAt: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The date and time of the export route filter was last updated",
+						},
+					},
+				},
+			},
+			dlImportRouteFilters: {
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "List Import Route Filters for a Direct Link gateway",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						dlImportRouteFilterId: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Import route Filter identifier",
+						},
+						dlAction: {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validate.InvokeValidator("ibm_dl_gateway", dlAction),
+							Description:  "Determines whether the  routes that match the prefix-set will be permit or deny",
+						},
+						dlBefore: {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "Identifier of the next route filter to be considered",
+						},
+						dlCreatedAt: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The date and time of the export route filter was created",
+						},
+						dlGe: {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "The minimum matching length of the prefix-set",
+						},
+						dlLe: {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "The maximum matching length of the prefix-set",
+						},
+						dlPrefix: {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "IP prefix representing an address and mask length of the prefix-set",
+						},
+						dlUpdatedAt: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The date and time of the export route filter was last updated",
+						},
+					},
+				},
+			},
+			dlDefault_export_route_filter: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_dl_gateway", dlDefault_export_route_filter),
+				Description:  "The default directional route filter action that applies to routes that do not match any directional route filters",
+			},
+			dlDefault_import_route_filter: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_dl_gateway", dlDefault_import_route_filter),
+				Description:  "The default directional route filter action that applies to routes that do not match any directional route filters",
+			},
+			dlAsPrepends: {
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "List of AS Prepend configuration information",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						dlCreatedAt: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The date and time AS Prepend was created",
+						},
+						dlResourceId: {
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    false,
+							Computed:    true,
+							Description: "The unique identifier for this AS Prepend",
+						},
+						dlLength: {
+							Type:         schema.TypeInt,
+							Required:     true,
+							ForceNew:     false,
+							ValidateFunc: validate.InvokeValidator("ibm_dl_gateway", dlLength),
+							Description:  "Number of times the ASN to appended to the AS Path",
+						},
+						dlPolicy: {
+							Type:         schema.TypeString,
+							Required:     true,
+							ForceNew:     false,
+							ValidateFunc: validate.InvokeValidator("ibm_dl_gateway", dlPolicy),
+							Description:  "Route type this AS Prepend applies to",
+						},
+						dlPrefix: {
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    false,
+							Description: "Comma separated list of prefixes this AS Prepend applies to. Maximum of 10 prefixes. If not specified, this AS Prepend applies to all prefixes",
+							Deprecated:  "prefix will be deprecated and support will be removed. Use specific_prefixes instead",
+						},
+						dlSpecificPrefixes: {
+							Type:        schema.TypeList,
+							Description: "Array of prefixes this AS Prepend applies to",
+							Optional:    true,
+							ForceNew:    false,
+							MinItems:    1,
+							MaxItems:    10,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+						},
+						dlUpdatedAt: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The date and time AS Prepend was updated",
+						},
+					},
+				},
 			},
 			dlBfdInterval: {
 				Type:         schema.TypeInt,
@@ -185,21 +310,18 @@ func ResourceIBMDLGateway() *schema.Resource {
 				ForceNew:     false,
 				Description:  "The unique user-defined name for this gateway",
 				ValidateFunc: validate.InvokeValidator("ibm_dl_gateway", dlName),
-				// ValidateFunc: validateRegexpLen(1, 63, "^([a-zA-Z]|[a-zA-Z][-_a-zA-Z0-9]*[a-zA-Z0-9])$"),
 			},
 			dlCarrierName: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "Carrier name",
-				// ValidateFunc: validateRegexpLen(1, 128, "^[a-z][A-Z][0-9][ -_]$"),
 			},
 			dlCustomerName: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "Customer name",
-				// ValidateFunc: validateRegexpLen(1, 128, "^[a-z][A-Z][0-9][ -_]$"),
 			},
 			dlSpeedMbps: {
 				Type:        schema.TypeInt,
@@ -213,7 +335,6 @@ func ResourceIBMDLGateway() *schema.Resource {
 				ForceNew:     true,
 				Description:  "Gateway type",
 				ValidateFunc: validate.InvokeValidator("ibm_dl_gateway", dlType),
-				// ValidateFunc: validate.ValidateAllowedStringValues([]string{"dedicated", "connect"}),
 			},
 			dlMacSecConfig: {
 				Type:        schema.TypeList,
@@ -339,11 +460,15 @@ func ResourceIBMDLGateway() *schema.Resource {
 				Computed:    true,
 				Description: "IBM BGP ASN",
 			},
-
 			dlBgpStatus: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Gateway BGP status",
+			},
+			dlBgpStatusUpdatedAt: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Date and time BGP status was updated",
 			},
 			dlChangeRequest: {
 				Type:        schema.TypeString,
@@ -369,6 +494,11 @@ func ResourceIBMDLGateway() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Gateway link status",
+			},
+			dlLinkStatusUpdatedAt: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Date and time Link status was updated",
 			},
 			dlLocationDisplayName: {
 				Type:        schema.TypeString,
@@ -421,7 +551,30 @@ func ResourceIBMDLGatewayValidator() *validate.ResourceValidator {
 	validateSchema := make([]validate.ValidateSchema, 0)
 	dlTypeAllowedValues := "dedicated, connect"
 	dlConnectionModeAllowedValues := "direct, transit"
+	dlPolicyAllowedValues := "export, import"
+	dlActionValues := "permit, deny"
 
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 dlAction,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              dlActionValues})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 dlDefault_export_route_filter,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              dlActionValues})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 dlDefault_import_route_filter,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              dlActionValues})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 dlType,
@@ -470,6 +623,22 @@ func ResourceIBMDLGatewayValidator() *validate.ResourceValidator {
 			Required:                   true,
 			MinValue:                   "1",
 			MaxValue:                   "255"})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 dlPolicy,
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              dlPolicyAllowedValues})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 dlLength,
+			ValidateFunctionIdentifier: validate.IntBetween,
+			Type:                       validate.TypeInt,
+			Required:                   true,
+			MinValue:                   "3",
+			MaxValue:                   "10"})
 
 	ibmISDLGatewayResourceValidator := validate.ResourceValidator{ResourceName: "ibm_dl_gateway", Schema: validateSchema}
 	return &ibmISDLGatewayResourceValidator
@@ -511,11 +680,83 @@ func resourceIBMdlGatewayCreate(d *schema.ResourceData, meta interface{}) error 
 		bfdConfig.Multiplier = &multiplier
 	}
 
+	asPrependsCreateItems := make([]directlinkv1.AsPrependTemplate, 0)
+	if asPrependsInput, ok := d.GetOk(dlAsPrepends); ok {
+		asPrependsItems := asPrependsInput.([]interface{})
+
+		for _, asPrependItem := range asPrependsItems {
+			i := asPrependItem.(map[string]interface{})
+
+			// Construct an instance of the AsPrependTemplate model
+			asPrependTemplateModel := new(directlinkv1.AsPrependTemplate)
+			asPrependTemplateModel.Length = NewInt64Pointer(int64(i[dlLength].(int)))
+			asPrependTemplateModel.Policy = NewStrPointer(i[dlPolicy].(string))
+			asPrependTemplateModel.Prefix = nil
+			asPrependTemplateModel.SpecificPrefixes = nil
+			_, prefix_ok := i[dlPrefix]
+			if prefix_ok && (len(i[dlPrefix].(string)) > 0) {
+				asPrependTemplateModel.Prefix = NewStrPointer(i[dlPrefix].(string))
+				asPrependTemplateModel.SpecificPrefixes = nil
+			}
+
+			sp_prefixOk, ok := i[dlSpecificPrefixes]
+			if ok && len(sp_prefixOk.([]interface{})) > 0 {
+				asPrependTemplateModel.Prefix = nil
+				asPrependTemplateModel.SpecificPrefixes = flex.ExpandStringList(sp_prefixOk.([]interface{}))
+			}
+			asPrependsCreateItems = append(asPrependsCreateItems, *asPrependTemplateModel)
+		}
+	}
+
+	exportRouteFiltersCreateList := make([]directlinkv1.GatewayTemplateRouteFilter, 0)
+	if exportRouteFiltersInputList, ok := d.GetOk(dlExportRouteFilters); ok {
+		exportRouteFilters := exportRouteFiltersInputList.([]interface{})
+
+		for _, exportRouteFilter := range exportRouteFilters {
+			filtersData := exportRouteFilter.(map[string]interface{})
+
+			// Construct an Export Route Filters List
+			exportRouteFilterTemplateModel := new(directlinkv1.GatewayTemplateRouteFilter)
+			exportRouteFilterTemplateModel.Action = NewStrPointer(filtersData[dlAction].(string))
+			exportRouteFilterTemplateModel.Prefix = NewStrPointer(filtersData[dlPrefix].(string))
+			exportRouteFilterTemplateModel.Ge = nil
+			exportRouteFilterTemplateModel.Le = nil
+			if _, ok := filtersData[dlGe]; ok {
+				exportRouteFilterTemplateModel.Ge = NewInt64Pointer(int64(filtersData[dlGe].(int)))
+			}
+			if _, ok := filtersData[dlLe]; ok {
+				exportRouteFilterTemplateModel.Le = NewInt64Pointer(int64(filtersData[dlLe].(int)))
+			}
+			exportRouteFiltersCreateList = append(exportRouteFiltersCreateList, *exportRouteFilterTemplateModel)
+		}
+	}
+
+	importRouteFiltersCreateList := make([]directlinkv1.GatewayTemplateRouteFilter, 0)
+	if importRouteFiltersInputList, ok := d.GetOk(dlImportRouteFilters); ok {
+		importRouteFilters := importRouteFiltersInputList.([]interface{})
+
+		for _, importRouteFilter := range importRouteFilters {
+			filtersData := importRouteFilter.(map[string]interface{})
+
+			// Construct an Import Route Filters List
+			importRouteFilterTemplateModel := new(directlinkv1.GatewayTemplateRouteFilter)
+			importRouteFilterTemplateModel.Action = NewStrPointer(filtersData[dlAction].(string))
+			importRouteFilterTemplateModel.Prefix = NewStrPointer(filtersData[dlPrefix].(string))
+			importRouteFilterTemplateModel.Ge = nil
+			importRouteFilterTemplateModel.Le = nil
+			if _, ok := filtersData[dlGe]; ok {
+				importRouteFilterTemplateModel.Ge = NewInt64Pointer(int64(filtersData[dlGe].(int)))
+			}
+			if _, ok := filtersData[dlLe]; ok {
+				importRouteFilterTemplateModel.Le = NewInt64Pointer(int64(filtersData[dlLe].(int)))
+			}
+			importRouteFiltersCreateList = append(importRouteFiltersCreateList, *importRouteFilterTemplateModel)
+		}
+	}
 	if dtype == "dedicated" {
 		var crossConnectRouter, carrierName, locationName, customerName string
 		if _, ok := d.GetOk(dlCarrierName); ok {
 			carrierName = d.Get(dlCarrierName).(string)
-			//		gatewayTemplateModel.CarrierName = &carrierName
 		} else {
 			err = fmt.Errorf("[ERROR] Error creating gateway, %s is a required field", dlCarrierName)
 			log.Printf("%s is a required field", dlCarrierName)
@@ -523,7 +764,6 @@ func resourceIBMdlGatewayCreate(d *schema.ResourceData, meta interface{}) error 
 		}
 		if _, ok := d.GetOk(dlCrossConnectRouter); ok {
 			crossConnectRouter = d.Get(dlCrossConnectRouter).(string)
-			//	gatewayTemplateModel.CrossConnectRouter = &crossConnectRouter
 		} else {
 			err = fmt.Errorf("[ERROR] Error creating gateway, %s is a required field", dlCrossConnectRouter)
 			log.Printf("%s is a required field", dlCrossConnectRouter)
@@ -531,7 +771,6 @@ func resourceIBMdlGatewayCreate(d *schema.ResourceData, meta interface{}) error 
 		}
 		if _, ok := d.GetOk(dlLocationName); ok {
 			locationName = d.Get(dlLocationName).(string)
-			//gatewayTemplateModel.LocationName = &locationName
 		} else {
 			err = fmt.Errorf("[ERROR] Error creating gateway, %s is a required field", dlLocationName)
 			log.Printf("%s is a required field", dlLocationName)
@@ -539,7 +778,6 @@ func resourceIBMdlGatewayCreate(d *schema.ResourceData, meta interface{}) error 
 		}
 		if _, ok := d.GetOk(dlCustomerName); ok {
 			customerName = d.Get(dlCustomerName).(string)
-			//gatewayTemplateModel.CustomerName = &customerName
 		} else {
 			err = fmt.Errorf("[ERROR] Error creating gateway, %s is a required field", dlCustomerName)
 			log.Printf("%s is a required field", dlCustomerName)
@@ -606,6 +844,21 @@ func resourceIBMdlGatewayCreate(d *schema.ResourceData, meta interface{}) error 
 			gatewayDedicatedTemplateModel.BfdConfig = &bfdConfig
 		}
 
+		if len(asPrependsCreateItems) > 0 {
+			gatewayDedicatedTemplateModel.AsPrepends = asPrependsCreateItems
+		}
+		if len(exportRouteFiltersCreateList) > 0 {
+			gatewayDedicatedTemplateModel.ExportRouteFilters = exportRouteFiltersCreateList
+		}
+		if len(importRouteFiltersCreateList) > 0 {
+			gatewayDedicatedTemplateModel.ImportRouteFilters = importRouteFiltersCreateList
+		}
+		if default_export_route_filter, ok := d.GetOk(dlDefault_export_route_filter); ok {
+			gatewayDedicatedTemplateModel.DefaultExportRouteFilter = NewStrPointer(default_export_route_filter.(string))
+		}
+		if default_import_route_filter, ok := d.GetOk(dlDefault_import_route_filter); ok {
+			gatewayDedicatedTemplateModel.DefaultImportRouteFilter = NewStrPointer(default_import_route_filter.(string))
+		}
 		createGatewayOptionsModel.GatewayTemplate = gatewayDedicatedTemplateModel
 
 	} else if dtype == "connect" {
@@ -651,6 +904,21 @@ func resourceIBMdlGatewayCreate(d *schema.ResourceData, meta interface{}) error 
 				gatewayConnectTemplateModel.BfdConfig = &bfdConfig
 			}
 
+			if len(asPrependsCreateItems) > 0 {
+				gatewayConnectTemplateModel.AsPrepends = asPrependsCreateItems
+			}
+			if len(exportRouteFiltersCreateList) > 0 {
+				gatewayConnectTemplateModel.ExportRouteFilters = exportRouteFiltersCreateList
+			}
+			if len(importRouteFiltersCreateList) > 0 {
+				gatewayConnectTemplateModel.ImportRouteFilters = importRouteFiltersCreateList
+			}
+			if default_export_route_filter, ok := d.GetOk(dlDefault_export_route_filter); ok {
+				gatewayConnectTemplateModel.DefaultExportRouteFilter = NewStrPointer(default_export_route_filter.(string))
+			}
+			if default_import_route_filter, ok := d.GetOk(dlDefault_import_route_filter); ok {
+				gatewayConnectTemplateModel.DefaultImportRouteFilter = NewStrPointer(default_import_route_filter.(string))
+			}
 			createGatewayOptionsModel.GatewayTemplate = gatewayConnectTemplateModel
 
 		} else {
@@ -692,6 +960,98 @@ func resourceIBMdlGatewayCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	return resourceIBMdlGatewayRead(d, meta)
+}
+
+func resourceIBMdlGatewayExportRouteFiltersRead(d *schema.ResourceData, meta interface{}) error {
+	directLink, err := directlinkClient(meta)
+	if err != nil {
+		return err
+	}
+
+	gatewayId := d.Id()
+	listGatewayExportRouteFiltersOptionsModel := &directlinkv1.ListGatewayExportRouteFiltersOptions{GatewayID: &gatewayId}
+	exportRouteFilterList, response, err := directLink.ListGatewayExportRouteFilters(listGatewayExportRouteFiltersOptionsModel)
+	if err != nil {
+		log.Println("[WARN] Error listing Direct Link Export Route Filters", response, err)
+		return err
+	}
+	exportRouteFilters := make([]map[string]interface{}, 0)
+	for _, instance := range exportRouteFilterList.ExportRouteFilters {
+		routeFilter := map[string]interface{}{}
+		if instance.ID != nil {
+			routeFilter[dlExportRouteFilterId] = *instance.ID
+		}
+		if instance.Action != nil {
+			routeFilter[dlAction] = *instance.Action
+		}
+		if instance.Before != nil {
+			routeFilter[dlBefore] = *instance.Before
+		}
+		if instance.CreatedAt != nil {
+			routeFilter[dlCreatedAt] = instance.CreatedAt.String()
+		}
+		if instance.Prefix != nil {
+			routeFilter[dlPrefix] = *instance.Prefix
+		}
+		if instance.UpdatedAt != nil {
+			routeFilter[dlUpdatedAt] = instance.UpdatedAt.String()
+		}
+		if instance.Ge != nil {
+			routeFilter[dlGe] = *instance.Ge
+		}
+		if instance.Le != nil {
+			routeFilter[dlLe] = *instance.Le
+		}
+		exportRouteFilters = append(exportRouteFilters, routeFilter)
+	}
+	d.Set(dlExportRouteFilters, exportRouteFilters)
+	return nil
+}
+
+func resourceIBMdlGatewayImportRouteFiltersRead(d *schema.ResourceData, meta interface{}) error {
+	directLink, err := directlinkClient(meta)
+	if err != nil {
+		return err
+	}
+
+	gatewayId := d.Id()
+	listGatewayImportRouteFiltersOptionsModel := &directlinkv1.ListGatewayImportRouteFiltersOptions{GatewayID: &gatewayId}
+	importRouteFilterList, response, err := directLink.ListGatewayImportRouteFilters(listGatewayImportRouteFiltersOptionsModel)
+	if err != nil {
+		log.Println("[WARN] Error  while listing Direct Link Import Route Filters", response, err)
+		return err
+	}
+	importRouteFilters := make([]map[string]interface{}, 0)
+	for _, instance := range importRouteFilterList.ImportRouteFilters {
+		routeFilter := map[string]interface{}{}
+		if instance.ID != nil {
+			routeFilter[dlImportRouteFilterId] = *instance.ID
+		}
+		if instance.Action != nil {
+			routeFilter[dlAction] = *instance.Action
+		}
+		if instance.Before != nil {
+			routeFilter[dlBefore] = *instance.Before
+		}
+		if instance.CreatedAt != nil {
+			routeFilter[dlCreatedAt] = instance.CreatedAt.String()
+		}
+		if instance.Prefix != nil {
+			routeFilter[dlPrefix] = *instance.Prefix
+		}
+		if instance.UpdatedAt != nil {
+			routeFilter[dlUpdatedAt] = instance.UpdatedAt.String()
+		}
+		if instance.Ge != nil {
+			routeFilter[dlGe] = *instance.Ge
+		}
+		if instance.Le != nil {
+			routeFilter[dlLe] = *instance.Le
+		}
+		importRouteFilters = append(importRouteFilters, routeFilter)
+	}
+	d.Set(dlImportRouteFilters, importRouteFilters)
+	return nil
 }
 
 func resourceIBMdlGatewayRead(d *schema.ResourceData, meta interface{}) error {
@@ -760,6 +1120,9 @@ func resourceIBMdlGatewayRead(d *schema.ResourceData, meta interface{}) error {
 	if instance.BgpStatus != nil {
 		d.Set(dlBgpStatus, *instance.BgpStatus)
 	}
+	if instance.BgpStatusUpdatedAt != nil {
+		d.Set(dlBgpStatusUpdatedAt, instance.BgpStatusUpdatedAt.String())
+	}
 	if instance.CompletionNoticeRejectReason != nil {
 		d.Set(dlCompletionNoticeRejectReason, *instance.CompletionNoticeRejectReason)
 	}
@@ -781,6 +1144,9 @@ func resourceIBMdlGatewayRead(d *schema.ResourceData, meta interface{}) error {
 	if instance.LinkStatus != nil {
 		d.Set(dlLinkStatus, *instance.LinkStatus)
 	}
+	if instance.LinkStatusUpdatedAt != nil {
+		d.Set(dlLinkStatusUpdatedAt, instance.LinkStatusUpdatedAt.String())
+	}
 	if instance.CreatedAt != nil {
 		d.Set(dlCreatedAt, instance.CreatedAt.String())
 	}
@@ -790,6 +1156,30 @@ func resourceIBMdlGatewayRead(d *schema.ResourceData, meta interface{}) error {
 	if instance.ConnectionMode != nil {
 		d.Set(dlConnectionMode, *instance.ConnectionMode)
 	}
+	if instance.DefaultExportRouteFilter != nil {
+		d.Set(dlDefault_export_route_filter, *instance.DefaultExportRouteFilter)
+	}
+	if instance.DefaultImportRouteFilter != nil {
+		d.Set(dlDefault_import_route_filter, *instance.DefaultImportRouteFilter)
+	}
+	asPrependList := make([]map[string]interface{}, 0)
+	if len(instance.AsPrepends) > 0 {
+		for _, asPrepend := range instance.AsPrepends {
+			asPrependItem := map[string]interface{}{}
+			asPrependItem[dlResourceId] = asPrepend.ID
+			asPrependItem[dlLength] = asPrepend.Length
+			asPrependItem[dlPrefix] = asPrepend.Prefix
+			asPrependItem[dlSpecificPrefixes] = asPrepend.SpecificPrefixes
+			asPrependItem[dlPolicy] = asPrepend.Policy
+			asPrependItem[dlCreatedAt] = asPrepend.CreatedAt.String()
+			asPrependItem[dlUpdatedAt] = asPrepend.UpdatedAt.String()
+
+			asPrependList = append(asPrependList, asPrependItem)
+		}
+
+	}
+	d.Set(dlAsPrepends, asPrependList)
+
 	if dtype == "dedicated" {
 		if instance.MacsecConfig != nil {
 			macsecList := make([]map[string]interface{}, 0)
@@ -883,7 +1273,8 @@ func resourceIBMdlGatewayRead(d *schema.ResourceData, meta interface{}) error {
 			d.Set(dlBfdStatusUpdatedAt, instance.BfdConfig.BfdStatusUpdatedAt.String())
 		}
 	}
-
+	resourceIBMdlGatewayExportRouteFiltersRead(d, meta)
+	resourceIBMdlGatewayImportRouteFiltersRead(d, meta)
 	return nil
 }
 func isWaitForDirectLinkAvailable(client *directlinkv1.DirectLinkV1, id string, timeout time.Duration) (interface{}, error) {
@@ -965,6 +1356,154 @@ func resourceIBMdlGatewayUpdate(d *schema.ResourceData, meta interface{}) error 
 		bgpIbmCidr := d.Get(dlBgpIbmCidr).(string)
 		updateGatewayOptionsModel.BgpIbmCidr = &bgpIbmCidr
 	}
+	if d.HasChange(dlAsPrepends) {
+		listGatewayAsPrependsOptions := directLink.NewListGatewayAsPrependsOptions(ID)
+		_, response, operationErr := directLink.ListGatewayAsPrepends(listGatewayAsPrependsOptions)
+		if operationErr != nil {
+			log.Printf("[DEBUG] Error listing Direct Link Gateway AS Prepends err %s\n%s", err, response)
+			return fmt.Errorf("[ERROR] Error listing Direct Link Gateway AS Prepends err %s\n%s", err, response)
+		}
+		etag := response.GetHeaders().Get("etag")
+		asPrependsCreateItems := make([]directlinkv1.AsPrependPrefixArrayTemplate, 0)
+		if asPrependsInput, ok := d.GetOk(dlAsPrepends); ok {
+			asPrependsItems := asPrependsInput.([]interface{})
+
+			for _, asPrependItem := range asPrependsItems {
+				i := asPrependItem.(map[string]interface{})
+
+				// Construct an instance of the AsPrependTemplate model
+				asPrependTemplateModel := new(directlinkv1.AsPrependPrefixArrayTemplate)
+				asPrependTemplateModel.Length = NewInt64Pointer(int64(i[dlLength].(int)))
+				asPrependTemplateModel.Policy = NewStrPointer(i[dlPolicy].(string))
+				asPrependTemplateModel.SpecificPrefixes = nil
+				_, prefix_ok := i[dlPrefix]
+
+				sp_prefixOk, ok := i[dlSpecificPrefixes]
+				if ok && len(sp_prefixOk.([]interface{})) > 0 {
+					asPrependTemplateModel.SpecificPrefixes = flex.ExpandStringList(sp_prefixOk.([]interface{}))
+				} else if prefix_ok && (len(i[dlPrefix].(string)) > 0) {
+					asPrependTemplateModel.SpecificPrefixes = strings.Split(i[dlPrefix].(string), ",")
+				}
+
+				asPrependsCreateItems = append(asPrependsCreateItems, *asPrependTemplateModel)
+			}
+		}
+
+		// Construct an instance of the AsPrependPrefixArrayTemplate model
+
+		replaceGatewayAsPrependsOptionsModel := new(directlinkv1.ReplaceGatewayAsPrependsOptions)
+		replaceGatewayAsPrependsOptionsModel.GatewayID = &ID
+		replaceGatewayAsPrependsOptionsModel.IfMatch = core.StringPtr(etag)
+		replaceGatewayAsPrependsOptionsModel.AsPrepends = asPrependsCreateItems
+		replaceGatewayAsPrependsOptionsModel.Headers = map[string]string{"If-Match": etag}
+
+		_, responseRep, operationErr := directLink.ReplaceGatewayAsPrepends(replaceGatewayAsPrependsOptionsModel)
+		if operationErr != nil {
+			log.Printf("[DEBUG] Error while replacing AS Prepends to a gateway id %s %s\n%s", ID, operationErr, responseRep)
+			return fmt.Errorf("[ERROR] Error while replacing AS Prepends to a gateway id %s %s\n%s", ID, operationErr, responseRep)
+		}
+	}
+	if d.HasChange(dlExportRouteFilters) {
+
+		listGatewayExportRouteFiltersOptionsModel := &directlinkv1.ListGatewayExportRouteFiltersOptions{GatewayID: &ID}
+		_, response, operationErr := directLink.ListGatewayExportRouteFilters(listGatewayExportRouteFiltersOptionsModel)
+		if operationErr != nil {
+			log.Printf("[DEBUG] Error listing the Direct Link Export Route Filters  %s\n%s", operationErr, response)
+			return fmt.Errorf("[ERROR] Error listing Direct Link Gateway Export Route Filters %s\n%s", operationErr, response)
+		}
+		etag := response.GetHeaders().Get("etag")
+		exportRouteFiltersReplaceList := make([]directlinkv1.GatewayTemplateRouteFilter, 0)
+		if exportRouteFiltersInputList, ok := d.GetOk(dlExportRouteFilters); ok {
+			exportRouteFilters := exportRouteFiltersInputList.([]interface{})
+
+			for _, exportRouteFilter := range exportRouteFilters {
+				filtersData := exportRouteFilter.(map[string]interface{})
+
+				// Construct an instance of the Export Route Fileter Template model
+				exportRouteFilterTemplateModel := new(directlinkv1.GatewayTemplateRouteFilter)
+				exportRouteFilterTemplateModel.Action = NewStrPointer(filtersData[dlAction].(string))
+				exportRouteFilterTemplateModel.Prefix = NewStrPointer(filtersData[dlPrefix].(string))
+				exportRouteFilterTemplateModel.Ge = nil
+				exportRouteFilterTemplateModel.Le = nil
+				if _, ok := filtersData[dlGe]; ok {
+					exportRouteFilterTemplateModel.Ge = NewInt64Pointer(int64(filtersData[dlGe].(int)))
+				}
+				if _, ok := filtersData[dlLe]; ok {
+					exportRouteFilterTemplateModel.Le = NewInt64Pointer(int64(filtersData[dlLe].(int)))
+				}
+				exportRouteFiltersReplaceList = append(exportRouteFiltersReplaceList, *exportRouteFilterTemplateModel)
+			}
+		}
+		replaceGatewayExportRouteFiltersOptionsModel := new(directlinkv1.ReplaceGatewayExportRouteFiltersOptions)
+		replaceGatewayExportRouteFiltersOptionsModel.GatewayID = core.StringPtr(ID)
+		replaceGatewayExportRouteFiltersOptionsModel.ExportRouteFilters = exportRouteFiltersReplaceList
+		replaceGatewayExportRouteFiltersOptionsModel.IfMatch = core.StringPtr(etag)
+		replaceGatewayExportRouteFiltersOptionsModel.Headers = map[string]string{"If-Match": etag}
+
+		/* after updating the Asprepends , waiting  for
+		   gateway to move to provisioned state
+		*/
+		_, err = isWaitForDirectLinkAvailable(directLink, ID, d.Timeout(schema.TimeoutCreate))
+		if err != nil {
+			return err
+		}
+		_, response, err := directLink.ReplaceGatewayExportRouteFilters(replaceGatewayExportRouteFiltersOptionsModel)
+		if err != nil {
+			log.Printf("[DEBUG] Error while replacing Export Route Fileter to a gateway id %s %s\n%s", ID, err, response)
+			return fmt.Errorf("[ERROR] Error while replacing Export Route Fileter to a gateway id %s %s\n%s", ID, err, response)
+		}
+	}
+
+	if d.HasChange(dlImportRouteFilters) {
+		listGatewayImportRouteFiltersOptionsModel := &directlinkv1.ListGatewayImportRouteFiltersOptions{GatewayID: &ID}
+		_, response, operationErr := directLink.ListGatewayImportRouteFilters(listGatewayImportRouteFiltersOptionsModel)
+		if operationErr != nil {
+			log.Printf("[DEBUG] Error listing the Direct Link Import Route Filters  %s\n%s", operationErr, response)
+			return fmt.Errorf("[ERROR] Error listing Direct Link Gateway Import Route Filters %s\n%s", operationErr, response)
+		}
+		etag := response.GetHeaders().Get("etag")
+		importRouteFiltersReplaceList := make([]directlinkv1.GatewayTemplateRouteFilter, 0)
+		if importRouteFiltersInputList, ok := d.GetOk(dlImportRouteFilters); ok {
+			importRouteFilters := importRouteFiltersInputList.([]interface{})
+
+			for _, importRouteFilter := range importRouteFilters {
+				filtersData := importRouteFilter.(map[string]interface{})
+
+				// Construct an instance of the Export Route Fileter Template model
+				importRouteFilterTemplateModel := new(directlinkv1.GatewayTemplateRouteFilter)
+				importRouteFilterTemplateModel.Action = NewStrPointer(filtersData[dlAction].(string))
+				importRouteFilterTemplateModel.Prefix = NewStrPointer(filtersData[dlPrefix].(string))
+				importRouteFilterTemplateModel.Ge = nil
+				importRouteFilterTemplateModel.Le = nil
+				if _, ok := filtersData[dlGe]; ok {
+					importRouteFilterTemplateModel.Ge = NewInt64Pointer(int64(filtersData[dlGe].(int)))
+				}
+				if _, ok := filtersData[dlLe]; ok {
+					importRouteFilterTemplateModel.Le = NewInt64Pointer(int64(filtersData[dlLe].(int)))
+				}
+				importRouteFiltersReplaceList = append(importRouteFiltersReplaceList, *importRouteFilterTemplateModel)
+			}
+		}
+		replaceGatewayImportRouteFiltersOptionsModel := new(directlinkv1.ReplaceGatewayImportRouteFiltersOptions)
+		replaceGatewayImportRouteFiltersOptionsModel.GatewayID = core.StringPtr(ID)
+		replaceGatewayImportRouteFiltersOptionsModel.ImportRouteFilters = importRouteFiltersReplaceList
+		replaceGatewayImportRouteFiltersOptionsModel.IfMatch = core.StringPtr(etag)
+		replaceGatewayImportRouteFiltersOptionsModel.Headers = map[string]string{"If-Match": etag}
+
+		/* after updating the export route filter , waiting  for
+		   gatewat to move to provisioned state
+		*/
+		_, err = isWaitForDirectLinkAvailable(directLink, ID, d.Timeout(schema.TimeoutCreate))
+		if err != nil {
+			return err
+		}
+		_, response, err := directLink.ReplaceGatewayImportRouteFilters(replaceGatewayImportRouteFiltersOptionsModel)
+		if err != nil {
+			log.Printf("[DEBUG] Error while replacing Import Route Fileter to a gateway id %s %s\n%s", ID, err, response)
+			return fmt.Errorf("[ERROR] Error while replacing Import Route Fileter to a gateway id %s %s\n%s", ID, err, response)
+		}
+
+	}
 	/*
 		NOTE: Operational Status cannot be maintained in terraform. The status keeps changing automatically in server side.
 		Hence, cannot be maintained in terraform.
@@ -982,6 +1521,12 @@ func resourceIBMdlGatewayUpdate(d *schema.ResourceData, meta interface{}) error 
 			}
 		}
 	*/
+	if d.HasChange(dlDefault_export_route_filter) {
+		updateGatewayOptionsModel.DefaultExportRouteFilter = NewStrPointer(d.Get(dlDefault_export_route_filter).(string))
+	}
+	if d.HasChange(dlDefault_import_route_filter) {
+		updateGatewayOptionsModel.DefaultImportRouteFilter = NewStrPointer(d.Get(dlDefault_import_route_filter).(string))
+	}
 	if d.HasChange(dlGlobal) {
 		global := d.Get(dlGlobal).(bool)
 		updateGatewayOptionsModel.Global = &global
@@ -1056,6 +1601,8 @@ func resourceIBMdlGatewayUpdate(d *schema.ResourceData, meta interface{}) error 
 			updateGatewayOptionsModel.MacsecConfig = nil
 		}
 	}
+	name := d.Get(dlName).(string)
+	updateGatewayOptionsModel.Name = &name
 	_, response, err := directLink.UpdateGateway(updateGatewayOptionsModel)
 	if err != nil {
 		log.Printf("[DEBUG] Update Direct Link Gateway err %s\n%s", err, response)

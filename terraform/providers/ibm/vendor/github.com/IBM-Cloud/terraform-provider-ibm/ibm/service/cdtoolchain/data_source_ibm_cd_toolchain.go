@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2022 All Rights Reserved.
+// Copyright IBM Corp. 2022, 2023 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package cdtoolchain
@@ -18,7 +18,7 @@ import (
 
 func DataSourceIBMCdToolchain() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: DataSourceIBMCdToolchainRead,
+		ReadContext: dataSourceIBMCdToolchainRead,
 
 		Schema: map[string]*schema.Schema{
 			"toolchain_id": &schema.Schema{
@@ -49,7 +49,7 @@ func DataSourceIBMCdToolchain() *schema.Resource {
 			"resource_group_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Resource group where toolchain can be found.",
+				Description: "Resource group where the toolchain is located.",
 			},
 			"crn": &schema.Schema{
 				Type:        schema.TypeString,
@@ -60,6 +60,11 @@ func DataSourceIBMCdToolchain() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "URI that can be used to retrieve toolchain.",
+			},
+			"ui_href": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "URL of a user-facing user interface for this toolchain.",
 			},
 			"created_at": &schema.Schema{
 				Type:        schema.TypeString,
@@ -77,18 +82,16 @@ func DataSourceIBMCdToolchain() *schema.Resource {
 				Description: "Identity that created the toolchain.",
 			},
 			"tags": &schema.Schema{
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "Tags associated with the toolchain.",
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+				Description: "Toolchain tags.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},
 	}
 }
 
-func DataSourceIBMCdToolchainRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceIBMCdToolchainRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -98,7 +101,7 @@ func DataSourceIBMCdToolchainRead(context context.Context, d *schema.ResourceDat
 
 	getToolchainByIDOptions.SetToolchainID(d.Get("toolchain_id").(string))
 
-	getToolchainByIDResponse, response, err := cdToolchainClient.GetToolchainByIDWithContext(context, getToolchainByIDOptions)
+	toolchain, response, err := cdToolchainClient.GetToolchainByIDWithContext(context, getToolchainByIDOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetToolchainByIDWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetToolchainByIDWithContext failed %s\n%s", err, response))
@@ -106,43 +109,54 @@ func DataSourceIBMCdToolchainRead(context context.Context, d *schema.ResourceDat
 
 	d.SetId(fmt.Sprintf("%s", *getToolchainByIDOptions.ToolchainID))
 
-	if err = d.Set("name", getToolchainByIDResponse.Name); err != nil {
+	tags, err := flex.GetTagsUsingCRN(meta, *toolchain.CRN)
+	if err != nil {
+		log.Printf(
+			"Error on get of toolchain (%s) tags: %s", d.Id(), err)
+	}
+	d.Set("tags", tags)
+
+	if err = d.Set("name", toolchain.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
 
-	if err = d.Set("description", getToolchainByIDResponse.Description); err != nil {
+	if err = d.Set("description", toolchain.Description); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
 	}
 
-	if err = d.Set("account_id", getToolchainByIDResponse.AccountID); err != nil {
+	if err = d.Set("account_id", toolchain.AccountID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting account_id: %s", err))
 	}
 
-	if err = d.Set("location", getToolchainByIDResponse.Location); err != nil {
+	if err = d.Set("location", toolchain.Location); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting location: %s", err))
 	}
 
-	if err = d.Set("resource_group_id", getToolchainByIDResponse.ResourceGroupID); err != nil {
+	if err = d.Set("resource_group_id", toolchain.ResourceGroupID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
 	}
 
-	if err = d.Set("crn", getToolchainByIDResponse.CRN); err != nil {
+	if err = d.Set("crn", toolchain.CRN); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
 	}
 
-	if err = d.Set("href", getToolchainByIDResponse.Href); err != nil {
+	if err = d.Set("href", toolchain.Href); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
 	}
 
-	if err = d.Set("created_at", flex.DateTimeToString(getToolchainByIDResponse.CreatedAt)); err != nil {
+	if err = d.Set("ui_href", toolchain.UIHref); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting ui_href: %s", err))
+	}
+
+	if err = d.Set("created_at", flex.DateTimeToString(toolchain.CreatedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting created_at: %s", err))
 	}
 
-	if err = d.Set("updated_at", flex.DateTimeToString(getToolchainByIDResponse.UpdatedAt)); err != nil {
+	if err = d.Set("updated_at", flex.DateTimeToString(toolchain.UpdatedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
 	}
 
-	if err = d.Set("created_by", getToolchainByIDResponse.CreatedBy); err != nil {
+	if err = d.Set("created_by", toolchain.CreatedBy); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting created_by: %s", err))
 	}
 

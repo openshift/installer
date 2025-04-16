@@ -225,7 +225,7 @@ func resourceIBMIAMCustomRoleUpdate(d *schema.ResourceData, meta interface{}) er
 		}
 
 		roleETag := response.Headers.Get("ETag")
-		roleUpdateOptions := &iampolicymanagementv1.UpdateRoleOptions{
+		roleUpdateOptions := &iampolicymanagementv1.ReplaceRoleOptions{
 			RoleID:      &roleID,
 			IfMatch:     &roleETag,
 			DisplayName: &updatedDisplayName,
@@ -233,7 +233,7 @@ func resourceIBMIAMCustomRoleUpdate(d *schema.ResourceData, meta interface{}) er
 			Actions:     updatedActions,
 		}
 
-		_, response, err = iamPolicyManagementClient.UpdateRole(roleUpdateOptions)
+		_, response, err = iamPolicyManagementClient.ReplaceRole(roleUpdateOptions)
 		if err != nil {
 			return fmt.Errorf("[ERROR] Error updating Custom Roles: %s\n%s", err, response)
 		}

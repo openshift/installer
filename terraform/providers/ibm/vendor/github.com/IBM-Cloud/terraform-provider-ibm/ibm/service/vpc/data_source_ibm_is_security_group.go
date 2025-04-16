@@ -141,6 +141,14 @@ func DataSourceIBMISSecurityGroup() *schema.Resource {
 				Description: "List of tags",
 			},
 
+			isSecurityGroupAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access management tags",
+			},
+
 			isSgCRN: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -197,12 +205,18 @@ func securityGroupGet(d *schema.ResourceData, meta interface{}, name string) err
 			d.Set(isSgName, *group.Name)
 			d.Set(isSgVPC, *group.VPC.ID)
 			d.Set(isSgCRN, *group.CRN)
-			tags, err := flex.GetTagsUsingCRN(meta, *group.CRN)
+			tags, err := flex.GetGlobalTagsUsingCRN(meta, *group.CRN, "", isUserTagType)
 			if err != nil {
 				log.Printf(
 					"An error occured during reading of security group (%s) tags : %s", *group.ID, err)
 			}
 			d.Set(isSgTags, tags)
+			accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *group.CRN, "", isAccessTagType)
+			if err != nil {
+				log.Printf(
+					"Error on get of security group (%s) access tags: %s", d.Id(), err)
+			}
+			d.Set(isSecurityGroupAccessTags, accesstags)
 			rules := make([]map[string]interface{}, 0)
 			for _, sgrule := range group.Rules {
 				switch reflect.TypeOf(sgrule).String() {

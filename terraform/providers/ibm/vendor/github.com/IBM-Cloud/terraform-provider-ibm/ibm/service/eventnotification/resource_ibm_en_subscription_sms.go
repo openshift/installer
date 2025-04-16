@@ -58,10 +58,22 @@ func ResourceIBMEnSMSSubscription() *schema.Resource {
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"to": {
+						"invited": {
 							Type:        schema.TypeList,
 							Optional:    true,
 							Description: "The phone number to send the SMS to in case of sms_ibm. The email id in case of smtp_ibm destination type.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+						},
+						"add": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: "The phone number to add in case of update to send the SMS to in case of sms_ibm.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+						},
+						"remove": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: "The phone number to remove in case of update to send the SMS to in case of sms_ibm. The email id in case of smtp_ibm destination type.",
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
 					},
@@ -274,17 +286,35 @@ func resourceIBMEnSMSSubscriptionDelete(context context.Context, d *schema.Resou
 	return nil
 }
 
-func SMSattributesMapToAttributes(attributeMap map[string]interface{}) (en.SubscriptionCreateAttributes, en.SubscriptionUpdateAttributesSmsAttributes) {
+func SMSattributesMapToAttributes(attributeMap map[string]interface{}) (en.SubscriptionCreateAttributes, en.SubscriptionUpdateAttributesSmsUpdateAttributes) {
 	attributesCreate := en.SubscriptionCreateAttributes{}
-	attributesUpdate := en.SubscriptionUpdateAttributesSmsAttributes{}
+	attributesUpdate := en.SubscriptionUpdateAttributesSmsUpdateAttributes{}
 
-	if attributeMap["to"] != nil {
+	if attributeMap["invited"] != nil {
 		to := []string{}
-		for _, toItem := range attributeMap["to"].([]interface{}) {
+		for _, toItem := range attributeMap["invited"].([]interface{}) {
 			to = append(to, toItem.(string))
 		}
-		attributesCreate.To = to
-		attributesUpdate.To = to
+		attributesCreate.Invited = to
+
+		updateTo := new(en.UpdateAttributesInvited)
+		if attributeMap["add"] != nil {
+			To := []string{}
+			for _, updateToitem := range attributeMap["add"].([]interface{}) {
+				To = append(To, updateToitem.(string))
+			}
+
+			updateTo.Add = To
+		}
+		if attributeMap["remove"] != nil {
+			rmsms := []string{}
+			for _, removeitem := range attributeMap["remove"].([]interface{}) {
+				rmsms = append(rmsms, removeitem.(string))
+			}
+
+			updateTo.Remove = rmsms
+		}
+		attributesUpdate.Invited = updateTo
 	}
 
 	return attributesCreate, attributesUpdate

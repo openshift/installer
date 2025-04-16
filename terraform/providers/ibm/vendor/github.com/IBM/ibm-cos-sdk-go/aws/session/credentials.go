@@ -10,6 +10,7 @@ import (
 	"github.com/IBM/ibm-cos-sdk-go/aws/request"
 )
 
+
 func resolveCredentials(cfg *aws.Config,
 	envCfg envConfig, sharedCfg sharedConfig,
 	handlers request.Handlers,

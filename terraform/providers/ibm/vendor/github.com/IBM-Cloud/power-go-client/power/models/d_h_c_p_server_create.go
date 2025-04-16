@@ -26,7 +26,7 @@ type DHCPServerCreate struct {
 	// Optional DNS Server for DHCP service
 	DNSServer *string `json:"dnsServer,omitempty"`
 
-	// Optional name of DHCP Service (will be prefixed by DHCP identifier)
+	// Optional name of DHCP Service. Only alphanumeric characters and dashes are allowed (will be prefixed by DHCP identifier)
 	Name *string `json:"name,omitempty"`
 
 	// Indicates if SNAT will be enabled for DHCP service

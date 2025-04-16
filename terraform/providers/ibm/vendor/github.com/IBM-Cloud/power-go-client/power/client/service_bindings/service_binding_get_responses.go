@@ -45,7 +45,8 @@ func NewServiceBindingGetOK() *ServiceBindingGetOK {
 	return &ServiceBindingGetOK{}
 }
 
-/* ServiceBindingGetOK describes a response with status code 200, with default header values.
+/*
+ServiceBindingGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -53,9 +54,39 @@ type ServiceBindingGetOK struct {
 	Payload *models.ServiceBindingResource
 }
 
+// IsSuccess returns true when this service binding get o k response has a 2xx status code
+func (o *ServiceBindingGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service binding get o k response has a 3xx status code
+func (o *ServiceBindingGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service binding get o k response has a 4xx status code
+func (o *ServiceBindingGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service binding get o k response has a 5xx status code
+func (o *ServiceBindingGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service binding get o k response a status code equal to that given
+func (o *ServiceBindingGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceBindingGetOK) Error() string {
 	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingGetOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceBindingGetOK) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingGetOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceBindingGetOK) GetPayload() *models.ServiceBindingResource {
 	return o.Payload
 }
@@ -77,7 +108,8 @@ func NewServiceBindingGetNotFound() *ServiceBindingGetNotFound {
 	return &ServiceBindingGetNotFound{}
 }
 
-/* ServiceBindingGetNotFound describes a response with status code 404, with default header values.
+/*
+ServiceBindingGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -85,9 +117,39 @@ type ServiceBindingGetNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service binding get not found response has a 2xx status code
+func (o *ServiceBindingGetNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service binding get not found response has a 3xx status code
+func (o *ServiceBindingGetNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service binding get not found response has a 4xx status code
+func (o *ServiceBindingGetNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service binding get not found response has a 5xx status code
+func (o *ServiceBindingGetNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service binding get not found response a status code equal to that given
+func (o *ServiceBindingGetNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *ServiceBindingGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingGetNotFound  %+v", 404, o.Payload)
 }
+
+func (o *ServiceBindingGetNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingGetNotFound  %+v", 404, o.Payload)
+}
+
 func (o *ServiceBindingGetNotFound) GetPayload() *models.Error {
 	return o.Payload
 }

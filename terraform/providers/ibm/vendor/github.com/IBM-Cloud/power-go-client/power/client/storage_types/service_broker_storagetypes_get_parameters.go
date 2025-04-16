@@ -52,10 +52,12 @@ func NewServiceBrokerStoragetypesGetParamsWithHTTPClient(client *http.Client) *S
 	}
 }
 
-/* ServiceBrokerStoragetypesGetParams contains all the parameters to send to the API endpoint
-   for the service broker storagetypes get operation.
+/*
+ServiceBrokerStoragetypesGetParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the service broker storagetypes get operation.
+
+	Typically these are written to a http.Request.
 */
 type ServiceBrokerStoragetypesGetParams struct {
 	timeout    time.Duration

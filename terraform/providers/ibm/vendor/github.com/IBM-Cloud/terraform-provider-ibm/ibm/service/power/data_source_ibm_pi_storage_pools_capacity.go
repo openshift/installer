@@ -99,22 +99,22 @@ func dataSourceIBMPIStoragePoolsCapacityRead(ctx context.Context, d *schema.Reso
 	if spc.MaximumStorageAllocation != nil {
 		msa := spc.MaximumStorageAllocation
 		data := map[string]interface{}{
-			MaxAllocationSize: msa.MaxAllocationSize,
-			StoragePool:       msa.StoragePool,
-			StorageType:       msa.StorageType,
+			MaxAllocationSize: *msa.MaxAllocationSize,
+			StoragePool:       *msa.StoragePool,
+			StorageType:       *msa.StorageType,
 		}
 		d.Set(MaximumStorageAllocation, flex.Flatten(data))
 	}
 
-	result := make([]map[string]string, 0, len(spc.StoragePoolsCapacity))
+	result := make([]map[string]interface{}, 0, len(spc.StoragePoolsCapacity))
 	for _, sp := range spc.StoragePoolsCapacity {
 		data := map[string]interface{}{
-			MaxAllocationSize: sp.MaxAllocationSize,
+			MaxAllocationSize: *sp.MaxAllocationSize,
 			PoolName:          sp.PoolName,
 			StorageType:       sp.StorageType,
 			TotalCapacity:     sp.TotalCapacity,
 		}
-		result = append(result, flex.Flatten(data))
+		result = append(result, data)
 	}
 	d.Set(StoragePoolsCapacity, result)
 

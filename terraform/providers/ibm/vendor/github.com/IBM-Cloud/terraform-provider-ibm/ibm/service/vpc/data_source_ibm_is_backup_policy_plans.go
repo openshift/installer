@@ -9,6 +9,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -66,17 +67,17 @@ func DataSourceIBMIsBackupPolicyPlans() *schema.Resource {
 						},
 						"deletion_trigger": &schema.Schema{
 							Type:     schema.TypeList,
-							Optional: true,
+							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"delete_after": &schema.Schema{
 										Type:        schema.TypeInt,
-										Optional:    true,
+										Computed:    true,
 										Description: "The maximum number of days to keep each backup after creation.",
 									},
 									"delete_over_count": &schema.Schema{
 										Type:        schema.TypeInt,
-										Optional:    true,
+										Computed:    true,
 										Description: "The maximum number of recent backups to keep. If absent, there is no maximum.",
 									},
 								},
@@ -87,6 +88,25 @@ func DataSourceIBMIsBackupPolicyPlans() *schema.Resource {
 							Computed:    true,
 							Description: "The URL for this backup policy plan.",
 						},
+						"clone_policy": &schema.Schema{
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"max_snapshots": &schema.Schema{
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "The maximum number of recent snapshots (per source) that will keep clones.",
+									},
+									"zones": &schema.Schema{
+										Type:        schema.TypeSet,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Computed:    true,
+										Description: "The zone this backup policy plan will create snapshot clones in.",
+									},
+								},
+							},
+						},
 						"id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -96,6 +116,30 @@ func DataSourceIBMIsBackupPolicyPlans() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The lifecycle state of this backup policy plan.",
+						},
+						"remote_region_policy": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "Backup policy plan cross region rule.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"delete_over_count": &schema.Schema{
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "The maximum number of recent remote copies to keep in this region.",
+									},
+									"encryption_key": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN of the [Key Protect Root Key](https://cloud.ibm.com/docs/key-protect?topic=key-protect-getting-started-tutorial) or [Hyper Protect Crypto Services Root Key](https://cloud.ibm.com/docs/hs-crypto?topic=hs-crypto-get-started) for this resource.",
+									},
+									"region": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The globally unique name for this region.",
+									},
+								},
+							},
 						},
 						"name": &schema.Schema{
 							Type:        schema.TypeString,
@@ -213,8 +257,33 @@ func dataSourceBackupPolicyPlanCollectionPlansToMap(plansItem vpcv1.BackupPolicy
 	if plansItem.Name != nil {
 		plansMap["name"] = plansItem.Name
 	}
+	remoteRegionPolicies := []map[string]interface{}{}
+	if plansItem.RemoteRegionPolicies != nil {
+		for _, remoteCopyPolicy := range plansItem.RemoteRegionPolicies {
+			remoteRegionPoliciesMap, _ := dataSourceIBMIsVPCBackupPolicyPlanRemoteCopyPolicyItemToMap(&remoteCopyPolicy)
+			remoteRegionPolicies = append(remoteRegionPolicies, remoteRegionPoliciesMap)
+		}
+		plansMap["remote_region_policy"] = remoteRegionPolicies
+	}
 	if plansItem.ResourceType != nil {
 		plansMap["resource_type"] = plansItem.ResourceType
+	}
+	if plansItem.ClonePolicy != nil {
+		backupPolicyPlanClonePolicyMap := []map[string]interface{}{}
+		finalList := map[string]interface{}{}
+
+		if plansItem.ClonePolicy.MaxSnapshots != nil {
+			finalList["max_snapshots"] = flex.IntValue(plansItem.ClonePolicy.MaxSnapshots)
+		}
+		if plansItem.ClonePolicy.Zones != nil && len(plansItem.ClonePolicy.Zones) != 0 {
+			zoneList := []string{}
+			for i := 0; i < len(plansItem.ClonePolicy.Zones); i++ {
+				zoneList = append(zoneList, string(*(plansItem.ClonePolicy.Zones[i].Name)))
+			}
+			finalList["zones"] = flex.NewStringSet(schema.HashString, zoneList)
+		}
+		backupPolicyPlanClonePolicyMap = append(backupPolicyPlanClonePolicyMap, finalList)
+		plansMap["clone_policy"] = backupPolicyPlanClonePolicyMap
 	}
 
 	return plansMap

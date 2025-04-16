@@ -52,10 +52,12 @@ func NewPcloudSharedprocessorpoolsDeleteParamsWithHTTPClient(client *http.Client
 	}
 }
 
-/* PcloudSharedprocessorpoolsDeleteParams contains all the parameters to send to the API endpoint
-   for the pcloud sharedprocessorpools delete operation.
+/*
+PcloudSharedprocessorpoolsDeleteParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud sharedprocessorpools delete operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudSharedprocessorpoolsDeleteParams struct {
 

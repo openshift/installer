@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	tgConnName    = "name"
-	tgConnections = "connections"
-	ID            = "id"
+	tgConnName        = "name"
+	tgConnections     = "connections"
+	ID                = "id"
+	tgBaseNetworkType = "base_network_type"
 )
 
 func DataSourceIBMTransitGateway() *schema.Resource {
@@ -85,6 +86,10 @@ func DataSourceIBMTransitGateway() *schema.Resource {
 							Computed: true,
 						},
 						tgBaseConnectionId: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						tgBaseNetworkType: {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -223,6 +228,10 @@ func dataSourceIBMTransitGatewayConnectionsRead(d *schema.ResourceData, meta int
 
 		if instance.BaseConnectionID != nil {
 			tgConn[tgBaseConnectionId] = *instance.BaseConnectionID
+		}
+
+		if instance.BaseNetworkType != nil {
+			tgConn[tgBaseNetworkType] = *instance.BaseNetworkType
 		}
 
 		if instance.LocalBgpAsn != nil {

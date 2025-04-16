@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -25,6 +26,9 @@ func DataSourceIBMContainerALBCert() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Cluster ID",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_container_alb_cert",
+					"cluster_id"),
 			},
 			"secret_name": {
 				Type:        schema.TypeString,
@@ -78,6 +82,20 @@ func DataSourceIBMContainerALBCert() *schema.Resource {
 	}
 }
 
+func DataSourceIBMContainerALBCertValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMContainerALBCertValidator := validate.ResourceValidator{ResourceName: "ibm_container_alb_cert", Schema: validateSchema}
+	return &iBMContainerALBCertValidator
+}
 func dataSourceIBMContainerALBCertRead(d *schema.ResourceData, meta interface{}) error {
 	ingressClient, err := meta.(conns.ClientSession).VpcContainerAPI()
 	if err != nil {

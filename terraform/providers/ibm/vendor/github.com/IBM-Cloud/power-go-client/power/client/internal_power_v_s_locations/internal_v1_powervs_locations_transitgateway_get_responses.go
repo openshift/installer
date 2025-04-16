@@ -51,7 +51,8 @@ func NewInternalV1PowervsLocationsTransitgatewayGetOK() *InternalV1PowervsLocati
 	return &InternalV1PowervsLocationsTransitgatewayGetOK{}
 }
 
-/* InternalV1PowervsLocationsTransitgatewayGetOK describes a response with status code 200, with default header values.
+/*
+InternalV1PowervsLocationsTransitgatewayGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -59,9 +60,39 @@ type InternalV1PowervsLocationsTransitgatewayGetOK struct {
 	Payload *models.TransitGatewayLocations
 }
 
+// IsSuccess returns true when this internal v1 powervs locations transitgateway get o k response has a 2xx status code
+func (o *InternalV1PowervsLocationsTransitgatewayGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this internal v1 powervs locations transitgateway get o k response has a 3xx status code
+func (o *InternalV1PowervsLocationsTransitgatewayGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 powervs locations transitgateway get o k response has a 4xx status code
+func (o *InternalV1PowervsLocationsTransitgatewayGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this internal v1 powervs locations transitgateway get o k response has a 5xx status code
+func (o *InternalV1PowervsLocationsTransitgatewayGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 powervs locations transitgateway get o k response a status code equal to that given
+func (o *InternalV1PowervsLocationsTransitgatewayGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *InternalV1PowervsLocationsTransitgatewayGetOK) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/powervs/locations/transit-gateway][%d] internalV1PowervsLocationsTransitgatewayGetOK  %+v", 200, o.Payload)
 }
+
+func (o *InternalV1PowervsLocationsTransitgatewayGetOK) String() string {
+	return fmt.Sprintf("[GET /internal/v1/powervs/locations/transit-gateway][%d] internalV1PowervsLocationsTransitgatewayGetOK  %+v", 200, o.Payload)
+}
+
 func (o *InternalV1PowervsLocationsTransitgatewayGetOK) GetPayload() *models.TransitGatewayLocations {
 	return o.Payload
 }
@@ -83,7 +114,8 @@ func NewInternalV1PowervsLocationsTransitgatewayGetForbidden() *InternalV1Powerv
 	return &InternalV1PowervsLocationsTransitgatewayGetForbidden{}
 }
 
-/* InternalV1PowervsLocationsTransitgatewayGetForbidden describes a response with status code 403, with default header values.
+/*
+InternalV1PowervsLocationsTransitgatewayGetForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -91,9 +123,39 @@ type InternalV1PowervsLocationsTransitgatewayGetForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this internal v1 powervs locations transitgateway get forbidden response has a 2xx status code
+func (o *InternalV1PowervsLocationsTransitgatewayGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this internal v1 powervs locations transitgateway get forbidden response has a 3xx status code
+func (o *InternalV1PowervsLocationsTransitgatewayGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 powervs locations transitgateway get forbidden response has a 4xx status code
+func (o *InternalV1PowervsLocationsTransitgatewayGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this internal v1 powervs locations transitgateway get forbidden response has a 5xx status code
+func (o *InternalV1PowervsLocationsTransitgatewayGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 powervs locations transitgateway get forbidden response a status code equal to that given
+func (o *InternalV1PowervsLocationsTransitgatewayGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *InternalV1PowervsLocationsTransitgatewayGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/powervs/locations/transit-gateway][%d] internalV1PowervsLocationsTransitgatewayGetForbidden  %+v", 403, o.Payload)
 }
+
+func (o *InternalV1PowervsLocationsTransitgatewayGetForbidden) String() string {
+	return fmt.Sprintf("[GET /internal/v1/powervs/locations/transit-gateway][%d] internalV1PowervsLocationsTransitgatewayGetForbidden  %+v", 403, o.Payload)
+}
+
 func (o *InternalV1PowervsLocationsTransitgatewayGetForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -115,7 +177,8 @@ func NewInternalV1PowervsLocationsTransitgatewayGetInternalServerError() *Intern
 	return &InternalV1PowervsLocationsTransitgatewayGetInternalServerError{}
 }
 
-/* InternalV1PowervsLocationsTransitgatewayGetInternalServerError describes a response with status code 500, with default header values.
+/*
+InternalV1PowervsLocationsTransitgatewayGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -123,9 +186,39 @@ type InternalV1PowervsLocationsTransitgatewayGetInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this internal v1 powervs locations transitgateway get internal server error response has a 2xx status code
+func (o *InternalV1PowervsLocationsTransitgatewayGetInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this internal v1 powervs locations transitgateway get internal server error response has a 3xx status code
+func (o *InternalV1PowervsLocationsTransitgatewayGetInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 powervs locations transitgateway get internal server error response has a 4xx status code
+func (o *InternalV1PowervsLocationsTransitgatewayGetInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this internal v1 powervs locations transitgateway get internal server error response has a 5xx status code
+func (o *InternalV1PowervsLocationsTransitgatewayGetInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this internal v1 powervs locations transitgateway get internal server error response a status code equal to that given
+func (o *InternalV1PowervsLocationsTransitgatewayGetInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *InternalV1PowervsLocationsTransitgatewayGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/powervs/locations/transit-gateway][%d] internalV1PowervsLocationsTransitgatewayGetInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *InternalV1PowervsLocationsTransitgatewayGetInternalServerError) String() string {
+	return fmt.Sprintf("[GET /internal/v1/powervs/locations/transit-gateway][%d] internalV1PowervsLocationsTransitgatewayGetInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *InternalV1PowervsLocationsTransitgatewayGetInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

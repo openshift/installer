@@ -52,10 +52,12 @@ func NewServiceBrokerAuthInfoUserParamsWithHTTPClient(client *http.Client) *Serv
 	}
 }
 
-/* ServiceBrokerAuthInfoUserParams contains all the parameters to send to the API endpoint
-   for the service broker auth info user operation.
+/*
+ServiceBrokerAuthInfoUserParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the service broker auth info user operation.
+
+	Typically these are written to a http.Request.
 */
 type ServiceBrokerAuthInfoUserParams struct {
 	timeout    time.Duration

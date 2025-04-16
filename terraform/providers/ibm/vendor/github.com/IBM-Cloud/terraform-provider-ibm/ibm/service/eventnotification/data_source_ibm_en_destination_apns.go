@@ -96,6 +96,11 @@ func DataSourceIBMEnAPNSDestination() *schema.Resource {
 										Computed:    true,
 										Description: "The Bundle ID In case of P8 Certificate",
 									},
+									"pre_prod": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "The flag to enable destination as pre-prod or prod",
+									},
 								},
 							},
 						},
@@ -210,10 +215,10 @@ func enAPNSDestinationConfigToMap(configItem en.DestinationConfig) (configMap ma
 	return configMap
 }
 
-func enAPNSDestinationConfigParamsToMap(paramsItem en.DestinationConfigParamsIntf) (paramsMap map[string]interface{}) {
+func enAPNSDestinationConfigParamsToMap(paramsItem en.DestinationConfigOneOfIntf) (paramsMap map[string]interface{}) {
 	paramsMap = map[string]interface{}{}
 
-	params := paramsItem.(*en.DestinationConfigParams)
+	params := paramsItem.(*en.DestinationConfigOneOf)
 
 	if params.CertType != nil {
 		paramsMap["cert_type"] = params.CertType
@@ -232,6 +237,9 @@ func enAPNSDestinationConfigParamsToMap(paramsItem en.DestinationConfigParamsInt
 	}
 	if params.BundleID != nil {
 		paramsMap["bundle_id"] = params.BundleID
+	}
+	if params.PreProd != nil {
+		paramsMap["pre_prod"] = params.PreProd
 	}
 
 	return paramsMap

@@ -19,10 +19,10 @@ import (
 
 func ResourceIBMCdToolchainToolHashicorpvault() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: ResourceIBMCdToolchainToolHashicorpvaultCreate,
-		ReadContext:   ResourceIBMCdToolchainToolHashicorpvaultRead,
-		UpdateContext: ResourceIBMCdToolchainToolHashicorpvaultUpdate,
-		DeleteContext: ResourceIBMCdToolchainToolHashicorpvaultDelete,
+		CreateContext: resourceIBMCdToolchainToolHashicorpvaultCreate,
+		ReadContext:   resourceIBMCdToolchainToolHashicorpvaultRead,
+		UpdateContext: resourceIBMCdToolchainToolHashicorpvaultUpdate,
+		DeleteContext: resourceIBMCdToolchainToolHashicorpvaultDelete,
 		Importer:      &schema.ResourceImporter{},
 
 		Schema: map[string]*schema.Schema{
@@ -31,83 +31,83 @@ func ResourceIBMCdToolchainToolHashicorpvault() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_cd_toolchain_tool_hashicorpvault", "toolchain_id"),
-				Description:  "ID of the toolchain to bind tool to.",
+				Description:  "ID of the toolchain to bind the tool to.",
 			},
 			"parameters": &schema.Schema{
 				Type:        schema.TypeList,
 				MinItems:    1,
 				MaxItems:    1,
 				Required:    true,
-				Description: "Parameters to be used to create the tool.",
+				Description: "Unique key-value pairs representing parameters to be used to create the tool. A list of parameters for each tool integration can be found in the <a href=\"https://cloud.ibm.com/docs/ContinuousDelivery?topic=ContinuousDelivery-integrations\">Configuring tool integrations page</a>.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "Enter a name for this tool integration. This name is displayed on your toolchain.",
+							Description: "The name used to identify this tool integration. Secret references include this name to identify the secrets store where the secrets reside. All secrets store tools integrated into a toolchain should have a unique name to allow secret resolution to function properly.",
 						},
 						"server_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "Type the server URL for your HashiCorp Vault instance.",
+							Description: "The server URL for your HashiCorp Vault instance.",
 						},
 						"authentication_method": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "Choose the authentication method for your HashiCorp Vault instance.",
+							Description: "The authentication method for your HashiCorp Vault instance.",
 						},
 						"token": &schema.Schema{
 							Type:             schema.TypeString,
 							Optional:         true,
 							DiffSuppressFunc: flex.SuppressHashedRawSecret,
 							Sensitive:        true,
-							Description:      "Type or select the authentication token for your HashiCorp Vault instance.",
+							Description:      "The authentication token for your HashiCorp Vault instance when using the 'github' and 'token' authentication methods. This parameter is ignored for other authentication methods. You can use a toolchain secret reference for this parameter. For more information, see [Protecting your sensitive data in Continuous Delivery](https://cloud.ibm.com/docs/ContinuousDelivery?topic=ContinuousDelivery-cd_data_security#cd_secure_credentials).",
 						},
 						"role_id": &schema.Schema{
 							Type:             schema.TypeString,
 							Optional:         true,
 							DiffSuppressFunc: flex.SuppressHashedRawSecret,
 							Sensitive:        true,
-							Description:      "Type or select the authentication role ID for your HashiCorp Vault instance.",
+							Description:      "The authentication role ID for your HashiCorp Vault instance when using the 'approle' authentication method. This parameter is ignored for other authentication methods. Note, 'role_id' should be treated as a secret and should not be shared in plaintext. You can use a toolchain secret reference for this parameter. For more information, see [Protecting your sensitive data in Continuous Delivery](https://cloud.ibm.com/docs/ContinuousDelivery?topic=ContinuousDelivery-cd_data_security#cd_secure_credentials).",
 						},
 						"secret_id": &schema.Schema{
 							Type:             schema.TypeString,
 							Optional:         true,
 							DiffSuppressFunc: flex.SuppressHashedRawSecret,
 							Sensitive:        true,
-							Description:      "Type or select the authentication secret ID for your HashiCorp Vault instance.",
+							Description:      "The authentication secret ID for your HashiCorp Vault instance when using the 'approle' authentication method. This parameter is ignored for other authentication methods. You can use a toolchain secret reference for this parameter. For more information, see [Protecting your sensitive data in Continuous Delivery](https://cloud.ibm.com/docs/ContinuousDelivery?topic=ContinuousDelivery-cd_data_security#cd_secure_credentials).",
 						},
 						"dashboard_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "Type the URL that you want to navigate to when you click the HashiCorp Vault integration tile.",
+							Description: "The URL of the HashiCorp Vault server dashboard for this integration. In the graphical UI, this is the dashboard that the browser will navigate to when you click the HashiCorp Vault integration tile.",
 						},
 						"path": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "Type the mount path where your secrets are stored in your HashiCorp Vault instance.",
+							Description: "The mount path where your secrets are stored in your HashiCorp Vault instance.",
 						},
 						"secret_filter": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Type a regular expression to filter the list of secret names returned from your HashiCorp Vault instance.",
+							Description: "A regular expression to filter the list of secret names returned from your HashiCorp Vault instance.",
 						},
 						"default_secret": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Type a default secret name that will be selected or used if no list of secret names are returned from your HashiCorp Vault instance.",
+							Description: "A default secret name that will be selected or used if no list of secret names are returned from your HashiCorp Vault instance.",
 						},
 						"username": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Type or select the authentication username for your HashiCorp Vault instance.",
+							Description: "The authentication username for your HashiCorp Vault instance when using the 'userpass' authentication method. This parameter is ignored for other authentication methods.",
 						},
 						"password": &schema.Schema{
 							Type:             schema.TypeString,
 							Optional:         true,
 							DiffSuppressFunc: flex.SuppressHashedRawSecret,
 							Sensitive:        true,
-							Description:      "Type or select the authentication password for your HashiCorp Vault instance.",
+							Description:      "The authentication password for your HashiCorp Vault instance when using the 'userpass' authentication method. This parameter is ignored for other authentication methods. You can use a toolchain secret reference for this parameter. For more information, see [Protecting your sensitive data in Continuous Delivery](https://cloud.ibm.com/docs/ContinuousDelivery?topic=ContinuousDelivery-cd_data_security#cd_secure_credentials).",
 						},
 					},
 				},
@@ -116,12 +116,12 @@ func ResourceIBMCdToolchainToolHashicorpvault() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_cd_toolchain_tool_hashicorpvault", "name"),
-				Description:  "Name of tool.",
+				Description:  "Name of the tool.",
 			},
 			"resource_group_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Resource group where tool can be found.",
+				Description: "Resource group where the tool is located.",
 			},
 			"crn": &schema.Schema{
 				Type:        schema.TypeString,
@@ -147,12 +147,12 @@ func ResourceIBMCdToolchainToolHashicorpvault() *schema.Resource {
 						"ui_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "URI representing the this resource through the UI.",
+							Description: "URI representing this resource through the UI.",
 						},
 						"api_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "URI representing the this resource through an API.",
+							Description: "URI representing this resource through an API.",
 						},
 					},
 				},
@@ -193,7 +193,7 @@ func ResourceIBMCdToolchainToolHashicorpvaultValidator() *validate.ResourceValid
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
-			Regexp:                     `^([^\\x00-\\x7F]|[a-zA-Z0-9-._ ])+$`,
+			Regexp:                     `^([^\x00-\x7F]|[a-zA-Z0-9-._ ])+$`,
 			MinValueLength:             0,
 			MaxValueLength:             128,
 		},
@@ -203,7 +203,7 @@ func ResourceIBMCdToolchainToolHashicorpvaultValidator() *validate.ResourceValid
 	return &resourceValidator
 }
 
-func ResourceIBMCdToolchainToolHashicorpvaultCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdToolchainToolHashicorpvaultCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -219,18 +219,18 @@ func ResourceIBMCdToolchainToolHashicorpvaultCreate(context context.Context, d *
 		createToolOptions.SetName(d.Get("name").(string))
 	}
 
-	postToolResponse, response, err := cdToolchainClient.CreateToolWithContext(context, createToolOptions)
+	toolchainToolPost, response, err := cdToolchainClient.CreateToolWithContext(context, createToolOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateToolWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("CreateToolWithContext failed %s\n%s", err, response))
 	}
 
-	d.SetId(fmt.Sprintf("%s/%s", *createToolOptions.ToolchainID, *postToolResponse.ID))
+	d.SetId(fmt.Sprintf("%s/%s", *createToolOptions.ToolchainID, *toolchainToolPost.ID))
 
-	return ResourceIBMCdToolchainToolHashicorpvaultRead(context, d, meta)
+	return resourceIBMCdToolchainToolHashicorpvaultRead(context, d, meta)
 }
 
-func ResourceIBMCdToolchainToolHashicorpvaultRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdToolchainToolHashicorpvaultRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -246,7 +246,7 @@ func ResourceIBMCdToolchainToolHashicorpvaultRead(context context.Context, d *sc
 	getToolByIDOptions.SetToolchainID(parts[0])
 	getToolByIDOptions.SetToolID(parts[1])
 
-	getToolByIDResponse, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
+	toolchainTool, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
@@ -256,49 +256,49 @@ func ResourceIBMCdToolchainToolHashicorpvaultRead(context context.Context, d *sc
 		return diag.FromErr(fmt.Errorf("GetToolByIDWithContext failed %s\n%s", err, response))
 	}
 
-	if err = d.Set("toolchain_id", getToolByIDResponse.ToolchainID); err != nil {
+	if err = d.Set("toolchain_id", toolchainTool.ToolchainID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting toolchain_id: %s", err))
 	}
-	parametersMap := GetParametersFromRead(getToolByIDResponse.Parameters, ResourceIBMCdToolchainToolHashicorpvault(), nil)
+	parametersMap := GetParametersFromRead(toolchainTool.Parameters, ResourceIBMCdToolchainToolHashicorpvault(), nil)
 	if err = d.Set("parameters", []map[string]interface{}{parametersMap}); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting parameters: %s", err))
 	}
-	if err = d.Set("name", getToolByIDResponse.Name); err != nil {
+	if err = d.Set("name", toolchainTool.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
-	if err = d.Set("resource_group_id", getToolByIDResponse.ResourceGroupID); err != nil {
+	if err = d.Set("resource_group_id", toolchainTool.ResourceGroupID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
 	}
-	if err = d.Set("crn", getToolByIDResponse.CRN); err != nil {
+	if err = d.Set("crn", toolchainTool.CRN); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
 	}
-	if err = d.Set("toolchain_crn", getToolByIDResponse.ToolchainCRN); err != nil {
+	if err = d.Set("toolchain_crn", toolchainTool.ToolchainCRN); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting toolchain_crn: %s", err))
 	}
-	if err = d.Set("href", getToolByIDResponse.Href); err != nil {
+	if err = d.Set("href", toolchainTool.Href); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
 	}
-	referentMap, err := ResourceIBMCdToolchainToolHashicorpvaultToolReferentToMap(getToolByIDResponse.Referent)
+	referentMap, err := resourceIBMCdToolchainToolHashicorpvaultToolModelReferentToMap(toolchainTool.Referent)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	if err = d.Set("referent", []map[string]interface{}{referentMap}); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting referent: %s", err))
 	}
-	if err = d.Set("updated_at", flex.DateTimeToString(getToolByIDResponse.UpdatedAt)); err != nil {
+	if err = d.Set("updated_at", flex.DateTimeToString(toolchainTool.UpdatedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
 	}
-	if err = d.Set("state", getToolByIDResponse.State); err != nil {
+	if err = d.Set("state", toolchainTool.State); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
 	}
-	if err = d.Set("tool_id", getToolByIDResponse.ID); err != nil {
+	if err = d.Set("tool_id", toolchainTool.ID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting tool_id: %s", err))
 	}
 
 	return nil
 }
 
-func ResourceIBMCdToolchainToolHashicorpvaultUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdToolchainToolHashicorpvaultUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -313,36 +313,38 @@ func ResourceIBMCdToolchainToolHashicorpvaultUpdate(context context.Context, d *
 
 	updateToolOptions.SetToolchainID(parts[0])
 	updateToolOptions.SetToolID(parts[1])
-	updateToolOptions.SetToolTypeID("hashicorpvault")
 
 	hasChange := false
 
+	patchVals := &cdtoolchainv2.ToolchainToolPrototypePatch{}
 	if d.HasChange("toolchain_id") {
 		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
 			" The resource must be re-created to update this property.", "toolchain_id"))
 	}
 	if d.HasChange("parameters") {
 		parameters := GetParametersForUpdate(d, ResourceIBMCdToolchainToolHashicorpvault(), nil)
-		updateToolOptions.SetParameters(parameters)
+		patchVals.Parameters = parameters
 		hasChange = true
 	}
 	if d.HasChange("name") {
-		updateToolOptions.SetName(d.Get("name").(string))
+		newName := d.Get("name").(string)
+		patchVals.Name = &newName
 		hasChange = true
 	}
 
 	if hasChange {
-		response, err := cdToolchainClient.UpdateToolWithContext(context, updateToolOptions)
+		updateToolOptions.ToolchainToolPrototypePatch, _ = patchVals.AsPatch()
+		_, response, err := cdToolchainClient.UpdateToolWithContext(context, updateToolOptions)
 		if err != nil {
 			log.Printf("[DEBUG] UpdateToolWithContext failed %s\n%s", err, response)
 			return diag.FromErr(fmt.Errorf("UpdateToolWithContext failed %s\n%s", err, response))
 		}
 	}
 
-	return ResourceIBMCdToolchainToolHashicorpvaultRead(context, d, meta)
+	return resourceIBMCdToolchainToolHashicorpvaultRead(context, d, meta)
 }
 
-func ResourceIBMCdToolchainToolHashicorpvaultDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdToolchainToolHashicorpvaultDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -369,7 +371,7 @@ func ResourceIBMCdToolchainToolHashicorpvaultDelete(context context.Context, d *
 	return nil
 }
 
-func ResourceIBMCdToolchainToolHashicorpvaultToolReferentToMap(model *cdtoolchainv2.ToolReferent) (map[string]interface{}, error) {
+func resourceIBMCdToolchainToolHashicorpvaultToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.UIHref != nil {
 		modelMap["ui_href"] = model.UIHref

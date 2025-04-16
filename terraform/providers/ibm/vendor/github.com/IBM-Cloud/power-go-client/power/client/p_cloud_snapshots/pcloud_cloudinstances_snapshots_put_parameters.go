@@ -54,10 +54,12 @@ func NewPcloudCloudinstancesSnapshotsPutParamsWithHTTPClient(client *http.Client
 	}
 }
 
-/* PcloudCloudinstancesSnapshotsPutParams contains all the parameters to send to the API endpoint
-   for the pcloud cloudinstances snapshots put operation.
+/*
+PcloudCloudinstancesSnapshotsPutParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud cloudinstances snapshots put operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudCloudinstancesSnapshotsPutParams struct {
 

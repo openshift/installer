@@ -89,6 +89,7 @@ func ResourceIBMISLBPoolMember() *schema.Resource {
 			isLBPoolMemberTargetAddress: {
 				Type:         schema.TypeString,
 				Optional:     true,
+				Computed:     true,
 				ExactlyOneOf: []string{isLBPoolMemberTargetAddress, isLBPoolMemberTargetID},
 				Description:  "Load balancer pool member target address",
 			},
@@ -96,6 +97,7 @@ func ResourceIBMISLBPoolMember() *schema.Resource {
 			isLBPoolMemberTargetID: {
 				Type:         schema.TypeString,
 				Optional:     true,
+				Computed:     true,
 				ExactlyOneOf: []string{isLBPoolMemberTargetAddress, isLBPoolMemberTargetID},
 				Description:  "Load balancer pool member target id",
 			},
@@ -410,7 +412,7 @@ func lbpmemberUpdate(d *schema.ResourceData, meta interface{}, lbID, lbPoolID, l
 
 		if _, ok := d.GetOk(isLBPoolMemberTargetAddress); ok {
 			targetAddress := d.Get(isLBPoolMemberTargetAddress).(string)
-			target := &vpcv1.LoadBalancerPoolMemberTargetPrototype{
+			target := &vpcv1.LoadBalancerPoolMemberTargetPrototypeIP{
 				Address: &targetAddress,
 			}
 			loadBalancerPoolMemberPatchModel.Target = target

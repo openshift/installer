@@ -57,7 +57,8 @@ func NewServiceBrokerOpenstacksGetOK() *ServiceBrokerOpenstacksGetOK {
 	return &ServiceBrokerOpenstacksGetOK{}
 }
 
-/* ServiceBrokerOpenstacksGetOK describes a response with status code 200, with default header values.
+/*
+ServiceBrokerOpenstacksGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -65,9 +66,39 @@ type ServiceBrokerOpenstacksGetOK struct {
 	Payload *models.OpenStacks
 }
 
+// IsSuccess returns true when this service broker openstacks get o k response has a 2xx status code
+func (o *ServiceBrokerOpenstacksGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service broker openstacks get o k response has a 3xx status code
+func (o *ServiceBrokerOpenstacksGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker openstacks get o k response has a 4xx status code
+func (o *ServiceBrokerOpenstacksGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker openstacks get o k response has a 5xx status code
+func (o *ServiceBrokerOpenstacksGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker openstacks get o k response a status code equal to that given
+func (o *ServiceBrokerOpenstacksGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceBrokerOpenstacksGetOK) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/openstacks][%d] serviceBrokerOpenstacksGetOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceBrokerOpenstacksGetOK) String() string {
+	return fmt.Sprintf("[GET /broker/v1/openstacks][%d] serviceBrokerOpenstacksGetOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceBrokerOpenstacksGetOK) GetPayload() *models.OpenStacks {
 	return o.Payload
 }
@@ -89,7 +120,8 @@ func NewServiceBrokerOpenstacksGetBadRequest() *ServiceBrokerOpenstacksGetBadReq
 	return &ServiceBrokerOpenstacksGetBadRequest{}
 }
 
-/* ServiceBrokerOpenstacksGetBadRequest describes a response with status code 400, with default header values.
+/*
+ServiceBrokerOpenstacksGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -97,9 +129,39 @@ type ServiceBrokerOpenstacksGetBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker openstacks get bad request response has a 2xx status code
+func (o *ServiceBrokerOpenstacksGetBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker openstacks get bad request response has a 3xx status code
+func (o *ServiceBrokerOpenstacksGetBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker openstacks get bad request response has a 4xx status code
+func (o *ServiceBrokerOpenstacksGetBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker openstacks get bad request response has a 5xx status code
+func (o *ServiceBrokerOpenstacksGetBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker openstacks get bad request response a status code equal to that given
+func (o *ServiceBrokerOpenstacksGetBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *ServiceBrokerOpenstacksGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/openstacks][%d] serviceBrokerOpenstacksGetBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *ServiceBrokerOpenstacksGetBadRequest) String() string {
+	return fmt.Sprintf("[GET /broker/v1/openstacks][%d] serviceBrokerOpenstacksGetBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *ServiceBrokerOpenstacksGetBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -121,7 +183,8 @@ func NewServiceBrokerOpenstacksGetForbidden() *ServiceBrokerOpenstacksGetForbidd
 	return &ServiceBrokerOpenstacksGetForbidden{}
 }
 
-/* ServiceBrokerOpenstacksGetForbidden describes a response with status code 403, with default header values.
+/*
+ServiceBrokerOpenstacksGetForbidden describes a response with status code 403, with default header values.
 
 Unauthorized
 */
@@ -129,9 +192,39 @@ type ServiceBrokerOpenstacksGetForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker openstacks get forbidden response has a 2xx status code
+func (o *ServiceBrokerOpenstacksGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker openstacks get forbidden response has a 3xx status code
+func (o *ServiceBrokerOpenstacksGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker openstacks get forbidden response has a 4xx status code
+func (o *ServiceBrokerOpenstacksGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker openstacks get forbidden response has a 5xx status code
+func (o *ServiceBrokerOpenstacksGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker openstacks get forbidden response a status code equal to that given
+func (o *ServiceBrokerOpenstacksGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *ServiceBrokerOpenstacksGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/openstacks][%d] serviceBrokerOpenstacksGetForbidden  %+v", 403, o.Payload)
 }
+
+func (o *ServiceBrokerOpenstacksGetForbidden) String() string {
+	return fmt.Sprintf("[GET /broker/v1/openstacks][%d] serviceBrokerOpenstacksGetForbidden  %+v", 403, o.Payload)
+}
+
 func (o *ServiceBrokerOpenstacksGetForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -153,7 +246,8 @@ func NewServiceBrokerOpenstacksGetInternalServerError() *ServiceBrokerOpenstacks
 	return &ServiceBrokerOpenstacksGetInternalServerError{}
 }
 
-/* ServiceBrokerOpenstacksGetInternalServerError describes a response with status code 500, with default header values.
+/*
+ServiceBrokerOpenstacksGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -161,9 +255,39 @@ type ServiceBrokerOpenstacksGetInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker openstacks get internal server error response has a 2xx status code
+func (o *ServiceBrokerOpenstacksGetInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker openstacks get internal server error response has a 3xx status code
+func (o *ServiceBrokerOpenstacksGetInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker openstacks get internal server error response has a 4xx status code
+func (o *ServiceBrokerOpenstacksGetInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker openstacks get internal server error response has a 5xx status code
+func (o *ServiceBrokerOpenstacksGetInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this service broker openstacks get internal server error response a status code equal to that given
+func (o *ServiceBrokerOpenstacksGetInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *ServiceBrokerOpenstacksGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/openstacks][%d] serviceBrokerOpenstacksGetInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *ServiceBrokerOpenstacksGetInternalServerError) String() string {
+	return fmt.Sprintf("[GET /broker/v1/openstacks][%d] serviceBrokerOpenstacksGetInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *ServiceBrokerOpenstacksGetInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

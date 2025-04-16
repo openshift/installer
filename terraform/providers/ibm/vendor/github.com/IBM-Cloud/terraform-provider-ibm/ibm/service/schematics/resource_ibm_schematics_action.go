@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -47,6 +48,7 @@ func ResourceIBMSchematicsAction() *schema.Resource {
 			"location": {
 				Type:         schema.TypeString,
 				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_schematics_action", "location"),
 				Description:  "List of locations supported by IBM Cloud Schematics service.  While creating your workspace or action, choose the right region, since it cannot be changed.  Note, this does not limit the location of the IBM Cloud resources, provisioned using Schematics.",
 			},
@@ -979,7 +981,13 @@ func resourceIBMSchematicsActionCreate(context context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	if r, ok := d.GetOk("location"); ok {
+		region := r.(string)
+		schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+		if updatedURL {
+			schematicsClient.Service.Options.URL = schematicsURL
+		}
+	}
 	createActionOptions := &schematicsv1.CreateActionOptions{}
 
 	if _, ok := d.GetOk("name"); ok {
@@ -1337,7 +1345,12 @@ func resourceIBMSchematicsActionRead(context context.Context, d *schema.Resource
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	actionIDSplit := strings.Split(d.Id(), ".")
+	region := actionIDSplit[0]
+	schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+	if updatedURL {
+		schematicsClient.Service.Options.URL = schematicsURL
+	}
 	getActionOptions := &schematicsv1.GetActionOptions{}
 
 	getActionOptions.SetActionID(d.Id())
@@ -1351,7 +1364,6 @@ func resourceIBMSchematicsActionRead(context context.Context, d *schema.Resource
 		log.Printf("[DEBUG] GetActionWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetActionWithContext failed %s\n%s", err, response))
 	}
-
 	if err = d.Set("name", action.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
 	}
@@ -1781,6 +1793,12 @@ func resourceIBMSchematicsActionUpdate(context context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	actionIDSplit := strings.Split(d.Id(), ".")
+	region := actionIDSplit[0]
+	schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+	if updatedURL {
+		schematicsClient.Service.Options.URL = schematicsURL
+	}
 
 	updateActionOptions := &schematicsv1.UpdateActionOptions{}
 
@@ -1928,7 +1946,12 @@ func resourceIBMSchematicsActionDelete(context context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	actionIDSplit := strings.Split(d.Id(), ".")
+	region := actionIDSplit[0]
+	schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+	if updatedURL {
+		schematicsClient.Service.Options.URL = schematicsURL
+	}
 	deleteActionOptions := &schematicsv1.DeleteActionOptions{}
 
 	deleteActionOptions.SetActionID(d.Id())

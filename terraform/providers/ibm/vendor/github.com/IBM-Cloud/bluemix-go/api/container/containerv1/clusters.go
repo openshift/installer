@@ -198,6 +198,7 @@ func (c ClusterSoftlayerHeader) ToMap() map[string]string {
 type ClusterCreateRequest struct {
 	GatewayEnabled               bool   `json:"GatewayEnabled" description:"true for gateway enabled cluster"`
 	Datacenter                   string `json:"dataCenter" description:"The worker's data center"`
+	OperatingSystem              string `json:"operatingSystem,omitempty"`
 	Isolation                    string `json:"isolation" description:"Can be 'public' or 'private'"`
 	MachineType                  string `json:"machineType" description:"The worker's machine type"`
 	Name                         string `json:"name" binding:"required" description:"The cluster's name"`

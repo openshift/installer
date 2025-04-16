@@ -6,12 +6,10 @@ package kms
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	//kp "github.com/IBM/keyprotect-go-client"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
-	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -59,38 +57,12 @@ func DataSourceIBMKMSkeyRings() *schema.Resource {
 }
 
 func dataSourceIBMKMSKeyRingsRead(d *schema.ResourceData, meta interface{}) error {
-	api, err := meta.(conns.ClientSession).KeyManagementAPI()
+	instanceID := getInstanceIDFromCRN(d.Get("instance_id").(string))
+	api, _, err := populateKPClient(d, meta, instanceID)
 	if err != nil {
 		return err
-	}
-
-	instanceID := d.Get("instance_id").(string)
-	CrnInstanceID := strings.Split(instanceID, ":")
-	if len(CrnInstanceID) > 3 {
-		instanceID = CrnInstanceID[len(CrnInstanceID)-3]
 	}
 	endpointType := d.Get("endpoint_type").(string)
-
-	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
-	if err != nil {
-		return err
-	}
-	resourceInstanceGet := rc.GetResourceInstanceOptions{
-		ID: &instanceID,
-	}
-
-	instanceData, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
-	if err != nil || instanceData == nil {
-		return fmt.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
-	}
-	extensions := instanceData.Extensions
-	URL, err := KmsEndpointURL(api, endpointType, extensions)
-	if err != nil {
-		return err
-	}
-	api.URL = URL
-
-	api.Config.InstanceID = instanceID
 	keys, err := api.GetKeyRings(context.Background())
 	if err != nil || keys == nil {
 		return fmt.Errorf("[ERROR] Get Key Rings failed with error: %s", err)

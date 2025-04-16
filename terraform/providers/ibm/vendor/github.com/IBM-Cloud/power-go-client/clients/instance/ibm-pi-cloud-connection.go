@@ -110,7 +110,7 @@ func (f *IBMPICloudConnectionClient) Delete(id string) (*models.JobReference, er
 }
 
 // Add a Network to a Cloud Connection
-func (f *IBMPICloudConnectionClient) AddNetwork(id, networkID string) (*models.CloudConnection, *models.JobReference, error) {
+func (f *IBMPICloudConnectionClient) AddNetwork(id, networkID string) (models.Object, *models.JobReference, error) {
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsNetworksPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithCloudConnectionID(id).
@@ -129,7 +129,7 @@ func (f *IBMPICloudConnectionClient) AddNetwork(id, networkID string) (*models.C
 }
 
 // Delete a Network from a Cloud Connection
-func (f *IBMPICloudConnectionClient) DeleteNetwork(id, networkID string) (*models.CloudConnection, *models.JobReference, error) {
+func (f *IBMPICloudConnectionClient) DeleteNetwork(id, networkID string) (models.Object, *models.JobReference, error) {
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsNetworksDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithCloudConnectionID(id).

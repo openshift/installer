@@ -508,8 +508,13 @@ func vpngwconUpdate(d *schema.ResourceData, meta interface{}, gID, gConnID strin
 
 	if d.HasChange(isVPNGatewayConnectionIKEPolicy) {
 		ikePolicyIdentity := d.Get(isVPNGatewayConnectionIKEPolicy).(string)
-		vpnGatewayConnectionPatchModel.IkePolicy = &vpcv1.VPNGatewayConnectionIkePolicyPatch{
-			ID: &ikePolicyIdentity,
+		if ikePolicyIdentity == "" {
+			var nullPatch *vpcv1.VPNGatewayConnectionIkePolicyPatch
+			vpnGatewayConnectionPatchModel.IkePolicy = nullPatch
+		} else {
+			vpnGatewayConnectionPatchModel.IkePolicy = &vpcv1.VPNGatewayConnectionIkePolicyPatch{
+				ID: &ikePolicyIdentity,
+			}
 		}
 		hasChanged = true
 	} else {
@@ -518,8 +523,13 @@ func vpngwconUpdate(d *schema.ResourceData, meta interface{}, gID, gConnID strin
 
 	if d.HasChange(isVPNGatewayConnectionIPSECPolicy) {
 		ipsecPolicyIdentity := d.Get(isVPNGatewayConnectionIPSECPolicy).(string)
-		vpnGatewayConnectionPatchModel.IpsecPolicy = &vpcv1.VPNGatewayConnectionIPsecPolicyPatch{
-			ID: &ipsecPolicyIdentity,
+		if ipsecPolicyIdentity == "" {
+			var nullPatch *vpcv1.VPNGatewayConnectionIPsecPolicyPatch
+			vpnGatewayConnectionPatchModel.IpsecPolicy = nullPatch
+		} else {
+			vpnGatewayConnectionPatchModel.IpsecPolicy = &vpcv1.VPNGatewayConnectionIPsecPolicyPatch{
+				ID: &ipsecPolicyIdentity,
+			}
 		}
 		hasChanged = true
 	} else {

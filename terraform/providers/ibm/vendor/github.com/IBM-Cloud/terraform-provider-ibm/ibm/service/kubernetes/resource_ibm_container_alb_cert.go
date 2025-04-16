@@ -15,6 +15,7 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
 func ResourceIBMContainerALBCert() *schema.Resource {
@@ -43,6 +44,9 @@ func ResourceIBMContainerALBCert() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "Cluster ID",
+				ValidateFunc: validate.InvokeValidator(
+					"ibm_container_alb_cert",
+					"cluster_id"),
 			},
 			"secret_name": {
 				Type:        schema.TypeString,
@@ -98,7 +102,20 @@ func ResourceIBMContainerALBCert() *schema.Resource {
 		},
 	}
 }
+func ResourceIBMContainerALBCertValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
 
+	iBMContainerALBCertValidator := validate.ResourceValidator{ResourceName: "ibm_container_alb_cert", Schema: validateSchema}
+	return &iBMContainerALBCertValidator
+}
 func resourceIBMContainerALBCertCreate(d *schema.ResourceData, meta interface{}) error {
 	ingressClient, err := meta.(conns.ClientSession).VpcContainerAPI()
 	if err != nil {

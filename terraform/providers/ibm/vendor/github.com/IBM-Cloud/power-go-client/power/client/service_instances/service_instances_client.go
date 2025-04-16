@@ -44,7 +44,7 @@ type ClientService interface {
 }
 
 /*
-  ServiceInstanceDeprovision deprovisions a service instance
+ServiceInstanceDeprovision deprovisions a service instance
 */
 func (a *Client) ServiceInstanceDeprovision(params *ServiceInstanceDeprovisionParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceDeprovisionOK, *ServiceInstanceDeprovisionAccepted, error) {
 	// TODO: Validate the params before sending
@@ -84,7 +84,7 @@ func (a *Client) ServiceInstanceDeprovision(params *ServiceInstanceDeprovisionPa
 }
 
 /*
-  ServiceInstanceGet gets a service instance
+ServiceInstanceGet gets a service instance
 */
 func (a *Client) ServiceInstanceGet(params *ServiceInstanceGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceGetOK, error) {
 	// TODO: Validate the params before sending
@@ -123,7 +123,7 @@ func (a *Client) ServiceInstanceGet(params *ServiceInstanceGetParams, authInfo r
 }
 
 /*
-  ServiceInstanceLastOperationGet lasts requested operation state for service instance
+ServiceInstanceLastOperationGet lasts requested operation state for service instance
 */
 func (a *Client) ServiceInstanceLastOperationGet(params *ServiceInstanceLastOperationGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceLastOperationGetOK, error) {
 	// TODO: Validate the params before sending
@@ -162,7 +162,7 @@ func (a *Client) ServiceInstanceLastOperationGet(params *ServiceInstanceLastOper
 }
 
 /*
-  ServiceInstanceProvision provisions a service instance
+ServiceInstanceProvision provisions a service instance
 */
 func (a *Client) ServiceInstanceProvision(params *ServiceInstanceProvisionParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceProvisionOK, *ServiceInstanceProvisionCreated, *ServiceInstanceProvisionAccepted, error) {
 	// TODO: Validate the params before sending
@@ -204,7 +204,7 @@ func (a *Client) ServiceInstanceProvision(params *ServiceInstanceProvisionParams
 }
 
 /*
-  ServiceInstanceUpdate updates a service instance
+ServiceInstanceUpdate updates a service instance
 */
 func (a *Client) ServiceInstanceUpdate(params *ServiceInstanceUpdateParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceInstanceUpdateOK, *ServiceInstanceUpdateAccepted, error) {
 	// TODO: Validate the params before sending

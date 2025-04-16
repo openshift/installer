@@ -5,6 +5,7 @@ package iampolicy
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
@@ -97,6 +98,12 @@ func ResourceIBMIAMUserPolicy() *schema.Resource {
 							Description: "Service type of the policy definition",
 						},
 
+						"service_group_id": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Service group id of the policy definition",
+						},
+
 						"attributes": {
 							Type:        schema.TypeMap,
 							Optional:    true,
@@ -186,6 +193,44 @@ func ResourceIBMIAMUserPolicy() *schema.Resource {
 				Computed:    true,
 				Description: "Set transactionID for debug",
 			},
+
+			"rule_conditions": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Rule conditions enforced by the policy",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Key of the condition",
+						},
+						"operator": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Operator of the condition",
+						},
+						"value": {
+							Type:        schema.TypeList,
+							Required:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Description: "Value of the condition",
+						},
+					},
+				},
+			},
+
+			"rule_operator": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Operator that multiple rule conditions are evaluated over",
+			},
+
+			"pattern": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Pattern rule follows for time-based condition",
+			},
 		},
 	}
 }
@@ -195,9 +240,6 @@ func resourceIBMIAMUserPolicyCreate(d *schema.ResourceData, meta interface{}) er
 	if err != nil {
 		return err
 	}
-
-	var policyOptions iampolicymanagementv1.CreatePolicyOptions
-	policyOptions, err = flex.GeneratePolicyOptions(d, meta)
 
 	if err != nil {
 		return err
@@ -217,49 +259,119 @@ func resourceIBMIAMUserPolicyCreate(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	subjectAttribute := &iampolicymanagementv1.SubjectAttribute{
-		Name:  core.StringPtr("iam_id"),
-		Value: &ibmUniqueID,
+	var policyID *string
+	ruleConditions, ruleConditionsDefined := d.GetOk("rule_conditions")
+	pattern, patternDefined := d.GetOk("pattern")
+	if ruleConditionsDefined || patternDefined {
+		policyOptions, err := flex.GenerateV2PolicyOptions(d, meta)
+
+		subjectAttribute := &iampolicymanagementv1.V2PolicySubjectAttribute{
+			Key:      core.StringPtr("iam_id"),
+			Value:    &ibmUniqueID,
+			Operator: core.StringPtr("stringEquals"),
+		}
+
+		policySubject := &iampolicymanagementv1.V2PolicySubject{
+			Attributes: []iampolicymanagementv1.V2PolicySubjectAttribute{*subjectAttribute},
+		}
+
+		accountIDResourceAttribute := &iampolicymanagementv1.V2PolicyResourceAttribute{
+			Key:      core.StringPtr("accountId"),
+			Value:    core.StringPtr(accountID),
+			Operator: core.StringPtr("stringEquals"),
+		}
+
+		policyResource := &iampolicymanagementv1.V2PolicyResource{
+			Attributes: append(policyOptions.Resource.Attributes, *accountIDResourceAttribute),
+			Tags:       flex.SetV2PolicyTags(d),
+		}
+
+		createPolicyOptions := iamPolicyManagementClient.NewCreateV2PolicyOptions(
+			policyOptions.Control,
+			"access",
+		)
+
+		createPolicyOptions.SetSubject(policySubject)
+		createPolicyOptions.SetResource(policyResource)
+
+		if patternDefined {
+			createPolicyOptions.SetPattern(pattern.(string))
+		}
+
+		if ruleConditionsDefined {
+			createPolicyOptions.SetRule(flex.GeneratePolicyRule(d, ruleConditions))
+		}
+
+		if description, ok := d.GetOk("description"); ok {
+			des := description.(string)
+			createPolicyOptions.Description = &des
+		}
+
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			createPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+		}
+
+		userPolicy, resp, err := iamPolicyManagementClient.CreateV2Policy(createPolicyOptions)
+
+		if err != nil {
+			return fmt.Errorf("Error creating user policies: %s, %s", err, resp)
+		}
+
+		policyID = userPolicy.ID
+
+	} else {
+		policyOptions, err := flex.GeneratePolicyOptions(d, meta)
+
+		if err != nil {
+			return err
+		}
+
+		subjectAttribute := &iampolicymanagementv1.SubjectAttribute{
+			Name:  core.StringPtr("iam_id"),
+			Value: &ibmUniqueID,
+		}
+
+		policySubjects := &iampolicymanagementv1.PolicySubject{
+			Attributes: []iampolicymanagementv1.SubjectAttribute{*subjectAttribute},
+		}
+
+		accountIDResourceAttribute := &iampolicymanagementv1.ResourceAttribute{
+			Name:     core.StringPtr("accountId"),
+			Value:    core.StringPtr(accountID),
+			Operator: core.StringPtr("stringEquals"),
+		}
+
+		policyResources := iampolicymanagementv1.PolicyResource{
+			Attributes: append(policyOptions.Resources[0].Attributes, *accountIDResourceAttribute),
+			Tags:       flex.SetTags(d),
+		}
+
+		createPolicyOptions := iamPolicyManagementClient.NewCreatePolicyOptions(
+			"access",
+			[]iampolicymanagementv1.PolicySubject{*policySubjects},
+			policyOptions.Roles,
+			[]iampolicymanagementv1.PolicyResource{policyResources},
+		)
+
+		if description, ok := d.GetOk("description"); ok {
+			des := description.(string)
+			createPolicyOptions.Description = &des
+		}
+
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			createPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+		}
+
+		userPolicy, resp, err := iamPolicyManagementClient.CreatePolicy(createPolicyOptions)
+		if err != nil {
+			return fmt.Errorf("Error creating user policies: %s, %s", err, resp)
+		}
+
+		policyID = userPolicy.ID
 	}
 
-	policySubjects := &iampolicymanagementv1.PolicySubject{
-		Attributes: []iampolicymanagementv1.SubjectAttribute{*subjectAttribute},
-	}
-
-	accountIDResourceAttribute := &iampolicymanagementv1.ResourceAttribute{
-		Name:     core.StringPtr("accountId"),
-		Value:    core.StringPtr(accountID),
-		Operator: core.StringPtr("stringEquals"),
-	}
-
-	policyResources := iampolicymanagementv1.PolicyResource{
-		Attributes: append(policyOptions.Resources[0].Attributes, *accountIDResourceAttribute),
-		Tags:       flex.SetTags(d),
-	}
-
-	createPolicyOptions := iamPolicyManagementClient.NewCreatePolicyOptions(
-		"access",
-		[]iampolicymanagementv1.PolicySubject{*policySubjects},
-		policyOptions.Roles,
-		[]iampolicymanagementv1.PolicyResource{policyResources},
-	)
-
-	if description, ok := d.GetOk("description"); ok {
-		des := description.(string)
-		createPolicyOptions.Description = &des
-	}
-
-	if transactionID, ok := d.GetOk("transaction_id"); ok {
-		createPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
-	}
-
-	userPolicy, resp, err := iamPolicyManagementClient.CreatePolicy(createPolicyOptions)
-	if err != nil {
-		return fmt.Errorf("Error creating user policies: %s, %s", err, resp)
-	}
-
-	getPolicyOptions := &iampolicymanagementv1.GetPolicyOptions{
-		PolicyID: userPolicy.ID,
+	getPolicyOptions := &iampolicymanagementv1.GetV2PolicyOptions{
+		ID: policyID,
 	}
 
 	if transactionID, ok := d.GetOk("transaction_id"); ok {
@@ -268,7 +380,7 @@ func resourceIBMIAMUserPolicyCreate(d *schema.ResourceData, meta interface{}) er
 
 	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
 		var err error
-		policy, res, err := iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+		policy, res, err := iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 
 		if err != nil || policy == nil {
 			if res != nil && res.StatusCode == 404 {
@@ -280,13 +392,13 @@ func resourceIBMIAMUserPolicyCreate(d *schema.ResourceData, meta interface{}) er
 	})
 
 	if conns.IsResourceTimeoutError(err) {
-		_, _, err = iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+		_, _, err = iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 	}
 	if err != nil {
-		d.SetId(fmt.Sprintf("%s/%s", userEmail, *userPolicy.ID))
+		d.SetId(fmt.Sprintf("%s/%s", userEmail, *policyID))
 		return fmt.Errorf("[ERROR] Error fetching user policy: %w", err)
 	}
-	d.SetId(fmt.Sprintf("%s/%s", userEmail, *userPolicy.ID))
+	d.SetId(fmt.Sprintf("%s/%s", userEmail, *policyID))
 
 	return resourceIBMIAMUserPolicyRead(d, meta)
 }
@@ -305,19 +417,19 @@ func resourceIBMIAMUserPolicyRead(d *schema.ResourceData, meta interface{}) erro
 	userEmail := parts[0]
 	userPolicyID := parts[1]
 
-	getPolicyOptions := &iampolicymanagementv1.GetPolicyOptions{
-		PolicyID: core.StringPtr(userPolicyID),
+	getPolicyOptions := &iampolicymanagementv1.GetV2PolicyOptions{
+		ID: core.StringPtr(userPolicyID),
 	}
 
 	if transactionID, ok := d.GetOk("transaction_id"); ok {
 		getPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
 	}
 
-	userPolicy := &iampolicymanagementv1.Policy{}
+	userPolicy := &iampolicymanagementv1.V2Policy{}
 	res := &core.DetailedResponse{}
 	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
 		var err error
-		userPolicy, res, err = iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+		userPolicy, res, err = iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 
 		if err != nil || userPolicy == nil {
 			if res != nil && res.StatusCode == 404 {
@@ -329,34 +441,39 @@ func resourceIBMIAMUserPolicyRead(d *schema.ResourceData, meta interface{}) erro
 	})
 
 	if conns.IsResourceTimeoutError(err) {
-		userPolicy, res, err = iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+		userPolicy, res, err = iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 	}
 	if err != nil || userPolicy == nil || res == nil {
 		return fmt.Errorf("[ERROR] Error retrieving userPolicy: %s %s", err, res)
 	}
 	d.Set("ibm_id", userEmail)
-	roles := make([]string, len(userPolicy.Roles))
 
-	for i, role := range userPolicy.Roles {
-		roles[i] = *role.DisplayName
-	}
+	roles, err := flex.GetRoleNamesFromPolicyResponse(*userPolicy, d, meta)
 	d.Set("roles", roles)
 	if _, ok := d.GetOk("resources"); ok {
-		d.Set("resources", flex.FlattenPolicyResource(userPolicy.Resources))
+		d.Set("resources", flex.FlattenV2PolicyResource(*userPolicy.Resource))
 	}
 	if _, ok := d.GetOk("resource_attributes"); ok {
-		d.Set("resource_attributes", flex.FlattenPolicyResourceAttributes(userPolicy.Resources))
+		d.Set("resource_attributes", flex.FlattenV2PolicyResourceAttributes(userPolicy.Resource.Attributes))
 	}
 
 	if _, ok := d.GetOk("resource_tags"); ok {
-		d.Set("resource_tags", flex.FlattenPolicyResourceTags(userPolicy.Resources))
+		d.Set("resource_tags", flex.FlattenV2PolicyResourceTags(*userPolicy.Resource))
 	}
 
-	if len(userPolicy.Resources) > 0 {
-		if *flex.GetResourceAttribute("serviceType", userPolicy.Resources[0]) == "service" {
+	if _, ok := d.GetOk("rule_conditions"); ok {
+		d.Set("rule_conditions", flex.FlattenRuleConditions(*userPolicy.Rule.(*iampolicymanagementv1.V2PolicyRule)))
+	}
+
+	if _, ok := d.GetOk("rule_operator"); ok {
+		d.Set("rule_operator", *userPolicy.Rule.(*iampolicymanagementv1.V2PolicyRule).Operator)
+	}
+
+	if (&iampolicymanagementv1.V2PolicyResource{}) != userPolicy.Resource {
+		if flex.GetV2PolicyResourceAttribute("serviceType", *userPolicy.Resource) == "service" {
 			d.Set("account_management", false)
 		}
-		if *flex.GetResourceAttribute("serviceType", userPolicy.Resources[0]) == "platform_service" {
+		if flex.GetV2PolicyResourceAttribute("serviceType", *userPolicy.Resource) == "platform_service" {
 			d.Set("account_management", true)
 		}
 	}
@@ -375,7 +492,7 @@ func resourceIBMIAMUserPolicyUpdate(d *schema.ResourceData, meta interface{}) er
 	if err != nil {
 		return err
 	}
-	if d.HasChange("roles") || d.HasChange("resources") || d.HasChange("resource_attributes") || d.HasChange("account_management") || d.HasChange("description") || d.HasChange("resource_tags") {
+	if d.HasChange("roles") || d.HasChange("resources") || d.HasChange("resource_attributes") || d.HasChange("account_management") || d.HasChange("description") || d.HasChange("resource_tags") || d.HasChange("rule_conditions") || d.HasChange("rule_operator") || d.HasChange("pattern") {
 		parts, err := flex.IdParts(d.Id())
 		if err != nil {
 			return err
@@ -390,44 +507,15 @@ func resourceIBMIAMUserPolicyUpdate(d *schema.ResourceData, meta interface{}) er
 
 		accountID := userDetails.UserAccount
 
-		createPolicyOptions, err := flex.GeneratePolicyOptions(d, meta)
-		if err != nil {
-			return err
-		}
-
-		ibmUniqueID, err := flex.GetIBMUniqueId(accountID, userEmail, meta)
-		if err != nil {
-			return err
-		}
-
-		accountIDResourceAttribute := &iampolicymanagementv1.ResourceAttribute{
-			Name:     core.StringPtr("accountId"),
-			Value:    core.StringPtr(accountID),
-			Operator: core.StringPtr("stringEquals"),
-		}
-
-		policyResources := iampolicymanagementv1.PolicyResource{
-			Attributes: append(createPolicyOptions.Resources[0].Attributes, *accountIDResourceAttribute),
-			Tags:       flex.SetTags(d),
-		}
-
-		subjectAttribute := &iampolicymanagementv1.SubjectAttribute{
-			Name:  core.StringPtr("iam_id"),
-			Value: &ibmUniqueID,
-		}
-		policySubjects := &iampolicymanagementv1.PolicySubject{
-			Attributes: []iampolicymanagementv1.SubjectAttribute{*subjectAttribute},
-		}
-
-		getPolicyOptions := &iampolicymanagementv1.GetPolicyOptions{
-			PolicyID: &userPolicyID,
+		getPolicyOptions := &iampolicymanagementv1.GetV2PolicyOptions{
+			ID: &userPolicyID,
 		}
 
 		if transactionID, ok := d.GetOk("transaction_id"); ok {
 			getPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
 		}
 
-		policy, response, err := iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+		policy, response, err := iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 		if err != nil || policy == nil {
 			if response != nil && response.StatusCode == 404 {
 				return nil
@@ -436,27 +524,120 @@ func resourceIBMIAMUserPolicyUpdate(d *schema.ResourceData, meta interface{}) er
 		}
 
 		userPolicyETag := response.Headers.Get("ETag")
-		updatePolicyOptions := iamPolicyManagementClient.NewUpdatePolicyOptions(
-			userPolicyID,
-			userPolicyETag,
-			"access",
-			[]iampolicymanagementv1.PolicySubject{*policySubjects},
-			createPolicyOptions.Roles,
-			[]iampolicymanagementv1.PolicyResource{policyResources},
-		)
 
-		if description, ok := d.GetOk("description"); ok {
-			des := description.(string)
-			updatePolicyOptions.Description = &des
-		}
-
-		if transactionID, ok := d.GetOk("transaction_id"); ok {
-			updatePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
-		}
-
-		_, resp, err := iamPolicyManagementClient.UpdatePolicy(updatePolicyOptions)
+		ibmUniqueID, err := flex.GetIBMUniqueId(accountID, userEmail, meta)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error updating user policy: %s, %s", err, resp)
+			return err
+		}
+
+		if strings.Contains(*policy.Href, "/v2/policies") {
+			createPolicyOptions, err := flex.GenerateV2PolicyOptions(d, meta)
+			if err != nil {
+				return err
+			}
+			subjectAttribute := &iampolicymanagementv1.V2PolicySubjectAttribute{
+				Key:      core.StringPtr("iam_id"),
+				Value:    &ibmUniqueID,
+				Operator: core.StringPtr("stringEquals"),
+			}
+
+			policySubject := &iampolicymanagementv1.V2PolicySubject{
+				Attributes: []iampolicymanagementv1.V2PolicySubjectAttribute{*subjectAttribute},
+			}
+
+			accountIDResourceAttribute := &iampolicymanagementv1.V2PolicyResourceAttribute{
+				Key:      core.StringPtr("accountId"),
+				Value:    core.StringPtr(accountID),
+				Operator: core.StringPtr("stringEquals"),
+			}
+
+			policyResource := &iampolicymanagementv1.V2PolicyResource{
+				Attributes: append(createPolicyOptions.Resource.Attributes, *accountIDResourceAttribute),
+				Tags:       flex.SetV2PolicyTags(d),
+			}
+
+			updatePolicyOptions := iamPolicyManagementClient.NewReplaceV2PolicyOptions(
+				userPolicyID,
+				userPolicyETag,
+				createPolicyOptions.Control,
+				"access",
+			)
+			updatePolicyOptions.SetSubject(policySubject)
+			updatePolicyOptions.SetResource(policyResource)
+
+			if pattern, ok := d.GetOk("pattern"); ok {
+				updatePolicyOptions.SetPattern(pattern.(string))
+			}
+
+			if ruleConditions, ok := d.GetOk("rule_conditions"); ok {
+				updatePolicyOptions.SetRule(flex.GeneratePolicyRule(d, ruleConditions))
+			}
+
+			if description, ok := d.GetOk("description"); ok {
+				des := description.(string)
+				updatePolicyOptions.Description = &des
+			}
+
+			if transactionID, ok := d.GetOk("transaction_id"); ok {
+				updatePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+			}
+
+			_, resp, err := iamPolicyManagementClient.ReplaceV2Policy(updatePolicyOptions)
+			if err != nil {
+				return fmt.Errorf("[ERROR] Error updating user policy: %s, %s", err, resp)
+			}
+		} else {
+			_, ruleConditionsDefined := d.GetOk("rule_conditions")
+			_, patternDefined := d.GetOk("pattern")
+			if ruleConditionsDefined || patternDefined {
+				return fmt.Errorf("Cannot use rule_conditions, rule_operator, or pattern when updating v1/policy. Delete existing v1/policy and create using rule_conditions and pattern.")
+			}
+			createPolicyOptions, err := flex.GeneratePolicyOptions(d, meta)
+			if err != nil {
+				return err
+			}
+
+			accountIDResourceAttribute := &iampolicymanagementv1.ResourceAttribute{
+				Name:     core.StringPtr("accountId"),
+				Value:    core.StringPtr(accountID),
+				Operator: core.StringPtr("stringEquals"),
+			}
+
+			policyResources := iampolicymanagementv1.PolicyResource{
+				Attributes: append(createPolicyOptions.Resources[0].Attributes, *accountIDResourceAttribute),
+				Tags:       flex.SetTags(d),
+			}
+
+			subjectAttribute := &iampolicymanagementv1.SubjectAttribute{
+				Name:  core.StringPtr("iam_id"),
+				Value: &ibmUniqueID,
+			}
+			policySubjects := &iampolicymanagementv1.PolicySubject{
+				Attributes: []iampolicymanagementv1.SubjectAttribute{*subjectAttribute},
+			}
+
+			updatePolicyOptions := iamPolicyManagementClient.NewReplacePolicyOptions(
+				userPolicyID,
+				userPolicyETag,
+				"access",
+				[]iampolicymanagementv1.PolicySubject{*policySubjects},
+				createPolicyOptions.Roles,
+				[]iampolicymanagementv1.PolicyResource{policyResources},
+			)
+
+			if description, ok := d.GetOk("description"); ok {
+				des := description.(string)
+				updatePolicyOptions.Description = &des
+			}
+
+			if transactionID, ok := d.GetOk("transaction_id"); ok {
+				updatePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+			}
+
+			_, resp, err := iamPolicyManagementClient.ReplacePolicy(updatePolicyOptions)
+			if err != nil {
+				return fmt.Errorf("[ERROR] Error updating user policy: %s, %s", err, resp)
+			}
 		}
 	}
 	return resourceIBMIAMUserPolicyRead(d, meta)
@@ -475,15 +656,37 @@ func resourceIBMIAMUserPolicyDelete(d *schema.ResourceData, meta interface{}) er
 	}
 	userPolicyID := parts[1]
 
-	deletePolicyOptions := iamPolicyManagementClient.NewDeletePolicyOptions(
+	getPolicyOptions := iamPolicyManagementClient.NewGetV2PolicyOptions(
 		userPolicyID,
 	)
 
-	if transactionID, ok := d.GetOk("transaction_id"); ok {
-		deletePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+	// Get policy to find version in href
+	policy, _, err := iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
+
+	if err != nil {
+		return err
 	}
 
-	_, err = iamPolicyManagementClient.DeletePolicy(deletePolicyOptions)
+	if strings.Contains(*policy.Href, "/v2/policies") {
+		deletePolicyOptions := iamPolicyManagementClient.NewDeleteV2PolicyOptions(
+			userPolicyID,
+		)
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			deletePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+		}
+
+		_, err = iamPolicyManagementClient.DeleteV2Policy(deletePolicyOptions)
+	} else {
+		deletePolicyOptions := iamPolicyManagementClient.NewDeletePolicyOptions(
+			userPolicyID,
+		)
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			deletePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+		}
+
+		_, err = iamPolicyManagementClient.DeletePolicy(deletePolicyOptions)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -507,11 +710,11 @@ func resourceIBMIAMUserPolicyExists(d *schema.ResourceData, meta interface{}) (b
 	userEmail := parts[0]
 	userPolicyID := parts[1]
 
-	getPolicyOptions := iamPolicyManagementClient.NewGetPolicyOptions(
+	getPolicyOptions := iamPolicyManagementClient.NewGetV2PolicyOptions(
 		userPolicyID,
 	)
 
-	userPolicy, resp, err := iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+	userPolicy, resp, err := iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 	if err != nil || userPolicy == nil {
 		if resp != nil && resp.StatusCode == 404 {
 			return false, nil
@@ -540,15 +743,15 @@ func importUserPolicy(d *schema.ResourceData, meta interface{}) (interface{}, in
 	}
 	userPolicyID := parts[1]
 
-	getPolicyOptions := iamPolicyManagementClient.NewGetPolicyOptions(
+	getPolicyOptions := iamPolicyManagementClient.NewGetV2PolicyOptions(
 		userPolicyID,
 	)
-	userPolicy, _, err := iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+	userPolicy, _, err := iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 	if err != nil {
 		return nil, nil, fmt.Errorf("[ERROR] Error retrieving User Policy: %s", err)
 	}
-	resources := flex.FlattenPolicyResource(userPolicy.Resources)
-	resource_attributes := flex.FlattenPolicyResourceAttributes(userPolicy.Resources)
-	d.Set("resource_tags", flex.FlattenPolicyResourceTags(userPolicy.Resources))
+	resources := flex.FlattenV2PolicyResource(*userPolicy.Resource)
+	resource_attributes := flex.FlattenV2PolicyResourceAttributes(userPolicy.Resource.Attributes)
+	d.Set("resource_tags", flex.FlattenV2PolicyResourceTags(*userPolicy.Resource))
 	return resources, resource_attributes, nil
 }

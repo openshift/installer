@@ -103,13 +103,6 @@ func ResourceIBMISAddressPrefixValidator() *validate.ResourceValidator {
 			MaxValueLength:             63})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 isVPCRouteDestinationCIDR,
-			ValidateFunctionIdentifier: validate.ValidateCIDRAddress,
-			Type:                       validate.TypeString,
-			ForceNew:                   true,
-			Required:                   true})
-	validateSchema = append(validateSchema,
-		validate.ValidateSchema{
 			Identifier:                 isVPCAddressPrefixCIDR,
 			ValidateFunctionIdentifier: validate.ValidateOverlappingAddress,
 			Type:                       validate.TypeString,

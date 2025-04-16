@@ -54,10 +54,12 @@ func NewPcloudVolumegroupsActionPostParamsWithHTTPClient(client *http.Client) *P
 	}
 }
 
-/* PcloudVolumegroupsActionPostParams contains all the parameters to send to the API endpoint
-   for the pcloud volumegroups action post operation.
+/*
+PcloudVolumegroupsActionPostParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud volumegroups action post operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudVolumegroupsActionPostParams struct {
 

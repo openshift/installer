@@ -69,7 +69,8 @@ func NewServiceInstanceProvisionOK() *ServiceInstanceProvisionOK {
 	return &ServiceInstanceProvisionOK{}
 }
 
-/* ServiceInstanceProvisionOK describes a response with status code 200, with default header values.
+/*
+ServiceInstanceProvisionOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -77,9 +78,39 @@ type ServiceInstanceProvisionOK struct {
 	Payload *models.ServiceInstanceProvision
 }
 
+// IsSuccess returns true when this service instance provision o k response has a 2xx status code
+func (o *ServiceInstanceProvisionOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service instance provision o k response has a 3xx status code
+func (o *ServiceInstanceProvisionOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance provision o k response has a 4xx status code
+func (o *ServiceInstanceProvisionOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service instance provision o k response has a 5xx status code
+func (o *ServiceInstanceProvisionOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance provision o k response a status code equal to that given
+func (o *ServiceInstanceProvisionOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceInstanceProvisionOK) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceInstanceProvisionOK) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceInstanceProvisionOK) GetPayload() *models.ServiceInstanceProvision {
 	return o.Payload
 }
@@ -101,7 +132,8 @@ func NewServiceInstanceProvisionCreated() *ServiceInstanceProvisionCreated {
 	return &ServiceInstanceProvisionCreated{}
 }
 
-/* ServiceInstanceProvisionCreated describes a response with status code 201, with default header values.
+/*
+ServiceInstanceProvisionCreated describes a response with status code 201, with default header values.
 
 Created
 */
@@ -109,9 +141,39 @@ type ServiceInstanceProvisionCreated struct {
 	Payload *models.ServiceInstanceProvision
 }
 
+// IsSuccess returns true when this service instance provision created response has a 2xx status code
+func (o *ServiceInstanceProvisionCreated) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service instance provision created response has a 3xx status code
+func (o *ServiceInstanceProvisionCreated) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance provision created response has a 4xx status code
+func (o *ServiceInstanceProvisionCreated) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service instance provision created response has a 5xx status code
+func (o *ServiceInstanceProvisionCreated) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance provision created response a status code equal to that given
+func (o *ServiceInstanceProvisionCreated) IsCode(code int) bool {
+	return code == 201
+}
+
 func (o *ServiceInstanceProvisionCreated) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionCreated  %+v", 201, o.Payload)
 }
+
+func (o *ServiceInstanceProvisionCreated) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionCreated  %+v", 201, o.Payload)
+}
+
 func (o *ServiceInstanceProvisionCreated) GetPayload() *models.ServiceInstanceProvision {
 	return o.Payload
 }
@@ -133,7 +195,8 @@ func NewServiceInstanceProvisionAccepted() *ServiceInstanceProvisionAccepted {
 	return &ServiceInstanceProvisionAccepted{}
 }
 
-/* ServiceInstanceProvisionAccepted describes a response with status code 202, with default header values.
+/*
+ServiceInstanceProvisionAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -141,9 +204,39 @@ type ServiceInstanceProvisionAccepted struct {
 	Payload *models.ServiceInstanceAsyncOperation
 }
 
+// IsSuccess returns true when this service instance provision accepted response has a 2xx status code
+func (o *ServiceInstanceProvisionAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service instance provision accepted response has a 3xx status code
+func (o *ServiceInstanceProvisionAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance provision accepted response has a 4xx status code
+func (o *ServiceInstanceProvisionAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service instance provision accepted response has a 5xx status code
+func (o *ServiceInstanceProvisionAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance provision accepted response a status code equal to that given
+func (o *ServiceInstanceProvisionAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
 func (o *ServiceInstanceProvisionAccepted) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionAccepted  %+v", 202, o.Payload)
 }
+
+func (o *ServiceInstanceProvisionAccepted) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionAccepted  %+v", 202, o.Payload)
+}
+
 func (o *ServiceInstanceProvisionAccepted) GetPayload() *models.ServiceInstanceAsyncOperation {
 	return o.Payload
 }
@@ -165,7 +258,8 @@ func NewServiceInstanceProvisionBadRequest() *ServiceInstanceProvisionBadRequest
 	return &ServiceInstanceProvisionBadRequest{}
 }
 
-/* ServiceInstanceProvisionBadRequest describes a response with status code 400, with default header values.
+/*
+ServiceInstanceProvisionBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -173,9 +267,39 @@ type ServiceInstanceProvisionBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service instance provision bad request response has a 2xx status code
+func (o *ServiceInstanceProvisionBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance provision bad request response has a 3xx status code
+func (o *ServiceInstanceProvisionBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance provision bad request response has a 4xx status code
+func (o *ServiceInstanceProvisionBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance provision bad request response has a 5xx status code
+func (o *ServiceInstanceProvisionBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance provision bad request response a status code equal to that given
+func (o *ServiceInstanceProvisionBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *ServiceInstanceProvisionBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *ServiceInstanceProvisionBadRequest) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *ServiceInstanceProvisionBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -197,7 +321,8 @@ func NewServiceInstanceProvisionConflict() *ServiceInstanceProvisionConflict {
 	return &ServiceInstanceProvisionConflict{}
 }
 
-/* ServiceInstanceProvisionConflict describes a response with status code 409, with default header values.
+/*
+ServiceInstanceProvisionConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -205,9 +330,39 @@ type ServiceInstanceProvisionConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service instance provision conflict response has a 2xx status code
+func (o *ServiceInstanceProvisionConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance provision conflict response has a 3xx status code
+func (o *ServiceInstanceProvisionConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance provision conflict response has a 4xx status code
+func (o *ServiceInstanceProvisionConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance provision conflict response has a 5xx status code
+func (o *ServiceInstanceProvisionConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance provision conflict response a status code equal to that given
+func (o *ServiceInstanceProvisionConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *ServiceInstanceProvisionConflict) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionConflict  %+v", 409, o.Payload)
 }
+
+func (o *ServiceInstanceProvisionConflict) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionConflict  %+v", 409, o.Payload)
+}
+
 func (o *ServiceInstanceProvisionConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -229,7 +384,8 @@ func NewServiceInstanceProvisionUnprocessableEntity() *ServiceInstanceProvisionU
 	return &ServiceInstanceProvisionUnprocessableEntity{}
 }
 
-/* ServiceInstanceProvisionUnprocessableEntity describes a response with status code 422, with default header values.
+/*
+ServiceInstanceProvisionUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -237,9 +393,39 @@ type ServiceInstanceProvisionUnprocessableEntity struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service instance provision unprocessable entity response has a 2xx status code
+func (o *ServiceInstanceProvisionUnprocessableEntity) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance provision unprocessable entity response has a 3xx status code
+func (o *ServiceInstanceProvisionUnprocessableEntity) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance provision unprocessable entity response has a 4xx status code
+func (o *ServiceInstanceProvisionUnprocessableEntity) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance provision unprocessable entity response has a 5xx status code
+func (o *ServiceInstanceProvisionUnprocessableEntity) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance provision unprocessable entity response a status code equal to that given
+func (o *ServiceInstanceProvisionUnprocessableEntity) IsCode(code int) bool {
+	return code == 422
+}
+
 func (o *ServiceInstanceProvisionUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionUnprocessableEntity  %+v", 422, o.Payload)
 }
+
+func (o *ServiceInstanceProvisionUnprocessableEntity) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionUnprocessableEntity  %+v", 422, o.Payload)
+}
+
 func (o *ServiceInstanceProvisionUnprocessableEntity) GetPayload() *models.Error {
 	return o.Payload
 }

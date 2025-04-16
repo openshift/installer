@@ -188,10 +188,10 @@ func enWebhookDestinationConfigToMap(configItem en.DestinationConfig) (configMap
 	return configMap
 }
 
-func enWebhookDestinationConfigParamsToMap(paramsItem en.DestinationConfigParamsIntf) (paramsMap map[string]interface{}) {
+func enWebhookDestinationConfigParamsToMap(paramsItem en.DestinationConfigOneOfIntf) (paramsMap map[string]interface{}) {
 	paramsMap = map[string]interface{}{}
 
-	params := paramsItem.(*en.DestinationConfigParams)
+	params := paramsItem.(*en.DestinationConfigOneOf)
 
 	if params.URL != nil {
 		paramsMap["url"] = params.URL

@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.53.0-9710cac3-20220713-193508
+ * IBM OpenAPI SDK Code Generator Version: 3.57.1-4c556507-20220928-143422
  */
 
 // Package contextbasedrestrictionsv1 : Operations and models for the ContextBasedRestrictionsV1 service
@@ -726,6 +726,9 @@ func (contextBasedRestrictions *ContextBasedRestrictionsV1) ListRulesWithContext
 	}
 	if listRulesOptions.ServiceType != nil {
 		builder.AddQuery("service_type", fmt.Sprint(*listRulesOptions.ServiceType))
+	}
+	if listRulesOptions.ServiceGroupID != nil {
+		builder.AddQuery("service_group_id", fmt.Sprint(*listRulesOptions.ServiceGroupID))
 	}
 	if listRulesOptions.ZoneID != nil {
 		builder.AddQuery("zone_id", fmt.Sprint(*listRulesOptions.ZoneID))
@@ -1885,6 +1888,9 @@ type ListRulesOptions struct {
 	// The rule's `serviceType` resource attribute.
 	ServiceType *string `json:"service_type,omitempty"`
 
+	// The rule's `service_group_id` resource attribute.
+	ServiceGroupID *string `json:"service_group_id,omitempty"`
+
 	// The globally unique ID of the zone.
 	ZoneID *string `json:"zone_id,omitempty"`
 
@@ -1965,6 +1971,12 @@ func (_options *ListRulesOptions) SetServiceName(serviceName string) *ListRulesO
 // SetServiceType : Allow user to set ServiceType
 func (_options *ListRulesOptions) SetServiceType(serviceType string) *ListRulesOptions {
 	_options.ServiceType = core.StringPtr(serviceType)
+	return _options
+}
+
+// SetServiceGroupID : Allow user to set ServiceGroupID
+func (_options *ListRulesOptions) SetServiceGroupID(serviceGroupID string) *ListRulesOptions {
+	_options.ServiceGroupID = core.StringPtr(serviceGroupID)
 	return _options
 }
 

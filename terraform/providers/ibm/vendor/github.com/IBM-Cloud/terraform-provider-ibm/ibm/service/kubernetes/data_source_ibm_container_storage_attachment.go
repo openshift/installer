@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -24,6 +25,9 @@ func DataSourceIBMContainerVpcWorkerVolumeAttachment() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Cluster name or ID",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_container_nlb_dns",
+					"cluster"),
 			},
 
 			"worker": {
@@ -37,6 +41,9 @@ func DataSourceIBMContainerVpcWorkerVolumeAttachment() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Description: "ID of the resource group.",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_container_nlb_dns",
+					"resource_group_id"),
 			},
 
 			"volume": {
@@ -63,6 +70,28 @@ func DataSourceIBMContainerVpcWorkerVolumeAttachment() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMContainerVpcWorkerVolumeAttachmentValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "resource_group_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			CloudDataType:              "resource_group",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMContainerVpcWorkerVolumeAttachmentValidator := validate.ResourceValidator{ResourceName: "ibm_container_nlb_dns", Schema: validateSchema}
+	return &iBMContainerVpcWorkerVolumeAttachmentValidator
 }
 
 func dataSourceIBMContainerVpcWorkerVolumeAttachmentRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2021.
+ * (C) Copyright IBM Corp. 2023.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.30.0-bd714324-20210406-200538
+ * IBM OpenAPI SDK Code Generator Version: 3.64.1-cee95189-20230124-211647
  */
 
 // Package enterprisemanagementv1 : Operations and models for the EnterpriseManagementV1 service
@@ -37,7 +37,7 @@ import (
 // EnterpriseManagementV1 : The Enterprise Management API enables you to create and manage an enterprise, account
 // groups, and accounts within the enterprise.
 //
-// Version: 1.0
+// API Version: 1.0
 type EnterpriseManagementV1 struct {
 	Service *core.BaseService
 }
@@ -230,11 +230,13 @@ func (enterpriseManagement *EnterpriseManagementV1) CreateEnterpriseWithContext(
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateEnterpriseResponse)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateEnterpriseResponse)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -303,11 +305,13 @@ func (enterpriseManagement *EnterpriseManagementV1) ListEnterprisesWithContext(c
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListEnterprisesResponse)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListEnterprisesResponse)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -362,11 +366,13 @@ func (enterpriseManagement *EnterpriseManagementV1) GetEnterpriseWithContext(ctx
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEnterprise)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEnterprise)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -553,6 +559,9 @@ func (enterpriseManagement *EnterpriseManagementV1) CreateAccountWithContext(ctx
 	if createAccountOptions.OwnerIamID != nil {
 		body["owner_iam_id"] = createAccountOptions.OwnerIamID
 	}
+	if createAccountOptions.Traits != nil {
+		body["traits"] = createAccountOptions.Traits
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
@@ -568,11 +577,13 @@ func (enterpriseManagement *EnterpriseManagementV1) CreateAccountWithContext(ctx
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateAccountResponse)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateAccountResponse)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -631,6 +642,9 @@ func (enterpriseManagement *EnterpriseManagementV1) ListAccountsWithContext(ctx 
 	if listAccountsOptions.Limit != nil {
 		builder.AddQuery("limit", fmt.Sprint(*listAccountsOptions.Limit))
 	}
+	if listAccountsOptions.IncludeDeleted != nil {
+		builder.AddQuery("include_deleted", fmt.Sprint(*listAccountsOptions.IncludeDeleted))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -642,11 +656,13 @@ func (enterpriseManagement *EnterpriseManagementV1) ListAccountsWithContext(ctx 
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListAccountsResponse)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListAccountsResponse)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -701,11 +717,13 @@ func (enterpriseManagement *EnterpriseManagementV1) GetAccountWithContext(ctx co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccount)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccount)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -756,6 +774,55 @@ func (enterpriseManagement *EnterpriseManagementV1) UpdateAccountWithContext(ctx
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = enterpriseManagement.Service.Request(request, nil)
+
+	return
+}
+
+// DeleteAccount : Remove an account from its enterprise
+// Remove an account from the enterprise its currently in. After an account is removed, it will be canceled and cannot
+// be reactivated.
+func (enterpriseManagement *EnterpriseManagementV1) DeleteAccount(deleteAccountOptions *DeleteAccountOptions) (response *core.DetailedResponse, err error) {
+	return enterpriseManagement.DeleteAccountWithContext(context.Background(), deleteAccountOptions)
+}
+
+// DeleteAccountWithContext is an alternate form of the DeleteAccount method which supports a Context parameter
+func (enterpriseManagement *EnterpriseManagementV1) DeleteAccountWithContext(ctx context.Context, deleteAccountOptions *DeleteAccountOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteAccountOptions, "deleteAccountOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(deleteAccountOptions, "deleteAccountOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id": *deleteAccountOptions.AccountID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/accounts/{account_id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range deleteAccountOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("enterprise_management", "V1", "DeleteAccount")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
 	}
 
 	request, err := builder.Build()
@@ -831,11 +898,13 @@ func (enterpriseManagement *EnterpriseManagementV1) CreateAccountGroupWithContex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateAccountGroupResponse)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateAccountGroupResponse)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -895,6 +964,9 @@ func (enterpriseManagement *EnterpriseManagementV1) ListAccountGroupsWithContext
 	if listAccountGroupsOptions.Limit != nil {
 		builder.AddQuery("limit", fmt.Sprint(*listAccountGroupsOptions.Limit))
 	}
+	if listAccountGroupsOptions.IncludeDeleted != nil {
+		builder.AddQuery("include_deleted", fmt.Sprint(*listAccountGroupsOptions.IncludeDeleted))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -906,11 +978,13 @@ func (enterpriseManagement *EnterpriseManagementV1) ListAccountGroupsWithContext
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListAccountGroupsResponse)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListAccountGroupsResponse)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -965,11 +1039,13 @@ func (enterpriseManagement *EnterpriseManagementV1) GetAccountGroupWithContext(c
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountGroup)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountGroup)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1024,6 +1100,56 @@ func (enterpriseManagement *EnterpriseManagementV1) UpdateAccountGroupWithContex
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = enterpriseManagement.Service.Request(request, nil)
+
+	return
+}
+
+// DeleteAccountGroup : Delete an account group from the enterprise
+// Delete an existing account group from the enterprise. You can't delete an account group that has child account
+// groups, the delete request will fail. This API doesn't perform a recursive delete on the child account groups, it
+// only deletes the current account group.
+func (enterpriseManagement *EnterpriseManagementV1) DeleteAccountGroup(deleteAccountGroupOptions *DeleteAccountGroupOptions) (response *core.DetailedResponse, err error) {
+	return enterpriseManagement.DeleteAccountGroupWithContext(context.Background(), deleteAccountGroupOptions)
+}
+
+// DeleteAccountGroupWithContext is an alternate form of the DeleteAccountGroup method which supports a Context parameter
+func (enterpriseManagement *EnterpriseManagementV1) DeleteAccountGroupWithContext(ctx context.Context, deleteAccountGroupOptions *DeleteAccountGroupOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteAccountGroupOptions, "deleteAccountGroupOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(deleteAccountGroupOptions, "deleteAccountGroupOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_group_id": *deleteAccountGroupOptions.AccountGroupID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = enterpriseManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(enterpriseManagement.Service.Options.URL, `/account-groups/{account_group_id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range deleteAccountGroupOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("enterprise_management", "V1", "DeleteAccountGroup")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
 	}
 
 	request, err := builder.Build()
@@ -1284,13 +1410,13 @@ func UnmarshalAccountGroup(m map[string]json.RawMessage, result interface{}) (er
 type CreateAccountGroupOptions struct {
 	// The CRN of the parent under which the account group will be created. The parent can be an existing account group or
 	// the enterprise itself.
-	Parent *string `validate:"required"`
+	Parent *string `json:"parent" validate:"required"`
 
 	// The name of the account group. This field must have 3 - 60 characters.
-	Name *string `validate:"required"`
+	Name *string `json:"name" validate:"required"`
 
 	// The IAM ID of the primary contact for this account group, such as `IBMid-0123ABC`. The IAM ID must already exist.
-	PrimaryContactIamID *string `validate:"required"`
+	PrimaryContactIamID *string `json:"primary_contact_iam_id" validate:"required"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1306,21 +1432,21 @@ func (*EnterpriseManagementV1) NewCreateAccountGroupOptions(parent string, name 
 }
 
 // SetParent : Allow user to set Parent
-func (options *CreateAccountGroupOptions) SetParent(parent string) *CreateAccountGroupOptions {
-	options.Parent = core.StringPtr(parent)
-	return options
+func (_options *CreateAccountGroupOptions) SetParent(parent string) *CreateAccountGroupOptions {
+	_options.Parent = core.StringPtr(parent)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateAccountGroupOptions) SetName(name string) *CreateAccountGroupOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateAccountGroupOptions) SetName(name string) *CreateAccountGroupOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetPrimaryContactIamID : Allow user to set PrimaryContactIamID
-func (options *CreateAccountGroupOptions) SetPrimaryContactIamID(primaryContactIamID string) *CreateAccountGroupOptions {
-	options.PrimaryContactIamID = core.StringPtr(primaryContactIamID)
-	return options
+func (_options *CreateAccountGroupOptions) SetPrimaryContactIamID(primaryContactIamID string) *CreateAccountGroupOptions {
+	_options.PrimaryContactIamID = core.StringPtr(primaryContactIamID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1350,13 +1476,18 @@ func UnmarshalCreateAccountGroupResponse(m map[string]json.RawMessage, result in
 type CreateAccountOptions struct {
 	// The CRN of the parent under which the account will be created. The parent can be an existing account group or the
 	// enterprise itself.
-	Parent *string `validate:"required"`
+	Parent *string `json:"parent" validate:"required"`
 
 	// The name of the account. This field must have 3 - 60 characters.
-	Name *string `validate:"required"`
+	Name *string `json:"name" validate:"required"`
 
 	// The IAM ID of the account owner, such as `IBMid-0123ABC`. The IAM ID must already exist.
-	OwnerIamID *string `validate:"required"`
+	OwnerIamID *string `json:"owner_iam_id" validate:"required"`
+
+	// The traits object can be used to set properties on child accounts of an enterprise. You can pass a field to opt-out
+	// of Multi-Factor Authentication setting or setup enterprise IAM settings when creating a child account in the
+	// enterprise. This is an optional field.
+	Traits *CreateAccountRequestTraits `json:"traits,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1372,27 +1503,61 @@ func (*EnterpriseManagementV1) NewCreateAccountOptions(parent string, name strin
 }
 
 // SetParent : Allow user to set Parent
-func (options *CreateAccountOptions) SetParent(parent string) *CreateAccountOptions {
-	options.Parent = core.StringPtr(parent)
-	return options
+func (_options *CreateAccountOptions) SetParent(parent string) *CreateAccountOptions {
+	_options.Parent = core.StringPtr(parent)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateAccountOptions) SetName(name string) *CreateAccountOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateAccountOptions) SetName(name string) *CreateAccountOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetOwnerIamID : Allow user to set OwnerIamID
-func (options *CreateAccountOptions) SetOwnerIamID(ownerIamID string) *CreateAccountOptions {
-	options.OwnerIamID = core.StringPtr(ownerIamID)
-	return options
+func (_options *CreateAccountOptions) SetOwnerIamID(ownerIamID string) *CreateAccountOptions {
+	_options.OwnerIamID = core.StringPtr(ownerIamID)
+	return _options
+}
+
+// SetTraits : Allow user to set Traits
+func (_options *CreateAccountOptions) SetTraits(traits *CreateAccountRequestTraits) *CreateAccountOptions {
+	_options.Traits = traits
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
 func (options *CreateAccountOptions) SetHeaders(param map[string]string) *CreateAccountOptions {
 	options.Headers = param
 	return options
+}
+
+// CreateAccountRequestTraits : The traits object can be used to set properties on child accounts of an enterprise. You can pass a field to opt-out
+// of Multi-Factor Authentication setting or setup enterprise IAM settings when creating a child account in the
+// enterprise. This is an optional field.
+type CreateAccountRequestTraits struct {
+	// By default MFA will be enabled on a child account. To opt out, pass the traits object with the mfa field set to
+	// empty string. This is an optional field.
+	Mfa *string `json:"mfa,omitempty"`
+
+	// The Enterprise IAM settings property will be turned off for a newly created child account by default. You can enable
+	// this property by passing 'true' in this boolean field. This is an optional field.
+	EnterpriseIamManaged *bool `json:"enterprise_iam_managed,omitempty"`
+}
+
+// UnmarshalCreateAccountRequestTraits unmarshals an instance of CreateAccountRequestTraits from the specified map of raw messages.
+func UnmarshalCreateAccountRequestTraits(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(CreateAccountRequestTraits)
+	err = core.UnmarshalPrimitive(m, "mfa", &obj.Mfa)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "enterprise_iam_managed", &obj.EnterpriseIamManaged)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // CreateAccountResponse : A newly-created account.
@@ -1415,16 +1580,16 @@ func UnmarshalCreateAccountResponse(m map[string]json.RawMessage, result interfa
 // CreateEnterpriseOptions : The CreateEnterprise options.
 type CreateEnterpriseOptions struct {
 	// The ID of the account that is used to create the enterprise.
-	SourceAccountID *string `validate:"required"`
+	SourceAccountID *string `json:"source_account_id" validate:"required"`
 
 	// The name of the enterprise. This field must have 3 - 60 characters.
-	Name *string `validate:"required"`
+	Name *string `json:"name" validate:"required"`
 
 	// The IAM ID of the enterprise primary contact, such as `IBMid-0123ABC`. The IAM ID must already exist.
-	PrimaryContactIamID *string `validate:"required"`
+	PrimaryContactIamID *string `json:"primary_contact_iam_id" validate:"required"`
 
 	// A domain or subdomain for the enterprise, such as `example.com` or `my.example.com`.
-	Domain *string
+	Domain *string `json:"domain,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1440,27 +1605,27 @@ func (*EnterpriseManagementV1) NewCreateEnterpriseOptions(sourceAccountID string
 }
 
 // SetSourceAccountID : Allow user to set SourceAccountID
-func (options *CreateEnterpriseOptions) SetSourceAccountID(sourceAccountID string) *CreateEnterpriseOptions {
-	options.SourceAccountID = core.StringPtr(sourceAccountID)
-	return options
+func (_options *CreateEnterpriseOptions) SetSourceAccountID(sourceAccountID string) *CreateEnterpriseOptions {
+	_options.SourceAccountID = core.StringPtr(sourceAccountID)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *CreateEnterpriseOptions) SetName(name string) *CreateEnterpriseOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateEnterpriseOptions) SetName(name string) *CreateEnterpriseOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetPrimaryContactIamID : Allow user to set PrimaryContactIamID
-func (options *CreateEnterpriseOptions) SetPrimaryContactIamID(primaryContactIamID string) *CreateEnterpriseOptions {
-	options.PrimaryContactIamID = core.StringPtr(primaryContactIamID)
-	return options
+func (_options *CreateEnterpriseOptions) SetPrimaryContactIamID(primaryContactIamID string) *CreateEnterpriseOptions {
+	_options.PrimaryContactIamID = core.StringPtr(primaryContactIamID)
+	return _options
 }
 
 // SetDomain : Allow user to set Domain
-func (options *CreateEnterpriseOptions) SetDomain(domain string) *CreateEnterpriseOptions {
-	options.Domain = core.StringPtr(domain)
-	return options
+func (_options *CreateEnterpriseOptions) SetDomain(domain string) *CreateEnterpriseOptions {
+	_options.Domain = core.StringPtr(domain)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1492,6 +1657,62 @@ func UnmarshalCreateEnterpriseResponse(m map[string]json.RawMessage, result inte
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// DeleteAccountGroupOptions : The DeleteAccountGroup options.
+type DeleteAccountGroupOptions struct {
+	// The ID of the account group to retrieve.
+	AccountGroupID *string `json:"account_group_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewDeleteAccountGroupOptions : Instantiate DeleteAccountGroupOptions
+func (*EnterpriseManagementV1) NewDeleteAccountGroupOptions(accountGroupID string) *DeleteAccountGroupOptions {
+	return &DeleteAccountGroupOptions{
+		AccountGroupID: core.StringPtr(accountGroupID),
+	}
+}
+
+// SetAccountGroupID : Allow user to set AccountGroupID
+func (_options *DeleteAccountGroupOptions) SetAccountGroupID(accountGroupID string) *DeleteAccountGroupOptions {
+	_options.AccountGroupID = core.StringPtr(accountGroupID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteAccountGroupOptions) SetHeaders(param map[string]string) *DeleteAccountGroupOptions {
+	options.Headers = param
+	return options
+}
+
+// DeleteAccountOptions : The DeleteAccount options.
+type DeleteAccountOptions struct {
+	// The ID of the target account.
+	AccountID *string `json:"account_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewDeleteAccountOptions : Instantiate DeleteAccountOptions
+func (*EnterpriseManagementV1) NewDeleteAccountOptions(accountID string) *DeleteAccountOptions {
+	return &DeleteAccountOptions{
+		AccountID: core.StringPtr(accountID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *DeleteAccountOptions) SetAccountID(accountID string) *DeleteAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteAccountOptions) SetHeaders(param map[string]string) *DeleteAccountOptions {
+	options.Headers = param
+	return options
 }
 
 // Enterprise : An enterprise resource.
@@ -1598,7 +1819,7 @@ func UnmarshalEnterprise(m map[string]json.RawMessage, result interface{}) (err 
 // GetAccountGroupOptions : The GetAccountGroup options.
 type GetAccountGroupOptions struct {
 	// The ID of the account group to retrieve.
-	AccountGroupID *string `validate:"required,ne="`
+	AccountGroupID *string `json:"account_group_id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1612,9 +1833,9 @@ func (*EnterpriseManagementV1) NewGetAccountGroupOptions(accountGroupID string) 
 }
 
 // SetAccountGroupID : Allow user to set AccountGroupID
-func (options *GetAccountGroupOptions) SetAccountGroupID(accountGroupID string) *GetAccountGroupOptions {
-	options.AccountGroupID = core.StringPtr(accountGroupID)
-	return options
+func (_options *GetAccountGroupOptions) SetAccountGroupID(accountGroupID string) *GetAccountGroupOptions {
+	_options.AccountGroupID = core.StringPtr(accountGroupID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1625,8 +1846,8 @@ func (options *GetAccountGroupOptions) SetHeaders(param map[string]string) *GetA
 
 // GetAccountOptions : The GetAccount options.
 type GetAccountOptions struct {
-	// The ID of the account to retrieve.
-	AccountID *string `validate:"required,ne="`
+	// The ID of the target account.
+	AccountID *string `json:"account_id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1640,9 +1861,9 @@ func (*EnterpriseManagementV1) NewGetAccountOptions(accountID string) *GetAccoun
 }
 
 // SetAccountID : Allow user to set AccountID
-func (options *GetAccountOptions) SetAccountID(accountID string) *GetAccountOptions {
-	options.AccountID = core.StringPtr(accountID)
-	return options
+func (_options *GetAccountOptions) SetAccountID(accountID string) *GetAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1654,7 +1875,7 @@ func (options *GetAccountOptions) SetHeaders(param map[string]string) *GetAccoun
 // GetEnterpriseOptions : The GetEnterprise options.
 type GetEnterpriseOptions struct {
 	// The ID of the enterprise to retrieve.
-	EnterpriseID *string `validate:"required,ne="`
+	EnterpriseID *string `json:"enterprise_id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1668,9 +1889,9 @@ func (*EnterpriseManagementV1) NewGetEnterpriseOptions(enterpriseID string) *Get
 }
 
 // SetEnterpriseID : Allow user to set EnterpriseID
-func (options *GetEnterpriseOptions) SetEnterpriseID(enterpriseID string) *GetEnterpriseOptions {
-	options.EnterpriseID = core.StringPtr(enterpriseID)
-	return options
+func (_options *GetEnterpriseOptions) SetEnterpriseID(enterpriseID string) *GetEnterpriseOptions {
+	_options.EnterpriseID = core.StringPtr(enterpriseID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1682,18 +1903,18 @@ func (options *GetEnterpriseOptions) SetHeaders(param map[string]string) *GetEnt
 // ImportAccountToEnterpriseOptions : The ImportAccountToEnterprise options.
 type ImportAccountToEnterpriseOptions struct {
 	// The ID of the enterprise to import the stand-alone account into.
-	EnterpriseID *string `validate:"required,ne="`
+	EnterpriseID *string `json:"enterprise_id" validate:"required,ne="`
 
 	// The ID of the existing stand-alone account to be imported.
-	AccountID *string `validate:"required,ne="`
+	AccountID *string `json:"account_id" validate:"required,ne="`
 
 	// The CRN of the expected parent of the imported account. The parent is the enterprise or account group that the
 	// account is added to.
-	Parent *string
+	Parent *string `json:"parent,omitempty"`
 
 	// The ID of the [billing unit](/apidocs/enterprise-apis/billing-unit) to use for billing this account in the
 	// enterprise.
-	BillingUnitID *string
+	BillingUnitID *string `json:"billing_unit_id,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1708,27 +1929,27 @@ func (*EnterpriseManagementV1) NewImportAccountToEnterpriseOptions(enterpriseID 
 }
 
 // SetEnterpriseID : Allow user to set EnterpriseID
-func (options *ImportAccountToEnterpriseOptions) SetEnterpriseID(enterpriseID string) *ImportAccountToEnterpriseOptions {
-	options.EnterpriseID = core.StringPtr(enterpriseID)
-	return options
+func (_options *ImportAccountToEnterpriseOptions) SetEnterpriseID(enterpriseID string) *ImportAccountToEnterpriseOptions {
+	_options.EnterpriseID = core.StringPtr(enterpriseID)
+	return _options
 }
 
 // SetAccountID : Allow user to set AccountID
-func (options *ImportAccountToEnterpriseOptions) SetAccountID(accountID string) *ImportAccountToEnterpriseOptions {
-	options.AccountID = core.StringPtr(accountID)
-	return options
+func (_options *ImportAccountToEnterpriseOptions) SetAccountID(accountID string) *ImportAccountToEnterpriseOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
 }
 
 // SetParent : Allow user to set Parent
-func (options *ImportAccountToEnterpriseOptions) SetParent(parent string) *ImportAccountToEnterpriseOptions {
-	options.Parent = core.StringPtr(parent)
-	return options
+func (_options *ImportAccountToEnterpriseOptions) SetParent(parent string) *ImportAccountToEnterpriseOptions {
+	_options.Parent = core.StringPtr(parent)
+	return _options
 }
 
 // SetBillingUnitID : Allow user to set BillingUnitID
-func (options *ImportAccountToEnterpriseOptions) SetBillingUnitID(billingUnitID string) *ImportAccountToEnterpriseOptions {
-	options.BillingUnitID = core.StringPtr(billingUnitID)
-	return options
+func (_options *ImportAccountToEnterpriseOptions) SetBillingUnitID(billingUnitID string) *ImportAccountToEnterpriseOptions {
+	_options.BillingUnitID = core.StringPtr(billingUnitID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1740,20 +1961,23 @@ func (options *ImportAccountToEnterpriseOptions) SetHeaders(param map[string]str
 // ListAccountGroupsOptions : The ListAccountGroups options.
 type ListAccountGroupsOptions struct {
 	// Get account groups that are either immediate children or are a part of the hierarchy for a given enterprise ID.
-	EnterpriseID *string
+	EnterpriseID *string `json:"enterprise_id,omitempty"`
 
 	// Get account groups that are either immediate children or are a part of the hierarchy for a given account group ID.
-	ParentAccountGroupID *string
+	ParentAccountGroupID *string `json:"parent_account_group_id,omitempty"`
 
 	// The first item to be returned in the page of results. This value can be obtained from the next_url property from the
 	// previous call of the operation. If not specified, then the first page of results is returned.
-	NextDocid *string
+	NextDocid *string `json:"next_docid,omitempty"`
 
 	// Get account groups that are either immediate children or are a part of the hierarchy for a given parent CRN.
-	Parent *string
+	Parent *string `json:"parent,omitempty"`
 
 	// Return results up to this limit. Valid values are between `0` and `100`.
-	Limit *int64
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Include the deleted account groups from an enterprise when used in conjunction with other query parameters.
+	IncludeDeleted *bool `json:"include_deleted,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1765,33 +1989,39 @@ func (*EnterpriseManagementV1) NewListAccountGroupsOptions() *ListAccountGroupsO
 }
 
 // SetEnterpriseID : Allow user to set EnterpriseID
-func (options *ListAccountGroupsOptions) SetEnterpriseID(enterpriseID string) *ListAccountGroupsOptions {
-	options.EnterpriseID = core.StringPtr(enterpriseID)
-	return options
+func (_options *ListAccountGroupsOptions) SetEnterpriseID(enterpriseID string) *ListAccountGroupsOptions {
+	_options.EnterpriseID = core.StringPtr(enterpriseID)
+	return _options
 }
 
 // SetParentAccountGroupID : Allow user to set ParentAccountGroupID
-func (options *ListAccountGroupsOptions) SetParentAccountGroupID(parentAccountGroupID string) *ListAccountGroupsOptions {
-	options.ParentAccountGroupID = core.StringPtr(parentAccountGroupID)
-	return options
+func (_options *ListAccountGroupsOptions) SetParentAccountGroupID(parentAccountGroupID string) *ListAccountGroupsOptions {
+	_options.ParentAccountGroupID = core.StringPtr(parentAccountGroupID)
+	return _options
 }
 
 // SetNextDocid : Allow user to set NextDocid
-func (options *ListAccountGroupsOptions) SetNextDocid(nextDocid string) *ListAccountGroupsOptions {
-	options.NextDocid = core.StringPtr(nextDocid)
-	return options
+func (_options *ListAccountGroupsOptions) SetNextDocid(nextDocid string) *ListAccountGroupsOptions {
+	_options.NextDocid = core.StringPtr(nextDocid)
+	return _options
 }
 
 // SetParent : Allow user to set Parent
-func (options *ListAccountGroupsOptions) SetParent(parent string) *ListAccountGroupsOptions {
-	options.Parent = core.StringPtr(parent)
-	return options
+func (_options *ListAccountGroupsOptions) SetParent(parent string) *ListAccountGroupsOptions {
+	_options.Parent = core.StringPtr(parent)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListAccountGroupsOptions) SetLimit(limit int64) *ListAccountGroupsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListAccountGroupsOptions) SetLimit(limit int64) *ListAccountGroupsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetIncludeDeleted : Allow user to set IncludeDeleted
+func (_options *ListAccountGroupsOptions) SetIncludeDeleted(includeDeleted bool) *ListAccountGroupsOptions {
+	_options.IncludeDeleted = core.BoolPtr(includeDeleted)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1831,23 +2061,38 @@ func UnmarshalListAccountGroupsResponse(m map[string]json.RawMessage, result int
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ListAccountGroupsResponse) GetNextNextDocid() (*string, error) {
+	if core.IsNil(resp.NextURL) {
+		return nil, nil
+	}
+	next_docid, err := core.GetQueryParam(resp.NextURL, "next_docid")
+	if err != nil || next_docid == nil {
+		return nil, err
+	}
+	return next_docid, nil
+}
+
 // ListAccountsOptions : The ListAccounts options.
 type ListAccountsOptions struct {
 	// Get accounts that are either immediate children or are a part of the hierarchy for a given enterprise ID.
-	EnterpriseID *string
+	EnterpriseID *string `json:"enterprise_id,omitempty"`
 
 	// Get accounts that are either immediate children or are a part of the hierarchy for a given account group ID.
-	AccountGroupID *string
+	AccountGroupID *string `json:"account_group_id,omitempty"`
 
 	// The first item to be returned in the page of results. This value can be obtained from the next_url property from the
 	// previous call of the operation. If not specified, then the first page of results is returned.
-	NextDocid *string
+	NextDocid *string `json:"next_docid,omitempty"`
 
 	// Get accounts that are either immediate children or are a part of the hierarchy for a given parent CRN.
-	Parent *string
+	Parent *string `json:"parent,omitempty"`
 
 	// Return results up to this limit. Valid values are between `0` and `100`.
-	Limit *int64
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Include the deleted accounts from an enterprise when used in conjunction with enterprise_id.
+	IncludeDeleted *bool `json:"include_deleted,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1859,33 +2104,39 @@ func (*EnterpriseManagementV1) NewListAccountsOptions() *ListAccountsOptions {
 }
 
 // SetEnterpriseID : Allow user to set EnterpriseID
-func (options *ListAccountsOptions) SetEnterpriseID(enterpriseID string) *ListAccountsOptions {
-	options.EnterpriseID = core.StringPtr(enterpriseID)
-	return options
+func (_options *ListAccountsOptions) SetEnterpriseID(enterpriseID string) *ListAccountsOptions {
+	_options.EnterpriseID = core.StringPtr(enterpriseID)
+	return _options
 }
 
 // SetAccountGroupID : Allow user to set AccountGroupID
-func (options *ListAccountsOptions) SetAccountGroupID(accountGroupID string) *ListAccountsOptions {
-	options.AccountGroupID = core.StringPtr(accountGroupID)
-	return options
+func (_options *ListAccountsOptions) SetAccountGroupID(accountGroupID string) *ListAccountsOptions {
+	_options.AccountGroupID = core.StringPtr(accountGroupID)
+	return _options
 }
 
 // SetNextDocid : Allow user to set NextDocid
-func (options *ListAccountsOptions) SetNextDocid(nextDocid string) *ListAccountsOptions {
-	options.NextDocid = core.StringPtr(nextDocid)
-	return options
+func (_options *ListAccountsOptions) SetNextDocid(nextDocid string) *ListAccountsOptions {
+	_options.NextDocid = core.StringPtr(nextDocid)
+	return _options
 }
 
 // SetParent : Allow user to set Parent
-func (options *ListAccountsOptions) SetParent(parent string) *ListAccountsOptions {
-	options.Parent = core.StringPtr(parent)
-	return options
+func (_options *ListAccountsOptions) SetParent(parent string) *ListAccountsOptions {
+	_options.Parent = core.StringPtr(parent)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListAccountsOptions) SetLimit(limit int64) *ListAccountsOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListAccountsOptions) SetLimit(limit int64) *ListAccountsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetIncludeDeleted : Allow user to set IncludeDeleted
+func (_options *ListAccountsOptions) SetIncludeDeleted(includeDeleted bool) *ListAccountsOptions {
+	_options.IncludeDeleted = core.BoolPtr(includeDeleted)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1925,23 +2176,35 @@ func UnmarshalListAccountsResponse(m map[string]json.RawMessage, result interfac
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ListAccountsResponse) GetNextNextDocid() (*string, error) {
+	if core.IsNil(resp.NextURL) {
+		return nil, nil
+	}
+	next_docid, err := core.GetQueryParam(resp.NextURL, "next_docid")
+	if err != nil || next_docid == nil {
+		return nil, err
+	}
+	return next_docid, nil
+}
+
 // ListEnterprisesOptions : The ListEnterprises options.
 type ListEnterprisesOptions struct {
 	// Get enterprises for a given enterprise account ID.
-	EnterpriseAccountID *string
+	EnterpriseAccountID *string `json:"enterprise_account_id,omitempty"`
 
 	// Get enterprises for a given account group ID.
-	AccountGroupID *string
+	AccountGroupID *string `json:"account_group_id,omitempty"`
 
 	// Get enterprises for a given account ID.
-	AccountID *string
+	AccountID *string `json:"account_id,omitempty"`
 
 	// The first item to be returned in the page of results. This value can be obtained from the next_url property from the
 	// previous call of the operation. If not specified, then the first page of results is returned.
-	NextDocid *string
+	NextDocid *string `json:"next_docid,omitempty"`
 
 	// Return results up to this limit. Valid values are between `0` and `100`.
-	Limit *int64
+	Limit *int64 `json:"limit,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1953,33 +2216,33 @@ func (*EnterpriseManagementV1) NewListEnterprisesOptions() *ListEnterprisesOptio
 }
 
 // SetEnterpriseAccountID : Allow user to set EnterpriseAccountID
-func (options *ListEnterprisesOptions) SetEnterpriseAccountID(enterpriseAccountID string) *ListEnterprisesOptions {
-	options.EnterpriseAccountID = core.StringPtr(enterpriseAccountID)
-	return options
+func (_options *ListEnterprisesOptions) SetEnterpriseAccountID(enterpriseAccountID string) *ListEnterprisesOptions {
+	_options.EnterpriseAccountID = core.StringPtr(enterpriseAccountID)
+	return _options
 }
 
 // SetAccountGroupID : Allow user to set AccountGroupID
-func (options *ListEnterprisesOptions) SetAccountGroupID(accountGroupID string) *ListEnterprisesOptions {
-	options.AccountGroupID = core.StringPtr(accountGroupID)
-	return options
+func (_options *ListEnterprisesOptions) SetAccountGroupID(accountGroupID string) *ListEnterprisesOptions {
+	_options.AccountGroupID = core.StringPtr(accountGroupID)
+	return _options
 }
 
 // SetAccountID : Allow user to set AccountID
-func (options *ListEnterprisesOptions) SetAccountID(accountID string) *ListEnterprisesOptions {
-	options.AccountID = core.StringPtr(accountID)
-	return options
+func (_options *ListEnterprisesOptions) SetAccountID(accountID string) *ListEnterprisesOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
 }
 
 // SetNextDocid : Allow user to set NextDocid
-func (options *ListEnterprisesOptions) SetNextDocid(nextDocid string) *ListEnterprisesOptions {
-	options.NextDocid = core.StringPtr(nextDocid)
-	return options
+func (_options *ListEnterprisesOptions) SetNextDocid(nextDocid string) *ListEnterprisesOptions {
+	_options.NextDocid = core.StringPtr(nextDocid)
+	return _options
 }
 
 // SetLimit : Allow user to set Limit
-func (options *ListEnterprisesOptions) SetLimit(limit int64) *ListEnterprisesOptions {
-	options.Limit = core.Int64Ptr(limit)
-	return options
+func (_options *ListEnterprisesOptions) SetLimit(limit int64) *ListEnterprisesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -2019,16 +2282,28 @@ func UnmarshalListEnterprisesResponse(m map[string]json.RawMessage, result inter
 	return
 }
 
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ListEnterprisesResponse) GetNextNextDocid() (*string, error) {
+	if core.IsNil(resp.NextURL) {
+		return nil, nil
+	}
+	next_docid, err := core.GetQueryParam(resp.NextURL, "next_docid")
+	if err != nil || next_docid == nil {
+		return nil, err
+	}
+	return next_docid, nil
+}
+
 // UpdateAccountGroupOptions : The UpdateAccountGroup options.
 type UpdateAccountGroupOptions struct {
 	// The ID of the account group to retrieve.
-	AccountGroupID *string `validate:"required,ne="`
+	AccountGroupID *string `json:"account_group_id" validate:"required,ne="`
 
 	// The new name of the account group. This field must have 3 - 60 characters.
-	Name *string
+	Name *string `json:"name,omitempty"`
 
 	// The IAM ID of the user to be the new primary contact for the account group.
-	PrimaryContactIamID *string
+	PrimaryContactIamID *string `json:"primary_contact_iam_id,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2042,21 +2317,21 @@ func (*EnterpriseManagementV1) NewUpdateAccountGroupOptions(accountGroupID strin
 }
 
 // SetAccountGroupID : Allow user to set AccountGroupID
-func (options *UpdateAccountGroupOptions) SetAccountGroupID(accountGroupID string) *UpdateAccountGroupOptions {
-	options.AccountGroupID = core.StringPtr(accountGroupID)
-	return options
+func (_options *UpdateAccountGroupOptions) SetAccountGroupID(accountGroupID string) *UpdateAccountGroupOptions {
+	_options.AccountGroupID = core.StringPtr(accountGroupID)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *UpdateAccountGroupOptions) SetName(name string) *UpdateAccountGroupOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *UpdateAccountGroupOptions) SetName(name string) *UpdateAccountGroupOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetPrimaryContactIamID : Allow user to set PrimaryContactIamID
-func (options *UpdateAccountGroupOptions) SetPrimaryContactIamID(primaryContactIamID string) *UpdateAccountGroupOptions {
-	options.PrimaryContactIamID = core.StringPtr(primaryContactIamID)
-	return options
+func (_options *UpdateAccountGroupOptions) SetPrimaryContactIamID(primaryContactIamID string) *UpdateAccountGroupOptions {
+	_options.PrimaryContactIamID = core.StringPtr(primaryContactIamID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -2067,11 +2342,11 @@ func (options *UpdateAccountGroupOptions) SetHeaders(param map[string]string) *U
 
 // UpdateAccountOptions : The UpdateAccount options.
 type UpdateAccountOptions struct {
-	// The ID of the account to retrieve.
-	AccountID *string `validate:"required,ne="`
+	// The ID of the target account.
+	AccountID *string `json:"account_id" validate:"required,ne="`
 
 	// The CRN of the new parent within the enterprise.
-	Parent *string `validate:"required"`
+	Parent *string `json:"parent" validate:"required"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2086,15 +2361,15 @@ func (*EnterpriseManagementV1) NewUpdateAccountOptions(accountID string, parent 
 }
 
 // SetAccountID : Allow user to set AccountID
-func (options *UpdateAccountOptions) SetAccountID(accountID string) *UpdateAccountOptions {
-	options.AccountID = core.StringPtr(accountID)
-	return options
+func (_options *UpdateAccountOptions) SetAccountID(accountID string) *UpdateAccountOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
 }
 
 // SetParent : Allow user to set Parent
-func (options *UpdateAccountOptions) SetParent(parent string) *UpdateAccountOptions {
-	options.Parent = core.StringPtr(parent)
-	return options
+func (_options *UpdateAccountOptions) SetParent(parent string) *UpdateAccountOptions {
+	_options.Parent = core.StringPtr(parent)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -2106,16 +2381,16 @@ func (options *UpdateAccountOptions) SetHeaders(param map[string]string) *Update
 // UpdateEnterpriseOptions : The UpdateEnterprise options.
 type UpdateEnterpriseOptions struct {
 	// The ID of the enterprise to retrieve.
-	EnterpriseID *string `validate:"required,ne="`
+	EnterpriseID *string `json:"enterprise_id" validate:"required,ne="`
 
 	// The new name of the enterprise. This field must have 3 - 60 characters.
-	Name *string
+	Name *string `json:"name,omitempty"`
 
 	// The new domain of the enterprise. This field has a limit of 60 characters.
-	Domain *string
+	Domain *string `json:"domain,omitempty"`
 
 	// The IAM ID of the user to be the new primary contact for the enterprise.
-	PrimaryContactIamID *string
+	PrimaryContactIamID *string `json:"primary_contact_iam_id,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2129,31 +2404,286 @@ func (*EnterpriseManagementV1) NewUpdateEnterpriseOptions(enterpriseID string) *
 }
 
 // SetEnterpriseID : Allow user to set EnterpriseID
-func (options *UpdateEnterpriseOptions) SetEnterpriseID(enterpriseID string) *UpdateEnterpriseOptions {
-	options.EnterpriseID = core.StringPtr(enterpriseID)
-	return options
+func (_options *UpdateEnterpriseOptions) SetEnterpriseID(enterpriseID string) *UpdateEnterpriseOptions {
+	_options.EnterpriseID = core.StringPtr(enterpriseID)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *UpdateEnterpriseOptions) SetName(name string) *UpdateEnterpriseOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *UpdateEnterpriseOptions) SetName(name string) *UpdateEnterpriseOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetDomain : Allow user to set Domain
-func (options *UpdateEnterpriseOptions) SetDomain(domain string) *UpdateEnterpriseOptions {
-	options.Domain = core.StringPtr(domain)
-	return options
+func (_options *UpdateEnterpriseOptions) SetDomain(domain string) *UpdateEnterpriseOptions {
+	_options.Domain = core.StringPtr(domain)
+	return _options
 }
 
 // SetPrimaryContactIamID : Allow user to set PrimaryContactIamID
-func (options *UpdateEnterpriseOptions) SetPrimaryContactIamID(primaryContactIamID string) *UpdateEnterpriseOptions {
-	options.PrimaryContactIamID = core.StringPtr(primaryContactIamID)
-	return options
+func (_options *UpdateEnterpriseOptions) SetPrimaryContactIamID(primaryContactIamID string) *UpdateEnterpriseOptions {
+	_options.PrimaryContactIamID = core.StringPtr(primaryContactIamID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
 func (options *UpdateEnterpriseOptions) SetHeaders(param map[string]string) *UpdateEnterpriseOptions {
 	options.Headers = param
 	return options
+}
+
+// EnterprisesPager can be used to simplify the use of the "ListEnterprises" method.
+type EnterprisesPager struct {
+	hasNext     bool
+	options     *ListEnterprisesOptions
+	client      *EnterpriseManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewEnterprisesPager returns a new EnterprisesPager instance.
+func (enterpriseManagement *EnterpriseManagementV1) NewEnterprisesPager(options *ListEnterprisesOptions) (pager *EnterprisesPager, err error) {
+	if options.NextDocid != nil && *options.NextDocid != "" {
+		err = fmt.Errorf("the 'options.NextDocid' field should not be set")
+		return
+	}
+
+	var optionsCopy ListEnterprisesOptions = *options
+	pager = &EnterprisesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  enterpriseManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *EnterprisesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *EnterprisesPager) GetNextWithContext(ctx context.Context) (page []Enterprise, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.NextDocid = pager.pageContext.next
+
+	result, _, err := pager.client.ListEnterprisesWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *string
+	if result.NextURL != nil {
+		var next_docid *string
+		next_docid, err = core.GetQueryParam(result.NextURL, "next_docid")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'next_docid' query parameter from URL '%s': %s", *result.NextURL, err.Error())
+			return
+		}
+		next = next_docid
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Resources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *EnterprisesPager) GetAllWithContext(ctx context.Context) (allItems []Enterprise, err error) {
+	for pager.HasNext() {
+		var nextPage []Enterprise
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *EnterprisesPager) GetNext() (page []Enterprise, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *EnterprisesPager) GetAll() (allItems []Enterprise, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+// AccountsPager can be used to simplify the use of the "ListAccounts" method.
+type AccountsPager struct {
+	hasNext     bool
+	options     *ListAccountsOptions
+	client      *EnterpriseManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewAccountsPager returns a new AccountsPager instance.
+func (enterpriseManagement *EnterpriseManagementV1) NewAccountsPager(options *ListAccountsOptions) (pager *AccountsPager, err error) {
+	if options.NextDocid != nil && *options.NextDocid != "" {
+		err = fmt.Errorf("the 'options.NextDocid' field should not be set")
+		return
+	}
+
+	var optionsCopy ListAccountsOptions = *options
+	pager = &AccountsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  enterpriseManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *AccountsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *AccountsPager) GetNextWithContext(ctx context.Context) (page []Account, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.NextDocid = pager.pageContext.next
+
+	result, _, err := pager.client.ListAccountsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *string
+	if result.NextURL != nil {
+		var next_docid *string
+		next_docid, err = core.GetQueryParam(result.NextURL, "next_docid")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'next_docid' query parameter from URL '%s': %s", *result.NextURL, err.Error())
+			return
+		}
+		next = next_docid
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Resources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *AccountsPager) GetAllWithContext(ctx context.Context) (allItems []Account, err error) {
+	for pager.HasNext() {
+		var nextPage []Account
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *AccountsPager) GetNext() (page []Account, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *AccountsPager) GetAll() (allItems []Account, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+// AccountGroupsPager can be used to simplify the use of the "ListAccountGroups" method.
+type AccountGroupsPager struct {
+	hasNext     bool
+	options     *ListAccountGroupsOptions
+	client      *EnterpriseManagementV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewAccountGroupsPager returns a new AccountGroupsPager instance.
+func (enterpriseManagement *EnterpriseManagementV1) NewAccountGroupsPager(options *ListAccountGroupsOptions) (pager *AccountGroupsPager, err error) {
+	if options.NextDocid != nil && *options.NextDocid != "" {
+		err = fmt.Errorf("the 'options.NextDocid' field should not be set")
+		return
+	}
+
+	var optionsCopy ListAccountGroupsOptions = *options
+	pager = &AccountGroupsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  enterpriseManagement,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *AccountGroupsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *AccountGroupsPager) GetNextWithContext(ctx context.Context) (page []AccountGroup, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.NextDocid = pager.pageContext.next
+
+	result, _, err := pager.client.ListAccountGroupsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *string
+	if result.NextURL != nil {
+		var next_docid *string
+		next_docid, err = core.GetQueryParam(result.NextURL, "next_docid")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'next_docid' query parameter from URL '%s': %s", *result.NextURL, err.Error())
+			return
+		}
+		next = next_docid
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Resources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *AccountGroupsPager) GetAllWithContext(ctx context.Context) (allItems []AccountGroup, err error) {
+	for pager.HasNext() {
+		var nextPage []AccountGroup
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *AccountGroupsPager) GetNext() (page []AccountGroup, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *AccountGroupsPager) GetAll() (allItems []AccountGroup, err error) {
+	return pager.GetAllWithContext(context.Background())
 }

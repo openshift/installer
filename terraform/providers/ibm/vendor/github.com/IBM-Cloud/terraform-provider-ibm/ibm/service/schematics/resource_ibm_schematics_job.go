@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -297,6 +298,7 @@ func ResourceIBMSchematicsJob() *schema.Resource {
 			"location": {
 				Type:         schema.TypeString,
 				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_schematics_job", "location"),
 				Description:  "List of locations supported by IBM Cloud Schematics service.  While creating your workspace or action, choose the right region, since it cannot be changed.  Note, this does not limit the location of the IBM Cloud resources, provisioned using Schematics.",
 			},
@@ -2836,7 +2838,7 @@ func ResourceIBMSchematicsJobValidator() *validate.ResourceValidator {
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
 			Optional:                   true,
-			AllowedValues:              "us, eu, eu-de, eu-gb, us-east, us-south",
+			AllowedValues:              "eu-de, eu-gb, us-east, us-south",
 		})
 
 	resourceValidator := validate.ResourceValidator{ResourceName: "ibm_schematics_job", Schema: validateSchema}
@@ -2856,6 +2858,13 @@ func resourceIBMSchematicsJobCreate(context context.Context, d *schema.ResourceD
 
 	iamRefreshToken := session.Config.IAMRefreshToken
 
+	if r, ok := d.GetOk("location"); ok {
+		region := r.(string)
+		schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+		if updatedURL {
+			schematicsClient.Service.Options.URL = schematicsURL
+		}
+	}
 	createJobOptions := &schematicsv1.CreateJobOptions{}
 	createJobOptions.SetRefreshToken(iamRefreshToken)
 
@@ -3896,7 +3905,12 @@ func resourceIBMSchematicsJobRead(context context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	jobIDSplit := strings.Split(d.Id(), ".")
+	region := jobIDSplit[0]
+	schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+	if updatedURL {
+		schematicsClient.Service.Options.URL = schematicsURL
+	}
 	getJobOptions := &schematicsv1.GetJobOptions{}
 
 	getJobOptions.SetJobID(d.Id())
@@ -3910,7 +3924,6 @@ func resourceIBMSchematicsJobRead(context context.Context, d *schema.ResourceDat
 		log.Printf("[DEBUG] GetJobWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetJobWithContext failed %s\n%s", err, response))
 	}
-
 	if err = d.Set("command_object", job.CommandObject); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting command_object: %s", err))
 	}
@@ -4967,7 +4980,12 @@ func resourceIBMSchematicsJobUpdate(context context.Context, d *schema.ResourceD
 	}
 
 	iamRefreshToken := session.Config.IAMRefreshToken
-
+	jobIDSplit := strings.Split(d.Id(), ".")
+	region := jobIDSplit[0]
+	schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+	if updatedURL {
+		schematicsClient.Service.Options.URL = schematicsURL
+	}
 	updateJobOptions := &schematicsv1.UpdateJobOptions{}
 
 	updateJobOptions.SetJobID(d.Id())
@@ -5061,7 +5079,12 @@ func resourceIBMSchematicsJobDelete(context context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	jobIDSplit := strings.Split(d.Id(), ".")
+	region := jobIDSplit[0]
+	schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+	if updatedURL {
+		schematicsClient.Service.Options.URL = schematicsURL
+	}
 	deleteJobOptions := &schematicsv1.DeleteJobOptions{}
 
 	iamRefreshToken := session.Config.IAMRefreshToken

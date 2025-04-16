@@ -144,8 +144,8 @@ func dataSourceIBMPrivateDNSGLBsRead(d *schema.ResourceData, meta interface{}) e
 		dnsLoadbalancer[pdnsGLBTTL] = *instance.TTL
 		dnsLoadbalancer[pdnsGLBHealth] = *instance.Health
 		dnsLoadbalancer[pdnsGLBFallbackPool] = *instance.FallbackPool
-		dnsLoadbalancer[pdnsGLBCreatedOn] = *instance.CreatedOn
-		dnsLoadbalancer[pdnsGLBModifiedOn] = *instance.ModifiedOn
+		dnsLoadbalancer[pdnsGLBCreatedOn] = (*instance.CreatedOn).String()
+		dnsLoadbalancer[pdnsGLBModifiedOn] = (*instance.ModifiedOn).String()
 		dnsLoadbalancer[pdnsGLBDefaultPool] = instance.DefaultPools
 		dnsLoadbalancer[pdnsGLBAZPools] = flattenPDNSGlbAZpool(instance.AzPools)
 

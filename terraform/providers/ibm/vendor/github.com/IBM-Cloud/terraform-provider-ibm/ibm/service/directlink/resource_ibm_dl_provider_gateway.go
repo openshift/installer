@@ -15,10 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const (
-	customerAccountID = "customer_account_id"
-)
-
 func ResourceIBMDLProviderGateway() *schema.Resource {
 	return &schema.Resource{
 		Create:   resourceIBMdlProviderGatewayCreate,

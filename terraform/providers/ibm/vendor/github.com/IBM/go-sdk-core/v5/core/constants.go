@@ -71,7 +71,7 @@ const (
 	ERRORMSG_AUTHENTICATE_ERROR      = "An error occurred while performing the 'authenticate' step: %s"
 	ERRORMSG_READ_RESPONSE_BODY      = "An error occurred while reading the response body: %s"
 	ERRORMSG_UNEXPECTED_RESPONSE     = "The response contained unexpected content, Content-Type=%s, operation resultType=%s"
-	ERRORMSG_UNMARSHAL_RESPONSE_BODY = "An error occurred while unmarshalling the response body: %s"
+	ERRORMSG_UNMARSHAL_RESPONSE_BODY = "An error occurred while processing the HTTP response: %s"
 	ERRORMSG_NIL_SLICE               = "The 'slice' parameter cannot be nil"
 	ERRORMSG_PARAM_NOT_SLICE         = "The 'slice' parameter must be a slice"
 	ERRORMSG_MARSHAL_SLICE           = "An error occurred while marshalling the slice: %s"

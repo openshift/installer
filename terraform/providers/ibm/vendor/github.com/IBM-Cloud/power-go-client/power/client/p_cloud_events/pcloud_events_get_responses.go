@@ -35,8 +35,8 @@ func (o *PcloudEventsGetReader) ReadResponse(response runtime.ClientResponse, co
 			return nil, err
 		}
 		return nil, result
-	case 401:
-		result := NewPcloudEventsGetUnauthorized()
+	case 403:
+		result := NewPcloudEventsGetForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -63,7 +63,8 @@ func NewPcloudEventsGetOK() *PcloudEventsGetOK {
 	return &PcloudEventsGetOK{}
 }
 
-/* PcloudEventsGetOK describes a response with status code 200, with default header values.
+/*
+PcloudEventsGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -71,9 +72,39 @@ type PcloudEventsGetOK struct {
 	Payload *models.Event
 }
 
+// IsSuccess returns true when this pcloud events get o k response has a 2xx status code
+func (o *PcloudEventsGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud events get o k response has a 3xx status code
+func (o *PcloudEventsGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud events get o k response has a 4xx status code
+func (o *PcloudEventsGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud events get o k response has a 5xx status code
+func (o *PcloudEventsGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud events get o k response a status code equal to that given
+func (o *PcloudEventsGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *PcloudEventsGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events/{event_id}][%d] pcloudEventsGetOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudEventsGetOK) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events/{event_id}][%d] pcloudEventsGetOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudEventsGetOK) GetPayload() *models.Event {
 	return o.Payload
 }
@@ -95,7 +126,8 @@ func NewPcloudEventsGetBadRequest() *PcloudEventsGetBadRequest {
 	return &PcloudEventsGetBadRequest{}
 }
 
-/* PcloudEventsGetBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudEventsGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -103,9 +135,39 @@ type PcloudEventsGetBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud events get bad request response has a 2xx status code
+func (o *PcloudEventsGetBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud events get bad request response has a 3xx status code
+func (o *PcloudEventsGetBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud events get bad request response has a 4xx status code
+func (o *PcloudEventsGetBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud events get bad request response has a 5xx status code
+func (o *PcloudEventsGetBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud events get bad request response a status code equal to that given
+func (o *PcloudEventsGetBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *PcloudEventsGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events/{event_id}][%d] pcloudEventsGetBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudEventsGetBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events/{event_id}][%d] pcloudEventsGetBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudEventsGetBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -122,27 +184,58 @@ func (o *PcloudEventsGetBadRequest) readResponse(response runtime.ClientResponse
 	return nil
 }
 
-// NewPcloudEventsGetUnauthorized creates a PcloudEventsGetUnauthorized with default headers values
-func NewPcloudEventsGetUnauthorized() *PcloudEventsGetUnauthorized {
-	return &PcloudEventsGetUnauthorized{}
+// NewPcloudEventsGetForbidden creates a PcloudEventsGetForbidden with default headers values
+func NewPcloudEventsGetForbidden() *PcloudEventsGetForbidden {
+	return &PcloudEventsGetForbidden{}
 }
 
-/* PcloudEventsGetUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudEventsGetForbidden describes a response with status code 403, with default header values.
 
-Unauthorized
+Forbidden
 */
-type PcloudEventsGetUnauthorized struct {
+type PcloudEventsGetForbidden struct {
 	Payload *models.Error
 }
 
-func (o *PcloudEventsGetUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events/{event_id}][%d] pcloudEventsGetUnauthorized  %+v", 401, o.Payload)
+// IsSuccess returns true when this pcloud events get forbidden response has a 2xx status code
+func (o *PcloudEventsGetForbidden) IsSuccess() bool {
+	return false
 }
-func (o *PcloudEventsGetUnauthorized) GetPayload() *models.Error {
+
+// IsRedirect returns true when this pcloud events get forbidden response has a 3xx status code
+func (o *PcloudEventsGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud events get forbidden response has a 4xx status code
+func (o *PcloudEventsGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud events get forbidden response has a 5xx status code
+func (o *PcloudEventsGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud events get forbidden response a status code equal to that given
+func (o *PcloudEventsGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+func (o *PcloudEventsGetForbidden) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events/{event_id}][%d] pcloudEventsGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudEventsGetForbidden) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events/{event_id}][%d] pcloudEventsGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudEventsGetForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
 
-func (o *PcloudEventsGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+func (o *PcloudEventsGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -159,7 +252,8 @@ func NewPcloudEventsGetNotFound() *PcloudEventsGetNotFound {
 	return &PcloudEventsGetNotFound{}
 }
 
-/* PcloudEventsGetNotFound describes a response with status code 404, with default header values.
+/*
+PcloudEventsGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -167,9 +261,39 @@ type PcloudEventsGetNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud events get not found response has a 2xx status code
+func (o *PcloudEventsGetNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud events get not found response has a 3xx status code
+func (o *PcloudEventsGetNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud events get not found response has a 4xx status code
+func (o *PcloudEventsGetNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud events get not found response has a 5xx status code
+func (o *PcloudEventsGetNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud events get not found response a status code equal to that given
+func (o *PcloudEventsGetNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *PcloudEventsGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events/{event_id}][%d] pcloudEventsGetNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudEventsGetNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events/{event_id}][%d] pcloudEventsGetNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudEventsGetNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -191,7 +315,8 @@ func NewPcloudEventsGetInternalServerError() *PcloudEventsGetInternalServerError
 	return &PcloudEventsGetInternalServerError{}
 }
 
-/* PcloudEventsGetInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudEventsGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -199,9 +324,39 @@ type PcloudEventsGetInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud events get internal server error response has a 2xx status code
+func (o *PcloudEventsGetInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud events get internal server error response has a 3xx status code
+func (o *PcloudEventsGetInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud events get internal server error response has a 4xx status code
+func (o *PcloudEventsGetInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud events get internal server error response has a 5xx status code
+func (o *PcloudEventsGetInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud events get internal server error response a status code equal to that given
+func (o *PcloudEventsGetInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudEventsGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events/{event_id}][%d] pcloudEventsGetInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudEventsGetInternalServerError) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events/{event_id}][%d] pcloudEventsGetInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudEventsGetInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

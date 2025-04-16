@@ -36,7 +36,7 @@ type ClientService interface {
 }
 
 /*
-  CatalogGet gets the catalog of services that the service broker offers
+CatalogGet gets the catalog of services that the service broker offers
 */
 func (a *Client) CatalogGet(params *CatalogGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*CatalogGetOK, error) {
 	// TODO: Validate the params before sending

@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2022 All Rights Reserved.
+// Copyright IBM Corp. 2023 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package cdtektonpipeline
@@ -15,15 +15,15 @@ import (
 	"github.com/IBM/continuous-delivery-go-sdk/cdtektonpipelinev2"
 )
 
-func DataSourceIBMTektonPipelineTriggerProperty() *schema.Resource {
+func DataSourceIBMCdTektonPipelineTriggerProperty() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: DataSourceIBMTektonPipelineTriggerPropertyRead,
+		ReadContext: dataSourceIBMCdTektonPipelineTriggerPropertyRead,
 
 		Schema: map[string]*schema.Schema{
 			"pipeline_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The tekton pipeline ID.",
+				Description: "The Tekton pipeline ID.",
 			},
 			"trigger_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -33,7 +33,7 @@ func DataSourceIBMTektonPipelineTriggerProperty() *schema.Resource {
 			"property_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The property's name.",
+				Description: "The property name.",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -43,20 +43,20 @@ func DataSourceIBMTektonPipelineTriggerProperty() *schema.Resource {
 			"value": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "String format property value.",
+				Description: "Property value. Any string value is valid.",
+			},
+			"href": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "API URL for interacting with the trigger property.",
 			},
 			"enum": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "Options for SINGLE_SELECT property type.",
+				Description: "Options for `single_select` property type. Only needed for `single_select` property type.",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-			},
-			"default": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Default option for SINGLE_SELECT property type.",
 			},
 			"type": &schema.Schema{
 				Type:        schema.TypeString,
@@ -66,13 +66,13 @@ func DataSourceIBMTektonPipelineTriggerProperty() *schema.Resource {
 			"path": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "property path for INTEGRATION type properties.",
+				Description: "A dot notation path for `integration` type properties only, that selects a value from the tool integration. If left blank the full tool integration data will be used.",
 			},
 		},
 	}
 }
 
-func DataSourceIBMTektonPipelineTriggerPropertyRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceIBMCdTektonPipelineTriggerPropertyRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -100,14 +100,8 @@ func DataSourceIBMTektonPipelineTriggerPropertyRead(context context.Context, d *
 		return diag.FromErr(fmt.Errorf("Error setting value: %s", err))
 	}
 
-	if err = d.Set("default", triggerProperty.Default); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting default: %s", err))
-	}
-
-	if triggerProperty.Enum != nil {
-		if err = d.Set("enum", triggerProperty.Enum); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting enum: %s", err))
-		}
+	if err = d.Set("href", triggerProperty.Href); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
 	}
 
 	if err = d.Set("type", triggerProperty.Type); err != nil {
@@ -116,6 +110,12 @@ func DataSourceIBMTektonPipelineTriggerPropertyRead(context context.Context, d *
 
 	if err = d.Set("path", triggerProperty.Path); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting path: %s", err))
+	}
+
+	if triggerProperty.Enum != nil {
+		if err = d.Set("enum", triggerProperty.Enum); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting enum: %s", err))
+		}
 	}
 
 	return nil

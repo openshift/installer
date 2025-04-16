@@ -4,12 +4,14 @@
 package vpc
 
 import (
+	"context"
 	"fmt"
 	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -36,6 +38,13 @@ func ResourceIBMISIPSecPolicy() *schema.Resource {
 		Delete:   resourceIBMISIPSecPolicyDelete,
 		Exists:   resourceIBMISIPSecPolicyExists,
 		Importer: &schema.ResourceImporter{},
+
+		CustomizeDiff: customdiff.All(
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceIPSecPolicyValidate(diff)
+				}),
+		),
 
 		Schema: map[string]*schema.Schema{
 			isIpSecName: {
@@ -144,9 +153,9 @@ func ResourceIBMISIPSecPolicy() *schema.Resource {
 func ResourceIBMISIPSECValidator() *validate.ResourceValidator {
 
 	validateSchema := make([]validate.ValidateSchema, 0)
-	authentication_algorithm := "md5, sha1, sha256, sha512"
-	encryption_algorithm := "triple_des, aes128, aes256"
-	pfs := "disabled, group_2, group_5, group_14"
+	authentication_algorithm := "md5, sha1, sha256, sha512, sha384, disabled"
+	encryption_algorithm := "triple_des, aes128, aes256, aes128gcm16, aes192gcm16, aes256gcm16"
+	pfs := "disabled, group_2, group_5, group_14, group_19, group_15, group_16, group_17, group_18, group_20, group_21, group_22, group_23, group_24, group_31"
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 isIpSecName,
