@@ -30,7 +30,6 @@ type MachineInput struct {
 	Role            string
 	UserDataSecret  string
 	HyperVGen       string
-	StorageSuffix   string
 	UseImageGallery bool
 	Private         bool
 	UserTags        map[string]string
@@ -79,15 +78,17 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 		}
 	case in.UseImageGallery:
 		// image gallery names cannot have dashes
+		id := clusterID
+		if in.HyperVGen == "V2" {
+			id += genV2Suffix
+		}
+		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/latest", resourceGroup, galleryName, id)
+		image = &capz.Image{ID: &imageID}
+	default:
 		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s", subscriptionID, resourceGroup, galleryName, clusterID)
 		if in.HyperVGen == "V2" && in.Platform.CloudName != aztypes.StackCloud {
 			imageID += genV2Suffix
 		}
-		image = &capz.Image{ID: &imageID}
-	default:
-		// AzureStack is the only use for managed images & supports only Gen1 VMs:
-		// https://learn.microsoft.com/en-us/azure-stack/user/azure-stack-vm-considerations?view=azs-2501&tabs=az1%2Caz2#vm-differences
-		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/images/%s", subscriptionID, resourceGroup, clusterID)
 		image = &capz.Image{ID: &imageID}
 	}
 
@@ -146,7 +147,6 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 	for i, id := range mpool.Identity.UserAssignedIdentities {
 		userAssignedIdentities[i] = capz.UserAssignedIdentity{ProviderID: id.ProviderID()}
 	}
-	storageAccountName := aztypes.GetStorageAccountName(clusterID)
 
 	defaultDiag := &capz.Diagnostics{
 		Boot: &capz.BootDiagnostics{
@@ -214,23 +214,6 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 				Diagnostics:            controlPlaneDiag,
 			},
 		}
-
-		if len(zone) == 0 {
-			// FailureDomain must be nil (not empty) to trigger availability set.
-			azureMachine.Spec.FailureDomain = nil
-		}
-
-		if in.Platform.CloudName == aztypes.StackCloud {
-			azureMachine.Spec.Diagnostics = &capz.Diagnostics{
-				Boot: &capz.BootDiagnostics{
-					StorageAccountType: capz.UserManagedDiagnosticsStorage,
-					UserManaged: &capz.UserManagedBootDiagnostics{
-						StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
-					},
-				},
-			}
-		}
-
 		azureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", azureMachine.Name)},
@@ -288,23 +271,6 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 			UserAssignedIdentities:     userAssignedIdentities,
 		},
 	}
-
-	if len(mpool.Zones[0]) == 0 {
-		// FailureDomain must be nil (not empty) to trigger availability set.
-		bootstrapAzureMachine.Spec.FailureDomain = nil
-	}
-
-	if in.Platform.CloudName == aztypes.StackCloud {
-		bootstrapAzureMachine.Spec.Diagnostics = &capz.Diagnostics{
-			Boot: &capz.BootDiagnostics{
-				StorageAccountType: capz.UserManagedDiagnosticsStorage,
-				UserManaged: &capz.UserManagedBootDiagnostics{
-					StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
-				},
-			},
-		}
-	}
-
 	bootstrapAzureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
 
 	result = append(result, &asset.RuntimeFile{

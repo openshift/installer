@@ -18,6 +18,7 @@ import (
 	powervscapi "github.com/openshift/installer/pkg/infrastructure/powervs/clusterapi"
 	vspherecapi "github.com/openshift/installer/pkg/infrastructure/vsphere/clusterapi"
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/terraform/stages/azure"
 	"github.com/openshift/installer/pkg/terraform/stages/ovirt"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -42,7 +43,7 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case azuretypes.Name:
 		return clusterapi.InitializeProvider(&azureinfra.Provider{}), nil
 	case azuretypes.StackTerraformName:
-		return clusterapi.InitializeProvider(&azureinfra.Provider{}), nil
+		return terraform.InitializeProvider(azure.StackPlatformStages), nil
 	case baremetaltypes.Name:
 		return baremetalinfra.InitializeProvider(), nil
 	case gcptypes.Name:

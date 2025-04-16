@@ -197,17 +197,3 @@ func (p *Platform) NetworkSecurityGroupName(infraID string) string {
 func (p *Platform) IsARO() bool {
 	return aro
 }
-
-// GetStorageAccountName takes an infraID and generates a
-// storage account name, which can't be more than 24 characters.
-func GetStorageAccountName(infraID string) string {
-	storageAccountNameMax := 24
-
-	storageAccountName := strings.ReplaceAll(infraID, "-", "")
-	if len(storageAccountName) > storageAccountNameMax-2 {
-		storageAccountName = storageAccountName[:storageAccountNameMax-2]
-	}
-	storageAccountName = fmt.Sprintf("%ssa", storageAccountName)
-
-	return storageAccountName
-}

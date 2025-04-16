@@ -3,7 +3,6 @@ package clusterapi
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -15,7 +14,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -213,27 +211,10 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 		if err != nil {
 			return fmt.Errorf("unable to retrieve azure session: %w", err)
 		}
-		azProvider := Azure
-		var envFP string
-		if cloudName == azure.StackCloud {
-			// Set provider so that the Azure Stack (forked) controller and CRDs are used.
-			azProvider = AzureStack
-
-			// Lay down the environment file so that cloud-provider-azure running in
-			// CAPZ & ASO controllers can load the environment.
-			b, err := json.Marshal(session.Environment)
-			if err != nil {
-				return errors.Wrap(err, "could not serialize Azure Stack endpoints")
-			}
-			envFP = filepath.Join(c.componentDir, "azurestackcloud.json")
-			if err = os.WriteFile(envFP, b, 0600); err != nil {
-				return fmt.Errorf("failed to write Azure Stack environment file: %w", err)
-			}
-		}
 
 		controllers = append(controllers,
 			c.getInfrastructureController(
-				&azProvider,
+				&Azure,
 				[]string{
 					"-v=2",
 					"--health-addr={{suggestHealthHostPort}}",
@@ -241,9 +222,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 					"--webhook-cert-dir={{.WebhookCertDir}}",
 					"--feature-gates=MachinePool=false",
 				},
-				map[string]string{
-					"AZURE_ENVIRONMENT_FILEPATH": envFP,
-				},
+				map[string]string{},
 			),
 			c.getInfrastructureController(
 				&AzureASO,
@@ -264,8 +243,7 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 					"AZURE_TENANT_ID":                   session.Credentials.TenantID,
 					"AZURE_SUBSCRIPTION_ID":             session.Credentials.SubscriptionID,
 					"AZURE_RESOURCE_MANAGER_ENDPOINT":   session.Environment.ResourceManagerEndpoint,
-					"AZURE_RESOURCE_MANAGER_AUDIENCE":   session.Environment.TokenAudience,
-					"AZURE_ENVIRONMENT_FILEPATH":        envFP,
+					"AZURE_RESOURCE_MANAGER_AUDIENCE":   session.Environment.ServiceManagementEndpoint,
 				},
 			),
 		)

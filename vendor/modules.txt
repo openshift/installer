@@ -64,7 +64,6 @@ github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns
 github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources
 github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions
 github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network
-github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/storage/mgmt/storage
 github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute
 github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering
 github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2022-08-01/compute
@@ -76,8 +75,6 @@ github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns
 github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2016-06-01/subscriptions
 github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-02-01/resources
 github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources
-github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2017-10-01/storage
-github.com/Azure/azure-sdk-for-go/storage
 github.com/Azure/azure-sdk-for-go/version
 # github.com/Azure/azure-sdk-for-go/sdk/azcore v1.14.0
 ## explicit; go 1.18
@@ -829,9 +826,6 @@ github.com/go-playground/validator/v10
 # github.com/gobuffalo/flect v1.0.3
 ## explicit; go 1.16
 github.com/gobuffalo/flect
-# github.com/gofrs/uuid v4.4.0+incompatible
-## explicit
-github.com/gofrs/uuid
 # github.com/gofrs/uuid/v5 v5.3.0
 ## explicit; go 1.19
 github.com/gofrs/uuid/v5

@@ -1,5 +1,0 @@
-# Ignore everything under ./templates
-templates
-
-# Allow only yaml templates under ./templates
-!templates/*.yaml
