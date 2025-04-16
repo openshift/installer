@@ -2,12 +2,13 @@ package bootstrap
 
 import (
 	"context"
-
-	"k8s.io/apimachinery/pkg/util/validation/field"
+	"regexp"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
+
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 const (
@@ -18,6 +19,7 @@ var (
 	bootstrapInPlaceEnabledServices = []string{
 		"install-to-disk.service",
 	}
+	installDiskValidationRegex = regexp.MustCompile(`^(/([A-Za-z0-9:._-]+)|/)+$`)
 )
 
 // SingleNodeBootstrapInPlace is an asset that generates the ignition config for single node OpenShift.
@@ -76,6 +78,9 @@ func verifyBootstrapInPlace(installConfig *types.InstallConfig) error {
 	} else if installConfig.BootstrapInPlace.InstallationDisk == "" {
 		errorList = append(errorList, field.Required(field.NewPath("bootstrapInPlace", "installationDisk"),
 			"installationDisk must be set the target disk drive for the installation"))
+	} else if installDiskValidationRegex.MatchString(installConfig.BootstrapInPlace.InstallationDisk) == false {
+		errorList = append(errorList, field.Required(field.NewPath("bootstrapInPlace", "installationDisk"),
+			"installationDisk can only contain a disk-path string (e.g., /dev/sda/)"))
 	}
 	return errorList.ToAggregate()
 }
