@@ -90,6 +90,11 @@ func DataSourceIBMIBMIsVPCRoutingTable() *schema.Resource {
 				Computed:    true,
 				Description: "Indicates whether this routing table is used to route traffic that originates from[Direct Link](https://cloud.ibm.com/docs/dl/) to this VPC.Incoming traffic will be routed according to the routing table with one exception: routes with an `action` of `deliver` are treated as `drop` unless the `next_hop` is an IP address within the VPC's address prefix ranges. Therefore, if an incoming packet matches a route with a `next_hop` of an internet-bound IP address or a VPN gateway connection, the packet will be dropped.",
 			},
+			rtRouteInternetIngress: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates whether this routing table is used to route traffic that originates from the internet.Incoming traffic will be routed according to the routing table with two exceptions:- Traffic destined for IP addresses associated with public gateways will not be  subject to routes in this routing table.- Routes with an action of deliver are treated as drop unless the `next_hop` is an  IP address bound to a network interface on a subnet in the route's `zone`.  Therefore, if an incoming packet matches a route with a `next_hop` of an  internet-bound IP address or a VPN gateway connection, the packet will be dropped.",
+			},
 			rtRouteTransitGatewayIngress: &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -281,6 +286,9 @@ func dataSourceIBMIBMIsVPCRoutingTableRead(context context.Context, d *schema.Re
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting route_direct_link_ingress: %s", err))
 	}
 
+	if err = d.Set(rtRouteInternetIngress, routingTable.RouteInternetIngress); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting route_internet_ingress: %s", err))
+	}
 	if err = d.Set(rtRouteTransitGatewayIngress, routingTable.RouteTransitGatewayIngress); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting route_transit_gateway_ingress: %s", err))
 	}

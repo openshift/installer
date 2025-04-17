@@ -8,6 +8,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM/go-sdk-core/v5/core"
@@ -26,6 +27,8 @@ func DataSourceIBMIAMTrustedProfilePolicy() *schema.Resource {
 				Optional:     true,
 				ExactlyOneOf: []string{"profile_id", "iam_id"},
 				Description:  "UUID of trusted profile",
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_iam_trusted_profile_policy",
+					"profile_id"),
 			},
 			"iam_id": {
 				Type:         schema.TypeString,
@@ -100,6 +103,11 @@ func DataSourceIBMIAMTrustedProfilePolicy() *schema.Resource {
 										Computed:    true,
 										Description: "Service type of the policy definition",
 									},
+									"service_group_id": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Service group id of the policy definition",
+									},
 									"attributes": {
 										Type:        schema.TypeMap,
 										Computed:    true,
@@ -138,11 +146,61 @@ func DataSourceIBMIAMTrustedProfilePolicy() *schema.Resource {
 							Computed:    true,
 							Description: "Description of the Policy",
 						},
+						"rule_conditions": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Description: "Rule conditions enforced by the policy",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"key": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "Key of the condition",
+									},
+									"operator": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "Operator of the condition",
+									},
+									"value": {
+										Type:        schema.TypeList,
+										Required:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "Value of the condition",
+									},
+								},
+							},
+						},
+						"rule_operator": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Operator that multiple rule conditions are evaluated over",
+						},
+						"pattern": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Pattern rule follows for time-based condition",
+						},
 					},
 				},
 			},
 		},
 	}
+}
+
+func DataSourceIBMIAMTrustedProfilePolicyValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "profile_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "iam",
+			CloudDataRange:             []string{"service:trusted_profile", "resolved_to:id"},
+			Required:                   true})
+
+	iBMIAMTrustedProfilePolicyValidator := validate.ResourceValidator{ResourceName: "ibm_iam_trusted_profile_policy", Schema: validateSchema}
+	return &iBMIAMTrustedProfilePolicyValidator
 }
 
 func dataSourceIBMIAMTrustedProfilePolicyRead(d *schema.ResourceData, meta interface{}) error {
@@ -178,7 +236,7 @@ func dataSourceIBMIAMTrustedProfilePolicyRead(d *schema.ResourceData, meta inter
 		return err
 	}
 
-	listPoliciesOptions := &iampolicymanagementv1.ListPoliciesOptions{
+	listPoliciesOptions := &iampolicymanagementv1.ListV2PoliciesOptions{
 		AccountID: core.StringPtr(userDetails.UserAccount),
 		IamID:     core.StringPtr(iamID),
 		Type:      core.StringPtr("access"),
@@ -192,7 +250,7 @@ func dataSourceIBMIAMTrustedProfilePolicyRead(d *schema.ResourceData, meta inter
 		listPoliciesOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
 	}
 
-	policyList, resp, err := iamPolicyManagementClient.ListPolicies(listPoliciesOptions)
+	policyList, resp, err := iamPolicyManagementClient.ListV2Policies(listPoliciesOptions)
 
 	if err != nil || resp == nil {
 		return fmt.Errorf("Error listing trusted profile policies: %s, %s", err, resp)
@@ -201,15 +259,15 @@ func dataSourceIBMIAMTrustedProfilePolicyRead(d *schema.ResourceData, meta inter
 	policies := policyList.Policies
 	profilePolicies := make([]map[string]interface{}, 0, len(policies))
 	for _, policy := range policies {
-		roles := make([]string, len(policy.Roles))
-		for i, role := range policy.Roles {
-			roles[i] = *role.DisplayName
+		roles, err := flex.GetRoleNamesFromPolicyResponse(policy, d, meta)
+		if err != nil {
+			return err
 		}
-		resources := flex.FlattenPolicyResource(policy.Resources)
+		resources := flex.FlattenV2PolicyResource(*policy.Resource)
 		p := map[string]interface{}{
 			"roles":         roles,
 			"resources":     resources,
-			"resource_tags": flex.FlattenPolicyResourceTags(policy.Resources),
+			"resource_tags": flex.FlattenV2PolicyResourceTags(*policy.Resource),
 		}
 		if v, ok := d.GetOk("profile_id"); ok && v != nil {
 			profileUUID := v.(string)
@@ -220,6 +278,15 @@ func dataSourceIBMIAMTrustedProfilePolicyRead(d *schema.ResourceData, meta inter
 		}
 		if policy.Description != nil {
 			p["description"] = policy.Description
+		}
+		if policy.Rule != nil {
+			p["rule_conditions"] = flex.FlattenRuleConditions(*policy.Rule.(*iampolicymanagementv1.V2PolicyRule))
+			if len(policy.Rule.(*iampolicymanagementv1.V2PolicyRule).Conditions) > 0 {
+				p["rule_operator"] = policy.Rule.(*iampolicymanagementv1.V2PolicyRule).Operator
+			}
+		}
+		if policy.Pattern != nil {
+			p["pattern"] = policy.Pattern
 		}
 		profilePolicies = append(profilePolicies, p)
 	}

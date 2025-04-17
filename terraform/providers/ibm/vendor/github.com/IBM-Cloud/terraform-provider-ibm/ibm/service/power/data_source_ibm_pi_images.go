@@ -20,7 +20,6 @@ import (
 
 /*
 Datasource to get the list of images that are available when a power instance is created
-
 */
 func DataSourceIBMPIImages() *schema.Resource {
 

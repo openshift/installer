@@ -189,8 +189,8 @@ func ResourceIBMDNSRecord() *schema.Resource {
 	}
 }
 
-//  Creates DNS Domain Resource Record
-//  https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/createObject
+// Creates DNS Domain Resource Record
+// https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/createObject
 func resourceIBMDNSRecordCreate(d *schema.ResourceData, meta interface{}) error {
 	sess := meta.(conns.ClientSession).SoftLayerSession()
 	service := services.GetDnsDomainResourceRecordService(sess.SetRetries(0))
@@ -277,8 +277,8 @@ func resourceIBMDNSRecordCreate(d *schema.ResourceData, meta interface{}) error 
 	return resourceIBMDNSRecordRead(d, meta)
 }
 
-//  Reads DNS Domain Resource Record from SL system
-//  https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/getObject
+// Reads DNS Domain Resource Record from SL system
+// https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/getObject
 func resourceIBMDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 	sess := meta.(conns.ClientSession).SoftLayerSession()
 	service := services.GetDnsDomainResourceRecordService(sess)
@@ -318,8 +318,8 @@ func resourceIBMDNSRecordRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-//  Updates DNS Domain Resource Record in SL system
-//  https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/editObject
+// Updates DNS Domain Resource Record in SL system
+// https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/editObject
 func resourceIBMDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error {
 	sess := meta.(conns.ClientSession).SoftLayerSession()
 	service := services.GetDnsDomainResourceRecordService(sess)
@@ -412,8 +412,8 @@ func resourceIBMDNSRecordUpdate(d *schema.ResourceData, meta interface{}) error 
 	return nil
 }
 
-//  Deletes DNS Domain Resource Record in SL system
-//  https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/deleteObject
+// Deletes DNS Domain Resource Record in SL system
+// https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/deleteObject
 func resourceIBMDNSRecordDelete(d *schema.ResourceData, meta interface{}) error {
 	sess := meta.(conns.ClientSession).SoftLayerSession()
 	service := services.GetDnsDomainResourceRecordService(sess)

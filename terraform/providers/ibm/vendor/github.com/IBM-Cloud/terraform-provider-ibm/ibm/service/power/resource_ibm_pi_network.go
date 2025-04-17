@@ -58,6 +58,7 @@ func ResourceIBMPINetwork() *schema.Resource {
 			helpers.PINetworkDNS: {
 				Type:        schema.TypeSet,
 				Optional:    true,
+				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of PI network DNS name",
 			},

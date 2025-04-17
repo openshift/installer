@@ -63,7 +63,8 @@ func NewPcloudTasksGetOK() *PcloudTasksGetOK {
 	return &PcloudTasksGetOK{}
 }
 
-/* PcloudTasksGetOK describes a response with status code 200, with default header values.
+/*
+PcloudTasksGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -71,9 +72,39 @@ type PcloudTasksGetOK struct {
 	Payload *models.Task
 }
 
+// IsSuccess returns true when this pcloud tasks get o k response has a 2xx status code
+func (o *PcloudTasksGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud tasks get o k response has a 3xx status code
+func (o *PcloudTasksGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tasks get o k response has a 4xx status code
+func (o *PcloudTasksGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud tasks get o k response has a 5xx status code
+func (o *PcloudTasksGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tasks get o k response a status code equal to that given
+func (o *PcloudTasksGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *PcloudTasksGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudTasksGetOK) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudTasksGetOK) GetPayload() *models.Task {
 	return o.Payload
 }
@@ -95,7 +126,8 @@ func NewPcloudTasksGetBadRequest() *PcloudTasksGetBadRequest {
 	return &PcloudTasksGetBadRequest{}
 }
 
-/* PcloudTasksGetBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudTasksGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -103,9 +135,39 @@ type PcloudTasksGetBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud tasks get bad request response has a 2xx status code
+func (o *PcloudTasksGetBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tasks get bad request response has a 3xx status code
+func (o *PcloudTasksGetBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tasks get bad request response has a 4xx status code
+func (o *PcloudTasksGetBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tasks get bad request response has a 5xx status code
+func (o *PcloudTasksGetBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tasks get bad request response a status code equal to that given
+func (o *PcloudTasksGetBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *PcloudTasksGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudTasksGetBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudTasksGetBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -127,7 +189,8 @@ func NewPcloudTasksGetUnauthorized() *PcloudTasksGetUnauthorized {
 	return &PcloudTasksGetUnauthorized{}
 }
 
-/* PcloudTasksGetUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudTasksGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -135,9 +198,39 @@ type PcloudTasksGetUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud tasks get unauthorized response has a 2xx status code
+func (o *PcloudTasksGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tasks get unauthorized response has a 3xx status code
+func (o *PcloudTasksGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tasks get unauthorized response has a 4xx status code
+func (o *PcloudTasksGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tasks get unauthorized response has a 5xx status code
+func (o *PcloudTasksGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tasks get unauthorized response a status code equal to that given
+func (o *PcloudTasksGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *PcloudTasksGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudTasksGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudTasksGetUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -159,7 +252,8 @@ func NewPcloudTasksGetNotFound() *PcloudTasksGetNotFound {
 	return &PcloudTasksGetNotFound{}
 }
 
-/* PcloudTasksGetNotFound describes a response with status code 404, with default header values.
+/*
+PcloudTasksGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -167,9 +261,39 @@ type PcloudTasksGetNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud tasks get not found response has a 2xx status code
+func (o *PcloudTasksGetNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tasks get not found response has a 3xx status code
+func (o *PcloudTasksGetNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tasks get not found response has a 4xx status code
+func (o *PcloudTasksGetNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tasks get not found response has a 5xx status code
+func (o *PcloudTasksGetNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tasks get not found response a status code equal to that given
+func (o *PcloudTasksGetNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *PcloudTasksGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudTasksGetNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudTasksGetNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -191,7 +315,8 @@ func NewPcloudTasksGetInternalServerError() *PcloudTasksGetInternalServerError {
 	return &PcloudTasksGetInternalServerError{}
 }
 
-/* PcloudTasksGetInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudTasksGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -199,9 +324,39 @@ type PcloudTasksGetInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud tasks get internal server error response has a 2xx status code
+func (o *PcloudTasksGetInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tasks get internal server error response has a 3xx status code
+func (o *PcloudTasksGetInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tasks get internal server error response has a 4xx status code
+func (o *PcloudTasksGetInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud tasks get internal server error response has a 5xx status code
+func (o *PcloudTasksGetInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud tasks get internal server error response a status code equal to that given
+func (o *PcloudTasksGetInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudTasksGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudTasksGetInternalServerError) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/tasks/{task_id}][%d] pcloudTasksGetInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudTasksGetInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
@@ -43,6 +44,8 @@ func ResourceIBMIAMTrustedProfilePolicy() *schema.Resource {
 				ExactlyOneOf: []string{"profile_id", "iam_id"},
 				Description:  "UUID of Trusted Profile",
 				ForceNew:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_iam_trusted_profile_policy",
+					"profile_id"),
 			},
 			"iam_id": {
 				Type:         schema.TypeString,
@@ -105,6 +108,12 @@ func ResourceIBMIAMTrustedProfilePolicy() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Service type of the policy definition",
+						},
+
+						"service_group_id": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Service group id of the policy definition",
 						},
 
 						"attributes": {
@@ -196,8 +205,61 @@ func ResourceIBMIAMTrustedProfilePolicy() *schema.Resource {
 				Computed:    true,
 				Description: "Set transactionID for debug",
 			},
+
+			"rule_conditions": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Rule conditions enforced by the policy",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Key of the condition",
+						},
+						"operator": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Operator of the condition",
+						},
+						"value": {
+							Type:        schema.TypeList,
+							Required:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Description: "Value of the condition",
+						},
+					},
+				},
+			},
+
+			"rule_operator": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Operator that multiple rule conditions are evaluated over",
+			},
+
+			"pattern": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Pattern rule follows for time-based condition",
+			},
 		},
 	}
+}
+
+func ResourceIBMIAMTrustedProfilePolicyValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "profile_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "iam",
+			CloudDataRange:             []string{"service:trusted_profile", "resolved_to:id"},
+			Required:                   true})
+
+	iBMIAMTrustedProfilePolicyValidator := validate.ResourceValidator{ResourceName: "ibm_iam_trusted_profile_policy", Schema: validateSchema}
+	return &iBMIAMTrustedProfilePolicyValidator
 }
 
 func resourceIBMIAMTrustedProfilePolicyCreate(d *schema.ResourceData, meta interface{}) error {
@@ -228,59 +290,120 @@ func resourceIBMIAMTrustedProfilePolicyCreate(d *schema.ResourceData, meta inter
 		return err
 	}
 
-	policyOptions, err := flex.GeneratePolicyOptions(d, meta)
-	if err != nil {
-		return err
-	}
-
-	subjectAttribute := &iampolicymanagementv1.SubjectAttribute{
-		Name:  core.StringPtr("iam_id"),
-		Value: &iamID,
-	}
-
-	policySubjects := &iampolicymanagementv1.PolicySubject{
-		Attributes: []iampolicymanagementv1.SubjectAttribute{*subjectAttribute},
-	}
-
-	accountIDResourceAttribute := &iampolicymanagementv1.ResourceAttribute{
-		Name:     core.StringPtr("accountId"),
-		Value:    core.StringPtr(userDetails.UserAccount),
-		Operator: core.StringPtr("stringEquals"),
-	}
-
-	policyResources := iampolicymanagementv1.PolicyResource{
-		Attributes: append(policyOptions.Resources[0].Attributes, *accountIDResourceAttribute),
-		Tags:       flex.SetTags(d),
-	}
-
 	iamPolicyManagementClient, err := meta.(conns.ClientSession).IAMPolicyManagementV1API()
 	if err != nil {
 		return err
 	}
+	var policyID string
+	ruleConditions, ruleConditionsDefined := d.GetOk("rule_conditions")
+	pattern, patternDefined := d.GetOk("pattern")
+	if ruleConditionsDefined || patternDefined {
+		policyOptions, err := flex.GenerateV2PolicyOptions(d, meta)
 
-	createPolicyOptions := iamPolicyManagementClient.NewCreatePolicyOptions(
-		"access",
-		[]iampolicymanagementv1.PolicySubject{*policySubjects},
-		policyOptions.Roles,
-		[]iampolicymanagementv1.PolicyResource{policyResources},
-	)
+		subjectAttribute := &iampolicymanagementv1.V2PolicySubjectAttribute{
+			Key:      core.StringPtr("iam_id"),
+			Value:    &iamID,
+			Operator: core.StringPtr("stringEquals"),
+		}
 
-	if desc, ok := d.GetOk("description"); ok {
-		des := desc.(string)
-		createPolicyOptions.Description = &des
+		policySubject := &iampolicymanagementv1.V2PolicySubject{
+			Attributes: []iampolicymanagementv1.V2PolicySubjectAttribute{*subjectAttribute},
+		}
+
+		accountIDResourceAttribute := &iampolicymanagementv1.V2PolicyResourceAttribute{
+			Key:      core.StringPtr("accountId"),
+			Value:    core.StringPtr(userDetails.UserAccount),
+			Operator: core.StringPtr("stringEquals"),
+		}
+
+		policyResource := &iampolicymanagementv1.V2PolicyResource{
+			Attributes: append(policyOptions.Resource.Attributes, *accountIDResourceAttribute),
+			Tags:       flex.SetV2PolicyTags(d),
+		}
+
+		createPolicyOptions := iamPolicyManagementClient.NewCreateV2PolicyOptions(
+			policyOptions.Control,
+			"access",
+		)
+
+		createPolicyOptions.SetSubject(policySubject)
+		createPolicyOptions.SetResource(policyResource)
+
+		if patternDefined {
+			createPolicyOptions.SetPattern(pattern.(string))
+		}
+
+		if ruleConditionsDefined {
+			createPolicyOptions.SetRule(flex.GeneratePolicyRule(d, ruleConditions))
+		}
+
+		if description, ok := d.GetOk("description"); ok {
+			des := description.(string)
+			createPolicyOptions.Description = &des
+		}
+
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			createPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+		}
+
+		trustedProfilePolicy, resp, err := iamPolicyManagementClient.CreateV2Policy(createPolicyOptions)
+
+		if err != nil {
+			return fmt.Errorf("Error creating user policies: %s, %s", err, resp)
+		}
+
+		policyID = *trustedProfilePolicy.ID
+	} else {
+		policyOptions, err := flex.GeneratePolicyOptions(d, meta)
+		if err != nil {
+			return err
+		}
+
+		subjectAttribute := &iampolicymanagementv1.SubjectAttribute{
+			Name:  core.StringPtr("iam_id"),
+			Value: &iamID,
+		}
+
+		policySubjects := &iampolicymanagementv1.PolicySubject{
+			Attributes: []iampolicymanagementv1.SubjectAttribute{*subjectAttribute},
+		}
+
+		accountIDResourceAttribute := &iampolicymanagementv1.ResourceAttribute{
+			Name:     core.StringPtr("accountId"),
+			Value:    core.StringPtr(userDetails.UserAccount),
+			Operator: core.StringPtr("stringEquals"),
+		}
+
+		policyResources := iampolicymanagementv1.PolicyResource{
+			Attributes: append(policyOptions.Resources[0].Attributes, *accountIDResourceAttribute),
+			Tags:       flex.SetTags(d),
+		}
+
+		createPolicyOptions := iamPolicyManagementClient.NewCreatePolicyOptions(
+			"access",
+			[]iampolicymanagementv1.PolicySubject{*policySubjects},
+			policyOptions.Roles,
+			[]iampolicymanagementv1.PolicyResource{policyResources},
+		)
+
+		if desc, ok := d.GetOk("description"); ok {
+			des := desc.(string)
+			createPolicyOptions.Description = &des
+		}
+
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			createPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+		}
+
+		trustedProfilePolicy, res, err := iamPolicyManagementClient.CreatePolicy(createPolicyOptions)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error creating trustedProfilePolicy: %s %s", err, res)
+		}
+		policyID = *trustedProfilePolicy.ID
 	}
 
-	if transactionID, ok := d.GetOk("transaction_id"); ok {
-		createPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
-	}
-
-	trustedProfilePolicy, res, err := iamPolicyManagementClient.CreatePolicy(createPolicyOptions)
-	if err != nil {
-		return fmt.Errorf("[ERROR] Error creating trustedProfilePolicy: %s %s", err, res)
-	}
-
-	getPolicyOptions := iamPolicyManagementClient.NewGetPolicyOptions(
-		*trustedProfilePolicy.ID,
+	getPolicyOptions := iamPolicyManagementClient.NewGetV2PolicyOptions(
+		policyID,
 	)
 
 	if transactionID, ok := d.GetOk("transaction_id"); ok {
@@ -289,7 +412,7 @@ func resourceIBMIAMTrustedProfilePolicyCreate(d *schema.ResourceData, meta inter
 
 	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
 		var err error
-		policy, res, err := iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+		policy, res, err := iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 
 		if err != nil || policy == nil {
 			if res != nil && res.StatusCode == 404 {
@@ -301,24 +424,24 @@ func resourceIBMIAMTrustedProfilePolicyCreate(d *schema.ResourceData, meta inter
 	})
 
 	if conns.IsResourceTimeoutError(err) {
-		_, res, err = iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+		_, _, err = iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 	}
 	if err != nil {
 		if v, ok := d.GetOk("profile_id"); ok && v != nil {
 			profileIDUUID := v.(string)
-			d.SetId(fmt.Sprintf("%s/%s", profileIDUUID, *trustedProfilePolicy.ID))
+			d.SetId(fmt.Sprintf("%s/%s", profileIDUUID, policyID))
 		} else if v, ok := d.GetOk("iam_id"); ok && v != nil {
 			iamID := v.(string)
-			d.SetId(fmt.Sprintf("%s/%s", iamID, *trustedProfilePolicy.ID))
+			d.SetId(fmt.Sprintf("%s/%s", iamID, policyID))
 		}
-		return fmt.Errorf("[ERROR] Error fetching trusted profile policy: %s %s", err, res)
+		return fmt.Errorf("[ERROR] Error fetching trusted profile policy: %s", err)
 	}
 	if v, ok := d.GetOk("profile_id"); ok && v != nil {
 		profileIDUUID := v.(string)
-		d.SetId(fmt.Sprintf("%s/%s", profileIDUUID, *trustedProfilePolicy.ID))
+		d.SetId(fmt.Sprintf("%s/%s", profileIDUUID, policyID))
 	} else if v, ok := d.GetOk("iam_id"); ok && v != nil {
 		iamID := v.(string)
-		d.SetId(fmt.Sprintf("%s/%s", iamID, *trustedProfilePolicy.ID))
+		d.SetId(fmt.Sprintf("%s/%s", iamID, policyID))
 	}
 
 	return resourceIBMIAMTrustedProfilePolicyRead(d, meta)
@@ -337,9 +460,9 @@ func resourceIBMIAMTrustedProfilePolicyRead(d *schema.ResourceData, meta interfa
 	}
 	profileIDUUID := parts[0]
 	trustedProfilePolicyID := parts[1]
-	trustedProfilePolicy := &iampolicymanagementv1.Policy{}
+	trustedProfilePolicy := &iampolicymanagementv1.V2Policy{}
 	res := &core.DetailedResponse{}
-	getPolicyOptions := iamPolicyManagementClient.NewGetPolicyOptions(
+	getPolicyOptions := iamPolicyManagementClient.NewGetV2PolicyOptions(
 		trustedProfilePolicyID,
 	)
 	if transactionID, ok := d.GetOk("transaction_id"); ok {
@@ -348,7 +471,7 @@ func resourceIBMIAMTrustedProfilePolicyRead(d *schema.ResourceData, meta interfa
 
 	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
 		var err error
-		trustedProfilePolicy, res, err = iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+		trustedProfilePolicy, res, err = iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 
 		if err != nil || trustedProfilePolicy == nil {
 			if res != nil && res.StatusCode == 404 {
@@ -360,7 +483,7 @@ func resourceIBMIAMTrustedProfilePolicyRead(d *schema.ResourceData, meta interfa
 	})
 
 	if conns.IsResourceTimeoutError(err) {
-		trustedProfilePolicy, res, err = iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+		trustedProfilePolicy, res, err = iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 	}
 	if err != nil || trustedProfilePolicy == nil || res == nil {
 		return fmt.Errorf("[ERROR] Error retrieving trusted profile policy: %s %s", err, res)
@@ -371,28 +494,33 @@ func resourceIBMIAMTrustedProfilePolicyRead(d *schema.ResourceData, meta interfa
 		d.Set("profile_id", profileIDUUID)
 	}
 
-	roles := make([]string, len(trustedProfilePolicy.Roles))
-	for i, role := range trustedProfilePolicy.Roles {
-		roles[i] = *role.DisplayName
-	}
+	roles, err := flex.GetRoleNamesFromPolicyResponse(*trustedProfilePolicy, d, meta)
 	d.Set("roles", roles)
 
 	if _, ok := d.GetOk("resources"); ok {
-		d.Set("resources", flex.FlattenPolicyResource(trustedProfilePolicy.Resources))
+		d.Set("resources", flex.FlattenV2PolicyResource(*trustedProfilePolicy.Resource))
 	}
 	if _, ok := d.GetOk("resource_attributes"); ok {
-		d.Set("resource_attributes", flex.FlattenPolicyResourceAttributes(trustedProfilePolicy.Resources))
+		d.Set("resource_attributes", flex.FlattenV2PolicyResourceAttributes(trustedProfilePolicy.Resource.Attributes))
 	}
 
 	if _, ok := d.GetOk("resource_tags"); ok {
-		d.Set("resource_tags", flex.FlattenPolicyResourceTags(trustedProfilePolicy.Resources))
+		d.Set("resource_tags", flex.FlattenV2PolicyResourceTags(*trustedProfilePolicy.Resource))
 	}
 
-	if len(trustedProfilePolicy.Resources) > 0 {
-		if *flex.GetResourceAttribute("serviceType", trustedProfilePolicy.Resources[0]) == "service" {
+	if _, ok := d.GetOk("rule_conditions"); ok {
+		d.Set("rule_conditions", flex.FlattenRuleConditions(*trustedProfilePolicy.Rule.(*iampolicymanagementv1.V2PolicyRule)))
+	}
+
+	if _, ok := d.GetOk("rule_operator"); ok {
+		d.Set("rule_operator", *trustedProfilePolicy.Rule.(*iampolicymanagementv1.V2PolicyRule).Operator)
+	}
+
+	if (&iampolicymanagementv1.V2PolicyResource{}) != trustedProfilePolicy.Resource {
+		if flex.GetV2PolicyResourceAttribute("serviceType", *trustedProfilePolicy.Resource) == "service" {
 			d.Set("account_management", false)
 		}
-		if *flex.GetResourceAttribute("serviceType", trustedProfilePolicy.Resources[0]) == "platform_service" {
+		if flex.GetV2PolicyResourceAttribute("serviceType", *trustedProfilePolicy.Resource) == "platform_service" {
 			d.Set("account_management", true)
 		}
 	}
@@ -408,7 +536,7 @@ func resourceIBMIAMTrustedProfilePolicyRead(d *schema.ResourceData, meta interfa
 
 func resourceIBMIAMTrustedProfilePolicyUpdate(d *schema.ResourceData, meta interface{}) error {
 
-	if d.HasChange("roles") || d.HasChange("resources") || d.HasChange("resource_attributes") || d.HasChange("account_management") || d.HasChange("description") || d.HasChange("resource_tags") {
+	if d.HasChange("roles") || d.HasChange("resources") || d.HasChange("resource_attributes") || d.HasChange("account_management") || d.HasChange("description") || d.HasChange("resource_tags") || d.HasChange("rule_conditions") || d.HasChange("rule_operator") || d.HasChange("pattern") {
 
 		parts, err := flex.IdParts(d.Id())
 		if err != nil {
@@ -442,36 +570,12 @@ func resourceIBMIAMTrustedProfilePolicyUpdate(d *schema.ResourceData, meta inter
 			return err
 		}
 
-		createPolicyOptions, err := flex.GeneratePolicyOptions(d, meta)
-		if err != nil {
-			return err
-		}
-
-		accountIDResourceAttribute := &iampolicymanagementv1.ResourceAttribute{
-			Name:     core.StringPtr("accountId"),
-			Value:    core.StringPtr(userDetails.UserAccount),
-			Operator: core.StringPtr("stringEquals"),
-		}
-
-		policyResources := iampolicymanagementv1.PolicyResource{
-			Attributes: append(createPolicyOptions.Resources[0].Attributes, *accountIDResourceAttribute),
-			Tags:       flex.SetTags(d),
-		}
-
-		subjectAttribute := &iampolicymanagementv1.SubjectAttribute{
-			Name:  core.StringPtr("iam_id"),
-			Value: &iamID,
-		}
-		policySubjects := &iampolicymanagementv1.PolicySubject{
-			Attributes: []iampolicymanagementv1.SubjectAttribute{*subjectAttribute},
-		}
-
 		iamPolicyManagementClient, err := meta.(conns.ClientSession).IAMPolicyManagementV1API()
 		if err != nil {
 			return err
 		}
 
-		getPolicyOptions := iamPolicyManagementClient.NewGetPolicyOptions(
+		getPolicyOptions := iamPolicyManagementClient.NewGetV2PolicyOptions(
 			trustedProfilePolicyID,
 		)
 
@@ -479,7 +583,7 @@ func resourceIBMIAMTrustedProfilePolicyUpdate(d *schema.ResourceData, meta inter
 			getPolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
 		}
 
-		policy, response, err := iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+		policy, response, err := iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 		if err != nil || policy == nil {
 			if response != nil && response.StatusCode == 404 {
 				return nil
@@ -488,29 +592,118 @@ func resourceIBMIAMTrustedProfilePolicyUpdate(d *schema.ResourceData, meta inter
 		}
 
 		trustedProfilePolicyETag := response.Headers.Get("ETag")
-		updatePolicyOptions := iamPolicyManagementClient.NewUpdatePolicyOptions(
-			trustedProfilePolicyID,
-			trustedProfilePolicyETag,
-			"access",
-			[]iampolicymanagementv1.PolicySubject{*policySubjects},
-			createPolicyOptions.Roles,
-			[]iampolicymanagementv1.PolicyResource{policyResources},
-		)
 
-		if desc, ok := d.GetOk("description"); ok {
-			des := desc.(string)
-			updatePolicyOptions.Description = &des
+		if strings.Contains(*policy.Href, "/v2/policies") {
+			createPolicyOptions, err := flex.GenerateV2PolicyOptions(d, meta)
+			if err != nil {
+				return err
+			}
+			subjectAttribute := &iampolicymanagementv1.V2PolicySubjectAttribute{
+				Key:      core.StringPtr("iam_id"),
+				Value:    &iamID,
+				Operator: core.StringPtr("stringEquals"),
+			}
+
+			policySubject := &iampolicymanagementv1.V2PolicySubject{
+				Attributes: []iampolicymanagementv1.V2PolicySubjectAttribute{*subjectAttribute},
+			}
+
+			accountIDResourceAttribute := &iampolicymanagementv1.V2PolicyResourceAttribute{
+				Key:      core.StringPtr("accountId"),
+				Value:    core.StringPtr(userDetails.UserAccount),
+				Operator: core.StringPtr("stringEquals"),
+			}
+
+			policyResource := &iampolicymanagementv1.V2PolicyResource{
+				Attributes: append(createPolicyOptions.Resource.Attributes, *accountIDResourceAttribute),
+				Tags:       flex.SetV2PolicyTags(d),
+			}
+
+			updatePolicyOptions := iamPolicyManagementClient.NewReplaceV2PolicyOptions(
+				trustedProfilePolicyID,
+				trustedProfilePolicyETag,
+				createPolicyOptions.Control,
+				"access",
+			)
+			updatePolicyOptions.SetSubject(policySubject)
+			updatePolicyOptions.SetResource(policyResource)
+
+			if pattern, ok := d.GetOk("pattern"); ok {
+				updatePolicyOptions.SetPattern(pattern.(string))
+			}
+
+			if ruleConditions, ok := d.GetOk("rule_conditions"); ok {
+				updatePolicyOptions.SetRule(flex.GeneratePolicyRule(d, ruleConditions))
+			}
+
+			if description, ok := d.GetOk("description"); ok {
+				des := description.(string)
+				updatePolicyOptions.Description = &des
+			}
+
+			if transactionID, ok := d.GetOk("transaction_id"); ok {
+				updatePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+			}
+
+			_, resp, err := iamPolicyManagementClient.ReplaceV2Policy(updatePolicyOptions)
+			if err != nil {
+				return fmt.Errorf("[ERROR] Error updating user policy: %s, %s", err, resp)
+			}
+		} else {
+
+			_, ruleConditionsDefined := d.GetOk("rule_conditions")
+			_, patternDefined := d.GetOk("pattern")
+			if ruleConditionsDefined || patternDefined {
+				return fmt.Errorf("Cannot use rule_conditions, rule_operator, or pattern when updating v1/policy. Delete existing v1/policy and create using rule_conditions and pattern.")
+			}
+
+			createPolicyOptions, err := flex.GeneratePolicyOptions(d, meta)
+			if err != nil {
+				return err
+			}
+
+			accountIDResourceAttribute := &iampolicymanagementv1.ResourceAttribute{
+				Name:     core.StringPtr("accountId"),
+				Value:    core.StringPtr(userDetails.UserAccount),
+				Operator: core.StringPtr("stringEquals"),
+			}
+
+			policyResources := iampolicymanagementv1.PolicyResource{
+				Attributes: append(createPolicyOptions.Resources[0].Attributes, *accountIDResourceAttribute),
+				Tags:       flex.SetTags(d),
+			}
+
+			subjectAttribute := &iampolicymanagementv1.SubjectAttribute{
+				Name:  core.StringPtr("iam_id"),
+				Value: &iamID,
+			}
+			policySubjects := &iampolicymanagementv1.PolicySubject{
+				Attributes: []iampolicymanagementv1.SubjectAttribute{*subjectAttribute},
+			}
+
+			updatePolicyOptions := iamPolicyManagementClient.NewReplacePolicyOptions(
+				trustedProfilePolicyID,
+				trustedProfilePolicyETag,
+				"access",
+				[]iampolicymanagementv1.PolicySubject{*policySubjects},
+				createPolicyOptions.Roles,
+				[]iampolicymanagementv1.PolicyResource{policyResources},
+			)
+
+			if desc, ok := d.GetOk("description"); ok {
+				des := desc.(string)
+				updatePolicyOptions.Description = &des
+			}
+
+			if transactionID, ok := d.GetOk("transaction_id"); ok {
+				updatePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+			}
+
+			_, resp, err := iamPolicyManagementClient.ReplacePolicy(updatePolicyOptions)
+			if err != nil {
+				return fmt.Errorf("[ERROR] Error updating trusted profile policy: %s: %s", err, resp)
+			}
 		}
-
-		if transactionID, ok := d.GetOk("transaction_id"); ok {
-			updatePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
-		}
-
-		_, resp, err := iamPolicyManagementClient.UpdatePolicy(updatePolicyOptions)
-		if err != nil {
-			return fmt.Errorf("[ERROR] Error updating trusted profile policy: %s: %s", err, resp)
-		}
-
 	}
 
 	return resourceIBMIAMTrustedProfilePolicyRead(d, meta)
@@ -529,17 +722,39 @@ func resourceIBMIAMTrustedProfilePolicyDelete(d *schema.ResourceData, meta inter
 	}
 	trustedProfilePolicyID := parts[1]
 
-	deletePolicyOptions := iamPolicyManagementClient.NewDeletePolicyOptions(
+	getPolicyOptions := iamPolicyManagementClient.NewGetV2PolicyOptions(
 		trustedProfilePolicyID,
 	)
 
-	if transactionID, ok := d.GetOk("transaction_id"); ok {
-		deletePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+	// Get policy to find version in href
+	policy, _, err := iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
+
+	if err != nil {
+		return err
 	}
 
-	resp, err := iamPolicyManagementClient.DeletePolicy(deletePolicyOptions)
+	if strings.Contains(*policy.Href, "/v2/policies") {
+		deletePolicyOptions := iamPolicyManagementClient.NewDeleteV2PolicyOptions(
+			trustedProfilePolicyID,
+		)
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			deletePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+		}
+
+		_, err = iamPolicyManagementClient.DeleteV2Policy(deletePolicyOptions)
+	} else {
+		deletePolicyOptions := iamPolicyManagementClient.NewDeletePolicyOptions(
+			trustedProfilePolicyID,
+		)
+		if transactionID, ok := d.GetOk("transaction_id"); ok {
+			deletePolicyOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
+		}
+
+		_, err = iamPolicyManagementClient.DeletePolicy(deletePolicyOptions)
+	}
+
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error deleting trusted profile policy: %s %s", err, resp)
+		return fmt.Errorf("[ERROR] Error deleting trusted profile policy: %s", err)
 	}
 
 	d.SetId("")
@@ -562,11 +777,11 @@ func resourceIBMIAMTrustedProfilePolicyExists(d *schema.ResourceData, meta inter
 	profileIDUUID := parts[0]
 	trustedProfilePolicyID := parts[1]
 
-	getPolicyOptions := iamPolicyManagementClient.NewGetPolicyOptions(
+	getPolicyOptions := iamPolicyManagementClient.NewGetV2PolicyOptions(
 		trustedProfilePolicyID,
 	)
 
-	trustedProfilePolicy, resp, err := iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+	trustedProfilePolicy, resp, err := iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 	if err != nil || trustedProfilePolicy == nil {
 		if resp != nil && resp.StatusCode == 404 {
 			return false, nil
@@ -594,15 +809,15 @@ func importTrustedProfilePolicy(d *schema.ResourceData, meta interface{}) (inter
 		return nil, nil, err
 	}
 	trustedProfilePolicyID := parts[1]
-	getPolicyOptions := iamPolicyManagementClient.NewGetPolicyOptions(
+	getPolicyOptions := iamPolicyManagementClient.NewGetV2PolicyOptions(
 		trustedProfilePolicyID,
 	)
-	trustedProfilePolicy, resp, err := iamPolicyManagementClient.GetPolicy(getPolicyOptions)
+	trustedProfilePolicy, resp, err := iamPolicyManagementClient.GetV2Policy(getPolicyOptions)
 	if err != nil {
 		return nil, nil, fmt.Errorf("[ERROR] Error retrieving trusted profile policy: %s %s", err, resp)
 	}
-	resources := flex.FlattenPolicyResource(trustedProfilePolicy.Resources)
-	resource_attributes := flex.FlattenPolicyResourceAttributes(trustedProfilePolicy.Resources)
-	d.Set("resource_tags", flex.FlattenPolicyResourceTags(trustedProfilePolicy.Resources))
+	resources := flex.FlattenV2PolicyResource(*trustedProfilePolicy.Resource)
+	resource_attributes := flex.FlattenV2PolicyResourceAttributes(trustedProfilePolicy.Resource.Attributes)
+	d.Set("resource_tags", flex.FlattenV2PolicyResourceTags(*trustedProfilePolicy.Resource))
 	return resources, resource_attributes, nil
 }

@@ -167,10 +167,10 @@ func enSlackDestinationConfigToMap(configItem en.DestinationConfig) (configMap m
 	return configMap
 }
 
-func enSlackDestinationConfigParamsToMap(paramsItem en.DestinationConfigParamsIntf) (paramsMap map[string]interface{}) {
+func enSlackDestinationConfigParamsToMap(paramsItem en.DestinationConfigOneOfIntf) (paramsMap map[string]interface{}) {
 	paramsMap = map[string]interface{}{}
 
-	params := paramsItem.(*en.DestinationConfigParams)
+	params := paramsItem.(*en.DestinationConfigOneOf)
 
 	if params.URL != nil {
 		paramsMap["url"] = params.URL

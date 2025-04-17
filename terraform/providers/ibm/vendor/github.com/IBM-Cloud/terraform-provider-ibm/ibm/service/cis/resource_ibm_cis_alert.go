@@ -136,7 +136,7 @@ func ResourceIBMCISAlertValidator() *validate.ResourceValidator {
 			Identifier:                 "cis_id",
 			ValidateFunctionIdentifier: validate.ValidateCloudData,
 			Type:                       validate.TypeString,
-			CloudDataType:              "ResourceInstance",
+			CloudDataType:              "resource_instance",
 			CloudDataRange:             []string{"service:internet-svcs"},
 			Required:                   true})
 	ibmCISAlertValidator := validate.ResourceValidator{

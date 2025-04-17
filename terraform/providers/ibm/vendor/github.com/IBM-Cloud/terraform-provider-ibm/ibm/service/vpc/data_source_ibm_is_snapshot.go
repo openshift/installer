@@ -5,6 +5,7 @@ package vpc
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
@@ -23,6 +24,74 @@ func DataSourceSnapshot() *schema.Resource {
 				ExactlyOneOf: []string{isSnapshotName, "identifier"},
 				Description:  "Snapshot identifier",
 				ValidateFunc: validate.InvokeDataSourceValidator("ibm_is_snapshot", "identifier"),
+			},
+
+			isSnapshotCopies: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The copies of this snapshot in other regions.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"crn": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The CRN for the copied snapshot.",
+						},
+						"deleted": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted, and provides some supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						"href": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for the copied snapshot.",
+						},
+						"id": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for the copied snapshot.",
+						},
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name for the copied snapshot. The name is unique across all snapshots in the copied snapshot's native region.",
+						},
+						"remote": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource is remote to this region,and identifies the native region.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this region.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The globally unique name for this region.",
+									},
+								},
+							},
+						},
+						"resource_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
 			},
 
 			isSnapshotName: {
@@ -44,10 +113,87 @@ func DataSourceSnapshot() *schema.Resource {
 				Computed:    true,
 				Description: "Snapshot source volume id",
 			},
+			isSnapshotSourceSnapshot: {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				Description: "If present, the source snapshot this snapshot was created from.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"crn": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "The CRN of the source snapshot.",
+						},
+						"deleted": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						"href": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for the source snapshot.",
+						},
+						"id": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for the source snapshot.",
+						},
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name for the source snapshot. The name is unique across all snapshots in the source snapshot's native region.",
+						},
+						"remote": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource is remote to this region,and identifies the native region.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this region.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The globally unique name for this region.",
+									},
+								},
+							},
+						},
+						"resource_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
+			},
 			isSnapshotSourceImage: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "If present, the image id from which the data on this volume was most directly provisioned.",
+			},
+
+			isSnapshotAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access tags",
 			},
 
 			isSnapshotOperatingSystem: {
@@ -77,6 +223,11 @@ func DataSourceSnapshot() *schema.Resource {
 				Computed:    true,
 				Description: "Encryption type of the snapshot",
 			},
+			isSnapshotEncryptionKey: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "A reference to the root key used to wrap the data encryption key for the source volume.",
+			},
 			isSnapshotHref: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -99,7 +250,13 @@ func DataSourceSnapshot() *schema.Resource {
 				Computed:    true,
 				Description: "The size of the snapshot",
 			},
-
+			isSnapshotClones: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Description: "Zones for creating the snapshot clone",
+			},
 			isSnapshotCapturedAt: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -224,12 +381,47 @@ func snapshotGetByNameOrID(d *schema.ResourceData, meta interface{}, name, id st
 				d.Set(isSnapshotMinCapacity, *snapshot.MinimumCapacity)
 				d.Set(isSnapshotSize, *snapshot.Size)
 				d.Set(isSnapshotEncryption, *snapshot.Encryption)
+				if snapshot.EncryptionKey != nil && snapshot.EncryptionKey.CRN != nil {
+					d.Set(isSnapshotEncryptionKey, *snapshot.EncryptionKey.CRN)
+				}
 				d.Set(isSnapshotLCState, *snapshot.LifecycleState)
 				d.Set(isSnapshotResourceType, *snapshot.ResourceType)
 				d.Set(isSnapshotBootable, *snapshot.Bootable)
+
+				// source snapshot
+				sourceSnapshotList := []map[string]interface{}{}
+				if snapshot.SourceSnapshot != nil {
+					sourceSnapshot := map[string]interface{}{}
+					sourceSnapshot["href"] = snapshot.SourceSnapshot.Href
+					if snapshot.SourceSnapshot.Deleted != nil {
+						snapshotSourceSnapshotDeletedMap := map[string]interface{}{}
+						snapshotSourceSnapshotDeletedMap["more_info"] = snapshot.SourceSnapshot.Deleted.MoreInfo
+						sourceSnapshot["deleted"] = []map[string]interface{}{snapshotSourceSnapshotDeletedMap}
+					}
+					sourceSnapshot["id"] = snapshot.SourceSnapshot.ID
+					sourceSnapshot["name"] = snapshot.SourceSnapshot.Name
+
+					sourceSnapshot["resource_type"] = snapshot.SourceSnapshot.ResourceType
+					sourceSnapshotList = append(sourceSnapshotList, sourceSnapshot)
+				}
+				d.Set(isSnapshotSourceSnapshot, sourceSnapshotList)
+
+				// snapshot copies
+				snapshotCopies := []map[string]interface{}{}
+				if snapshot.Copies != nil {
+					for _, copiesItem := range snapshot.Copies {
+						copiesMap, err := dataSourceIBMIsSnapshotsSnapshotCopiesItemToMap(&copiesItem)
+						if err != nil {
+							return fmt.Errorf("[ERROR] Error fetching snapshot copies: %s", err)
+						}
+						snapshotCopies = append(snapshotCopies, copiesMap)
+					}
+				}
+				d.Set(isSnapshotCopies, snapshotCopies)
+
 				if snapshot.UserTags != nil {
 					if err = d.Set(isSnapshotUserTags, snapshot.UserTags); err != nil {
-						return fmt.Errorf("Error setting user tags: %s", err)
+						return fmt.Errorf("[ERROR] Error setting user tags: %s", err)
 					}
 				}
 				if snapshot.ResourceGroup != nil && snapshot.ResourceGroup.ID != nil {
@@ -244,6 +436,18 @@ func snapshotGetByNameOrID(d *schema.ResourceData, meta interface{}, name, id st
 				if snapshot.OperatingSystem != nil && snapshot.OperatingSystem.Name != nil {
 					d.Set(isSnapshotOperatingSystem, *snapshot.OperatingSystem.Name)
 				}
+
+				var clones []string
+				clones = make([]string, 0)
+				if snapshot.Clones != nil {
+					for _, clone := range snapshot.Clones {
+						if clone.Zone != nil && clone.Zone.Name != nil {
+							clones = append(clones, *clone.Zone.Name)
+						}
+					}
+				}
+				d.Set(isSnapshotClones, flex.NewStringSet(schema.HashString, clones))
+
 				backupPolicyPlanList := []map[string]interface{}{}
 				if snapshot.BackupPolicyPlan != nil {
 					backupPolicyPlan := map[string]interface{}{}
@@ -259,6 +463,12 @@ func snapshotGetByNameOrID(d *schema.ResourceData, meta interface{}, name, id st
 					backupPolicyPlanList = append(backupPolicyPlanList, backupPolicyPlan)
 				}
 				d.Set(isSnapshotBackupPolicyPlan, backupPolicyPlanList)
+				accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *snapshot.CRN, "", isAccessTagType)
+				if err != nil {
+					log.Printf(
+						"[ERROR] Error on get of resource snapshot (%s) access tags: %s", d.Id(), err)
+				}
+				d.Set(isSnapshotAccessTags, accesstags)
 				return nil
 			}
 		}
@@ -284,12 +494,45 @@ func snapshotGetByNameOrID(d *schema.ResourceData, meta interface{}, name, id st
 		d.Set(isSnapshotLCState, *snapshot.LifecycleState)
 		d.Set(isSnapshotResourceType, *snapshot.ResourceType)
 		d.Set(isSnapshotBootable, *snapshot.Bootable)
+
+		if snapshot.EncryptionKey != nil && snapshot.EncryptionKey.CRN != nil {
+			d.Set(isSnapshotEncryptionKey, *snapshot.EncryptionKey.CRN)
+		}
+		// source snapshot
+		sourceSnapshotList := []map[string]interface{}{}
+		if snapshot.SourceSnapshot != nil {
+			sourceSnapshot := map[string]interface{}{}
+			sourceSnapshot["href"] = snapshot.SourceSnapshot.Href
+			sourceSnapshot["crn"] = snapshot.SourceSnapshot.CRN
+			if snapshot.SourceSnapshot.Deleted != nil {
+				snapshotSourceSnapshotDeletedMap := map[string]interface{}{}
+				snapshotSourceSnapshotDeletedMap["more_info"] = snapshot.SourceSnapshot.Deleted.MoreInfo
+				sourceSnapshot["deleted"] = []map[string]interface{}{snapshotSourceSnapshotDeletedMap}
+			}
+			sourceSnapshot["id"] = snapshot.SourceSnapshot.ID
+			sourceSnapshot["name"] = snapshot.SourceSnapshot.Name
+			sourceSnapshot["resource_type"] = snapshot.SourceSnapshot.ResourceType
+			sourceSnapshotList = append(sourceSnapshotList, sourceSnapshot)
+		}
+		// snapshot copies
+		snapshotCopies := []map[string]interface{}{}
+		if snapshot.Copies != nil {
+			for _, copiesItem := range snapshot.Copies {
+				copiesMap, err := dataSourceIBMIsSnapshotsSnapshotCopiesItemToMap(&copiesItem)
+				if err != nil {
+					return fmt.Errorf("[ERROR] Error fetching snapshot copies: %s", err)
+				}
+				snapshotCopies = append(snapshotCopies, copiesMap)
+			}
+		}
+		d.Set(isSnapshotCopies, snapshotCopies)
+
 		if snapshot.CapturedAt != nil {
 			d.Set(isSnapshotCapturedAt, (*snapshot.CapturedAt).String())
 		}
 		if snapshot.UserTags != nil {
 			if err = d.Set(isSnapshotUserTags, snapshot.UserTags); err != nil {
-				return fmt.Errorf("Error setting user tags: %s", err)
+				return fmt.Errorf("[ERROR] Error setting user tags: %s", err)
 			}
 		}
 		if snapshot.ResourceGroup != nil && snapshot.ResourceGroup.ID != nil {
@@ -304,6 +547,17 @@ func snapshotGetByNameOrID(d *schema.ResourceData, meta interface{}, name, id st
 		if snapshot.OperatingSystem != nil && snapshot.OperatingSystem.Name != nil {
 			d.Set(isSnapshotOperatingSystem, *snapshot.OperatingSystem.Name)
 		}
+		var clones []string
+		clones = make([]string, 0)
+		if snapshot.Clones != nil {
+			for _, clone := range snapshot.Clones {
+				if clone.Zone != nil && clone.Zone.Name != nil {
+					clones = append(clones, *clone.Zone.Name)
+				}
+			}
+		}
+		d.Set(isSnapshotClones, flex.NewStringSet(schema.HashString, clones))
+
 		backupPolicyPlanList := []map[string]interface{}{}
 		if snapshot.BackupPolicyPlan != nil {
 			backupPolicyPlan := map[string]interface{}{}
@@ -319,6 +573,12 @@ func snapshotGetByNameOrID(d *schema.ResourceData, meta interface{}, name, id st
 			backupPolicyPlanList = append(backupPolicyPlanList, backupPolicyPlan)
 		}
 		d.Set(isSnapshotBackupPolicyPlan, backupPolicyPlanList)
+		accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *snapshot.CRN, "", isAccessTagType)
+		if err != nil {
+			log.Printf(
+				"[ERROR] Error on get of resource snapshot (%s) access tags: %s", d.Id(), err)
+		}
+		d.Set(isSnapshotAccessTags, accesstags)
 		return nil
 	}
 }

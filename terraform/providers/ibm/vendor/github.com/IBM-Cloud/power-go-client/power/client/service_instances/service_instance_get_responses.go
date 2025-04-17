@@ -45,7 +45,8 @@ func NewServiceInstanceGetOK() *ServiceInstanceGetOK {
 	return &ServiceInstanceGetOK{}
 }
 
-/* ServiceInstanceGetOK describes a response with status code 200, with default header values.
+/*
+ServiceInstanceGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -53,9 +54,39 @@ type ServiceInstanceGetOK struct {
 	Payload *models.ServiceInstanceResource
 }
 
+// IsSuccess returns true when this service instance get o k response has a 2xx status code
+func (o *ServiceInstanceGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service instance get o k response has a 3xx status code
+func (o *ServiceInstanceGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance get o k response has a 4xx status code
+func (o *ServiceInstanceGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service instance get o k response has a 5xx status code
+func (o *ServiceInstanceGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance get o k response a status code equal to that given
+func (o *ServiceInstanceGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceInstanceGetOK) Error() string {
 	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}][%d] serviceInstanceGetOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceInstanceGetOK) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}][%d] serviceInstanceGetOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceInstanceGetOK) GetPayload() *models.ServiceInstanceResource {
 	return o.Payload
 }
@@ -77,7 +108,8 @@ func NewServiceInstanceGetNotFound() *ServiceInstanceGetNotFound {
 	return &ServiceInstanceGetNotFound{}
 }
 
-/* ServiceInstanceGetNotFound describes a response with status code 404, with default header values.
+/*
+ServiceInstanceGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -85,9 +117,39 @@ type ServiceInstanceGetNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service instance get not found response has a 2xx status code
+func (o *ServiceInstanceGetNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance get not found response has a 3xx status code
+func (o *ServiceInstanceGetNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance get not found response has a 4xx status code
+func (o *ServiceInstanceGetNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance get not found response has a 5xx status code
+func (o *ServiceInstanceGetNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance get not found response a status code equal to that given
+func (o *ServiceInstanceGetNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *ServiceInstanceGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}][%d] serviceInstanceGetNotFound  %+v", 404, o.Payload)
 }
+
+func (o *ServiceInstanceGetNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}][%d] serviceInstanceGetNotFound  %+v", 404, o.Payload)
+}
+
 func (o *ServiceInstanceGetNotFound) GetPayload() *models.Error {
 	return o.Payload
 }

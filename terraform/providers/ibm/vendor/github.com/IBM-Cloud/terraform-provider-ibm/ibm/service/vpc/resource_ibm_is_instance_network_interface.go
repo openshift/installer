@@ -551,7 +551,7 @@ func resourceIBMIsInstanceNetworkInterfaceUpdate(context context.Context, d *sch
 		patchVals.Name = core.StringPtr(d.Get(isInstanceNicName).(string))
 		hasChange = true
 	}
-	if d.HasChange("primary_network_interface.0.primary_ip.0.name") || d.HasChange("primary_network_interface.0.primary_ip.0.auto_delete") {
+	if !d.IsNewResource() && (d.HasChange("primary_network_interface.0.primary_ip.0.name") || d.HasChange("primary_network_interface.0.primary_ip.0.auto_delete")) {
 		subnetId := d.Get(isBareMetalServerNicSubnet).(string)
 		ripId := d.Get("primary_network_interface.0.primary_ip.0.reserved_ip").(string)
 		updateripoptions := &vpcv1.UpdateSubnetReservedIPOptions{

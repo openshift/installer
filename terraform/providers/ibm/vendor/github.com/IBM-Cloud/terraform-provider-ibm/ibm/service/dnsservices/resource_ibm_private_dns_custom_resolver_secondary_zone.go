@@ -158,8 +158,8 @@ func resourceIBMPrivateDNSSecondaryZoneRead(ctx context.Context, d *schema.Resou
 	d.Set(pdnsSecondaryZoneZone, *resource.Zone)
 	d.Set(pdnsSecondaryZoneTransferFrom, transferFrom)
 	d.Set(pdnsSecondaryZoneID, *resource.ID)
-	d.Set(pdnsSecondaryZoneCreatedOn, resource.CreatedOn)
-	d.Set(pdnsSecondaryZoneModifiedOn, resource.ModifiedOn)
+	d.Set(pdnsSecondaryZoneCreatedOn, resource.CreatedOn.String())
+	d.Set(pdnsSecondaryZoneModifiedOn, resource.ModifiedOn.String())
 	d.Set(pdnsSecondaryZoneEnabled, *resource.Enabled)
 
 	return nil

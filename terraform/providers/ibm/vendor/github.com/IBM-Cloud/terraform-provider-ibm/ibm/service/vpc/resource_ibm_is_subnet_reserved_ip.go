@@ -22,6 +22,7 @@ const (
 	isReservedIPProvisioningDone = "done"
 	isReservedIP                 = "reserved_ip"
 	isReservedIPTarget           = "target"
+	isReservedIPTargetCrn        = "target_crn"
 	isReservedIPLifecycleState   = "lifecycle_state"
 )
 
@@ -68,6 +69,12 @@ func ResourceIBMISReservedIP() *schema.Resource {
 				Computed:    true,
 				Optional:    true,
 				Description: "The unique identifier for target.",
+			},
+			isReservedIPTargetCrn: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Optional:    true,
+				Description: "The crn for target.",
 			},
 			isReservedIPLifecycleState: {
 				Type:        schema.TypeString,
@@ -213,6 +220,12 @@ func resourceIBMISReservedIPRead(d *schema.ResourceData, meta interface{}) error
 				{
 					target := targetIntf.(*vpcv1.ReservedIPTargetEndpointGatewayReference)
 					d.Set(isReservedIPTarget, target.ID)
+					d.Set(isReservedIPTargetCrn, target.CRN)
+				}
+			case "*vpcv1.ReservedIPTargetGenericResourceReference":
+				{
+					target := targetIntf.(*vpcv1.ReservedIPTargetGenericResourceReference)
+					d.Set(isReservedIPTargetCrn, target.CRN)
 				}
 			case "*vpcv1.ReservedIPTargetNetworkInterfaceReferenceTargetContext":
 				{
@@ -223,16 +236,19 @@ func resourceIBMISReservedIPRead(d *schema.ResourceData, meta interface{}) error
 				{
 					target := targetIntf.(*vpcv1.ReservedIPTargetLoadBalancerReference)
 					d.Set(isReservedIPTarget, target.ID)
+					d.Set(isReservedIPTargetCrn, target.CRN)
 				}
 			case "*vpcv1.ReservedIPTargetVPNGatewayReference":
 				{
 					target := targetIntf.(*vpcv1.ReservedIPTargetVPNGatewayReference)
 					d.Set(isReservedIPTarget, target.ID)
+					d.Set(isReservedIPTargetCrn, target.CRN)
 				}
 			case "*vpcv1.ReservedIPTarget":
 				{
 					target := targetIntf.(*vpcv1.ReservedIPTarget)
 					d.Set(isReservedIPTarget, target.ID)
+					d.Set(isReservedIPTargetCrn, target.CRN)
 				}
 			}
 		}

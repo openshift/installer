@@ -311,6 +311,25 @@ func DataSourceIbmIsDedicatedHostProfiles() *schema.Resource {
 								},
 							},
 						},
+						"vcpu_manufacturer": &schema.Schema{
+							Type: schema.TypeList,
+
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The type for this profile field.",
+									},
+									"value": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "TThe VCPU manufacturer for a dedicated host with this profile.",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -467,6 +486,13 @@ func dataSourceDedicatedHostProfileCollectionProfilesToMap(profilesItem vpcv1.De
 		vcpuCountList = append(vcpuCountList, vcpuCountMap)
 		profilesMap["vcpu_count"] = vcpuCountList
 	}
+	// AMD Support, changes for manufacturer details.
+	if profilesItem.VcpuManufacturer != nil {
+		vcpuManufacturerList := []map[string]interface{}{}
+		vcpuManufacturerMap := dataSourceDedicatedHostProfileCollectionProfilesVcpuManufacturerToMap(*profilesItem.VcpuManufacturer)
+		vcpuManufacturerList = append(vcpuManufacturerList, vcpuManufacturerMap)
+		profilesMap["vcpu_manufacturer"] = vcpuManufacturerList
+	}
 
 	return profilesMap
 }
@@ -551,6 +577,20 @@ func dataSourceDedicatedHostProfileCollectionProfilesVcpuArchitectureToMap(vcpuA
 	}
 
 	return vcpuArchitectureMap
+}
+
+// AMD Changes, manufacturer details added.
+func dataSourceDedicatedHostProfileCollectionProfilesVcpuManufacturerToMap(vcpuManufacturerItem vpcv1.DedicatedHostProfileVcpuManufacturer) (vcpuManufacturerMap map[string]interface{}) {
+	vcpuManufacturerMap = map[string]interface{}{}
+
+	if vcpuManufacturerItem.Type != nil {
+		vcpuManufacturerMap["type"] = vcpuManufacturerItem.Type
+	}
+	if vcpuManufacturerItem.Value != nil {
+		vcpuManufacturerMap["value"] = vcpuManufacturerItem.Value
+	}
+
+	return vcpuManufacturerMap
 }
 
 func dataSourceDedicatedHostProfileCollectionProfilesVcpuCountToMap(vcpuCountItem vpcv1.DedicatedHostProfileVcpu) (vcpuCountMap map[string]interface{}) {

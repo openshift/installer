@@ -5,6 +5,7 @@ package vpc
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -120,6 +121,32 @@ func DataSourceIBMISInstances() *schema.Resource {
 							Computed:    true,
 							Description: "Indicates whether the metadata service endpoint is available to the virtual server instance",
 						},
+						isInstanceMetadataService: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The metadata service configuration",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									isInstanceMetadataServiceEnabled1: {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Indicates whether the metadata service endpoint will be available to the virtual server instance",
+									},
+
+									isInstanceMetadataServiceProtocol: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The communication protocol to use for the metadata service endpoint. Applies only when the metadata service is enabled.",
+									},
+
+									isInstanceMetadataServiceRespHopLimit: {
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "The hop limit (IP time to live) for IP response packets from the metadata service",
+									},
+								},
+							},
+						},
 						"status": {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -130,6 +157,39 @@ func DataSourceIBMISInstances() *schema.Resource {
 							Computed:    true,
 							Description: "The availability policy to use for this virtual server instance. The action to perform if the compute host experiences a failure.",
 						},
+
+						isInstanceLifecycleState: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The lifecycle state of the virtual server instance.",
+						},
+						isInstanceLifecycleReasons: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The reasons for the current lifecycle_state (if any).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									isInstanceLifecycleReasonsCode: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A snake case string succinctly identifying the reason for this lifecycle state.",
+									},
+
+									isInstanceLifecycleReasonsMessage: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An explanation of the reason for this lifecycle state.",
+									},
+
+									isInstanceLifecycleReasonsMoreInfo: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about the reason for this lifecycle state.",
+									},
+								},
+							},
+						},
+
 						isInstanceStatusReasons: {
 							Type:        schema.TypeList,
 							Computed:    true,
@@ -166,6 +226,41 @@ func DataSourceIBMISInstances() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "vpc attached to the instance",
+						},
+
+						isInstanceCatalogOffering: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The catalog offering or offering version to use when provisioning this virtual server instance. If an offering is specified, the latest version of that offering will be used. The specified offering or offering version may be in a different account in the same enterprise, subject to IAM policies.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									isInstanceCatalogOfferingOfferingCrn: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Identifies a catalog offering by a unique CRN property",
+									},
+									isInstanceCatalogOfferingVersionCrn: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Identifies a version of a catalog offering by a unique CRN property",
+									},
+								},
+							},
+						},
+						isInstanceTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "list of tags for the instance",
+						},
+
+						isInstanceAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "list of access tags for the instance",
 						},
 						"boot_volume": {
 							Type:        schema.TypeList,
@@ -463,6 +558,11 @@ func DataSourceIBMISInstances() *schema.Resource {
 										Computed:    true,
 										Description: "Instance vcpu count",
 									},
+									"manufacturer": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Instance vcpu manufacturer",
+									},
 								},
 							},
 						},
@@ -737,6 +837,18 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 		l["memory"] = *instance.Memory
 		if instance.MetadataService != nil {
 			l[isInstanceMetadataServiceEnabled] = *instance.MetadataService.Enabled
+			metadataService := []map[string]interface{}{}
+			metadataServiceMap := map[string]interface{}{}
+
+			metadataServiceMap[isInstanceMetadataServiceEnabled1] = instance.MetadataService.Enabled
+			if instance.MetadataService.Protocol != nil {
+				metadataServiceMap[isInstanceMetadataServiceProtocol] = instance.MetadataService.Protocol
+			}
+			if instance.MetadataService.ResponseHopLimit != nil {
+				metadataServiceMap[isInstanceMetadataServiceRespHopLimit] = instance.MetadataService.ResponseHopLimit
+			}
+			metadataService = append(metadataService, metadataServiceMap)
+			l[isInstanceMetadataService] = metadataService
 		}
 		l["status"] = *instance.Status
 		l["resource_group"] = *instance.ResourceGroup.ID
@@ -762,6 +874,16 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 			l[isInstanceTotalVolumeBandwidth] = int(*instance.TotalVolumeBandwidth)
 		}
 
+		// catalog
+		if instance.CatalogOffering != nil {
+			versionCrn := *instance.CatalogOffering.Version.CRN
+			catalogList := make([]map[string]interface{}, 0)
+			catalogMap := map[string]interface{}{}
+			catalogMap[isInstanceCatalogOfferingVersionCrn] = versionCrn
+			catalogList = append(catalogList, catalogMap)
+			l[isInstanceCatalogOffering] = catalogList
+		}
+
 		if instance.BootVolumeAttachment != nil {
 			bootVolList := make([]map[string]interface{}, 0)
 			bootVol := map[string]interface{}{}
@@ -777,6 +899,19 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 			bootVolList = append(bootVolList, bootVol)
 			l["boot_volume"] = bootVolList
 		}
+		tags, err := flex.GetGlobalTagsUsingCRN(meta, *instance.CRN, "", isInstanceUserTagType)
+		if err != nil {
+			log.Printf(
+				"Error on get of resource vpc Instance (%s) tags: %s", d.Id(), err)
+		}
+		l[isInstanceTags] = tags
+
+		accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *instance.CRN, "", isInstanceAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on get of resource vpc Instance (%s) access tags: %s", d.Id(), err)
+		}
+		l[isInstanceAccessTags] = accesstags
 		//set the status reasons
 		statusReasonsList := make([]map[string]interface{}, 0)
 		if instance.StatusReasons != nil {
@@ -919,6 +1054,7 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 			currentCPU := map[string]interface{}{}
 			currentCPU["architecture"] = *instance.Vcpu.Architecture
 			currentCPU["count"] = *instance.Vcpu.Count
+			currentCPU["manufacturer"] = *instance.Vcpu.Manufacturer
 			cpuList = append(cpuList, currentCPU)
 		}
 		l["vcpu"] = cpuList
@@ -932,6 +1068,14 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 			currentGpu[isInstanceGpuMemory] = instance.Gpu.Memory
 			gpuList = append(gpuList, currentGpu)
 			l[isInstanceGpu] = gpuList
+		}
+
+		//set the lifecycle status, reasons
+		if instance.LifecycleState != nil {
+			l[isInstanceLifecycleState] = *instance.LifecycleState
+		}
+		if instance.LifecycleReasons != nil {
+			l[isInstanceLifecycleReasons] = dataSourceInstanceFlattenLifecycleReasons(instance.LifecycleReasons)
 		}
 
 		l["zone"] = *instance.Zone.Name

@@ -36,6 +36,7 @@ archives:
     - LICENSE
     - README.md
     - CHANGELOG.md
+    - NOTICE
     - src: metadata/provider_metadata.json
       strip_parent: true
 checksum:

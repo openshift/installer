@@ -71,6 +71,8 @@ func NewInvalidARNWithUnsupportedPartitionError(resource arn.Resource, err error
 }
 
 // NewInvalidARNWithFIPSError ARN not supported for FIPS region
+//
+// Deprecated: FIPS will not appear in the ARN region component.
 func NewInvalidARNWithFIPSError(resource arn.Resource, err error) InvalidARNError {
 	return InvalidARNError{
 		message:  "resource ARN not supported for FIPS region",
@@ -154,6 +156,18 @@ func NewClientConfiguredForFIPSError(resource arn.Resource, clientPartitionID, c
 		clientRegion:      clientRegion,
 	}
 }
+
+// NewFIPSConfigurationError denotes a configuration error when a client or request is configured for FIPS
+// IBM Unsupported
+/*func NewFIPSConfigurationError(resource arn.Resource, clientPartitionID, clientRegion string, err error) ConfigurationError {
+	return ConfigurationError{
+		message:           "use of ARN is not supported when client or request is configured for FIPS",
+		origErr:           err,
+		resource:          resource,
+		clientPartitionID: clientPartitionID,
+		clientRegion:      clientRegion,
+	}
+}*/
 
 // NewClientConfiguredForAccelerateError denotes client config error for unsupported S3 accelerate
 func NewClientConfiguredForAccelerateError(resource arn.Resource, clientPartitionID, clientRegion string, err error) ConfigurationError {

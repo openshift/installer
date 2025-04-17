@@ -15,6 +15,7 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
 func ResourceIBMContainerWorkerPoolZoneAttachment() *schema.Resource {
@@ -45,6 +46,9 @@ func ResourceIBMContainerWorkerPoolZoneAttachment() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "cluster name or ID",
+				ValidateFunc: validate.InvokeValidator(
+					"ibm_container_worker_pool_zone_attachment",
+					"cluster"),
 			},
 
 			"worker_pool": {
@@ -95,6 +99,20 @@ func ResourceIBMContainerWorkerPoolZoneAttachment() *schema.Resource {
 			},
 		},
 	}
+}
+func ResourceIBMContainerWorkerPoolZoneAttachmentValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMContainerWorkerPoolZoneAttachmentValidator := validate.ResourceValidator{ResourceName: "ibm_container_nlb_dns", Schema: validateSchema}
+	return &iBMContainerWorkerPoolZoneAttachmentValidator
 }
 
 func resourceIBMContainerWorkerPoolZoneAttachmentCreate(d *schema.ResourceData, meta interface{}) error {

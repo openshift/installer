@@ -52,10 +52,12 @@ func NewPcloudCloudinstancesJobsGetallParamsWithHTTPClient(client *http.Client) 
 	}
 }
 
-/* PcloudCloudinstancesJobsGetallParams contains all the parameters to send to the API endpoint
-   for the pcloud cloudinstances jobs getall operation.
+/*
+PcloudCloudinstancesJobsGetallParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud cloudinstances jobs getall operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudCloudinstancesJobsGetallParams struct {
 

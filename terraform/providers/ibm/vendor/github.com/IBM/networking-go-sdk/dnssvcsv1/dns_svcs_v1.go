@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2022.
+ * (C) Copyright IBM Corp. 2023.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.47.1-be944570-20220406-170244
+ * IBM OpenAPI SDK Code Generator Version: 3.67.0-df2073a1-20230222-221157
  */
 
 // Package dnssvcsv1 : Operations and models for the DnsSvcsV1 service
@@ -33,6 +33,7 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	common "github.com/IBM/networking-go-sdk/common"
+	"github.com/go-openapi/strfmt"
 )
 
 // DnsSvcsV1 : DNS Services API
@@ -209,6 +210,9 @@ func (dnsSvcs *DnsSvcsV1) ListDnszonesWithContext(ctx context.Context, listDnszo
 	if listDnszonesOptions.Limit != nil {
 		builder.AddQuery("limit", fmt.Sprint(*listDnszonesOptions.Limit))
 	}
+	if listDnszonesOptions.VpcID != nil {
+		builder.AddQuery("vpc_id", fmt.Sprint(*listDnszonesOptions.VpcID))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -329,7 +333,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteDnszoneWithContext(ctx context.Context, deleteDn
 
 	pathParamsMap := map[string]string{
 		"instance_id": *deleteDnszoneOptions.InstanceID,
-		"dnszone_id":  *deleteDnszoneOptions.DnszoneID,
+		"dnszone_id": *deleteDnszoneOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -381,7 +385,7 @@ func (dnsSvcs *DnsSvcsV1) GetDnszoneWithContext(ctx context.Context, getDnszoneO
 
 	pathParamsMap := map[string]string{
 		"instance_id": *getDnszoneOptions.InstanceID,
-		"dnszone_id":  *getDnszoneOptions.DnszoneID,
+		"dnszone_id": *getDnszoneOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -445,7 +449,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateDnszoneWithContext(ctx context.Context, updateDn
 
 	pathParamsMap := map[string]string{
 		"instance_id": *updateDnszoneOptions.InstanceID,
-		"dnszone_id":  *updateDnszoneOptions.DnszoneID,
+		"dnszone_id": *updateDnszoneOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -522,7 +526,7 @@ func (dnsSvcs *DnsSvcsV1) ListResourceRecordsWithContext(ctx context.Context, li
 
 	pathParamsMap := map[string]string{
 		"instance_id": *listResourceRecordsOptions.InstanceID,
-		"dnszone_id":  *listResourceRecordsOptions.DnszoneID,
+		"dnszone_id": *listResourceRecordsOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -551,6 +555,12 @@ func (dnsSvcs *DnsSvcsV1) ListResourceRecordsWithContext(ctx context.Context, li
 	}
 	if listResourceRecordsOptions.Limit != nil {
 		builder.AddQuery("limit", fmt.Sprint(*listResourceRecordsOptions.Limit))
+	}
+	if listResourceRecordsOptions.Type != nil {
+		builder.AddQuery("type", fmt.Sprint(*listResourceRecordsOptions.Type))
+	}
+	if listResourceRecordsOptions.Name != nil {
+		builder.AddQuery("name", fmt.Sprint(*listResourceRecordsOptions.Name))
 	}
 
 	request, err := builder.Build()
@@ -593,7 +603,7 @@ func (dnsSvcs *DnsSvcsV1) CreateResourceRecordWithContext(ctx context.Context, c
 
 	pathParamsMap := map[string]string{
 		"instance_id": *createResourceRecordOptions.InstanceID,
-		"dnszone_id":  *createResourceRecordOptions.DnszoneID,
+		"dnszone_id": *createResourceRecordOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -682,8 +692,8 @@ func (dnsSvcs *DnsSvcsV1) DeleteResourceRecordWithContext(ctx context.Context, d
 
 	pathParamsMap := map[string]string{
 		"instance_id": *deleteResourceRecordOptions.InstanceID,
-		"dnszone_id":  *deleteResourceRecordOptions.DnszoneID,
-		"record_id":   *deleteResourceRecordOptions.RecordID,
+		"dnszone_id": *deleteResourceRecordOptions.DnszoneID,
+		"record_id": *deleteResourceRecordOptions.RecordID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -735,8 +745,8 @@ func (dnsSvcs *DnsSvcsV1) GetResourceRecordWithContext(ctx context.Context, getR
 
 	pathParamsMap := map[string]string{
 		"instance_id": *getResourceRecordOptions.InstanceID,
-		"dnszone_id":  *getResourceRecordOptions.DnszoneID,
-		"record_id":   *getResourceRecordOptions.RecordID,
+		"dnszone_id": *getResourceRecordOptions.DnszoneID,
+		"record_id": *getResourceRecordOptions.RecordID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -800,8 +810,8 @@ func (dnsSvcs *DnsSvcsV1) UpdateResourceRecordWithContext(ctx context.Context, u
 
 	pathParamsMap := map[string]string{
 		"instance_id": *updateResourceRecordOptions.InstanceID,
-		"dnszone_id":  *updateResourceRecordOptions.DnszoneID,
-		"record_id":   *updateResourceRecordOptions.RecordID,
+		"dnszone_id": *updateResourceRecordOptions.DnszoneID,
+		"record_id": *updateResourceRecordOptions.RecordID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -887,7 +897,7 @@ func (dnsSvcs *DnsSvcsV1) ExportResourceRecordsWithContext(ctx context.Context, 
 
 	pathParamsMap := map[string]string{
 		"instance_id": *exportResourceRecordsOptions.InstanceID,
-		"dnszone_id":  *exportResourceRecordsOptions.DnszoneID,
+		"dnszone_id": *exportResourceRecordsOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -937,14 +947,14 @@ func (dnsSvcs *DnsSvcsV1) ImportResourceRecordsWithContext(ctx context.Context, 
 	if err != nil {
 		return
 	}
-	if importResourceRecordsOptions.File == nil {
-		err = fmt.Errorf("at least one of  or file must be supplied")
+	if (importResourceRecordsOptions.File == nil) {
+		err = fmt.Errorf("file must be supplied")
 		return
 	}
 
 	pathParamsMap := map[string]string{
 		"instance_id": *importResourceRecordsOptions.InstanceID,
-		"dnszone_id":  *importResourceRecordsOptions.DnszoneID,
+		"dnszone_id": *importResourceRecordsOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -1013,7 +1023,7 @@ func (dnsSvcs *DnsSvcsV1) ListPermittedNetworksWithContext(ctx context.Context, 
 
 	pathParamsMap := map[string]string{
 		"instance_id": *listPermittedNetworksOptions.InstanceID,
-		"dnszone_id":  *listPermittedNetworksOptions.DnszoneID,
+		"dnszone_id": *listPermittedNetworksOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1035,6 +1045,10 @@ func (dnsSvcs *DnsSvcsV1) ListPermittedNetworksWithContext(ctx context.Context, 
 	builder.AddHeader("Accept", "application/json")
 	if listPermittedNetworksOptions.XCorrelationID != nil {
 		builder.AddHeader("X-Correlation-ID", fmt.Sprint(*listPermittedNetworksOptions.XCorrelationID))
+	}
+
+	if listPermittedNetworksOptions.Accounts != nil {
+		builder.AddQuery("accounts", fmt.Sprint(*listPermittedNetworksOptions.Accounts))
 	}
 
 	request, err := builder.Build()
@@ -1077,7 +1091,7 @@ func (dnsSvcs *DnsSvcsV1) CreatePermittedNetworkWithContext(ctx context.Context,
 
 	pathParamsMap := map[string]string{
 		"instance_id": *createPermittedNetworkOptions.InstanceID,
-		"dnszone_id":  *createPermittedNetworkOptions.DnszoneID,
+		"dnszone_id": *createPermittedNetworkOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -1100,6 +1114,10 @@ func (dnsSvcs *DnsSvcsV1) CreatePermittedNetworkWithContext(ctx context.Context,
 	builder.AddHeader("Content-Type", "application/json")
 	if createPermittedNetworkOptions.XCorrelationID != nil {
 		builder.AddHeader("X-Correlation-ID", fmt.Sprint(*createPermittedNetworkOptions.XCorrelationID))
+	}
+
+	if createPermittedNetworkOptions.Accounts != nil {
+		builder.AddQuery("accounts", fmt.Sprint(*createPermittedNetworkOptions.Accounts))
 	}
 
 	body := make(map[string]interface{})
@@ -1153,8 +1171,8 @@ func (dnsSvcs *DnsSvcsV1) DeletePermittedNetworkWithContext(ctx context.Context,
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id":          *deletePermittedNetworkOptions.InstanceID,
-		"dnszone_id":           *deletePermittedNetworkOptions.DnszoneID,
+		"instance_id": *deletePermittedNetworkOptions.InstanceID,
+		"dnszone_id": *deletePermittedNetworkOptions.DnszoneID,
 		"permitted_network_id": *deletePermittedNetworkOptions.PermittedNetworkID,
 	}
 
@@ -1218,8 +1236,8 @@ func (dnsSvcs *DnsSvcsV1) GetPermittedNetworkWithContext(ctx context.Context, ge
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id":          *getPermittedNetworkOptions.InstanceID,
-		"dnszone_id":           *getPermittedNetworkOptions.DnszoneID,
+		"instance_id": *getPermittedNetworkOptions.InstanceID,
+		"dnszone_id": *getPermittedNetworkOptions.DnszoneID,
 		"permitted_network_id": *getPermittedNetworkOptions.PermittedNetworkID,
 	}
 
@@ -1284,7 +1302,7 @@ func (dnsSvcs *DnsSvcsV1) ListLoadBalancersWithContext(ctx context.Context, list
 
 	pathParamsMap := map[string]string{
 		"instance_id": *listLoadBalancersOptions.InstanceID,
-		"dnszone_id":  *listLoadBalancersOptions.DnszoneID,
+		"dnszone_id": *listLoadBalancersOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1355,7 +1373,7 @@ func (dnsSvcs *DnsSvcsV1) CreateLoadBalancerWithContext(ctx context.Context, cre
 
 	pathParamsMap := map[string]string{
 		"instance_id": *createLoadBalancerOptions.InstanceID,
-		"dnszone_id":  *createLoadBalancerOptions.DnszoneID,
+		"dnszone_id": *createLoadBalancerOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
@@ -1447,8 +1465,8 @@ func (dnsSvcs *DnsSvcsV1) DeleteLoadBalancerWithContext(ctx context.Context, del
 
 	pathParamsMap := map[string]string{
 		"instance_id": *deleteLoadBalancerOptions.InstanceID,
-		"dnszone_id":  *deleteLoadBalancerOptions.DnszoneID,
-		"lb_id":       *deleteLoadBalancerOptions.LbID,
+		"dnszone_id": *deleteLoadBalancerOptions.DnszoneID,
+		"lb_id": *deleteLoadBalancerOptions.LbID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -1500,8 +1518,8 @@ func (dnsSvcs *DnsSvcsV1) GetLoadBalancerWithContext(ctx context.Context, getLoa
 
 	pathParamsMap := map[string]string{
 		"instance_id": *getLoadBalancerOptions.InstanceID,
-		"dnszone_id":  *getLoadBalancerOptions.DnszoneID,
-		"lb_id":       *getLoadBalancerOptions.LbID,
+		"dnszone_id": *getLoadBalancerOptions.DnszoneID,
+		"lb_id": *getLoadBalancerOptions.LbID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1565,8 +1583,8 @@ func (dnsSvcs *DnsSvcsV1) UpdateLoadBalancerWithContext(ctx context.Context, upd
 
 	pathParamsMap := map[string]string{
 		"instance_id": *updateLoadBalancerOptions.InstanceID,
-		"dnszone_id":  *updateLoadBalancerOptions.DnszoneID,
-		"lb_id":       *updateLoadBalancerOptions.LbID,
+		"dnszone_id": *updateLoadBalancerOptions.DnszoneID,
+		"lb_id": *updateLoadBalancerOptions.LbID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -1825,7 +1843,7 @@ func (dnsSvcs *DnsSvcsV1) DeletePoolWithContext(ctx context.Context, deletePoolO
 
 	pathParamsMap := map[string]string{
 		"instance_id": *deletePoolOptions.InstanceID,
-		"pool_id":     *deletePoolOptions.PoolID,
+		"pool_id": *deletePoolOptions.PoolID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -1877,7 +1895,7 @@ func (dnsSvcs *DnsSvcsV1) GetPoolWithContext(ctx context.Context, getPoolOptions
 
 	pathParamsMap := map[string]string{
 		"instance_id": *getPoolOptions.InstanceID,
-		"pool_id":     *getPoolOptions.PoolID,
+		"pool_id": *getPoolOptions.PoolID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1941,7 +1959,7 @@ func (dnsSvcs *DnsSvcsV1) UpdatePoolWithContext(ctx context.Context, updatePoolO
 
 	pathParamsMap := map[string]string{
 		"instance_id": *updatePoolOptions.InstanceID,
-		"pool_id":     *updatePoolOptions.PoolID,
+		"pool_id": *updatePoolOptions.PoolID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -2218,7 +2236,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteMonitorWithContext(ctx context.Context, deleteMo
 
 	pathParamsMap := map[string]string{
 		"instance_id": *deleteMonitorOptions.InstanceID,
-		"monitor_id":  *deleteMonitorOptions.MonitorID,
+		"monitor_id": *deleteMonitorOptions.MonitorID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -2270,7 +2288,7 @@ func (dnsSvcs *DnsSvcsV1) GetMonitorWithContext(ctx context.Context, getMonitorO
 
 	pathParamsMap := map[string]string{
 		"instance_id": *getMonitorOptions.InstanceID,
-		"monitor_id":  *getMonitorOptions.MonitorID,
+		"monitor_id": *getMonitorOptions.MonitorID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -2334,7 +2352,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateMonitorWithContext(ctx context.Context, updateMo
 
 	pathParamsMap := map[string]string{
 		"instance_id": *updateMonitorOptions.InstanceID,
-		"monitor_id":  *updateMonitorOptions.MonitorID,
+		"monitor_id": *updateMonitorOptions.MonitorID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -3088,6 +3106,13 @@ func (dnsSvcs *DnsSvcsV1) ListForwardingRulesWithContext(ctx context.Context, li
 		builder.AddHeader("X-Correlation-ID", fmt.Sprint(*listForwardingRulesOptions.XCorrelationID))
 	}
 
+	if listForwardingRulesOptions.Offset != nil {
+		builder.AddQuery("offset", fmt.Sprint(*listForwardingRulesOptions.Offset))
+	}
+	if listForwardingRulesOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listForwardingRulesOptions.Limit))
+	}
+
 	request, err := builder.Build()
 	if err != nil {
 		return
@@ -3212,7 +3237,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteForwardingRuleWithContext(ctx context.Context, d
 	pathParamsMap := map[string]string{
 		"instance_id": *deleteForwardingRuleOptions.InstanceID,
 		"resolver_id": *deleteForwardingRuleOptions.ResolverID,
-		"rule_id":     *deleteForwardingRuleOptions.RuleID,
+		"rule_id": *deleteForwardingRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -3265,7 +3290,7 @@ func (dnsSvcs *DnsSvcsV1) GetForwardingRuleWithContext(ctx context.Context, getF
 	pathParamsMap := map[string]string{
 		"instance_id": *getForwardingRuleOptions.InstanceID,
 		"resolver_id": *getForwardingRuleOptions.ResolverID,
-		"rule_id":     *getForwardingRuleOptions.RuleID,
+		"rule_id": *getForwardingRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -3330,7 +3355,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateForwardingRuleWithContext(ctx context.Context, u
 	pathParamsMap := map[string]string{
 		"instance_id": *updateForwardingRuleOptions.InstanceID,
 		"resolver_id": *updateForwardingRuleOptions.ResolverID,
-		"rule_id":     *updateForwardingRuleOptions.RuleID,
+		"rule_id": *updateForwardingRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -3563,8 +3588,8 @@ func (dnsSvcs *DnsSvcsV1) GetSecondaryZoneWithContext(ctx context.Context, getSe
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id":       *getSecondaryZoneOptions.InstanceID,
-		"resolver_id":       *getSecondaryZoneOptions.ResolverID,
+		"instance_id": *getSecondaryZoneOptions.InstanceID,
+		"resolver_id": *getSecondaryZoneOptions.ResolverID,
 		"secondary_zone_id": *getSecondaryZoneOptions.SecondaryZoneID,
 	}
 
@@ -3628,8 +3653,8 @@ func (dnsSvcs *DnsSvcsV1) UpdateSecondaryZoneWithContext(ctx context.Context, up
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id":       *updateSecondaryZoneOptions.InstanceID,
-		"resolver_id":       *updateSecondaryZoneOptions.ResolverID,
+		"instance_id": *updateSecondaryZoneOptions.InstanceID,
+		"resolver_id": *updateSecondaryZoneOptions.ResolverID,
 		"secondary_zone_id": *updateSecondaryZoneOptions.SecondaryZoneID,
 	}
 
@@ -3709,8 +3734,8 @@ func (dnsSvcs *DnsSvcsV1) DeleteSecondaryZoneWithContext(ctx context.Context, de
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id":       *deleteSecondaryZoneOptions.InstanceID,
-		"resolver_id":       *deleteSecondaryZoneOptions.ResolverID,
+		"instance_id": *deleteSecondaryZoneOptions.InstanceID,
+		"resolver_id": *deleteSecondaryZoneOptions.ResolverID,
 		"secondary_zone_id": *deleteSecondaryZoneOptions.SecondaryZoneID,
 	}
 
@@ -3914,7 +3939,7 @@ func (dnsSvcs *DnsSvcsV1) GetLinkedZoneWithContext(ctx context.Context, getLinke
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id":       *getLinkedZoneOptions.InstanceID,
+		"instance_id": *getLinkedZoneOptions.InstanceID,
 		"linked_dnszone_id": *getLinkedZoneOptions.LinkedDnszoneID,
 	}
 
@@ -3978,7 +4003,7 @@ func (dnsSvcs *DnsSvcsV1) UpdateLinkedZoneWithContext(ctx context.Context, updat
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id":       *updateLinkedZoneOptions.InstanceID,
+		"instance_id": *updateLinkedZoneOptions.InstanceID,
 		"linked_dnszone_id": *updateLinkedZoneOptions.LinkedDnszoneID,
 	}
 
@@ -4055,7 +4080,7 @@ func (dnsSvcs *DnsSvcsV1) DeleteLinkedZoneWithContext(ctx context.Context, delet
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id":       *deleteLinkedZoneOptions.InstanceID,
+		"instance_id": *deleteLinkedZoneOptions.InstanceID,
 		"linked_dnszone_id": *deleteLinkedZoneOptions.LinkedDnszoneID,
 	}
 
@@ -4108,7 +4133,7 @@ func (dnsSvcs *DnsSvcsV1) ListDnszoneAccessRequestsWithContext(ctx context.Conte
 
 	pathParamsMap := map[string]string{
 		"instance_id": *listDnszoneAccessRequestsOptions.InstanceID,
-		"dnszone_id":  *listDnszoneAccessRequestsOptions.DnszoneID,
+		"dnszone_id": *listDnszoneAccessRequestsOptions.DnszoneID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -4179,8 +4204,8 @@ func (dnsSvcs *DnsSvcsV1) GetDnszoneAccessRequestWithContext(ctx context.Context
 
 	pathParamsMap := map[string]string{
 		"instance_id": *getDnszoneAccessRequestOptions.InstanceID,
-		"dnszone_id":  *getDnszoneAccessRequestOptions.DnszoneID,
-		"request_id":  *getDnszoneAccessRequestOptions.RequestID,
+		"dnszone_id": *getDnszoneAccessRequestOptions.DnszoneID,
+		"request_id": *getDnszoneAccessRequestOptions.RequestID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -4244,8 +4269,8 @@ func (dnsSvcs *DnsSvcsV1) UpdateDnszoneAccessRequestWithContext(ctx context.Cont
 
 	pathParamsMap := map[string]string{
 		"instance_id": *updateDnszoneAccessRequestOptions.InstanceID,
-		"dnszone_id":  *updateDnszoneAccessRequestOptions.DnszoneID,
-		"request_id":  *updateDnszoneAccessRequestOptions.RequestID,
+		"dnszone_id": *updateDnszoneAccessRequestOptions.DnszoneID,
+		"request_id": *updateDnszoneAccessRequestOptions.RequestID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -4318,7 +4343,7 @@ func (dnsSvcs *DnsSvcsV1) ListLinkedPermittedNetworksWithContext(ctx context.Con
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id":       *listLinkedPermittedNetworksOptions.InstanceID,
+		"instance_id": *listLinkedPermittedNetworksOptions.InstanceID,
 		"linked_dnszone_id": *listLinkedPermittedNetworksOptions.LinkedDnszoneID,
 	}
 
@@ -4382,7 +4407,7 @@ func (dnsSvcs *DnsSvcsV1) CreateLzPermittedNetworkWithContext(ctx context.Contex
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id":       *createLzPermittedNetworkOptions.InstanceID,
+		"instance_id": *createLzPermittedNetworkOptions.InstanceID,
 		"linked_dnszone_id": *createLzPermittedNetworkOptions.LinkedDnszoneID,
 	}
 
@@ -4459,8 +4484,8 @@ func (dnsSvcs *DnsSvcsV1) DeleteLzPermittedNetworkWithContext(ctx context.Contex
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id":          *deleteLzPermittedNetworkOptions.InstanceID,
-		"linked_dnszone_id":    *deleteLzPermittedNetworkOptions.LinkedDnszoneID,
+		"instance_id": *deleteLzPermittedNetworkOptions.InstanceID,
+		"linked_dnszone_id": *deleteLzPermittedNetworkOptions.LinkedDnszoneID,
 		"permitted_network_id": *deleteLzPermittedNetworkOptions.PermittedNetworkID,
 	}
 
@@ -4524,8 +4549,8 @@ func (dnsSvcs *DnsSvcsV1) GetLinkedPermittedNetworkWithContext(ctx context.Conte
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id":          *getLinkedPermittedNetworkOptions.InstanceID,
-		"linked_dnszone_id":    *getLinkedPermittedNetworkOptions.LinkedDnszoneID,
+		"instance_id": *getLinkedPermittedNetworkOptions.InstanceID,
+		"linked_dnszone_id": *getLinkedPermittedNetworkOptions.LinkedDnszoneID,
 		"permitted_network_id": *getLinkedPermittedNetworkOptions.PermittedNetworkID,
 	}
 
@@ -4998,7 +5023,7 @@ type CreateLoadBalancerOptions struct {
 func (*DnsSvcsV1) NewCreateLoadBalancerOptions(instanceID string, dnszoneID string) *CreateLoadBalancerOptions {
 	return &CreateLoadBalancerOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
+		DnszoneID: core.StringPtr(dnszoneID),
 	}
 }
 
@@ -5098,7 +5123,7 @@ const (
 // NewCreateLzPermittedNetworkOptions : Instantiate CreateLzPermittedNetworkOptions
 func (*DnsSvcsV1) NewCreateLzPermittedNetworkOptions(instanceID string, linkedDnszoneID string) *CreateLzPermittedNetworkOptions {
 	return &CreateLzPermittedNetworkOptions{
-		InstanceID:      core.StringPtr(instanceID),
+		InstanceID: core.StringPtr(instanceID),
 		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
 	}
 }
@@ -5199,15 +5224,15 @@ type CreateMonitorOptions struct {
 // Constants associated with the CreateMonitorOptions.Type property.
 // The protocol to use for the health check. Currently supported protocols are 'HTTP','HTTPS' and 'TCP'.
 const (
-	CreateMonitorOptions_Type_Http  = "HTTP"
+	CreateMonitorOptions_Type_Http = "HTTP"
 	CreateMonitorOptions_Type_Https = "HTTPS"
-	CreateMonitorOptions_Type_Tcp   = "TCP"
+	CreateMonitorOptions_Type_Tcp = "TCP"
 )
 
 // Constants associated with the CreateMonitorOptions.Method property.
 // The method to use for the health check applicable to HTTP/HTTPS based checks, the default value is 'GET'.
 const (
-	CreateMonitorOptions_Method_Get  = "GET"
+	CreateMonitorOptions_Method_Get = "GET"
 	CreateMonitorOptions_Method_Head = "HEAD"
 )
 
@@ -5328,6 +5353,10 @@ type CreatePermittedNetworkOptions struct {
 	// Permitted network data for VPC.
 	PermittedNetwork *PermittedNetworkVpc `json:"permitted_network,omitempty"`
 
+	// The account identifiers of the owner zone and linked zones in the format of "?account=account1,account2,account3".
+	// Maximum 5 accounts are allowed.
+	Accounts *string `json:"accounts,omitempty"`
+
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
@@ -5345,7 +5374,7 @@ const (
 func (*DnsSvcsV1) NewCreatePermittedNetworkOptions(instanceID string, dnszoneID string) *CreatePermittedNetworkOptions {
 	return &CreatePermittedNetworkOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
+		DnszoneID: core.StringPtr(dnszoneID),
 	}
 }
 
@@ -5370,6 +5399,12 @@ func (_options *CreatePermittedNetworkOptions) SetType(typeVar string) *CreatePe
 // SetPermittedNetwork : Allow user to set PermittedNetwork
 func (_options *CreatePermittedNetworkOptions) SetPermittedNetwork(permittedNetwork *PermittedNetworkVpc) *CreatePermittedNetworkOptions {
 	_options.PermittedNetwork = permittedNetwork
+	return _options
+}
+
+// SetAccounts : Allow user to set Accounts
+func (_options *CreatePermittedNetworkOptions) SetAccounts(accounts string) *CreatePermittedNetworkOptions {
+	_options.Accounts = core.StringPtr(accounts)
 	return _options
 }
 
@@ -5429,11 +5464,11 @@ type CreatePoolOptions struct {
 // Constants associated with the CreatePoolOptions.HealthcheckRegion property.
 // Health check region of VSIs.
 const (
-	CreatePoolOptions_HealthcheckRegion_AuSyd   = "au-syd"
-	CreatePoolOptions_HealthcheckRegion_EuDu    = "eu-du"
-	CreatePoolOptions_HealthcheckRegion_EuGb    = "eu-gb"
-	CreatePoolOptions_HealthcheckRegion_JpTok   = "jp-tok"
-	CreatePoolOptions_HealthcheckRegion_UsEast  = "us-east"
+	CreatePoolOptions_HealthcheckRegion_AuSyd = "au-syd"
+	CreatePoolOptions_HealthcheckRegion_EuDu = "eu-du"
+	CreatePoolOptions_HealthcheckRegion_EuGb = "eu-gb"
+	CreatePoolOptions_HealthcheckRegion_JpTok = "jp-tok"
+	CreatePoolOptions_HealthcheckRegion_UsEast = "us-east"
 	CreatePoolOptions_HealthcheckRegion_UsSouth = "us-south"
 )
 
@@ -5552,20 +5587,20 @@ type CreateResourceRecordOptions struct {
 // Constants associated with the CreateResourceRecordOptions.Type property.
 // Type of the resource record.
 const (
-	CreateResourceRecordOptions_Type_A     = "A"
-	CreateResourceRecordOptions_Type_Aaaa  = "AAAA"
+	CreateResourceRecordOptions_Type_A = "A"
+	CreateResourceRecordOptions_Type_Aaaa = "AAAA"
 	CreateResourceRecordOptions_Type_Cname = "CNAME"
-	CreateResourceRecordOptions_Type_Mx    = "MX"
-	CreateResourceRecordOptions_Type_Ptr   = "PTR"
-	CreateResourceRecordOptions_Type_Srv   = "SRV"
-	CreateResourceRecordOptions_Type_Txt   = "TXT"
+	CreateResourceRecordOptions_Type_Mx = "MX"
+	CreateResourceRecordOptions_Type_Ptr = "PTR"
+	CreateResourceRecordOptions_Type_Srv = "SRV"
+	CreateResourceRecordOptions_Type_Txt = "TXT"
 )
 
 // NewCreateResourceRecordOptions : Instantiate CreateResourceRecordOptions
 func (*DnsSvcsV1) NewCreateResourceRecordOptions(instanceID string, dnszoneID string) *CreateResourceRecordOptions {
 	return &CreateResourceRecordOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
+		DnszoneID: core.StringPtr(dnszoneID),
 	}
 }
 
@@ -5835,7 +5870,7 @@ type DeleteDnszoneOptions struct {
 func (*DnsSvcsV1) NewDeleteDnszoneOptions(instanceID string, dnszoneID string) *DeleteDnszoneOptions {
 	return &DeleteDnszoneOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
+		DnszoneID: core.StringPtr(dnszoneID),
 	}
 }
 
@@ -5886,7 +5921,7 @@ func (*DnsSvcsV1) NewDeleteForwardingRuleOptions(instanceID string, resolverID s
 	return &DeleteForwardingRuleOptions{
 		InstanceID: core.StringPtr(instanceID),
 		ResolverID: core.StringPtr(resolverID),
-		RuleID:     core.StringPtr(ruleID),
+		RuleID: core.StringPtr(ruleID),
 	}
 }
 
@@ -5938,7 +5973,7 @@ type DeleteLinkedZoneOptions struct {
 // NewDeleteLinkedZoneOptions : Instantiate DeleteLinkedZoneOptions
 func (*DnsSvcsV1) NewDeleteLinkedZoneOptions(instanceID string, linkedDnszoneID string) *DeleteLinkedZoneOptions {
 	return &DeleteLinkedZoneOptions{
-		InstanceID:      core.StringPtr(instanceID),
+		InstanceID: core.StringPtr(instanceID),
 		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
 	}
 }
@@ -5989,8 +6024,8 @@ type DeleteLoadBalancerOptions struct {
 func (*DnsSvcsV1) NewDeleteLoadBalancerOptions(instanceID string, dnszoneID string, lbID string) *DeleteLoadBalancerOptions {
 	return &DeleteLoadBalancerOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
-		LbID:       core.StringPtr(lbID),
+		DnszoneID: core.StringPtr(dnszoneID),
+		LbID: core.StringPtr(lbID),
 	}
 }
 
@@ -6045,8 +6080,8 @@ type DeleteLzPermittedNetworkOptions struct {
 // NewDeleteLzPermittedNetworkOptions : Instantiate DeleteLzPermittedNetworkOptions
 func (*DnsSvcsV1) NewDeleteLzPermittedNetworkOptions(instanceID string, linkedDnszoneID string, permittedNetworkID string) *DeleteLzPermittedNetworkOptions {
 	return &DeleteLzPermittedNetworkOptions{
-		InstanceID:         core.StringPtr(instanceID),
-		LinkedDnszoneID:    core.StringPtr(linkedDnszoneID),
+		InstanceID: core.StringPtr(instanceID),
+		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
 		PermittedNetworkID: core.StringPtr(permittedNetworkID),
 	}
 }
@@ -6100,7 +6135,7 @@ type DeleteMonitorOptions struct {
 func (*DnsSvcsV1) NewDeleteMonitorOptions(instanceID string, monitorID string) *DeleteMonitorOptions {
 	return &DeleteMonitorOptions{
 		InstanceID: core.StringPtr(instanceID),
-		MonitorID:  core.StringPtr(monitorID),
+		MonitorID: core.StringPtr(monitorID),
 	}
 }
 
@@ -6149,8 +6184,8 @@ type DeletePermittedNetworkOptions struct {
 // NewDeletePermittedNetworkOptions : Instantiate DeletePermittedNetworkOptions
 func (*DnsSvcsV1) NewDeletePermittedNetworkOptions(instanceID string, dnszoneID string, permittedNetworkID string) *DeletePermittedNetworkOptions {
 	return &DeletePermittedNetworkOptions{
-		InstanceID:         core.StringPtr(instanceID),
-		DnszoneID:          core.StringPtr(dnszoneID),
+		InstanceID: core.StringPtr(instanceID),
+		DnszoneID: core.StringPtr(dnszoneID),
 		PermittedNetworkID: core.StringPtr(permittedNetworkID),
 	}
 }
@@ -6204,7 +6239,7 @@ type DeletePoolOptions struct {
 func (*DnsSvcsV1) NewDeletePoolOptions(instanceID string, poolID string) *DeletePoolOptions {
 	return &DeletePoolOptions{
 		InstanceID: core.StringPtr(instanceID),
-		PoolID:     core.StringPtr(poolID),
+		PoolID: core.StringPtr(poolID),
 	}
 }
 
@@ -6254,8 +6289,8 @@ type DeleteResourceRecordOptions struct {
 func (*DnsSvcsV1) NewDeleteResourceRecordOptions(instanceID string, dnszoneID string, recordID string) *DeleteResourceRecordOptions {
 	return &DeleteResourceRecordOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
-		RecordID:   core.StringPtr(recordID),
+		DnszoneID: core.StringPtr(dnszoneID),
+		RecordID: core.StringPtr(recordID),
 	}
 }
 
@@ -6310,8 +6345,8 @@ type DeleteSecondaryZoneOptions struct {
 // NewDeleteSecondaryZoneOptions : Instantiate DeleteSecondaryZoneOptions
 func (*DnsSvcsV1) NewDeleteSecondaryZoneOptions(instanceID string, resolverID string, secondaryZoneID string) *DeleteSecondaryZoneOptions {
 	return &DeleteSecondaryZoneOptions{
-		InstanceID:      core.StringPtr(instanceID),
-		ResolverID:      core.StringPtr(resolverID),
+		InstanceID: core.StringPtr(instanceID),
+		ResolverID: core.StringPtr(resolverID),
 		SecondaryZoneID: core.StringPtr(secondaryZoneID),
 	}
 }
@@ -6365,7 +6400,7 @@ type ExportResourceRecordsOptions struct {
 func (*DnsSvcsV1) NewExportResourceRecordsOptions(instanceID string, dnszoneID string) *ExportResourceRecordsOptions {
 	return &ExportResourceRecordsOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
+		DnszoneID: core.StringPtr(dnszoneID),
 	}
 }
 
@@ -6462,8 +6497,8 @@ type GetDnszoneAccessRequestOptions struct {
 func (*DnsSvcsV1) NewGetDnszoneAccessRequestOptions(instanceID string, dnszoneID string, requestID string) *GetDnszoneAccessRequestOptions {
 	return &GetDnszoneAccessRequestOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
-		RequestID:  core.StringPtr(requestID),
+		DnszoneID: core.StringPtr(dnszoneID),
+		RequestID: core.StringPtr(requestID),
 	}
 }
 
@@ -6516,7 +6551,7 @@ type GetDnszoneOptions struct {
 func (*DnsSvcsV1) NewGetDnszoneOptions(instanceID string, dnszoneID string) *GetDnszoneOptions {
 	return &GetDnszoneOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
+		DnszoneID: core.StringPtr(dnszoneID),
 	}
 }
 
@@ -6567,7 +6602,7 @@ func (*DnsSvcsV1) NewGetForwardingRuleOptions(instanceID string, resolverID stri
 	return &GetForwardingRuleOptions{
 		InstanceID: core.StringPtr(instanceID),
 		ResolverID: core.StringPtr(resolverID),
-		RuleID:     core.StringPtr(ruleID),
+		RuleID: core.StringPtr(ruleID),
 	}
 }
 
@@ -6622,8 +6657,8 @@ type GetLinkedPermittedNetworkOptions struct {
 // NewGetLinkedPermittedNetworkOptions : Instantiate GetLinkedPermittedNetworkOptions
 func (*DnsSvcsV1) NewGetLinkedPermittedNetworkOptions(instanceID string, linkedDnszoneID string, permittedNetworkID string) *GetLinkedPermittedNetworkOptions {
 	return &GetLinkedPermittedNetworkOptions{
-		InstanceID:         core.StringPtr(instanceID),
-		LinkedDnszoneID:    core.StringPtr(linkedDnszoneID),
+		InstanceID: core.StringPtr(instanceID),
+		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
 		PermittedNetworkID: core.StringPtr(permittedNetworkID),
 	}
 }
@@ -6676,7 +6711,7 @@ type GetLinkedZoneOptions struct {
 // NewGetLinkedZoneOptions : Instantiate GetLinkedZoneOptions
 func (*DnsSvcsV1) NewGetLinkedZoneOptions(instanceID string, linkedDnszoneID string) *GetLinkedZoneOptions {
 	return &GetLinkedZoneOptions{
-		InstanceID:      core.StringPtr(instanceID),
+		InstanceID: core.StringPtr(instanceID),
 		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
 	}
 }
@@ -6727,8 +6762,8 @@ type GetLoadBalancerOptions struct {
 func (*DnsSvcsV1) NewGetLoadBalancerOptions(instanceID string, dnszoneID string, lbID string) *GetLoadBalancerOptions {
 	return &GetLoadBalancerOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
-		LbID:       core.StringPtr(lbID),
+		DnszoneID: core.StringPtr(dnszoneID),
+		LbID: core.StringPtr(lbID),
 	}
 }
 
@@ -6781,7 +6816,7 @@ type GetMonitorOptions struct {
 func (*DnsSvcsV1) NewGetMonitorOptions(instanceID string, monitorID string) *GetMonitorOptions {
 	return &GetMonitorOptions{
 		InstanceID: core.StringPtr(instanceID),
-		MonitorID:  core.StringPtr(monitorID),
+		MonitorID: core.StringPtr(monitorID),
 	}
 }
 
@@ -6830,8 +6865,8 @@ type GetPermittedNetworkOptions struct {
 // NewGetPermittedNetworkOptions : Instantiate GetPermittedNetworkOptions
 func (*DnsSvcsV1) NewGetPermittedNetworkOptions(instanceID string, dnszoneID string, permittedNetworkID string) *GetPermittedNetworkOptions {
 	return &GetPermittedNetworkOptions{
-		InstanceID:         core.StringPtr(instanceID),
-		DnszoneID:          core.StringPtr(dnszoneID),
+		InstanceID: core.StringPtr(instanceID),
+		DnszoneID: core.StringPtr(dnszoneID),
 		PermittedNetworkID: core.StringPtr(permittedNetworkID),
 	}
 }
@@ -6885,7 +6920,7 @@ type GetPoolOptions struct {
 func (*DnsSvcsV1) NewGetPoolOptions(instanceID string, poolID string) *GetPoolOptions {
 	return &GetPoolOptions{
 		InstanceID: core.StringPtr(instanceID),
-		PoolID:     core.StringPtr(poolID),
+		PoolID: core.StringPtr(poolID),
 	}
 }
 
@@ -6935,8 +6970,8 @@ type GetResourceRecordOptions struct {
 func (*DnsSvcsV1) NewGetResourceRecordOptions(instanceID string, dnszoneID string, recordID string) *GetResourceRecordOptions {
 	return &GetResourceRecordOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
-		RecordID:   core.StringPtr(recordID),
+		DnszoneID: core.StringPtr(dnszoneID),
+		RecordID: core.StringPtr(recordID),
 	}
 }
 
@@ -6991,8 +7026,8 @@ type GetSecondaryZoneOptions struct {
 // NewGetSecondaryZoneOptions : Instantiate GetSecondaryZoneOptions
 func (*DnsSvcsV1) NewGetSecondaryZoneOptions(instanceID string, resolverID string, secondaryZoneID string) *GetSecondaryZoneOptions {
 	return &GetSecondaryZoneOptions{
-		InstanceID:      core.StringPtr(instanceID),
-		ResolverID:      core.StringPtr(resolverID),
+		InstanceID: core.StringPtr(instanceID),
+		ResolverID: core.StringPtr(resolverID),
 		SecondaryZoneID: core.StringPtr(secondaryZoneID),
 	}
 }
@@ -7052,7 +7087,7 @@ type ImportResourceRecordsOptions struct {
 func (*DnsSvcsV1) NewImportResourceRecordsOptions(instanceID string, dnszoneID string) *ImportResourceRecordsOptions {
 	return &ImportResourceRecordsOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
+		DnszoneID: core.StringPtr(dnszoneID),
 	}
 }
 
@@ -7178,7 +7213,7 @@ type ListDnszoneAccessRequestsOptions struct {
 func (*DnsSvcsV1) NewListDnszoneAccessRequestsOptions(instanceID string, dnszoneID string) *ListDnszoneAccessRequestsOptions {
 	return &ListDnszoneAccessRequestsOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
+		DnszoneID: core.StringPtr(dnszoneID),
 	}
 }
 
@@ -7232,6 +7267,9 @@ type ListDnszonesOptions struct {
 	// Specify maximum resources might be returned.
 	Limit *int64 `json:"limit,omitempty"`
 
+	// Specify the VPC ID.
+	VpcID *string `json:"vpc_id,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -7267,6 +7305,12 @@ func (_options *ListDnszonesOptions) SetLimit(limit int64) *ListDnszonesOptions 
 	return _options
 }
 
+// SetVpcID : Allow user to set VpcID
+func (_options *ListDnszonesOptions) SetVpcID(vpcID string) *ListDnszonesOptions {
+	_options.VpcID = core.StringPtr(vpcID)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListDnszonesOptions) SetHeaders(param map[string]string) *ListDnszonesOptions {
 	options.Headers = param
@@ -7283,6 +7327,12 @@ type ListForwardingRulesOptions struct {
 
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
+
+	// Specify how many resources to skip over, the default value is 0.
+	Offset *int64 `json:"offset,omitempty"`
+
+	// Specify maximum resources might be returned.
+	Limit *int64 `json:"limit,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -7314,6 +7364,18 @@ func (_options *ListForwardingRulesOptions) SetXCorrelationID(xCorrelationID str
 	return _options
 }
 
+// SetOffset : Allow user to set Offset
+func (_options *ListForwardingRulesOptions) SetOffset(offset int64) *ListForwardingRulesOptions {
+	_options.Offset = core.Int64Ptr(offset)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListForwardingRulesOptions) SetLimit(limit int64) *ListForwardingRulesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListForwardingRulesOptions) SetHeaders(param map[string]string) *ListForwardingRulesOptions {
 	options.Headers = param
@@ -7338,7 +7400,7 @@ type ListLinkedPermittedNetworksOptions struct {
 // NewListLinkedPermittedNetworksOptions : Instantiate ListLinkedPermittedNetworksOptions
 func (*DnsSvcsV1) NewListLinkedPermittedNetworksOptions(instanceID string, linkedDnszoneID string) *ListLinkedPermittedNetworksOptions {
 	return &ListLinkedPermittedNetworksOptions{
-		InstanceID:      core.StringPtr(instanceID),
+		InstanceID: core.StringPtr(instanceID),
 		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
 	}
 }
@@ -7447,7 +7509,7 @@ type ListLoadBalancersOptions struct {
 func (*DnsSvcsV1) NewListLoadBalancersOptions(instanceID string, dnszoneID string) *ListLoadBalancersOptions {
 	return &ListLoadBalancersOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
+		DnszoneID: core.StringPtr(dnszoneID),
 	}
 }
 
@@ -7550,6 +7612,10 @@ type ListPermittedNetworksOptions struct {
 	// The unique identifier of a DNS zone.
 	DnszoneID *string `json:"dnszone_id" validate:"required,ne="`
 
+	// The account identifiers of the owner zone and linked zones in the format of "?account=account1,account2,account3".
+	// Maximum 5 accounts are allowed.
+	Accounts *string `json:"accounts,omitempty"`
+
 	// Uniquely identifying a request.
 	XCorrelationID *string `json:"X-Correlation-ID,omitempty"`
 
@@ -7561,7 +7627,7 @@ type ListPermittedNetworksOptions struct {
 func (*DnsSvcsV1) NewListPermittedNetworksOptions(instanceID string, dnszoneID string) *ListPermittedNetworksOptions {
 	return &ListPermittedNetworksOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
+		DnszoneID: core.StringPtr(dnszoneID),
 	}
 }
 
@@ -7574,6 +7640,12 @@ func (_options *ListPermittedNetworksOptions) SetInstanceID(instanceID string) *
 // SetDnszoneID : Allow user to set DnszoneID
 func (_options *ListPermittedNetworksOptions) SetDnszoneID(dnszoneID string) *ListPermittedNetworksOptions {
 	_options.DnszoneID = core.StringPtr(dnszoneID)
+	return _options
+}
+
+// SetAccounts : Allow user to set Accounts
+func (_options *ListPermittedNetworksOptions) SetAccounts(accounts string) *ListPermittedNetworksOptions {
+	_options.Accounts = core.StringPtr(accounts)
 	return _options
 }
 
@@ -7661,6 +7733,12 @@ type ListResourceRecordsOptions struct {
 	// Specify maximum resources might be returned.
 	Limit *int64 `json:"limit,omitempty"`
 
+	// Specify the type of resource record to query.
+	Type *string `json:"type,omitempty"`
+
+	// Specify the name of resource record to query.
+	Name *string `json:"name,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -7669,7 +7747,7 @@ type ListResourceRecordsOptions struct {
 func (*DnsSvcsV1) NewListResourceRecordsOptions(instanceID string, dnszoneID string) *ListResourceRecordsOptions {
 	return &ListResourceRecordsOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
+		DnszoneID: core.StringPtr(dnszoneID),
 	}
 }
 
@@ -7700,6 +7778,18 @@ func (_options *ListResourceRecordsOptions) SetOffset(offset int64) *ListResourc
 // SetLimit : Allow user to set Limit
 func (_options *ListResourceRecordsOptions) SetLimit(limit int64) *ListResourceRecordsOptions {
 	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetType : Allow user to set Type
+func (_options *ListResourceRecordsOptions) SetType(typeVar string) *ListResourceRecordsOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *ListResourceRecordsOptions) SetName(name string) *ListResourceRecordsOptions {
+	_options.Name = core.StringPtr(name)
 	return _options
 }
 
@@ -7900,7 +7990,6 @@ type ResourceRecordInputRdata struct {
 	// Hostname of the relevant A or AAAA record.
 	Ptrdname *string `json:"ptrdname,omitempty"`
 }
-
 func (*ResourceRecordInputRdata) isaResourceRecordInputRdata() bool {
 	return true
 }
@@ -7996,7 +8085,6 @@ type ResourceRecordUpdateInputRdata struct {
 	// Hostname of the relevant A or AAAA record.
 	Ptrdname *string `json:"ptrdname,omitempty"`
 }
-
 func (*ResourceRecordUpdateInputRdata) isaResourceRecordUpdateInputRdata() bool {
 	return true
 }
@@ -8282,16 +8370,16 @@ type UpdateDnszoneAccessRequestOptions struct {
 // The action applies to the access request.
 const (
 	UpdateDnszoneAccessRequestOptions_Action_Approve = "APPROVE"
-	UpdateDnszoneAccessRequestOptions_Action_Reject  = "REJECT"
-	UpdateDnszoneAccessRequestOptions_Action_Revoke  = "REVOKE"
+	UpdateDnszoneAccessRequestOptions_Action_Reject = "REJECT"
+	UpdateDnszoneAccessRequestOptions_Action_Revoke = "REVOKE"
 )
 
 // NewUpdateDnszoneAccessRequestOptions : Instantiate UpdateDnszoneAccessRequestOptions
 func (*DnsSvcsV1) NewUpdateDnszoneAccessRequestOptions(instanceID string, dnszoneID string, requestID string) *UpdateDnszoneAccessRequestOptions {
 	return &UpdateDnszoneAccessRequestOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
-		RequestID:  core.StringPtr(requestID),
+		DnszoneID: core.StringPtr(dnszoneID),
+		RequestID: core.StringPtr(requestID),
 	}
 }
 
@@ -8356,7 +8444,7 @@ type UpdateDnszoneOptions struct {
 func (*DnsSvcsV1) NewUpdateDnszoneOptions(instanceID string, dnszoneID string) *UpdateDnszoneOptions {
 	return &UpdateDnszoneOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
+		DnszoneID: core.StringPtr(dnszoneID),
 	}
 }
 
@@ -8428,7 +8516,7 @@ func (*DnsSvcsV1) NewUpdateForwardingRuleOptions(instanceID string, resolverID s
 	return &UpdateForwardingRuleOptions{
 		InstanceID: core.StringPtr(instanceID),
 		ResolverID: core.StringPtr(resolverID),
-		RuleID:     core.StringPtr(ruleID),
+		RuleID: core.StringPtr(ruleID),
 	}
 }
 
@@ -8504,7 +8592,7 @@ type UpdateLinkedZoneOptions struct {
 // NewUpdateLinkedZoneOptions : Instantiate UpdateLinkedZoneOptions
 func (*DnsSvcsV1) NewUpdateLinkedZoneOptions(instanceID string, linkedDnszoneID string) *UpdateLinkedZoneOptions {
 	return &UpdateLinkedZoneOptions{
-		InstanceID:      core.StringPtr(instanceID),
+		InstanceID: core.StringPtr(instanceID),
 		LinkedDnszoneID: core.StringPtr(linkedDnszoneID),
 	}
 }
@@ -8589,8 +8677,8 @@ type UpdateLoadBalancerOptions struct {
 func (*DnsSvcsV1) NewUpdateLoadBalancerOptions(instanceID string, dnszoneID string, lbID string) *UpdateLoadBalancerOptions {
 	return &UpdateLoadBalancerOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
-		LbID:       core.StringPtr(lbID),
+		DnszoneID: core.StringPtr(dnszoneID),
+		LbID: core.StringPtr(lbID),
 	}
 }
 
@@ -8730,15 +8818,15 @@ type UpdateMonitorOptions struct {
 // Constants associated with the UpdateMonitorOptions.Type property.
 // The protocol to use for the health check. Currently supported protocols are 'HTTP','HTTPS' and 'TCP'.
 const (
-	UpdateMonitorOptions_Type_Http  = "HTTP"
+	UpdateMonitorOptions_Type_Http = "HTTP"
 	UpdateMonitorOptions_Type_Https = "HTTPS"
-	UpdateMonitorOptions_Type_Tcp   = "TCP"
+	UpdateMonitorOptions_Type_Tcp = "TCP"
 )
 
 // Constants associated with the UpdateMonitorOptions.Method property.
 // The method to use for the health check applicable to HTTP/HTTPS based checks, the default value is 'GET'.
 const (
-	UpdateMonitorOptions_Method_Get  = "GET"
+	UpdateMonitorOptions_Method_Get = "GET"
 	UpdateMonitorOptions_Method_Head = "HEAD"
 )
 
@@ -8746,7 +8834,7 @@ const (
 func (*DnsSvcsV1) NewUpdateMonitorOptions(instanceID string, monitorID string) *UpdateMonitorOptions {
 	return &UpdateMonitorOptions{
 		InstanceID: core.StringPtr(instanceID),
-		MonitorID:  core.StringPtr(monitorID),
+		MonitorID: core.StringPtr(monitorID),
 	}
 }
 
@@ -8899,11 +8987,11 @@ type UpdatePoolOptions struct {
 // Constants associated with the UpdatePoolOptions.HealthcheckRegion property.
 // Health check region of VSIs.
 const (
-	UpdatePoolOptions_HealthcheckRegion_AuSyd   = "au-syd"
-	UpdatePoolOptions_HealthcheckRegion_EuDu    = "eu-du"
-	UpdatePoolOptions_HealthcheckRegion_EuGb    = "eu-gb"
-	UpdatePoolOptions_HealthcheckRegion_JpTok   = "jp-tok"
-	UpdatePoolOptions_HealthcheckRegion_UsEast  = "us-east"
+	UpdatePoolOptions_HealthcheckRegion_AuSyd = "au-syd"
+	UpdatePoolOptions_HealthcheckRegion_EuDu = "eu-du"
+	UpdatePoolOptions_HealthcheckRegion_EuGb = "eu-gb"
+	UpdatePoolOptions_HealthcheckRegion_JpTok = "jp-tok"
+	UpdatePoolOptions_HealthcheckRegion_UsEast = "us-east"
 	UpdatePoolOptions_HealthcheckRegion_UsSouth = "us-south"
 )
 
@@ -8911,7 +8999,7 @@ const (
 func (*DnsSvcsV1) NewUpdatePoolOptions(instanceID string, poolID string) *UpdatePoolOptions {
 	return &UpdatePoolOptions{
 		InstanceID: core.StringPtr(instanceID),
-		PoolID:     core.StringPtr(poolID),
+		PoolID: core.StringPtr(poolID),
 	}
 }
 
@@ -9030,8 +9118,8 @@ type UpdateResourceRecordOptions struct {
 func (*DnsSvcsV1) NewUpdateResourceRecordOptions(instanceID string, dnszoneID string, recordID string) *UpdateResourceRecordOptions {
 	return &UpdateResourceRecordOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID:  core.StringPtr(dnszoneID),
-		RecordID:   core.StringPtr(recordID),
+		DnszoneID: core.StringPtr(dnszoneID),
+		RecordID: core.StringPtr(recordID),
 	}
 }
 
@@ -9125,8 +9213,8 @@ type UpdateSecondaryZoneOptions struct {
 // NewUpdateSecondaryZoneOptions : Instantiate UpdateSecondaryZoneOptions
 func (*DnsSvcsV1) NewUpdateSecondaryZoneOptions(instanceID string, resolverID string, secondaryZoneID string) *UpdateSecondaryZoneOptions {
 	return &UpdateSecondaryZoneOptions{
-		InstanceID:      core.StringPtr(instanceID),
-		ResolverID:      core.StringPtr(resolverID),
+		InstanceID: core.StringPtr(instanceID),
+		ResolverID: core.StringPtr(resolverID),
 		SecondaryZoneID: core.StringPtr(secondaryZoneID),
 	}
 }
@@ -9197,22 +9285,22 @@ type AccessRequest struct {
 	State *string `json:"state" validate:"required"`
 
 	// The expired time of access request with state `pending`.
-	PendingExpiresAt *string `json:"pending_expires_at,omitempty"`
+	PendingExpiresAt *strfmt.DateTime `json:"pending_expires_at,omitempty"`
 
 	// The time when the linked zone is created.
-	CreatedOn *string `json:"created_on,omitempty"`
+	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
 
 	// The recent time when the linked zone is modified.
-	ModifiedOn *string `json:"modified_on,omitempty"`
+	ModifiedOn *strfmt.DateTime `json:"modified_on,omitempty"`
 }
 
 // Constants associated with the AccessRequest.State property.
 // The state of the access request.
 const (
 	AccessRequest_State_Approved = "APPROVED"
-	AccessRequest_State_Pending  = "PENDING"
+	AccessRequest_State_Pending = "PENDING"
 	AccessRequest_State_Rejected = "REJECTED"
-	AccessRequest_State_Revoked  = "REVOKED"
+	AccessRequest_State_Revoked = "REVOKED"
 	AccessRequest_State_Timedout = "TIMEDOUT"
 )
 
@@ -9366,10 +9454,10 @@ type CustomResolver struct {
 	Locations []Location `json:"locations,omitempty"`
 
 	// the time when a custom resolver is created, RFC3339 format.
-	CreatedOn *string `json:"created_on,omitempty"`
+	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
 
 	// the recent time when a custom resolver is modified, RFC3339 format.
-	ModifiedOn *string `json:"modified_on,omitempty"`
+	ModifiedOn *strfmt.DateTime `json:"modified_on,omitempty"`
 }
 
 // Constants associated with the CustomResolver.Health property.
@@ -9377,7 +9465,7 @@ type CustomResolver struct {
 const (
 	CustomResolver_Health_Critical = "CRITICAL"
 	CustomResolver_Health_Degraded = "DEGRADED"
-	CustomResolver_Health_Healthy  = "HEALTHY"
+	CustomResolver_Health_Healthy = "HEALTHY"
 )
 
 // UnmarshalCustomResolver unmarshals an instance of CustomResolver from the specified map of raw messages.
@@ -9441,16 +9529,16 @@ type Dnszone struct {
 	// Unique identifier of a DNS zone.
 	ID *string `json:"id,omitempty"`
 
-	// the time when a DNS zone is created.
-	CreatedOn *string `json:"created_on,omitempty"`
+	// The time when a DNS zone is created.
+	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
 
-	// the recent time when a DNS zone is modified.
-	ModifiedOn *string `json:"modified_on,omitempty"`
+	// The recent time when a DNS zone is modified.
+	ModifiedOn *strfmt.DateTime `json:"modified_on,omitempty"`
 
 	// Unique identifier of a service instance.
 	InstanceID *string `json:"instance_id,omitempty"`
 
-	// Name of DNS zone.
+	// Name of the DNS zone. Must be a fully qualified domain name.
 	Name *string `json:"name,omitempty"`
 
 	// The text describing the purpose of a DNS zone.
@@ -9466,10 +9554,10 @@ type Dnszone struct {
 // Constants associated with the Dnszone.State property.
 // State of DNS zone.
 const (
-	Dnszone_State_Active            = "active"
-	Dnszone_State_Deleted           = "deleted"
-	Dnszone_State_Disabled          = "disabled"
-	Dnszone_State_PendingDelete     = "pending_delete"
+	Dnszone_State_Active = "active"
+	Dnszone_State_Deleted = "deleted"
+	Dnszone_State_Disabled = "disabled"
+	Dnszone_State_PendingDelete = "pending_delete"
 	Dnszone_State_PendingNetworkAdd = "pending_network_add"
 )
 
@@ -9530,17 +9618,17 @@ type ForwardingRule struct {
 	ForwardTo []string `json:"forward_to,omitempty"`
 
 	// the time when a forwarding rule is created, RFC3339 format.
-	CreatedOn *string `json:"created_on,omitempty"`
+	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
 
 	// the recent time when a forwarding rule is modified, RFC3339 format.
-	ModifiedOn *string `json:"modified_on,omitempty"`
+	ModifiedOn *strfmt.DateTime `json:"modified_on,omitempty"`
 }
 
 // Constants associated with the ForwardingRule.Type property.
 // Type of the forwarding rule.
 const (
 	ForwardingRule_Type_Default = "default"
-	ForwardingRule_Type_Zone    = "zone"
+	ForwardingRule_Type_Zone = "zone"
 )
 
 // UnmarshalForwardingRule unmarshals an instance of ForwardingRule from the specified map of raw messages.
@@ -9581,7 +9669,31 @@ func UnmarshalForwardingRule(m map[string]json.RawMessage, result interface{}) (
 // ForwardingRuleList : List of forwarding rules.
 type ForwardingRuleList struct {
 	// An array of forwarding rules.
-	ForwardingRules []ForwardingRule `json:"forwarding_rules,omitempty"`
+	ForwardingRules []ForwardingRule `json:"forwarding_rules" validate:"required"`
+
+	// The number of resources to skip over.
+	Offset *int64 `json:"offset" validate:"required"`
+
+	// The maximum number of resources might be returned.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// The number of resources are returned.
+	Count *int64 `json:"count" validate:"required"`
+
+	// Total number of resources.
+	TotalCount *int64 `json:"total_count" validate:"required"`
+
+	// href.
+	First *PaginationRef `json:"first" validate:"required"`
+
+	// href.
+	Last *PaginationRef `json:"last" validate:"required"`
+
+	// href.
+	Previous *PaginationRef `json:"previous,omitempty"`
+
+	// href.
+	Next *PaginationRef `json:"next,omitempty"`
 }
 
 // UnmarshalForwardingRuleList unmarshals an instance of ForwardingRuleList from the specified map of raw messages.
@@ -9591,8 +9703,57 @@ func UnmarshalForwardingRuleList(m map[string]json.RawMessage, result interface{
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "count", &obj.Count)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPaginationRef)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalPaginationRef)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPaginationRef)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPaginationRef)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ForwardingRuleList) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
+	if err != nil || offset == nil {
+		return nil, err
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
 }
 
 // HealthcheckHeader : The HTTP header of health check request.
@@ -9607,7 +9768,7 @@ type HealthcheckHeader struct {
 // NewHealthcheckHeader : Instantiate HealthcheckHeader (Generic Model Constructor)
 func (*DnsSvcsV1) NewHealthcheckHeader(name string, value []string) (_model *HealthcheckHeader, err error) {
 	_model = &HealthcheckHeader{
-		Name:  core.StringPtr(name),
+		Name: core.StringPtr(name),
 		Value: value,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -9712,23 +9873,23 @@ type LinkedDnszone struct {
 	Label *string `json:"label,omitempty"`
 
 	// The expired time of linked zone with state `approval pending`.
-	ApprovalRequiredBefore *string `json:"approval_required_before,omitempty"`
+	ApprovalRequiredBefore *strfmt.DateTime `json:"approval_required_before,omitempty"`
 
 	// The time when the linked zone is created.
-	CreatedOn *string `json:"created_on,omitempty"`
+	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
 
 	// The recent time when the linked zone is modified.
-	ModifiedOn *string `json:"modified_on,omitempty"`
+	ModifiedOn *strfmt.DateTime `json:"modified_on,omitempty"`
 }
 
 // Constants associated with the LinkedDnszone.State property.
 // The state of linked zone.
 const (
-	LinkedDnszone_State_Active            = "ACTIVE"
-	LinkedDnszone_State_ApprovalRejected  = "APPROVAL_REJECTED"
-	LinkedDnszone_State_ApprovalRevoked   = "APPROVAL_REVOKED"
-	LinkedDnszone_State_ApprovalTimedout  = "APPROVAL_TIMEDOUT"
-	LinkedDnszone_State_PendingApproval   = "PENDING_APPROVAL"
+	LinkedDnszone_State_Active = "ACTIVE"
+	LinkedDnszone_State_ApprovalRejected = "APPROVAL_REJECTED"
+	LinkedDnszone_State_ApprovalRevoked = "APPROVAL_REVOKED"
+	LinkedDnszone_State_ApprovalTimedout = "APPROVAL_TIMEDOUT"
+	LinkedDnszone_State_PendingApproval = "PENDING_APPROVAL"
 	LinkedDnszone_State_PendingNetworkAdd = "PENDING_NETWORK_ADD"
 )
 
@@ -10367,10 +10528,10 @@ type LoadBalancer struct {
 	AzPools []LoadBalancerAzPoolsItem `json:"az_pools,omitempty"`
 
 	// The time when a load balancer is created.
-	CreatedOn *string `json:"created_on,omitempty"`
+	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
 
 	// The recent time when a load balancer is modified.
-	ModifiedOn *string `json:"modified_on,omitempty"`
+	ModifiedOn *strfmt.DateTime `json:"modified_on,omitempty"`
 }
 
 // Constants associated with the LoadBalancer.Health property.
@@ -10378,7 +10539,7 @@ type LoadBalancer struct {
 const (
 	LoadBalancer_Health_Critical = "CRITICAL"
 	LoadBalancer_Health_Degraded = "DEGRADED"
-	LoadBalancer_Health_Healthy  = "HEALTHY"
+	LoadBalancer_Health_Healthy = "HEALTHY"
 )
 
 // UnmarshalLoadBalancer unmarshals an instance of LoadBalancer from the specified map of raw messages.
@@ -10561,16 +10722,16 @@ type Monitor struct {
 	ExpectedBody *string `json:"expected_body,omitempty"`
 
 	// the time when a load balancer monitor is created.
-	CreatedOn *string `json:"created_on,omitempty"`
+	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
 
 	// the recent time when a load balancer monitor is modified.
-	ModifiedOn *string `json:"modified_on,omitempty"`
+	ModifiedOn *strfmt.DateTime `json:"modified_on,omitempty"`
 }
 
 // Constants associated with the Monitor.Method property.
 // The method to use for the health check applicable to HTTP/HTTPS based checks, the default value is 'GET'.
 const (
-	Monitor_Method_Get  = "GET"
+	Monitor_Method_Get = "GET"
 	Monitor_Method_Head = "HEAD"
 )
 
@@ -10758,10 +10919,10 @@ type PermittedNetwork struct {
 	ID *string `json:"id,omitempty"`
 
 	// The time when a permitted network is created.
-	CreatedOn *string `json:"created_on,omitempty"`
+	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
 
 	// The recent time when a permitted network is modified.
-	ModifiedOn *string `json:"modified_on,omitempty"`
+	ModifiedOn *strfmt.DateTime `json:"modified_on,omitempty"`
 
 	// Permitted network data for VPC.
 	PermittedNetwork *PermittedNetworkVpc `json:"permitted_network,omitempty"`
@@ -10771,6 +10932,9 @@ type PermittedNetwork struct {
 
 	// The state of a permitted network.
 	State *string `json:"state,omitempty"`
+
+	// Unique identifier of a linked zone through which the permitted network was added.
+	LinkedZoneID *string `json:"linked_zone_id,omitempty"`
 }
 
 // Constants associated with the PermittedNetwork.Type property.
@@ -10782,7 +10946,7 @@ const (
 // Constants associated with the PermittedNetwork.State property.
 // The state of a permitted network.
 const (
-	PermittedNetwork_State_Active            = "ACTIVE"
+	PermittedNetwork_State_Active = "ACTIVE"
 	PermittedNetwork_State_RemovalInProgress = "REMOVAL_IN_PROGRESS"
 )
 
@@ -10810,6 +10974,10 @@ func UnmarshalPermittedNetwork(m map[string]json.RawMessage, result interface{})
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "state", &obj.State)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "linked_zone_id", &obj.LinkedZoneID)
 	if err != nil {
 		return
 	}
@@ -10884,10 +11052,10 @@ type Pool struct {
 	HealthcheckVsis []PoolHealthcheckVsisItem `json:"healthcheck_vsis,omitempty"`
 
 	// the time when a load balancer pool is created.
-	CreatedOn *string `json:"created_on,omitempty"`
+	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
 
 	// the recent time when a load balancer pool is modified.
-	ModifiedOn *string `json:"modified_on,omitempty"`
+	ModifiedOn *strfmt.DateTime `json:"modified_on,omitempty"`
 }
 
 // Constants associated with the Pool.Health property.
@@ -10895,17 +11063,17 @@ type Pool struct {
 const (
 	Pool_Health_Critical = "CRITICAL"
 	Pool_Health_Degraded = "DEGRADED"
-	Pool_Health_Healthy  = "HEALTHY"
+	Pool_Health_Healthy = "HEALTHY"
 )
 
 // Constants associated with the Pool.HealthcheckRegion property.
 // Health check region of VSIs.
 const (
-	Pool_HealthcheckRegion_AuSyd   = "au-syd"
-	Pool_HealthcheckRegion_EuDu    = "eu-du"
-	Pool_HealthcheckRegion_EuGb    = "eu-gb"
-	Pool_HealthcheckRegion_JpTok   = "jp-tok"
-	Pool_HealthcheckRegion_UsEast  = "us-east"
+	Pool_HealthcheckRegion_AuSyd = "au-syd"
+	Pool_HealthcheckRegion_EuDu = "eu-du"
+	Pool_HealthcheckRegion_EuGb = "eu-gb"
+	Pool_HealthcheckRegion_JpTok = "jp-tok"
+	Pool_HealthcheckRegion_UsEast = "us-east"
 	Pool_HealthcheckRegion_UsSouth = "us-south"
 )
 
@@ -11084,11 +11252,11 @@ type ResourceRecord struct {
 	// Identifier of the resource record.
 	ID *string `json:"id,omitempty"`
 
-	// the time when a resource record is created.
-	CreatedOn *string `json:"created_on,omitempty"`
+	// The time when a resource record is created.
+	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
 
-	// the recent time when a resource record is modified.
-	ModifiedOn *string `json:"modified_on,omitempty"`
+	// The recent time when a resource record is modified.
+	ModifiedOn *strfmt.DateTime `json:"modified_on,omitempty"`
 
 	// Name of the resource record.
 	Name *string `json:"name,omitempty"`
@@ -11100,7 +11268,7 @@ type ResourceRecord struct {
 	TTL *int64 `json:"ttl,omitempty"`
 
 	// Content of the resource record.
-	Rdata interface{} `json:"rdata,omitempty"`
+	Rdata map[string]interface{} `json:"rdata,omitempty"`
 
 	// Only used for SRV record.
 	Service *string `json:"service,omitempty"`
@@ -11112,13 +11280,13 @@ type ResourceRecord struct {
 // Constants associated with the ResourceRecord.Type property.
 // Type of the resource record.
 const (
-	ResourceRecord_Type_A     = "A"
-	ResourceRecord_Type_Aaaa  = "AAAA"
+	ResourceRecord_Type_A = "A"
+	ResourceRecord_Type_Aaaa = "AAAA"
 	ResourceRecord_Type_Cname = "CNAME"
-	ResourceRecord_Type_Mx    = "MX"
-	ResourceRecord_Type_Ptr   = "PTR"
-	ResourceRecord_Type_Srv   = "SRV"
-	ResourceRecord_Type_Txt   = "TXT"
+	ResourceRecord_Type_Mx = "MX"
+	ResourceRecord_Type_Ptr = "PTR"
+	ResourceRecord_Type_Srv = "SRV"
+	ResourceRecord_Type_Txt = "TXT"
 )
 
 // UnmarshalResourceRecord unmarshals an instance of ResourceRecord from the specified map of raw messages.
@@ -11182,10 +11350,10 @@ type SecondaryZone struct {
 	TransferFrom []string `json:"transfer_from" validate:"required"`
 
 	// The time when a secondary zone is created.
-	CreatedOn *string `json:"created_on,omitempty"`
+	CreatedOn *strfmt.DateTime `json:"created_on,omitempty"`
 
 	// The recent time when a secondary zone is modified.
-	ModifiedOn *string `json:"modified_on,omitempty"`
+	ModifiedOn *strfmt.DateTime `json:"modified_on,omitempty"`
 }
 
 // UnmarshalSecondaryZone unmarshals an instance of SecondaryZone from the specified map of raw messages.
@@ -11419,7 +11587,7 @@ type ResourceRecordInputRdataRdataMxRecord struct {
 // NewResourceRecordInputRdataRdataMxRecord : Instantiate ResourceRecordInputRdataRdataMxRecord (Generic Model Constructor)
 func (*DnsSvcsV1) NewResourceRecordInputRdataRdataMxRecord(exchange string, preference int64) (_model *ResourceRecordInputRdataRdataMxRecord, err error) {
 	_model = &ResourceRecordInputRdataRdataMxRecord{
-		Exchange:   core.StringPtr(exchange),
+		Exchange: core.StringPtr(exchange),
 		Preference: core.Int64Ptr(preference),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -11495,10 +11663,10 @@ type ResourceRecordInputRdataRdataSrvRecord struct {
 // NewResourceRecordInputRdataRdataSrvRecord : Instantiate ResourceRecordInputRdataRdataSrvRecord (Generic Model Constructor)
 func (*DnsSvcsV1) NewResourceRecordInputRdataRdataSrvRecord(port int64, priority int64, target string, weight int64) (_model *ResourceRecordInputRdataRdataSrvRecord, err error) {
 	_model = &ResourceRecordInputRdataRdataSrvRecord{
-		Port:     core.Int64Ptr(port),
+		Port: core.Int64Ptr(port),
 		Priority: core.Int64Ptr(priority),
-		Target:   core.StringPtr(target),
-		Weight:   core.Int64Ptr(weight),
+		Target: core.StringPtr(target),
+		Weight: core.Int64Ptr(weight),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
@@ -11668,7 +11836,7 @@ type ResourceRecordUpdateInputRdataRdataMxRecord struct {
 // NewResourceRecordUpdateInputRdataRdataMxRecord : Instantiate ResourceRecordUpdateInputRdataRdataMxRecord (Generic Model Constructor)
 func (*DnsSvcsV1) NewResourceRecordUpdateInputRdataRdataMxRecord(exchange string, preference int64) (_model *ResourceRecordUpdateInputRdataRdataMxRecord, err error) {
 	_model = &ResourceRecordUpdateInputRdataRdataMxRecord{
-		Exchange:   core.StringPtr(exchange),
+		Exchange: core.StringPtr(exchange),
 		Preference: core.Int64Ptr(preference),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -11744,10 +11912,10 @@ type ResourceRecordUpdateInputRdataRdataSrvRecord struct {
 // NewResourceRecordUpdateInputRdataRdataSrvRecord : Instantiate ResourceRecordUpdateInputRdataRdataSrvRecord (Generic Model Constructor)
 func (*DnsSvcsV1) NewResourceRecordUpdateInputRdataRdataSrvRecord(port int64, priority int64, target string, weight int64) (_model *ResourceRecordUpdateInputRdataRdataSrvRecord, err error) {
 	_model = &ResourceRecordUpdateInputRdataRdataSrvRecord{
-		Port:     core.Int64Ptr(port),
+		Port: core.Int64Ptr(port),
 		Priority: core.Int64Ptr(priority),
-		Target:   core.StringPtr(target),
-		Weight:   core.Int64Ptr(weight),
+		Target: core.StringPtr(target),
+		Weight: core.Int64Ptr(weight),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
@@ -11809,4 +11977,787 @@ func UnmarshalResourceRecordUpdateInputRdataRdataTxtRecord(m map[string]json.Raw
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+//
+// DnszonesPager can be used to simplify the use of the "ListDnszones" method.
+//
+type DnszonesPager struct {
+	hasNext bool
+	options *ListDnszonesOptions
+	client  *DnsSvcsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewDnszonesPager returns a new DnszonesPager instance.
+func (dnsSvcs *DnsSvcsV1) NewDnszonesPager(options *ListDnszonesOptions) (pager *DnszonesPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListDnszonesOptions = *options
+	pager = &DnszonesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  dnsSvcs,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *DnszonesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *DnszonesPager) GetNextWithContext(ctx context.Context) (page []Dnszone, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListDnszonesWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Dnszones
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *DnszonesPager) GetAllWithContext(ctx context.Context) (allItems []Dnszone, err error) {
+	for pager.HasNext() {
+		var nextPage []Dnszone
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *DnszonesPager) GetNext() (page []Dnszone, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *DnszonesPager) GetAll() (allItems []Dnszone, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// ResourceRecordsPager can be used to simplify the use of the "ListResourceRecords" method.
+//
+type ResourceRecordsPager struct {
+	hasNext bool
+	options *ListResourceRecordsOptions
+	client  *DnsSvcsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewResourceRecordsPager returns a new ResourceRecordsPager instance.
+func (dnsSvcs *DnsSvcsV1) NewResourceRecordsPager(options *ListResourceRecordsOptions) (pager *ResourceRecordsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListResourceRecordsOptions = *options
+	pager = &ResourceRecordsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  dnsSvcs,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ResourceRecordsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ResourceRecordsPager) GetNextWithContext(ctx context.Context) (page []ResourceRecord, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListResourceRecordsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.ResourceRecords
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ResourceRecordsPager) GetAllWithContext(ctx context.Context) (allItems []ResourceRecord, err error) {
+	for pager.HasNext() {
+		var nextPage []ResourceRecord
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ResourceRecordsPager) GetNext() (page []ResourceRecord, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ResourceRecordsPager) GetAll() (allItems []ResourceRecord, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// LoadBalancersPager can be used to simplify the use of the "ListLoadBalancers" method.
+//
+type LoadBalancersPager struct {
+	hasNext bool
+	options *ListLoadBalancersOptions
+	client  *DnsSvcsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewLoadBalancersPager returns a new LoadBalancersPager instance.
+func (dnsSvcs *DnsSvcsV1) NewLoadBalancersPager(options *ListLoadBalancersOptions) (pager *LoadBalancersPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListLoadBalancersOptions = *options
+	pager = &LoadBalancersPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  dnsSvcs,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *LoadBalancersPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *LoadBalancersPager) GetNextWithContext(ctx context.Context) (page []LoadBalancer, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListLoadBalancersWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.LoadBalancers
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *LoadBalancersPager) GetAllWithContext(ctx context.Context) (allItems []LoadBalancer, err error) {
+	for pager.HasNext() {
+		var nextPage []LoadBalancer
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *LoadBalancersPager) GetNext() (page []LoadBalancer, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *LoadBalancersPager) GetAll() (allItems []LoadBalancer, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// PoolsPager can be used to simplify the use of the "ListPools" method.
+//
+type PoolsPager struct {
+	hasNext bool
+	options *ListPoolsOptions
+	client  *DnsSvcsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewPoolsPager returns a new PoolsPager instance.
+func (dnsSvcs *DnsSvcsV1) NewPoolsPager(options *ListPoolsOptions) (pager *PoolsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListPoolsOptions = *options
+	pager = &PoolsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  dnsSvcs,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *PoolsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *PoolsPager) GetNextWithContext(ctx context.Context) (page []Pool, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListPoolsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Pools
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *PoolsPager) GetAllWithContext(ctx context.Context) (allItems []Pool, err error) {
+	for pager.HasNext() {
+		var nextPage []Pool
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *PoolsPager) GetNext() (page []Pool, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *PoolsPager) GetAll() (allItems []Pool, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// MonitorsPager can be used to simplify the use of the "ListMonitors" method.
+//
+type MonitorsPager struct {
+	hasNext bool
+	options *ListMonitorsOptions
+	client  *DnsSvcsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewMonitorsPager returns a new MonitorsPager instance.
+func (dnsSvcs *DnsSvcsV1) NewMonitorsPager(options *ListMonitorsOptions) (pager *MonitorsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListMonitorsOptions = *options
+	pager = &MonitorsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  dnsSvcs,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *MonitorsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *MonitorsPager) GetNextWithContext(ctx context.Context) (page []Monitor, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListMonitorsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Monitors
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *MonitorsPager) GetAllWithContext(ctx context.Context) (allItems []Monitor, err error) {
+	for pager.HasNext() {
+		var nextPage []Monitor
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *MonitorsPager) GetNext() (page []Monitor, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *MonitorsPager) GetAll() (allItems []Monitor, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// ForwardingRulesPager can be used to simplify the use of the "ListForwardingRules" method.
+//
+type ForwardingRulesPager struct {
+	hasNext bool
+	options *ListForwardingRulesOptions
+	client  *DnsSvcsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewForwardingRulesPager returns a new ForwardingRulesPager instance.
+func (dnsSvcs *DnsSvcsV1) NewForwardingRulesPager(options *ListForwardingRulesOptions) (pager *ForwardingRulesPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListForwardingRulesOptions = *options
+	pager = &ForwardingRulesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  dnsSvcs,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ForwardingRulesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ForwardingRulesPager) GetNextWithContext(ctx context.Context) (page []ForwardingRule, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListForwardingRulesWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.ForwardingRules
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ForwardingRulesPager) GetAllWithContext(ctx context.Context) (allItems []ForwardingRule, err error) {
+	for pager.HasNext() {
+		var nextPage []ForwardingRule
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ForwardingRulesPager) GetNext() (page []ForwardingRule, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ForwardingRulesPager) GetAll() (allItems []ForwardingRule, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// SecondaryZonesPager can be used to simplify the use of the "ListSecondaryZones" method.
+//
+type SecondaryZonesPager struct {
+	hasNext bool
+	options *ListSecondaryZonesOptions
+	client  *DnsSvcsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewSecondaryZonesPager returns a new SecondaryZonesPager instance.
+func (dnsSvcs *DnsSvcsV1) NewSecondaryZonesPager(options *ListSecondaryZonesOptions) (pager *SecondaryZonesPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListSecondaryZonesOptions = *options
+	pager = &SecondaryZonesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  dnsSvcs,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *SecondaryZonesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *SecondaryZonesPager) GetNextWithContext(ctx context.Context) (page []SecondaryZone, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListSecondaryZonesWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.SecondaryZones
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *SecondaryZonesPager) GetAllWithContext(ctx context.Context) (allItems []SecondaryZone, err error) {
+	for pager.HasNext() {
+		var nextPage []SecondaryZone
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *SecondaryZonesPager) GetNext() (page []SecondaryZone, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *SecondaryZonesPager) GetAll() (allItems []SecondaryZone, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// LinkedZonesPager can be used to simplify the use of the "ListLinkedZones" method.
+//
+type LinkedZonesPager struct {
+	hasNext bool
+	options *ListLinkedZonesOptions
+	client  *DnsSvcsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewLinkedZonesPager returns a new LinkedZonesPager instance.
+func (dnsSvcs *DnsSvcsV1) NewLinkedZonesPager(options *ListLinkedZonesOptions) (pager *LinkedZonesPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListLinkedZonesOptions = *options
+	pager = &LinkedZonesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  dnsSvcs,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *LinkedZonesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *LinkedZonesPager) GetNextWithContext(ctx context.Context) (page []LinkedDnszone, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListLinkedZonesWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.LinkedDnszones
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *LinkedZonesPager) GetAllWithContext(ctx context.Context) (allItems []LinkedDnszone, err error) {
+	for pager.HasNext() {
+		var nextPage []LinkedDnszone
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *LinkedZonesPager) GetNext() (page []LinkedDnszone, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *LinkedZonesPager) GetAll() (allItems []LinkedDnszone, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// DnszoneAccessRequestsPager can be used to simplify the use of the "ListDnszoneAccessRequests" method.
+//
+type DnszoneAccessRequestsPager struct {
+	hasNext bool
+	options *ListDnszoneAccessRequestsOptions
+	client  *DnsSvcsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewDnszoneAccessRequestsPager returns a new DnszoneAccessRequestsPager instance.
+func (dnsSvcs *DnsSvcsV1) NewDnszoneAccessRequestsPager(options *ListDnszoneAccessRequestsOptions) (pager *DnszoneAccessRequestsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListDnszoneAccessRequestsOptions = *options
+	pager = &DnszoneAccessRequestsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  dnsSvcs,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *DnszoneAccessRequestsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *DnszoneAccessRequestsPager) GetNextWithContext(ctx context.Context) (page []AccessRequest, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListDnszoneAccessRequestsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.AccessRequests
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *DnszoneAccessRequestsPager) GetAllWithContext(ctx context.Context) (allItems []AccessRequest, err error) {
+	for pager.HasNext() {
+		var nextPage []AccessRequest
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *DnszoneAccessRequestsPager) GetNext() (page []AccessRequest, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *DnszoneAccessRequestsPager) GetAll() (allItems []AccessRequest, err error) {
+	return pager.GetAllWithContext(context.Background())
 }

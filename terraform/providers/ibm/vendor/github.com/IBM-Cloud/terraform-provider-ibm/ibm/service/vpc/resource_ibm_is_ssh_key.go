@@ -17,6 +17,7 @@ import (
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -29,6 +30,9 @@ const (
 	isKeyLength        = "length"
 	isKeyTags          = "tags"
 	isKeyResourceGroup = "resource_group"
+	isKeyAccessTags    = "access_tags"
+	isKeyUserTagType   = "user"
+	isKeyAccessTagType = "access"
 )
 
 func ResourceIBMISSSHKey() *schema.Resource {
@@ -40,10 +44,16 @@ func ResourceIBMISSSHKey() *schema.Resource {
 		Exists:   resourceIBMISSSHKeyExists,
 		Importer: &schema.ResourceImporter{},
 
-		CustomizeDiff: customdiff.Sequence(
-			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
-				return flex.ResourceTagsCustomizeDiff(diff)
-			},
+		CustomizeDiff: customdiff.All(
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceTagsCustomizeDiff(diff)
+				},
+			),
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceValidateAccessTags(diff, v)
+				}),
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -64,9 +74,11 @@ func ResourceIBMISSSHKey() *schema.Resource {
 			},
 
 			isKeyType: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Key type",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice([]string{"ed25519", "rsa"}, false),
+				Description:  "Key type",
 			},
 
 			isKeyFingerprint: {
@@ -126,6 +138,15 @@ func ResourceIBMISSSHKey() *schema.Resource {
 				Computed:    true,
 				Description: "The resource group name in which resource is provisioned",
 			},
+
+			isKeyAccessTags: {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_ssh_key", "accesstag")},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access management tags for SSH key",
+			},
 		},
 	}
 }
@@ -150,6 +171,15 @@ func ResourceIBMISSHKeyValidator() *validate.ResourceValidator {
 			Type:                       validate.TypeString,
 			Optional:                   true,
 			Regexp:                     `^[A-Za-z0-9:_ .-]+$`,
+			MinValueLength:             1,
+			MaxValueLength:             128})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "accesstag",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-]):([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-])$`,
 			MinValueLength:             1,
 			MaxValueLength:             128})
 
@@ -187,6 +217,11 @@ func keyCreate(d *schema.ResourceData, meta interface{}, name, publickey string)
 		}
 	}
 
+	if keytype, ok := d.GetOk(isKeyType); ok {
+		kt := keytype.(string)
+		options.Type = &kt
+	}
+
 	key, response, err := sess.CreateKey(options)
 	if err != nil {
 		return fmt.Errorf("[DEBUG] Create SSH Key %s\n%s", err, response)
@@ -197,10 +232,19 @@ func keyCreate(d *schema.ResourceData, meta interface{}, name, publickey string)
 	v := os.Getenv("IC_ENV_TAGS")
 	if _, ok := d.GetOk(isKeyTags); ok || v != "" {
 		oldList, newList := d.GetChange(isKeyTags)
-		err = flex.UpdateTagsUsingCRN(oldList, newList, meta, *key.CRN)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *key.CRN, "", isKeyUserTagType)
 		if err != nil {
 			log.Printf(
 				"Error on create of vpc SSH Key (%s) tags: %s", d.Id(), err)
+		}
+	}
+
+	if _, ok := d.GetOk(isKeyAccessTags); ok {
+		oldList, newList := d.GetChange(isKeyAccessTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *key.CRN, "", isKeyAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on create of vpc SSH Key (%s) access tags: %s", d.Id(), err)
 		}
 	}
 	return nil
@@ -238,12 +282,18 @@ func keyGet(d *schema.ResourceData, meta interface{}, id string) error {
 	d.Set(isKeyType, *key.Type)
 	d.Set(isKeyFingerprint, *key.Fingerprint)
 	d.Set(isKeyLength, *key.Length)
-	tags, err := flex.GetTagsUsingCRN(meta, *key.CRN)
+	tags, err := flex.GetGlobalTagsUsingCRN(meta, *key.CRN, "", isKeyUserTagType)
 	if err != nil {
 		log.Printf(
 			"Error on get of vpc SSH Key (%s) tags: %s", d.Id(), err)
 	}
 	d.Set(isKeyTags, tags)
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *key.CRN, "", isKeyAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of vpc SSH Key (%s) access tags: %s", d.Id(), err)
+	}
+	d.Set(isKeyAccessTags, accesstags)
 	controller, err := flex.GetBaseController(meta)
 	if err != nil {
 		return err
@@ -291,10 +341,25 @@ func keyUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasCha
 			return fmt.Errorf("[ERROR] Error getting SSH Key : %s\n%s", err, response)
 		}
 		oldList, newList := d.GetChange(isKeyTags)
-		err = flex.UpdateTagsUsingCRN(oldList, newList, meta, *key.CRN)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *key.CRN, "", isKeyUserTagType)
 		if err != nil {
 			log.Printf(
 				"Error on update of resource vpc SSH Key (%s) tags: %s", id, err)
+		}
+	}
+	if d.HasChange(isKeyAccessTags) {
+		options := &vpcv1.GetKeyOptions{
+			ID: &id,
+		}
+		key, response, err := sess.GetKey(options)
+		if err != nil {
+			return fmt.Errorf("Error getting SSH Key : %s\n%s", err, response)
+		}
+		oldList, newList := d.GetChange(isKeyAccessTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *key.CRN, "", isKeyAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on update of resource vpc SSH Key (%s) access tags: %s", id, err)
 		}
 	}
 	if hasChanged {
@@ -409,11 +474,11 @@ func parseKey(s string) (ssh.PublicKey, error) {
 
 	// Accepts formats of PublicKey:
 	// - <base64 key>
-	// - ssh-rsa <base64 key>
-	// - ssh-rsa <base64 key> <comment>
-	// if PublicKey provides other than just base64 key, then first part must be "ssh-rsa"
-	if subStrs := strings.Split(s, " "); len(subStrs) > 1 && subStrs[0] != "ssh-rsa" {
-		return nil, errors.New("not an RSA key")
+	// - ssh-rsa/ssh-ed25519 <base64 key>
+	// - ssh-rsa/ssh-ed25519 <base64 key> <comment>
+	// if PublicKey provides other than just base64 key, then first part must be "ssh-rsa" or "ssh-ed25519"
+	if subStrs := strings.Split(s, " "); len(subStrs) > 1 && subStrs[0] != "ssh-rsa" && subStrs[0] != "ssh-ed25519" {
+		return nil, errors.New("not an RSA key OR ED25519 key")
 	}
 
 	pk, _, _, _, e := ssh.ParseAuthorizedKey(keyBytes)

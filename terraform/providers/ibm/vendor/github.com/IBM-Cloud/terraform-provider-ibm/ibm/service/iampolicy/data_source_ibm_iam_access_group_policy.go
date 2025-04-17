@@ -8,6 +8,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -23,6 +24,8 @@ func DataSourceIBMIAMAccessGroupPolicy() *schema.Resource {
 				Description: "ID of access group",
 				Type:        schema.TypeString,
 				Required:    true,
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_iam_access_group_policy",
+					"access_group_id"),
 			},
 			"sort": {
 				Description: "Sort query for policies",
@@ -91,6 +94,11 @@ func DataSourceIBMIAMAccessGroupPolicy() *schema.Resource {
 										Computed:    true,
 										Description: "Service type of the policy definition",
 									},
+									"service_group_id": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Service group id of the policy definition",
+									},
 									"attributes": {
 										Type:        schema.TypeMap,
 										Computed:    true,
@@ -129,11 +137,61 @@ func DataSourceIBMIAMAccessGroupPolicy() *schema.Resource {
 							Computed:    true,
 							Description: "Description of the Policy",
 						},
+						"rule_conditions": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Description: "Rule conditions enforced by the policy",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"key": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "Key of the condition",
+									},
+									"operator": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "Operator of the condition",
+									},
+									"value": {
+										Type:        schema.TypeList,
+										Required:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "Value of the condition",
+									},
+								},
+							},
+						},
+						"rule_operator": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Operator that multiple rule conditions are evaluated over",
+						},
+						"pattern": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Pattern rule follows for time-based condition",
+						},
 					},
 				},
 			},
 		},
 	}
+}
+
+func DataSourceIBMIAMAccessGroupPolicyValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "access_group_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "iam",
+			CloudDataRange:             []string{"service:access_group", "resolved_to:id"},
+			Required:                   true})
+
+	iBMIAMAccessGroupPolicyValidator := validate.ResourceValidator{ResourceName: "ibm_iam_access_group_policy", Schema: validateSchema}
+	return &iBMIAMAccessGroupPolicyValidator
 }
 
 func dataSourceIBMIAMAccessGroupPolicyRead(d *schema.ResourceData, meta interface{}) error {
@@ -151,7 +209,7 @@ func dataSourceIBMIAMAccessGroupPolicyRead(d *schema.ResourceData, meta interfac
 
 	accountID := userDetails.UserAccount
 
-	listPoliciesOptions := &iampolicymanagementv1.ListPoliciesOptions{
+	listPoliciesOptions := &iampolicymanagementv1.ListV2PoliciesOptions{
 		AccountID:     core.StringPtr(accountID),
 		AccessGroupID: core.StringPtr(accessGroupId),
 		Type:          core.StringPtr("access"),
@@ -165,7 +223,7 @@ func dataSourceIBMIAMAccessGroupPolicyRead(d *schema.ResourceData, meta interfac
 		listPoliciesOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
 	}
 
-	policyList, resp, err := iamPolicyManagementClient.ListPolicies(listPoliciesOptions)
+	policyList, resp, err := iamPolicyManagementClient.ListV2Policies(listPoliciesOptions)
 
 	if err != nil || resp == nil {
 		return fmt.Errorf("Error listing access group policies: %s, %s", err, resp)
@@ -174,19 +232,28 @@ func dataSourceIBMIAMAccessGroupPolicyRead(d *schema.ResourceData, meta interfac
 	policies := policyList.Policies
 	accessGroupPolicies := make([]map[string]interface{}, 0, len(policies))
 	for _, policy := range policies {
-		roles := make([]string, len(policy.Roles))
-		for i, role := range policy.Roles {
-			roles[i] = *role.DisplayName
+		roles, err := flex.GetRoleNamesFromPolicyResponse(policy, d, meta)
+		if err != nil {
+			return err
 		}
-		resources := flex.FlattenPolicyResource(policy.Resources)
+		resources := flex.FlattenV2PolicyResource(*policy.Resource)
 		p := map[string]interface{}{
 			"id":            fmt.Sprintf("%s/%s", accessGroupId, *policy.ID),
 			"roles":         roles,
 			"resources":     resources,
-			"resource_tags": flex.FlattenPolicyResourceTags(policy.Resources),
+			"resource_tags": flex.FlattenV2PolicyResourceTags(*policy.Resource),
 		}
 		if policy.Description != nil {
 			p["description"] = policy.Description
+		}
+		if policy.Rule != nil {
+			p["rule_conditions"] = flex.FlattenRuleConditions(*policy.Rule.(*iampolicymanagementv1.V2PolicyRule))
+			if len(policy.Rule.(*iampolicymanagementv1.V2PolicyRule).Conditions) > 0 {
+				p["rule_operator"] = policy.Rule.(*iampolicymanagementv1.V2PolicyRule).Operator
+			}
+		}
+		if policy.Pattern != nil {
+			p["pattern"] = policy.Pattern
 		}
 		accessGroupPolicies = append(accessGroupPolicies, p)
 	}

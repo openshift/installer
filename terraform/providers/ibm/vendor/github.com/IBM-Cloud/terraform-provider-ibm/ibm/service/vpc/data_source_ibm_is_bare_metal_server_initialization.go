@@ -165,20 +165,17 @@ func dataSourceIBMISBareMetalServerInitializationRead(context context.Context, d
 				if keyFlag != "" {
 					block, err := pem.Decode(keybytes)
 					if block == nil {
-						return diag.FromErr(fmt.Errorf("[ERROR] Failed to load the private key from the given key contents. Instead of the key file path, please make sure the private key is pem format"))
+						return diag.FromErr(fmt.Errorf("[ERROR] Failed to load the private key from the given key contents. Instead of the key file path, please make sure the private key is pem format (%v)", err))
 					}
 					isEncrypted := false
-					switch block.Type {
-					case "RSA PRIVATE KEY":
-						isEncrypted = x509.IsEncryptedPEMBlock(block)
-					case "OPENSSH PRIVATE KEY":
+					if block.Type == "OPENSSH PRIVATE KEY" {
 						var err error
 						isEncrypted, err = isOpenSSHPrivKeyEncrypted(block.Bytes)
 						if err != nil {
 							return diag.FromErr(fmt.Errorf("[ERROR] Failed to check if the provided open ssh key is encrypted or not %s", err))
 						}
-					default:
-						return diag.FromErr(fmt.Errorf("[ERROR] PEM and OpenSSH private key formats with RSA key type are supported, can not support this key file type: %s", err))
+					} else {
+						isEncrypted = x509.IsEncryptedPEMBlock(block)
 					}
 					passphrase := ""
 					var privateKey interface{}

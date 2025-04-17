@@ -39,7 +39,8 @@ func NewServiceBrokerSwaggerspecOK() *ServiceBrokerSwaggerspecOK {
 	return &ServiceBrokerSwaggerspecOK{}
 }
 
-/* ServiceBrokerSwaggerspecOK describes a response with status code 200, with default header values.
+/*
+ServiceBrokerSwaggerspecOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -47,9 +48,39 @@ type ServiceBrokerSwaggerspecOK struct {
 	Payload models.Object
 }
 
+// IsSuccess returns true when this service broker swaggerspec o k response has a 2xx status code
+func (o *ServiceBrokerSwaggerspecOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service broker swaggerspec o k response has a 3xx status code
+func (o *ServiceBrokerSwaggerspecOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker swaggerspec o k response has a 4xx status code
+func (o *ServiceBrokerSwaggerspecOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker swaggerspec o k response has a 5xx status code
+func (o *ServiceBrokerSwaggerspecOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker swaggerspec o k response a status code equal to that given
+func (o *ServiceBrokerSwaggerspecOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceBrokerSwaggerspecOK) Error() string {
 	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceBrokerSwaggerspecOK) String() string {
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceBrokerSwaggerspecOK) GetPayload() models.Object {
 	return o.Payload
 }

@@ -212,3 +212,45 @@ func (f *IBMPIVolumeClient) UpdateVolumeAttach(id, volumeID string, body *models
 	}
 	return nil
 }
+
+// Performs action on volume
+func (f *IBMPIVolumeClient) VolumeAction(id string, body *models.VolumeAction) error {
+	params := p_cloud_volumes.NewPcloudCloudinstancesVolumesActionPostParams().
+		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
+		WithCloudInstanceID(f.cloudInstanceID).WithVolumeID(id).WithBody(body)
+	_, err := f.session.Power.PCloudVolumes.PcloudCloudinstancesVolumesActionPost(params, f.session.AuthInfo(f.cloudInstanceID))
+	if err != nil {
+		return fmt.Errorf("failed to perform action on volume %s with error %w", id, err)
+	}
+	return nil
+}
+
+// Get remote copy relationship of a volume
+func (f *IBMPIVolumeClient) GetVolumeRemoteCopyRelationships(id string) (*models.VolumeRemoteCopyRelationship, error) {
+	params := p_cloud_volumes.NewPcloudCloudinstancesVolumesRemoteCopyRelationshipGetParams().
+		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
+		WithCloudInstanceID(f.cloudInstanceID).WithVolumeID(id)
+	resp, err := f.session.Power.PCloudVolumes.PcloudCloudinstancesVolumesRemoteCopyRelationshipGet(params, f.session.AuthInfo(f.cloudInstanceID))
+	if err != nil {
+		return nil, fmt.Errorf(errors.GetVolumeRemoteCopyRelationshipsOperationFailed, id, f.cloudInstanceID, err)
+	}
+	if resp == nil || resp.Payload == nil {
+		return nil, fmt.Errorf("failed to Get remote copy relationships of a volume %s", id)
+	}
+	return resp.Payload, nil
+}
+
+// Get a list of flashcopy mappings of a given volume
+func (f *IBMPIVolumeClient) GetVolumeFlashCopyMappings(id string) (models.FlashCopyMappings, error) {
+	params := p_cloud_volumes.NewPcloudCloudinstancesVolumesFlashCopyMappingsGetParams().
+		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
+		WithCloudInstanceID(f.cloudInstanceID).WithVolumeID(id)
+	resp, err := f.session.Power.PCloudVolumes.PcloudCloudinstancesVolumesFlashCopyMappingsGet(params, f.session.AuthInfo(f.cloudInstanceID))
+	if err != nil {
+		return nil, fmt.Errorf(errors.GetVolumeFlashCopyMappingOperationFailed, id, f.cloudInstanceID, err)
+	}
+	if resp == nil || resp.Payload == nil {
+		return nil, fmt.Errorf("failed to Get flash copy mapping of a volume %s", id)
+	}
+	return resp.Payload, nil
+}

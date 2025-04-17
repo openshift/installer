@@ -11,6 +11,7 @@ import (
 	"github.com/IBM-Cloud/container-services-go-sdk/kubernetesserviceapiv1"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -28,6 +29,9 @@ func ResourceIBMContainerNlbDns() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "The name or ID of the cluster. To list the clusters that you have access to, use the `GET /v1/clusters` API or run `ibmcloud ks cluster ls`.",
+				ValidateFunc: validate.InvokeValidator(
+					"ibm_container_nlb_dns",
+					"cluster"),
 			},
 			"nlb_host": {
 				Type:     schema.TypeString,
@@ -71,6 +75,21 @@ func ResourceIBMContainerNlbDns() *schema.Resource {
 			},
 		},
 	}
+}
+
+func ResourceIBMContainerNlbDnsValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMContainerNlbDnsValidator := validate.ResourceValidator{ResourceName: "ibm_container_nlb_dns", Schema: validateSchema}
+	return &iBMContainerNlbDnsValidator
 }
 
 func resourceIbmContainerNlbDnsCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

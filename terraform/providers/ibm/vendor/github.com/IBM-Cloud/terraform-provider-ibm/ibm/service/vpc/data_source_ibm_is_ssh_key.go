@@ -5,6 +5,7 @@ package vpc
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
@@ -81,6 +82,14 @@ func DataSourceIBMISSSHKey() *schema.Resource {
 				Computed:    true,
 				Description: "The resource group name in which resource is provisioned",
 			},
+
+			isKeyAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access tags",
+			},
 		},
 	}
 }
@@ -141,6 +150,12 @@ func keyGetByName(d *schema.ResourceData, meta interface{}, name string) error {
 			if key.PublicKey != nil {
 				d.Set(isKeyPublicKey, *key.PublicKey)
 			}
+			accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *key.CRN, "", isKeyAccessTagType)
+			if err != nil {
+				log.Printf(
+					"Error on get of resource SSH Key (%s) access tags: %s", d.Id(), err)
+			}
+			d.Set(isKeyAccessTags, accesstags)
 			return nil
 		}
 	}

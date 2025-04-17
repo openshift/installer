@@ -24,7 +24,7 @@ type NetworkCreate struct {
 	// Network in CIDR notation (192.168.0.0/24)
 	Cidr string `json:"cidr,omitempty"`
 
-	// DNS Servers
+	// DNS Servers. If not specified, default is 127.0.0.1 for 'vlan' (private network) and 9.9.9.9 for 'pub-vlan' (public network)
 	DNSServers []string `json:"dnsServers"`
 
 	// Gateway IP Address

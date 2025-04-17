@@ -226,9 +226,6 @@ func dataSourceIBMIsBackupPoliciesRead(context context.Context, d *schema.Resour
 		}
 
 	}
-	if len(matchBackupPolicies) == 0 {
-		return diag.FromErr(fmt.Errorf("[ERROR] no BackupPolicies found"))
-	}
 
 	d.SetId(dataSourceIBMIsBackupPoliciesID(d))
 

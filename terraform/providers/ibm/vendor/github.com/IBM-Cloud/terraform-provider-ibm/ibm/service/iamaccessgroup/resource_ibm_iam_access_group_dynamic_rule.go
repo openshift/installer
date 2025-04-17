@@ -27,6 +27,8 @@ func ResourceIBMIAMDynamicRule() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Unique identifier of the access group",
+				ValidateFunc: validate.InvokeValidator("ibm_iam_access_group_dynamic_rule",
+					"access_group_id"),
 			},
 
 			"name": {
@@ -74,6 +76,20 @@ func ResourceIBMIAMDynamicRule() *schema.Resource {
 			},
 		},
 	}
+}
+func ResourceIBMIAMDynamicRuleValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "access_group_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "iam",
+			CloudDataRange:             []string{"service:access_group", "resolved_to:id"},
+			Optional:                   true})
+
+	iBMIAMDynamicRuleValidator := validate.ResourceValidator{ResourceName: "ibm_iam_access_group_dynamic_rule", Schema: validateSchema}
+	return &iBMIAMDynamicRuleValidator
 }
 
 func resourceIBMIAMDynamicRuleCreate(d *schema.ResourceData, meta interface{}) error {

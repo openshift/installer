@@ -18,7 +18,7 @@ import (
 
 func DataSourceIBMCdToolchainToolNexus() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: DataSourceIBMCdToolchainToolNexusRead,
+		ReadContext: dataSourceIBMCdToolchainToolNexusRead,
 
 		Schema: map[string]*schema.Schema{
 			"toolchain_id": &schema.Schema{
@@ -34,7 +34,7 @@ func DataSourceIBMCdToolchainToolNexus() *schema.Resource {
 			"resource_group_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Resource group where tool can be found.",
+				Description: "Resource group where the tool is located.",
 			},
 			"crn": &schema.Schema{
 				Type:        schema.TypeString,
@@ -60,12 +60,12 @@ func DataSourceIBMCdToolchainToolNexus() *schema.Resource {
 						"ui_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "URI representing the this resource through the UI.",
+							Description: "URI representing this resource through the UI.",
 						},
 						"api_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "URI representing the this resource through an API.",
+							Description: "URI representing this resource through an API.",
 						},
 					},
 				},
@@ -83,49 +83,49 @@ func DataSourceIBMCdToolchainToolNexus() *schema.Resource {
 			"parameters": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "Parameters to be used to create the tool.",
+				Description: "Unique key-value pairs representing parameters to be used to create the tool. A list of parameters for each tool integration can be found in the <a href=\"https://cloud.ibm.com/docs/ContinuousDelivery?topic=ContinuousDelivery-integrations\">Configuring tool integrations page</a>.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type a name for this tool integration, for example: my-nexus. This name displays on your toolchain.",
-						},
-						"dashboard_url": &schema.Schema{
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "Type the URL that you want to navigate to when you click the Nexus integration tile.",
+							Description: "The name for this tool integration.",
 						},
 						"type": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Choose the type of repository for your Nexus integration.",
+							Description: "The type of repository for the Nexus integration.",
 						},
 						"user_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type the User ID or email for your Nexus repository.",
+							Description: "The user id or email for authenticating to the Nexus repository.",
 						},
 						"token": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Sensitive:   true,
-							Description: "Type the password or authentication token for your Nexus repository.",
+							Description: "The password or token for authenticating to the Nexus repository. You can use a toolchain secret reference for this parameter. For more information, see [Protecting your sensitive data in Continuous Delivery](https://cloud.ibm.com/docs/ContinuousDelivery?topic=ContinuousDelivery-cd_data_security#cd_secure_credentials).",
 						},
 						"release_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type the URL for your Nexus release repository.",
+							Description: "The URL of the Nexus release repository.",
 						},
 						"mirror_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type the URL for your Nexus virtual repository, which is a repository that can see your private repositories and a cache of the public repositories.",
+							Description: "The URL of the Nexus virtual repository, which is a repository that can see your private repositories and is a cache of the public repositories.",
 						},
 						"snapshot_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Type the URL for your Nexus snapshot repository.",
+							Description: "The URL of the Nexus snapshot repository.",
+						},
+						"server_url": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL of the Nexus server.",
 						},
 					},
 				},
@@ -139,7 +139,7 @@ func DataSourceIBMCdToolchainToolNexus() *schema.Resource {
 	}
 }
 
-func DataSourceIBMCdToolchainToolNexusRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceIBMCdToolchainToolNexusRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -150,37 +150,37 @@ func DataSourceIBMCdToolchainToolNexusRead(context context.Context, d *schema.Re
 	getToolByIDOptions.SetToolchainID(d.Get("toolchain_id").(string))
 	getToolByIDOptions.SetToolID(d.Get("tool_id").(string))
 
-	getToolByIDResponse, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
+	toolchainTool, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
 	if err != nil {
 		log.Printf("[DEBUG] GetToolByIDWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetToolByIDWithContext failed %s\n%s", err, response))
 	}
 
-	if *getToolByIDResponse.ToolTypeID != "nexus" {
-		return diag.FromErr(fmt.Errorf("Retrieved tool is not the correct type: %s", *getToolByIDResponse.ToolTypeID))
+	if *toolchainTool.ToolTypeID != "nexus" {
+		return diag.FromErr(fmt.Errorf("Retrieved tool is not the correct type: %s", *toolchainTool.ToolTypeID))
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", *getToolByIDOptions.ToolchainID, *getToolByIDOptions.ToolID))
 
-	if err = d.Set("resource_group_id", getToolByIDResponse.ResourceGroupID); err != nil {
+	if err = d.Set("resource_group_id", toolchainTool.ResourceGroupID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
 	}
 
-	if err = d.Set("crn", getToolByIDResponse.CRN); err != nil {
+	if err = d.Set("crn", toolchainTool.CRN); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
 	}
 
-	if err = d.Set("toolchain_crn", getToolByIDResponse.ToolchainCRN); err != nil {
+	if err = d.Set("toolchain_crn", toolchainTool.ToolchainCRN); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting toolchain_crn: %s", err))
 	}
 
-	if err = d.Set("href", getToolByIDResponse.Href); err != nil {
+	if err = d.Set("href", toolchainTool.Href); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
 	}
 
 	referent := []map[string]interface{}{}
-	if getToolByIDResponse.Referent != nil {
-		modelMap, err := DataSourceIBMCdToolchainToolNexusToolReferentToMap(getToolByIDResponse.Referent)
+	if toolchainTool.Referent != nil {
+		modelMap, err := dataSourceIBMCdToolchainToolNexusToolModelReferentToMap(toolchainTool.Referent)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -190,31 +190,34 @@ func DataSourceIBMCdToolchainToolNexusRead(context context.Context, d *schema.Re
 		return diag.FromErr(fmt.Errorf("Error setting referent %s", err))
 	}
 
-	if err = d.Set("name", getToolByIDResponse.Name); err != nil {
+	if err = d.Set("name", toolchainTool.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
 
-	if err = d.Set("updated_at", flex.DateTimeToString(getToolByIDResponse.UpdatedAt)); err != nil {
+	if err = d.Set("updated_at", flex.DateTimeToString(toolchainTool.UpdatedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
 	}
 
 	parameters := []map[string]interface{}{}
-	if getToolByIDResponse.Parameters != nil {
-		modelMap := GetParametersFromRead(getToolByIDResponse.Parameters, DataSourceIBMCdToolchainToolNexus(), nil)
+	if toolchainTool.Parameters != nil {
+		remapFields := map[string]string{
+			"server_url": "dashboard_url",
+		}
+		modelMap := GetParametersFromRead(toolchainTool.Parameters, DataSourceIBMCdToolchainToolNexus(), remapFields)
 		parameters = append(parameters, modelMap)
 	}
 	if err = d.Set("parameters", parameters); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting parameters %s", err))
 	}
 
-	if err = d.Set("state", getToolByIDResponse.State); err != nil {
+	if err = d.Set("state", toolchainTool.State); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
 	}
 
 	return nil
 }
 
-func DataSourceIBMCdToolchainToolNexusToolReferentToMap(model *cdtoolchainv2.ToolReferent) (map[string]interface{}, error) {
+func dataSourceIBMCdToolchainToolNexusToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.UIHref != nil {
 		modelMap["ui_href"] = *model.UIHref

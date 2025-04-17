@@ -12,15 +12,15 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
-	"github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1"
+	"github.com/IBM/secrets-manager-go-sdk/v2/secretsmanagerv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func DataSourceIBMSecretsManagerSecrets() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceIBMSecretsManagerSecretsRead,
-
+		ReadContext:        dataSourceIBMSecretsManagerSecretsRead,
+		DeprecationMessage: "Data Source Removal: Data Source ibm_secrets_manager_secrets is deprecated and will be removed. Use ibm_sm_secrets for listing secrets",
 		Schema: map[string]*schema.Schema{
 			"instance_id": {
 				Type:        schema.TypeString,
@@ -392,9 +392,9 @@ func dataSourceListSecretsFlattenResources(result []secretsmanagerv1.SecretResou
 func dataSourceListSecretsResourcesToMap(resourcesItem secretsmanagerv1.SecretResource) (resourcesMap map[string]interface{}) {
 	resourcesMap = map[string]interface{}{}
 
-	if resourcesItem.Type != nil {
-		resourcesMap["type"] = *resourcesItem.Type
-	}
+	//if resourcesItem.Type != nil {
+	//	resourcesMap["type"] = *resourcesItem.Type
+	//}
 	if resourcesItem.ID != nil {
 		resourcesMap["secret_id"] = *resourcesItem.ID
 	}
@@ -441,11 +441,12 @@ func dataSourceListSecretsResourcesToMap(resourcesItem secretsmanagerv1.SecretRe
 	if resourcesItem.ExpirationDate != nil {
 		resourcesMap["expiration_date"] = (*resourcesItem.ExpirationDate).String()
 	}
-	if resourcesItem.Payload != nil {
-		resourcesMap["payload"] = *resourcesItem.Payload
-	}
+	// Commented out because the response to list secrets shouldn't include payload
+	//if resourcesItem.Payload != nil {
+	//	resourcesMap["payload"] = *resourcesItem.Payload
+	//}
 	if resourcesItem.SecretData != nil {
-		secretData := resourcesItem.SecretData.(map[string]interface{})
+		secretData := resourcesItem.SecretData
 		resourcesMap["secret_data"] = secretData
 		if *resourcesItem.SecretType == "username_password" {
 			resourcesMap["username"] = secretData["username"].(string)
@@ -476,20 +477,20 @@ func dataSourceListSecretsResourcesToMap(resourcesItem secretsmanagerv1.SecretRe
 	return resourcesMap
 }
 
-func dataSourceListSecretsResourcesVersionsToMap(versionsItem secretsmanagerv1.SecretVersion) (versionsMap map[string]interface{}) {
+func dataSourceListSecretsResourcesVersionsToMap(versionsItem map[string]interface{}) (versionsMap map[string]interface{}) {
 	versionsMap = map[string]interface{}{}
 
-	if versionsItem.ID != nil {
-		versionsMap["id"] = *versionsItem.ID
+	if id, ok := versionsItem["id"]; ok {
+		versionsMap["id"] = id
 	}
-	if versionsItem.CreationDate != nil {
-		versionsMap["creation_date"] = (*versionsItem.CreationDate).String()
+	if creation_date, ok := versionsItem["creation_date"]; ok {
+		versionsMap["creation_date"] = creation_date
 	}
-	if versionsItem.CreatedBy != nil {
-		versionsMap["created_by"] = *versionsItem.CreatedBy
+	if created_by, ok := versionsItem["created_by"]; ok {
+		versionsMap["created_by"] = created_by
 	}
-	if versionsItem.AutoRotated != nil {
-		versionsMap["auto_rotated"] = *versionsItem.AutoRotated
+	if rotated, ok := versionsItem["auto_rotated"]; ok {
+		versionsMap["auto_rotated"] = rotated
 	}
 
 	return versionsMap

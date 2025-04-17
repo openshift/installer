@@ -46,8 +46,8 @@ func ResourceIBMDNSReverseRecord() *schema.Resource {
 	}
 }
 
-//  Creates DNS Domain Reverse Record
-//  https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain/CreatePtrRecord
+// Creates DNS Domain Reverse Record
+// https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain/CreatePtrRecord
 func resourceIBMDNSREVERSERecordCreate(d *schema.ResourceData, meta interface{}) error {
 	sess := meta.(conns.ClientSession).SoftLayerSession()
 	service := services.GetDnsDomainService(sess.SetRetries(0))
@@ -68,8 +68,8 @@ func resourceIBMDNSREVERSERecordCreate(d *schema.ResourceData, meta interface{})
 	return resourceIBMDNSREVERSERecordRead(d, meta)
 }
 
-//  Reads DNS Domain Reverse Record from SL system
-//  https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/getObject
+// Reads DNS Domain Reverse Record from SL system
+// https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/getObject
 func resourceIBMDNSREVERSERecordRead(d *schema.ResourceData, meta interface{}) error {
 	sess := meta.(conns.ClientSession).SoftLayerSession()
 	service := services.GetDnsDomainResourceRecordService(sess)
@@ -85,8 +85,8 @@ func resourceIBMDNSREVERSERecordRead(d *schema.ResourceData, meta interface{}) e
 	return nil
 }
 
-//  Updates DNS Domain Reverse Record in SL system
-//  https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/editObject
+// Updates DNS Domain Reverse Record in SL system
+// https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/editObject
 func resourceIBMDNSREVERSERecordUpdate(d *schema.ResourceData, meta interface{}) error {
 	sess := meta.(conns.ClientSession).SoftLayerSession()
 	service := services.GetDnsDomainResourceRecordService(sess)
@@ -110,8 +110,8 @@ func resourceIBMDNSREVERSERecordUpdate(d *schema.ResourceData, meta interface{})
 	return nil
 }
 
-//  Deletes DNS Domain Reverse Record in SL system
-//  https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/deleteObject
+// Deletes DNS Domain Reverse Record in SL system
+// https://sldn.softlayer.com/reference/services/SoftLayer_Dns_Domain_ResourceRecord/deleteObject
 func resourceIBMDNSREVERSERecordDelete(d *schema.ResourceData, meta interface{}) error {
 	sess := meta.(conns.ClientSession).SoftLayerSession()
 	service := services.GetDnsDomainResourceRecordService(sess)

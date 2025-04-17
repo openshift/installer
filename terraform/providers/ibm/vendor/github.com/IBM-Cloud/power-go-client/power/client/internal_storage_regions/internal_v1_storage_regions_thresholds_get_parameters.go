@@ -52,10 +52,12 @@ func NewInternalV1StorageRegionsThresholdsGetParamsWithHTTPClient(client *http.C
 	}
 }
 
-/* InternalV1StorageRegionsThresholdsGetParams contains all the parameters to send to the API endpoint
-   for the internal v1 storage regions thresholds get operation.
+/*
+InternalV1StorageRegionsThresholdsGetParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the internal v1 storage regions thresholds get operation.
+
+	Typically these are written to a http.Request.
 */
 type InternalV1StorageRegionsThresholdsGetParams struct {
 

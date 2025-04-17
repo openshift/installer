@@ -12,11 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	kp "github.com/IBM/keyprotect-go-client"
-	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -63,7 +61,6 @@ func ResourceIBMKmskeyPolicies() *schema.Resource {
 			"rotation": {
 				Type:         schema.TypeList,
 				Optional:     true,
-				Computed:     true,
 				AtLeastOneOf: []string{"rotation", "dual_auth_delete"},
 				Description:  "Specifies the key rotation time interval in months, with a minimum of 1, and a maximum of 12",
 				Elem: &schema.Resource{
@@ -98,9 +95,15 @@ func ResourceIBMKmskeyPolicies() *schema.Resource {
 							Computed:    true,
 							Description: "Updates when the policy is replaced or modified. The date format follows RFC 3339.",
 						},
+						"enabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "If set to true, Key Protect enables a rotation policy on a single key.",
+							Default:     true,
+						},
 						"interval_month": {
 							Type:         schema.TypeInt,
-							Required:     true,
+							Optional:     true,
 							ValidateFunc: validate.ValidateAllowedRangeInt(1, 12),
 							Description:  "Specifies the key rotation time interval in months",
 						},
@@ -168,48 +171,28 @@ func ResourceIBMKmskeyPolicies() *schema.Resource {
 				Computed:    true,
 				Description: "The status of the resource",
 			},
+			flex.ResourceControllerURL: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The URL of the IBM Cloud dashboard that can be used to explore and view details about the resource",
+			},
 		},
 	}
 }
 func resourceIBMKmsKeyPolicyCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	kpAPI, err := meta.(conns.ClientSession).KeyManagementAPI()
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	instanceID := d.Get("instance_id").(string)
-	CrnInstanceID := strings.Split(instanceID, ":")
-	if len(CrnInstanceID) > 3 {
-		instanceID = CrnInstanceID[len(CrnInstanceID)-3]
-	}
-	endpointType := d.Get("endpoint_type").(string)
+	instanceID := getInstanceIDFromCRN(d.Get("instance_id").(string))
 	var id string
 	if v, ok := d.GetOk("key_id"); ok {
 		id = v.(string)
-		d.Set("key_id", id)
+		// d.Set("key_id", id)
 	}
 	if v, ok := d.GetOk("alias"); ok {
 		id = v.(string)
 	}
-	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
+	kpAPI, _, err := populateKPClient(d, meta, instanceID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	resourceInstanceGet := rc.GetResourceInstanceOptions{
-		ID: &instanceID,
-	}
-	instanceData, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
-	if err != nil || instanceData == nil {
-		return diag.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
-	}
-	extensions := instanceData.Extensions
-	URL, err := KmsEndpointURL(kpAPI, endpointType, extensions)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	kpAPI.URL = URL
-
-	kpAPI.Config.InstanceID = instanceID
-
 	key, err := kpAPI.GetKey(context, id)
 	if err != nil {
 		return diag.Errorf("Get Key failed with error while creating policies: %s", err)
@@ -223,35 +206,11 @@ func resourceIBMKmsKeyPolicyCreate(context context.Context, d *schema.ResourceDa
 }
 
 func resourceIBMKmsKeyPolicyRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	kpAPI, err := meta.(conns.ClientSession).KeyManagementAPI()
+	_, instanceID, keyid := getInstanceAndKeyDataFromCRN(d.Id())
+	kpAPI, _, err := populateKPClient(d, meta, instanceID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	crn := d.Id()
-	crnData := strings.Split(crn, ":")
-	endpointType := d.Get("endpoint_type").(string)
-	instanceID := crnData[len(crnData)-3]
-	keyid := crnData[len(crnData)-1]
-
-	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	resourceInstanceGet := rc.GetResourceInstanceOptions{
-		ID: &instanceID,
-	}
-	instanceData, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
-	if err != nil || instanceData == nil {
-		return diag.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
-	}
-	extensions := instanceData.Extensions
-	URL, err := KmsEndpointURL(kpAPI, endpointType, extensions)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	kpAPI.URL = URL
-
-	kpAPI.Config.InstanceID = instanceID
 	key, err := kpAPI.GetKey(context, keyid)
 	if err != nil {
 		kpError := err.(*kp.Error)
@@ -305,45 +264,16 @@ func resourceIBMKmsKeyPolicyUpdate(context context.Context, d *schema.ResourceDa
 
 	if d.HasChange("rotation") || d.HasChange("dual_auth_delete") {
 
-		kpAPI, err := meta.(conns.ClientSession).KeyManagementAPI()
+		instanceID := getInstanceIDFromCRN(d.Get("instance_id").(string))
+		kpAPI, _, err := populateKPClient(d, meta, instanceID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		_, _, key_id := getInstanceAndKeyDataFromCRN(d.Id())
 
-		instanceID := d.Get("instance_id").(string)
-		CrnInstanceID := strings.Split(instanceID, ":")
-		if len(CrnInstanceID) > 3 {
-			instanceID = CrnInstanceID[len(CrnInstanceID)-3]
-		}
-		endpointType := d.Get("endpoint_type").(string)
-
-		rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
+		err = resourceUpdatePolicies(context, d, kpAPI, meta, key_id)
 		if err != nil {
-			return diag.FromErr(err)
-		}
-		resourceInstanceGet := rc.GetResourceInstanceOptions{
-			ID: &instanceID,
-		}
-		instanceData, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
-		if err != nil || instanceData == nil {
-			return diag.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
-		}
-		extensions := instanceData.Extensions
-		URL, err := KmsEndpointURL(kpAPI, endpointType, extensions)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		kpAPI.URL = URL
-		kpAPI.Config.InstanceID = instanceID
-
-		crn := d.Id()
-		crnData := strings.Split(crn, ":")
-		key_id := crnData[len(crnData)-1]
-
-		err = resourceHandlePolicies(context, d, kpAPI, meta, key_id)
-		if err != nil {
-			resourceIBMKmsKeyRead(d, meta)
-			return diag.Errorf("Could not create policies: %s", err)
+			return diag.Errorf("Could not update policies: %s", err)
 		}
 	}
 	return resourceIBMKmsKeyPolicyRead(context, d, meta)
@@ -358,27 +288,92 @@ func resourceIBMKmsKeyPolicyDelete(context context.Context, d *schema.ResourceDa
 
 }
 
-func resourceHandlePolicies(context context.Context, d *schema.ResourceData, kpAPI *kp.Client, meta interface{}, key_id string) error {
-	var setRotation, setDualAuthDelete, dualAuthEnable bool
+func resourceUpdatePolicies(context context.Context, d *schema.ResourceData, kpAPI *kp.Client, meta interface{}, key_id string) error {
+	var dualAuthEnable, rotationEnable bool
 	var rotationInterval int
 
-	if policyInfo, ok := d.GetOk("rotation"); ok {
-		rpdList := policyInfo.([]interface{})
-		if len(rpdList) != 0 {
-			rotationInterval = rpdList[0].(map[string]interface{})["interval_month"].(int)
-			setRotation = true
+	policy := getPolicyFromSchema(d)
+
+	if policy.Rotation != nil {
+		rotationInterval = policy.Rotation.Interval
+		rotationEnable = *policy.Rotation.Enabled
+		/* While updating a rotation policy, if the user does not set interval_month, it will be zero and the policy update
+		will intend to only enable or disbale a policy. In case, the user inputs both values `enabled` and
+		`interval_month`, policy update will update both with respective functions called from the SDK. */
+		if rotationInterval == 0 {
+			if rotationEnable {
+				_, err := kpAPI.EnableRotationPolicy(context, key_id)
+				if err != nil {
+					return fmt.Errorf("[ERROR] Error while enabling key rotation policies: %s", err)
+				}
+			} else if !rotationEnable {
+				_, err := kpAPI.DisableRotationPolicy(context, key_id)
+				if err != nil {
+					return fmt.Errorf("[ERROR] Error while disabling key rotation policies: %s", err)
+				}
+			}
+		} else {
+			_, err := kpAPI.SetRotationPolicy(context, key_id, rotationInterval, rotationEnable)
+			if err != nil {
+				return fmt.Errorf("[ERROR] Error while disabling key rotation policies: %s", err)
+			}
 		}
 	}
-	if dadp, ok := d.GetOk("dual_auth_delete"); ok {
-		dadpList := dadp.([]interface{})
-		if len(dadpList) != 0 {
-			dualAuthEnable = dadpList[0].(map[string]interface{})["enabled"].(bool)
-			setDualAuthDelete = true
+	if policy.DualAuth != nil {
+		dualAuthEnable = *policy.DualAuth.Enabled
+		_, err := kpAPI.SetDualAuthDeletePolicy(context, key_id, dualAuthEnable)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error while setting dual_auth_delete policies: %s", err)
 		}
 	}
-	_, err := kpAPI.SetPolicies(context, key_id, setRotation, rotationInterval, setDualAuthDelete, dualAuthEnable)
+	return nil
+}
+
+func resourceHandlePolicies(context context.Context, d *schema.ResourceData, kpAPI *kp.Client, meta interface{}, key_id string) error {
+	var setRotation, setDualAuthDelete, dualAuthEnable, rotationEnable bool
+	var rotationInterval int
+
+	policy := getPolicyFromSchema(d)
+
+	if policy.Rotation != nil {
+		setRotation = true
+		rotationInterval = policy.Rotation.Interval
+		rotationEnable = *policy.Rotation.Enabled
+	}
+	if policy.DualAuth != nil {
+		setDualAuthDelete = true
+		dualAuthEnable = *policy.DualAuth.Enabled
+	}
+	_, err := kpAPI.SetPolicies(context, key_id, setRotation, rotationInterval, setDualAuthDelete, dualAuthEnable, rotationEnable)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error while creating policies: %s", err)
 	}
 	return nil
+}
+
+func getPolicyFromSchema(d *schema.ResourceData) kp.Policy {
+	var policy kp.Policy
+	if rotationPolicyInfo, ok := d.GetOk("rotation"); ok {
+		rotationPolicyList := rotationPolicyInfo.([]interface{})
+		if len(rotationPolicyList) != 0 {
+			rotationPolicyMap := rotationPolicyList[0].(map[string]interface{})
+			policy.Rotation = &kp.Rotation{
+				Interval: rotationPolicyMap["interval_month"].(int),
+			}
+			if _, ok := rotationPolicyMap["enabled"]; ok {
+				enabled := rotationPolicyMap["enabled"].(bool)
+				policy.Rotation.Enabled = &enabled
+			}
+		}
+	}
+	if dualAuthPolicyInfo, ok := d.GetOk("dual_auth_delete"); ok {
+		dualAuthPolicyList := dualAuthPolicyInfo.([]interface{})
+		if len(dualAuthPolicyList) != 0 {
+			enabled := dualAuthPolicyList[0].(map[string]interface{})["enabled"].(bool)
+			policy.DualAuth = &kp.DualAuth{
+				Enabled: &enabled,
+			}
+		}
+	}
+	return policy
 }

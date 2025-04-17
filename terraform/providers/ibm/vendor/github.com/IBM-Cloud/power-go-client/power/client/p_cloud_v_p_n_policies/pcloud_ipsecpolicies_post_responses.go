@@ -75,7 +75,8 @@ func NewPcloudIpsecpoliciesPostOK() *PcloudIpsecpoliciesPostOK {
 	return &PcloudIpsecpoliciesPostOK{}
 }
 
-/* PcloudIpsecpoliciesPostOK describes a response with status code 200, with default header values.
+/*
+PcloudIpsecpoliciesPostOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -83,9 +84,39 @@ type PcloudIpsecpoliciesPostOK struct {
 	Payload *models.IPSecPolicy
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies post o k response has a 2xx status code
+func (o *PcloudIpsecpoliciesPostOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies post o k response has a 3xx status code
+func (o *PcloudIpsecpoliciesPostOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies post o k response has a 4xx status code
+func (o *PcloudIpsecpoliciesPostOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies post o k response has a 5xx status code
+func (o *PcloudIpsecpoliciesPostOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies post o k response a status code equal to that given
+func (o *PcloudIpsecpoliciesPostOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *PcloudIpsecpoliciesPostOK) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesPostOK) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesPostOK) GetPayload() *models.IPSecPolicy {
 	return o.Payload
 }
@@ -107,7 +138,8 @@ func NewPcloudIpsecpoliciesPostBadRequest() *PcloudIpsecpoliciesPostBadRequest {
 	return &PcloudIpsecpoliciesPostBadRequest{}
 }
 
-/* PcloudIpsecpoliciesPostBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudIpsecpoliciesPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -115,9 +147,39 @@ type PcloudIpsecpoliciesPostBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies post bad request response has a 2xx status code
+func (o *PcloudIpsecpoliciesPostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies post bad request response has a 3xx status code
+func (o *PcloudIpsecpoliciesPostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies post bad request response has a 4xx status code
+func (o *PcloudIpsecpoliciesPostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies post bad request response has a 5xx status code
+func (o *PcloudIpsecpoliciesPostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies post bad request response a status code equal to that given
+func (o *PcloudIpsecpoliciesPostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *PcloudIpsecpoliciesPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesPostBadRequest) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesPostBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -139,7 +201,8 @@ func NewPcloudIpsecpoliciesPostUnauthorized() *PcloudIpsecpoliciesPostUnauthoriz
 	return &PcloudIpsecpoliciesPostUnauthorized{}
 }
 
-/* PcloudIpsecpoliciesPostUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudIpsecpoliciesPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -147,9 +210,39 @@ type PcloudIpsecpoliciesPostUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies post unauthorized response has a 2xx status code
+func (o *PcloudIpsecpoliciesPostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies post unauthorized response has a 3xx status code
+func (o *PcloudIpsecpoliciesPostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies post unauthorized response has a 4xx status code
+func (o *PcloudIpsecpoliciesPostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies post unauthorized response has a 5xx status code
+func (o *PcloudIpsecpoliciesPostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies post unauthorized response a status code equal to that given
+func (o *PcloudIpsecpoliciesPostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *PcloudIpsecpoliciesPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesPostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesPostUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -171,7 +264,8 @@ func NewPcloudIpsecpoliciesPostForbidden() *PcloudIpsecpoliciesPostForbidden {
 	return &PcloudIpsecpoliciesPostForbidden{}
 }
 
-/* PcloudIpsecpoliciesPostForbidden describes a response with status code 403, with default header values.
+/*
+PcloudIpsecpoliciesPostForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -179,9 +273,39 @@ type PcloudIpsecpoliciesPostForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies post forbidden response has a 2xx status code
+func (o *PcloudIpsecpoliciesPostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies post forbidden response has a 3xx status code
+func (o *PcloudIpsecpoliciesPostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies post forbidden response has a 4xx status code
+func (o *PcloudIpsecpoliciesPostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies post forbidden response has a 5xx status code
+func (o *PcloudIpsecpoliciesPostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies post forbidden response a status code equal to that given
+func (o *PcloudIpsecpoliciesPostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *PcloudIpsecpoliciesPostForbidden) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostForbidden  %+v", 403, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesPostForbidden) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostForbidden  %+v", 403, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesPostForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -203,7 +327,8 @@ func NewPcloudIpsecpoliciesPostConflict() *PcloudIpsecpoliciesPostConflict {
 	return &PcloudIpsecpoliciesPostConflict{}
 }
 
-/* PcloudIpsecpoliciesPostConflict describes a response with status code 409, with default header values.
+/*
+PcloudIpsecpoliciesPostConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -211,9 +336,39 @@ type PcloudIpsecpoliciesPostConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies post conflict response has a 2xx status code
+func (o *PcloudIpsecpoliciesPostConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies post conflict response has a 3xx status code
+func (o *PcloudIpsecpoliciesPostConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies post conflict response has a 4xx status code
+func (o *PcloudIpsecpoliciesPostConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies post conflict response has a 5xx status code
+func (o *PcloudIpsecpoliciesPostConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies post conflict response a status code equal to that given
+func (o *PcloudIpsecpoliciesPostConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *PcloudIpsecpoliciesPostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostConflict  %+v", 409, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesPostConflict) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostConflict  %+v", 409, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesPostConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -235,7 +390,8 @@ func NewPcloudIpsecpoliciesPostUnprocessableEntity() *PcloudIpsecpoliciesPostUnp
 	return &PcloudIpsecpoliciesPostUnprocessableEntity{}
 }
 
-/* PcloudIpsecpoliciesPostUnprocessableEntity describes a response with status code 422, with default header values.
+/*
+PcloudIpsecpoliciesPostUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -243,9 +399,39 @@ type PcloudIpsecpoliciesPostUnprocessableEntity struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies post unprocessable entity response has a 2xx status code
+func (o *PcloudIpsecpoliciesPostUnprocessableEntity) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies post unprocessable entity response has a 3xx status code
+func (o *PcloudIpsecpoliciesPostUnprocessableEntity) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies post unprocessable entity response has a 4xx status code
+func (o *PcloudIpsecpoliciesPostUnprocessableEntity) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies post unprocessable entity response has a 5xx status code
+func (o *PcloudIpsecpoliciesPostUnprocessableEntity) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies post unprocessable entity response a status code equal to that given
+func (o *PcloudIpsecpoliciesPostUnprocessableEntity) IsCode(code int) bool {
+	return code == 422
+}
+
 func (o *PcloudIpsecpoliciesPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostUnprocessableEntity  %+v", 422, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesPostUnprocessableEntity) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostUnprocessableEntity  %+v", 422, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesPostUnprocessableEntity) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -267,7 +453,8 @@ func NewPcloudIpsecpoliciesPostInternalServerError() *PcloudIpsecpoliciesPostInt
 	return &PcloudIpsecpoliciesPostInternalServerError{}
 }
 
-/* PcloudIpsecpoliciesPostInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudIpsecpoliciesPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -275,9 +462,39 @@ type PcloudIpsecpoliciesPostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies post internal server error response has a 2xx status code
+func (o *PcloudIpsecpoliciesPostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies post internal server error response has a 3xx status code
+func (o *PcloudIpsecpoliciesPostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies post internal server error response has a 4xx status code
+func (o *PcloudIpsecpoliciesPostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies post internal server error response has a 5xx status code
+func (o *PcloudIpsecpoliciesPostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud ipsecpolicies post internal server error response a status code equal to that given
+func (o *PcloudIpsecpoliciesPostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudIpsecpoliciesPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesPostInternalServerError) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesPostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

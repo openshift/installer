@@ -211,6 +211,11 @@ func DataSourceIBMISLBListener() *schema.Resource {
 				Computed:    true,
 				Description: "The provisioning status of this listener.",
 			},
+			isLBListenerIdleConnectionTimeout: {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "idle connection timeout of listener",
+			},
 		},
 	}
 }
@@ -246,6 +251,11 @@ func dataSourceIBMIsLbListenerRead(context context.Context, d *schema.ResourceDa
 	if loadBalancerListener.ConnectionLimit != nil {
 		if err = d.Set("connection_limit", flex.IntValue(loadBalancerListener.ConnectionLimit)); err != nil {
 			return diag.FromErr(fmt.Errorf("Error setting connection_limit: %s", err))
+		}
+	}
+	if loadBalancerListener.IdleConnectionTimeout != nil {
+		if err = d.Set(isLBListenerIdleConnectionTimeout, flex.IntValue(loadBalancerListener.IdleConnectionTimeout)); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting idle_connection_timeout: %s", err))
 		}
 	}
 	if err = d.Set("created_at", loadBalancerListener.CreatedAt.String()); err != nil {

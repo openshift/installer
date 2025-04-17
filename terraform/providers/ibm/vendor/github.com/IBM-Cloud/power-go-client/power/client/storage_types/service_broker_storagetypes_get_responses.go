@@ -45,7 +45,8 @@ func NewServiceBrokerStoragetypesGetOK() *ServiceBrokerStoragetypesGetOK {
 	return &ServiceBrokerStoragetypesGetOK{}
 }
 
-/* ServiceBrokerStoragetypesGetOK describes a response with status code 200, with default header values.
+/*
+ServiceBrokerStoragetypesGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -53,9 +54,39 @@ type ServiceBrokerStoragetypesGetOK struct {
 	Payload models.StorageTypes
 }
 
+// IsSuccess returns true when this service broker storagetypes get o k response has a 2xx status code
+func (o *ServiceBrokerStoragetypesGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service broker storagetypes get o k response has a 3xx status code
+func (o *ServiceBrokerStoragetypesGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker storagetypes get o k response has a 4xx status code
+func (o *ServiceBrokerStoragetypesGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker storagetypes get o k response has a 5xx status code
+func (o *ServiceBrokerStoragetypesGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker storagetypes get o k response a status code equal to that given
+func (o *ServiceBrokerStoragetypesGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceBrokerStoragetypesGetOK) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceBrokerStoragetypesGetOK) String() string {
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceBrokerStoragetypesGetOK) GetPayload() models.StorageTypes {
 	return o.Payload
 }
@@ -75,7 +106,8 @@ func NewServiceBrokerStoragetypesGetInternalServerError() *ServiceBrokerStoraget
 	return &ServiceBrokerStoragetypesGetInternalServerError{}
 }
 
-/* ServiceBrokerStoragetypesGetInternalServerError describes a response with status code 500, with default header values.
+/*
+ServiceBrokerStoragetypesGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -83,9 +115,39 @@ type ServiceBrokerStoragetypesGetInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker storagetypes get internal server error response has a 2xx status code
+func (o *ServiceBrokerStoragetypesGetInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker storagetypes get internal server error response has a 3xx status code
+func (o *ServiceBrokerStoragetypesGetInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker storagetypes get internal server error response has a 4xx status code
+func (o *ServiceBrokerStoragetypesGetInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker storagetypes get internal server error response has a 5xx status code
+func (o *ServiceBrokerStoragetypesGetInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this service broker storagetypes get internal server error response a status code equal to that given
+func (o *ServiceBrokerStoragetypesGetInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *ServiceBrokerStoragetypesGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *ServiceBrokerStoragetypesGetInternalServerError) String() string {
+	return fmt.Sprintf("[GET /broker/v1/storage-types][%d] serviceBrokerStoragetypesGetInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *ServiceBrokerStoragetypesGetInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

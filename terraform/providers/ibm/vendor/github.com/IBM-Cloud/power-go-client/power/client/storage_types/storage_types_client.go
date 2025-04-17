@@ -36,7 +36,7 @@ type ClientService interface {
 }
 
 /*
-  ServiceBrokerStoragetypesGet availables storage types in a region
+ServiceBrokerStoragetypesGet availables storage types in a region
 */
 func (a *Client) ServiceBrokerStoragetypesGet(params *ServiceBrokerStoragetypesGetParams, opts ...ClientOption) (*ServiceBrokerStoragetypesGetOK, error) {
 	// TODO: Validate the params before sending

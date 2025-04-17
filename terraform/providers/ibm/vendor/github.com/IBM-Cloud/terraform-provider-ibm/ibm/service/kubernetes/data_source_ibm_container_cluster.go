@@ -31,6 +31,9 @@ func DataSourceIBMContainerCluster() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"cluster_name_id", "name"},
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_container_cluster",
+					"name"),
 			},
 			"worker_count": {
 				Description: "Number of workers",
@@ -350,6 +353,20 @@ func DataSourceIBMContainerCluster() *schema.Resource {
 	}
 }
 
+func DataSourceIBMContainerClusterValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "name",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMContainerClusterValidator := validate.ResourceValidator{ResourceName: "ibm_container_cluster", Schema: validateSchema}
+	return &iBMContainerClusterValidator
+}
 func dataSourceIBMContainerClusterRead(d *schema.ResourceData, meta interface{}) error {
 	csClient, err := meta.(conns.ClientSession).ContainerAPI()
 	if err != nil {

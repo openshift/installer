@@ -112,9 +112,9 @@ func dataSourceIBMPIStorageTypesCapacityRead(ctx context.Context, d *schema.Reso
 	if stc.MaximumStorageAllocation != nil {
 		msa := stc.MaximumStorageAllocation
 		data := map[string]interface{}{
-			MaxAllocationSize: msa.MaxAllocationSize,
-			StoragePool:       msa.StoragePool,
-			StorageType:       msa.StorageType,
+			MaxAllocationSize: *msa.MaxAllocationSize,
+			StoragePool:       *msa.StoragePool,
+			StorageType:       *msa.StorageType,
 		}
 		d.Set(MaximumStorageAllocation, flex.Flatten(data))
 	}
@@ -124,21 +124,21 @@ func dataSourceIBMPIStorageTypesCapacityRead(ctx context.Context, d *schema.Reso
 		if st.MaximumStorageAllocation != nil {
 			msa := st.MaximumStorageAllocation
 			data := map[string]interface{}{
-				MaxAllocationSize: msa.MaxAllocationSize,
-				StoragePool:       msa.StoragePool,
-				StorageType:       msa.StorageType,
+				MaxAllocationSize: *msa.MaxAllocationSize,
+				StoragePool:       *msa.StoragePool,
+				StorageType:       *msa.StorageType,
 			}
 			stResult[MaximumStorageAllocation] = flex.Flatten(data)
 		}
-		spc := make([]map[string]string, 0, len(st.StoragePoolsCapacity))
+		spc := make([]map[string]interface{}, 0, len(st.StoragePoolsCapacity))
 		for _, sp := range st.StoragePoolsCapacity {
 			data := map[string]interface{}{
-				MaxAllocationSize: sp.MaxAllocationSize,
+				MaxAllocationSize: *sp.MaxAllocationSize,
 				PoolName:          sp.PoolName,
 				StorageType:       sp.StorageType,
 				TotalCapacity:     sp.TotalCapacity,
 			}
-			spc = append(spc, flex.Flatten(data))
+			spc = append(spc, data)
 		}
 		stResult[StoragePoolsCapacity] = spc
 		stResult[StorageType] = st.StorageType

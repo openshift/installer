@@ -52,10 +52,12 @@ func NewPcloudDhcpGetallParamsWithHTTPClient(client *http.Client) *PcloudDhcpGet
 	}
 }
 
-/* PcloudDhcpGetallParams contains all the parameters to send to the API endpoint
-   for the pcloud dhcp getall operation.
+/*
+PcloudDhcpGetallParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud dhcp getall operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudDhcpGetallParams struct {
 

@@ -53,10 +53,12 @@ func NewServiceBrokerAuthRegistrationParamsWithHTTPClient(client *http.Client) *
 	}
 }
 
-/* ServiceBrokerAuthRegistrationParams contains all the parameters to send to the API endpoint
-   for the service broker auth registration operation.
+/*
+ServiceBrokerAuthRegistrationParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the service broker auth registration operation.
+
+	Typically these are written to a http.Request.
 */
 type ServiceBrokerAuthRegistrationParams struct {
 

@@ -6,13 +6,11 @@ package kms
 import (
 	"context"
 	"log"
-	"strings"
 
 	//kp "github.com/IBM/keyprotect-go-client"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
-	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -48,19 +46,14 @@ func DataSourceIBMKMSkeyPolicies() *schema.Resource {
 			},
 			"policies": {
 				Type:        schema.TypeList,
-				Optional:    true,
 				Computed:    true,
 				Description: "Creates or updates one or more policies for the specified key",
-				MinItems:    1,
-				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"rotation": {
-							Type:         schema.TypeList,
-							Optional:     true,
-							Computed:     true,
-							AtLeastOneOf: []string{"policies.0.rotation", "policies.0.dual_auth_delete"},
-							Description:  "Specifies the key rotation time interval in months, with a minimum of 1, and a maximum of 12",
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "Specifies the key rotation with enabled and time interval in months, with a minimum of 1, and a maximum of 12",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"id": {
@@ -94,20 +87,22 @@ func DataSourceIBMKMSkeyPolicies() *schema.Resource {
 										Description: "Updates when the policy is replaced or modified. The date format follows RFC 3339.",
 									},
 									"interval_month": {
-										Type:         schema.TypeInt,
-										Required:     true,
-										ValidateFunc: validate.ValidateAllowedRangeInt(1, 12),
-										Description:  "Specifies the key rotation time interval in months",
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "Specifies the key rotation time interval in months",
+									},
+									"enabled": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Specifies whether the key rotation policy is enabled.",
 									},
 								},
 							},
 						},
 						"dual_auth_delete": {
-							Type:         schema.TypeList,
-							Optional:     true,
-							Computed:     true,
-							AtLeastOneOf: []string{"policies.0.rotation", "policies.0.dual_auth_delete"},
-							Description:  "Data associated with the dual authorization delete policy.",
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "Data associated with the dual authorization delete policy.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"id": {
@@ -142,8 +137,8 @@ func DataSourceIBMKMSkeyPolicies() *schema.Resource {
 									},
 									"enabled": {
 										Type:        schema.TypeBool,
-										Required:    true,
-										Description: "If set to true, Key Protect enables a dual authorization policy on a single key.",
+										Computed:    true,
+										Description: "Specifies the dual authorization policy on a single key.",
 									},
 								},
 							},
@@ -156,37 +151,12 @@ func DataSourceIBMKMSkeyPolicies() *schema.Resource {
 }
 
 func dataSourceIBMKMSKeyPoliciesRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	api, err := meta.(conns.ClientSession).KeyManagementAPI()
+	instanceID := getInstanceIDFromCRN(d.Get("instance_id").(string))
+	api, _, err := populateKPClient(d, meta, instanceID)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-
-	instanceID := d.Get("instance_id").(string)
-	CrnInstanceID := strings.Split(instanceID, ":")
-	if len(CrnInstanceID) > 3 {
-		instanceID = CrnInstanceID[len(CrnInstanceID)-3]
 	}
 	endpointType := d.Get("endpoint_type").(string)
-
-	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	resourceInstanceGet := rc.GetResourceInstanceOptions{
-		ID: &instanceID,
-	}
-
-	instanceData, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
-	if err != nil || instanceData == nil {
-		return diag.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
-	}
-	extensions := instanceData.Extensions
-	URL, err := KmsEndpointURL(api, endpointType, extensions)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	api.URL = URL
-	api.Config.InstanceID = instanceID
 	var id string
 	if v, ok := d.GetOk("key_id"); ok {
 		id = v.(string)

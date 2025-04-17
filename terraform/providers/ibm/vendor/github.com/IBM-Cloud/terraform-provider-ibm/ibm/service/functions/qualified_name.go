@@ -22,9 +22,11 @@ type QualifiedName struct {
 // QualifiedName Methods //
 ///////////////////////////
 
-//  GetFullQualifiedName() returns a full qualified name in proper string format
-//      from qualifiedName with proper syntax.
-//  Example: /namespace/[package/]entity
+// GetFullQualifiedName() returns a full qualified name in proper string format
+//
+//	from qualifiedName with proper syntax.
+//
+// Example: /namespace/[package/]entity
 func (qualifiedName *QualifiedName) GetFullQualifiedName() string {
 	output := []string{}
 
@@ -39,42 +41,47 @@ func (qualifiedName *QualifiedName) GetFullQualifiedName() string {
 	return strings.Join(output, "")
 }
 
-//  GetPackageName() returns the package name from qualifiedName without a
-//      leading '/'
+// GetPackageName() returns the package name from qualifiedName without a
+//
+//	leading '/'
 func (qualifiedName *QualifiedName) GetPackageName() string {
 	return qualifiedName.packageName
 }
 
-//  GetEntityName() returns the entity name ([package/]entity) of qualifiedName
-//      without a leading '/'
+// GetEntityName() returns the entity name ([package/]entity) of qualifiedName
+//
+//	without a leading '/'
 func (qualifiedName *QualifiedName) GetEntityName() string {
 	return qualifiedName.EntityName
 }
 
-//  GetEntity() returns the name of entity in qualifiedName without a leading '/'
+// GetEntity() returns the name of entity in qualifiedName without a leading '/'
 func (qualifiedName *QualifiedName) GetEntity() string {
 	return qualifiedName.entity
 }
 
-//  GetNamespace() returns the name of the namespace in qualifiedName without
-//      a leading '/'
+// GetNamespace() returns the name of the namespace in qualifiedName without
+//
+//	a leading '/'
 func (qualifiedName *QualifiedName) GetNamespace() string {
 	return qualifiedName.namespace
 }
 
-//  NewQualifiedName(name) initializes and constructs a (possibly fully qualified)
-//      QualifiedName struct.
+// NewQualifiedName(name) initializes and constructs a (possibly fully qualified)
 //
-//      NOTE: If the given qualified name is None, then this is a default qualified
-//          name and it is resolved from properties.
-//      NOTE: If the namespace is missing from the qualified name, the namespace
-//          is also resolved from the property file.
+//	QualifiedName struct.
 //
-//  Examples:
-//      foo => qualifiedName {namespace: "_", entityName: foo}
-//      pkg/foo => qualifiedName {namespace: "_", entityName: pkg/foo}
-//      /ns/foo => qualifiedName {namespace: ns, entityName: foo}
-//      /ns/pkg/foo => qualifiedName {namespace: ns, entityName: pkg/foo}
+//	NOTE: If the given qualified name is None, then this is a default qualified
+//	    name and it is resolved from properties.
+//	NOTE: If the namespace is missing from the qualified name, the namespace
+//	    is also resolved from the property file.
+//
+// Examples:
+//
+//	foo => qualifiedName {namespace: "_", entityName: foo}
+//	pkg/foo => qualifiedName {namespace: "_", entityName: pkg/foo}
+//	/ns/foo => qualifiedName {namespace: ns, entityName: foo}
+//	/ns/pkg/foo => qualifiedName {namespace: ns, entityName: pkg/foo}
 func NewQualifiedName(name string) (*QualifiedName, error) {
 	qualifiedName := new(QualifiedName)
 
@@ -122,15 +129,17 @@ func NewQualifiedName(name string) (*QualifiedName, error) {
 // Error Functions //
 /////////////////////
 
-//  qualifiedNameNotSpecifiedErr() returns generic whisk error for
-//      invalid qualified names detected while building a new
-//      QualifiedName struct.
+// qualifiedNameNotSpecifiedErr() returns generic whisk error for
+//
+//	invalid qualified names detected while building a new
+//	QualifiedName struct.
 func qualifiedNameNotSpecifiedErr() error {
 	return errors.New("[ERROR] valid qualified name must be specified")
 }
 
-//  NewQualifiedNameError(entityName, err) returns specific whisk error
-//      for invalid qualified names.
+// NewQualifiedNameError(entityName, err) returns specific whisk error
+//
+//	for invalid qualified names.
 func NewQualifiedNameError(entityName string, err error) error {
 	errorMsg := fmt.Sprintf("%s is not a alid qualified name %s", entityName, err)
 	return errors.New(errorMsg)
@@ -140,9 +149,10 @@ func NewQualifiedNameError(entityName string, err error) error {
 // Helper/Misc Functions //
 ///////////////////////////
 
-//  addLeadSlash(name) returns a (possibly fully qualified) resource name,
-//      inserting a leading '/' if it is of 3 parts (namespace/package/action)
-//      and lacking the leading '/'.
+// addLeadSlash(name) returns a (possibly fully qualified) resource name,
+//
+//	inserting a leading '/' if it is of 3 parts (namespace/package/action)
+//	and lacking the leading '/'.
 func addLeadSlash(name string) string {
 	parts := strings.Split(name, "/")
 	if len(parts) == 3 && parts[0] != "" {
@@ -151,22 +161,25 @@ func addLeadSlash(name string) string {
 	return name
 }
 
-//  getNamespaceFromProp() returns a namespace from Properties if one exists,
-//      else defaults to returning "_"
+// getNamespaceFromProp() returns a namespace from Properties if one exists,
+//
+//	else defaults to returning "_"
 func getNamespaceFromProp() string {
 	namespace := os.Getenv("FUNCTION_NAMESPACE")
 	return namespace
 }
 
-//  getQualifiedName(name, namespace) returns a fully qualified name given a
-//      (possibly fully qualified) resource name and optional namespace.
+// getQualifiedName(name, namespace) returns a fully qualified name given a
 //
-//  Examples:
-//      (foo, None) => /_/foo
-//      (pkg/foo, None) => /_/pkg/foo
-//      (foo, ns) => /ns/foo
-//      (/ns/pkg/foo, None) => /ns/pkg/foo
-//      (/ns/pkg/foo, otherns) => /ns/pkg/foo
+//	(possibly fully qualified) resource name and optional namespace.
+//
+// Examples:
+//
+//	(foo, None) => /_/foo
+//	(pkg/foo, None) => /_/pkg/foo
+//	(foo, ns) => /ns/foo
+//	(/ns/pkg/foo, None) => /ns/pkg/foo
+//	(/ns/pkg/foo, otherns) => /ns/pkg/foo
 func getQualifiedName(name string, namespace string) string {
 	name = addLeadSlash(name)
 	if strings.HasPrefix(name, "/") {

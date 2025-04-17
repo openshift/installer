@@ -7,13 +7,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/IBM/platform-services-go-sdk/atrackerv1"
 	"github.com/IBM/platform-services-go-sdk/atrackerv2"
 )
 
@@ -119,7 +117,7 @@ func DataSourceIBMAtrackerRoutes() *schema.Resource {
 }
 
 func dataSourceIBMAtrackerRoutesRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	atrackerClientv1, atrackerClientv2, err := getAtrackerClients(meta)
+	atrackerClientv2, err := getAtrackerClients(meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -130,60 +128,6 @@ func dataSourceIBMAtrackerRoutesRead(context context.Context, d *schema.Resource
 	if err != nil {
 		log.Printf("[DEBUG] ListRoutesWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("ListRoutesWithContext failed %s\n%s", err, response))
-	}
-	// TODO: Remove after deprecation
-	if len(routeList.Routes) == 0 {
-		var routeListV1 *atrackerv1.RouteList
-		listRoutesOptionsV1 := &atrackerv1.ListRoutesOptions{}
-		routeListV1, response, err := atrackerClientv1.ListRoutesWithContext(context, listRoutesOptionsV1)
-
-		if err != nil && response != nil && strings.Contains(response.String(), BLOCKED_V1_RESOURCE) {
-			return nil
-		} else if err != nil {
-			log.Printf("[DEBUG] ListRoutesWithContext failed %s\n%s", err, response)
-			return diag.FromErr(fmt.Errorf("ListRoutesWithContext failed %s\n%s", err, response))
-		}
-		var matchRoutesV1 []atrackerv1.Route
-		var name string
-		var suppliedFilter bool
-
-		if v, ok := d.GetOk("name"); ok {
-			name = v.(string)
-			suppliedFilter = true
-			for _, data := range routeListV1.Routes {
-				if *data.Name == name {
-					matchRoutesV1 = append(matchRoutesV1, data)
-				}
-			}
-		} else {
-			matchRoutesV1 = routeListV1.Routes
-		}
-
-		routeListV1.Routes = matchRoutesV1
-		if suppliedFilter {
-			if len(routeList.Routes) == 0 {
-				return diag.FromErr(fmt.Errorf("no Routes found with name %s", name))
-			}
-			d.SetId(name)
-		} else {
-			d.SetId(DataSourceIBMAtrackerRoutesID(d))
-		}
-		routesV1 := []map[string]interface{}{}
-
-		if routeListV1.Routes != nil {
-			routeListV1.Routes = matchRoutesV1
-			for _, modelItem := range routeListV1.Routes {
-				modelMap := dataSourceRouteListRoutesToMapV1(modelItem)
-				if err != nil {
-					return diag.FromErr(err)
-				}
-				routesV1 = append(routesV1, modelMap)
-			}
-		}
-		if err = d.Set("routes", routesV1); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting routes %s", err))
-		}
-		return nil
 	}
 
 	// Use the provided filter argument and construct a new list with only the requested resource(s)
@@ -283,49 +227,4 @@ func dataSourceIBMAtrackerRoutesRuleToMap(model *atrackerv2.Rule) (map[string]in
 		modelMap["locations"] = model.Locations
 	}
 	return modelMap, nil
-}
-
-func dataSourceRouteListRoutesToMapV1(routesItem atrackerv1.Route) (routesMap map[string]interface{}) {
-	routesMap = map[string]interface{}{}
-
-	if routesItem.ID != nil {
-		routesMap["id"] = routesItem.ID
-	}
-	if routesItem.Name != nil {
-		routesMap["name"] = routesItem.Name
-	}
-	if routesItem.CRN != nil {
-		routesMap["crn"] = routesItem.CRN
-	}
-	if routesItem.Version != nil {
-		routesMap["version"] = routesItem.Version
-	}
-	if routesItem.ReceiveGlobalEvents != nil {
-		routesMap["receive_global_events"] = routesItem.ReceiveGlobalEvents
-	}
-	if routesItem.Rules != nil {
-		rulesList := []map[string]interface{}{}
-		for _, rulesItem := range routesItem.Rules {
-			rulesList = append(rulesList, dataSourceRouteListRoutesRulesToMapV1(rulesItem))
-		}
-		routesMap["rules"] = rulesList
-	}
-	if routesItem.Created != nil {
-		routesMap["created"] = routesItem.Created.String()
-	}
-	if routesItem.Updated != nil {
-		routesMap["updated"] = routesItem.Updated.String()
-	}
-
-	return routesMap
-}
-
-func dataSourceRouteListRoutesRulesToMapV1(rulesItem atrackerv1.Rule) (rulesMap map[string]interface{}) {
-	rulesMap = map[string]interface{}{}
-
-	if rulesItem.TargetIds != nil {
-		rulesMap["target_ids"] = rulesItem.TargetIds
-	}
-
-	return rulesMap
 }

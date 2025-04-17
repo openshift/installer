@@ -27,6 +27,9 @@ func DataSourceIBMDatabaseConnection() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Deployment ID.",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_database_connection",
+					"deployment_id"),
 			},
 			"user_type": &schema.Schema{
 				Type:        schema.TypeString,
@@ -39,10 +42,17 @@ func DataSourceIBMDatabaseConnection() *schema.Resource {
 				Description: "User ID.",
 			},
 			"endpoint_type": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				Description:  "Endpoint Type. The endpoint must be enabled on the deployment before its connection information can be fetched.",
-				ValidateFunc: validate.ValidateAllowedStringValues([]string{"public", "private", "public-and-private"}),
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Endpoint Type. The endpoint must be enabled on the deployment before its connection information can be fetched.",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_database_connection",
+					"endpoint_type"),
+			},
+			"certificate_root": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional certificate root path to prepend certificate names. Certificates would be stored in this directory for use by other commands.",
 			},
 			"postgres": &schema.Schema{
 				Type:     schema.TypeList,
@@ -1604,6 +1614,29 @@ func DataSourceIBMDatabaseConnection() *schema.Resource {
 		},
 	}
 }
+func DataSourceIBMDatabaseConnectionValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "deployment_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cloud-database",
+			CloudDataRange:             []string{"resolved_to:id"}})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "endpoint_type",
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "public, private, public-and-private"})
+
+	iBMDatabaseConnectionsValidator := validate.ResourceValidator{ResourceName: "ibm_database_connection", Schema: validateSchema}
+	return &iBMDatabaseConnectionsValidator
+}
 
 func DataSourceIBMDatabaseConnectionRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cloudDatabasesClient, err := meta.(conns.ClientSession).CloudDatabasesV5()
@@ -1617,6 +1650,10 @@ func DataSourceIBMDatabaseConnectionRead(context context.Context, d *schema.Reso
 	getConnectionOptions.SetUserType(d.Get("user_type").(string))
 	getConnectionOptions.SetUserID(d.Get("user_id").(string))
 	getConnectionOptions.SetEndpointType(d.Get("endpoint_type").(string))
+
+	if _, ok := d.GetOk("certificate_root"); ok {
+		getConnectionOptions.SetCertificateRoot(d.Get("certificate_root").(string))
+	}
 
 	connection, response, err := cloudDatabasesClient.GetConnectionWithContext(context, getConnectionOptions)
 	if err != nil {

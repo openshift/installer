@@ -11,6 +11,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 
 	"github.com/IBM/platform-services-go-sdk/iamaccessgroupsv2"
@@ -32,6 +33,8 @@ func ResourceIBMIAMAccessGroupMembers() *schema.Resource {
 				Required:    true,
 				Description: "Unique identifier of the access group",
 				ForceNew:    true,
+				ValidateFunc: validate.InvokeValidator("ibm_iam_access_group_members",
+					"access_group_id"),
 			},
 
 			"ibm_ids": {
@@ -73,6 +76,20 @@ func ResourceIBMIAMAccessGroupMembers() *schema.Resource {
 	}
 }
 
+func ResourceIBMIAMAccessGroupMembersValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "access_group_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "iam",
+			CloudDataRange:             []string{"service:access_group", "resolved_to:id"},
+			Optional:                   true})
+
+	iBMIAMAccessGroupMembersValidator := validate.ResourceValidator{ResourceName: "ibm_iam_access_group_members", Schema: validateSchema}
+	return &iBMIAMAccessGroupMembersValidator
+}
 func resourceIBMIAMAccessGroupMembersCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	iamAccessGroupsClient, err := meta.(conns.ClientSession).IAMAccessGroupsV2()
 	if err != nil {

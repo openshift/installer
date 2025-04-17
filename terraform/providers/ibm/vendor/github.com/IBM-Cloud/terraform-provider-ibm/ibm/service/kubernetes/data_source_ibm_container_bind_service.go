@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -19,6 +20,9 @@ func DataSourceIBMContainerBindService() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Cluster name or ID",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_container_bind_service",
+					"cluster_name_id"),
 			},
 			"service_instance_id": {
 				Type:          schema.TypeString,
@@ -46,6 +50,20 @@ func DataSourceIBMContainerBindService() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMContainerBindServiceValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster_name_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMContainerBindServiceValidator := validate.ResourceValidator{ResourceName: "ibm_container_bind_service", Schema: validateSchema}
+	return &iBMContainerBindServiceValidator
 }
 
 func dataSourceIBMContainerBindServiceRead(d *schema.ResourceData, meta interface{}) error {

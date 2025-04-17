@@ -44,7 +44,7 @@ type ClientService interface {
 }
 
 /*
-  InternalV1StorageRegionsStoragePoolsGet gets the settings for given pool name
+InternalV1StorageRegionsStoragePoolsGet gets the settings for given pool name
 */
 func (a *Client) InternalV1StorageRegionsStoragePoolsGet(params *InternalV1StorageRegionsStoragePoolsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsStoragePoolsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -83,7 +83,7 @@ func (a *Client) InternalV1StorageRegionsStoragePoolsGet(params *InternalV1Stora
 }
 
 /*
-  InternalV1StorageRegionsStoragePoolsGetall gets the current storage pools settings for a region zone
+InternalV1StorageRegionsStoragePoolsGetall gets the current storage pools settings for a region zone
 */
 func (a *Client) InternalV1StorageRegionsStoragePoolsGetall(params *InternalV1StorageRegionsStoragePoolsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsStoragePoolsGetallOK, error) {
 	// TODO: Validate the params before sending
@@ -122,7 +122,7 @@ func (a *Client) InternalV1StorageRegionsStoragePoolsGetall(params *InternalV1St
 }
 
 /*
-  InternalV1StorageRegionsStoragePoolsPut updates the settings for given pool name
+InternalV1StorageRegionsStoragePoolsPut updates the settings for given pool name
 */
 func (a *Client) InternalV1StorageRegionsStoragePoolsPut(params *InternalV1StorageRegionsStoragePoolsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsStoragePoolsPutOK, error) {
 	// TODO: Validate the params before sending
@@ -161,7 +161,7 @@ func (a *Client) InternalV1StorageRegionsStoragePoolsPut(params *InternalV1Stora
 }
 
 /*
-  InternalV1StorageRegionsThresholdsGet gets the current default threshold settings for a region zone
+InternalV1StorageRegionsThresholdsGet gets the current default threshold settings for a region zone
 */
 func (a *Client) InternalV1StorageRegionsThresholdsGet(params *InternalV1StorageRegionsThresholdsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsThresholdsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -200,7 +200,7 @@ func (a *Client) InternalV1StorageRegionsThresholdsGet(params *InternalV1Storage
 }
 
 /*
-  InternalV1StorageRegionsThresholdsPut updates a default threshold setting for a region zone
+InternalV1StorageRegionsThresholdsPut updates a default threshold setting for a region zone
 */
 func (a *Client) InternalV1StorageRegionsThresholdsPut(params *InternalV1StorageRegionsThresholdsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1StorageRegionsThresholdsPutAccepted, error) {
 	// TODO: Validate the params before sending

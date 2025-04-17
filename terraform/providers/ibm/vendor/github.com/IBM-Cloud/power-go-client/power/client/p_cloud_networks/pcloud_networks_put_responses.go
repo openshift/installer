@@ -41,6 +41,12 @@ func (o *PcloudNetworksPutReader) ReadResponse(response runtime.ClientResponse, 
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudNetworksPutForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudNetworksPutNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -69,7 +75,8 @@ func NewPcloudNetworksPutOK() *PcloudNetworksPutOK {
 	return &PcloudNetworksPutOK{}
 }
 
-/* PcloudNetworksPutOK describes a response with status code 200, with default header values.
+/*
+PcloudNetworksPutOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -77,9 +84,39 @@ type PcloudNetworksPutOK struct {
 	Payload *models.Network
 }
 
+// IsSuccess returns true when this pcloud networks put o k response has a 2xx status code
+func (o *PcloudNetworksPutOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud networks put o k response has a 3xx status code
+func (o *PcloudNetworksPutOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud networks put o k response has a 4xx status code
+func (o *PcloudNetworksPutOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud networks put o k response has a 5xx status code
+func (o *PcloudNetworksPutOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud networks put o k response a status code equal to that given
+func (o *PcloudNetworksPutOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *PcloudNetworksPutOK) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudNetworksPutOK) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudNetworksPutOK) GetPayload() *models.Network {
 	return o.Payload
 }
@@ -101,7 +138,8 @@ func NewPcloudNetworksPutBadRequest() *PcloudNetworksPutBadRequest {
 	return &PcloudNetworksPutBadRequest{}
 }
 
-/* PcloudNetworksPutBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudNetworksPutBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,9 +147,39 @@ type PcloudNetworksPutBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud networks put bad request response has a 2xx status code
+func (o *PcloudNetworksPutBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud networks put bad request response has a 3xx status code
+func (o *PcloudNetworksPutBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud networks put bad request response has a 4xx status code
+func (o *PcloudNetworksPutBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud networks put bad request response has a 5xx status code
+func (o *PcloudNetworksPutBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud networks put bad request response a status code equal to that given
+func (o *PcloudNetworksPutBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *PcloudNetworksPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudNetworksPutBadRequest) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudNetworksPutBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -133,7 +201,8 @@ func NewPcloudNetworksPutUnauthorized() *PcloudNetworksPutUnauthorized {
 	return &PcloudNetworksPutUnauthorized{}
 }
 
-/* PcloudNetworksPutUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudNetworksPutUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -141,9 +210,39 @@ type PcloudNetworksPutUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud networks put unauthorized response has a 2xx status code
+func (o *PcloudNetworksPutUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud networks put unauthorized response has a 3xx status code
+func (o *PcloudNetworksPutUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud networks put unauthorized response has a 4xx status code
+func (o *PcloudNetworksPutUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud networks put unauthorized response has a 5xx status code
+func (o *PcloudNetworksPutUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud networks put unauthorized response a status code equal to that given
+func (o *PcloudNetworksPutUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *PcloudNetworksPutUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudNetworksPutUnauthorized) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudNetworksPutUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -160,12 +259,76 @@ func (o *PcloudNetworksPutUnauthorized) readResponse(response runtime.ClientResp
 	return nil
 }
 
+// NewPcloudNetworksPutForbidden creates a PcloudNetworksPutForbidden with default headers values
+func NewPcloudNetworksPutForbidden() *PcloudNetworksPutForbidden {
+	return &PcloudNetworksPutForbidden{}
+}
+
+/*
+PcloudNetworksPutForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudNetworksPutForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud networks put forbidden response has a 2xx status code
+func (o *PcloudNetworksPutForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud networks put forbidden response has a 3xx status code
+func (o *PcloudNetworksPutForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud networks put forbidden response has a 4xx status code
+func (o *PcloudNetworksPutForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud networks put forbidden response has a 5xx status code
+func (o *PcloudNetworksPutForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud networks put forbidden response a status code equal to that given
+func (o *PcloudNetworksPutForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+func (o *PcloudNetworksPutForbidden) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudNetworksPutForbidden) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudNetworksPutForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudNetworksPutForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudNetworksPutNotFound creates a PcloudNetworksPutNotFound with default headers values
 func NewPcloudNetworksPutNotFound() *PcloudNetworksPutNotFound {
 	return &PcloudNetworksPutNotFound{}
 }
 
-/* PcloudNetworksPutNotFound describes a response with status code 404, with default header values.
+/*
+PcloudNetworksPutNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -173,9 +336,39 @@ type PcloudNetworksPutNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud networks put not found response has a 2xx status code
+func (o *PcloudNetworksPutNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud networks put not found response has a 3xx status code
+func (o *PcloudNetworksPutNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud networks put not found response has a 4xx status code
+func (o *PcloudNetworksPutNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud networks put not found response has a 5xx status code
+func (o *PcloudNetworksPutNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud networks put not found response a status code equal to that given
+func (o *PcloudNetworksPutNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *PcloudNetworksPutNotFound) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudNetworksPutNotFound) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudNetworksPutNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -197,7 +390,8 @@ func NewPcloudNetworksPutUnprocessableEntity() *PcloudNetworksPutUnprocessableEn
 	return &PcloudNetworksPutUnprocessableEntity{}
 }
 
-/* PcloudNetworksPutUnprocessableEntity describes a response with status code 422, with default header values.
+/*
+PcloudNetworksPutUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -205,9 +399,39 @@ type PcloudNetworksPutUnprocessableEntity struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud networks put unprocessable entity response has a 2xx status code
+func (o *PcloudNetworksPutUnprocessableEntity) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud networks put unprocessable entity response has a 3xx status code
+func (o *PcloudNetworksPutUnprocessableEntity) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud networks put unprocessable entity response has a 4xx status code
+func (o *PcloudNetworksPutUnprocessableEntity) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud networks put unprocessable entity response has a 5xx status code
+func (o *PcloudNetworksPutUnprocessableEntity) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud networks put unprocessable entity response a status code equal to that given
+func (o *PcloudNetworksPutUnprocessableEntity) IsCode(code int) bool {
+	return code == 422
+}
+
 func (o *PcloudNetworksPutUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutUnprocessableEntity  %+v", 422, o.Payload)
 }
+
+func (o *PcloudNetworksPutUnprocessableEntity) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutUnprocessableEntity  %+v", 422, o.Payload)
+}
+
 func (o *PcloudNetworksPutUnprocessableEntity) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -229,7 +453,8 @@ func NewPcloudNetworksPutInternalServerError() *PcloudNetworksPutInternalServerE
 	return &PcloudNetworksPutInternalServerError{}
 }
 
-/* PcloudNetworksPutInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudNetworksPutInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -237,9 +462,39 @@ type PcloudNetworksPutInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud networks put internal server error response has a 2xx status code
+func (o *PcloudNetworksPutInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud networks put internal server error response has a 3xx status code
+func (o *PcloudNetworksPutInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud networks put internal server error response has a 4xx status code
+func (o *PcloudNetworksPutInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud networks put internal server error response has a 5xx status code
+func (o *PcloudNetworksPutInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud networks put internal server error response a status code equal to that given
+func (o *PcloudNetworksPutInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudNetworksPutInternalServerError) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudNetworksPutInternalServerError) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}][%d] pcloudNetworksPutInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudNetworksPutInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

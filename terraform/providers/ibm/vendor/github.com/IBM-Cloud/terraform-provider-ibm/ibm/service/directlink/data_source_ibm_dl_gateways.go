@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2017, 2021 All Rights Reserved.
+// Copyright IBM Corp. 2017, 2021, 2023 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package directlink
@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	dlGateways   = "gateways"
-	dlGatewaysId = "id"
+	dlGateways         = "gateways"
+	dlGatewaysId       = "id"
+	dlSpecificPrefixes = "specific_prefixes"
 )
 
 func DataSourceIBMDLGateways() *schema.Resource {
@@ -30,6 +31,61 @@ func DataSourceIBMDLGateways() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Id of the data source gateways",
+						},
+						dlAsPrepends: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "List of AS Prepend configuration information",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									dlCreatedAt: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The date and time AS Prepend was created",
+									},
+									ID: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The date and time AS Prepend was created",
+									},
+									dlLength: {
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "Number of times the ASN to appended to the AS Path",
+									},
+									dlPolicy: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Route type this AS Prepend applies to",
+									},
+									dlPrefix: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Comma separated list of prefixes this AS Prepend applies to. Maximum of 10 prefixes. If not specified, this AS Prepend applies to all prefixes.",
+									},
+									dlSpecificPrefixes: {
+										Type:        schema.TypeList,
+										Description: "Array of prefixes this AS Prepend applies to",
+										Computed:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+									},
+									dlUpdatedAt: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The date and time AS Prepend was updated",
+									},
+								},
+							},
+						},
+						dlDefault_export_route_filter: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The default directional route filter action that applies to routes that do not match any directional route filters",
+						},
+						dlDefault_import_route_filter: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The default directional route filter action that applies to routes that do not match any directional route filters",
 						},
 						dlAuthenticationKey: {
 							Type:        schema.TypeString,
@@ -86,6 +142,12 @@ func DataSourceIBMDLGateways() *schema.Resource {
 							Computed:    true,
 							Description: "Gateway BGP status",
 						},
+						dlBgpStatusUpdatedAt: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Optional:    true,
+							Description: "Date and time BGP status was updated",
+						},
 						dlCompletionNoticeRejectReason: {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -120,6 +182,12 @@ func DataSourceIBMDLGateways() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Gateway link status",
+						},
+						dlLinkStatusUpdatedAt: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Optional:    true,
+							Description: "Date and time Link status was updated",
 						},
 						dlLocationDisplayName: {
 							Type:        schema.TypeString,
@@ -317,6 +385,9 @@ func dataSourceIBMDLGatewaysRead(d *schema.ResourceData, meta interface{}) error
 		if instance.BgpStatus != nil {
 			gateway[dlBgpStatus] = *instance.BgpStatus
 		}
+		if instance.BgpStatusUpdatedAt != nil {
+			gateway[dlBgpStatusUpdatedAt] = instance.BgpStatusUpdatedAt.String()
+		}
 		if instance.LocationName != nil {
 			gateway[dlLocationName] = *instance.LocationName
 		}
@@ -335,12 +406,21 @@ func dataSourceIBMDLGatewaysRead(d *schema.ResourceData, meta interface{}) error
 		if instance.LinkStatus != nil {
 			gateway[dlLinkStatus] = *instance.LinkStatus
 		}
+		if instance.LinkStatusUpdatedAt != nil {
+			gateway[dlLinkStatusUpdatedAt] = instance.LinkStatusUpdatedAt.String()
+		}
 		if instance.CreatedAt != nil {
 			gateway[dlCreatedAt] = instance.CreatedAt.String()
 		}
 		if instance.ResourceGroup != nil {
 			rg := instance.ResourceGroup
 			gateway[dlResourceGroup] = *rg.ID
+		}
+		if instance.DefaultExportRouteFilter != nil {
+			gateway[dlDefault_export_route_filter] = *instance.DefaultExportRouteFilter
+		}
+		if instance.DefaultImportRouteFilter != nil {
+			gateway[dlDefault_import_route_filter] = *instance.DefaultImportRouteFilter
 		}
 
 		//Show the BFD Config parameters if set
@@ -361,6 +441,24 @@ func dataSourceIBMDLGatewaysRead(d *schema.ResourceData, meta interface{}) error
 				gateway[dlBfdStatusUpdatedAt] = instance.BfdConfig.BfdStatusUpdatedAt.String()
 			}
 		}
+
+		asPrependList := make([]map[string]interface{}, 0)
+		if len(instance.AsPrepends) > 0 {
+			for _, asPrepend := range instance.AsPrepends {
+				asPrependItem := map[string]interface{}{}
+				asPrependItem[dlResourceId] = asPrepend.ID
+				asPrependItem[dlLength] = asPrepend.Length
+				asPrependItem[dlPrefix] = asPrepend.Prefix
+				asPrependItem[dlSpecificPrefixes] = asPrepend.SpecificPrefixes
+				asPrependItem[dlPolicy] = asPrepend.Policy
+				asPrependItem[dlCreatedAt] = asPrepend.CreatedAt.String()
+				asPrependItem[dlUpdatedAt] = asPrepend.UpdatedAt.String()
+
+				asPrependList = append(asPrependList, asPrependItem)
+			}
+
+		}
+		gateway[dlAsPrepends] = asPrependList
 
 		dtype := *instance.Type
 		if dtype == "dedicated" {

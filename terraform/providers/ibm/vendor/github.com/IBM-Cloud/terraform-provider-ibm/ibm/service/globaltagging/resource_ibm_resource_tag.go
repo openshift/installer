@@ -7,14 +7,12 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/IBM/platform-services-go-sdk/globaltaggingv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
@@ -27,7 +25,6 @@ const (
 	tagType      = "tag_type"
 	acccountID   = "acccount_id"
 	service      = "service"
-	crnRegex     = "^crn:v1(:[a-zA-Z0-9 \\-\\._~\\*\\+,;=!$&'\\(\\)\\/\\?#\\[\\]@]*){8}$|^[0-9]+$"
 )
 
 func ResourceIBMResourceTag() *schema.Resource {
@@ -171,15 +168,10 @@ func resourceIBMResourceTagCreate(d *schema.ResourceData, meta interface{}) erro
 		}
 	}
 
-	crn, err := regexp.Compile(crnRegex)
-	if err != nil {
-		return err
-	}
-
-	if crn.MatchString(resourceID) {
+	if strings.HasPrefix(resourceID, "crn:") {
 		d.SetId(resourceID)
 	} else {
-		d.SetId(fmt.Sprintf("%s/%s", resourceID, resourceType))
+		d.SetId(fmt.Sprintf("%s/%s", resourceID, rType))
 	}
 
 	return resourceIBMResourceTagRead(d, meta)
@@ -194,12 +186,7 @@ func resourceIBMResourceTagRead(d *schema.ResourceData, meta interface{}) error 
 	}
 	acctID := userDetails.UserAccount
 
-	crn, err := regexp.Compile(crnRegex)
-	if err != nil {
-		return err
-	}
-
-	if crn.MatchString(d.Id()) {
+	if strings.HasPrefix(d.Id(), "crn:") {
 		rID = d.Id()
 	} else {
 		parts, err := flex.VmIdParts(d.Id())
@@ -221,12 +208,8 @@ func resourceIBMResourceTagRead(d *schema.ResourceData, meta interface{}) error 
 		}
 	}
 
-	tagList, err := flex.GetGlobalTagsUsingCRN(meta, rID, resourceType, tType)
+	tagList, err := flex.GetGlobalTagsUsingSearchAPI(meta, rID, rType, tType)
 	if err != nil {
-		if apierr, ok := err.(bmxerror.RequestFailure); ok && apierr.StatusCode() == 404 {
-			d.SetId("")
-			return nil
-		}
 		return fmt.Errorf("[ERROR] Error getting resource tags for: %s with error : %s", rID, err)
 	}
 
@@ -240,12 +223,7 @@ func resourceIBMResourceTagRead(d *schema.ResourceData, meta interface{}) error 
 func resourceIBMResourceTagUpdate(d *schema.ResourceData, meta interface{}) error {
 	var rID, rType, tType string
 
-	crn, err := regexp.Compile(crnRegex)
-	if err != nil {
-		return err
-	}
-
-	if crn.MatchString(d.Id()) {
+	if strings.HasPrefix(d.Id(), "crn:") {
 		rID = d.Id()
 	} else {
 		parts, err := flex.VmIdParts(d.Id())
@@ -274,12 +252,7 @@ func resourceIBMResourceTagUpdate(d *schema.ResourceData, meta interface{}) erro
 func resourceIBMResourceTagDelete(d *schema.ResourceData, meta interface{}) error {
 	var rID, rType string
 
-	crn, err := regexp.Compile(crnRegex)
-	if err != nil {
-		return err
-	}
-
-	if crn.MatchString(d.Id()) {
+	if strings.HasPrefix(d.Id(), "crn:") {
 		rID = d.Id()
 	} else {
 		parts, err := flex.VmIdParts(d.Id())

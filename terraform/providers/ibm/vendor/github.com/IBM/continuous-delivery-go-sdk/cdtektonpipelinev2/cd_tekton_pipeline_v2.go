@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2022.
+ * (C) Copyright IBM Corp. 2023.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.50.0-af9e48c4-20220523-163800
+ * IBM OpenAPI SDK Code Generator Version: 3.68.2-ac7def68-20230310-195410
  */
 
 // Package cdtektonpipelinev2 : Operations and models for the CdTektonPipelineV2 service
@@ -27,7 +27,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
@@ -47,7 +46,7 @@ type CdTektonPipelineV2 struct {
 }
 
 // DefaultServiceURL is the default URL to make service requests to.
-const DefaultServiceURL = "https://api.us-south.devops.cloud.ibm.com/v2"
+const DefaultServiceURL = "https://api.us-south.devops.cloud.ibm.com/pipeline/v2"
 
 // DefaultServiceName is the default key used to find external configuration information.
 const DefaultServiceName = "cd_tekton_pipeline"
@@ -117,15 +116,15 @@ func NewCdTektonPipelineV2(options *CdTektonPipelineV2Options) (service *CdTekto
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
 	var endpoints = map[string]string{
-		"us-south": "https://api.us-south.devops.cloud.ibm.com/v2", // The host URL for Tekton Pipeline Service in the us-south region.
-		"us-east": "https://api.us-east.devops.cloud.ibm.com/v2", // The host URL for Tekton Pipeline Service in the us-east region.
-		"eu-de": "https://api.eu-de.devops.cloud.ibm.com/v2", // The host URL for Tekton Pipeline Service in the eu-de region.
-		"eu-gb": "https://api.eu-gb.devops.cloud.ibm.com/v2", // The host URL for Tekton Pipeline Service in the eu-gb region.
-		"jp-osa": "https://api.jp-osa.devops.cloud.ibm.com/v2", // The host URL for Tekton Pipeline Service in the jp-osa region.
-		"jp-tok": "https://api.jp-tok.devops.cloud.ibm.com/v2", // The host URL for Tekton Pipeline Service in the jp-tok region.
-		"au-syd": "https://api.au-syd.devops.cloud.ibm.com/v2", // The host URL for Tekton Pipeline Service in the au-syd region.
-		"ca-tor": "https://api.ca-tor.devops.cloud.ibm.com/v2", // The host URL for Tekton Pipeline Service in the ca-tor region.
-		"br-sao": "https://api.br-sao.devops.cloud.ibm.com/v2", // The host URL for Tekton Pipeline Service in the br-sao region.
+		"us-south": "https://api.us-south.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the us-south region.
+		"us-east": "https://api.us-east.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the us-east region.
+		"eu-de": "https://api.eu-de.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the eu-de region.
+		"eu-gb": "https://api.eu-gb.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the eu-gb region.
+		"jp-osa": "https://api.jp-osa.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the jp-osa region.
+		"jp-tok": "https://api.jp-tok.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the jp-tok region.
+		"au-syd": "https://api.au-syd.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the au-syd region.
+		"ca-tor": "https://api.ca-tor.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the ca-tor region.
+		"br-sao": "https://api.br-sao.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the br-sao region.
 	}
 
 	if url, ok := endpoints[region]; ok {
@@ -180,16 +179,19 @@ func (cdTektonPipeline *CdTektonPipelineV2) DisableRetries() {
 	cdTektonPipeline.Service.DisableRetries()
 }
 
-// CreateTektonPipeline : Create tekton pipeline
-// This request creates a tekton pipeline for a tekton pipeline toolchain integration, user has to use the toolchain
-// endpoint to create the tekton pipeline toolchain integration first and then use the generated UUID to create the
-// tekton pipeline with or without a specified worker.
+// CreateTektonPipeline : Create Tekton pipeline
+// This request creates a Tekton pipeline. Requires a pipeline tool already created in the toolchain using the toolchain
+// API https://cloud.ibm.com/apidocs/toolchain#create-tool, and use the tool ID to create the Tekton pipeline.
 func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipeline(createTektonPipelineOptions *CreateTektonPipelineOptions) (result *TektonPipeline, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.CreateTektonPipelineWithContext(context.Background(), createTektonPipelineOptions)
 }
 
 // CreateTektonPipelineWithContext is an alternate form of the CreateTektonPipeline method which supports a Context parameter
 func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineWithContext(ctx context.Context, createTektonPipelineOptions *CreateTektonPipelineOptions) (result *TektonPipeline, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createTektonPipelineOptions, "createTektonPipelineOptions cannot be nil")
+	if err != nil {
+		return
+	}
 	err = core.ValidateStruct(createTektonPipelineOptions, "createTektonPipelineOptions")
 	if err != nil {
 		return
@@ -217,6 +219,15 @@ func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineWithContext(ctx 
 	body := make(map[string]interface{})
 	if createTektonPipelineOptions.ID != nil {
 		body["id"] = createTektonPipelineOptions.ID
+	}
+	if createTektonPipelineOptions.NextBuildNumber != nil {
+		body["next_build_number"] = createTektonPipelineOptions.NextBuildNumber
+	}
+	if createTektonPipelineOptions.EnableNotifications != nil {
+		body["enable_notifications"] = createTektonPipelineOptions.EnableNotifications
+	}
+	if createTektonPipelineOptions.EnablePartialCloning != nil {
+		body["enable_partial_cloning"] = createTektonPipelineOptions.EnablePartialCloning
 	}
 	if createTektonPipelineOptions.Worker != nil {
 		body["worker"] = createTektonPipelineOptions.Worker
@@ -247,8 +258,8 @@ func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineWithContext(ctx 
 	return
 }
 
-// GetTektonPipeline : Get tekton pipeline data
-// This request retrieves whole tekton pipeline data.
+// GetTektonPipeline : Get Tekton pipeline data
+// This request retrieves the Tekton pipeline data for the pipeline identified by `{id}`.
 func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipeline(getTektonPipelineOptions *GetTektonPipelineOptions) (result *TektonPipeline, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.GetTektonPipelineWithContext(context.Background(), getTektonPipelineOptions)
 }
@@ -307,9 +318,9 @@ func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineWithContext(ctx con
 	return
 }
 
-// UpdateTektonPipeline : Update tekton pipeline data
-// This request updates tekton pipeline data, but you can only change worker ID in this endpoint. Use other endpoints
-// such as /definitions, /triggers, and /properties for detailed updated.
+// UpdateTektonPipeline : Update Tekton pipeline data
+// This request updates Tekton pipeline data, but you can only change worker ID in this endpoint. Use other endpoints
+// such as /definitions, /triggers, and /properties for other configuration updates.
 func (cdTektonPipeline *CdTektonPipelineV2) UpdateTektonPipeline(updateTektonPipelineOptions *UpdateTektonPipelineOptions) (result *TektonPipeline, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.UpdateTektonPipelineWithContext(context.Background(), updateTektonPipelineOptions)
 }
@@ -346,15 +357,13 @@ func (cdTektonPipeline *CdTektonPipelineV2) UpdateTektonPipelineWithContext(ctx 
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
-	builder.AddHeader("Content-Type", "application/json")
+	builder.AddHeader("Content-Type", "application/merge-patch+json")
 
-	body := make(map[string]interface{})
-	if updateTektonPipelineOptions.Worker != nil {
-		body["worker"] = updateTektonPipelineOptions.Worker
-	}
-	_, err = builder.SetBodyContentJSON(body)
-	if err != nil {
-		return
+	if updateTektonPipelineOptions.TektonPipelinePatch != nil {
+		_, err = builder.SetBodyContentJSON(updateTektonPipelineOptions.TektonPipelinePatch)
+		if err != nil {
+			return
+		}
 	}
 
 	request, err := builder.Build()
@@ -378,8 +387,8 @@ func (cdTektonPipeline *CdTektonPipelineV2) UpdateTektonPipelineWithContext(ctx 
 	return
 }
 
-// DeleteTektonPipeline : Delete tekton pipeline instance
-// This request deletes tekton pipeline instance that associated with the pipeline toolchain integration.
+// DeleteTektonPipeline : Delete Tekton pipeline instance
+// This request deletes Tekton pipeline instance that is associated with the pipeline toolchain integration.
 func (cdTektonPipeline *CdTektonPipelineV2) DeleteTektonPipeline(deleteTektonPipelineOptions *DeleteTektonPipelineOptions) (response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.DeleteTektonPipelineWithContext(context.Background(), deleteTektonPipelineOptions)
 }
@@ -427,14 +436,14 @@ func (cdTektonPipeline *CdTektonPipelineV2) DeleteTektonPipelineWithContext(ctx 
 }
 
 // ListTektonPipelineRuns : List pipeline run records
-// This request list pipeline run records, which has data of that run, such as status, user_info, trigger and other
+// This request lists pipeline run records, which has data about the runs, such as status, user_info, trigger and other
 // information. Default limit is 50.
-func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineRuns(listTektonPipelineRunsOptions *ListTektonPipelineRunsOptions) (result *PipelineRuns, response *core.DetailedResponse, err error) {
+func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineRuns(listTektonPipelineRunsOptions *ListTektonPipelineRunsOptions) (result *PipelineRunsCollection, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.ListTektonPipelineRunsWithContext(context.Background(), listTektonPipelineRunsOptions)
 }
 
 // ListTektonPipelineRunsWithContext is an alternate form of the ListTektonPipelineRuns method which supports a Context parameter
-func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineRunsWithContext(ctx context.Context, listTektonPipelineRunsOptions *ListTektonPipelineRunsOptions) (result *PipelineRuns, response *core.DetailedResponse, err error) {
+func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineRunsWithContext(ctx context.Context, listTektonPipelineRunsOptions *ListTektonPipelineRunsOptions) (result *PipelineRunsCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listTektonPipelineRunsOptions, "listTektonPipelineRunsOptions cannot be nil")
 	if err != nil {
 		return
@@ -466,11 +475,11 @@ func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineRunsWithContext(ct
 	}
 	builder.AddHeader("Accept", "application/json")
 
+	if listTektonPipelineRunsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listTektonPipelineRunsOptions.Start))
+	}
 	if listTektonPipelineRunsOptions.Limit != nil {
 		builder.AddQuery("limit", fmt.Sprint(*listTektonPipelineRunsOptions.Limit))
-	}
-	if listTektonPipelineRunsOptions.Offset != nil {
-		builder.AddQuery("offset", fmt.Sprint(*listTektonPipelineRunsOptions.Offset))
 	}
 	if listTektonPipelineRunsOptions.Status != nil {
 		builder.AddQuery("status", fmt.Sprint(*listTektonPipelineRunsOptions.Status))
@@ -490,7 +499,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineRunsWithContext(ct
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPipelineRuns)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPipelineRunsCollection)
 		if err != nil {
 			return
 		}
@@ -500,8 +509,9 @@ func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineRunsWithContext(ct
 	return
 }
 
-// CreateTektonPipelineRun : Start a trigger to create a pipelineRun
-// This request executes a trigger to create a pipelineRun.
+// CreateTektonPipelineRun : Trigger a pipeline run
+// Trigger a new pipeline run with the named manual or timer trigger, using the provided additional or override
+// properties.
 func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineRun(createTektonPipelineRunOptions *CreateTektonPipelineRunOptions) (result *PipelineRun, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.CreateTektonPipelineRunWithContext(context.Background(), createTektonPipelineRunOptions)
 }
@@ -550,11 +560,14 @@ func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineRunWithContext(c
 	if createTektonPipelineRunOptions.SecureTriggerProperties != nil {
 		body["secure_trigger_properties"] = createTektonPipelineRunOptions.SecureTriggerProperties
 	}
-	if createTektonPipelineRunOptions.TriggerHeader != nil {
-		body["trigger_header"] = createTektonPipelineRunOptions.TriggerHeader
+	if createTektonPipelineRunOptions.TriggerHeaders != nil {
+		body["trigger_headers"] = createTektonPipelineRunOptions.TriggerHeaders
 	}
 	if createTektonPipelineRunOptions.TriggerBody != nil {
 		body["trigger_body"] = createTektonPipelineRunOptions.TriggerBody
+	}
+	if createTektonPipelineRunOptions.Trigger != nil {
+		body["trigger"] = createTektonPipelineRunOptions.Trigger
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -583,8 +596,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineRunWithContext(c
 }
 
 // GetTektonPipelineRun : Get a pipeline run record
-// This request retrieves detail of requested pipeline run, to get Kubernetes Resources List of this pipeline run use
-// endpoint /tekton_pipelines/{pipeline_id}/tekton_pipelinerun_resource_list/{id}.
+// This request retrieves details of the pipeline run identified by `{id}`.
 func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineRun(getTektonPipelineRunOptions *GetTektonPipelineRunOptions) (result *PipelineRun, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.GetTektonPipelineRunWithContext(context.Background(), getTektonPipelineRunOptions)
 }
@@ -649,7 +661,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineRunWithContext(ctx 
 }
 
 // DeleteTektonPipelineRun : Delete a pipeline run record
-// This request deletes the requested pipeline run record.
+// This request deletes the pipeline run record identified by `{id}`.
 func (cdTektonPipeline *CdTektonPipelineV2) DeleteTektonPipelineRun(deleteTektonPipelineRunOptions *DeleteTektonPipelineRunOptions) (response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.DeleteTektonPipelineRunWithContext(context.Background(), deleteTektonPipelineRunOptions)
 }
@@ -698,7 +710,8 @@ func (cdTektonPipeline *CdTektonPipelineV2) DeleteTektonPipelineRunWithContext(c
 }
 
 // CancelTektonPipelineRun : Cancel a pipeline run
-// This request cancels a running pipeline run, use 'force' payload in case you can't cancel a pipeline run normally.
+// This request cancels a running pipeline run identified by `{id}`. Use `force: true` in the body if the pipeline run
+// can't be cancelled normally.
 func (cdTektonPipeline *CdTektonPipelineV2) CancelTektonPipelineRun(cancelTektonPipelineRunOptions *CancelTektonPipelineRunOptions) (result *PipelineRun, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.CancelTektonPipelineRunWithContext(context.Background(), cancelTektonPipelineRunOptions)
 }
@@ -769,7 +782,8 @@ func (cdTektonPipeline *CdTektonPipelineV2) CancelTektonPipelineRunWithContext(c
 }
 
 // RerunTektonPipelineRun : Rerun a pipeline run
-// This request reruns a past pipeline run with same data. Request body isn't allowed.
+// This request reruns a past pipeline run, which is identified by `{id}`, with the same data. Request body isn't
+// allowed.
 func (cdTektonPipeline *CdTektonPipelineV2) RerunTektonPipelineRun(rerunTektonPipelineRunOptions *RerunTektonPipelineRunOptions) (result *PipelineRun, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.RerunTektonPipelineRunWithContext(context.Background(), rerunTektonPipelineRunOptions)
 }
@@ -829,14 +843,15 @@ func (cdTektonPipeline *CdTektonPipelineV2) RerunTektonPipelineRunWithContext(ct
 	return
 }
 
-// GetTektonPipelineRunLogs : Get a list of pipeline run log IDs
-// This request fetches list of log IDs of a pipeline run.
-func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineRunLogs(getTektonPipelineRunLogsOptions *GetTektonPipelineRunLogsOptions) (result *PipelineRunLogs, response *core.DetailedResponse, err error) {
+// GetTektonPipelineRunLogs : Get a list of pipeline run log objects
+// This request fetches a list of log data for a pipeline run identified by `{id}`. The `href` in each log entry can be
+// used to fetch that individual log.
+func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineRunLogs(getTektonPipelineRunLogsOptions *GetTektonPipelineRunLogsOptions) (result *LogsCollection, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.GetTektonPipelineRunLogsWithContext(context.Background(), getTektonPipelineRunLogsOptions)
 }
 
 // GetTektonPipelineRunLogsWithContext is an alternate form of the GetTektonPipelineRunLogs method which supports a Context parameter
-func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineRunLogsWithContext(ctx context.Context, getTektonPipelineRunLogsOptions *GetTektonPipelineRunLogsOptions) (result *PipelineRunLogs, response *core.DetailedResponse, err error) {
+func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineRunLogsWithContext(ctx context.Context, getTektonPipelineRunLogsOptions *GetTektonPipelineRunLogsOptions) (result *LogsCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getTektonPipelineRunLogsOptions, "getTektonPipelineRunLogsOptions cannot be nil")
 	if err != nil {
 		return
@@ -880,7 +895,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineRunLogsWithContext(
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPipelineRunLogs)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalLogsCollection)
 		if err != nil {
 			return
 		}
@@ -890,9 +905,9 @@ func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineRunLogsWithContext(
 	return
 }
 
-// GetTektonPipelineRunLogContent : Get the log content of a pipeline run step by using the step log ID
-// This request retrieves log content of a pipeline run step, to get the log ID use endpoint
-// /tekton_pipelines/{pipeline_id}/pipeline_runs/{id}/logs.
+// GetTektonPipelineRunLogContent : Get the log content of a pipeline run step
+// This request retrieves the log content of a pipeline run step, where the step is identified by `{id}`. To get the log
+// ID use the endpoint `/tekton_pipelines/{pipeline_id}/pipeline_runs/{id}/logs`.
 func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineRunLogContent(getTektonPipelineRunLogContentOptions *GetTektonPipelineRunLogContentOptions) (result *StepLog, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.GetTektonPipelineRunLogContentWithContext(context.Background(), getTektonPipelineRunLogContentOptions)
 }
@@ -954,14 +969,17 @@ func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineRunLogContentWithCo
 }
 
 // ListTektonPipelineDefinitions : List pipeline definitions
-// This request fetches pipeline definitions, which is the a collection of individual definition entries, each entry is
-// a composition of a repo url, a repo branch and a repo path.
-func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineDefinitions(listTektonPipelineDefinitionsOptions *ListTektonPipelineDefinitionsOptions) (result *Definitions, response *core.DetailedResponse, err error) {
+// This request fetches pipeline definitions, which is a collection of individual definition entries. Each entry
+// consists of a repository url, a repository path and a branch or tag. The referenced repository URL must match the URL
+// of a repository tool integration in the parent toolchain. Obtain the list of integrations from the toolchain API
+// https://cloud.ibm.com/apidocs/toolchain#list-tools. The branch or tag of the definition must match against a
+// corresponding branch or tag in the chosen repository, and the path must match a subfolder in the repository.
+func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineDefinitions(listTektonPipelineDefinitionsOptions *ListTektonPipelineDefinitionsOptions) (result *DefinitionsCollection, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.ListTektonPipelineDefinitionsWithContext(context.Background(), listTektonPipelineDefinitionsOptions)
 }
 
 // ListTektonPipelineDefinitionsWithContext is an alternate form of the ListTektonPipelineDefinitions method which supports a Context parameter
-func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineDefinitionsWithContext(ctx context.Context, listTektonPipelineDefinitionsOptions *ListTektonPipelineDefinitionsOptions) (result *Definitions, response *core.DetailedResponse, err error) {
+func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineDefinitionsWithContext(ctx context.Context, listTektonPipelineDefinitionsOptions *ListTektonPipelineDefinitionsOptions) (result *DefinitionsCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listTektonPipelineDefinitionsOptions, "listTektonPipelineDefinitionsOptions cannot be nil")
 	if err != nil {
 		return
@@ -1004,7 +1022,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineDefinitionsWithCon
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDefinitions)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDefinitionsCollection)
 		if err != nil {
 			return
 		}
@@ -1015,7 +1033,11 @@ func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineDefinitionsWithCon
 }
 
 // CreateTektonPipelineDefinition : Create a single definition
-// This request adds a single definition.
+// This request adds a single definition. The source properties should consist of a repository url, a repository path
+// and a branch or tag. The referenced repository URL must match the URL of a repository tool integration in the parent
+// toolchain. Obtain the list of integrations from the toolchain API https://cloud.ibm.com/apidocs/toolchain#list-tools.
+// The branch or tag of the definition must match against a corresponding branch or tag in the chosen repository, and
+// the path must match a subfolder in the repository.
 func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineDefinition(createTektonPipelineDefinitionOptions *CreateTektonPipelineDefinitionOptions) (result *Definition, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.CreateTektonPipelineDefinitionWithContext(context.Background(), createTektonPipelineDefinitionOptions)
 }
@@ -1055,8 +1077,8 @@ func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineDefinitionWithCo
 	builder.AddHeader("Content-Type", "application/json")
 
 	body := make(map[string]interface{})
-	if createTektonPipelineDefinitionOptions.ScmSource != nil {
-		body["scm_source"] = createTektonPipelineDefinitionOptions.ScmSource
+	if createTektonPipelineDefinitionOptions.Source != nil {
+		body["source"] = createTektonPipelineDefinitionOptions.Source
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1085,8 +1107,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineDefinitionWithCo
 }
 
 // GetTektonPipelineDefinition : Retrieve a single definition entry
-// This request fetches a single definition entry, which is a composition of the definition repo's url, branch and
-// directory path.
+// This request fetches a single definition entry, which consists of the definition repository URL, branch/tag and path.
 func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineDefinition(getTektonPipelineDefinitionOptions *GetTektonPipelineDefinitionOptions) (result *Definition, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.GetTektonPipelineDefinitionWithContext(context.Background(), getTektonPipelineDefinitionOptions)
 }
@@ -1147,8 +1168,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineDefinitionWithConte
 }
 
 // ReplaceTektonPipelineDefinition : Edit a single definition entry
-// This request replaces a single definition's repo directory path or repo branch. Its scm_source.url and
-// service_instance_id are immutable.
+// This request updates a definition entry identified by `{definition_id}`.
 func (cdTektonPipeline *CdTektonPipelineV2) ReplaceTektonPipelineDefinition(replaceTektonPipelineDefinitionOptions *ReplaceTektonPipelineDefinitionOptions) (result *Definition, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.ReplaceTektonPipelineDefinitionWithContext(context.Background(), replaceTektonPipelineDefinitionOptions)
 }
@@ -1189,14 +1209,8 @@ func (cdTektonPipeline *CdTektonPipelineV2) ReplaceTektonPipelineDefinitionWithC
 	builder.AddHeader("Content-Type", "application/json")
 
 	body := make(map[string]interface{})
-	if replaceTektonPipelineDefinitionOptions.ScmSource != nil {
-		body["scm_source"] = replaceTektonPipelineDefinitionOptions.ScmSource
-	}
-	if replaceTektonPipelineDefinitionOptions.ServiceInstanceID != nil {
-		body["service_instance_id"] = replaceTektonPipelineDefinitionOptions.ServiceInstanceID
-	}
-	if replaceTektonPipelineDefinitionOptions.ID != nil {
-		body["id"] = replaceTektonPipelineDefinitionOptions.ID
+	if replaceTektonPipelineDefinitionOptions.Source != nil {
+		body["source"] = replaceTektonPipelineDefinitionOptions.Source
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1225,7 +1239,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) ReplaceTektonPipelineDefinitionWithC
 }
 
 // DeleteTektonPipelineDefinition : Delete a single definition entry
-// This request deletes a single definition from definition list.
+// This request deletes a single definition from the definition list.
 func (cdTektonPipeline *CdTektonPipelineV2) DeleteTektonPipelineDefinition(deleteTektonPipelineDefinitionOptions *DeleteTektonPipelineDefinitionOptions) (response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.DeleteTektonPipelineDefinitionWithContext(context.Background(), deleteTektonPipelineDefinitionOptions)
 }
@@ -1273,14 +1287,14 @@ func (cdTektonPipeline *CdTektonPipelineV2) DeleteTektonPipelineDefinitionWithCo
 	return
 }
 
-// ListTektonPipelineProperties : List pipeline environment properties
-// This request lists the pipeline environment properties which every pipelineRun execution has access to.
-func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineProperties(listTektonPipelinePropertiesOptions *ListTektonPipelinePropertiesOptions) (result *EnvProperties, response *core.DetailedResponse, err error) {
+// ListTektonPipelineProperties : List the pipeline's environment properties
+// This request lists the environment properties the pipeline identified by `{pipeline_id}`.
+func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineProperties(listTektonPipelinePropertiesOptions *ListTektonPipelinePropertiesOptions) (result *PropertiesCollection, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.ListTektonPipelinePropertiesWithContext(context.Background(), listTektonPipelinePropertiesOptions)
 }
 
 // ListTektonPipelinePropertiesWithContext is an alternate form of the ListTektonPipelineProperties method which supports a Context parameter
-func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelinePropertiesWithContext(ctx context.Context, listTektonPipelinePropertiesOptions *ListTektonPipelinePropertiesOptions) (result *EnvProperties, response *core.DetailedResponse, err error) {
+func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelinePropertiesWithContext(ctx context.Context, listTektonPipelinePropertiesOptions *ListTektonPipelinePropertiesOptions) (result *PropertiesCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listTektonPipelinePropertiesOptions, "listTektonPipelinePropertiesOptions cannot be nil")
 	if err != nil {
 		return
@@ -1333,7 +1347,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelinePropertiesWithCont
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEnvProperties)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPropertiesCollection)
 		if err != nil {
 			return
 		}
@@ -1343,8 +1357,8 @@ func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelinePropertiesWithCont
 	return
 }
 
-// CreateTektonPipelineProperties : Create pipeline environment property
-// This request creates a single pipeline environment property.
+// CreateTektonPipelineProperties : Create a pipeline environment property
+// This request creates an environment property.
 func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineProperties(createTektonPipelinePropertiesOptions *CreateTektonPipelinePropertiesOptions) (result *Property, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.CreateTektonPipelinePropertiesWithContext(context.Background(), createTektonPipelinePropertiesOptions)
 }
@@ -1387,17 +1401,14 @@ func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelinePropertiesWithCo
 	if createTektonPipelinePropertiesOptions.Name != nil {
 		body["name"] = createTektonPipelinePropertiesOptions.Name
 	}
+	if createTektonPipelinePropertiesOptions.Type != nil {
+		body["type"] = createTektonPipelinePropertiesOptions.Type
+	}
 	if createTektonPipelinePropertiesOptions.Value != nil {
 		body["value"] = createTektonPipelinePropertiesOptions.Value
 	}
 	if createTektonPipelinePropertiesOptions.Enum != nil {
 		body["enum"] = createTektonPipelinePropertiesOptions.Enum
-	}
-	if createTektonPipelinePropertiesOptions.Default != nil {
-		body["default"] = createTektonPipelinePropertiesOptions.Default
-	}
-	if createTektonPipelinePropertiesOptions.Type != nil {
-		body["type"] = createTektonPipelinePropertiesOptions.Type
 	}
 	if createTektonPipelinePropertiesOptions.Path != nil {
 		body["path"] = createTektonPipelinePropertiesOptions.Path
@@ -1428,8 +1439,8 @@ func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelinePropertiesWithCo
 	return
 }
 
-// GetTektonPipelineProperty : Get a single pipeline environment property
-// This request gets a single pipeline environment property data.
+// GetTektonPipelineProperty : Get a pipeline environment property
+// This request gets the data of an environment property identified by `{property_name}`.
 func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineProperty(getTektonPipelinePropertyOptions *GetTektonPipelinePropertyOptions) (result *Property, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.GetTektonPipelinePropertyWithContext(context.Background(), getTektonPipelinePropertyOptions)
 }
@@ -1489,9 +1500,9 @@ func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelinePropertyWithContext
 	return
 }
 
-// ReplaceTektonPipelineProperty : Replace a single pipeline environment property value
-// This request updates a single pipeline environment property value, its type or name are immutable. For any property
-// type, the entered value replaces the existing value.
+// ReplaceTektonPipelineProperty : Replace the value of an environment property
+// This request updates the value of an environment property identified by `{property_name}`, its type or name are
+// immutable.
 func (cdTektonPipeline *CdTektonPipelineV2) ReplaceTektonPipelineProperty(replaceTektonPipelinePropertyOptions *ReplaceTektonPipelinePropertyOptions) (result *Property, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.ReplaceTektonPipelinePropertyWithContext(context.Background(), replaceTektonPipelinePropertyOptions)
 }
@@ -1535,17 +1546,14 @@ func (cdTektonPipeline *CdTektonPipelineV2) ReplaceTektonPipelinePropertyWithCon
 	if replaceTektonPipelinePropertyOptions.Name != nil {
 		body["name"] = replaceTektonPipelinePropertyOptions.Name
 	}
+	if replaceTektonPipelinePropertyOptions.Type != nil {
+		body["type"] = replaceTektonPipelinePropertyOptions.Type
+	}
 	if replaceTektonPipelinePropertyOptions.Value != nil {
 		body["value"] = replaceTektonPipelinePropertyOptions.Value
 	}
 	if replaceTektonPipelinePropertyOptions.Enum != nil {
 		body["enum"] = replaceTektonPipelinePropertyOptions.Enum
-	}
-	if replaceTektonPipelinePropertyOptions.Default != nil {
-		body["default"] = replaceTektonPipelinePropertyOptions.Default
-	}
-	if replaceTektonPipelinePropertyOptions.Type != nil {
-		body["type"] = replaceTektonPipelinePropertyOptions.Type
 	}
 	if replaceTektonPipelinePropertyOptions.Path != nil {
 		body["path"] = replaceTektonPipelinePropertyOptions.Path
@@ -1626,13 +1634,13 @@ func (cdTektonPipeline *CdTektonPipelineV2) DeleteTektonPipelinePropertyWithCont
 }
 
 // ListTektonPipelineTriggers : List pipeline triggers
-// This request lists pipeline triggers.
-func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineTriggers(listTektonPipelineTriggersOptions *ListTektonPipelineTriggersOptions) (result *Triggers, response *core.DetailedResponse, err error) {
+// This request lists pipeline triggers for the pipeline identified by `{pipeline_id}`.
+func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineTriggers(listTektonPipelineTriggersOptions *ListTektonPipelineTriggersOptions) (result *TriggersCollection, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.ListTektonPipelineTriggersWithContext(context.Background(), listTektonPipelineTriggersOptions)
 }
 
 // ListTektonPipelineTriggersWithContext is an alternate form of the ListTektonPipelineTriggers method which supports a Context parameter
-func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineTriggersWithContext(ctx context.Context, listTektonPipelineTriggersOptions *ListTektonPipelineTriggersOptions) (result *Triggers, response *core.DetailedResponse, err error) {
+func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineTriggersWithContext(ctx context.Context, listTektonPipelineTriggersOptions *ListTektonPipelineTriggersOptions) (result *TriggersCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listTektonPipelineTriggersOptions, "listTektonPipelineTriggersOptions cannot be nil")
 	if err != nil {
 		return
@@ -1697,7 +1705,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineTriggersWithContex
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTriggers)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTriggersCollection)
 		if err != nil {
 			return
 		}
@@ -1707,8 +1715,8 @@ func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineTriggersWithContex
 	return
 }
 
-// CreateTektonPipelineTrigger : Create a trigger or duplicate a trigger
-// This request creates a trigger or duplicate a trigger from an existing trigger.
+// CreateTektonPipelineTrigger : Create a trigger
+// This request creates a trigger.
 func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineTrigger(createTektonPipelineTriggerOptions *CreateTektonPipelineTriggerOptions) (result TriggerIntf, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.CreateTektonPipelineTriggerWithContext(context.Background(), createTektonPipelineTriggerOptions)
 }
@@ -1747,11 +1755,46 @@ func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineTriggerWithConte
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
 
-	if createTektonPipelineTriggerOptions.Trigger != nil {
-		_, err = builder.SetBodyContentJSON(createTektonPipelineTriggerOptions.Trigger)
-		if err != nil {
-			return
-		}
+	body := make(map[string]interface{})
+	if createTektonPipelineTriggerOptions.Type != nil {
+		body["type"] = createTektonPipelineTriggerOptions.Type
+	}
+	if createTektonPipelineTriggerOptions.Name != nil {
+		body["name"] = createTektonPipelineTriggerOptions.Name
+	}
+	if createTektonPipelineTriggerOptions.EventListener != nil {
+		body["event_listener"] = createTektonPipelineTriggerOptions.EventListener
+	}
+	if createTektonPipelineTriggerOptions.Tags != nil {
+		body["tags"] = createTektonPipelineTriggerOptions.Tags
+	}
+	if createTektonPipelineTriggerOptions.Worker != nil {
+		body["worker"] = createTektonPipelineTriggerOptions.Worker
+	}
+	if createTektonPipelineTriggerOptions.MaxConcurrentRuns != nil {
+		body["max_concurrent_runs"] = createTektonPipelineTriggerOptions.MaxConcurrentRuns
+	}
+	if createTektonPipelineTriggerOptions.Enabled != nil {
+		body["enabled"] = createTektonPipelineTriggerOptions.Enabled
+	}
+	if createTektonPipelineTriggerOptions.Secret != nil {
+		body["secret"] = createTektonPipelineTriggerOptions.Secret
+	}
+	if createTektonPipelineTriggerOptions.Cron != nil {
+		body["cron"] = createTektonPipelineTriggerOptions.Cron
+	}
+	if createTektonPipelineTriggerOptions.Timezone != nil {
+		body["timezone"] = createTektonPipelineTriggerOptions.Timezone
+	}
+	if createTektonPipelineTriggerOptions.Source != nil {
+		body["source"] = createTektonPipelineTriggerOptions.Source
+	}
+	if createTektonPipelineTriggerOptions.Events != nil {
+		body["events"] = createTektonPipelineTriggerOptions.Events
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
 	}
 
 	request, err := builder.Build()
@@ -1776,7 +1819,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineTriggerWithConte
 }
 
 // GetTektonPipelineTrigger : Get a single trigger
-// This request retrieves a single trigger detail.
+// This request retrieves a single trigger identified by `{trigger_id}`.
 func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineTrigger(getTektonPipelineTriggerOptions *GetTektonPipelineTriggerOptions) (result TriggerIntf, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.GetTektonPipelineTriggerWithContext(context.Background(), getTektonPipelineTriggerOptions)
 }
@@ -1836,9 +1879,9 @@ func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineTriggerWithContext(
 	return
 }
 
-// UpdateTektonPipelineTrigger : Edit a single trigger entry
-// This request changes a single field or many fields of a trigger, note that some fields are immutable, and use
-// /properties to update trigger properties.
+// UpdateTektonPipelineTrigger : Edit a trigger
+// This request changes a single field or many fields of the trigger identified by `{trigger_id}`. Note that some fields
+// are immutable, and use `/properties` endpoint to update trigger properties.
 func (cdTektonPipeline *CdTektonPipelineV2) UpdateTektonPipelineTrigger(updateTektonPipelineTriggerOptions *UpdateTektonPipelineTriggerOptions) (result TriggerIntf, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.UpdateTektonPipelineTriggerWithContext(context.Background(), updateTektonPipelineTriggerOptions)
 }
@@ -1876,48 +1919,13 @@ func (cdTektonPipeline *CdTektonPipelineV2) UpdateTektonPipelineTriggerWithConte
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
-	builder.AddHeader("Content-Type", "application/json")
+	builder.AddHeader("Content-Type", "application/merge-patch+json")
 
-	body := make(map[string]interface{})
-	if updateTektonPipelineTriggerOptions.Type != nil {
-		body["type"] = updateTektonPipelineTriggerOptions.Type
-	}
-	if updateTektonPipelineTriggerOptions.Name != nil {
-		body["name"] = updateTektonPipelineTriggerOptions.Name
-	}
-	if updateTektonPipelineTriggerOptions.EventListener != nil {
-		body["event_listener"] = updateTektonPipelineTriggerOptions.EventListener
-	}
-	if updateTektonPipelineTriggerOptions.Tags != nil {
-		body["tags"] = updateTektonPipelineTriggerOptions.Tags
-	}
-	if updateTektonPipelineTriggerOptions.Worker != nil {
-		body["worker"] = updateTektonPipelineTriggerOptions.Worker
-	}
-	if updateTektonPipelineTriggerOptions.Concurrency != nil {
-		body["concurrency"] = updateTektonPipelineTriggerOptions.Concurrency
-	}
-	if updateTektonPipelineTriggerOptions.Disabled != nil {
-		body["disabled"] = updateTektonPipelineTriggerOptions.Disabled
-	}
-	if updateTektonPipelineTriggerOptions.Secret != nil {
-		body["secret"] = updateTektonPipelineTriggerOptions.Secret
-	}
-	if updateTektonPipelineTriggerOptions.Cron != nil {
-		body["cron"] = updateTektonPipelineTriggerOptions.Cron
-	}
-	if updateTektonPipelineTriggerOptions.Timezone != nil {
-		body["timezone"] = updateTektonPipelineTriggerOptions.Timezone
-	}
-	if updateTektonPipelineTriggerOptions.ScmSource != nil {
-		body["scm_source"] = updateTektonPipelineTriggerOptions.ScmSource
-	}
-	if updateTektonPipelineTriggerOptions.Events != nil {
-		body["events"] = updateTektonPipelineTriggerOptions.Events
-	}
-	_, err = builder.SetBodyContentJSON(body)
-	if err != nil {
-		return
+	if updateTektonPipelineTriggerOptions.TriggerPatch != nil {
+		_, err = builder.SetBodyContentJSON(updateTektonPipelineTriggerOptions.TriggerPatch)
+		if err != nil {
+			return
+		}
 	}
 
 	request, err := builder.Build()
@@ -1942,7 +1950,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) UpdateTektonPipelineTriggerWithConte
 }
 
 // DeleteTektonPipelineTrigger : Delete a single trigger
-// This request deletes a single trigger.
+// This request deletes the trigger identified by `{trigger_id}`.
 func (cdTektonPipeline *CdTektonPipelineV2) DeleteTektonPipelineTrigger(deleteTektonPipelineTriggerOptions *DeleteTektonPipelineTriggerOptions) (response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.DeleteTektonPipelineTriggerWithContext(context.Background(), deleteTektonPipelineTriggerOptions)
 }
@@ -1990,14 +1998,85 @@ func (cdTektonPipeline *CdTektonPipelineV2) DeleteTektonPipelineTriggerWithConte
 	return
 }
 
-// ListTektonPipelineTriggerProperties : List trigger environment properties
-// This request lists trigger environment properties.
-func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineTriggerProperties(listTektonPipelineTriggerPropertiesOptions *ListTektonPipelineTriggerPropertiesOptions) (result *TriggerProperties, response *core.DetailedResponse, err error) {
+// DuplicateTektonPipelineTrigger : Duplicate a trigger
+// This request duplicates a trigger from an existing trigger identified by `{source_trigger_id}`.
+func (cdTektonPipeline *CdTektonPipelineV2) DuplicateTektonPipelineTrigger(duplicateTektonPipelineTriggerOptions *DuplicateTektonPipelineTriggerOptions) (result TriggerIntf, response *core.DetailedResponse, err error) {
+	return cdTektonPipeline.DuplicateTektonPipelineTriggerWithContext(context.Background(), duplicateTektonPipelineTriggerOptions)
+}
+
+// DuplicateTektonPipelineTriggerWithContext is an alternate form of the DuplicateTektonPipelineTrigger method which supports a Context parameter
+func (cdTektonPipeline *CdTektonPipelineV2) DuplicateTektonPipelineTriggerWithContext(ctx context.Context, duplicateTektonPipelineTriggerOptions *DuplicateTektonPipelineTriggerOptions) (result TriggerIntf, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(duplicateTektonPipelineTriggerOptions, "duplicateTektonPipelineTriggerOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(duplicateTektonPipelineTriggerOptions, "duplicateTektonPipelineTriggerOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"pipeline_id": *duplicateTektonPipelineTriggerOptions.PipelineID,
+		"source_trigger_id": *duplicateTektonPipelineTriggerOptions.SourceTriggerID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = cdTektonPipeline.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(cdTektonPipeline.Service.Options.URL, `/tekton_pipelines/{pipeline_id}/triggers/{source_trigger_id}/duplicate`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range duplicateTektonPipelineTriggerOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("cd_tekton_pipeline", "V2", "DuplicateTektonPipelineTrigger")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if duplicateTektonPipelineTriggerOptions.Name != nil {
+		body["name"] = duplicateTektonPipelineTriggerOptions.Name
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = cdTektonPipeline.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrigger)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListTektonPipelineTriggerProperties : List trigger properties
+// This request lists trigger properties for the trigger identified by `{trigger_id}`.
+func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineTriggerProperties(listTektonPipelineTriggerPropertiesOptions *ListTektonPipelineTriggerPropertiesOptions) (result *TriggerPropertiesCollection, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.ListTektonPipelineTriggerPropertiesWithContext(context.Background(), listTektonPipelineTriggerPropertiesOptions)
 }
 
 // ListTektonPipelineTriggerPropertiesWithContext is an alternate form of the ListTektonPipelineTriggerProperties method which supports a Context parameter
-func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineTriggerPropertiesWithContext(ctx context.Context, listTektonPipelineTriggerPropertiesOptions *ListTektonPipelineTriggerPropertiesOptions) (result *TriggerProperties, response *core.DetailedResponse, err error) {
+func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineTriggerPropertiesWithContext(ctx context.Context, listTektonPipelineTriggerPropertiesOptions *ListTektonPipelineTriggerPropertiesOptions) (result *TriggerPropertiesCollection, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(listTektonPipelineTriggerPropertiesOptions, "listTektonPipelineTriggerPropertiesOptions cannot be nil")
 	if err != nil {
 		return
@@ -2030,9 +2109,15 @@ func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineTriggerPropertiesW
 	}
 	builder.AddHeader("Accept", "application/json")
 
-	builder.AddQuery("name", fmt.Sprint(*listTektonPipelineTriggerPropertiesOptions.Name))
-	builder.AddQuery("type", fmt.Sprint(*listTektonPipelineTriggerPropertiesOptions.Type))
-	builder.AddQuery("sort", fmt.Sprint(*listTektonPipelineTriggerPropertiesOptions.Sort))
+	if listTektonPipelineTriggerPropertiesOptions.Name != nil {
+		builder.AddQuery("name", fmt.Sprint(*listTektonPipelineTriggerPropertiesOptions.Name))
+	}
+	if listTektonPipelineTriggerPropertiesOptions.Type != nil {
+		builder.AddQuery("type", fmt.Sprint(*listTektonPipelineTriggerPropertiesOptions.Type))
+	}
+	if listTektonPipelineTriggerPropertiesOptions.Sort != nil {
+		builder.AddQuery("sort", fmt.Sprint(*listTektonPipelineTriggerPropertiesOptions.Sort))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -2045,7 +2130,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineTriggerPropertiesW
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTriggerProperties)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTriggerPropertiesCollection)
 		if err != nil {
 			return
 		}
@@ -2055,8 +2140,8 @@ func (cdTektonPipeline *CdTektonPipelineV2) ListTektonPipelineTriggerPropertiesW
 	return
 }
 
-// CreateTektonPipelineTriggerProperties : Create trigger's environment property
-// This request creates a trigger's property.
+// CreateTektonPipelineTriggerProperties : Create a trigger property
+// This request creates a property in the trigger identified by `{trigger_id}`.
 func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineTriggerProperties(createTektonPipelineTriggerPropertiesOptions *CreateTektonPipelineTriggerPropertiesOptions) (result *TriggerProperty, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.CreateTektonPipelineTriggerPropertiesWithContext(context.Background(), createTektonPipelineTriggerPropertiesOptions)
 }
@@ -2100,17 +2185,14 @@ func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineTriggerPropertie
 	if createTektonPipelineTriggerPropertiesOptions.Name != nil {
 		body["name"] = createTektonPipelineTriggerPropertiesOptions.Name
 	}
+	if createTektonPipelineTriggerPropertiesOptions.Type != nil {
+		body["type"] = createTektonPipelineTriggerPropertiesOptions.Type
+	}
 	if createTektonPipelineTriggerPropertiesOptions.Value != nil {
 		body["value"] = createTektonPipelineTriggerPropertiesOptions.Value
 	}
 	if createTektonPipelineTriggerPropertiesOptions.Enum != nil {
 		body["enum"] = createTektonPipelineTriggerPropertiesOptions.Enum
-	}
-	if createTektonPipelineTriggerPropertiesOptions.Default != nil {
-		body["default"] = createTektonPipelineTriggerPropertiesOptions.Default
-	}
-	if createTektonPipelineTriggerPropertiesOptions.Type != nil {
-		body["type"] = createTektonPipelineTriggerPropertiesOptions.Type
 	}
 	if createTektonPipelineTriggerPropertiesOptions.Path != nil {
 		body["path"] = createTektonPipelineTriggerPropertiesOptions.Path
@@ -2141,8 +2223,8 @@ func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineTriggerPropertie
 	return
 }
 
-// GetTektonPipelineTriggerProperty : Get a trigger's environment property
-// This request retrieves a trigger's environment property.
+// GetTektonPipelineTriggerProperty : Get a trigger property
+// This request retrieves a trigger property.
 func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineTriggerProperty(getTektonPipelineTriggerPropertyOptions *GetTektonPipelineTriggerPropertyOptions) (result *TriggerProperty, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.GetTektonPipelineTriggerPropertyWithContext(context.Background(), getTektonPipelineTriggerPropertyOptions)
 }
@@ -2203,9 +2285,8 @@ func (cdTektonPipeline *CdTektonPipelineV2) GetTektonPipelineTriggerPropertyWith
 	return
 }
 
-// ReplaceTektonPipelineTriggerProperty : Replace a trigger's environment property value
-// This request updates a trigger's environment property value, its type or name are immutable. For any property type,
-// the entered value replaces the existing value.
+// ReplaceTektonPipelineTriggerProperty : Replace a trigger property value
+// This request updates a trigger property value, type and name are immutable.
 func (cdTektonPipeline *CdTektonPipelineV2) ReplaceTektonPipelineTriggerProperty(replaceTektonPipelineTriggerPropertyOptions *ReplaceTektonPipelineTriggerPropertyOptions) (result *TriggerProperty, response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.ReplaceTektonPipelineTriggerPropertyWithContext(context.Background(), replaceTektonPipelineTriggerPropertyOptions)
 }
@@ -2250,17 +2331,14 @@ func (cdTektonPipeline *CdTektonPipelineV2) ReplaceTektonPipelineTriggerProperty
 	if replaceTektonPipelineTriggerPropertyOptions.Name != nil {
 		body["name"] = replaceTektonPipelineTriggerPropertyOptions.Name
 	}
+	if replaceTektonPipelineTriggerPropertyOptions.Type != nil {
+		body["type"] = replaceTektonPipelineTriggerPropertyOptions.Type
+	}
 	if replaceTektonPipelineTriggerPropertyOptions.Value != nil {
 		body["value"] = replaceTektonPipelineTriggerPropertyOptions.Value
 	}
 	if replaceTektonPipelineTriggerPropertyOptions.Enum != nil {
 		body["enum"] = replaceTektonPipelineTriggerPropertyOptions.Enum
-	}
-	if replaceTektonPipelineTriggerPropertyOptions.Default != nil {
-		body["default"] = replaceTektonPipelineTriggerPropertyOptions.Default
-	}
-	if replaceTektonPipelineTriggerPropertyOptions.Type != nil {
-		body["type"] = replaceTektonPipelineTriggerPropertyOptions.Type
 	}
 	if replaceTektonPipelineTriggerPropertyOptions.Path != nil {
 		body["path"] = replaceTektonPipelineTriggerPropertyOptions.Path
@@ -2291,8 +2369,8 @@ func (cdTektonPipeline *CdTektonPipelineV2) ReplaceTektonPipelineTriggerProperty
 	return
 }
 
-// DeleteTektonPipelineTriggerProperty : Delete a trigger's property
-// this request deletes a trigger's property.
+// DeleteTektonPipelineTriggerProperty : Delete a trigger property
+// This request deletes a trigger property.
 func (cdTektonPipeline *CdTektonPipelineV2) DeleteTektonPipelineTriggerProperty(deleteTektonPipelineTriggerPropertyOptions *DeleteTektonPipelineTriggerPropertyOptions) (response *core.DetailedResponse, err error) {
 	return cdTektonPipeline.DeleteTektonPipelineTriggerPropertyWithContext(context.Background(), deleteTektonPipelineTriggerPropertyOptions)
 }
@@ -2343,7 +2421,7 @@ func (cdTektonPipeline *CdTektonPipelineV2) DeleteTektonPipelineTriggerPropertyW
 
 // CancelTektonPipelineRunOptions : The CancelTektonPipelineRun options.
 type CancelTektonPipelineRunOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// ID of current instance.
@@ -2388,39 +2466,23 @@ func (options *CancelTektonPipelineRunOptions) SetHeaders(param map[string]strin
 	return options
 }
 
-// Concurrency : Concurrency object.
-type Concurrency struct {
-	// Defines the maximum number of concurrent runs for this trigger.
-	MaxConcurrentRuns *int64 `json:"max_concurrent_runs,omitempty"`
-}
-
-// UnmarshalConcurrency unmarshals an instance of Concurrency from the specified map of raw messages.
-func UnmarshalConcurrency(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(Concurrency)
-	err = core.UnmarshalPrimitive(m, "max_concurrent_runs", &obj.MaxConcurrentRuns)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // CreateTektonPipelineDefinitionOptions : The CreateTektonPipelineDefinition options.
 type CreateTektonPipelineDefinitionOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
-	// Scm source for tekton pipeline defintion.
-	ScmSource *DefinitionScmSource `json:"scm_source,omitempty"`
+	// Source repository containing the Tekton pipeline definition.
+	Source *DefinitionSource `json:"source" validate:"required"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewCreateTektonPipelineDefinitionOptions : Instantiate CreateTektonPipelineDefinitionOptions
-func (*CdTektonPipelineV2) NewCreateTektonPipelineDefinitionOptions(pipelineID string) *CreateTektonPipelineDefinitionOptions {
+func (*CdTektonPipelineV2) NewCreateTektonPipelineDefinitionOptions(pipelineID string, source *DefinitionSource) *CreateTektonPipelineDefinitionOptions {
 	return &CreateTektonPipelineDefinitionOptions{
 		PipelineID: core.StringPtr(pipelineID),
+		Source: source,
 	}
 }
 
@@ -2430,9 +2492,9 @@ func (_options *CreateTektonPipelineDefinitionOptions) SetPipelineID(pipelineID 
 	return _options
 }
 
-// SetScmSource : Allow user to set ScmSource
-func (_options *CreateTektonPipelineDefinitionOptions) SetScmSource(scmSource *DefinitionScmSource) *CreateTektonPipelineDefinitionOptions {
-	_options.ScmSource = scmSource
+// SetSource : Allow user to set Source
+func (_options *CreateTektonPipelineDefinitionOptions) SetSource(source *DefinitionSource) *CreateTektonPipelineDefinitionOptions {
+	_options.Source = source
 	return _options
 }
 
@@ -2444,19 +2506,35 @@ func (options *CreateTektonPipelineDefinitionOptions) SetHeaders(param map[strin
 
 // CreateTektonPipelineOptions : The CreateTektonPipeline options.
 type CreateTektonPipelineOptions struct {
-	// UUID.
-	ID *string `json:"id,omitempty"`
+	// The ID for the associated pipeline tool, which was already created in the target toolchain. To get the pipeline ID
+	// call the toolchain API https://cloud.ibm.com/apidocs/toolchain#list-tools and find the pipeline tool.
+	ID *string `json:"id" validate:"required"`
 
-	// Worker object with worker ID only.
-	Worker *WorkerWithID `json:"worker,omitempty"`
+	// Specify the build number that will be used for the next pipeline run. Build numbers can be any positive whole number
+	// between 0 and 100000000000000.
+	NextBuildNumber *int64 `json:"next_build_number,omitempty"`
+
+	// Flag whether to enable notifications for this pipeline. When enabled, pipeline run events are published on all slack
+	// integration specified channels in the parent toolchain.
+	EnableNotifications *bool `json:"enable_notifications,omitempty"`
+
+	// Flag whether to enable partial cloning for this pipeline. When partial clone is enabled, only the files contained
+	// within the paths specified in definition repositories are read and cloned, this means that symbolic links might not
+	// work.
+	EnablePartialCloning *bool `json:"enable_partial_cloning,omitempty"`
+
+	// Worker object containing worker ID only. If omitted the IBM Managed shared workers are used by default.
+	Worker *WorkerIdentity `json:"worker,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewCreateTektonPipelineOptions : Instantiate CreateTektonPipelineOptions
-func (*CdTektonPipelineV2) NewCreateTektonPipelineOptions() *CreateTektonPipelineOptions {
-	return &CreateTektonPipelineOptions{}
+func (*CdTektonPipelineV2) NewCreateTektonPipelineOptions(id string) *CreateTektonPipelineOptions {
+	return &CreateTektonPipelineOptions{
+		ID: core.StringPtr(id),
+	}
 }
 
 // SetID : Allow user to set ID
@@ -2465,8 +2543,26 @@ func (_options *CreateTektonPipelineOptions) SetID(id string) *CreateTektonPipel
 	return _options
 }
 
+// SetNextBuildNumber : Allow user to set NextBuildNumber
+func (_options *CreateTektonPipelineOptions) SetNextBuildNumber(nextBuildNumber int64) *CreateTektonPipelineOptions {
+	_options.NextBuildNumber = core.Int64Ptr(nextBuildNumber)
+	return _options
+}
+
+// SetEnableNotifications : Allow user to set EnableNotifications
+func (_options *CreateTektonPipelineOptions) SetEnableNotifications(enableNotifications bool) *CreateTektonPipelineOptions {
+	_options.EnableNotifications = core.BoolPtr(enableNotifications)
+	return _options
+}
+
+// SetEnablePartialCloning : Allow user to set EnablePartialCloning
+func (_options *CreateTektonPipelineOptions) SetEnablePartialCloning(enablePartialCloning bool) *CreateTektonPipelineOptions {
+	_options.EnablePartialCloning = core.BoolPtr(enablePartialCloning)
+	return _options
+}
+
 // SetWorker : Allow user to set Worker
-func (_options *CreateTektonPipelineOptions) SetWorker(worker *WorkerWithID) *CreateTektonPipelineOptions {
+func (_options *CreateTektonPipelineOptions) SetWorker(worker *WorkerIdentity) *CreateTektonPipelineOptions {
 	_options.Worker = worker
 	return _options
 }
@@ -2479,25 +2575,23 @@ func (options *CreateTektonPipelineOptions) SetHeaders(param map[string]string) 
 
 // CreateTektonPipelinePropertiesOptions : The CreateTektonPipelineProperties options.
 type CreateTektonPipelinePropertiesOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// Property name.
-	Name *string `json:"name,omitempty"`
-
-	// String format property value.
-	Value *string `json:"value,omitempty"`
-
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
-
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
+	Name *string `json:"name" validate:"required"`
 
 	// Property type.
-	Type *string `json:"type,omitempty"`
+	Type *string `json:"type" validate:"required"`
 
-	// property path for INTEGRATION type properties.
+	// Property value. Any string value is valid.
+	Value *string `json:"value,omitempty"`
+
+	// Options for `single_select` property type. Only needed when using `single_select` property type.
+	Enum []string `json:"enum,omitempty"`
+
+	// A dot notation path for `integration` type properties only, to select a value from the tool integration. If left
+	// blank the full tool integration data will be used.
 	Path *string `json:"path,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -2507,17 +2601,19 @@ type CreateTektonPipelinePropertiesOptions struct {
 // Constants associated with the CreateTektonPipelinePropertiesOptions.Type property.
 // Property type.
 const (
-	CreateTektonPipelinePropertiesOptionsTypeAppconfigConst = "APPCONFIG"
-	CreateTektonPipelinePropertiesOptionsTypeIntegrationConst = "INTEGRATION"
-	CreateTektonPipelinePropertiesOptionsTypeSecureConst = "SECURE"
-	CreateTektonPipelinePropertiesOptionsTypeSingleSelectConst = "SINGLE_SELECT"
-	CreateTektonPipelinePropertiesOptionsTypeTextConst = "TEXT"
+	CreateTektonPipelinePropertiesOptionsTypeAppconfigConst = "appconfig"
+	CreateTektonPipelinePropertiesOptionsTypeIntegrationConst = "integration"
+	CreateTektonPipelinePropertiesOptionsTypeSecureConst = "secure"
+	CreateTektonPipelinePropertiesOptionsTypeSingleSelectConst = "single_select"
+	CreateTektonPipelinePropertiesOptionsTypeTextConst = "text"
 )
 
 // NewCreateTektonPipelinePropertiesOptions : Instantiate CreateTektonPipelinePropertiesOptions
-func (*CdTektonPipelineV2) NewCreateTektonPipelinePropertiesOptions(pipelineID string) *CreateTektonPipelinePropertiesOptions {
+func (*CdTektonPipelineV2) NewCreateTektonPipelinePropertiesOptions(pipelineID string, name string, typeVar string) *CreateTektonPipelinePropertiesOptions {
 	return &CreateTektonPipelinePropertiesOptions{
 		PipelineID: core.StringPtr(pipelineID),
+		Name: core.StringPtr(name),
+		Type: core.StringPtr(typeVar),
 	}
 }
 
@@ -2533,6 +2629,12 @@ func (_options *CreateTektonPipelinePropertiesOptions) SetName(name string) *Cre
 	return _options
 }
 
+// SetType : Allow user to set Type
+func (_options *CreateTektonPipelinePropertiesOptions) SetType(typeVar string) *CreateTektonPipelinePropertiesOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
 // SetValue : Allow user to set Value
 func (_options *CreateTektonPipelinePropertiesOptions) SetValue(value string) *CreateTektonPipelinePropertiesOptions {
 	_options.Value = core.StringPtr(value)
@@ -2542,18 +2644,6 @@ func (_options *CreateTektonPipelinePropertiesOptions) SetValue(value string) *C
 // SetEnum : Allow user to set Enum
 func (_options *CreateTektonPipelinePropertiesOptions) SetEnum(enum []string) *CreateTektonPipelinePropertiesOptions {
 	_options.Enum = enum
-	return _options
-}
-
-// SetDefault : Allow user to set Default
-func (_options *CreateTektonPipelinePropertiesOptions) SetDefault(defaultVar string) *CreateTektonPipelinePropertiesOptions {
-	_options.Default = core.StringPtr(defaultVar)
-	return _options
-}
-
-// SetType : Allow user to set Type
-func (_options *CreateTektonPipelinePropertiesOptions) SetType(typeVar string) *CreateTektonPipelinePropertiesOptions {
-	_options.Type = core.StringPtr(typeVar)
 	return _options
 }
 
@@ -2571,26 +2661,31 @@ func (options *CreateTektonPipelinePropertiesOptions) SetHeaders(param map[strin
 
 // CreateTektonPipelineRunOptions : The CreateTektonPipelineRun options.
 type CreateTektonPipelineRunOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// Trigger name.
 	TriggerName *string `json:"trigger_name,omitempty"`
 
-	// A valid single dictionary object containing string values only to provide extra TEXT trigger properties or override
-	// defined TEXT type trigger properties.
-	TriggerProperties map[string]interface{} `json:"trigger_properties,omitempty"`
+	// An object containing string values only that provides additional `text` properties, or overrides existing
+	// pipeline/trigger properties, to use for the created run.
+	TriggerProperties []Property `json:"trigger_properties,omitempty"`
 
-	// A valid single dictionary object containing string values only to provide extra SECURE type trigger properties or
-	// override defined SECURE type trigger properties.
-	SecureTriggerProperties map[string]interface{} `json:"secure_trigger_properties,omitempty"`
+	// An object containing string values only that provides additional `secure` properties, or overrides existing `secure`
+	// pipeline/trigger properties, to use for the created run.
+	SecureTriggerProperties []Property `json:"secure_trigger_properties,omitempty"`
 
-	// A valid single dictionary object with only string values to provide header, use $(header.header_key_name) to access
-	// it in triggerBinding.
-	TriggerHeader map[string]interface{} `json:"trigger_header,omitempty"`
+	// An object containing string values only that provides the request headers. Use `$(header.header_key_name)` to access
+	// it in a TriggerBinding. Most commonly used as part of a Generic Webhook to provide a verification token or signature
+	// in the request headers.
+	TriggerHeaders map[string]interface{} `json:"trigger_headers,omitempty"`
 
-	// A valid object to provide body, use $(body.body_key_name) to access it in triggerBinding.
+	// An object that provides the request body. Use `$(body.body_key_name)` to access it in a TriggerBinding. Most
+	// commonly used to pass in additional properties or override properties for the pipeline run that is created.
 	TriggerBody map[string]interface{} `json:"trigger_body,omitempty"`
+
+	// Trigger details passed when triggering a Tekton pipeline run.
+	Trigger *PipelineRunTrigger `json:"trigger,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2616,26 +2711,32 @@ func (_options *CreateTektonPipelineRunOptions) SetTriggerName(triggerName strin
 }
 
 // SetTriggerProperties : Allow user to set TriggerProperties
-func (_options *CreateTektonPipelineRunOptions) SetTriggerProperties(triggerProperties map[string]interface{}) *CreateTektonPipelineRunOptions {
+func (_options *CreateTektonPipelineRunOptions) SetTriggerProperties(triggerProperties []Property) *CreateTektonPipelineRunOptions {
 	_options.TriggerProperties = triggerProperties
 	return _options
 }
 
 // SetSecureTriggerProperties : Allow user to set SecureTriggerProperties
-func (_options *CreateTektonPipelineRunOptions) SetSecureTriggerProperties(secureTriggerProperties map[string]interface{}) *CreateTektonPipelineRunOptions {
+func (_options *CreateTektonPipelineRunOptions) SetSecureTriggerProperties(secureTriggerProperties []Property) *CreateTektonPipelineRunOptions {
 	_options.SecureTriggerProperties = secureTriggerProperties
 	return _options
 }
 
-// SetTriggerHeader : Allow user to set TriggerHeader
-func (_options *CreateTektonPipelineRunOptions) SetTriggerHeader(triggerHeader map[string]interface{}) *CreateTektonPipelineRunOptions {
-	_options.TriggerHeader = triggerHeader
+// SetTriggerHeaders : Allow user to set TriggerHeaders
+func (_options *CreateTektonPipelineRunOptions) SetTriggerHeaders(triggerHeaders map[string]interface{}) *CreateTektonPipelineRunOptions {
+	_options.TriggerHeaders = triggerHeaders
 	return _options
 }
 
 // SetTriggerBody : Allow user to set TriggerBody
 func (_options *CreateTektonPipelineRunOptions) SetTriggerBody(triggerBody map[string]interface{}) *CreateTektonPipelineRunOptions {
 	_options.TriggerBody = triggerBody
+	return _options
+}
+
+// SetTrigger : Allow user to set Trigger
+func (_options *CreateTektonPipelineRunOptions) SetTrigger(trigger *PipelineRunTrigger) *CreateTektonPipelineRunOptions {
+	_options.Trigger = trigger
 	return _options
 }
 
@@ -2647,20 +2748,84 @@ func (options *CreateTektonPipelineRunOptions) SetHeaders(param map[string]strin
 
 // CreateTektonPipelineTriggerOptions : The CreateTektonPipelineTrigger options.
 type CreateTektonPipelineTriggerOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
-	// Tekton pipeline trigger object.
-	Trigger TriggerIntf `json:"Trigger,omitempty"`
+	// Trigger type.
+	Type *string `json:"type" validate:"required"`
+
+	// Trigger name.
+	Name *string `json:"name" validate:"required"`
+
+	// Event listener name. The name of the event listener to which the trigger is associated. The event listeners are
+	// defined in the definition repositories of the Tekton pipeline.
+	EventListener *string `json:"event_listener" validate:"required"`
+
+	// Trigger tags array.
+	Tags []string `json:"tags"`
+
+	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
+	Worker *WorkerIdentity `json:"worker,omitempty"`
+
+	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
+	// for this trigger.
+	MaxConcurrentRuns *int64 `json:"max_concurrent_runs,omitempty"`
+
+	// Flag whether the trigger is enabled. If omitted the trigger is enabled by default.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// Only needed for generic webhook trigger type. Secret used to start generic webhook trigger.
+	Secret *GenericSecret `json:"secret,omitempty"`
+
+	// Only needed for timer triggers. Cron expression that indicates when this trigger will activate. Maximum frequency is
+	// every 5 minutes. The string is based on UNIX crontab syntax: minute, hour, day of month, month, day of week.
+	// Example: 0 *_/2 * * * - every 2 hours.
+	Cron *string `json:"cron,omitempty"`
+
+	// Only used for timer triggers. Specify the timezone used for this timer trigger, which will ensure the cron activates
+	// this trigger relative to the specified timezone. If no timezone is specified, the default timezone used is UTC.
+	// Valid timezones are those listed in the IANA timezone database, https://www.iana.org/time-zones.
+	Timezone *string `json:"timezone,omitempty"`
+
+	// Source repository for a Git trigger. Only required for Git triggers. The referenced repository URL must match the
+	// URL of a repository tool integration in the parent toolchain. Obtain the list of integrations from the toolchain API
+	// https://cloud.ibm.com/apidocs/toolchain#list-tools.
+	Source *TriggerSourcePrototype `json:"source,omitempty"`
+
+	// Only needed for Git triggers. List of events to which a Git trigger listens. Choose one or more from: 'push',
+	// 'pull_request' and 'pull_request_closed'. For SCM repositories that use 'merge request' events, such events map to
+	// the equivalent 'pull request' events.
+	Events []string `json:"events"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
+// Constants associated with the CreateTektonPipelineTriggerOptions.Type property.
+// Trigger type.
+const (
+	CreateTektonPipelineTriggerOptionsTypeGenericConst = "generic"
+	CreateTektonPipelineTriggerOptionsTypeManualConst = "manual"
+	CreateTektonPipelineTriggerOptionsTypeScmConst = "scm"
+	CreateTektonPipelineTriggerOptionsTypeTimerConst = "timer"
+)
+
+// Constants associated with the CreateTektonPipelineTriggerOptions.Events property.
+// List of events. Supported options are 'push' Git webhook events, 'pull_request_closed' Git webhook events and
+// 'pull_request' for 'open pull request' or 'update pull request' Git webhook events.
+const (
+	CreateTektonPipelineTriggerOptionsEventsPullRequestConst = "pull_request"
+	CreateTektonPipelineTriggerOptionsEventsPullRequestClosedConst = "pull_request_closed"
+	CreateTektonPipelineTriggerOptionsEventsPushConst = "push"
+)
+
 // NewCreateTektonPipelineTriggerOptions : Instantiate CreateTektonPipelineTriggerOptions
-func (*CdTektonPipelineV2) NewCreateTektonPipelineTriggerOptions(pipelineID string) *CreateTektonPipelineTriggerOptions {
+func (*CdTektonPipelineV2) NewCreateTektonPipelineTriggerOptions(pipelineID string, typeVar string, name string, eventListener string) *CreateTektonPipelineTriggerOptions {
 	return &CreateTektonPipelineTriggerOptions{
 		PipelineID: core.StringPtr(pipelineID),
+		Type: core.StringPtr(typeVar),
+		Name: core.StringPtr(name),
+		EventListener: core.StringPtr(eventListener),
 	}
 }
 
@@ -2670,9 +2835,75 @@ func (_options *CreateTektonPipelineTriggerOptions) SetPipelineID(pipelineID str
 	return _options
 }
 
-// SetTrigger : Allow user to set Trigger
-func (_options *CreateTektonPipelineTriggerOptions) SetTrigger(trigger TriggerIntf) *CreateTektonPipelineTriggerOptions {
-	_options.Trigger = trigger
+// SetType : Allow user to set Type
+func (_options *CreateTektonPipelineTriggerOptions) SetType(typeVar string) *CreateTektonPipelineTriggerOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *CreateTektonPipelineTriggerOptions) SetName(name string) *CreateTektonPipelineTriggerOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetEventListener : Allow user to set EventListener
+func (_options *CreateTektonPipelineTriggerOptions) SetEventListener(eventListener string) *CreateTektonPipelineTriggerOptions {
+	_options.EventListener = core.StringPtr(eventListener)
+	return _options
+}
+
+// SetTags : Allow user to set Tags
+func (_options *CreateTektonPipelineTriggerOptions) SetTags(tags []string) *CreateTektonPipelineTriggerOptions {
+	_options.Tags = tags
+	return _options
+}
+
+// SetWorker : Allow user to set Worker
+func (_options *CreateTektonPipelineTriggerOptions) SetWorker(worker *WorkerIdentity) *CreateTektonPipelineTriggerOptions {
+	_options.Worker = worker
+	return _options
+}
+
+// SetMaxConcurrentRuns : Allow user to set MaxConcurrentRuns
+func (_options *CreateTektonPipelineTriggerOptions) SetMaxConcurrentRuns(maxConcurrentRuns int64) *CreateTektonPipelineTriggerOptions {
+	_options.MaxConcurrentRuns = core.Int64Ptr(maxConcurrentRuns)
+	return _options
+}
+
+// SetEnabled : Allow user to set Enabled
+func (_options *CreateTektonPipelineTriggerOptions) SetEnabled(enabled bool) *CreateTektonPipelineTriggerOptions {
+	_options.Enabled = core.BoolPtr(enabled)
+	return _options
+}
+
+// SetSecret : Allow user to set Secret
+func (_options *CreateTektonPipelineTriggerOptions) SetSecret(secret *GenericSecret) *CreateTektonPipelineTriggerOptions {
+	_options.Secret = secret
+	return _options
+}
+
+// SetCron : Allow user to set Cron
+func (_options *CreateTektonPipelineTriggerOptions) SetCron(cron string) *CreateTektonPipelineTriggerOptions {
+	_options.Cron = core.StringPtr(cron)
+	return _options
+}
+
+// SetTimezone : Allow user to set Timezone
+func (_options *CreateTektonPipelineTriggerOptions) SetTimezone(timezone string) *CreateTektonPipelineTriggerOptions {
+	_options.Timezone = core.StringPtr(timezone)
+	return _options
+}
+
+// SetSource : Allow user to set Source
+func (_options *CreateTektonPipelineTriggerOptions) SetSource(source *TriggerSourcePrototype) *CreateTektonPipelineTriggerOptions {
+	_options.Source = source
+	return _options
+}
+
+// SetEvents : Allow user to set Events
+func (_options *CreateTektonPipelineTriggerOptions) SetEvents(events []string) *CreateTektonPipelineTriggerOptions {
+	_options.Events = events
 	return _options
 }
 
@@ -2684,28 +2915,26 @@ func (options *CreateTektonPipelineTriggerOptions) SetHeaders(param map[string]s
 
 // CreateTektonPipelineTriggerPropertiesOptions : The CreateTektonPipelineTriggerProperties options.
 type CreateTektonPipelineTriggerPropertiesOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// The trigger ID.
 	TriggerID *string `json:"trigger_id" validate:"required,ne="`
 
 	// Property name.
-	Name *string `json:"name,omitempty"`
-
-	// String format property value.
-	Value *string `json:"value,omitempty"`
-
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
-
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
+	Name *string `json:"name" validate:"required"`
 
 	// Property type.
-	Type *string `json:"type,omitempty"`
+	Type *string `json:"type" validate:"required"`
 
-	// property path for INTEGRATION type properties.
+	// Property value. Any string value is valid.
+	Value *string `json:"value,omitempty"`
+
+	// Options for `single_select` property type. Only needed for `single_select` property type.
+	Enum []string `json:"enum,omitempty"`
+
+	// A dot notation path for `integration` type properties only, to select a value from the tool integration. If left
+	// blank the full tool integration data will be used.
 	Path *string `json:"path,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -2715,18 +2944,20 @@ type CreateTektonPipelineTriggerPropertiesOptions struct {
 // Constants associated with the CreateTektonPipelineTriggerPropertiesOptions.Type property.
 // Property type.
 const (
-	CreateTektonPipelineTriggerPropertiesOptionsTypeAppconfigConst = "APPCONFIG"
-	CreateTektonPipelineTriggerPropertiesOptionsTypeIntegrationConst = "INTEGRATION"
-	CreateTektonPipelineTriggerPropertiesOptionsTypeSecureConst = "SECURE"
-	CreateTektonPipelineTriggerPropertiesOptionsTypeSingleSelectConst = "SINGLE_SELECT"
-	CreateTektonPipelineTriggerPropertiesOptionsTypeTextConst = "TEXT"
+	CreateTektonPipelineTriggerPropertiesOptionsTypeAppconfigConst = "appconfig"
+	CreateTektonPipelineTriggerPropertiesOptionsTypeIntegrationConst = "integration"
+	CreateTektonPipelineTriggerPropertiesOptionsTypeSecureConst = "secure"
+	CreateTektonPipelineTriggerPropertiesOptionsTypeSingleSelectConst = "single_select"
+	CreateTektonPipelineTriggerPropertiesOptionsTypeTextConst = "text"
 )
 
 // NewCreateTektonPipelineTriggerPropertiesOptions : Instantiate CreateTektonPipelineTriggerPropertiesOptions
-func (*CdTektonPipelineV2) NewCreateTektonPipelineTriggerPropertiesOptions(pipelineID string, triggerID string) *CreateTektonPipelineTriggerPropertiesOptions {
+func (*CdTektonPipelineV2) NewCreateTektonPipelineTriggerPropertiesOptions(pipelineID string, triggerID string, name string, typeVar string) *CreateTektonPipelineTriggerPropertiesOptions {
 	return &CreateTektonPipelineTriggerPropertiesOptions{
 		PipelineID: core.StringPtr(pipelineID),
 		TriggerID: core.StringPtr(triggerID),
+		Name: core.StringPtr(name),
+		Type: core.StringPtr(typeVar),
 	}
 }
 
@@ -2748,6 +2979,12 @@ func (_options *CreateTektonPipelineTriggerPropertiesOptions) SetName(name strin
 	return _options
 }
 
+// SetType : Allow user to set Type
+func (_options *CreateTektonPipelineTriggerPropertiesOptions) SetType(typeVar string) *CreateTektonPipelineTriggerPropertiesOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
 // SetValue : Allow user to set Value
 func (_options *CreateTektonPipelineTriggerPropertiesOptions) SetValue(value string) *CreateTektonPipelineTriggerPropertiesOptions {
 	_options.Value = core.StringPtr(value)
@@ -2757,18 +2994,6 @@ func (_options *CreateTektonPipelineTriggerPropertiesOptions) SetValue(value str
 // SetEnum : Allow user to set Enum
 func (_options *CreateTektonPipelineTriggerPropertiesOptions) SetEnum(enum []string) *CreateTektonPipelineTriggerPropertiesOptions {
 	_options.Enum = enum
-	return _options
-}
-
-// SetDefault : Allow user to set Default
-func (_options *CreateTektonPipelineTriggerPropertiesOptions) SetDefault(defaultVar string) *CreateTektonPipelineTriggerPropertiesOptions {
-	_options.Default = core.StringPtr(defaultVar)
-	return _options
-}
-
-// SetType : Allow user to set Type
-func (_options *CreateTektonPipelineTriggerPropertiesOptions) SetType(typeVar string) *CreateTektonPipelineTriggerPropertiesOptions {
-	_options.Type = core.StringPtr(typeVar)
 	return _options
 }
 
@@ -2784,37 +3009,30 @@ func (options *CreateTektonPipelineTriggerPropertiesOptions) SetHeaders(param ma
 	return options
 }
 
-// Definition : Tekton pipeline definition entry object.
+// Definition : Tekton pipeline definition entry object, consisting of a repository url, a repository path and a branch or tag. The
+// referenced repository URL must match the URL of a repository tool integration in the parent toolchain. Obtain the
+// list of integrations from the toolchain API https://cloud.ibm.com/apidocs/toolchain#list-tools. The branch or tag of
+// the definition must match against a corresponding branch or tag in the chosen repository, and the path must match a
+// subfolder in the repository.
 type Definition struct {
-	// Scm source for tekton pipeline defintion.
-	ScmSource *DefinitionScmSource `json:"scm_source" validate:"required"`
+	// Source repository containing the Tekton pipeline definition.
+	Source *DefinitionSource `json:"source" validate:"required"`
 
-	// UUID.
-	ServiceInstanceID *string `json:"service_instance_id" validate:"required"`
+	// API URL for interacting with the definition.
+	Href *string `json:"href,omitempty"`
 
-	// UUID.
+	// The aggregated definition ID.
 	ID *string `json:"id" validate:"required"`
-}
-
-// NewDefinition : Instantiate Definition (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewDefinition(scmSource *DefinitionScmSource, serviceInstanceID string, id string) (_model *Definition, err error) {
-	_model = &Definition{
-		ScmSource: scmSource,
-		ServiceInstanceID: core.StringPtr(serviceInstanceID),
-		ID: core.StringPtr(id),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
 }
 
 // UnmarshalDefinition unmarshals an instance of Definition from the specified map of raw messages.
 func UnmarshalDefinition(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(Definition)
-	err = core.UnmarshalModel(m, "scm_source", &obj.ScmSource, UnmarshalDefinitionScmSource)
+	err = core.UnmarshalModel(m, "source", &obj.Source, UnmarshalDefinitionSource)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "service_instance_id", &obj.ServiceInstanceID)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		return
 	}
@@ -2826,24 +3044,61 @@ func UnmarshalDefinition(m map[string]json.RawMessage, result interface{}) (err 
 	return
 }
 
-// DefinitionScmSource : Scm source for tekton pipeline defintion.
-type DefinitionScmSource struct {
-	// General href URL.
-	URL *string `json:"url" validate:"required"`
+// DefinitionSource : Source repository containing the Tekton pipeline definition.
+type DefinitionSource struct {
+	// The only supported source type is "git", indicating that the source is a git repository.
+	Type *string `json:"type" validate:"required"`
 
-	// A branch of the repo, branch field doesn't coexist with tag field.
-	Branch *string `json:"branch,omitempty"`
-
-	// A tag of the repo.
-	Tag *string `json:"tag,omitempty"`
-
-	// The path to the definitions yaml files.
-	Path *string `json:"path" validate:"required"`
+	// Properties of the source, which define the URL of the repository and a branch or tag.
+	Properties *DefinitionSourceProperties `json:"properties" validate:"required"`
 }
 
-// NewDefinitionScmSource : Instantiate DefinitionScmSource (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewDefinitionScmSource(url string, path string) (_model *DefinitionScmSource, err error) {
-	_model = &DefinitionScmSource{
+// NewDefinitionSource : Instantiate DefinitionSource (Generic Model Constructor)
+func (*CdTektonPipelineV2) NewDefinitionSource(typeVar string, properties *DefinitionSourceProperties) (_model *DefinitionSource, err error) {
+	_model = &DefinitionSource{
+		Type: core.StringPtr(typeVar),
+		Properties: properties,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalDefinitionSource unmarshals an instance of DefinitionSource from the specified map of raw messages.
+func UnmarshalDefinitionSource(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DefinitionSource)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalDefinitionSourceProperties)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// DefinitionSourceProperties : Properties of the source, which define the URL of the repository and a branch or tag.
+type DefinitionSourceProperties struct {
+	// URL of the definition repository.
+	URL *string `json:"url" validate:"required"`
+
+	// A branch from the repo, specify one of branch or tag only.
+	Branch *string `json:"branch,omitempty"`
+
+	// A tag from the repo, specify one of branch or tag only.
+	Tag *string `json:"tag,omitempty"`
+
+	// The path to the definition's YAML files.
+	Path *string `json:"path" validate:"required"`
+
+	// Reference to the repository tool in the parent toolchain.
+	Tool *Tool `json:"tool,omitempty"`
+}
+
+// NewDefinitionSourceProperties : Instantiate DefinitionSourceProperties (Generic Model Constructor)
+func (*CdTektonPipelineV2) NewDefinitionSourceProperties(url string, path string) (_model *DefinitionSourceProperties, err error) {
+	_model = &DefinitionSourceProperties{
 		URL: core.StringPtr(url),
 		Path: core.StringPtr(path),
 	}
@@ -2851,9 +3106,9 @@ func (*CdTektonPipelineV2) NewDefinitionScmSource(url string, path string) (_mod
 	return
 }
 
-// UnmarshalDefinitionScmSource unmarshals an instance of DefinitionScmSource from the specified map of raw messages.
-func UnmarshalDefinitionScmSource(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DefinitionScmSource)
+// UnmarshalDefinitionSourceProperties unmarshals an instance of DefinitionSourceProperties from the specified map of raw messages.
+func UnmarshalDefinitionSourceProperties(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DefinitionSourceProperties)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
 		return
@@ -2870,21 +3125,7 @@ func UnmarshalDefinitionScmSource(m map[string]json.RawMessage, result interface
 	if err != nil {
 		return
 	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// Definitions : Pipeline definitions is a collection of individual definition entries, each entry is a composition of a repo url,
-// repo branch/tag and a certain directory path.
-type Definitions struct {
-	// Definition list.
-	Definitions []DefinitionsDefinitionsItem `json:"definitions" validate:"required"`
-}
-
-// UnmarshalDefinitions unmarshals an instance of Definitions from the specified map of raw messages.
-func UnmarshalDefinitions(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(Definitions)
-	err = core.UnmarshalModel(m, "definitions", &obj.Definitions, UnmarshalDefinitionsDefinitionsItem)
+	err = core.UnmarshalModel(m, "tool", &obj.Tool, UnmarshalTool)
 	if err != nil {
 		return
 	}
@@ -2892,37 +3133,17 @@ func UnmarshalDefinitions(m map[string]json.RawMessage, result interface{}) (err
 	return
 }
 
-// DefinitionsDefinitionsItem : Tekton pipeline definition entry object.
-type DefinitionsDefinitionsItem struct {
-	// Scm source for tekton pipeline defintion.
-	ScmSource *DefinitionScmSource `json:"scm_source" validate:"required"`
-
-	// UUID.
-	ServiceInstanceID *string `json:"service_instance_id" validate:"required"`
-
-	// UUID.
-	ID *string `json:"id" validate:"required"`
-
-	// General href URL.
-	Href *string `json:"href,omitempty"`
+// DefinitionsCollection : Pipeline definitions is a collection of individual definition entries, each entry consists of a repository URL,
+// branch/tag and path.
+type DefinitionsCollection struct {
+	// The list of all definitions in the pipeline.
+	Definitions []Definition `json:"definitions" validate:"required"`
 }
 
-// UnmarshalDefinitionsDefinitionsItem unmarshals an instance of DefinitionsDefinitionsItem from the specified map of raw messages.
-func UnmarshalDefinitionsDefinitionsItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DefinitionsDefinitionsItem)
-	err = core.UnmarshalModel(m, "scm_source", &obj.ScmSource, UnmarshalDefinitionScmSource)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "service_instance_id", &obj.ServiceInstanceID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+// UnmarshalDefinitionsCollection unmarshals an instance of DefinitionsCollection from the specified map of raw messages.
+func UnmarshalDefinitionsCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DefinitionsCollection)
+	err = core.UnmarshalModel(m, "definitions", &obj.Definitions, UnmarshalDefinition)
 	if err != nil {
 		return
 	}
@@ -2932,7 +3153,7 @@ func UnmarshalDefinitionsDefinitionsItem(m map[string]json.RawMessage, result in
 
 // DeleteTektonPipelineDefinitionOptions : The DeleteTektonPipelineDefinition options.
 type DeleteTektonPipelineDefinitionOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// The definition ID.
@@ -2998,10 +3219,10 @@ func (options *DeleteTektonPipelineOptions) SetHeaders(param map[string]string) 
 
 // DeleteTektonPipelinePropertyOptions : The DeleteTektonPipelineProperty options.
 type DeleteTektonPipelinePropertyOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
-	// The property's name.
+	// The property name.
 	PropertyName *string `json:"property_name" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -3036,7 +3257,7 @@ func (options *DeleteTektonPipelinePropertyOptions) SetHeaders(param map[string]
 
 // DeleteTektonPipelineRunOptions : The DeleteTektonPipelineRun options.
 type DeleteTektonPipelineRunOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// ID of current instance.
@@ -3074,7 +3295,7 @@ func (options *DeleteTektonPipelineRunOptions) SetHeaders(param map[string]strin
 
 // DeleteTektonPipelineTriggerOptions : The DeleteTektonPipelineTrigger options.
 type DeleteTektonPipelineTriggerOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// The trigger ID.
@@ -3112,13 +3333,13 @@ func (options *DeleteTektonPipelineTriggerOptions) SetHeaders(param map[string]s
 
 // DeleteTektonPipelineTriggerPropertyOptions : The DeleteTektonPipelineTriggerProperty options.
 type DeleteTektonPipelineTriggerPropertyOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// The trigger ID.
 	TriggerID *string `json:"trigger_id" validate:"required,ne="`
 
-	// The property's name.
+	// The property name.
 	PropertyName *string `json:"property_name" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -3158,83 +3379,82 @@ func (options *DeleteTektonPipelineTriggerPropertyOptions) SetHeaders(param map[
 	return options
 }
 
-// EnvProperties : Pipeline properties object.
-type EnvProperties struct {
-	// Pipeline properties list.
-	Properties []Property `json:"properties" validate:"required"`
+// DuplicateTektonPipelineTriggerOptions : The DuplicateTektonPipelineTrigger options.
+type DuplicateTektonPipelineTriggerOptions struct {
+	// The Tekton pipeline ID.
+	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
+
+	// The ID of the trigger to duplicate.
+	SourceTriggerID *string `json:"source_trigger_id" validate:"required,ne="`
+
+	// Trigger name.
+	Name *string `json:"name" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
 }
 
-// UnmarshalEnvProperties unmarshals an instance of EnvProperties from the specified map of raw messages.
-func UnmarshalEnvProperties(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(EnvProperties)
-	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalProperty)
-	if err != nil {
-		return
+// NewDuplicateTektonPipelineTriggerOptions : Instantiate DuplicateTektonPipelineTriggerOptions
+func (*CdTektonPipelineV2) NewDuplicateTektonPipelineTriggerOptions(pipelineID string, sourceTriggerID string, name string) *DuplicateTektonPipelineTriggerOptions {
+	return &DuplicateTektonPipelineTriggerOptions{
+		PipelineID: core.StringPtr(pipelineID),
+		SourceTriggerID: core.StringPtr(sourceTriggerID),
+		Name: core.StringPtr(name),
 	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
 }
 
-// Events : Needed only for git trigger type. Events object defines the events this git trigger listening to.
-type Events struct {
-	// If true, the trigger starts when tekton pipeline service receive a repo's 'push' git webhook event.
-	Push *bool `json:"push,omitempty"`
-
-	// If true, the trigger starts when tekton pipeline service receive a repo pull reqeust's 'close' git webhook event.
-	PullRequestClosed *bool `json:"pull_request_closed,omitempty"`
-
-	// If true, the trigger starts when tekton pipeline service receive a repo pull reqeust's 'open' or 'update' git
-	// webhook event.
-	PullRequest *bool `json:"pull_request,omitempty"`
+// SetPipelineID : Allow user to set PipelineID
+func (_options *DuplicateTektonPipelineTriggerOptions) SetPipelineID(pipelineID string) *DuplicateTektonPipelineTriggerOptions {
+	_options.PipelineID = core.StringPtr(pipelineID)
+	return _options
 }
 
-// UnmarshalEvents unmarshals an instance of Events from the specified map of raw messages.
-func UnmarshalEvents(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(Events)
-	err = core.UnmarshalPrimitive(m, "push", &obj.Push)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "pull_request_closed", &obj.PullRequestClosed)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "pull_request", &obj.PullRequest)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
+// SetSourceTriggerID : Allow user to set SourceTriggerID
+func (_options *DuplicateTektonPipelineTriggerOptions) SetSourceTriggerID(sourceTriggerID string) *DuplicateTektonPipelineTriggerOptions {
+	_options.SourceTriggerID = core.StringPtr(sourceTriggerID)
+	return _options
 }
 
-// GenericSecret : Needed only for generic trigger type. Secret used to start generic trigger.
+// SetName : Allow user to set Name
+func (_options *DuplicateTektonPipelineTriggerOptions) SetName(name string) *DuplicateTektonPipelineTriggerOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DuplicateTektonPipelineTriggerOptions) SetHeaders(param map[string]string) *DuplicateTektonPipelineTriggerOptions {
+	options.Headers = param
+	return options
+}
+
+// GenericSecret : Only needed for generic webhook trigger type. Secret used to start generic webhook trigger.
 type GenericSecret struct {
 	// Secret type.
 	Type *string `json:"type,omitempty"`
 
-	// Secret value, not needed if secret type is "internalValidation".
+	// Secret value, not needed if secret type is `internal_validation`.
 	Value *string `json:"value,omitempty"`
 
-	// Secret location, not needed if secret type is "internalValidation".
+	// Secret location, not needed if secret type is `internal_validation`.
 	Source *string `json:"source,omitempty"`
 
-	// Secret name, not needed if type is "internalValidation".
+	// Secret name, not needed if type is `internal_validation`.
 	KeyName *string `json:"key_name,omitempty"`
 
-	// Algorithm used for "digestMatches" secret type.
+	// Algorithm used for `digest_matches` secret type. Only needed for `digest_matches` secret type.
 	Algorithm *string `json:"algorithm,omitempty"`
 }
 
 // Constants associated with the GenericSecret.Type property.
 // Secret type.
 const (
-	GenericSecretTypeDigestmatchesConst = "digestMatches"
-	GenericSecretTypeInternalvalidationConst = "internalValidation"
-	GenericSecretTypeTokenmatchesConst = "tokenMatches"
+	GenericSecretTypeDigestMatchesConst = "digest_matches"
+	GenericSecretTypeInternalValidationConst = "internal_validation"
+	GenericSecretTypeTokenMatchesConst = "token_matches"
 )
 
 // Constants associated with the GenericSecret.Source property.
-// Secret location, not needed if secret type is "internalValidation".
+// Secret location, not needed if secret type is `internal_validation`.
 const (
 	GenericSecretSourceHeaderConst = "header"
 	GenericSecretSourcePayloadConst = "payload"
@@ -3242,7 +3462,7 @@ const (
 )
 
 // Constants associated with the GenericSecret.Algorithm property.
-// Algorithm used for "digestMatches" secret type.
+// Algorithm used for `digest_matches` secret type. Only needed for `digest_matches` secret type.
 const (
 	GenericSecretAlgorithmMd4Const = "md4"
 	GenericSecretAlgorithmMd5Const = "md5"
@@ -3284,7 +3504,7 @@ func UnmarshalGenericSecret(m map[string]json.RawMessage, result interface{}) (e
 
 // GetTektonPipelineDefinitionOptions : The GetTektonPipelineDefinition options.
 type GetTektonPipelineDefinitionOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// The definition ID.
@@ -3350,10 +3570,10 @@ func (options *GetTektonPipelineOptions) SetHeaders(param map[string]string) *Ge
 
 // GetTektonPipelinePropertyOptions : The GetTektonPipelineProperty options.
 type GetTektonPipelinePropertyOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
-	// The property's name.
+	// The property name.
 	PropertyName *string `json:"property_name" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -3388,10 +3608,10 @@ func (options *GetTektonPipelinePropertyOptions) SetHeaders(param map[string]str
 
 // GetTektonPipelineRunLogContentOptions : The GetTektonPipelineRunLogContent options.
 type GetTektonPipelineRunLogContentOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
-	// The tekton pipeline run ID.
+	// The Tekton pipeline run ID.
 	PipelineRunID *string `json:"pipeline_run_id" validate:"required,ne="`
 
 	// ID of current instance.
@@ -3436,7 +3656,7 @@ func (options *GetTektonPipelineRunLogContentOptions) SetHeaders(param map[strin
 
 // GetTektonPipelineRunLogsOptions : The GetTektonPipelineRunLogs options.
 type GetTektonPipelineRunLogsOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// ID of current instance.
@@ -3474,7 +3694,7 @@ func (options *GetTektonPipelineRunLogsOptions) SetHeaders(param map[string]stri
 
 // GetTektonPipelineRunOptions : The GetTektonPipelineRun options.
 type GetTektonPipelineRunOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// ID of current instance.
@@ -3527,7 +3747,7 @@ func (options *GetTektonPipelineRunOptions) SetHeaders(param map[string]string) 
 
 // GetTektonPipelineTriggerOptions : The GetTektonPipelineTrigger options.
 type GetTektonPipelineTriggerOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// The trigger ID.
@@ -3565,13 +3785,13 @@ func (options *GetTektonPipelineTriggerOptions) SetHeaders(param map[string]stri
 
 // GetTektonPipelineTriggerPropertyOptions : The GetTektonPipelineTriggerProperty options.
 type GetTektonPipelineTriggerPropertyOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// The trigger ID.
 	TriggerID *string `json:"trigger_id" validate:"required,ne="`
 
-	// The property's name.
+	// The property name.
 	PropertyName *string `json:"property_name" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -3613,7 +3833,7 @@ func (options *GetTektonPipelineTriggerPropertyOptions) SetHeaders(param map[str
 
 // ListTektonPipelineDefinitionsOptions : The ListTektonPipelineDefinitions options.
 type ListTektonPipelineDefinitionsOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -3641,7 +3861,7 @@ func (options *ListTektonPipelineDefinitionsOptions) SetHeaders(param map[string
 
 // ListTektonPipelinePropertiesOptions : The ListTektonPipelineProperties options.
 type ListTektonPipelinePropertiesOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// Filters the collection to resources with the specified property name.
@@ -3650,8 +3870,7 @@ type ListTektonPipelinePropertiesOptions struct {
 	// Filters the collection to resources with the specified property type.
 	Type []string `json:"type,omitempty"`
 
-	// Sorts the returned properties by a property field, for properties you can sort them alphabetically by "name" in
-	// ascending order or with "-name" in descending order.
+	// Sorts the returned properties by name, in ascending order using `name` or in descending order using `-name`.
 	Sort *string `json:"sort,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -3659,13 +3878,13 @@ type ListTektonPipelinePropertiesOptions struct {
 }
 
 // Constants associated with the ListTektonPipelinePropertiesOptions.Type property.
-// Query in URL.
+// Type of property.
 const (
-	ListTektonPipelinePropertiesOptionsTypeAppconfigConst = "APPCONFIG"
-	ListTektonPipelinePropertiesOptionsTypeIntegrationConst = "INTEGRATION"
-	ListTektonPipelinePropertiesOptionsTypeSecureConst = "SECURE"
-	ListTektonPipelinePropertiesOptionsTypeSingleSelectConst = "SINGLE_SELECT"
-	ListTektonPipelinePropertiesOptionsTypeTextConst = "TEXT"
+	ListTektonPipelinePropertiesOptionsTypeAppconfigConst = "appconfig"
+	ListTektonPipelinePropertiesOptionsTypeIntegrationConst = "integration"
+	ListTektonPipelinePropertiesOptionsTypeSecureConst = "secure"
+	ListTektonPipelinePropertiesOptionsTypeSingleSelectConst = "single_select"
+	ListTektonPipelinePropertiesOptionsTypeTextConst = "text"
 )
 
 // NewListTektonPipelinePropertiesOptions : Instantiate ListTektonPipelinePropertiesOptions
@@ -3707,14 +3926,15 @@ func (options *ListTektonPipelinePropertiesOptions) SetHeaders(param map[string]
 
 // ListTektonPipelineRunsOptions : The ListTektonPipelineRuns options.
 type ListTektonPipelineRunsOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
+
+	// A page token that identifies the start point of the list of pipeline runs. This value is included in the response
+	// body of each request to fetch pipeline runs.
+	Start *string `json:"start,omitempty"`
 
 	// The number of pipeline runs to return, sorted by creation time, most recent first.
 	Limit *int64 `json:"limit,omitempty"`
-
-	// Skip the specified number of pipeline runs.
-	Offset *int64 `json:"offset,omitempty"`
 
 	// Filters the collection to resources with the specified status.
 	Status *string `json:"status,omitempty"`
@@ -3753,15 +3973,15 @@ func (_options *ListTektonPipelineRunsOptions) SetPipelineID(pipelineID string) 
 	return _options
 }
 
-// SetLimit : Allow user to set Limit
-func (_options *ListTektonPipelineRunsOptions) SetLimit(limit int64) *ListTektonPipelineRunsOptions {
-	_options.Limit = core.Int64Ptr(limit)
+// SetStart : Allow user to set Start
+func (_options *ListTektonPipelineRunsOptions) SetStart(start string) *ListTektonPipelineRunsOptions {
+	_options.Start = core.StringPtr(start)
 	return _options
 }
 
-// SetOffset : Allow user to set Offset
-func (_options *ListTektonPipelineRunsOptions) SetOffset(offset int64) *ListTektonPipelineRunsOptions {
-	_options.Offset = core.Int64Ptr(offset)
+// SetLimit : Allow user to set Limit
+func (_options *ListTektonPipelineRunsOptions) SetLimit(limit int64) *ListTektonPipelineRunsOptions {
+	_options.Limit = core.Int64Ptr(limit)
 	return _options
 }
 
@@ -3785,34 +4005,30 @@ func (options *ListTektonPipelineRunsOptions) SetHeaders(param map[string]string
 
 // ListTektonPipelineTriggerPropertiesOptions : The ListTektonPipelineTriggerProperties options.
 type ListTektonPipelineTriggerPropertiesOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// The trigger ID.
 	TriggerID *string `json:"trigger_id" validate:"required,ne="`
 
-	// filter properties by the name of property.
-	Name *string `json:"name" validate:"required"`
+	// Filter properties by `name`.
+	Name *string `json:"name,omitempty"`
 
-	// filter properties by the type of property, avaialble types are
-	// "SECURE","TEXT","INTEGRATION","SINGLE_SELECT","APPCONFIG".
-	Type *string `json:"type" validate:"required"`
+	// Filter properties by `type`. Valid types are `secure`, `text`, `integration`, `single_select`, `appconfig`.
+	Type *string `json:"type,omitempty"`
 
-	// sort properties by the a property field, for properties you can only sort them by "name" or "-name".
-	Sort *string `json:"sort" validate:"required"`
+	// Sort properties by name. They can be sorted in ascending order using `name` or in descending order using `-name`.
+	Sort *string `json:"sort,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewListTektonPipelineTriggerPropertiesOptions : Instantiate ListTektonPipelineTriggerPropertiesOptions
-func (*CdTektonPipelineV2) NewListTektonPipelineTriggerPropertiesOptions(pipelineID string, triggerID string, name string, typeVar string, sort string) *ListTektonPipelineTriggerPropertiesOptions {
+func (*CdTektonPipelineV2) NewListTektonPipelineTriggerPropertiesOptions(pipelineID string, triggerID string) *ListTektonPipelineTriggerPropertiesOptions {
 	return &ListTektonPipelineTriggerPropertiesOptions{
 		PipelineID: core.StringPtr(pipelineID),
 		TriggerID: core.StringPtr(triggerID),
-		Name: core.StringPtr(name),
-		Type: core.StringPtr(typeVar),
-		Sort: core.StringPtr(sort),
 	}
 }
 
@@ -3854,28 +4070,30 @@ func (options *ListTektonPipelineTriggerPropertiesOptions) SetHeaders(param map[
 
 // ListTektonPipelineTriggersOptions : The ListTektonPipelineTriggers options.
 type ListTektonPipelineTriggersOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
-	// filter the triggers by trigger "type", possible values are "manual", "scm", "generic", "timer".
+	// Optional filter by "type", accepts a comma separated list of types. Valid types are "manual", "scm", "generic", and
+	// "timer".
 	Type *string `json:"type,omitempty"`
 
-	// filter the triggers by trigger "name", accept single string value.
+	// Optional filter by "name", accepts a single string value.
 	Name *string `json:"name,omitempty"`
 
-	// filter the triggers by trigger "event_listener", accept single string value.
+	// Optional filter by "event_listener", accepts a single string value.
 	EventListener *string `json:"event_listener,omitempty"`
 
-	// filter the triggers by trigger "worker.id", accept single string value.
+	// Optional filter by "worker.id", accepts a single string value.
 	WorkerID *string `json:"worker.id,omitempty"`
 
-	// filter the triggers by trigger "worker.name", accept single string value.
+	// Optional filter by "worker.name", accepts a single string value.
 	WorkerName *string `json:"worker.name,omitempty"`
 
-	// filter the triggers by trigger "disabled" flag, possbile state are "true" and "false".
+	// Optional filter by "disabled" state, possible values are "true" or "false".
 	Disabled *string `json:"disabled,omitempty"`
 
-	// filter the triggers by trigger "tags", the response lists triggers if it has one matching tag.
+	// Optional filter by "tags", accepts a comma separated list of tags. The response lists triggers having at least one
+	// matching tag.
 	Tags *string `json:"tags,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -3943,50 +4161,110 @@ func (options *ListTektonPipelineTriggersOptions) SetHeaders(param map[string]st
 	return options
 }
 
-// PipelineRun : Single tekton pipeline run object.
+// Log : Log data for Tekton pipeline run steps.
+type Log struct {
+	// API for getting log content.
+	Href *string `json:"href,omitempty"`
+
+	// Step log ID.
+	ID *string `json:"id" validate:"required"`
+
+	// <podName>/<containerName> of this log.
+	Name *string `json:"name" validate:"required"`
+}
+
+// UnmarshalLog unmarshals an instance of Log from the specified map of raw messages.
+func UnmarshalLog(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Log)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// LogsCollection : List of pipeline run log objects.
+type LogsCollection struct {
+	// The list of pipeline run log objects.
+	Logs []Log `json:"logs" validate:"required"`
+}
+
+// UnmarshalLogsCollection unmarshals an instance of LogsCollection from the specified map of raw messages.
+func UnmarshalLogsCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LogsCollection)
+	err = core.UnmarshalModel(m, "logs", &obj.Logs, UnmarshalLog)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PipelineRun : Single Tekton pipeline run object.
 type PipelineRun struct {
 	// UUID.
 	ID *string `json:"id" validate:"required"`
 
-	// User information.
+	// General href URL.
+	Href *string `json:"href,omitempty"`
+
+	// Information about the user that triggered a pipeline run. Only included for pipeline runs that were manually
+	// triggered.
 	UserInfo *UserInfo `json:"user_info,omitempty"`
 
 	// Status of the pipeline run.
 	Status *string `json:"status" validate:"required"`
 
-	// The aggregated definition ID used for this pipelineRun.
+	// The aggregated definition ID.
 	DefinitionID *string `json:"definition_id" validate:"required"`
 
-	// worker details used in this pipelineRun.
+	// Reference to the pipeline definition of a pipeline run.
+	Definition *RunDefinition `json:"definition,omitempty"`
+
+	// worker details used in this pipeline run.
 	Worker *PipelineRunWorker `json:"worker" validate:"required"`
 
-	// UUID.
+	// The ID of the pipeline to which this pipeline run belongs.
 	PipelineID *string `json:"pipeline_id" validate:"required"`
+
+	// Reference to the pipeline to which a pipeline run belongs.
+	Pipeline *RunPipeline `json:"pipeline,omitempty"`
 
 	// Listener name used to start the run.
 	ListenerName *string `json:"listener_name" validate:"required"`
 
-	// Tekton pipeline trigger object.
+	// Tekton pipeline trigger.
 	Trigger TriggerIntf `json:"trigger" validate:"required"`
 
-	// Event parameters object passed to this pipeline run in String format, the contents depends on the type of trigger,
-	// for example, for git trigger it includes the git event payload.
+	// Event parameters object in String format that was passed in upon creation of this pipeline run, the contents depends
+	// on the type of trigger. For example, the Git event payload is included for Git triggers, or in the case of a manual
+	// trigger the override and added properties are included.
 	EventParamsBlob *string `json:"event_params_blob" validate:"required"`
 
-	// Heads passed to this pipeline run in String format, tekton pipeline service can't control the shape of the contents.
-	EventHeaderParamsBlob *string `json:"event_header_params_blob,omitempty"`
+	// Trigger headers object in String format that was passed in upon creation of this pipeline run. Omitted if no
+	// trigger_headers object was provided when creating the pipeline run.
+	TriggerHeaders *string `json:"trigger_headers,omitempty"`
 
-	// Properties used in this tekton pipeline run.
+	// Properties used in this Tekton pipeline run. Not included when fetching the list of pipeline runs.
 	Properties []Property `json:"properties,omitempty"`
 
 	// Standard RFC 3339 Date Time String.
-	Created *strfmt.DateTime `json:"created" validate:"required"`
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// Standard RFC 3339 Date Time String.
-	Updated *strfmt.DateTime `json:"updated,omitempty"`
+	// Standard RFC 3339 Date Time String. Only included if the run has been updated since it was created.
+	UpdatedAt *strfmt.DateTime `json:"updated_at,omitempty"`
 
-	// Dashboard URL for this pipeline run.
-	HTMLURL *string `json:"html_url" validate:"required"`
+	// URL for the details page of this pipeline run.
+	RunURL *string `json:"run_url" validate:"required"`
 }
 
 // Constants associated with the PipelineRun.Status property.
@@ -4010,6 +4288,10 @@ func UnmarshalPipelineRun(m map[string]json.RawMessage, result interface{}) (err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalModel(m, "user_info", &obj.UserInfo, UnmarshalUserInfo)
 	if err != nil {
 		return
@@ -4022,11 +4304,19 @@ func UnmarshalPipelineRun(m map[string]json.RawMessage, result interface{}) (err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalModel(m, "definition", &obj.Definition, UnmarshalRunDefinition)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalModel(m, "worker", &obj.Worker, UnmarshalPipelineRunWorker)
 	if err != nil {
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "pipeline_id", &obj.PipelineID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "pipeline", &obj.Pipeline, UnmarshalRunPipeline)
 	if err != nil {
 		return
 	}
@@ -4042,7 +4332,7 @@ func UnmarshalPipelineRun(m map[string]json.RawMessage, result interface{}) (err
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "event_header_params_blob", &obj.EventHeaderParamsBlob)
+	err = core.UnmarshalPrimitive(m, "trigger_headers", &obj.TriggerHeaders)
 	if err != nil {
 		return
 	}
@@ -4050,15 +4340,15 @@ func UnmarshalPipelineRun(m map[string]json.RawMessage, result interface{}) (err
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "html_url", &obj.HTMLURL)
+	err = core.UnmarshalPrimitive(m, "run_url", &obj.RunURL)
 	if err != nil {
 		return
 	}
@@ -4066,46 +4356,58 @@ func UnmarshalPipelineRun(m map[string]json.RawMessage, result interface{}) (err
 	return
 }
 
-// PipelineRunLog : Pipeline run logId object.
-type PipelineRunLog struct {
-	// <podName>/<containerName> of this log.
-	Name *string `json:"name,omitempty"`
+// PipelineRunTrigger : Trigger details passed when triggering a Tekton pipeline run.
+type PipelineRunTrigger struct {
+	// Trigger name.
+	Name *string `json:"name" validate:"required"`
 
-	// Generated log ID.
-	ID *string `json:"id,omitempty"`
+	// An object containing string values only that provides additional `text` properties, or overrides existing
+	// pipeline/trigger properties, to use for the created run.
+	Properties []Property `json:"properties,omitempty"`
 
-	// API for getting log content.
-	Href *string `json:"href,omitempty"`
+	// An object containing string values only that provides additional `secure` properties, or overrides existing `secure`
+	// pipeline/trigger properties, to use for the created run.
+	SecureProperties []Property `json:"secure_properties,omitempty"`
+
+	// An object containing string values only that provides the request headers. Use `$(header.header_key_name)` to access
+	// it in a TriggerBinding. Most commonly used as part of a Generic Webhook to provide a verification token or signature
+	// in the request headers.
+	HeadersVar map[string]interface{} `json:"headers,omitempty"`
+
+	// An object that provides the request body. Use `$(body.body_key_name)` to access it in a TriggerBinding. Most
+	// commonly used to pass in additional properties or override properties for the pipeline run that is created.
+	Body map[string]interface{} `json:"body,omitempty"`
 }
 
-// UnmarshalPipelineRunLog unmarshals an instance of PipelineRunLog from the specified map of raw messages.
-func UnmarshalPipelineRunLog(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(PipelineRunLog)
+// NewPipelineRunTrigger : Instantiate PipelineRunTrigger (Generic Model Constructor)
+func (*CdTektonPipelineV2) NewPipelineRunTrigger(name string) (_model *PipelineRunTrigger, err error) {
+	_model = &PipelineRunTrigger{
+		Name: core.StringPtr(name),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalPipelineRunTrigger unmarshals an instance of PipelineRunTrigger from the specified map of raw messages.
+func UnmarshalPipelineRunTrigger(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PipelineRunTrigger)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalProperty)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	err = core.UnmarshalModel(m, "secure_properties", &obj.SecureProperties, UnmarshalProperty)
 	if err != nil {
 		return
 	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// PipelineRunLogs : List of pipeline run log ID object.
-type PipelineRunLogs struct {
-	Logs []PipelineRunLog `json:"logs,omitempty"`
-}
-
-// UnmarshalPipelineRunLogs unmarshals an instance of PipelineRunLogs from the specified map of raw messages.
-func UnmarshalPipelineRunLogs(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(PipelineRunLogs)
-	err = core.UnmarshalModel(m, "logs", &obj.Logs, UnmarshalPipelineRunLog)
+	err = core.UnmarshalPrimitive(m, "headers", &obj.HeadersVar)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "body", &obj.Body)
 	if err != nil {
 		return
 	}
@@ -4113,15 +4415,15 @@ func UnmarshalPipelineRunLogs(m map[string]json.RawMessage, result interface{}) 
 	return
 }
 
-// PipelineRunWorker : worker details used in this pipelineRun.
+// PipelineRunWorker : worker details used in this pipeline run.
 type PipelineRunWorker struct {
-	// Worker name.
+	// Name of the worker. Computed based on the worker ID.
 	Name *string `json:"name,omitempty"`
 
-	// The agent ID of the corresponding private worker integration used for this pipelineRun.
-	Agent *string `json:"agent,omitempty"`
+	// The agent ID of the corresponding private worker integration used for this pipeline run.
+	AgentID *string `json:"agent_id,omitempty"`
 
-	// The Service ID of the corresponding private worker integration used for this pipelineRun.
+	// The Service ID of the corresponding private worker integration used for this pipeline run.
 	ServiceID *string `json:"service_id,omitempty"`
 
 	// UUID.
@@ -4135,7 +4437,7 @@ func UnmarshalPipelineRunWorker(m map[string]json.RawMessage, result interface{}
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "agent", &obj.Agent)
+	err = core.UnmarshalPrimitive(m, "agent_id", &obj.AgentID)
 	if err != nil {
 		return
 	}
@@ -4151,32 +4453,30 @@ func UnmarshalPipelineRunWorker(m map[string]json.RawMessage, result interface{}
 	return
 }
 
-// PipelineRuns : Tekton pipeline runs object.
-type PipelineRuns struct {
+// PipelineRunsCollection : Tekton pipeline runs object.
+type PipelineRunsCollection struct {
 	// Tekton pipeline runs list.
-	PipelineRuns []PipelineRunsPipelineRunsItem `json:"pipeline_runs" validate:"required"`
-
-	// Skip a specified number of pipeline runs.
-	Offset *int64 `json:"offset" validate:"required"`
+	PipelineRuns []PipelineRun `json:"pipeline_runs" validate:"required"`
 
 	// The number of pipeline runs to return, sorted by creation time, most recent first.
 	Limit *int64 `json:"limit" validate:"required"`
 
 	// First page of pipeline runs.
-	First *PipelineRunsFirst `json:"first" validate:"required"`
+	First *RunsFirstPage `json:"first" validate:"required"`
 
-	// Next page of pipeline runs relative to the offset and limit.
-	Next *PipelineRunsNext `json:"next,omitempty"`
+	// Next page of pipeline runs relative to the `start` and `limit` params. Only included when there are more pages
+	// available.
+	Next *RunsNextPage `json:"next,omitempty"`
+
+	// Last page of pipeline runs relative to the `start` and `limit` params. Only included when the last page has been
+	// reached.
+	Last *RunsLastPage `json:"last,omitempty"`
 }
 
-// UnmarshalPipelineRuns unmarshals an instance of PipelineRuns from the specified map of raw messages.
-func UnmarshalPipelineRuns(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(PipelineRuns)
-	err = core.UnmarshalModel(m, "pipeline_runs", &obj.PipelineRuns, UnmarshalPipelineRunsPipelineRunsItem)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
+// UnmarshalPipelineRunsCollection unmarshals an instance of PipelineRunsCollection from the specified map of raw messages.
+func UnmarshalPipelineRunsCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PipelineRunsCollection)
+	err = core.UnmarshalModel(m, "pipeline_runs", &obj.PipelineRuns, UnmarshalPipelineRun)
 	if err != nil {
 		return
 	}
@@ -4184,11 +4484,15 @@ func UnmarshalPipelineRuns(m map[string]json.RawMessage, result interface{}) (er
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPipelineRunsFirst)
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalRunsFirstPage)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPipelineRunsNext)
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalRunsNextPage)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalRunsLastPage)
 	if err != nil {
 		return
 	}
@@ -4197,179 +4501,27 @@ func UnmarshalPipelineRuns(m map[string]json.RawMessage, result interface{}) (er
 }
 
 // Retrieve the value to be passed to a request to access the next page of results
-func (resp *PipelineRuns) GetNextOffset() (*int64, error) {
+func (resp *PipelineRunsCollection) GetNextStart() (*string, error) {
 	if core.IsNil(resp.Next) {
 		return nil, nil
 	}
-	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
-	if err != nil || offset == nil {
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil || start == nil {
 		return nil, err
 	}
-	var offsetValue int64
-	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	return core.Int64Ptr(offsetValue), nil
+	return start, nil
 }
 
-// PipelineRunsFirst : First page of pipeline runs.
-type PipelineRunsFirst struct {
-	// General href URL.
-	Href *string `json:"href" validate:"required"`
+// PropertiesCollection : Pipeline properties object.
+type PropertiesCollection struct {
+	// Pipeline properties list.
+	Properties []Property `json:"properties" validate:"required"`
 }
 
-// UnmarshalPipelineRunsFirst unmarshals an instance of PipelineRunsFirst from the specified map of raw messages.
-func UnmarshalPipelineRunsFirst(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(PipelineRunsFirst)
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// PipelineRunsNext : Next page of pipeline runs relative to the offset and limit.
-type PipelineRunsNext struct {
-	// General href URL.
-	Href *string `json:"href" validate:"required"`
-}
-
-// UnmarshalPipelineRunsNext unmarshals an instance of PipelineRunsNext from the specified map of raw messages.
-func UnmarshalPipelineRunsNext(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(PipelineRunsNext)
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// PipelineRunsPipelineRunsItem : Single tekton pipeline run object.
-type PipelineRunsPipelineRunsItem struct {
-	// UUID.
-	ID *string `json:"id" validate:"required"`
-
-	// User information.
-	UserInfo *UserInfo `json:"user_info,omitempty"`
-
-	// Status of the pipeline run.
-	Status *string `json:"status" validate:"required"`
-
-	// The aggregated definition ID used for this pipelineRun.
-	DefinitionID *string `json:"definition_id" validate:"required"`
-
-	// worker details used in this pipelineRun.
-	Worker *PipelineRunWorker `json:"worker" validate:"required"`
-
-	// UUID.
-	PipelineID *string `json:"pipeline_id" validate:"required"`
-
-	// Listener name used to start the run.
-	ListenerName *string `json:"listener_name" validate:"required"`
-
-	// Tekton pipeline trigger object.
-	Trigger TriggerIntf `json:"trigger" validate:"required"`
-
-	// Event parameters object passed to this pipeline run in String format, the contents depends on the type of trigger,
-	// for example, for git trigger it includes the git event payload.
-	EventParamsBlob *string `json:"event_params_blob" validate:"required"`
-
-	// Heads passed to this pipeline run in String format, tekton pipeline service can't control the shape of the contents.
-	EventHeaderParamsBlob *string `json:"event_header_params_blob,omitempty"`
-
-	// Properties used in this tekton pipeline run.
-	Properties []Property `json:"properties,omitempty"`
-
-	// Standard RFC 3339 Date Time String.
-	Created *strfmt.DateTime `json:"created" validate:"required"`
-
-	// Standard RFC 3339 Date Time String.
-	Updated *strfmt.DateTime `json:"updated,omitempty"`
-
-	// Dashboard URL for this pipeline run.
-	HTMLURL *string `json:"html_url" validate:"required"`
-
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-}
-
-// Constants associated with the PipelineRunsPipelineRunsItem.Status property.
-// Status of the pipeline run.
-const (
-	PipelineRunsPipelineRunsItemStatusCancelledConst = "cancelled"
-	PipelineRunsPipelineRunsItemStatusCancellingConst = "cancelling"
-	PipelineRunsPipelineRunsItemStatusErrorConst = "error"
-	PipelineRunsPipelineRunsItemStatusFailedConst = "failed"
-	PipelineRunsPipelineRunsItemStatusPendingConst = "pending"
-	PipelineRunsPipelineRunsItemStatusQueuedConst = "queued"
-	PipelineRunsPipelineRunsItemStatusRunningConst = "running"
-	PipelineRunsPipelineRunsItemStatusSucceededConst = "succeeded"
-	PipelineRunsPipelineRunsItemStatusWaitingConst = "waiting"
-)
-
-// UnmarshalPipelineRunsPipelineRunsItem unmarshals an instance of PipelineRunsPipelineRunsItem from the specified map of raw messages.
-func UnmarshalPipelineRunsPipelineRunsItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(PipelineRunsPipelineRunsItem)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "user_info", &obj.UserInfo, UnmarshalUserInfo)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "definition_id", &obj.DefinitionID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "worker", &obj.Worker, UnmarshalPipelineRunWorker)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "pipeline_id", &obj.PipelineID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "listener_name", &obj.ListenerName)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "trigger", &obj.Trigger, UnmarshalTrigger)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "event_params_blob", &obj.EventParamsBlob)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "event_header_params_blob", &obj.EventHeaderParamsBlob)
-	if err != nil {
-		return
-	}
+// UnmarshalPropertiesCollection unmarshals an instance of PropertiesCollection from the specified map of raw messages.
+func UnmarshalPropertiesCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PropertiesCollection)
 	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalProperty)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "html_url", &obj.HTMLURL)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		return
 	}
@@ -4382,30 +4534,31 @@ type Property struct {
 	// Property name.
 	Name *string `json:"name" validate:"required"`
 
-	// String format property value.
+	// Property value. Any string value is valid.
 	Value *string `json:"value,omitempty"`
 
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
+	// API URL for interacting with the property.
+	Href *string `json:"href,omitempty"`
 
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
+	// Options for `single_select` property type. Only needed when using `single_select` property type.
+	Enum []string `json:"enum,omitempty"`
 
 	// Property type.
 	Type *string `json:"type" validate:"required"`
 
-	// property path for INTEGRATION type properties.
+	// A dot notation path for `integration` type properties only, that selects a value from the tool integration. If left
+	// blank the full tool integration data will be used.
 	Path *string `json:"path,omitempty"`
 }
 
 // Constants associated with the Property.Type property.
 // Property type.
 const (
-	PropertyTypeAppconfigConst = "APPCONFIG"
-	PropertyTypeIntegrationConst = "INTEGRATION"
-	PropertyTypeSecureConst = "SECURE"
-	PropertyTypeSingleSelectConst = "SINGLE_SELECT"
-	PropertyTypeTextConst = "TEXT"
+	PropertyTypeAppconfigConst = "appconfig"
+	PropertyTypeIntegrationConst = "integration"
+	PropertyTypeSecureConst = "secure"
+	PropertyTypeSingleSelectConst = "single_select"
+	PropertyTypeTextConst = "text"
 )
 
 // NewProperty : Instantiate Property (Generic Model Constructor)
@@ -4429,11 +4582,11 @@ func UnmarshalProperty(m map[string]json.RawMessage, result interface{}) (err er
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
 	if err != nil {
 		return
 	}
@@ -4451,30 +4604,25 @@ func UnmarshalProperty(m map[string]json.RawMessage, result interface{}) (err er
 
 // ReplaceTektonPipelineDefinitionOptions : The ReplaceTektonPipelineDefinition options.
 type ReplaceTektonPipelineDefinitionOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// The definition ID.
 	DefinitionID *string `json:"definition_id" validate:"required,ne="`
 
-	// Scm source for tekton pipeline defintion.
-	ScmSource *DefinitionScmSource `json:"scm_source,omitempty"`
-
-	// UUID.
-	ServiceInstanceID *string `json:"service_instance_id,omitempty"`
-
-	// UUID.
-	ID *string `json:"id,omitempty"`
+	// Source repository containing the Tekton pipeline definition.
+	Source *DefinitionSource `json:"source" validate:"required"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewReplaceTektonPipelineDefinitionOptions : Instantiate ReplaceTektonPipelineDefinitionOptions
-func (*CdTektonPipelineV2) NewReplaceTektonPipelineDefinitionOptions(pipelineID string, definitionID string) *ReplaceTektonPipelineDefinitionOptions {
+func (*CdTektonPipelineV2) NewReplaceTektonPipelineDefinitionOptions(pipelineID string, definitionID string, source *DefinitionSource) *ReplaceTektonPipelineDefinitionOptions {
 	return &ReplaceTektonPipelineDefinitionOptions{
 		PipelineID: core.StringPtr(pipelineID),
 		DefinitionID: core.StringPtr(definitionID),
+		Source: source,
 	}
 }
 
@@ -4490,21 +4638,9 @@ func (_options *ReplaceTektonPipelineDefinitionOptions) SetDefinitionID(definiti
 	return _options
 }
 
-// SetScmSource : Allow user to set ScmSource
-func (_options *ReplaceTektonPipelineDefinitionOptions) SetScmSource(scmSource *DefinitionScmSource) *ReplaceTektonPipelineDefinitionOptions {
-	_options.ScmSource = scmSource
-	return _options
-}
-
-// SetServiceInstanceID : Allow user to set ServiceInstanceID
-func (_options *ReplaceTektonPipelineDefinitionOptions) SetServiceInstanceID(serviceInstanceID string) *ReplaceTektonPipelineDefinitionOptions {
-	_options.ServiceInstanceID = core.StringPtr(serviceInstanceID)
-	return _options
-}
-
-// SetID : Allow user to set ID
-func (_options *ReplaceTektonPipelineDefinitionOptions) SetID(id string) *ReplaceTektonPipelineDefinitionOptions {
-	_options.ID = core.StringPtr(id)
+// SetSource : Allow user to set Source
+func (_options *ReplaceTektonPipelineDefinitionOptions) SetSource(source *DefinitionSource) *ReplaceTektonPipelineDefinitionOptions {
+	_options.Source = source
 	return _options
 }
 
@@ -4516,28 +4652,26 @@ func (options *ReplaceTektonPipelineDefinitionOptions) SetHeaders(param map[stri
 
 // ReplaceTektonPipelinePropertyOptions : The ReplaceTektonPipelineProperty options.
 type ReplaceTektonPipelinePropertyOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
-	// The property's name.
+	// The property name.
 	PropertyName *string `json:"property_name" validate:"required,ne="`
 
 	// Property name.
-	Name *string `json:"name,omitempty"`
-
-	// String format property value.
-	Value *string `json:"value,omitempty"`
-
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
-
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
+	Name *string `json:"name" validate:"required"`
 
 	// Property type.
-	Type *string `json:"type,omitempty"`
+	Type *string `json:"type" validate:"required"`
 
-	// property path for INTEGRATION type properties.
+	// Property value. Any string value is valid.
+	Value *string `json:"value,omitempty"`
+
+	// Options for `single_select` property type. Only needed when using `single_select` property type.
+	Enum []string `json:"enum,omitempty"`
+
+	// A dot notation path for `integration` type properties only, to select a value from the tool integration. If left
+	// blank the full tool integration data will be used.
 	Path *string `json:"path,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -4547,18 +4681,20 @@ type ReplaceTektonPipelinePropertyOptions struct {
 // Constants associated with the ReplaceTektonPipelinePropertyOptions.Type property.
 // Property type.
 const (
-	ReplaceTektonPipelinePropertyOptionsTypeAppconfigConst = "APPCONFIG"
-	ReplaceTektonPipelinePropertyOptionsTypeIntegrationConst = "INTEGRATION"
-	ReplaceTektonPipelinePropertyOptionsTypeSecureConst = "SECURE"
-	ReplaceTektonPipelinePropertyOptionsTypeSingleSelectConst = "SINGLE_SELECT"
-	ReplaceTektonPipelinePropertyOptionsTypeTextConst = "TEXT"
+	ReplaceTektonPipelinePropertyOptionsTypeAppconfigConst = "appconfig"
+	ReplaceTektonPipelinePropertyOptionsTypeIntegrationConst = "integration"
+	ReplaceTektonPipelinePropertyOptionsTypeSecureConst = "secure"
+	ReplaceTektonPipelinePropertyOptionsTypeSingleSelectConst = "single_select"
+	ReplaceTektonPipelinePropertyOptionsTypeTextConst = "text"
 )
 
 // NewReplaceTektonPipelinePropertyOptions : Instantiate ReplaceTektonPipelinePropertyOptions
-func (*CdTektonPipelineV2) NewReplaceTektonPipelinePropertyOptions(pipelineID string, propertyName string) *ReplaceTektonPipelinePropertyOptions {
+func (*CdTektonPipelineV2) NewReplaceTektonPipelinePropertyOptions(pipelineID string, propertyName string, name string, typeVar string) *ReplaceTektonPipelinePropertyOptions {
 	return &ReplaceTektonPipelinePropertyOptions{
 		PipelineID: core.StringPtr(pipelineID),
 		PropertyName: core.StringPtr(propertyName),
+		Name: core.StringPtr(name),
+		Type: core.StringPtr(typeVar),
 	}
 }
 
@@ -4580,6 +4716,12 @@ func (_options *ReplaceTektonPipelinePropertyOptions) SetName(name string) *Repl
 	return _options
 }
 
+// SetType : Allow user to set Type
+func (_options *ReplaceTektonPipelinePropertyOptions) SetType(typeVar string) *ReplaceTektonPipelinePropertyOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
 // SetValue : Allow user to set Value
 func (_options *ReplaceTektonPipelinePropertyOptions) SetValue(value string) *ReplaceTektonPipelinePropertyOptions {
 	_options.Value = core.StringPtr(value)
@@ -4589,18 +4731,6 @@ func (_options *ReplaceTektonPipelinePropertyOptions) SetValue(value string) *Re
 // SetEnum : Allow user to set Enum
 func (_options *ReplaceTektonPipelinePropertyOptions) SetEnum(enum []string) *ReplaceTektonPipelinePropertyOptions {
 	_options.Enum = enum
-	return _options
-}
-
-// SetDefault : Allow user to set Default
-func (_options *ReplaceTektonPipelinePropertyOptions) SetDefault(defaultVar string) *ReplaceTektonPipelinePropertyOptions {
-	_options.Default = core.StringPtr(defaultVar)
-	return _options
-}
-
-// SetType : Allow user to set Type
-func (_options *ReplaceTektonPipelinePropertyOptions) SetType(typeVar string) *ReplaceTektonPipelinePropertyOptions {
-	_options.Type = core.StringPtr(typeVar)
 	return _options
 }
 
@@ -4618,31 +4748,29 @@ func (options *ReplaceTektonPipelinePropertyOptions) SetHeaders(param map[string
 
 // ReplaceTektonPipelineTriggerPropertyOptions : The ReplaceTektonPipelineTriggerProperty options.
 type ReplaceTektonPipelineTriggerPropertyOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// The trigger ID.
 	TriggerID *string `json:"trigger_id" validate:"required,ne="`
 
-	// The property's name.
+	// The property name.
 	PropertyName *string `json:"property_name" validate:"required,ne="`
 
 	// Property name.
-	Name *string `json:"name,omitempty"`
-
-	// String format property value.
-	Value *string `json:"value,omitempty"`
-
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
-
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
+	Name *string `json:"name" validate:"required"`
 
 	// Property type.
-	Type *string `json:"type,omitempty"`
+	Type *string `json:"type" validate:"required"`
 
-	// property path for INTEGRATION type properties.
+	// Property value. Any string value is valid.
+	Value *string `json:"value,omitempty"`
+
+	// Options for `single_select` property type. Only needed for `single_select` property type.
+	Enum []string `json:"enum,omitempty"`
+
+	// A dot notation path for `integration` type properties only, to select a value from the tool integration. If left
+	// blank the full tool integration data will be used.
 	Path *string `json:"path,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -4652,19 +4780,21 @@ type ReplaceTektonPipelineTriggerPropertyOptions struct {
 // Constants associated with the ReplaceTektonPipelineTriggerPropertyOptions.Type property.
 // Property type.
 const (
-	ReplaceTektonPipelineTriggerPropertyOptionsTypeAppconfigConst = "APPCONFIG"
-	ReplaceTektonPipelineTriggerPropertyOptionsTypeIntegrationConst = "INTEGRATION"
-	ReplaceTektonPipelineTriggerPropertyOptionsTypeSecureConst = "SECURE"
-	ReplaceTektonPipelineTriggerPropertyOptionsTypeSingleSelectConst = "SINGLE_SELECT"
-	ReplaceTektonPipelineTriggerPropertyOptionsTypeTextConst = "TEXT"
+	ReplaceTektonPipelineTriggerPropertyOptionsTypeAppconfigConst = "appconfig"
+	ReplaceTektonPipelineTriggerPropertyOptionsTypeIntegrationConst = "integration"
+	ReplaceTektonPipelineTriggerPropertyOptionsTypeSecureConst = "secure"
+	ReplaceTektonPipelineTriggerPropertyOptionsTypeSingleSelectConst = "single_select"
+	ReplaceTektonPipelineTriggerPropertyOptionsTypeTextConst = "text"
 )
 
 // NewReplaceTektonPipelineTriggerPropertyOptions : Instantiate ReplaceTektonPipelineTriggerPropertyOptions
-func (*CdTektonPipelineV2) NewReplaceTektonPipelineTriggerPropertyOptions(pipelineID string, triggerID string, propertyName string) *ReplaceTektonPipelineTriggerPropertyOptions {
+func (*CdTektonPipelineV2) NewReplaceTektonPipelineTriggerPropertyOptions(pipelineID string, triggerID string, propertyName string, name string, typeVar string) *ReplaceTektonPipelineTriggerPropertyOptions {
 	return &ReplaceTektonPipelineTriggerPropertyOptions{
 		PipelineID: core.StringPtr(pipelineID),
 		TriggerID: core.StringPtr(triggerID),
 		PropertyName: core.StringPtr(propertyName),
+		Name: core.StringPtr(name),
+		Type: core.StringPtr(typeVar),
 	}
 }
 
@@ -4692,6 +4822,12 @@ func (_options *ReplaceTektonPipelineTriggerPropertyOptions) SetName(name string
 	return _options
 }
 
+// SetType : Allow user to set Type
+func (_options *ReplaceTektonPipelineTriggerPropertyOptions) SetType(typeVar string) *ReplaceTektonPipelineTriggerPropertyOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
 // SetValue : Allow user to set Value
 func (_options *ReplaceTektonPipelineTriggerPropertyOptions) SetValue(value string) *ReplaceTektonPipelineTriggerPropertyOptions {
 	_options.Value = core.StringPtr(value)
@@ -4701,18 +4837,6 @@ func (_options *ReplaceTektonPipelineTriggerPropertyOptions) SetValue(value stri
 // SetEnum : Allow user to set Enum
 func (_options *ReplaceTektonPipelineTriggerPropertyOptions) SetEnum(enum []string) *ReplaceTektonPipelineTriggerPropertyOptions {
 	_options.Enum = enum
-	return _options
-}
-
-// SetDefault : Allow user to set Default
-func (_options *ReplaceTektonPipelineTriggerPropertyOptions) SetDefault(defaultVar string) *ReplaceTektonPipelineTriggerPropertyOptions {
-	_options.Default = core.StringPtr(defaultVar)
-	return _options
-}
-
-// SetType : Allow user to set Type
-func (_options *ReplaceTektonPipelineTriggerPropertyOptions) SetType(typeVar string) *ReplaceTektonPipelineTriggerPropertyOptions {
-	_options.Type = core.StringPtr(typeVar)
 	return _options
 }
 
@@ -4730,7 +4854,7 @@ func (options *ReplaceTektonPipelineTriggerPropertyOptions) SetHeaders(param map
 
 // RerunTektonPipelineRunOptions : The RerunTektonPipelineRun options.
 type RerunTektonPipelineRunOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// ID of current instance.
@@ -4766,23 +4890,127 @@ func (options *RerunTektonPipelineRunOptions) SetHeaders(param map[string]string
 	return options
 }
 
-// StepLog : Log object for tekton pipeline run step.
+// ResourceGroupReference : The resource group in which the pipeline was created.
+type ResourceGroupReference struct {
+	// ID.
+	ID *string `json:"id,omitempty"`
+}
+
+// UnmarshalResourceGroupReference unmarshals an instance of ResourceGroupReference from the specified map of raw messages.
+func UnmarshalResourceGroupReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ResourceGroupReference)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RunDefinition : Reference to the pipeline definition of a pipeline run.
+type RunDefinition struct {
+	// The ID of the definition used for a pipeline run.
+	ID *string `json:"id,omitempty"`
+}
+
+// UnmarshalRunDefinition unmarshals an instance of RunDefinition from the specified map of raw messages.
+func UnmarshalRunDefinition(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RunDefinition)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RunPipeline : Reference to the pipeline to which a pipeline run belongs.
+type RunPipeline struct {
+	// The ID of the pipeline to which a pipeline run belongs.
+	ID *string `json:"id,omitempty"`
+}
+
+// UnmarshalRunPipeline unmarshals an instance of RunPipeline from the specified map of raw messages.
+func UnmarshalRunPipeline(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RunPipeline)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RunsFirstPage : First page of pipeline runs.
+type RunsFirstPage struct {
+	// General href URL.
+	Href *string `json:"href" validate:"required"`
+}
+
+// UnmarshalRunsFirstPage unmarshals an instance of RunsFirstPage from the specified map of raw messages.
+func UnmarshalRunsFirstPage(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RunsFirstPage)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RunsLastPage : Last page of pipeline runs relative to the `start` and `limit` params. Only included when the last page has been
+// reached.
+type RunsLastPage struct {
+	// General href URL.
+	Href *string `json:"href" validate:"required"`
+}
+
+// UnmarshalRunsLastPage unmarshals an instance of RunsLastPage from the specified map of raw messages.
+func UnmarshalRunsLastPage(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RunsLastPage)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RunsNextPage : Next page of pipeline runs relative to the `start` and `limit` params. Only included when there are more pages
+// available.
+type RunsNextPage struct {
+	// General href URL.
+	Href *string `json:"href" validate:"required"`
+}
+
+// UnmarshalRunsNextPage unmarshals an instance of RunsNextPage from the specified map of raw messages.
+func UnmarshalRunsNextPage(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RunsNextPage)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// StepLog : Logs for a Tekton pipeline run step.
 type StepLog struct {
+	// The raw log content of the step. Only included when fetching an individual log object.
+	Data *string `json:"data" validate:"required"`
+
 	// Step log ID.
 	ID *string `json:"id" validate:"required"`
-
-	// The raw log content of step.
-	Data *string `json:"data" validate:"required"`
 }
 
 // UnmarshalStepLog unmarshals an instance of StepLog from the specified map of raw messages.
 func UnmarshalStepLog(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(StepLog)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	err = core.UnmarshalPrimitive(m, "data", &obj.Data)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "data", &obj.Data)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		return
 	}
@@ -4798,11 +5026,11 @@ type TektonPipeline struct {
 	// Pipeline status.
 	Status *string `json:"status" validate:"required"`
 
-	// ID.
-	ResourceGroupID *string `json:"resource_group_id" validate:"required"`
+	// The resource group in which the pipeline was created.
+	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
 
-	// Toolchain object.
-	Toolchain *Toolchain `json:"toolchain" validate:"required"`
+	// Toolchain object containing references to the parent toolchain.
+	Toolchain *ToolchainReference `json:"toolchain" validate:"required"`
 
 	// UUID.
 	ID *string `json:"id" validate:"required"`
@@ -4817,11 +5045,7 @@ type TektonPipeline struct {
 	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
 
 	// Standard RFC 3339 Date Time String.
-	Created *strfmt.DateTime `json:"created" validate:"required"`
-
-	// Tekton pipeline definition document detail object. If this property is absent, the pipeline has no definitions
-	// added.
-	PipelineDefinition *TektonPipelinePipelineDefinition `json:"pipeline_definition,omitempty"`
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
 	// Tekton pipeline triggers list.
 	Triggers []TriggerIntf `json:"triggers" validate:"required"`
@@ -4829,13 +5053,28 @@ type TektonPipeline struct {
 	// Default pipeline worker used to run the pipeline.
 	Worker *Worker `json:"worker" validate:"required"`
 
-	// Dashboard URL of this pipeline.
-	HTMLURL *string `json:"html_url" validate:"required"`
+	// URL for this pipeline showing the list of pipeline runs.
+	RunsURL *string `json:"runs_url" validate:"required"`
 
-	// The latest pipeline run build number. If this property is absent, the pipeline hasn't had any pipelineRuns.
-	BuildNumber *int64 `json:"build_number,omitempty"`
+	// API URL for interacting with the pipeline.
+	Href *string `json:"href,omitempty"`
 
-	// Flag whether this pipeline enabled.
+	// The latest pipeline run build number. If this property is absent, the pipeline hasn't had any pipeline runs.
+	BuildNumber *int64 `json:"build_number" validate:"required"`
+
+	// The build number that will be used for the next pipeline run.
+	NextBuildNumber *int64 `json:"next_build_number,omitempty"`
+
+	// Flag whether to enable notifications for this pipeline. When enabled, pipeline run events will be published on all
+	// slack integration specified channels in the parent toolchain. If omitted, this feature is disabled by default.
+	EnableNotifications *bool `json:"enable_notifications" validate:"required"`
+
+	// Flag whether to enable partial cloning for this pipeline. When partial clone is enabled, only the files contained
+	// within the paths specified in definition repositories are read and cloned, this means that symbolic links might not
+	// work. If omitted, this feature is disabled by default.
+	EnablePartialCloning *bool `json:"enable_partial_cloning" validate:"required"`
+
+	// Flag whether this pipeline is enabled.
 	Enabled *bool `json:"enabled" validate:"required"`
 }
 
@@ -4857,11 +5096,11 @@ func UnmarshalTektonPipeline(m map[string]json.RawMessage, result interface{}) (
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "resource_group_id", &obj.ResourceGroupID)
+	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "toolchain", &obj.Toolchain, UnmarshalToolchain)
+	err = core.UnmarshalModel(m, "toolchain", &obj.Toolchain, UnmarshalToolchainReference)
 	if err != nil {
 		return
 	}
@@ -4881,11 +5120,7 @@ func UnmarshalTektonPipeline(m map[string]json.RawMessage, result interface{}) (
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "pipeline_definition", &obj.PipelineDefinition, UnmarshalTektonPipelinePipelineDefinition)
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
 		return
 	}
@@ -4897,11 +5132,27 @@ func UnmarshalTektonPipeline(m map[string]json.RawMessage, result interface{}) (
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "html_url", &obj.HTMLURL)
+	err = core.UnmarshalPrimitive(m, "runs_url", &obj.RunsURL)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "build_number", &obj.BuildNumber)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "next_build_number", &obj.NextBuildNumber)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "enable_notifications", &obj.EnableNotifications)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "enable_partial_cloning", &obj.EnablePartialCloning)
 	if err != nil {
 		return
 	}
@@ -4913,31 +5164,76 @@ func UnmarshalTektonPipeline(m map[string]json.RawMessage, result interface{}) (
 	return
 }
 
-// TektonPipelinePipelineDefinition : Tekton pipeline definition document detail object. If this property is absent, the pipeline has no definitions added.
-type TektonPipelinePipelineDefinition struct {
-	// The state of pipeline definition status.
-	Status *string `json:"status,omitempty"`
+// TektonPipelinePatch : Request body used to update this pipeline.
+type TektonPipelinePatch struct {
+	// Specify the build number that will be used for the next pipeline run. Build numbers can be any positive whole number
+	// between 0 and 100000000000000.
+	NextBuildNumber *int64 `json:"next_build_number,omitempty"`
 
-	// UUID.
-	ID *string `json:"id,omitempty"`
+	// Flag whether to enable notifications for this pipeline. When enabled, pipeline run events are published on all slack
+	// integration specified channels in the parent toolchain.
+	EnableNotifications *bool `json:"enable_notifications,omitempty"`
+
+	// Flag whether to enable partial cloning for this pipeline. When partial clone is enabled, only the files contained
+	// within the paths specified in definition repositories are read and cloned, this means that symbolic links might not
+	// work.
+	EnablePartialCloning *bool `json:"enable_partial_cloning,omitempty"`
+
+	// Worker object containing worker ID only. If omitted the IBM Managed shared workers are used by default.
+	Worker *WorkerIdentity `json:"worker,omitempty"`
 }
 
-// Constants associated with the TektonPipelinePipelineDefinition.Status property.
-// The state of pipeline definition status.
-const (
-	TektonPipelinePipelineDefinitionStatusFailedConst = "failed"
-	TektonPipelinePipelineDefinitionStatusOutdatedConst = "outdated"
-	TektonPipelinePipelineDefinitionStatusUpdatedConst = "updated"
-	TektonPipelinePipelineDefinitionStatusUpdatingConst = "updating"
-)
-
-// UnmarshalTektonPipelinePipelineDefinition unmarshals an instance of TektonPipelinePipelineDefinition from the specified map of raw messages.
-func UnmarshalTektonPipelinePipelineDefinition(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TektonPipelinePipelineDefinition)
-	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+// UnmarshalTektonPipelinePatch unmarshals an instance of TektonPipelinePatch from the specified map of raw messages.
+func UnmarshalTektonPipelinePatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TektonPipelinePatch)
+	err = core.UnmarshalPrimitive(m, "next_build_number", &obj.NextBuildNumber)
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "enable_notifications", &obj.EnableNotifications)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "enable_partial_cloning", &obj.EnablePartialCloning)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "worker", &obj.Worker, UnmarshalWorkerIdentity)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AsPatch returns a generic map representation of the TektonPipelinePatch
+func (tektonPipelinePatch *TektonPipelinePatch) AsPatch() (_patch map[string]interface{}, err error) {
+	var jsonData []byte
+	jsonData, err = json.Marshal(tektonPipelinePatch)
+	if err == nil {
+		err = json.Unmarshal(jsonData, &_patch)
+	}
+	return
+}
+
+// Tool : Reference to the repository tool in the parent toolchain.
+type Tool struct {
+	// ID of the repository tool instance in the parent toolchain.
+	ID *string `json:"id" validate:"required"`
+}
+
+// NewTool : Instantiate Tool (Generic Model Constructor)
+func (*CdTektonPipelineV2) NewTool(id string) (_model *Tool, err error) {
+	_model = &Tool{
+		ID: core.StringPtr(id),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalTool unmarshals an instance of Tool from the specified map of raw messages.
+func UnmarshalTool(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Tool)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		return
@@ -4946,18 +5242,18 @@ func UnmarshalTektonPipelinePipelineDefinition(m map[string]json.RawMessage, res
 	return
 }
 
-// Toolchain : Toolchain object.
-type Toolchain struct {
+// ToolchainReference : Toolchain object containing references to the parent toolchain.
+type ToolchainReference struct {
 	// UUID.
 	ID *string `json:"id" validate:"required"`
 
-	// The CRN for the toolchain that containing the tekton pipeline.
+	// The CRN for the toolchain that contains the Tekton pipeline.
 	CRN *string `json:"crn" validate:"required"`
 }
 
-// UnmarshalToolchain unmarshals an instance of Toolchain from the specified map of raw messages.
-func UnmarshalToolchain(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(Toolchain)
+// UnmarshalToolchainReference unmarshals an instance of ToolchainReference from the specified map of raw messages.
+func UnmarshalToolchainReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ToolchainReference)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		return
@@ -4970,63 +5266,80 @@ func UnmarshalToolchain(m map[string]json.RawMessage, result interface{}) (err e
 	return
 }
 
-// Trigger : Tekton pipeline trigger object.
+// Trigger : Tekton pipeline trigger.
 // Models which "extend" this model:
-// - TriggerDuplicateTrigger
 // - TriggerManualTrigger
 // - TriggerScmTrigger
 // - TriggerTimerTrigger
 // - TriggerGenericTrigger
 type Trigger struct {
-	// source trigger ID to clone from.
-	SourceTriggerID *string `json:"source_trigger_id,omitempty"`
-
-	// name of the duplicated trigger.
-	Name *string `json:"name,omitempty"`
-
 	// Trigger type.
 	Type *string `json:"type,omitempty"`
 
-	// Event listener name.
+	// Trigger name.
+	Name *string `json:"name,omitempty"`
+
+	// API URL for interacting with the trigger. Only included when fetching the list of pipeline triggers.
+	Href *string `json:"href,omitempty"`
+
+	// Event listener name. The name of the event listener to which the trigger is associated. The event listeners are
+	// defined in the definition repositories of the Tekton pipeline.
 	EventListener *string `json:"event_listener,omitempty"`
 
-	// UUID.
+	// The Trigger ID.
 	ID *string `json:"id,omitempty"`
 
-	// Trigger properties.
-	Properties []TriggerPropertiesItem `json:"properties,omitempty"`
+	// Optional trigger properties used to override or supplement the pipeline properties when triggering a pipeline run.
+	Properties []TriggerProperty `json:"properties,omitempty"`
 
-	// Trigger tags array.
-	Tags []string `json:"tags,omitempty"`
+	// Optional trigger tags array.
+	Tags []string `json:"tags"`
 
-	// Trigger worker used to run the trigger, the trigger worker overrides the default pipeline worker.If not exist, this
-	// trigger uses default pipeline worker.
+	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
 	Worker *Worker `json:"worker,omitempty"`
 
-	// Concurrency object.
-	Concurrency *Concurrency `json:"concurrency,omitempty"`
+	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
+	// for this trigger.
+	MaxConcurrentRuns *int64 `json:"max_concurrent_runs,omitempty"`
 
-	// flag whether the trigger is disabled.
-	Disabled *bool `json:"disabled,omitempty"`
+	// Flag whether the trigger is enabled.
+	Enabled *bool `json:"enabled,omitempty"`
 
-	// Scm source for git type tekton pipeline trigger.
-	ScmSource *TriggerScmSource `json:"scm_source,omitempty"`
+	// Source repository for a Git trigger. Only required for Git triggers. The referenced repository URL must match the
+	// URL of a repository tool integration in the parent toolchain. Obtain the list of integrations from the toolchain API
+	// https://cloud.ibm.com/apidocs/toolchain#list-tools.
+	Source *TriggerSource `json:"source,omitempty"`
 
-	// Needed only for git trigger type. Events object defines the events this git trigger listening to.
-	Events *Events `json:"events,omitempty"`
+	// Only needed for Git triggers. List of events to which a Git trigger listens. Choose one or more from: 'push',
+	// 'pull_request' and 'pull_request_closed'. For SCM repositories that use 'merge request' events, such events map to
+	// the equivalent 'pull request' events.
+	Events []string `json:"events"`
 
-	// UUID.
-	ServiceInstanceID *string `json:"service_instance_id,omitempty"`
-
-	// Needed only for timer trigger type. Cron expression for timer trigger. Maximum frequency is every 5 minutes.
+	// Only needed for timer triggers. Cron expression that indicates when this trigger will activate. Maximum frequency is
+	// every 5 minutes. The string is based on UNIX crontab syntax: minute, hour, day of month, month, day of week.
+	// Example: 0 *_/2 * * * - every 2 hours.
 	Cron *string `json:"cron,omitempty"`
 
-	// Needed only for timer trigger type. Timezones for timer trigger.
+	// Only used for timer triggers. Specify the timezone used for this timer trigger, which will ensure the cron activates
+	// this trigger relative to the specified timezone. If no timezone is specified, the default timezone used is UTC.
+	// Valid timezones are those listed in the IANA timezone database, https://www.iana.org/time-zones.
 	Timezone *string `json:"timezone,omitempty"`
 
-	// Needed only for generic trigger type. Secret used to start generic trigger.
+	// Only needed for generic webhook trigger type. Secret used to start generic webhook trigger.
 	Secret *GenericSecret `json:"secret,omitempty"`
+
+	// Webhook URL that can be used to trigger pipeline runs.
+	WebhookURL *string `json:"webhook_url,omitempty"`
 }
+
+// Constants associated with the Trigger.Events property.
+// List of events. Supported options are 'push' Git webhook events, 'pull_request_closed' Git webhook events and
+// 'pull_request' for 'open pull request' or 'update pull request' Git webhook events.
+const (
+	TriggerEventsPullRequestConst = "pull_request"
+	TriggerEventsPullRequestClosedConst = "pull_request_closed"
+	TriggerEventsPushConst = "push"
+)
 func (*Trigger) isaTrigger() bool {
 	return true
 }
@@ -5038,7 +5351,7 @@ type TriggerIntf interface {
 // UnmarshalTrigger unmarshals an instance of Trigger from the specified map of raw messages.
 func UnmarshalTrigger(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(Trigger)
-	err = core.UnmarshalPrimitive(m, "source_trigger_id", &obj.SourceTriggerID)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
 		return
 	}
@@ -5046,7 +5359,7 @@ func UnmarshalTrigger(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		return
 	}
@@ -5058,7 +5371,7 @@ func UnmarshalTrigger(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerPropertiesItem)
+	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerProperty)
 	if err != nil {
 		return
 	}
@@ -5070,23 +5383,19 @@ func UnmarshalTrigger(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "concurrency", &obj.Concurrency, UnmarshalConcurrency)
+	err = core.UnmarshalPrimitive(m, "max_concurrent_runs", &obj.MaxConcurrentRuns)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
+	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "scm_source", &obj.ScmSource, UnmarshalTriggerScmSource)
+	err = core.UnmarshalModel(m, "source", &obj.Source, UnmarshalTriggerSource)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "events", &obj.Events, UnmarshalEvents)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "service_instance_id", &obj.ServiceInstanceID)
+	err = core.UnmarshalPrimitive(m, "events", &obj.Events)
 	if err != nil {
 		return
 	}
@@ -5102,161 +5411,129 @@ func UnmarshalTrigger(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "webhook_url", &obj.WebhookURL)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// TriggerGenericTriggerPropertiesItem : Trigger Property object.
-type TriggerGenericTriggerPropertiesItem struct {
-	// Property name.
-	Name *string `json:"name" validate:"required"`
+// TriggerPatch : Tekton pipeline trigger object used for updating the trigger.
+type TriggerPatch struct {
+	// Trigger type.
+	Type *string `json:"type,omitempty"`
 
-	// String format property value.
-	Value *string `json:"value,omitempty"`
+	// Trigger name.
+	Name *string `json:"name,omitempty"`
 
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
+	// Event listener name. The name of the event listener to which the trigger is associated. The event listeners are
+	// defined in the definition repositories of the Tekton pipeline.
+	EventListener *string `json:"event_listener,omitempty"`
 
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
+	// Trigger tags array. Optional tags for the trigger.
+	Tags []string `json:"tags"`
 
-	// Property type.
-	Type *string `json:"type" validate:"required"`
+	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
+	Worker *WorkerIdentity `json:"worker,omitempty"`
 
-	// property path for INTEGRATION type properties.
-	Path *string `json:"path,omitempty"`
+	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
+	// for this trigger.
+	MaxConcurrentRuns *int64 `json:"max_concurrent_runs,omitempty"`
 
-	// General href URL.
-	Href *string `json:"href,omitempty"`
+	// Defines if this trigger is enabled.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// Only needed for generic webhook trigger type. Secret used to start generic webhook trigger.
+	Secret *GenericSecret `json:"secret,omitempty"`
+
+	// Only needed for timer triggers. Cron expression that indicates when this trigger will activate. Maximum frequency is
+	// every 5 minutes. The string is based on UNIX crontab syntax: minute, hour, day of month, month, day of week.
+	// Example: 0 *_/2 * * * - every 2 hours.
+	Cron *string `json:"cron,omitempty"`
+
+	// Only used for timer triggers. Specify the timezone used for this timer trigger, which will ensure the cron activates
+	// this trigger relative to the specified timezone. If no timezone is specified, the default timezone used is UTC.
+	// Valid timezones are those listed in the IANA timezone database, https://www.iana.org/time-zones.
+	Timezone *string `json:"timezone,omitempty"`
+
+	// Source repository for a Git trigger. Only required for Git triggers. The referenced repository URL must match the
+	// URL of a repository tool integration in the parent toolchain. Obtain the list of integrations from the toolchain API
+	// https://cloud.ibm.com/apidocs/toolchain#list-tools.
+	Source *TriggerSourcePrototype `json:"source,omitempty"`
+
+	// Only needed for Git triggers. List of events to which a Git trigger listens. Choose one or more from: 'push',
+	// 'pull_request' and 'pull_request_closed'. For SCM repositories that use 'merge request' events, such events map to
+	// the equivalent 'pull request' events.
+	Events []string `json:"events"`
 }
 
-// Constants associated with the TriggerGenericTriggerPropertiesItem.Type property.
-// Property type.
+// Constants associated with the TriggerPatch.Type property.
+// Trigger type.
 const (
-	TriggerGenericTriggerPropertiesItemTypeAppconfigConst = "APPCONFIG"
-	TriggerGenericTriggerPropertiesItemTypeIntegrationConst = "INTEGRATION"
-	TriggerGenericTriggerPropertiesItemTypeSecureConst = "SECURE"
-	TriggerGenericTriggerPropertiesItemTypeSingleSelectConst = "SINGLE_SELECT"
-	TriggerGenericTriggerPropertiesItemTypeTextConst = "TEXT"
+	TriggerPatchTypeGenericConst = "generic"
+	TriggerPatchTypeManualConst = "manual"
+	TriggerPatchTypeScmConst = "scm"
+	TriggerPatchTypeTimerConst = "timer"
 )
 
-// NewTriggerGenericTriggerPropertiesItem : Instantiate TriggerGenericTriggerPropertiesItem (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewTriggerGenericTriggerPropertiesItem(name string, typeVar string) (_model *TriggerGenericTriggerPropertiesItem, err error) {
-	_model = &TriggerGenericTriggerPropertiesItem{
-		Name: core.StringPtr(name),
-		Type: core.StringPtr(typeVar),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
+// Constants associated with the TriggerPatch.Events property.
+// List of events. Supported options are 'push' Git webhook events, 'pull_request_closed' Git webhook events and
+// 'pull_request' for 'open pull request' or 'update pull request' Git webhook events.
+const (
+	TriggerPatchEventsPullRequestConst = "pull_request"
+	TriggerPatchEventsPullRequestClosedConst = "pull_request_closed"
+	TriggerPatchEventsPushConst = "push"
+)
 
-// UnmarshalTriggerGenericTriggerPropertiesItem unmarshals an instance of TriggerGenericTriggerPropertiesItem from the specified map of raw messages.
-func UnmarshalTriggerGenericTriggerPropertiesItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggerGenericTriggerPropertiesItem)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
-	if err != nil {
-		return
-	}
+// UnmarshalTriggerPatch unmarshals an instance of TriggerPatch from the specified map of raw messages.
+func UnmarshalTriggerPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TriggerPatch)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// TriggerManualTriggerPropertiesItem : Trigger Property object.
-type TriggerManualTriggerPropertiesItem struct {
-	// Property name.
-	Name *string `json:"name" validate:"required"`
-
-	// String format property value.
-	Value *string `json:"value,omitempty"`
-
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
-
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
-
-	// Property type.
-	Type *string `json:"type" validate:"required"`
-
-	// property path for INTEGRATION type properties.
-	Path *string `json:"path,omitempty"`
-
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-}
-
-// Constants associated with the TriggerManualTriggerPropertiesItem.Type property.
-// Property type.
-const (
-	TriggerManualTriggerPropertiesItemTypeAppconfigConst = "APPCONFIG"
-	TriggerManualTriggerPropertiesItemTypeIntegrationConst = "INTEGRATION"
-	TriggerManualTriggerPropertiesItemTypeSecureConst = "SECURE"
-	TriggerManualTriggerPropertiesItemTypeSingleSelectConst = "SINGLE_SELECT"
-	TriggerManualTriggerPropertiesItemTypeTextConst = "TEXT"
-)
-
-// NewTriggerManualTriggerPropertiesItem : Instantiate TriggerManualTriggerPropertiesItem (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewTriggerManualTriggerPropertiesItem(name string, typeVar string) (_model *TriggerManualTriggerPropertiesItem, err error) {
-	_model = &TriggerManualTriggerPropertiesItem{
-		Name: core.StringPtr(name),
-		Type: core.StringPtr(typeVar),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-// UnmarshalTriggerManualTriggerPropertiesItem unmarshals an instance of TriggerManualTriggerPropertiesItem from the specified map of raw messages.
-func UnmarshalTriggerManualTriggerPropertiesItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggerManualTriggerPropertiesItem)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	err = core.UnmarshalPrimitive(m, "event_listener", &obj.EventListener)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
+	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	err = core.UnmarshalModel(m, "worker", &obj.Worker, UnmarshalWorkerIdentity)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	err = core.UnmarshalPrimitive(m, "max_concurrent_runs", &obj.MaxConcurrentRuns)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
+	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	err = core.UnmarshalModel(m, "secret", &obj.Secret, UnmarshalGenericSecret)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cron", &obj.Cron)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "timezone", &obj.Timezone)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "source", &obj.Source, UnmarshalTriggerSourcePrototype)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "events", &obj.Events)
 	if err != nil {
 		return
 	}
@@ -5264,16 +5541,26 @@ func UnmarshalTriggerManualTriggerPropertiesItem(m map[string]json.RawMessage, r
 	return
 }
 
-// TriggerProperties : Trigger properties object.
-type TriggerProperties struct {
+// AsPatch returns a generic map representation of the TriggerPatch
+func (triggerPatch *TriggerPatch) AsPatch() (_patch map[string]interface{}, err error) {
+	var jsonData []byte
+	jsonData, err = json.Marshal(triggerPatch)
+	if err == nil {
+		err = json.Unmarshal(jsonData, &_patch)
+	}
+	return
+}
+
+// TriggerPropertiesCollection : Trigger properties object.
+type TriggerPropertiesCollection struct {
 	// Trigger properties list.
-	Properties []TriggerPropertiesPropertiesItem `json:"properties" validate:"required"`
+	Properties []TriggerProperty `json:"properties" validate:"required"`
 }
 
-// UnmarshalTriggerProperties unmarshals an instance of TriggerProperties from the specified map of raw messages.
-func UnmarshalTriggerProperties(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggerProperties)
-	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerPropertiesPropertiesItem)
+// UnmarshalTriggerPropertiesCollection unmarshals an instance of TriggerPropertiesCollection from the specified map of raw messages.
+func UnmarshalTriggerPropertiesCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TriggerPropertiesCollection)
+	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerProperty)
 	if err != nil {
 		return
 	}
@@ -5281,194 +5568,37 @@ func UnmarshalTriggerProperties(m map[string]json.RawMessage, result interface{}
 	return
 }
 
-// TriggerPropertiesItem : Trigger Property object.
-type TriggerPropertiesItem struct {
-	// Property name.
-	Name *string `json:"name" validate:"required"`
-
-	// String format property value.
-	Value *string `json:"value,omitempty"`
-
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
-
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
-
-	// Property type.
-	Type *string `json:"type" validate:"required"`
-
-	// property path for INTEGRATION type properties.
-	Path *string `json:"path,omitempty"`
-
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-}
-
-// Constants associated with the TriggerPropertiesItem.Type property.
-// Property type.
-const (
-	TriggerPropertiesItemTypeAppconfigConst = "APPCONFIG"
-	TriggerPropertiesItemTypeIntegrationConst = "INTEGRATION"
-	TriggerPropertiesItemTypeSecureConst = "SECURE"
-	TriggerPropertiesItemTypeSingleSelectConst = "SINGLE_SELECT"
-	TriggerPropertiesItemTypeTextConst = "TEXT"
-)
-
-// NewTriggerPropertiesItem : Instantiate TriggerPropertiesItem (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewTriggerPropertiesItem(name string, typeVar string) (_model *TriggerPropertiesItem, err error) {
-	_model = &TriggerPropertiesItem{
-		Name: core.StringPtr(name),
-		Type: core.StringPtr(typeVar),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-// UnmarshalTriggerPropertiesItem unmarshals an instance of TriggerPropertiesItem from the specified map of raw messages.
-func UnmarshalTriggerPropertiesItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggerPropertiesItem)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// TriggerPropertiesPropertiesItem : Trigger Property object.
-type TriggerPropertiesPropertiesItem struct {
-	// Property name.
-	Name *string `json:"name" validate:"required"`
-
-	// String format property value.
-	Value *string `json:"value,omitempty"`
-
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
-
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
-
-	// Property type.
-	Type *string `json:"type" validate:"required"`
-
-	// property path for INTEGRATION type properties.
-	Path *string `json:"path,omitempty"`
-
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-}
-
-// Constants associated with the TriggerPropertiesPropertiesItem.Type property.
-// Property type.
-const (
-	TriggerPropertiesPropertiesItemTypeAppconfigConst = "APPCONFIG"
-	TriggerPropertiesPropertiesItemTypeIntegrationConst = "INTEGRATION"
-	TriggerPropertiesPropertiesItemTypeSecureConst = "SECURE"
-	TriggerPropertiesPropertiesItemTypeSingleSelectConst = "SINGLE_SELECT"
-	TriggerPropertiesPropertiesItemTypeTextConst = "TEXT"
-)
-
-// UnmarshalTriggerPropertiesPropertiesItem unmarshals an instance of TriggerPropertiesPropertiesItem from the specified map of raw messages.
-func UnmarshalTriggerPropertiesPropertiesItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggerPropertiesPropertiesItem)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// TriggerProperty : Trigger Property object.
+// TriggerProperty : Trigger property object.
 type TriggerProperty struct {
 	// Property name.
 	Name *string `json:"name" validate:"required"`
 
-	// String format property value.
+	// Property value. Any string value is valid.
 	Value *string `json:"value,omitempty"`
 
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
+	// API URL for interacting with the trigger property.
+	Href *string `json:"href,omitempty"`
 
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
+	// Options for `single_select` property type. Only needed for `single_select` property type.
+	Enum []string `json:"enum,omitempty"`
 
 	// Property type.
 	Type *string `json:"type" validate:"required"`
 
-	// property path for INTEGRATION type properties.
+	// A dot notation path for `integration` type properties only, that selects a value from the tool integration. If left
+	// blank the full tool integration data will be used.
 	Path *string `json:"path,omitempty"`
 }
 
 // Constants associated with the TriggerProperty.Type property.
 // Property type.
 const (
-	TriggerPropertyTypeAppconfigConst = "APPCONFIG"
-	TriggerPropertyTypeIntegrationConst = "INTEGRATION"
-	TriggerPropertyTypeSecureConst = "SECURE"
-	TriggerPropertyTypeSingleSelectConst = "SINGLE_SELECT"
-	TriggerPropertyTypeTextConst = "TEXT"
+	TriggerPropertyTypeAppconfigConst = "appconfig"
+	TriggerPropertyTypeIntegrationConst = "integration"
+	TriggerPropertyTypeSecureConst = "secure"
+	TriggerPropertyTypeSingleSelectConst = "single_select"
+	TriggerPropertyTypeTextConst = "text"
 )
-
-// NewTriggerProperty : Instantiate TriggerProperty (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewTriggerProperty(name string, typeVar string) (_model *TriggerProperty, err error) {
-	_model = &TriggerProperty{
-		Name: core.StringPtr(name),
-		Type: core.StringPtr(typeVar),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
 
 // UnmarshalTriggerProperty unmarshals an instance of TriggerProperty from the specified map of raw messages.
 func UnmarshalTriggerProperty(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -5481,11 +5611,11 @@ func UnmarshalTriggerProperty(m map[string]json.RawMessage, result interface{}) 
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
 	if err != nil {
 		return
 	}
@@ -5501,28 +5631,61 @@ func UnmarshalTriggerProperty(m map[string]json.RawMessage, result interface{}) 
 	return
 }
 
-// TriggerScmSource : Scm source for git type tekton pipeline trigger.
-type TriggerScmSource struct {
-	// Needed only for git trigger type. Repo URL that listening to.
-	URL *string `json:"url,omitempty"`
+// TriggerSource : Source repository for a Git trigger. Only required for Git triggers. The referenced repository URL must match the URL
+// of a repository tool integration in the parent toolchain. Obtain the list of integrations from the toolchain API
+// https://cloud.ibm.com/apidocs/toolchain#list-tools.
+type TriggerSource struct {
+	// The only supported source type is "git", indicating that the source is a git repository.
+	Type *string `json:"type" validate:"required"`
 
-	// Needed only for git trigger type. Branch name of the repo. Branch field doesn't coexist with pattern field.
-	Branch *string `json:"branch,omitempty"`
-
-	// Needed only for git trigger type. Git branch or tag pattern to listen to. Please refer to
-	// https://github.com/micromatch/micromatch for pattern syntax.
-	Pattern *string `json:"pattern,omitempty"`
-
-	// Needed only for git trigger type. Branch name of the repo.
-	BlindConnection *bool `json:"blind_connection,omitempty"`
-
-	// Webhook ID.
-	HookID *string `json:"hook_id,omitempty"`
+	// Properties of the source, which define the URL of the repository and a branch or pattern.
+	Properties *TriggerSourceProperties `json:"properties" validate:"required"`
 }
 
-// UnmarshalTriggerScmSource unmarshals an instance of TriggerScmSource from the specified map of raw messages.
-func UnmarshalTriggerScmSource(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggerScmSource)
+// UnmarshalTriggerSource unmarshals an instance of TriggerSource from the specified map of raw messages.
+func UnmarshalTriggerSource(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TriggerSource)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerSourceProperties)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TriggerSourceProperties : Properties of the source, which define the URL of the repository and a branch or pattern.
+type TriggerSourceProperties struct {
+	// URL of the repository to which the trigger is listening.
+	URL *string `json:"url" validate:"required"`
+
+	// Name of a branch from the repo. One of branch or pattern must be specified, but only one or the other.
+	Branch *string `json:"branch,omitempty"`
+
+	// The pattern of Git branch or tag to which to listen. You can specify a glob pattern such as '!test' or '*master' to
+	// match against multiple tags/branches in the repository. The glob pattern used must conform to Bash 4.3
+	// specifications, see bash documentation for more info:
+	// https://www.gnu.org/software/bash/manual/bash.html#Pattern-Matching. One of branch or pattern must be specified, but
+	// only one or the other.
+	Pattern *string `json:"pattern,omitempty"`
+
+	// True if the repository server is not addressable on the public internet. IBM Cloud will not be able to validate the
+	// connection details you provide.
+	BlindConnection *bool `json:"blind_connection" validate:"required"`
+
+	// ID of the webhook from the repo. Computed upon creation of the trigger.
+	HookID *string `json:"hook_id,omitempty"`
+
+	// Reference to the repository tool in the parent toolchain.
+	Tool *Tool `json:"tool" validate:"required"`
+}
+
+// UnmarshalTriggerSourceProperties unmarshals an instance of TriggerSourceProperties from the specified map of raw messages.
+func UnmarshalTriggerSourceProperties(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TriggerSourceProperties)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
 		return
@@ -5543,82 +5706,51 @@ func UnmarshalTriggerScmSource(m map[string]json.RawMessage, result interface{})
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalModel(m, "tool", &obj.Tool, UnmarshalTool)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// TriggerScmTriggerPropertiesItem : Trigger Property object.
-type TriggerScmTriggerPropertiesItem struct {
-	// Property name.
-	Name *string `json:"name" validate:"required"`
+// TriggerSourcePropertiesPrototype : Properties of the source, which define the URL of the repository and a branch or pattern.
+type TriggerSourcePropertiesPrototype struct {
+	// URL of the repository to which the trigger is listening.
+	URL *string `json:"url" validate:"required"`
 
-	// String format property value.
-	Value *string `json:"value,omitempty"`
+	// Name of a branch from the repo. One of branch or pattern must be specified, but only one or the other.
+	Branch *string `json:"branch,omitempty"`
 
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
-
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
-
-	// Property type.
-	Type *string `json:"type" validate:"required"`
-
-	// property path for INTEGRATION type properties.
-	Path *string `json:"path,omitempty"`
-
-	// General href URL.
-	Href *string `json:"href,omitempty"`
+	// The pattern of Git branch or tag to which to listen. You can specify a glob pattern such as '!test' or '*master' to
+	// match against multiple tags/branches in the repository. The glob pattern used must conform to Bash 4.3
+	// specifications, see bash documentation for more info:
+	// https://www.gnu.org/software/bash/manual/bash.html#Pattern-Matching. One of branch or pattern must be specified, but
+	// only one or the other.
+	Pattern *string `json:"pattern,omitempty"`
 }
 
-// Constants associated with the TriggerScmTriggerPropertiesItem.Type property.
-// Property type.
-const (
-	TriggerScmTriggerPropertiesItemTypeAppconfigConst = "APPCONFIG"
-	TriggerScmTriggerPropertiesItemTypeIntegrationConst = "INTEGRATION"
-	TriggerScmTriggerPropertiesItemTypeSecureConst = "SECURE"
-	TriggerScmTriggerPropertiesItemTypeSingleSelectConst = "SINGLE_SELECT"
-	TriggerScmTriggerPropertiesItemTypeTextConst = "TEXT"
-)
-
-// NewTriggerScmTriggerPropertiesItem : Instantiate TriggerScmTriggerPropertiesItem (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewTriggerScmTriggerPropertiesItem(name string, typeVar string) (_model *TriggerScmTriggerPropertiesItem, err error) {
-	_model = &TriggerScmTriggerPropertiesItem{
-		Name: core.StringPtr(name),
-		Type: core.StringPtr(typeVar),
+// NewTriggerSourcePropertiesPrototype : Instantiate TriggerSourcePropertiesPrototype (Generic Model Constructor)
+func (*CdTektonPipelineV2) NewTriggerSourcePropertiesPrototype(url string) (_model *TriggerSourcePropertiesPrototype, err error) {
+	_model = &TriggerSourcePropertiesPrototype{
+		URL: core.StringPtr(url),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
-// UnmarshalTriggerScmTriggerPropertiesItem unmarshals an instance of TriggerScmTriggerPropertiesItem from the specified map of raw messages.
-func UnmarshalTriggerScmTriggerPropertiesItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggerScmTriggerPropertiesItem)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+// UnmarshalTriggerSourcePropertiesPrototype unmarshals an instance of TriggerSourcePropertiesPrototype from the specified map of raw messages.
+func UnmarshalTriggerSourcePropertiesPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TriggerSourcePropertiesPrototype)
+	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	err = core.UnmarshalPrimitive(m, "branch", &obj.Branch)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	err = core.UnmarshalPrimitive(m, "pattern", &obj.Pattern)
 	if err != nil {
 		return
 	}
@@ -5626,78 +5758,35 @@ func UnmarshalTriggerScmTriggerPropertiesItem(m map[string]json.RawMessage, resu
 	return
 }
 
-// TriggerTimerTriggerPropertiesItem : Trigger Property object.
-type TriggerTimerTriggerPropertiesItem struct {
-	// Property name.
-	Name *string `json:"name" validate:"required"`
-
-	// String format property value.
-	Value *string `json:"value,omitempty"`
-
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
-
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
-
-	// Property type.
+// TriggerSourcePrototype : Source repository for a Git trigger. Only required for Git triggers. The referenced repository URL must match the URL
+// of a repository tool integration in the parent toolchain. Obtain the list of integrations from the toolchain API
+// https://cloud.ibm.com/apidocs/toolchain#list-tools.
+type TriggerSourcePrototype struct {
+	// The only supported source type is "git", indicating that the source is a git repository.
 	Type *string `json:"type" validate:"required"`
 
-	// property path for INTEGRATION type properties.
-	Path *string `json:"path,omitempty"`
-
-	// General href URL.
-	Href *string `json:"href,omitempty"`
+	// Properties of the source, which define the URL of the repository and a branch or pattern.
+	Properties *TriggerSourcePropertiesPrototype `json:"properties" validate:"required"`
 }
 
-// Constants associated with the TriggerTimerTriggerPropertiesItem.Type property.
-// Property type.
-const (
-	TriggerTimerTriggerPropertiesItemTypeAppconfigConst = "APPCONFIG"
-	TriggerTimerTriggerPropertiesItemTypeIntegrationConst = "INTEGRATION"
-	TriggerTimerTriggerPropertiesItemTypeSecureConst = "SECURE"
-	TriggerTimerTriggerPropertiesItemTypeSingleSelectConst = "SINGLE_SELECT"
-	TriggerTimerTriggerPropertiesItemTypeTextConst = "TEXT"
-)
-
-// NewTriggerTimerTriggerPropertiesItem : Instantiate TriggerTimerTriggerPropertiesItem (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewTriggerTimerTriggerPropertiesItem(name string, typeVar string) (_model *TriggerTimerTriggerPropertiesItem, err error) {
-	_model = &TriggerTimerTriggerPropertiesItem{
-		Name: core.StringPtr(name),
+// NewTriggerSourcePrototype : Instantiate TriggerSourcePrototype (Generic Model Constructor)
+func (*CdTektonPipelineV2) NewTriggerSourcePrototype(typeVar string, properties *TriggerSourcePropertiesPrototype) (_model *TriggerSourcePrototype, err error) {
+	_model = &TriggerSourcePrototype{
 		Type: core.StringPtr(typeVar),
+		Properties: properties,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
-// UnmarshalTriggerTimerTriggerPropertiesItem unmarshals an instance of TriggerTimerTriggerPropertiesItem from the specified map of raw messages.
-func UnmarshalTriggerTimerTriggerPropertiesItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggerTimerTriggerPropertiesItem)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
-	if err != nil {
-		return
-	}
+// UnmarshalTriggerSourcePrototype unmarshals an instance of TriggerSourcePrototype from the specified map of raw messages.
+func UnmarshalTriggerSourcePrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TriggerSourcePrototype)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerSourcePropertiesPrototype)
 	if err != nil {
 		return
 	}
@@ -5705,435 +5794,16 @@ func UnmarshalTriggerTimerTriggerPropertiesItem(m map[string]json.RawMessage, re
 	return
 }
 
-// Triggers : Tekton pipeline triggers object.
-type Triggers struct {
+// TriggersCollection : Tekton pipeline triggers object.
+type TriggersCollection struct {
 	// Tekton pipeline triggers list.
-	Triggers []TriggersTriggersItemIntf `json:"triggers" validate:"required"`
+	Triggers []TriggerIntf `json:"triggers" validate:"required"`
 }
 
-// UnmarshalTriggers unmarshals an instance of Triggers from the specified map of raw messages.
-func UnmarshalTriggers(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(Triggers)
-	err = core.UnmarshalModel(m, "triggers", &obj.Triggers, UnmarshalTriggersTriggersItem)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// TriggersTriggersItem : Tekton pipeline trigger object.
-// Models which "extend" this model:
-// - TriggersTriggersItemTriggerDuplicateTrigger
-// - TriggersTriggersItemTriggerManualTrigger
-// - TriggersTriggersItemTriggerScmTrigger
-// - TriggersTriggersItemTriggerTimerTrigger
-// - TriggersTriggersItemTriggerGenericTrigger
-type TriggersTriggersItem struct {
-	// source trigger ID to clone from.
-	SourceTriggerID *string `json:"source_trigger_id,omitempty"`
-
-	// name of the duplicated trigger.
-	Name *string `json:"name,omitempty"`
-
-	// Trigger type.
-	Type *string `json:"type,omitempty"`
-
-	// Event listener name.
-	EventListener *string `json:"event_listener,omitempty"`
-
-	// UUID.
-	ID *string `json:"id,omitempty"`
-
-	// Trigger properties.
-	Properties []TriggerPropertiesItem `json:"properties,omitempty"`
-
-	// Trigger tags array.
-	Tags []string `json:"tags,omitempty"`
-
-	// Trigger worker used to run the trigger, the trigger worker overrides the default pipeline worker.If not exist, this
-	// trigger uses default pipeline worker.
-	Worker *Worker `json:"worker,omitempty"`
-
-	// Concurrency object.
-	Concurrency *Concurrency `json:"concurrency,omitempty"`
-
-	// flag whether the trigger is disabled.
-	Disabled *bool `json:"disabled,omitempty"`
-
-	// Scm source for git type tekton pipeline trigger.
-	ScmSource *TriggerScmSource `json:"scm_source,omitempty"`
-
-	// Needed only for git trigger type. Events object defines the events this git trigger listening to.
-	Events *Events `json:"events,omitempty"`
-
-	// UUID.
-	ServiceInstanceID *string `json:"service_instance_id,omitempty"`
-
-	// Needed only for timer trigger type. Cron expression for timer trigger. Maximum frequency is every 5 minutes.
-	Cron *string `json:"cron,omitempty"`
-
-	// Needed only for timer trigger type. Timezones for timer trigger.
-	Timezone *string `json:"timezone,omitempty"`
-
-	// Needed only for generic trigger type. Secret used to start generic trigger.
-	Secret *GenericSecret `json:"secret,omitempty"`
-
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-}
-func (*TriggersTriggersItem) isaTriggersTriggersItem() bool {
-	return true
-}
-
-type TriggersTriggersItemIntf interface {
-	isaTriggersTriggersItem() bool
-}
-
-// UnmarshalTriggersTriggersItem unmarshals an instance of TriggersTriggersItem from the specified map of raw messages.
-func UnmarshalTriggersTriggersItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggersTriggersItem)
-	err = core.UnmarshalPrimitive(m, "source_trigger_id", &obj.SourceTriggerID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "event_listener", &obj.EventListener)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerPropertiesItem)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "worker", &obj.Worker, UnmarshalWorker)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "concurrency", &obj.Concurrency, UnmarshalConcurrency)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "scm_source", &obj.ScmSource, UnmarshalTriggerScmSource)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "events", &obj.Events, UnmarshalEvents)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "service_instance_id", &obj.ServiceInstanceID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "cron", &obj.Cron)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "timezone", &obj.Timezone)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "secret", &obj.Secret, UnmarshalGenericSecret)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// TriggersTriggersItemTriggerGenericTriggerPropertiesItem : Trigger Property object.
-type TriggersTriggersItemTriggerGenericTriggerPropertiesItem struct {
-	// Property name.
-	Name *string `json:"name" validate:"required"`
-
-	// String format property value.
-	Value *string `json:"value,omitempty"`
-
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
-
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
-
-	// Property type.
-	Type *string `json:"type" validate:"required"`
-
-	// property path for INTEGRATION type properties.
-	Path *string `json:"path,omitempty"`
-
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-}
-
-// Constants associated with the TriggersTriggersItemTriggerGenericTriggerPropertiesItem.Type property.
-// Property type.
-const (
-	TriggersTriggersItemTriggerGenericTriggerPropertiesItemTypeAppconfigConst = "APPCONFIG"
-	TriggersTriggersItemTriggerGenericTriggerPropertiesItemTypeIntegrationConst = "INTEGRATION"
-	TriggersTriggersItemTriggerGenericTriggerPropertiesItemTypeSecureConst = "SECURE"
-	TriggersTriggersItemTriggerGenericTriggerPropertiesItemTypeSingleSelectConst = "SINGLE_SELECT"
-	TriggersTriggersItemTriggerGenericTriggerPropertiesItemTypeTextConst = "TEXT"
-)
-
-// UnmarshalTriggersTriggersItemTriggerGenericTriggerPropertiesItem unmarshals an instance of TriggersTriggersItemTriggerGenericTriggerPropertiesItem from the specified map of raw messages.
-func UnmarshalTriggersTriggersItemTriggerGenericTriggerPropertiesItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggersTriggersItemTriggerGenericTriggerPropertiesItem)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// TriggersTriggersItemTriggerManualTriggerPropertiesItem : Trigger Property object.
-type TriggersTriggersItemTriggerManualTriggerPropertiesItem struct {
-	// Property name.
-	Name *string `json:"name" validate:"required"`
-
-	// String format property value.
-	Value *string `json:"value,omitempty"`
-
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
-
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
-
-	// Property type.
-	Type *string `json:"type" validate:"required"`
-
-	// property path for INTEGRATION type properties.
-	Path *string `json:"path,omitempty"`
-
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-}
-
-// Constants associated with the TriggersTriggersItemTriggerManualTriggerPropertiesItem.Type property.
-// Property type.
-const (
-	TriggersTriggersItemTriggerManualTriggerPropertiesItemTypeAppconfigConst = "APPCONFIG"
-	TriggersTriggersItemTriggerManualTriggerPropertiesItemTypeIntegrationConst = "INTEGRATION"
-	TriggersTriggersItemTriggerManualTriggerPropertiesItemTypeSecureConst = "SECURE"
-	TriggersTriggersItemTriggerManualTriggerPropertiesItemTypeSingleSelectConst = "SINGLE_SELECT"
-	TriggersTriggersItemTriggerManualTriggerPropertiesItemTypeTextConst = "TEXT"
-)
-
-// UnmarshalTriggersTriggersItemTriggerManualTriggerPropertiesItem unmarshals an instance of TriggersTriggersItemTriggerManualTriggerPropertiesItem from the specified map of raw messages.
-func UnmarshalTriggersTriggersItemTriggerManualTriggerPropertiesItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggersTriggersItemTriggerManualTriggerPropertiesItem)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// TriggersTriggersItemTriggerScmTriggerPropertiesItem : Trigger Property object.
-type TriggersTriggersItemTriggerScmTriggerPropertiesItem struct {
-	// Property name.
-	Name *string `json:"name" validate:"required"`
-
-	// String format property value.
-	Value *string `json:"value,omitempty"`
-
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
-
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
-
-	// Property type.
-	Type *string `json:"type" validate:"required"`
-
-	// property path for INTEGRATION type properties.
-	Path *string `json:"path,omitempty"`
-
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-}
-
-// Constants associated with the TriggersTriggersItemTriggerScmTriggerPropertiesItem.Type property.
-// Property type.
-const (
-	TriggersTriggersItemTriggerScmTriggerPropertiesItemTypeAppconfigConst = "APPCONFIG"
-	TriggersTriggersItemTriggerScmTriggerPropertiesItemTypeIntegrationConst = "INTEGRATION"
-	TriggersTriggersItemTriggerScmTriggerPropertiesItemTypeSecureConst = "SECURE"
-	TriggersTriggersItemTriggerScmTriggerPropertiesItemTypeSingleSelectConst = "SINGLE_SELECT"
-	TriggersTriggersItemTriggerScmTriggerPropertiesItemTypeTextConst = "TEXT"
-)
-
-// UnmarshalTriggersTriggersItemTriggerScmTriggerPropertiesItem unmarshals an instance of TriggersTriggersItemTriggerScmTriggerPropertiesItem from the specified map of raw messages.
-func UnmarshalTriggersTriggersItemTriggerScmTriggerPropertiesItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggersTriggersItemTriggerScmTriggerPropertiesItem)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// TriggersTriggersItemTriggerTimerTriggerPropertiesItem : Trigger Property object.
-type TriggersTriggersItemTriggerTimerTriggerPropertiesItem struct {
-	// Property name.
-	Name *string `json:"name" validate:"required"`
-
-	// String format property value.
-	Value *string `json:"value,omitempty"`
-
-	// Options for SINGLE_SELECT property type.
-	Enum []string `json:"enum,omitempty"`
-
-	// Default option for SINGLE_SELECT property type.
-	Default *string `json:"default,omitempty"`
-
-	// Property type.
-	Type *string `json:"type" validate:"required"`
-
-	// property path for INTEGRATION type properties.
-	Path *string `json:"path,omitempty"`
-
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-}
-
-// Constants associated with the TriggersTriggersItemTriggerTimerTriggerPropertiesItem.Type property.
-// Property type.
-const (
-	TriggersTriggersItemTriggerTimerTriggerPropertiesItemTypeAppconfigConst = "APPCONFIG"
-	TriggersTriggersItemTriggerTimerTriggerPropertiesItemTypeIntegrationConst = "INTEGRATION"
-	TriggersTriggersItemTriggerTimerTriggerPropertiesItemTypeSecureConst = "SECURE"
-	TriggersTriggersItemTriggerTimerTriggerPropertiesItemTypeSingleSelectConst = "SINGLE_SELECT"
-	TriggersTriggersItemTriggerTimerTriggerPropertiesItemTypeTextConst = "TEXT"
-)
-
-// UnmarshalTriggersTriggersItemTriggerTimerTriggerPropertiesItem unmarshals an instance of TriggersTriggersItemTriggerTimerTriggerPropertiesItem from the specified map of raw messages.
-func UnmarshalTriggersTriggersItemTriggerTimerTriggerPropertiesItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggersTriggersItemTriggerTimerTriggerPropertiesItem)
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "enum", &obj.Enum)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "path", &obj.Path)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+// UnmarshalTriggersCollection unmarshals an instance of TriggersCollection from the specified map of raw messages.
+func UnmarshalTriggersCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TriggersCollection)
+	err = core.UnmarshalModel(m, "triggers", &obj.Triggers, UnmarshalTrigger)
 	if err != nil {
 		return
 	}
@@ -6146,8 +5816,8 @@ type UpdateTektonPipelineOptions struct {
 	// ID of current instance.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Worker object with worker ID only.
-	Worker *WorkerWithID `json:"worker,omitempty"`
+	// JSON Merge-Patch content for update_tekton_pipeline.
+	TektonPipelinePatch map[string]interface{} `json:"TektonPipelinePatch,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -6166,9 +5836,9 @@ func (_options *UpdateTektonPipelineOptions) SetID(id string) *UpdateTektonPipel
 	return _options
 }
 
-// SetWorker : Allow user to set Worker
-func (_options *UpdateTektonPipelineOptions) SetWorker(worker *WorkerWithID) *UpdateTektonPipelineOptions {
-	_options.Worker = worker
+// SetTektonPipelinePatch : Allow user to set TektonPipelinePatch
+func (_options *UpdateTektonPipelineOptions) SetTektonPipelinePatch(tektonPipelinePatch map[string]interface{}) *UpdateTektonPipelineOptions {
+	_options.TektonPipelinePatch = tektonPipelinePatch
 	return _options
 }
 
@@ -6180,60 +5850,18 @@ func (options *UpdateTektonPipelineOptions) SetHeaders(param map[string]string) 
 
 // UpdateTektonPipelineTriggerOptions : The UpdateTektonPipelineTrigger options.
 type UpdateTektonPipelineTriggerOptions struct {
-	// The tekton pipeline ID.
+	// The Tekton pipeline ID.
 	PipelineID *string `json:"pipeline_id" validate:"required,ne="`
 
 	// The trigger ID.
 	TriggerID *string `json:"trigger_id" validate:"required,ne="`
 
-	// Trigger type.
-	Type *string `json:"type,omitempty"`
-
-	// Trigger name.
-	Name *string `json:"name,omitempty"`
-
-	// Event listener name.
-	EventListener *string `json:"event_listener,omitempty"`
-
-	// Trigger tags array.
-	Tags []string `json:"tags,omitempty"`
-
-	// Trigger worker used to run the trigger, the trigger worker overrides the default pipeline worker.
-	Worker *Worker `json:"worker,omitempty"`
-
-	// Concurrency object.
-	Concurrency *Concurrency `json:"concurrency,omitempty"`
-
-	// Defines if this trigger is disabled.
-	Disabled *bool `json:"disabled,omitempty"`
-
-	// Needed only for generic trigger type. Secret used to start generic trigger.
-	Secret *GenericSecret `json:"secret,omitempty"`
-
-	// Needed only for timer trigger type. Cron expression for timer trigger.
-	Cron *string `json:"cron,omitempty"`
-
-	// Needed only for timer trigger type. Timezones for timer trigger.
-	Timezone *string `json:"timezone,omitempty"`
-
-	// Scm source for git type tekton pipeline trigger.
-	ScmSource *TriggerScmSource `json:"scm_source,omitempty"`
-
-	// Needed only for git trigger type. Events object defines the events this git trigger listening to.
-	Events *Events `json:"events,omitempty"`
+	// JSON Merge-Patch content for update_tekton_pipeline_trigger.
+	TriggerPatch map[string]interface{} `json:"TriggerPatch,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
-
-// Constants associated with the UpdateTektonPipelineTriggerOptions.Type property.
-// Trigger type.
-const (
-	UpdateTektonPipelineTriggerOptionsTypeGenericConst = "generic"
-	UpdateTektonPipelineTriggerOptionsTypeManualConst = "manual"
-	UpdateTektonPipelineTriggerOptionsTypeScmConst = "scm"
-	UpdateTektonPipelineTriggerOptionsTypeTimerConst = "timer"
-)
 
 // NewUpdateTektonPipelineTriggerOptions : Instantiate UpdateTektonPipelineTriggerOptions
 func (*CdTektonPipelineV2) NewUpdateTektonPipelineTriggerOptions(pipelineID string, triggerID string) *UpdateTektonPipelineTriggerOptions {
@@ -6255,75 +5883,9 @@ func (_options *UpdateTektonPipelineTriggerOptions) SetTriggerID(triggerID strin
 	return _options
 }
 
-// SetType : Allow user to set Type
-func (_options *UpdateTektonPipelineTriggerOptions) SetType(typeVar string) *UpdateTektonPipelineTriggerOptions {
-	_options.Type = core.StringPtr(typeVar)
-	return _options
-}
-
-// SetName : Allow user to set Name
-func (_options *UpdateTektonPipelineTriggerOptions) SetName(name string) *UpdateTektonPipelineTriggerOptions {
-	_options.Name = core.StringPtr(name)
-	return _options
-}
-
-// SetEventListener : Allow user to set EventListener
-func (_options *UpdateTektonPipelineTriggerOptions) SetEventListener(eventListener string) *UpdateTektonPipelineTriggerOptions {
-	_options.EventListener = core.StringPtr(eventListener)
-	return _options
-}
-
-// SetTags : Allow user to set Tags
-func (_options *UpdateTektonPipelineTriggerOptions) SetTags(tags []string) *UpdateTektonPipelineTriggerOptions {
-	_options.Tags = tags
-	return _options
-}
-
-// SetWorker : Allow user to set Worker
-func (_options *UpdateTektonPipelineTriggerOptions) SetWorker(worker *Worker) *UpdateTektonPipelineTriggerOptions {
-	_options.Worker = worker
-	return _options
-}
-
-// SetConcurrency : Allow user to set Concurrency
-func (_options *UpdateTektonPipelineTriggerOptions) SetConcurrency(concurrency *Concurrency) *UpdateTektonPipelineTriggerOptions {
-	_options.Concurrency = concurrency
-	return _options
-}
-
-// SetDisabled : Allow user to set Disabled
-func (_options *UpdateTektonPipelineTriggerOptions) SetDisabled(disabled bool) *UpdateTektonPipelineTriggerOptions {
-	_options.Disabled = core.BoolPtr(disabled)
-	return _options
-}
-
-// SetSecret : Allow user to set Secret
-func (_options *UpdateTektonPipelineTriggerOptions) SetSecret(secret *GenericSecret) *UpdateTektonPipelineTriggerOptions {
-	_options.Secret = secret
-	return _options
-}
-
-// SetCron : Allow user to set Cron
-func (_options *UpdateTektonPipelineTriggerOptions) SetCron(cron string) *UpdateTektonPipelineTriggerOptions {
-	_options.Cron = core.StringPtr(cron)
-	return _options
-}
-
-// SetTimezone : Allow user to set Timezone
-func (_options *UpdateTektonPipelineTriggerOptions) SetTimezone(timezone string) *UpdateTektonPipelineTriggerOptions {
-	_options.Timezone = core.StringPtr(timezone)
-	return _options
-}
-
-// SetScmSource : Allow user to set ScmSource
-func (_options *UpdateTektonPipelineTriggerOptions) SetScmSource(scmSource *TriggerScmSource) *UpdateTektonPipelineTriggerOptions {
-	_options.ScmSource = scmSource
-	return _options
-}
-
-// SetEvents : Allow user to set Events
-func (_options *UpdateTektonPipelineTriggerOptions) SetEvents(events *Events) *UpdateTektonPipelineTriggerOptions {
-	_options.Events = events
+// SetTriggerPatch : Allow user to set TriggerPatch
+func (_options *UpdateTektonPipelineTriggerOptions) SetTriggerPatch(triggerPatch map[string]interface{}) *UpdateTektonPipelineTriggerOptions {
+	_options.TriggerPatch = triggerPatch
 	return _options
 }
 
@@ -6333,12 +5895,13 @@ func (options *UpdateTektonPipelineTriggerOptions) SetHeaders(param map[string]s
 	return options
 }
 
-// UserInfo : User information.
+// UserInfo : Information about the user that triggered a pipeline run. Only included for pipeline runs that were manually
+// triggered.
 type UserInfo struct {
 	// IBM Cloud IAM ID.
 	IamID *string `json:"iam_id" validate:"required"`
 
-	// User Email address.
+	// User email address.
 	Sub *string `json:"sub" validate:"required"`
 }
 
@@ -6359,29 +5922,14 @@ func UnmarshalUserInfo(m map[string]json.RawMessage, result interface{}) (err er
 
 // Worker : Default pipeline worker used to run the pipeline.
 type Worker struct {
-	// worker name.
+	// Name of the worker. Computed based on the worker ID.
 	Name *string `json:"name,omitempty"`
 
-	// worker type.
+	// Type of the worker. Computed based on the worker ID.
 	Type *string `json:"type,omitempty"`
 
+	// ID of the worker.
 	ID *string `json:"id" validate:"required"`
-}
-
-// Constants associated with the Worker.Type property.
-// worker type.
-const (
-	WorkerTypePrivateConst = "private"
-	WorkerTypePublicConst = "public"
-)
-
-// NewWorker : Instantiate Worker (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewWorker(id string) (_model *Worker, err error) {
-	_model = &Worker{
-		ID: core.StringPtr(id),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
 }
 
 // UnmarshalWorker unmarshals an instance of Worker from the specified map of raw messages.
@@ -6403,23 +5951,24 @@ func UnmarshalWorker(m map[string]json.RawMessage, result interface{}) (err erro
 	return
 }
 
-// WorkerWithID : Worker object with worker ID only.
-type WorkerWithID struct {
+// WorkerIdentity : Worker object containing worker ID only. If omitted the IBM Managed shared workers are used by default.
+type WorkerIdentity struct {
+	// ID of the worker.
 	ID *string `json:"id" validate:"required"`
 }
 
-// NewWorkerWithID : Instantiate WorkerWithID (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewWorkerWithID(id string) (_model *WorkerWithID, err error) {
-	_model = &WorkerWithID{
+// NewWorkerIdentity : Instantiate WorkerIdentity (Generic Model Constructor)
+func (*CdTektonPipelineV2) NewWorkerIdentity(id string) (_model *WorkerIdentity, err error) {
+	_model = &WorkerIdentity{
 		ID: core.StringPtr(id),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
-// UnmarshalWorkerWithID unmarshals an instance of WorkerWithID from the specified map of raw messages.
-func UnmarshalWorkerWithID(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(WorkerWithID)
+// UnmarshalWorkerIdentity unmarshals an instance of WorkerIdentity from the specified map of raw messages.
+func UnmarshalWorkerIdentity(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(WorkerIdentity)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		return
@@ -6428,46 +5977,8 @@ func UnmarshalWorkerWithID(m map[string]json.RawMessage, result interface{}) (er
 	return
 }
 
-// TriggerDuplicateTrigger : request body to duplicate trigger.
-// This model "extends" Trigger
-type TriggerDuplicateTrigger struct {
-	// source trigger ID to clone from.
-	SourceTriggerID *string `json:"source_trigger_id" validate:"required"`
-
-	// name of the duplicated trigger.
-	Name *string `json:"name" validate:"required"`
-}
-
-// NewTriggerDuplicateTrigger : Instantiate TriggerDuplicateTrigger (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewTriggerDuplicateTrigger(sourceTriggerID string, name string) (_model *TriggerDuplicateTrigger, err error) {
-	_model = &TriggerDuplicateTrigger{
-		SourceTriggerID: core.StringPtr(sourceTriggerID),
-		Name: core.StringPtr(name),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-func (*TriggerDuplicateTrigger) isaTrigger() bool {
-	return true
-}
-
-// UnmarshalTriggerDuplicateTrigger unmarshals an instance of TriggerDuplicateTrigger from the specified map of raw messages.
-func UnmarshalTriggerDuplicateTrigger(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggerDuplicateTrigger)
-	err = core.UnmarshalPrimitive(m, "source_trigger_id", &obj.SourceTriggerID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// TriggerGenericTrigger : Generic trigger, which triggers pipeline when tekton pipeline service receive a valie POST event with secrets.
+// TriggerGenericTrigger : Generic webhook trigger, which triggers a pipeline run when the Tekton Pipeline Service receives a POST event with
+// secrets.
 // This model "extends" Trigger
 type TriggerGenericTrigger struct {
 	// Trigger type.
@@ -6476,42 +5987,37 @@ type TriggerGenericTrigger struct {
 	// Trigger name.
 	Name *string `json:"name" validate:"required"`
 
-	// Event listener name.
+	// API URL for interacting with the trigger. Only included when fetching the list of pipeline triggers.
+	Href *string `json:"href,omitempty"`
+
+	// Event listener name. The name of the event listener to which the trigger is associated. The event listeners are
+	// defined in the definition repositories of the Tekton pipeline.
 	EventListener *string `json:"event_listener" validate:"required"`
 
-	// UUID.
-	ID *string `json:"id,omitempty"`
+	// The Trigger ID.
+	ID *string `json:"id" validate:"required"`
 
-	// Trigger properties.
-	Properties []TriggerGenericTriggerPropertiesItem `json:"properties,omitempty"`
+	// Optional trigger properties used to override or supplement the pipeline properties when triggering a pipeline run.
+	Properties []TriggerProperty `json:"properties,omitempty"`
 
-	// Trigger tags array.
-	Tags []string `json:"tags,omitempty"`
+	// Optional trigger tags array.
+	Tags []string `json:"tags"`
 
-	// Trigger worker used to run the trigger, the trigger worker overrides the default pipeline worker.If not exist, this
-	// trigger uses default pipeline worker.
+	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
 	Worker *Worker `json:"worker,omitempty"`
 
-	// Concurrency object.
-	Concurrency *Concurrency `json:"concurrency,omitempty"`
+	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
+	// for this trigger.
+	MaxConcurrentRuns *int64 `json:"max_concurrent_runs,omitempty"`
 
-	// flag whether the trigger is disabled.
-	Disabled *bool `json:"disabled" validate:"required"`
+	// Flag whether the trigger is enabled.
+	Enabled *bool `json:"enabled" validate:"required"`
 
-	// Needed only for generic trigger type. Secret used to start generic trigger.
+	// Only needed for generic webhook trigger type. Secret used to start generic webhook trigger.
 	Secret *GenericSecret `json:"secret,omitempty"`
-}
 
-// NewTriggerGenericTrigger : Instantiate TriggerGenericTrigger (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewTriggerGenericTrigger(typeVar string, name string, eventListener string, disabled bool) (_model *TriggerGenericTrigger, err error) {
-	_model = &TriggerGenericTrigger{
-		Type: core.StringPtr(typeVar),
-		Name: core.StringPtr(name),
-		EventListener: core.StringPtr(eventListener),
-		Disabled: core.BoolPtr(disabled),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
+	// Webhook URL that can be used to trigger pipeline runs.
+	WebhookURL *string `json:"webhook_url,omitempty"`
 }
 
 func (*TriggerGenericTrigger) isaTrigger() bool {
@@ -6529,6 +6035,10 @@ func UnmarshalTriggerGenericTrigger(m map[string]json.RawMessage, result interfa
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "event_listener", &obj.EventListener)
 	if err != nil {
 		return
@@ -6537,7 +6047,7 @@ func UnmarshalTriggerGenericTrigger(m map[string]json.RawMessage, result interfa
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerGenericTriggerPropertiesItem)
+	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerProperty)
 	if err != nil {
 		return
 	}
@@ -6549,15 +6059,19 @@ func UnmarshalTriggerGenericTrigger(m map[string]json.RawMessage, result interfa
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "concurrency", &obj.Concurrency, UnmarshalConcurrency)
+	err = core.UnmarshalPrimitive(m, "max_concurrent_runs", &obj.MaxConcurrentRuns)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
+	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
 		return
 	}
 	err = core.UnmarshalModel(m, "secret", &obj.Secret, UnmarshalGenericSecret)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "webhook_url", &obj.WebhookURL)
 	if err != nil {
 		return
 	}
@@ -6574,39 +6088,31 @@ type TriggerManualTrigger struct {
 	// Trigger name.
 	Name *string `json:"name" validate:"required"`
 
-	// Event listener name.
+	// API URL for interacting with the trigger. Only included when fetching the list of pipeline triggers.
+	Href *string `json:"href,omitempty"`
+
+	// Event listener name. The name of the event listener to which the trigger is associated. The event listeners are
+	// defined in the definition repositories of the Tekton pipeline.
 	EventListener *string `json:"event_listener" validate:"required"`
 
-	// UUID.
-	ID *string `json:"id,omitempty"`
+	// The Trigger ID.
+	ID *string `json:"id" validate:"required"`
 
-	// Trigger properties.
-	Properties []TriggerManualTriggerPropertiesItem `json:"properties,omitempty"`
+	// Optional trigger properties used to override or supplement the pipeline properties when triggering a pipeline run.
+	Properties []TriggerProperty `json:"properties,omitempty"`
 
-	// Trigger tags array.
-	Tags []string `json:"tags,omitempty"`
+	// Optional trigger tags array.
+	Tags []string `json:"tags"`
 
-	// Trigger worker used to run the trigger, the trigger worker overrides the default pipeline worker.If not exist, this
-	// trigger uses default pipeline worker.
+	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
 	Worker *Worker `json:"worker,omitempty"`
 
-	// Concurrency object.
-	Concurrency *Concurrency `json:"concurrency,omitempty"`
+	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
+	// for this trigger.
+	MaxConcurrentRuns *int64 `json:"max_concurrent_runs,omitempty"`
 
-	// flag whether the trigger is disabled.
-	Disabled *bool `json:"disabled" validate:"required"`
-}
-
-// NewTriggerManualTrigger : Instantiate TriggerManualTrigger (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewTriggerManualTrigger(typeVar string, name string, eventListener string, disabled bool) (_model *TriggerManualTrigger, err error) {
-	_model = &TriggerManualTrigger{
-		Type: core.StringPtr(typeVar),
-		Name: core.StringPtr(name),
-		EventListener: core.StringPtr(eventListener),
-		Disabled: core.BoolPtr(disabled),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
+	// Flag whether the trigger is enabled.
+	Enabled *bool `json:"enabled" validate:"required"`
 }
 
 func (*TriggerManualTrigger) isaTrigger() bool {
@@ -6624,6 +6130,10 @@ func UnmarshalTriggerManualTrigger(m map[string]json.RawMessage, result interfac
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "event_listener", &obj.EventListener)
 	if err != nil {
 		return
@@ -6632,7 +6142,7 @@ func UnmarshalTriggerManualTrigger(m map[string]json.RawMessage, result interfac
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerManualTriggerPropertiesItem)
+	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerProperty)
 	if err != nil {
 		return
 	}
@@ -6644,11 +6154,11 @@ func UnmarshalTriggerManualTrigger(m map[string]json.RawMessage, result interfac
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "concurrency", &obj.Concurrency, UnmarshalConcurrency)
+	err = core.UnmarshalPrimitive(m, "max_concurrent_runs", &obj.MaxConcurrentRuns)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
+	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
 		return
 	}
@@ -6656,8 +6166,8 @@ func UnmarshalTriggerManualTrigger(m map[string]json.RawMessage, result interfac
 	return
 }
 
-// TriggerScmTrigger : Git type trigger, which automatically triggers pipelineRun when tekton pipeline service receive a valid corresponding
-// git event.
+// TriggerScmTrigger : Git type trigger, which automatically triggers a pipeline run when the Tekton Pipeline Service receives a
+// corresponding Git webhook event.
 // This model "extends" Trigger
 type TriggerScmTrigger struct {
 	// Trigger type.
@@ -6666,49 +6176,51 @@ type TriggerScmTrigger struct {
 	// Trigger name.
 	Name *string `json:"name" validate:"required"`
 
-	// Event listener name.
+	// API URL for interacting with the trigger. Only included when fetching the list of pipeline triggers.
+	Href *string `json:"href,omitempty"`
+
+	// Event listener name. The name of the event listener to which the trigger is associated. The event listeners are
+	// defined in the definition repositories of the Tekton pipeline.
 	EventListener *string `json:"event_listener" validate:"required"`
 
-	// UUID.
-	ID *string `json:"id,omitempty"`
+	// The Trigger ID.
+	ID *string `json:"id" validate:"required"`
 
-	// Trigger properties.
-	Properties []TriggerScmTriggerPropertiesItem `json:"properties,omitempty"`
+	// Optional trigger properties used to override or supplement the pipeline properties when triggering a pipeline run.
+	Properties []TriggerProperty `json:"properties,omitempty"`
 
-	// Trigger tags array.
-	Tags []string `json:"tags,omitempty"`
+	// Optional trigger tags array.
+	Tags []string `json:"tags"`
 
-	// Trigger worker used to run the trigger, the trigger worker overrides the default pipeline worker.If not exist, this
-	// trigger uses default pipeline worker.
+	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
 	Worker *Worker `json:"worker,omitempty"`
 
-	// Concurrency object.
-	Concurrency *Concurrency `json:"concurrency,omitempty"`
+	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
+	// for this trigger.
+	MaxConcurrentRuns *int64 `json:"max_concurrent_runs,omitempty"`
 
-	// flag whether the trigger is disabled.
-	Disabled *bool `json:"disabled" validate:"required"`
+	// Flag whether the trigger is enabled.
+	Enabled *bool `json:"enabled" validate:"required"`
 
-	// Scm source for git type tekton pipeline trigger.
-	ScmSource *TriggerScmSource `json:"scm_source,omitempty"`
+	// Source repository for a Git trigger. Only required for Git triggers. The referenced repository URL must match the
+	// URL of a repository tool integration in the parent toolchain. Obtain the list of integrations from the toolchain API
+	// https://cloud.ibm.com/apidocs/toolchain#list-tools.
+	Source *TriggerSource `json:"source,omitempty"`
 
-	// Needed only for git trigger type. Events object defines the events this git trigger listening to.
-	Events *Events `json:"events,omitempty"`
-
-	// UUID.
-	ServiceInstanceID *string `json:"service_instance_id,omitempty"`
+	// Only needed for Git triggers. List of events to which a Git trigger listens. Choose one or more from: 'push',
+	// 'pull_request' and 'pull_request_closed'. For SCM repositories that use 'merge request' events, such events map to
+	// the equivalent 'pull request' events.
+	Events []string `json:"events"`
 }
 
-// NewTriggerScmTrigger : Instantiate TriggerScmTrigger (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewTriggerScmTrigger(typeVar string, name string, eventListener string, disabled bool) (_model *TriggerScmTrigger, err error) {
-	_model = &TriggerScmTrigger{
-		Type: core.StringPtr(typeVar),
-		Name: core.StringPtr(name),
-		EventListener: core.StringPtr(eventListener),
-		Disabled: core.BoolPtr(disabled),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
+// Constants associated with the TriggerScmTrigger.Events property.
+// List of events. Supported options are 'push' Git webhook events, 'pull_request_closed' Git webhook events and
+// 'pull_request' for 'open pull request' or 'update pull request' Git webhook events.
+const (
+	TriggerScmTriggerEventsPullRequestConst = "pull_request"
+	TriggerScmTriggerEventsPullRequestClosedConst = "pull_request_closed"
+	TriggerScmTriggerEventsPushConst = "push"
+)
 
 func (*TriggerScmTrigger) isaTrigger() bool {
 	return true
@@ -6725,6 +6237,10 @@ func UnmarshalTriggerScmTrigger(m map[string]json.RawMessage, result interface{}
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "event_listener", &obj.EventListener)
 	if err != nil {
 		return
@@ -6733,7 +6249,7 @@ func UnmarshalTriggerScmTrigger(m map[string]json.RawMessage, result interface{}
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerScmTriggerPropertiesItem)
+	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerProperty)
 	if err != nil {
 		return
 	}
@@ -6745,23 +6261,19 @@ func UnmarshalTriggerScmTrigger(m map[string]json.RawMessage, result interface{}
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "concurrency", &obj.Concurrency, UnmarshalConcurrency)
+	err = core.UnmarshalPrimitive(m, "max_concurrent_runs", &obj.MaxConcurrentRuns)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
+	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "scm_source", &obj.ScmSource, UnmarshalTriggerScmSource)
+	err = core.UnmarshalModel(m, "source", &obj.Source, UnmarshalTriggerSource)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "events", &obj.Events, UnmarshalEvents)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "service_instance_id", &obj.ServiceInstanceID)
+	err = core.UnmarshalPrimitive(m, "events", &obj.Events)
 	if err != nil {
 		return
 	}
@@ -6769,7 +6281,7 @@ func UnmarshalTriggerScmTrigger(m map[string]json.RawMessage, result interface{}
 	return
 }
 
-// TriggerTimerTrigger : Timer trigger, which triggers pipelineRun according to the cron value and time zone.
+// TriggerTimerTrigger : Timer trigger, which triggers pipeline runs according to the provided cron value and timezone.
 // This model "extends" Trigger
 type TriggerTimerTrigger struct {
 	// Trigger type.
@@ -6778,45 +6290,41 @@ type TriggerTimerTrigger struct {
 	// Trigger name.
 	Name *string `json:"name" validate:"required"`
 
-	// Event listener name.
+	// API URL for interacting with the trigger. Only included when fetching the list of pipeline triggers.
+	Href *string `json:"href,omitempty"`
+
+	// Event listener name. The name of the event listener to which the trigger is associated. The event listeners are
+	// defined in the definition repositories of the Tekton pipeline.
 	EventListener *string `json:"event_listener" validate:"required"`
 
-	// UUID.
-	ID *string `json:"id,omitempty"`
+	// The Trigger ID.
+	ID *string `json:"id" validate:"required"`
 
-	// Trigger properties.
-	Properties []TriggerTimerTriggerPropertiesItem `json:"properties,omitempty"`
+	// Optional trigger properties used to override or supplement the pipeline properties when triggering a pipeline run.
+	Properties []TriggerProperty `json:"properties,omitempty"`
 
-	// Trigger tags array.
-	Tags []string `json:"tags,omitempty"`
+	// Optional trigger tags array.
+	Tags []string `json:"tags"`
 
-	// Trigger worker used to run the trigger, the trigger worker overrides the default pipeline worker.If not exist, this
-	// trigger uses default pipeline worker.
+	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
 	Worker *Worker `json:"worker,omitempty"`
 
-	// Concurrency object.
-	Concurrency *Concurrency `json:"concurrency,omitempty"`
+	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
+	// for this trigger.
+	MaxConcurrentRuns *int64 `json:"max_concurrent_runs,omitempty"`
 
-	// flag whether the trigger is disabled.
-	Disabled *bool `json:"disabled" validate:"required"`
+	// Flag whether the trigger is enabled.
+	Enabled *bool `json:"enabled" validate:"required"`
 
-	// Needed only for timer trigger type. Cron expression for timer trigger. Maximum frequency is every 5 minutes.
+	// Only needed for timer triggers. Cron expression that indicates when this trigger will activate. Maximum frequency is
+	// every 5 minutes. The string is based on UNIX crontab syntax: minute, hour, day of month, month, day of week.
+	// Example: 0 *_/2 * * * - every 2 hours.
 	Cron *string `json:"cron,omitempty"`
 
-	// Needed only for timer trigger type. Timezones for timer trigger.
+	// Only used for timer triggers. Specify the timezone used for this timer trigger, which will ensure the cron activates
+	// this trigger relative to the specified timezone. If no timezone is specified, the default timezone used is UTC.
+	// Valid timezones are those listed in the IANA timezone database, https://www.iana.org/time-zones.
 	Timezone *string `json:"timezone,omitempty"`
-}
-
-// NewTriggerTimerTrigger : Instantiate TriggerTimerTrigger (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewTriggerTimerTrigger(typeVar string, name string, eventListener string, disabled bool) (_model *TriggerTimerTrigger, err error) {
-	_model = &TriggerTimerTrigger{
-		Type: core.StringPtr(typeVar),
-		Name: core.StringPtr(name),
-		EventListener: core.StringPtr(eventListener),
-		Disabled: core.BoolPtr(disabled),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
 }
 
 func (*TriggerTimerTrigger) isaTrigger() bool {
@@ -6834,6 +6342,10 @@ func UnmarshalTriggerTimerTrigger(m map[string]json.RawMessage, result interface
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "event_listener", &obj.EventListener)
 	if err != nil {
 		return
@@ -6842,7 +6354,7 @@ func UnmarshalTriggerTimerTrigger(m map[string]json.RawMessage, result interface
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerTimerTriggerPropertiesItem)
+	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggerProperty)
 	if err != nil {
 		return
 	}
@@ -6854,11 +6366,11 @@ func UnmarshalTriggerTimerTrigger(m map[string]json.RawMessage, result interface
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "concurrency", &obj.Concurrency, UnmarshalConcurrency)
+	err = core.UnmarshalPrimitive(m, "max_concurrent_runs", &obj.MaxConcurrentRuns)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
+	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
 	if err != nil {
 		return
 	}
@@ -6874,425 +6386,89 @@ func UnmarshalTriggerTimerTrigger(m map[string]json.RawMessage, result interface
 	return
 }
 
-// TriggersTriggersItemTriggerDuplicateTrigger : request body to duplicate trigger.
-// This model "extends" TriggersTriggersItem
-type TriggersTriggersItemTriggerDuplicateTrigger struct {
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-
-	// source trigger ID to clone from.
-	SourceTriggerID *string `json:"source_trigger_id" validate:"required"`
-
-	// name of the duplicated trigger.
-	Name *string `json:"name" validate:"required"`
+//
+// TektonPipelineRunsPager can be used to simplify the use of the "ListTektonPipelineRuns" method.
+//
+type TektonPipelineRunsPager struct {
+	hasNext bool
+	options *ListTektonPipelineRunsOptions
+	client  *CdTektonPipelineV2
+	pageContext struct {
+		next *string
+	}
 }
 
-func (*TriggersTriggersItemTriggerDuplicateTrigger) isaTriggersTriggersItem() bool {
-	return true
-}
+// NewTektonPipelineRunsPager returns a new TektonPipelineRunsPager instance.
+func (cdTektonPipeline *CdTektonPipelineV2) NewTektonPipelineRunsPager(options *ListTektonPipelineRunsOptions) (pager *TektonPipelineRunsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = fmt.Errorf("the 'options.Start' field should not be set")
+		return
+	}
 
-// UnmarshalTriggersTriggersItemTriggerDuplicateTrigger unmarshals an instance of TriggersTriggersItemTriggerDuplicateTrigger from the specified map of raw messages.
-func UnmarshalTriggersTriggersItemTriggerDuplicateTrigger(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggersTriggersItemTriggerDuplicateTrigger)
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		return
+	var optionsCopy ListTektonPipelineRunsOptions = *options
+	pager = &TektonPipelineRunsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  cdTektonPipeline,
 	}
-	err = core.UnmarshalPrimitive(m, "source_trigger_id", &obj.SourceTriggerID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// TriggersTriggersItemTriggerGenericTrigger : Generic trigger, which triggers pipeline when tekton pipeline service receive a valie POST event with secrets.
-// This model "extends" TriggersTriggersItem
-type TriggersTriggersItemTriggerGenericTrigger struct {
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-
-	// Trigger type.
-	Type *string `json:"type" validate:"required"`
-
-	// Trigger name.
-	Name *string `json:"name" validate:"required"`
-
-	// Event listener name.
-	EventListener *string `json:"event_listener" validate:"required"`
-
-	// UUID.
-	ID *string `json:"id,omitempty"`
-
-	// Trigger properties.
-	Properties []TriggersTriggersItemTriggerGenericTriggerPropertiesItem `json:"properties,omitempty"`
-
-	// Trigger tags array.
-	Tags []string `json:"tags,omitempty"`
-
-	// Trigger worker used to run the trigger, the trigger worker overrides the default pipeline worker.If not exist, this
-	// trigger uses default pipeline worker.
-	Worker *Worker `json:"worker,omitempty"`
-
-	// Concurrency object.
-	Concurrency *Concurrency `json:"concurrency,omitempty"`
-
-	// flag whether the trigger is disabled.
-	Disabled *bool `json:"disabled" validate:"required"`
-
-	// Needed only for generic trigger type. Secret used to start generic trigger.
-	Secret *GenericSecret `json:"secret,omitempty"`
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *TektonPipelineRunsPager) HasNext() bool {
+	return pager.hasNext
 }
 
-func (*TriggersTriggersItemTriggerGenericTrigger) isaTriggersTriggersItem() bool {
-	return true
-}
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *TektonPipelineRunsPager) GetNextWithContext(ctx context.Context) (page []PipelineRun, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
 
-// UnmarshalTriggersTriggersItemTriggerGenericTrigger unmarshals an instance of TriggersTriggersItemTriggerGenericTrigger from the specified map of raw messages.
-func UnmarshalTriggersTriggersItemTriggerGenericTrigger(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggersTriggersItemTriggerGenericTrigger)
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListTektonPipelineRunsWithContext(ctx, pager.options)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
+
+	var next *string
+	if result.Next != nil {
+		var start *string
+		start, err = core.GetQueryParam(result.Next.Href, "start")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = start
 	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "event_listener", &obj.EventListener)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggersTriggersItemTriggerGenericTriggerPropertiesItem)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "worker", &obj.Worker, UnmarshalWorker)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "concurrency", &obj.Concurrency, UnmarshalConcurrency)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "secret", &obj.Secret, UnmarshalGenericSecret)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.PipelineRuns
+
 	return
 }
 
-// TriggersTriggersItemTriggerManualTrigger : Manual trigger.
-// This model "extends" TriggersTriggersItem
-type TriggersTriggersItemTriggerManualTrigger struct {
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-
-	// Trigger type.
-	Type *string `json:"type" validate:"required"`
-
-	// Trigger name.
-	Name *string `json:"name" validate:"required"`
-
-	// Event listener name.
-	EventListener *string `json:"event_listener" validate:"required"`
-
-	// UUID.
-	ID *string `json:"id,omitempty"`
-
-	// Trigger properties.
-	Properties []TriggersTriggersItemTriggerManualTriggerPropertiesItem `json:"properties,omitempty"`
-
-	// Trigger tags array.
-	Tags []string `json:"tags,omitempty"`
-
-	// Trigger worker used to run the trigger, the trigger worker overrides the default pipeline worker.If not exist, this
-	// trigger uses default pipeline worker.
-	Worker *Worker `json:"worker,omitempty"`
-
-	// Concurrency object.
-	Concurrency *Concurrency `json:"concurrency,omitempty"`
-
-	// flag whether the trigger is disabled.
-	Disabled *bool `json:"disabled" validate:"required"`
-}
-
-func (*TriggersTriggersItemTriggerManualTrigger) isaTriggersTriggersItem() bool {
-	return true
-}
-
-// UnmarshalTriggersTriggersItemTriggerManualTrigger unmarshals an instance of TriggersTriggersItemTriggerManualTrigger from the specified map of raw messages.
-func UnmarshalTriggersTriggersItemTriggerManualTrigger(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggersTriggersItemTriggerManualTrigger)
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		return
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *TektonPipelineRunsPager) GetAllWithContext(ctx context.Context) (allItems []PipelineRun, err error) {
+	for pager.HasNext() {
+		var nextPage []PipelineRun
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
 	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "event_listener", &obj.EventListener)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggersTriggersItemTriggerManualTriggerPropertiesItem)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "worker", &obj.Worker, UnmarshalWorker)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "concurrency", &obj.Concurrency, UnmarshalConcurrency)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// TriggersTriggersItemTriggerScmTrigger : Git type trigger, which automatically triggers pipelineRun when tekton pipeline service receive a valid corresponding
-// git event.
-// This model "extends" TriggersTriggersItem
-type TriggersTriggersItemTriggerScmTrigger struct {
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-
-	// Trigger type.
-	Type *string `json:"type" validate:"required"`
-
-	// Trigger name.
-	Name *string `json:"name" validate:"required"`
-
-	// Event listener name.
-	EventListener *string `json:"event_listener" validate:"required"`
-
-	// UUID.
-	ID *string `json:"id,omitempty"`
-
-	// Trigger properties.
-	Properties []TriggersTriggersItemTriggerScmTriggerPropertiesItem `json:"properties,omitempty"`
-
-	// Trigger tags array.
-	Tags []string `json:"tags,omitempty"`
-
-	// Trigger worker used to run the trigger, the trigger worker overrides the default pipeline worker.If not exist, this
-	// trigger uses default pipeline worker.
-	Worker *Worker `json:"worker,omitempty"`
-
-	// Concurrency object.
-	Concurrency *Concurrency `json:"concurrency,omitempty"`
-
-	// flag whether the trigger is disabled.
-	Disabled *bool `json:"disabled" validate:"required"`
-
-	// Scm source for git type tekton pipeline trigger.
-	ScmSource *TriggerScmSource `json:"scm_source,omitempty"`
-
-	// Needed only for git trigger type. Events object defines the events this git trigger listening to.
-	Events *Events `json:"events,omitempty"`
-
-	// UUID.
-	ServiceInstanceID *string `json:"service_instance_id,omitempty"`
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *TektonPipelineRunsPager) GetNext() (page []PipelineRun, err error) {
+	return pager.GetNextWithContext(context.Background())
 }
 
-func (*TriggersTriggersItemTriggerScmTrigger) isaTriggersTriggersItem() bool {
-	return true
-}
-
-// UnmarshalTriggersTriggersItemTriggerScmTrigger unmarshals an instance of TriggersTriggersItemTriggerScmTrigger from the specified map of raw messages.
-func UnmarshalTriggersTriggersItemTriggerScmTrigger(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggersTriggersItemTriggerScmTrigger)
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "event_listener", &obj.EventListener)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggersTriggersItemTriggerScmTriggerPropertiesItem)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "worker", &obj.Worker, UnmarshalWorker)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "concurrency", &obj.Concurrency, UnmarshalConcurrency)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "scm_source", &obj.ScmSource, UnmarshalTriggerScmSource)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "events", &obj.Events, UnmarshalEvents)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "service_instance_id", &obj.ServiceInstanceID)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// TriggersTriggersItemTriggerTimerTrigger : Timer trigger, which triggers pipelineRun according to the cron value and time zone.
-// This model "extends" TriggersTriggersItem
-type TriggersTriggersItemTriggerTimerTrigger struct {
-	// General href URL.
-	Href *string `json:"href,omitempty"`
-
-	// Trigger type.
-	Type *string `json:"type" validate:"required"`
-
-	// Trigger name.
-	Name *string `json:"name" validate:"required"`
-
-	// Event listener name.
-	EventListener *string `json:"event_listener" validate:"required"`
-
-	// UUID.
-	ID *string `json:"id,omitempty"`
-
-	// Trigger properties.
-	Properties []TriggersTriggersItemTriggerTimerTriggerPropertiesItem `json:"properties,omitempty"`
-
-	// Trigger tags array.
-	Tags []string `json:"tags,omitempty"`
-
-	// Trigger worker used to run the trigger, the trigger worker overrides the default pipeline worker.If not exist, this
-	// trigger uses default pipeline worker.
-	Worker *Worker `json:"worker,omitempty"`
-
-	// Concurrency object.
-	Concurrency *Concurrency `json:"concurrency,omitempty"`
-
-	// flag whether the trigger is disabled.
-	Disabled *bool `json:"disabled" validate:"required"`
-
-	// Needed only for timer trigger type. Cron expression for timer trigger. Maximum frequency is every 5 minutes.
-	Cron *string `json:"cron,omitempty"`
-
-	// Needed only for timer trigger type. Timezones for timer trigger.
-	Timezone *string `json:"timezone,omitempty"`
-}
-
-func (*TriggersTriggersItemTriggerTimerTrigger) isaTriggersTriggersItem() bool {
-	return true
-}
-
-// UnmarshalTriggersTriggersItemTriggerTimerTrigger unmarshals an instance of TriggersTriggersItemTriggerTimerTrigger from the specified map of raw messages.
-func UnmarshalTriggersTriggersItemTriggerTimerTrigger(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TriggersTriggersItemTriggerTimerTrigger)
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "event_listener", &obj.EventListener)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalTriggersTriggersItemTriggerTimerTriggerPropertiesItem)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "worker", &obj.Worker, UnmarshalWorker)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "concurrency", &obj.Concurrency, UnmarshalConcurrency)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "disabled", &obj.Disabled)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "cron", &obj.Cron)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "timezone", &obj.Timezone)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *TektonPipelineRunsPager) GetAll() (allItems []PipelineRun, err error) {
+	return pager.GetAllWithContext(context.Background())
 }

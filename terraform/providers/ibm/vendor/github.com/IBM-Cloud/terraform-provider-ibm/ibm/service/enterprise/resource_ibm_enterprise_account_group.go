@@ -236,7 +236,20 @@ func resourceIbmEnterpriseAccountGroupUpdate(context context.Context, d *schema.
 
 func resourceIbmEnterpriseAccountGroupDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
-	d.SetId("")
+	enterpriseManagementClient, err := meta.(conns.ClientSession).EnterpriseManagementV1()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	deleteAccountGroupOptions := &enterprisemanagementv1.DeleteAccountGroupOptions{}
+
+	deleteAccountGroupOptions.SetAccountGroupID(d.Id())
+
+	response, err := enterpriseManagementClient.DeleteAccountGroupWithContext(context, deleteAccountGroupOptions)
+	if err != nil {
+		log.Printf("[DEBUG] DeleteAccountGroupWithContext failed %s\n%s", err, response)
+		return diag.FromErr(fmt.Errorf("DeleteAccountGroupWithContext failed %s\n%s", err, response))
+	}
 
 	return nil
 }

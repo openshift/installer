@@ -1049,8 +1049,8 @@ func setTagsAndNotes(m gatewayMember, meta interface{}) error {
 	return nil
 }
 
-//New types to resuse functions from other resources which does the same job
-//Essentially mimic schema.ResourceData get functions
+// New types to resuse functions from other resources which does the same job
+// Essentially mimic schema.ResourceData get functions
 type dataRetriever interface {
 	Get(string) interface{}
 	GetOk(string) (interface{}, bool)

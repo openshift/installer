@@ -18,6 +18,13 @@ import (
 )
 
 const (
+	isVolumeArchitecture                                   = "architecture"
+	isVolumeDHOnly                                         = "dedicated_host_only"
+	isVolumeDisplayName                                    = "display_name"
+	isVolumeOSFamily                                       = "family"
+	isVolumeOSVendor                                       = "vendor"
+	isVolumeOSVersion                                      = "version"
+	isVolumeAttachmentState                                = "attachment_state"
 	isVolumes                                              = "volumes"
 	isVolumesActive                                        = "active"
 	isVolumesBandwidth                                     = "bandwidth"
@@ -33,6 +40,8 @@ const (
 	isVolumesIops                                          = "iops"
 	isVolumesName                                          = "name"
 	isVolumesOperatingSystem                               = "operating_system"
+	isVolumesOperatingSystemFamily                         = "operating_system_family"
+	isVolumesOperatingSystemArch                           = "operating_system_architecture"
 	isVolumesOperatingSystemHref                           = "href"
 	isVolumesOperatingSystemName                           = "name"
 	isVolumesProfile                                       = "profile"
@@ -89,6 +98,26 @@ func DataSourceIBMIsVolumes() *schema.Resource {
 		ReadContext: dataSourceIBMIsVolumesRead,
 
 		Schema: map[string]*schema.Schema{
+			isVolumeAttachmentState: &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Attachment state of the Volume.",
+			},
+			isVolumesEncryption: &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Encryption type of Volume.",
+			},
+			isVolumesOperatingSystemFamily: &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Operating system family of the Volume.",
+			},
+			isVolumesOperatingSystemArch: &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Operating system architecture of the Volume.",
+			},
 			"volume_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -109,6 +138,11 @@ func DataSourceIBMIsVolumes() *schema.Resource {
 							Type:        schema.TypeBool,
 							Computed:    true,
 							Description: "Indicates whether a running virtual server instance has an attachment to this volume.",
+						},
+						isVolumeAttachmentState: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The attachment state of the volume.",
 						},
 						isVolumesBandwidth: &schema.Schema{
 							Type:        schema.TypeInt,
@@ -180,6 +214,27 @@ func DataSourceIBMIsVolumes() *schema.Resource {
 							Description: "The operating system associated with this volume. If absent, this volume was notcreated from an image, or the image did not include an operating system.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
+									isVolumeArchitecture: &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The operating system architecture.",
+									},
+									isVolumeDHOnly: &schema.Schema{
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Images with this operating system can only be used on dedicated hosts or dedicated host groups.",
+									},
+									isVolumeDisplayName: &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A unique, display-friendly name for the operating system.",
+									},
+									isVolumeOSFamily: &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The software family for this operating system.",
+									},
+
 									isVolumesOperatingSystemHref: &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
@@ -189,6 +244,16 @@ func DataSourceIBMIsVolumes() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The globally unique name for this operating system.",
+									},
+									isVolumeOSVendor: &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The vendor of the operating system.",
+									},
+									isVolumeOSVersion: &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The major release version of this operating system.",
 									},
 								},
 							},
@@ -487,6 +552,44 @@ func DataSourceIBMIsVolumes() *schema.Resource {
 							Set:         flex.ResourceIBMVPCHash,
 							Description: "User Tags for the Volume",
 						},
+						isVolumeAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "Access management tags for the volume instance",
+						},
+						isVolumeHealthReasons: {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									isVolumeHealthReasonsCode: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A snake case string succinctly identifying the reason for this health state.",
+									},
+
+									isVolumeHealthReasonsMessage: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An explanation of the reason for this health state.",
+									},
+
+									isVolumeHealthReasonsMoreInfo: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about the reason for this health state.",
+									},
+								},
+							},
+						},
+
+						isVolumeHealthState: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The health of this resource.",
+						},
 					},
 				},
 			},
@@ -503,21 +606,40 @@ func dataSourceIBMIsVolumesRead(context context.Context, d *schema.ResourceData,
 	// filters - volume-name and zone-name
 	volumeName := d.Get("volume_name").(string)
 	zoneName := d.Get("zone_name").(string)
+	attachmentState := d.Get(isVolumeAttachmentState).(string)
+	encryption := d.Get(isVolumesEncryption).(string)
+	operatingSystemFamily := d.Get(isVolumesOperatingSystemFamily).(string)
+	operatingSystemArch := d.Get(isVolumesOperatingSystemArch).(string)
 
 	start := ""
 	allrecs := []vpcv1.Volume{}
+	listVolumesOptions := &vpcv1.ListVolumesOptions{}
+	if start != "" {
+		listVolumesOptions.Start = &start
+	}
+	if volumeName != "" {
+		listVolumesOptions.Name = &volumeName
+	}
+	if zoneName != "" {
+		listVolumesOptions.ZoneName = &zoneName
+	}
+	if attachmentState != "" {
+		listVolumesOptions.AttachmentState = &attachmentState
+	}
+	if encryption != "" {
+		listVolumesOptions.Encryption = &encryption
+	}
+	if operatingSystemFamily != "" {
+		listVolumesOptions.OperatingSystemFamily = &operatingSystemFamily
+	}
+	if operatingSystemArch != "" {
+		listVolumesOptions.OperatingSystemArchitecture = &operatingSystemArch
+	}
 
 	// list
 	for {
-		listVolumesOptions := &vpcv1.ListVolumesOptions{}
 		if start != "" {
 			listVolumesOptions.Start = &start
-		}
-		if volumeName != "" {
-			listVolumesOptions.Name = &volumeName
-		}
-		if zoneName != "" {
-			listVolumesOptions.ZoneName = &zoneName
 		}
 		volumeCollection, response, err := vpcClient.ListVolumesWithContext(context, listVolumesOptions)
 		if err != nil {
@@ -536,7 +658,7 @@ func dataSourceIBMIsVolumesRead(context context.Context, d *schema.ResourceData,
 
 	d.SetId(dataSourceIBMIsVolumesID(d))
 
-	err = d.Set(isVolumes, dataSourceVolumeCollectionFlattenVolumes(allrecs))
+	err = d.Set(isVolumes, dataSourceVolumeCollectionFlattenVolumes(allrecs, meta))
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting volumes %s", err))
 	}
@@ -549,19 +671,22 @@ func dataSourceIBMIsVolumesID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceVolumeCollectionFlattenVolumes(result []vpcv1.Volume) (volumes []map[string]interface{}) {
+func dataSourceVolumeCollectionFlattenVolumes(result []vpcv1.Volume, meta interface{}) (volumes []map[string]interface{}) {
 	for _, volumesItem := range result {
-		volumes = append(volumes, dataSourceVolumeCollectionVolumesToMap(volumesItem))
+		volumes = append(volumes, dataSourceVolumeCollectionVolumesToMap(volumesItem, meta))
 	}
 
 	return volumes
 }
 
-func dataSourceVolumeCollectionVolumesToMap(volumesItem vpcv1.Volume) (volumesMap map[string]interface{}) {
+func dataSourceVolumeCollectionVolumesToMap(volumesItem vpcv1.Volume, meta interface{}) (volumesMap map[string]interface{}) {
 	volumesMap = map[string]interface{}{}
 
 	if volumesItem.Active != nil {
 		volumesMap[isVolumesActive] = volumesItem.Active
+	}
+	if volumesItem.AttachmentState != nil {
+		volumesMap[isVolumeAttachmentState] = volumesItem.AttachmentState
 	}
 	if volumesItem.Bandwidth != nil {
 		volumesMap[isVolumesBandwidth] = volumesItem.Bandwidth
@@ -632,12 +757,22 @@ func dataSourceVolumeCollectionVolumesToMap(volumesItem vpcv1.Volume) (volumesMa
 	if volumesItem.Status != nil {
 		volumesMap[isVolumesStatus] = volumesItem.Status
 	}
+	if volumesItem.HealthState != nil {
+		volumesMap[isVolumeHealthState] = volumesItem.HealthState
+	}
 	if volumesItem.StatusReasons != nil {
 		statusReasonsList := []map[string]interface{}{}
 		for _, statusReasonsItem := range volumesItem.StatusReasons {
 			statusReasonsList = append(statusReasonsList, dataSourceVolumeCollectionVolumesStatusReasonsToMap(statusReasonsItem))
 		}
 		volumesMap[isVolumesStatusReasons] = statusReasonsList
+	}
+	if volumesItem.HealthReasons != nil {
+		healthReasonsList := []map[string]interface{}{}
+		for _, healthReasonsItem := range volumesItem.HealthReasons {
+			healthReasonsList = append(healthReasonsList, dataSourceVolumeCollectionVolumesHealthReasonsToMap(healthReasonsItem))
+		}
+		volumesMap[isVolumeHealthReasons] = healthReasonsList
 	}
 	if volumesItem.VolumeAttachments != nil {
 		volumeAttachmentsList := []map[string]interface{}{}
@@ -655,6 +790,12 @@ func dataSourceVolumeCollectionVolumesToMap(volumesItem vpcv1.Volume) (volumesMa
 	if volumesItem.UserTags != nil {
 		volumesMap[isVolumeTags] = volumesItem.UserTags
 	}
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *volumesItem.CRN, "", isVolumeAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource vpc volume (%s) access tags: %s", *volumesItem.ID, err)
+	}
+	volumesMap[isVolumeAccessTags] = accesstags
 	return volumesMap
 }
 
@@ -668,14 +809,32 @@ func dataSourceVolumeCollectionVolumesEncryptionKeyToMap(encryptionKeyItem vpcv1
 	return encryptionKeyMap
 }
 
-func dataSourceVolumeCollectionVolumesOperatingSystemToMap(operatingSystemItem vpcv1.OperatingSystemReference) (operatingSystemMap map[string]interface{}) {
+func dataSourceVolumeCollectionVolumesOperatingSystemToMap(operatingSystemItem vpcv1.OperatingSystem) (operatingSystemMap map[string]interface{}) {
 	operatingSystemMap = map[string]interface{}{}
 
+	if operatingSystemItem.Architecture != nil {
+		operatingSystemMap[isVolumeArchitecture] = operatingSystemItem.Architecture
+	}
+	if operatingSystemItem.DedicatedHostOnly != nil {
+		operatingSystemMap[isVolumeDHOnly] = operatingSystemItem.DedicatedHostOnly
+	}
+	if operatingSystemItem.DisplayName != nil {
+		operatingSystemMap[isVolumeDisplayName] = operatingSystemItem.DisplayName
+	}
+	if operatingSystemItem.Family != nil {
+		operatingSystemMap[isVolumeOSFamily] = operatingSystemItem.Family
+	}
 	if operatingSystemItem.Href != nil {
 		operatingSystemMap[isVolumesOperatingSystemHref] = operatingSystemItem.Href
 	}
 	if operatingSystemItem.Name != nil {
 		operatingSystemMap[isVolumesOperatingSystemName] = operatingSystemItem.Name
+	}
+	if operatingSystemItem.Vendor != nil {
+		operatingSystemMap[isVolumeOSVendor] = operatingSystemItem.Vendor
+	}
+	if operatingSystemItem.Version != nil {
+		operatingSystemMap[isVolumeOSVersion] = operatingSystemItem.Version
 	}
 
 	return operatingSystemMap
@@ -797,6 +956,22 @@ func dataSourceVolumeCollectionVolumesStatusReasonsToMap(statusReasonsItem vpcv1
 	}
 
 	return statusReasonsMap
+}
+
+func dataSourceVolumeCollectionVolumesHealthReasonsToMap(statusReasonsItem vpcv1.VolumeHealthReason) (healthReasonsMap map[string]interface{}) {
+	healthReasonsMap = map[string]interface{}{}
+
+	if statusReasonsItem.Code != nil {
+		healthReasonsMap[isVolumeHealthReasonsCode] = statusReasonsItem.Code
+	}
+	if statusReasonsItem.Message != nil {
+		healthReasonsMap[isVolumeHealthReasonsMessage] = statusReasonsItem.Message
+	}
+	if statusReasonsItem.MoreInfo != nil {
+		healthReasonsMap[isVolumeHealthReasonsMoreInfo] = statusReasonsItem.MoreInfo
+	}
+
+	return healthReasonsMap
 }
 
 func dataSourceVolumeCollectionVolumesVolumeAttachmentsToMap(volumeAttachmentsItem vpcv1.VolumeAttachmentReferenceVolumeContext) (volumeAttachmentsMap map[string]interface{}) {
