@@ -88,10 +88,11 @@ func (search *IamRoleSearch) find(ctx context.Context) (arns []string, names []s
 
 // IamUserSearch holds data to search for IAM users.
 type IamUserSearch struct {
-	client    *iam.IAM
-	filters   []Filter
-	logger    logrus.FieldLogger
-	unmatched map[string]struct{}
+	client      *iam.IAM
+	filters     []Filter
+	logger      logrus.FieldLogger
+	unmatched   map[string]struct{}
+	clusterName string
 }
 
 func (search *IamUserSearch) arns(ctx context.Context) ([]string, error) {
@@ -107,6 +108,13 @@ func (search *IamUserSearch) arns(ctx context.Context) ([]string, error) {
 		func(results *iam.ListUsersOutput, lastPage bool) bool {
 			search.logger.Debugf("iterating over a page of %d IAM users", len(results.Users))
 			for _, user := range results.Users {
+				// By convention, IAM user names are created with the cluster name as prefix.
+				// We can cut down on expensive API calls by checking the prefix, before continuing
+				// to make the call to get user, which we need to confirm it has an owned tag.
+				if cn := search.clusterName; len(cn) != 0 && !strings.HasPrefix(*user.UserName, cn) {
+					search.unmatched[*user.Arn] = exists
+				}
+
 				if _, ok := search.unmatched[*user.Arn]; ok {
 					continue
 				}

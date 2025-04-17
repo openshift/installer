@@ -60,6 +60,7 @@ type ClusterUninstaller struct {
 	ClusterID      string
 	ClusterDomain  string
 	HostedZoneRole string
+	ClusterName    string
 
 	// Session is the AWS session to be used for deletion.  If nil, a
 	// new session will be created based on the usual credential
@@ -90,6 +91,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		ClusterDomain:  metadata.AWS.ClusterDomain,
 		Session:        session,
 		HostedZoneRole: metadata.AWS.HostedZoneRole,
+		ClusterName:    metadata.ClusterName,
 	}, nil
 }
 
@@ -163,9 +165,10 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		Logger:  o.Logger,
 	}
 	iamUserSearch := &IamUserSearch{
-		client:  iamClient,
-		filters: o.Filters,
-		logger:  o.Logger,
+		client:      iamClient,
+		filters:     o.Filters,
+		logger:      o.Logger,
+		clusterName: o.ClusterName,
 	}
 
 	// Get the initial resources to delete, so that they can be returned if the context is canceled while terminating
