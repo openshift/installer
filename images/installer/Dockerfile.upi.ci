@@ -1,5 +1,5 @@
 # This Dockerfile is used by CI to test UPI platforms for OpenShift Installer
-# It builds an image containing binaries like jq, terraform, awscli, oc, etc. to allow bringing up UPI infrastructure.
+# It builds an image containing binaries like jq, awscli, oc, etc. to allow bringing up UPI infrastructure.
 # It also contains the `upi` directory that contains various terraform and cloud formation templates that are used to create infrastructure resources.
 
 FROM registry.ci.openshift.org/ocp/4.17:installer-terraform-providers as providers
