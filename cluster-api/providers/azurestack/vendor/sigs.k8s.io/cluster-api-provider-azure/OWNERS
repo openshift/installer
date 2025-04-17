@@ -1,0 +1,22 @@
+# See the OWNERS docs: https://git.k8s.io/community/contributors/guide/owners.md
+
+approvers:
+  - sig-cluster-lifecycle-leads
+  - cluster-api-admins
+  - cluster-api-maintainers
+  - cluster-api-azure-maintainers
+
+reviewers:
+  - cluster-api-azure-maintainers
+  - cluster-api-azure-reviewers
+
+emeritus_approvers:
+  - alexeldeib
+  - awesomenix
+  - CecileRobertMichon
+  - justaugustus
+  - nader-ziada
+  - ncdc
+  - shysank
+  - sonasingh46
+  - devigned
