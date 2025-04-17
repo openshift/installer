@@ -1600,11 +1600,8 @@ func validateFencingCredentials(installConfig *types.InstallConfig) (errors fiel
 func validateFencingForPlatform(config *types.InstallConfig, fldPath *field.Path) field.ErrorList {
 	errs := field.ErrorList{}
 	switch {
-	case config.None != nil, config.External != nil:
-	case config.BareMetal != nil:
-		if len(config.Platform.BareMetal.Hosts) > 0 {
-			errs = append(errs, field.Forbidden(fldPath, "fencing is mutually exclusive with hosts, please remove either of them"))
-		}
+	case config.None != nil, config.External != nil, config.BareMetal != nil:
+		// Allowed platforms
 	default:
 		errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("fencing is only supported on baremetal, external or none platforms, instead %s platform was found", config.Platform.Name())))
 	}
