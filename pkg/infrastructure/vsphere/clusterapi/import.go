@@ -3,6 +3,7 @@ package clusterapi
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -22,6 +23,10 @@ import (
 
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/utils"
+)
+
+const (
+	vmware_serial_concentrator_config = "vmware-serial-port-concentrator.json"
 )
 
 func debugCorruptOva(cachedImage string, err error) error {
@@ -56,6 +61,53 @@ func checkOvaSecureBoot(ovfEnvelope *ovf.Envelope) bool {
 		}
 	}
 	return false
+}
+
+func shouldAttachSerialPort() bool {
+	if _, err := os.Stat(vmware_serial_concentrator_config); errors.Is(err, os.ErrNotExist) {
+		return false
+
+	} else {
+		return true
+	}
+}
+
+func attachVirtualSerialPort(ctx context.Context, vm *object.VirtualMachine) error {
+	var concentratorConfig types.VirtualDeviceURIBackingInfo
+	concentratorConfigFile, err := os.Open(vmware_serial_concentrator_config)
+	if err != nil {
+		return fmt.Errorf("unable to open concentrator configuration file: %v", err)
+	}
+	defer concentratorConfigFile.Close()
+
+	concentratorConfigBytes, err := io.ReadAll(concentratorConfigFile)
+	if err != nil {
+		return fmt.Errorf("unable to read vmware-serial-port-concentrator.json: %v", err)
+	}
+
+	err = json.Unmarshal(concentratorConfigBytes, &concentratorConfig)
+	if err != nil {
+		return fmt.Errorf("unable to unmarshal vmware-serial-port-concentrator.json: %v", err)
+	}
+
+	devices, err := vm.Device(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to get device list: %v", err)
+	}
+
+	debugSerialPort, err := devices.CreateSerialPort()
+	if err != nil {
+		return fmt.Errorf("unable to create serial port: %v", err)
+	}
+
+	isClient := concentratorConfig.Direction == "client"
+	debugSerialPort = devices.ConnectSerialPort(debugSerialPort, concentratorConfig.ServiceURI, isClient, concentratorConfig.ProxyURI)
+	err = vm.AddDevice(ctx, debugSerialPort)
+	if err != nil {
+		return fmt.Errorf("unable to add serial port device: %v", err)
+	}
+
+	return nil
 }
 
 func importRhcosOva(ctx context.Context, session *session.Session, folder *object.Folder, cachedImage, clusterID, tagID, diskProvisioningType string, failureDomain vsphere.FailureDomain) error {
@@ -209,6 +261,13 @@ func importRhcosOva(ctx context.Context, session *session.Session, folder *objec
 		err = vm.SetBootOptions(ctx, bootOptions)
 		if err != nil {
 			return fmt.Errorf("failed to set boot options: %w", err)
+		}
+	}
+
+	if shouldAttachSerialPort() {
+		err = attachVirtualSerialPort(ctx, vm)
+		if err != nil {
+			return fmt.Errorf("failed to attach virtual serial port: %w", err)
 		}
 	}
 
