@@ -54,7 +54,7 @@ check_host_config() {
 check_ui() {
     local ui_issue="90_ui-availability"
     if systemctl is-active --quiet "agent-start-ui"; then
-       echo "\e{green}Please go to \e{lightgreen}$AIUI_URL\e{reset}\e{green} in your browser to continue the installation\e{reset}" | set_issue "${ui_issue}"
+       echo "\\e{green}Please go to \\e{lightgreen}$AIUI_URL\\e{reset}\\e{green} in your browser to continue the installation\\e{reset}" | set_issue "${ui_issue}"
     else
        clear_issue "${ui_issue}"        
     fi
