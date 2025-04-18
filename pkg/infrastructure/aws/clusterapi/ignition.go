@@ -71,6 +71,10 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi
 			privateIPAddresses = append(privateIPAddresses, *nic.PrivateIpAddress)
 		}
 	}
+	if !in.InstallConfig.Config.PublicAPI() {
+		// For private cluster installs, the API LB IP is the same as the API-Int LB IP
+		publicIPAddresses = privateIPAddresses
+	}
 	logrus.Debugf("AWS: Editing Ignition files to start in-cluster DNS when UserProvisionedDNS is enabled")
 	return clusterapi.EditIgnition(in, awstypes.Name, publicIPAddresses, privateIPAddresses)
 }
