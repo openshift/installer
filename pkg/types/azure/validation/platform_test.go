@@ -58,30 +58,12 @@ func TestValidatePlatform(t *testing.T) {
 		},
 		{
 			name: "invalid baseDomainResourceGroupName",
-			wantSkip: func(p *azure.Platform) bool {
-				// This test case doesn't apply to ARO
-				// so we want to skip it when run tests for ARO build
-				return p.IsARO()
-			},
 			platform: func() *azure.Platform {
 				p := validPlatform()
 				p.BaseDomainResourceGroupName = ""
 				return p
 			}(),
 			expected: `^test-path\.baseDomainResourceGroupName: Required value: baseDomainResourceGroupName is the resource group name where the azure dns zone is deployed$`,
-		},
-		{
-			name: "do not require baseDomainResourceGroupName on ARO",
-			wantSkip: func(p *azure.Platform) bool {
-				// This is a ARO-specific test case
-				// so want to skip when running non-ARO builds
-				return !p.IsARO()
-			},
-			platform: func() *azure.Platform {
-				p := validPlatform()
-				p.BaseDomainResourceGroupName = ""
-				return p
-			}(),
 		},
 		{
 			name:     "minimal",
