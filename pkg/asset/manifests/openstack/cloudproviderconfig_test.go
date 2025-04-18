@@ -109,9 +109,9 @@ func TestCloudProviderConfig(t *testing.T) {
 				},
 			},
 			expectedConfig: `[Global]
-secret-name = openstack-credentials
-secret-namespace = kube-system
-region = my_region
+use-clouds = true
+clouds-file = /etc/openstack/secret/clouds.yaml
+cloud = openstack
 `,
 		},
 	}
