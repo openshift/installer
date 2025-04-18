@@ -738,7 +738,7 @@ func validatePlatformKMSKeys(client API, ic *types.InstallConfig, fieldPath *fie
 	cp := ic.ControlPlane
 	validatedControlPlaneKey := false
 	if cp != nil && cp.Platform.GCP != nil && cp.Platform.GCP.EncryptionKey != nil && cp.Platform.GCP.EncryptionKey.KMSKey != nil {
-		if _, err := client.GetKeyRing(context.TODO(), cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey.KeyRing); err != nil {
+		if _, err := client.GetKeyRing(context.TODO(), cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey); err != nil {
 			return append(allErrs, field.Invalid(fieldPath.Child("controlPlane").Child("encryptionKey").Child("kmsKey").Child("keyRing"),
 				cp.Platform.GCP.OSDisk.EncryptionKey.KMSKey.KeyRing,
 				err.Error(),
@@ -750,7 +750,7 @@ func validatePlatformKMSKeys(client API, ic *types.InstallConfig, fieldPath *fie
 	validatedComputeKeys := false
 	for _, mp := range ic.Compute {
 		if mp.Platform.GCP != nil && mp.Platform.GCP.EncryptionKey != nil && mp.Platform.GCP.EncryptionKey.KMSKey != nil {
-			if _, err := client.GetKeyRing(context.TODO(), mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey.KeyRing); err != nil {
+			if _, err := client.GetKeyRing(context.TODO(), mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey); err != nil {
 				allErrs = append(allErrs, field.Invalid(fieldPath.Child("compute").Child("encryptionKey").Child("kmsKey").Child("keyRing"),
 					mp.Platform.GCP.OSDisk.EncryptionKey.KMSKey.KeyRing,
 					err.Error(),
@@ -763,7 +763,7 @@ func validatePlatformKMSKeys(client API, ic *types.InstallConfig, fieldPath *fie
 
 	defaultMp := ic.GCP.DefaultMachinePlatform
 	if defaultMp != nil && defaultMp.EncryptionKey != nil && defaultMp.EncryptionKey.KMSKey != nil {
-		if _, err := client.GetKeyRing(context.TODO(), defaultMp.EncryptionKey.KMSKey.KeyRing); err != nil {
+		if _, err := client.GetKeyRing(context.TODO(), defaultMp.EncryptionKey.KMSKey); err != nil {
 			if validatedControlPlaneKey && (validatedComputeKeys && len(allErrs) == 0) {
 				logrus.Warn("defaultMachinePool.encryptionKey.KMSKey.KeyRing is not valid, but compute and control plane key rings are valid")
 			} else {
