@@ -71,6 +71,8 @@ spec:
                       properties:
                         address:
                           type: string
+                        disableCertificateVerification:
+                          type: boolean
                         hostName:
                           type: string
                         password:
@@ -79,6 +81,7 @@ spec:
                           type: string
                       required:
                       - address
+                      - disableCertificateVerification
                       - password
                       - username
                       type: object
@@ -1384,6 +1387,8 @@ spec:
                         properties:
                           address:
                             type: string
+                          disableCertificateVerification:
+                            type: boolean
                           hostName:
                             type: string
                           password:
@@ -1392,6 +1397,7 @@ spec:
                             type: string
                         required:
                         - address
+                        - disableCertificateVerification
                         - password
                         - username
                         type: object
@@ -2636,6 +2642,8 @@ spec:
                       properties:
                         address:
                           type: string
+                        disableCertificateVerification:
+                          type: boolean
                         hostName:
                           type: string
                         password:
@@ -2644,6 +2652,7 @@ spec:
                           type: string
                       required:
                       - address
+                      - disableCertificateVerification
                       - password
                       - username
                       type: object

@@ -160,8 +160,9 @@ type Fencing struct {
 
 // Credential stores the information about a baremetal host's management controller.
 type Credential struct {
-	HostName string `json:"hostName,omitempty" validate:"required,uniqueField"`
-	Username string `json:"username" validate:"required"`
-	Password string `json:"password" validate:"required"`
-	Address  string `json:"address" validate:"required,uniqueField"`
+	HostName                       string `json:"hostName,omitempty" validate:"required,uniqueField"`
+	Username                       string `json:"username" validate:"required"`
+	Password                       string `json:"password" validate:"required"`
+	Address                        string `json:"address" validate:"required,uniqueField"`
+	DisableCertificateVerification bool   `json:"disableCertificateVerification"`
 }
