@@ -72,9 +72,14 @@ func NewClient(ctx context.Context, endpoints []configv1.GCPServiceEndpoint) (*C
 		return nil, errors.Wrap(err, "failed to get session")
 	}
 
+	modifiedEndpoints, err := FormatGCPEndpointList(endpoints)
+	if err != nil {
+		return nil, fmt.Errorf("GCP client failed to format endpoints: %w", err)
+	}
+
 	client := &Client{
 		ssn:       ssn,
-		endpoints: endpoints,
+		endpoints: modifiedEndpoints,
 	}
 	return client, nil
 }
