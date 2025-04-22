@@ -133,6 +133,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		capgLoadBalancerType = capg.Internal
 	}
 
+	formattedEndpoints, err := gcpic.FormatGCPEndpointList(installConfig.Config.GCP.ServiceEndpoints)
+	if err != nil {
+		return nil, fmt.Errorf("failed to format GCP endpoints for capg: %w", err)
+	}
+
 	gcpCluster := &capg.GCPCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -156,7 +161,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				LoadBalancerType:                  ptr.To(capgLoadBalancerType),
 			},
 			ResourceManagerTags: GetTagsFromInstallConfig(installConfig),
-			ServiceEndpoints:    getServiceEndpointsFromInstallConfig(installConfig),
+			ServiceEndpoints:    convertServiceEndpointsToCAPG(formattedEndpoints),
 		},
 	}
 	gcpCluster.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPCluster"))
@@ -261,11 +266,11 @@ func GetTagsFromInstallConfig(installConfig *installconfig.InstallConfig) []capg
 	return tags
 }
 
-// getServiceEndpointsFromInstallConfig gets the service endpoints for CAPG use.
-func getServiceEndpointsFromInstallConfig(installConfig *installconfig.InstallConfig) *capg.ServiceEndpoints {
+// convertServiceEndpointsToCAPG converts the service endpoint list to a list of CAPG service endpoints.
+func convertServiceEndpointsToCAPG(endpoints []configv1.GCPServiceEndpoint) *capg.ServiceEndpoints {
 	capgServiceEndpoints := &capg.ServiceEndpoints{}
 
-	for _, endpoint := range installConfig.Config.GCP.ServiceEndpoints {
+	for _, endpoint := range endpoints {
 		switch endpoint.Name {
 		case configv1.GCPServiceEndpointNameCompute:
 			capgServiceEndpoints.ComputeServiceEndpoint = endpoint.URL
