@@ -242,6 +242,12 @@ func getValidAgentConfig() *agentconfig.AgentConfig {
 	}
 }
 
+func getValidAgentConfigProxy() *agentconfig.AgentConfig {
+	agentConfig := getValidAgentConfig()
+	agentConfig.Config.RendezvousIP = "10.10.11.1"
+	return agentConfig
+}
+
 func getValidAgentHostsConfig() *agentconfig.AgentHosts {
 	return &agentconfig.AgentHosts{
 		Hosts: []agenttypes.Host{
