@@ -133,7 +133,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		capgLoadBalancerType = capg.Internal
 	}
 
-	formattedEndpoints, err := gcpic.FormatGCPEndpointList(installConfig.Config.GCP.ServiceEndpoints)
+	formattedEndpoints, err := gcpic.FormatGCPEndpointList(installConfig.Config.GCP.ServiceEndpoints, gcpic.FormatGCPEndpointInput{SkipPath: false})
 	if err != nil {
 		return nil, fmt.Errorf("failed to format GCP endpoints for capg: %w", err)
 	}
