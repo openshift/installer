@@ -205,9 +205,8 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 			config.Status.PlatformStatus.GCP.ResourceTags = resourceTags
 		}
 
-		// The endpoints are modified to include the path (i.e. https://compute-endpoint.p.googleapis.com becomes
-		// https://compute-endpoint.p.googleapis.com/compute/v1/ )
-		modifiedEndpoints, err := gcpcfg.FormatGCPEndpointList(installConfig.Config.Platform.GCP.ServiceEndpoints)
+		// The endpoints must not include any path. The path will be added by the users in other packages.
+		modifiedEndpoints, err := gcpcfg.FormatGCPEndpointList(installConfig.Config.Platform.GCP.ServiceEndpoints, gcpcfg.FormatGCPEndpointInput{SkipPath: true})
 		if err != nil {
 			return fmt.Errorf("infrastructure failed to format GCP Endpoints: %w", err)
 		}
