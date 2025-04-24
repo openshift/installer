@@ -203,8 +203,9 @@ func validatePublicIpv4Pool(ctx context.Context, meta *Metadata, fldPath *field.
 
 	sess, err := meta.Session(ctx)
 	if err != nil {
-		return append(allErrs, field.Invalid(fldPath, nil, fmt.Sprintf("unable to start a session: %s", err.Error())))
+		return append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve aws session: %w", err)))
 	}
+
 	publicIpv4Pool, err := DescribePublicIpv4Pool(ctx, sess, config.Platform.AWS.Region, poolID)
 	if err != nil {
 		return append(allErrs, field.Invalid(fldPath, poolID, err.Error()))
@@ -493,7 +494,12 @@ func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *fiel
 		return append(allErrs, field.Invalid(fldPath, vpc, errMsg))
 	}
 
-	securityGroups, err := DescribeSecurityGroups(ctx, meta.session, pool.AdditionalSecurityGroupIDs, platform.Region)
+	session, err := meta.Session(ctx)
+	if err != nil {
+		return append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve aws session: %w", err)))
+	}
+
+	securityGroups, err := DescribeSecurityGroups(ctx, session, pool.AdditionalSecurityGroupIDs, platform.Region)
 	if err != nil {
 		return append(allErrs, field.Invalid(fldPath, pool.AdditionalSecurityGroupIDs, err.Error()))
 	}
@@ -773,7 +779,7 @@ func validateServiceEndpoints(fldPath *field.Path, region string, services []aws
 func validateZoneLocal(ctx context.Context, meta *Metadata, fldPath *field.Path, zoneName string) *field.Error {
 	sess, err := meta.Session(ctx)
 	if err != nil {
-		return field.Invalid(fldPath, zoneName, fmt.Sprintf("unable to start a session: %s", err.Error()))
+		return field.Invalid(fldPath, zoneName, fmt.Sprintf("unable to retrieve aws session: %s", err.Error()))
 	}
 	zones, err := describeFilteredZones(ctx, sess, meta.Region, []string{zoneName})
 	if err != nil {
@@ -904,7 +910,7 @@ func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcI
 func validateInstanceProfile(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) *field.Error {
 	session, err := meta.Session(ctx)
 	if err != nil {
-		return field.InternalError(fldPath, fmt.Errorf("unable to start a session: %w", err))
+		return field.InternalError(fldPath, fmt.Errorf("unable to retrieve aws session: %w", err))
 	}
 	client := iam.New(session)
 	res, err := client.GetInstanceProfileWithContext(ctx, &iam.GetInstanceProfileInput{
