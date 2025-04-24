@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -17,7 +18,6 @@ import (
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
-	"google.golang.org/api/storage/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -58,7 +58,7 @@ type ClusterUninstaller struct {
 	computeSvc  *compute.Service
 	iamSvc      *iam.Service
 	dnsSvc      *dns.Service
-	storageSvc  *storage.Service
+	storageSvc  *storage.Client
 	rmSvc       *resourcemanager.Service
 	fileSvc     *file.Service
 	regionOpSvc *compute.RegionOperationsService
