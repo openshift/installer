@@ -6,10 +6,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"google.golang.org/api/option"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 )
 
@@ -20,21 +18,6 @@ const (
 // GetBootstrapStorageName gets the name of the storage bucket for the bootstrap process.
 func GetBootstrapStorageName(clusterID string) string {
 	return fmt.Sprintf("%s-bootstrap-ignition", clusterID)
-}
-
-// NewStorageClient creates a new Google storage client.
-func NewStorageClient(ctx context.Context) (*storage.Client, error) {
-	ssn, err := gcpic.GetSession(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get session while creating gcp storage client: %w", err)
-	}
-
-	client, err := storage.NewClient(ctx, option.WithCredentials(ssn.Credentials))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create client: %w", err)
-	}
-
-	return client, nil
 }
 
 // CreateStorage creates the gcp bucket/storage. The storage bucket does Not include the bucket object. The
@@ -65,13 +48,8 @@ func CreateStorage(ctx context.Context, ic *installconfig.InstallConfig, bucketH
 }
 
 // CreateSignedURL creates a signed url and correlates the signed url with a storage bucket.
-func CreateSignedURL(clusterID string) (string, error) {
+func CreateSignedURL(client *storage.Client, clusterID string) (string, error) {
 	bucketName := GetBootstrapStorageName(clusterID)
-
-	client, err := NewStorageClient(context.TODO())
-	if err != nil {
-		return "", fmt.Errorf("failed to create storage client: %w", err)
-	}
 
 	// Signing a URL requires credentials authorized to sign a URL. You can pass
 	// these in through SignedURLOptions with a Google Access ID with
@@ -110,11 +88,7 @@ func FillBucket(ctx context.Context, bucketHandle *storage.BucketHandle, content
 }
 
 // DestroyStorage Destroy the bucket and the bucket objects that are associated with the bucket.
-func DestroyStorage(ctx context.Context, clusterID string) error {
-	client, err := NewStorageClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create storage client: %w", err)
-	}
+func DestroyStorage(ctx context.Context, client *storage.Client, clusterID string) error {
 	bucketName := GetBootstrapStorageName(clusterID)
 
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)

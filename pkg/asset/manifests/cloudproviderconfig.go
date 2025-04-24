@@ -185,13 +185,13 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			// name, otherwise this would take the last one.
 			switch endpoint.Name {
 			case configv1.GCPServiceEndpointNameCompute:
-				formattedURL, err := gcp.FormatGCPEndpoint(endpoint.URL, gcp.ComputeServiceNameGCP, gcp.ServiceVersionGCP1)
+				formattedURL, err := gcp.FormatGCPEndpoint(endpoint.Name, endpoint.URL, gcp.FormatGCPEndpointInput{SkipPath: false})
 				if err != nil {
 					return fmt.Errorf("failed format GCP compute endpoint URL %s: %w", endpoint.URL, err)
 				}
 				apiEndpoint = formattedURL
 			case configv1.GCPServiceEndpointNameContainer:
-				formattedURL, err := gcp.FormatGCPEndpoint(endpoint.URL, gcp.ContainerServiceNameGCP, gcp.ServiceVersionGCP1)
+				formattedURL, err := gcp.FormatGCPEndpoint(endpoint.Name, endpoint.URL, gcp.FormatGCPEndpointInput{SkipPath: false})
 				if err != nil {
 					return fmt.Errorf("failed format GCP container endpoint URL %s: %w", endpoint.URL, err)
 				}

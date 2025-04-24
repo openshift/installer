@@ -7,8 +7,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"google.golang.org/api/googleapi"
-	storage "google.golang.org/api/storage/v1"
+	"google.golang.org/api/iterator"
 )
 
 var (
@@ -37,23 +36,25 @@ func (o *ClusterUninstaller) listBucketsWithFilter(ctx context.Context, fields s
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []cloudResource{}
-	req := o.storageSvc.Buckets.List(o.ProjectID).Fields(googleapi.Field(fields))
 
-	err := req.Pages(ctx, func(list *storage.Buckets) error {
-		for _, item := range list.Items {
-			if filterFunc(item.Name) {
-				o.Logger.Debugf("Found bucket: %s", item.Name)
-				result = append(result, cloudResource{
-					key:      item.Name,
-					name:     item.Name,
-					typeName: bucketResourceName,
-				})
-			}
+	it := o.storageSvc.Buckets(ctx, o.ProjectID)
+	for {
+		bucketAttrs, err := it.Next()
+		if errors.Is(err, iterator.Done) {
+			break
 		}
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch object storage buckets: %w", err)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch storage bucket: %w", err)
+		}
+		if filterFunc(bucketAttrs.Name) {
+			o.Logger.Debugf("Found bucket: %s", bucketAttrs.Name)
+			result = append(result, cloudResource{
+				key:      bucketAttrs.Name,
+				name:     bucketAttrs.Name,
+				typeName: bucketResourceName,
+			})
+		}
 	}
 	return result, nil
 }
@@ -62,7 +63,7 @@ func (o *ClusterUninstaller) deleteBucket(ctx context.Context, item cloudResourc
 	o.Logger.Debugf("Deleting storage bucket %s", item.name)
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
-	err := o.storageSvc.Buckets.Delete(item.name).Context(ctx).Do()
+	err := o.storageSvc.Bucket(item.name).Delete(ctx)
 	if err != nil && !isNoOp(err) {
 		return errors.Wrapf(err, "failed to delete bucket %s", item.name)
 	}
