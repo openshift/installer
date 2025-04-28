@@ -4264,12 +4264,41 @@ spec:
                       different account than the rest of the cluster resources.
                       If HostedZoneRole is set, HostedZone must also be set.
                     type: string
+                  ingressController:
+                    description: IngressController is an optional extra configuration
+                      for the Ingress Controllers.
+                    properties:
+                      securityGroupEnabled:
+                        description: |-
+                          SecurityGroupEnabled is an optional field to enable security groups
+                          when using load balancer type Network Load Balancer (NLB).
+                          When this field is enabled with LBType NLB, all ingresscontrollers (including the
+                          default ingresscontroller) will be created using security group in the NLBs
+                          by default.
+
+                          If this field is not set explicitly, it defaults to no security groups in the NLB.
+                          This default is subject to change over time.
+                        type: boolean
+                      securityGroups:
+                        description: |-
+                          resources created by installer.
+
+                          SecurityGroups is an optional list of security groups to be added to the IngressController
+                          when using load balancer type Network Load Balancer (NLB).
+
+                          When this field is used with SecurityGroupEnabled and LBType NLB, the security
+                          group will be attached to the IngressControllers.
+                        items:
+                          type: string
+                        type: array
+                    type: object
                   lbType:
                     description: |-
                       LBType is an optional field to specify a load balancer type.
                       When this field is specified, all ingresscontrollers (including the
                       default ingresscontroller) will be created using the specified load-balancer
                       type by default.
+                      Q: Should we move LBType to here?
 
                       Following are the accepted values:
 
