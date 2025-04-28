@@ -317,6 +317,17 @@ func ValidateServiceInstance(client API, ic *types.InstallConfig) error {
 	return nil
 }
 
+func ValidateStorageTier(ic *types.InstallConfig) error {
+	if len(ic.PowerVS.StorageTier) > 0 {
+		if ic.PowerVS.StorageTier == "tier0" || ic.PowerVS.StorageTier == "tier1" || ic.PowerVS.StorageTier == "tier3" {
+			return nil
+		} else {
+			return fmt.Errorf("platform:powervs:storageTier has an invalid value %q. Available storage tiers: tier0, tier1 and tier3", ic.PowerVS.StorageTier)
+		}
+	}
+	return nil
+}
+
 // ValidateTransitGateway validates the optional transit gateway name in our install config.
 func ValidateTransitGateway(client API, ic *types.InstallConfig) error {
 	var (
