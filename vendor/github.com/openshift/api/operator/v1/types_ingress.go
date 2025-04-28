@@ -682,6 +682,13 @@ type AWSSubnetID string
 // +kubebuilder:validation:XValidation:rule=`!self.startsWith('subnet-')`,message="subnet name cannot start with 'subnet-'"
 type AWSSubnetName string
 
+// AWSSecurityGroup is a reference to an AWS security group name or ID.
+// +kubebuilder:validation:MinLength=1
+// +kubebuilder:validation:MaxLength=256
+// +kubebuilder:validation:XValidation:rule=`!self.contains(',')`,message="security group name cannot contain a comma"
+// +kubebuilder:validation:XValidation:rule=`self.startsWith('sg-') ? self.matches('^sg-[0-9A-Za-z]{17}$') : true`,message="security group follow the pattern '^sg-[0-9A-Za-z]{17}$' if it starts with 'sg-'"
+type AWSSecurityGroup string
+
 // GCPLoadBalancerParameters provides configuration settings that are
 // specific to GCP load balancers.
 type GCPLoadBalancerParameters struct {
@@ -842,7 +849,26 @@ type AWSNetworkLoadBalancerParameters struct {
 	// +listType=atomic
 	// +kubebuilder:validation:XValidation:rule=`self.all(x, self.exists_one(y, x == y))`,message="eipAllocations cannot contain duplicates"
 	// +kubebuilder:validation:MaxItems=10
-	EIPAllocations []EIPAllocation `json:"eipAllocations"`
+	EIPAllocations []EIPAllocation `json:"eipAllocations,omitempty"`
+
+	// securityGroups is a list of IDs or Names of Security Groups (SG) instances that
+	// are assigned to the Network Load Balancer.
+	// The following restrictions apply:
+	//
+	// Only a single Security Group can be added (??).
+	// An SG can be allocated to only a single IngressController.
+	//
+	// +optional
+	// +openshift:enable:FeatureGate=IngressNLBSecurityGroup
+	// SecurityGroups *AWSSecurityGroups `json:"securityGroups"`
+	SecurityGroups []AWSSecurityGroup `json:"securityGroups,omitempty"`
+
+	// managedSecurityGroup specifies whether the service load balancer should create
+	// and manage security groups for the Network Load Balancer.
+	//
+	// +optional
+	// +openshift:enable:FeatureGate=IngressNLBSecurityGroup
+	ManagedSecurityGroup bool `json:"managedSecurityGroup,omitempty"`
 }
 
 // EIPAllocation is an ID for an Elastic IP (EIP) address that can be allocated to an ELB in the AWS environment.
