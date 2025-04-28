@@ -277,7 +277,9 @@ func (APIServer) SwaggerDoc() map[string]string {
 }
 
 var map_APIServerEncryption = map[string]string{
+	"":     "APIServerEncryption is used to encrypt sensitive resources on the cluster.",
 	"type": "type defines what encryption type should be used to encrypt resources at the datastore layer. When this field is unset (i.e. when it is set to the empty string), identity is implied. The behavior of unset can and will change over time.  Even if encryption is enabled by default, the meaning of unset may change to a different encryption type based on changes in best practices.\n\nWhen encryption is enabled, all sensitive resources shipped with the platform are encrypted. This list of sensitive resources can and will change over time.  The current authoritative list is:\n\n  1. secrets\n  2. configmaps\n  3. routes.route.openshift.io\n  4. oauthaccesstokens.oauth.openshift.io\n  5. oauthauthorizetokens.oauth.openshift.io",
+	"kms":  "kms defines the configuration for the external KMS instance that manages the encryption keys, when KMS encryption is enabled sensitive resources will be encrypted using keys managed by an externally configured KMS instance.\n\nThe Key Management Service (KMS) instance provides symmetric encryption and is responsible for managing the lifecyle of the encryption keys outside of the control plane. This allows integration with an external provider to manage the data encryption keys securely.",
 }
 
 func (APIServerEncryption) SwaggerDoc() map[string]string {
@@ -394,6 +396,16 @@ func (DeprecatedWebhookTokenAuthenticator) SwaggerDoc() map[string]string {
 	return map_DeprecatedWebhookTokenAuthenticator
 }
 
+var map_ExtraMapping = map[string]string{
+	"":                "ExtraMapping allows specifying a key and CEL expression to evaluate the keys' value. It is used to create additional mappings and attributes added to a cluster identity from a provided authentication token.",
+	"key":             "key is a required field that specifies the string to use as the extra attribute key.\n\nkey must be a domain-prefix path (e.g 'example.org/foo'). key must not exceed 510 characters in length. key must contain the '/' character, separating the domain and path characters. key must not be empty.\n\nThe domain portion of the key (string of characters prior to the '/') must be a valid RFC1123 subdomain. It must not exceed 253 characters in length. It must start and end with an alphanumeric character. It must only contain lower case alphanumeric characters and '-' or '.'. It must not use the reserved domains, or be subdomains of, \"kubernetes.io\", \"k8s.io\", and \"openshift.io\".\n\nThe path portion of the key (string of characters after the '/') must not be empty and must consist of at least one alphanumeric character, percent-encoded octets, '-', '.', '_', '~', '!', '$', '&', ''', '(', ')', '*', '+', ',', ';', '=', and ':'. It must not exceed 256 characters in length.",
+	"valueExpression": "valueExpression is a required field to specify the CEL expression to extract the extra attribute value from a JWT token's claims. valueExpression must produce a string or string array value. \"\", [], and null are treated as the extra mapping not being present. Empty string values within an array are filtered out.\n\nCEL expressions have access to the token claims through a CEL variable, 'claims'. 'claims' is a map of claim names to claim values. For example, the 'sub' claim value can be accessed as 'claims.sub'. Nested claims can be accessed using dot notation ('claims.foo.bar').\n\nvalueExpression must not exceed 4096 characters in length. valueExpression must not be empty.",
+}
+
+func (ExtraMapping) SwaggerDoc() map[string]string {
+	return map_ExtraMapping
+}
+
 var map_OIDCClientConfig = map[string]string{
 	"componentName":      "componentName is the name of the component that is supposed to consume this client configuration",
 	"componentNamespace": "componentNamespace is the namespace of the component that is supposed to consume this client configuration",
@@ -459,10 +471,22 @@ func (TokenClaimMapping) SwaggerDoc() map[string]string {
 var map_TokenClaimMappings = map[string]string{
 	"username": "username is a name of the claim that should be used to construct usernames for the cluster identity.\n\nDefault value: \"sub\"",
 	"groups":   "groups is a name of the claim that should be used to construct groups for the cluster identity. The referenced claim must use array of strings values.",
+	"uid":      "uid is an optional field for configuring the claim mapping used to construct the uid for the cluster identity.\n\nWhen using uid.claim to specify the claim it must be a single string value. When using uid.expression the expression must result in a single string value.\n\nWhen omitted, this means the user has no opinion and the platform is left to choose a default, which is subject to change over time. The current default is to use the 'sub' claim.",
+	"extra":    "extra is an optional field for configuring the mappings used to construct the extra attribute for the cluster identity. When omitted, no extra attributes will be present on the cluster identity. key values for extra mappings must be unique. A maximum of 64 extra attribute mappings may be provided.",
 }
 
 func (TokenClaimMappings) SwaggerDoc() map[string]string {
 	return map_TokenClaimMappings
+}
+
+var map_TokenClaimOrExpressionMapping = map[string]string{
+	"":           "TokenClaimOrExpressionMapping allows specifying either a JWT token claim or CEL expression to be used when mapping claims from an authentication token to cluster identities.",
+	"claim":      "claim is an optional field for specifying the JWT token claim that is used in the mapping. The value of this claim will be assigned to the field in which this mapping is associated.\n\nPrecisely one of claim or expression must be set. claim must not be specified when expression is set. When specified, claim must be at least 1 character in length and must not exceed 256 characters in length.",
+	"expression": "expression is an optional field for specifying a CEL expression that produces a string value from JWT token claims.\n\nCEL expressions have access to the token claims through a CEL variable, 'claims'. 'claims' is a map of claim names to claim values. For example, the 'sub' claim value can be accessed as 'claims.sub'. Nested claims can be accessed using dot notation ('claims.foo.bar').\n\nPrecisely one of claim or expression must be set. expression must not be specified when claim is set. When specified, expression must be at least 1 character in length and must not exceed 4096 characters in length.",
+}
+
+func (TokenClaimOrExpressionMapping) SwaggerDoc() map[string]string {
+	return map_TokenClaimOrExpressionMapping
 }
 
 var map_TokenClaimValidationRule = map[string]string{
@@ -1972,6 +1996,26 @@ var map_LoadBalancer = map[string]string{
 
 func (LoadBalancer) SwaggerDoc() map[string]string {
 	return map_LoadBalancer
+}
+
+var map_AWSKMSConfig = map[string]string{
+	"":       "AWSKMSConfig defines the KMS config specific to AWS KMS provider",
+	"keyARN": "keyARN specifies the Amazon Resource Name (ARN) of the AWS KMS key used for encryption. The value must adhere to the format `arn:aws:kms:<region>:<account_id>:key/<key_id>`, where: - `<region>` is the AWS region consisting of lowercase letters and hyphens followed by a number. - `<account_id>` is a 12-digit numeric identifier for the AWS account. - `<key_id>` is a unique identifier for the KMS key, consisting of lowercase hexadecimal characters and hyphens.",
+	"region": "region specifies the AWS region where the KMS instance exists, and follows the format `<region-prefix>-<region-name>-<number>`, e.g.: `us-east-1`. Only lowercase letters and hyphens followed by numbers are allowed.",
+}
+
+func (AWSKMSConfig) SwaggerDoc() map[string]string {
+	return map_AWSKMSConfig
+}
+
+var map_KMSConfig = map[string]string{
+	"":     "KMSConfig defines the configuration for the KMS instance that will be used with KMSEncryptionProvider encryption",
+	"type": "type defines the kind of platform for the KMS provider. Available provider types are AWS only.",
+	"aws":  "aws defines the key config for using an AWS KMS instance for the encryption. The AWS KMS instance is managed by the user outside the purview of the control plane.",
+}
+
+func (KMSConfig) SwaggerDoc() map[string]string {
+	return map_KMSConfig
 }
 
 var map_ClusterNetworkEntry = map[string]string{

@@ -352,3 +352,7 @@ replace github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.c
 
 // This is to force capi back for the older provider version
 replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
+
+// WIP SPLAT-2137 / branch: SPLAT-2113
+//replace github.com/openshift/api => /home/mtulio/openshift/OCPSTRAT-1553/api
+replace github.com/openshift/api => github.com/mtulio/openshift-api v0.0.0-20250520212508-507b878818bf

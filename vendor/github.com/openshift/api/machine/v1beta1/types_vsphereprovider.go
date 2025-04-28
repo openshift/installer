@@ -265,6 +265,9 @@ type VSphereMachineProviderStatus struct {
 	InstanceState *string `json:"instanceState,omitempty"`
 	// conditions is a set of conditions associated with the Machine to indicate
 	// errors or other status
+	// +listType=map
+	// +listMapKey=type
+	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	// taskRef is a managed object reference to a Task related to the machine.
 	// This value is set automatically at runtime and should not be set or
