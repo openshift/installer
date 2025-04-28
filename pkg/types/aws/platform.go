@@ -95,6 +95,7 @@ type Platform struct {
 	// When this field is specified, all ingresscontrollers (including the
 	// default ingresscontroller) will be created using the specified load-balancer
 	// type by default.
+	// Q: Should we move LBType to here?
 	//
 	// Following are the accepted values:
 	//
@@ -134,6 +135,10 @@ type Platform struct {
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
+
+	// IngressController is an optional extra configuration for the Ingress Controllers.
+	// +optional
+	IngressController *IngressController `json:"ingressController,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to
@@ -231,6 +236,21 @@ const (
 	// load balancer that serves the Kubernetes API server.
 	ControlPlaneInternalLBSubnetRole SubnetRoleType = "ControlPlaneInternalLB"
 )
+
+// IngressController specifies the additional ingress controller configuration.
+type IngressController struct {
+	// SecurityGroupEnabled is an optional field to enable security groups
+	// when using load balancer type Network Load Balancer (NLB).
+	// When this field is enabled with LBType NLB, all ingresscontrollers (including the
+	// default ingresscontroller) will be created using security group in the NLBs
+	// by default.
+	//
+	// If this field is not set explicitly, it defaults to no security groups in the NLB.
+	// This default is subject to change over time.
+	//
+	// +optional
+	SecurityGroupEnabled bool `json:"securityGroupEnabled,omitempty"`
+}
 
 // IsSecretRegion returns true if the region is part of either the ISO or ISOB partitions.
 func IsSecretRegion(region string) bool {
