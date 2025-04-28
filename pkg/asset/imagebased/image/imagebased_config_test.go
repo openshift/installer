@@ -216,7 +216,7 @@ networkConfig:
 `,
 
 			expectedFound: false,
-			expectedError: "networkConfig: Invalid value: invalid: config\n: failed to execute 'nmstatectl gc', error: InvalidArgument: Invalid YAML string: unknown field `invalid`",
+			expectedError: "unknown field `invalid`",
 		},
 		{
 			name: "empty networkConfig",
