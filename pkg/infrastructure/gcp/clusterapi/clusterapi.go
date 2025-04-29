@@ -112,7 +112,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	// Create the bucket and presigned url. The url is generated using a known/expected name so that the
 	// url can be retrieved from the api by this name.
 	bucketName := gcp.GetBootstrapStorageName(in.InfraID)
-	storageClient, err := gcp.NewStorageClient(ctx)
+	storageClient, err := icgcp.GetStorageService(ctx, in.InstallConfig.Config.GCP.ServiceEndpoints)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage client: %w", err)
 	}
@@ -249,7 +249,12 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 // DestroyBootstrap destroys the temporary bootstrap resources.
 func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapDestroyInput) error {
 	logrus.Warnf("Destroying GCP Bootstrap Resources")
-	if err := gcp.DestroyStorage(ctx, in.Metadata.InfraID); err != nil {
+	storageClient, err := icgcp.GetStorageService(ctx, in.Metadata.GCP.ServiceEndpoints)
+	if err != nil {
+		return fmt.Errorf("failed to create storage client: %w", err)
+	}
+
+	if err := gcp.DestroyStorage(ctx, storageClient, in.Metadata.InfraID); err != nil {
 		return fmt.Errorf("failed to destroy storage: %w", err)
 	}
 

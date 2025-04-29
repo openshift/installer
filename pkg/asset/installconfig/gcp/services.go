@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"cloud.google.com/go/storage"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/cloudresourcemanager/v3"
 	"google.golang.org/api/compute/v1"
@@ -14,7 +15,6 @@ import (
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
 	serviceusage "google.golang.org/api/serviceusage/v1beta1"
-	"google.golang.org/api/storage/v1"
 
 	configv1 "github.com/openshift/api/config/v1"
 )
@@ -23,23 +23,14 @@ type serviceNameGCP string
 type serviceVersionGCP string
 
 const (
-	cloudResourceManagerNameGCP serviceNameGCP = "cloudresourcemanager"
-	computeServiceNameGCP       serviceNameGCP = "compute"
-	containerServiceNameGCP     serviceNameGCP = "container"
-	dnsServiceNameGCP           serviceNameGCP = "dns"
-	fileServiceNameGCP          serviceNameGCP = "file"
-	iamServiceNameGCP           serviceNameGCP = "iam"
-	serviceUsageNameGCP         serviceNameGCP = "serviceusage"
-	storageServiceNameGCP       serviceNameGCP = "storage"
+	computeServiceNameGCP   serviceNameGCP = "compute"
+	containerServiceNameGCP serviceNameGCP = "container"
+	storageServiceNameGCP   serviceNameGCP = "storage"
 
 	serviceVersionGCP1 serviceVersionGCP = "v1"
-	serviceVersionGCP3 serviceVersionGCP = "v3"
-	// TODO: should this be betav1
-	serviceVersionGCPBeta serviceVersionGCP = "beta"
 )
 
-// FormatGCPEndpointInput is the structure containing input variables for formatting the GCP
-// Service Endpoints.
+// FormatGCPEndpointInput is the structure containing input variables for formatting the GCP Service Endpoints.
 type FormatGCPEndpointInput struct {
 	// SkipPath should be set to true when the path should not be added to the
 	// formatted endpoint. When the path is added, an example endpoint of
@@ -49,7 +40,7 @@ type FormatGCPEndpointInput struct {
 }
 
 // FormatGCPEndpointList will format the list of GCP Service Endpoints to match the expected url
-// for WithEndpoint or BasePath override endpoint options
+// for WithEndpoint or BasePath override endpoint options.
 func FormatGCPEndpointList(endpoints []configv1.GCPServiceEndpoint, input FormatGCPEndpointInput) ([]configv1.GCPServiceEndpoint, error) {
 	// The endpoints are modified to include the path
 	modifiedEndpoints := []configv1.GCPServiceEndpoint{}
@@ -84,19 +75,20 @@ func FormatGCPEndpoint(service configv1.GCPServiceEndpointName, endpoint string,
 	if !input.SkipPath {
 		switch service {
 		case configv1.GCPServiceEndpointNameCloudResource:
-			endpointURL.Path = fmt.Sprintf("/%s/%s/", cloudResourceManagerNameGCP, serviceVersionGCP3)
+			endpointURL.Path = "/"
 		case configv1.GCPServiceEndpointNameCompute:
 			endpointURL.Path = fmt.Sprintf("/%s/%s/", computeServiceNameGCP, serviceVersionGCP1)
 		case configv1.GCPServiceEndpointNameContainer:
 			endpointURL.Path = fmt.Sprintf("/%s/%s/", containerServiceNameGCP, serviceVersionGCP1)
 		case configv1.GCPServiceEndpointNameDNS:
-			endpointURL.Path = fmt.Sprintf("/%s/%s/", dnsServiceNameGCP, serviceVersionGCP1)
+			endpointURL.Path = "/"
 		case configv1.GCPServiceEndpointNameFile:
-			endpointURL.Path = fmt.Sprintf("/%s/%s/", fileServiceNameGCP, serviceVersionGCP1)
+			endpointURL.Path = "/"
 		case configv1.GCPServiceEndpointNameIAM:
-			endpointURL.Path = fmt.Sprintf("/%s/%s/", iamServiceNameGCP, serviceVersionGCP1)
+			endpointURL.Path = "/"
 		case configv1.GCPServiceEndpointNameServiceUsage:
-			endpointURL.Path = fmt.Sprintf("/%s/%s/", serviceUsageNameGCP, serviceVersionGCPBeta)
+			// This is a beta service but the endpoint override remains the same.
+			endpointURL.Path = "/"
 		case configv1.GCPServiceEndpointNameStorage:
 			endpointURL.Path = fmt.Sprintf("/%s/%s/", storageServiceNameGCP, serviceVersionGCP1)
 		default:
@@ -257,7 +249,7 @@ func GetIAMService(ctx context.Context, serviceEndpoints []configv1.GCPServiceEn
 
 // GetStorageService creates the storage service. The service is created with credentials and any service
 // endpoint overrides entered by the user in the installconfig.
-func GetStorageService(ctx context.Context, serviceEndpoints []configv1.GCPServiceEndpoint, options ...option.ClientOption) (*storage.Service, error) {
+func GetStorageService(ctx context.Context, serviceEndpoints []configv1.GCPServiceEndpoint, options ...option.ClientOption) (*storage.Client, error) {
 	genOptions, err := getOptions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get storage service options: %w", err)
@@ -274,7 +266,7 @@ func GetStorageService(ctx context.Context, serviceEndpoints []configv1.GCPServi
 	}
 
 	options = append(options, genOptions...)
-	svc, err := storage.NewService(ctx, options...)
+	svc, err := storage.NewClient(ctx, options...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage service: %w", err)
 	}

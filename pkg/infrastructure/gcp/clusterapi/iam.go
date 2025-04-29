@@ -83,6 +83,14 @@ func CreateServiceAccount(ctx context.Context, infraID, projectID, role string, 
 		return "", fmt.Errorf("Projects.ServiceAccounts.Create: %w", err)
 	}
 
+	ret, err := service.Projects.ServiceAccounts.List("projects/" + projectID).Do()
+	if err != nil {
+		return "", fmt.Errorf("Projects.ServiceAccounts.List: %w", err)
+	}
+	for _, account := range ret.Accounts {
+		logrus.Debugf("Service account: %s", account.DisplayName)
+	}
+
 	// Poll for service account
 	for i := 0; i < retryCount; i++ {
 		_, err := service.Projects.ServiceAccounts.Get(sa.Name).Do()
