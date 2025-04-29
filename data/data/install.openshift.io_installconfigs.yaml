@@ -71,8 +71,15 @@ spec:
                       properties:
                         address:
                           type: string
-                        disableCertificateVerification:
-                          type: boolean
+                        certificateVerification:
+                          default: Enabled
+                          description: |-
+                            CertificateVerification Defines whether ssl certificate verification is required or not.
+                            If omitted, the platform chooses a default, that default is enabled.
+                          enum:
+                          - Enabled
+                          - Disabled
+                          type: string
                         hostName:
                           type: string
                         password:
@@ -81,7 +88,6 @@ spec:
                           type: string
                       required:
                       - address
-                      - disableCertificateVerification
                       - password
                       - username
                       type: object
@@ -1387,8 +1393,15 @@ spec:
                         properties:
                           address:
                             type: string
-                          disableCertificateVerification:
-                            type: boolean
+                          certificateVerification:
+                            default: Enabled
+                            description: |-
+                              CertificateVerification Defines whether ssl certificate verification is required or not.
+                              If omitted, the platform chooses a default, that default is enabled.
+                            enum:
+                            - Enabled
+                            - Disabled
+                            type: string
                           hostName:
                             type: string
                           password:
@@ -1397,7 +1410,6 @@ spec:
                             type: string
                         required:
                         - address
-                        - disableCertificateVerification
                         - password
                         - username
                         type: object
@@ -2642,8 +2654,15 @@ spec:
                       properties:
                         address:
                           type: string
-                        disableCertificateVerification:
-                          type: boolean
+                        certificateVerification:
+                          default: Enabled
+                          description: |-
+                            CertificateVerification Defines whether ssl certificate verification is required or not.
+                            If omitted, the platform chooses a default, that default is enabled.
+                          enum:
+                          - Enabled
+                          - Disabled
+                          type: string
                         hostName:
                           type: string
                         password:
@@ -2652,7 +2671,6 @@ spec:
                           type: string
                       required:
                       - address
-                      - disableCertificateVerification
                       - password
                       - username
                       type: object

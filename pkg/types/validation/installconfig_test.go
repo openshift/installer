@@ -2824,8 +2824,9 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
+				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
-					Credential(c1().DisableCertificateVerification(true), c2())).
+					Credential(c1().CertificateVerification(types.CertificateVerificationDisabled), c2())).
 				CpReplicas(2).
 				build(),
 			name:     "valid_with_disabled_cert_verification",
@@ -3026,8 +3027,8 @@ func (hb *credentialBuilder) BMCPassword(value string) *credentialBuilder {
 	return hb
 }
 
-func (hb *credentialBuilder) DisableCertificateVerification(value bool) *credentialBuilder {
-	hb.Credential.DisableCertificateVerification = value
+func (hb *credentialBuilder) CertificateVerification(value types.CertificateVerificationPolicy) *credentialBuilder {
+	hb.Credential.CertificateVerification = value
 	return hb
 }
 
