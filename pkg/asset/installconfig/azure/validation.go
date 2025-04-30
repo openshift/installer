@@ -58,6 +58,9 @@ func Validate(client API, ic *types.InstallConfig) error {
 	}
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
 	allErrs = append(allErrs, validateBootDiagnostics(client, ic)...)
+	if ic.Azure.BaseDomainResourceGroupName != "" && ic.Publish == types.InternalPublishingStrategy {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("platform").Child("azure").Child("baseDomainResourceGroupName"), ic.Azure.BaseDomainResourceGroupName, "base domain resource group should not be specified for internal publishing strategy"))
+	}
 	return allErrs.ToAggregate()
 }
 
