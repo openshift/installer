@@ -33,14 +33,15 @@ func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (p
 	// way is for all vcenter data to be part of the vcenters array.
 	if len(metadata.VSphere.VCenters) > 0 {
 		for _, vsphere := range metadata.VSphere.VCenters {
-			client, err := NewClient(vsphere.VCenter, vsphere.Username, vsphere.Password)
+			logger.Info(fmt.Sprintf("Creating client for vCenter %v for destroy", vsphere.VCenter))
+			client, err := NewClient(vsphere.VCenter, vsphere.Username, vsphere.Password, logger)
 			if err != nil {
 				return nil, err
 			}
 			clients = append(clients, client)
 		}
 	} else {
-		client, err := NewClient(metadata.VSphere.VCenter, metadata.VSphere.Username, metadata.VSphere.Password)
+		client, err := NewClient(metadata.VSphere.VCenter, metadata.VSphere.Username, metadata.VSphere.Password, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -66,8 +67,6 @@ func (o *ClusterUninstaller) deleteFolder(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
-	o.Logger.Debug("Delete Folder")
-
 	for _, client := range o.clients {
 		folderMoList, err := client.ListFolders(ctx, o.InfraID)
 		if err != nil {
@@ -82,7 +81,7 @@ func (o *ClusterUninstaller) deleteFolder(ctx context.Context) error {
 		// If there are no children in the folder, go ahead and remove it
 
 		for _, f := range folderMoList {
-			folderLogger := o.Logger.WithField("Folder", f.Name)
+			folderLogger := o.Logger.WithField("Folder", f.Name).WithField("vCenter", client.GetVCenterName())
 			if numChildren := len(f.ChildEntity); numChildren > 0 {
 				entities := make([]string, 0, numChildren)
 				for _, child := range f.ChildEntity {
@@ -108,9 +107,9 @@ func (o *ClusterUninstaller) deleteStoragePolicy(ctx context.Context) error {
 	defer cancel()
 
 	policyName := fmt.Sprintf("openshift-storage-policy-%s", o.InfraID)
-	policyLogger := o.Logger.WithField("StoragePolicy", policyName)
-	policyLogger.Debug("Delete")
 	for _, client := range o.clients {
+		policyLogger := o.Logger.WithField("StoragePolicy", policyName).WithField("vCenter", client.GetVCenterName())
+		policyLogger.Debug("Destroying")
 		err := client.DeleteStoragePolicy(ctx, policyName)
 		if err != nil {
 			policyLogger.Debug(err)
@@ -126,9 +125,9 @@ func (o *ClusterUninstaller) deleteTag(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 
-	tagLogger := o.Logger.WithField("Tag", o.InfraID)
-	tagLogger.Debug("Delete")
 	for _, client := range o.clients {
+		tagLogger := o.Logger.WithField("Tag", o.InfraID).WithField("vCenter", client.GetVCenterName())
+		tagLogger.Debug("Delete")
 		err := client.DeleteTag(ctx, o.InfraID)
 		if err != nil {
 			tagLogger.Debug(err)
@@ -145,9 +144,9 @@ func (o *ClusterUninstaller) deleteTagCategory(ctx context.Context) error {
 	defer cancel()
 
 	categoryID := "openshift-" + o.InfraID
-	tcLogger := o.Logger.WithField("TagCategory", categoryID)
-	tcLogger.Debug("Delete")
 	for _, client := range o.clients {
+		tcLogger := o.Logger.WithField("TagCategory", categoryID).WithField("vCenter", client.GetVCenterName())
+		tcLogger.Debug("Delete")
 		err := client.DeleteTagCategory(ctx, categoryID)
 		if err != nil {
 			tcLogger.Errorln(err)
@@ -160,13 +159,14 @@ func (o *ClusterUninstaller) deleteTagCategory(ctx context.Context) error {
 }
 
 func (o *ClusterUninstaller) stopVirtualMachine(ctx context.Context, vmMO mo.VirtualMachine, client API) error {
-	virtualMachineLogger := o.Logger.WithField("VirtualMachine", vmMO.Name)
+	virtualMachineLogger := o.Logger.WithField("VirtualMachine", vmMO.Name).WithField("vCenter", client.GetVCenterName())
+	virtualMachineLogger.Debug("Powering off")
 	err := client.StopVirtualMachine(ctx, vmMO)
 	if err != nil {
 		virtualMachineLogger.Debug(err)
 		return err
 	}
-	virtualMachineLogger.Debug("Powered off")
+	virtualMachineLogger.Info("Powered off")
 
 	return nil
 }
@@ -175,16 +175,25 @@ func (o *ClusterUninstaller) stopVirtualMachines(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 
-	o.Logger.Debug("Power Off Virtual Machines")
 	var errs []error
 	for _, client := range o.clients {
+		clientLogger := o.Logger.WithField("vCenter", client.GetVCenterName())
+		clientLogger.Debug("Powering Off Virtual Machines")
 		found, err := client.ListVirtualMachines(ctx, o.InfraID)
 		if err != nil {
 			o.Logger.Debug(err)
 			return err
 		}
 
+		// In theory, all failure domains should at least have the template in it.  If we get zero VMs back, this may
+		// signify an issue getting VMs by tags from the vCenter.
+		if len(found) == 0 {
+			clientLogger.Warning("No Virtual Machines Found")
+		}
+
 		for _, vmMO := range found {
+			stopLogger := o.Logger.WithField("VirtualMachine", vmMO.Name).WithField("IsPoweredOff", isPoweredOff(vmMO))
+			stopLogger.Debug("Power State")
 			if !isPoweredOff(vmMO) {
 				if err := o.stopVirtualMachine(ctx, vmMO, client); err != nil {
 					errs = append(errs, err)
@@ -212,13 +221,20 @@ func (o *ClusterUninstaller) deleteVirtualMachines(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 
-	o.Logger.Debug("Delete Virtual Machines")
 	var errs []error
 	for _, client := range o.clients {
+		clientLogger := o.Logger.WithField("vCenter", client.GetVCenterName())
+		clientLogger.Debug("Delete Virtual Machines")
 		found, err := client.ListVirtualMachines(ctx, o.InfraID)
 		if err != nil {
 			o.Logger.Debug(err)
 			return err
+		}
+
+		// In theory, all failure domains should at least have the template in it.  If we get zero VMs back, this may
+		// signify an issue getting VMs by tags from the vCenter.
+		if len(found) == 0 {
+			clientLogger.Warning("No Virtual Machines Found")
 		}
 
 		for _, vmMO := range found {
@@ -235,8 +251,8 @@ func (o *ClusterUninstaller) deleteHostZoneObjects(ctx context.Context) error {
 	var errs []error
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
-	o.Logger.Debug("Deleting VM Groups and VM Host Rules")
 	for _, client := range o.clients {
+		o.Logger.WithField("vCenter", client.GetVCenterName()).Debug("Delete Host Zone Objects")
 		if err := client.DeleteHostZoneObjects(ctx, o.InfraID); err != nil {
 			errs = append(errs, err)
 		}
@@ -248,16 +264,17 @@ func (o *ClusterUninstaller) deleteHostZoneObjects(ctx context.Context) error {
 func (o *ClusterUninstaller) deleteCnsVolumes(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
-	o.Logger.Debug("Delete CNS Volumes")
 
 	for _, client := range o.clients {
+		o.Logger.WithField("vCenter", client.GetVCenterName()).Debug("Delete CNS Volumes")
 		cnsVolumes, err := client.GetCnsVolumes(ctx, o.InfraID)
 		if err != nil {
 			return err
 		}
 
 		for _, cv := range cnsVolumes {
-			cnsVolumeLogger := o.Logger.WithField("CNS Volume", cv.VolumeId.Id)
+			cnsVolumeLogger := o.Logger.WithField("CNSVolume", cv.VolumeId.Id).WithField("vCenter", client.GetVCenterName())
+			cnsVolumeLogger.Debug("Destroying")
 			err := client.DeleteCnsVolumes(ctx, cv)
 			if err != nil {
 				return err
@@ -270,35 +287,32 @@ func (o *ClusterUninstaller) deleteCnsVolumes(ctx context.Context) error {
 }
 
 func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
+	o.Logger.Debug("Destroying cluster")
 	stagedFuncs := [][]struct {
 		name    string
 		execute func(context.Context) error
-	}{{
+	}{
 		{
-			name: "Stop virtual machines", execute: o.stopVirtualMachines,
+			{name: "Stop virtual machines", execute: o.stopVirtualMachines},
 		},
 		{
-			name: "Delete Virtual Machines", execute: o.deleteVirtualMachines,
+			{name: "Delete Virtual Machines", execute: o.deleteVirtualMachines},
 		},
 		{
-			name: "Delete CNS Volumes", execute: o.deleteCnsVolumes,
+			{name: "Delete CNS Volumes", execute: o.deleteCnsVolumes},
 		},
 		{
-			name: "Folder", execute: o.deleteFolder,
+			{name: "Folder", execute: o.deleteFolder},
 		},
 		{
-			name: "Storage Policy", execute: o.deleteStoragePolicy,
+			{name: "Storage Policy", execute: o.deleteStoragePolicy},
+			{name: "Tag", execute: o.deleteTag},
+			{name: "Tag Category", execute: o.deleteTagCategory},
 		},
 		{
-			name: "Tag", execute: o.deleteTag,
+			{name: "VM Groups and VM Host Rules", execute: o.deleteHostZoneObjects},
 		},
-		{
-			name: "Tag Category", execute: o.deleteTagCategory,
-		},
-		{
-			name: "VM Groups and VM Host Rules", execute: o.deleteHostZoneObjects,
-		},
-	}}
+	}
 
 	stageFailed := false
 	for _, stage := range stagedFuncs {
