@@ -59,7 +59,6 @@ func (params CloudProviderConfig) JSON() (string, error) {
 
 	if params.CloudName == azure.StackCloud {
 		config.authConfig.ResourceManagerEndpoint = params.ResourceManagerEndpoint
-		config.LoadBalancerSku = "basic"
 		config.UseInstanceMetadata = false
 	}
 
