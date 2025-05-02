@@ -763,7 +763,6 @@ github.com/gophercloud/gophercloud/v2/openstack/identity/v3/oauth1
 github.com/gophercloud/gophercloud/v2/openstack/identity/v3/tokens
 github.com/gophercloud/gophercloud/v2/openstack/image/v2/imagedata
 github.com/gophercloud/gophercloud/v2/openstack/image/v2/images
-github.com/gophercloud/gophercloud/v2/openstack/loadbalancer/v2/apiversions
 github.com/gophercloud/gophercloud/v2/openstack/loadbalancer/v2/l7policies
 github.com/gophercloud/gophercloud/v2/openstack/loadbalancer/v2/listeners
 github.com/gophercloud/gophercloud/v2/openstack/loadbalancer/v2/loadbalancers
