@@ -54,10 +54,12 @@ func NewPcloudV2VolumesclonePostParamsWithHTTPClient(client *http.Client) *Pclou
 	}
 }
 
-/* PcloudV2VolumesclonePostParams contains all the parameters to send to the API endpoint
-   for the pcloud v2 volumesclone post operation.
+/*
+PcloudV2VolumesclonePostParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud v2 volumesclone post operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudV2VolumesclonePostParams struct {
 

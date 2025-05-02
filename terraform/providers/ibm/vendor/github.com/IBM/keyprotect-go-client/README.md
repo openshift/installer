@@ -1,3 +1,5 @@
+# IBM Cloud Go SDK Version 0.9.2
+
 # keyprotect-go-client
 
 [![Build Status](https://travis-ci.com/IBM/keyprotect-go-client.svg?branch=master)](https://travis-ci.com/IBM/keyprotect-go-client)
@@ -27,7 +29,7 @@ This client expects that you have an existing IBM Cloud Key Protect Service Inst
 
 Build a client with `ClientConfig` and `New`, then use the client to do some operations.
 ```go
-import "github.com/IBM/keyprotect-go-client"
+import kp "github.com/IBM/keyprotect-go-client"
 
 // Use your IAM API Key and your KeyProtect Service Instance GUID/UUID to create a ClientConfig
 cc := kp.ClientConfig{
@@ -113,24 +115,49 @@ fmt.Println(key.ID, key.Name)
 crkID := key.ID
 ```
 
+### Generating a root key with policy overrides (CRK)
+
+```go
+enable := true
+// Specify policy data
+policy := kp.Policy{
+  Rotation: &kp.Rotation{
+    Enabled:  &enable,
+    Interval: 3,
+  },
+  DualAuth: &kp.DualAuth{
+    Enabled:  &enable,
+  },
+}
+
+// Create a root key named MyRootKey with a rotation and a dualAuthDelete policy
+key, err := client.CreateRootKeyWithPolicyOverrides(ctx, "MyRootKey", nil, nil, policy)
+if err != nil {
+    fmt.Println(err)
+}
+fmt.Println(key.ID, key.Name)
+
+crkID := key.ID
+```
+
 ### Wrapping and Unwrapping a DEK using a specific Root Key.
 
 ```go
 myDEK := []byte{"thisisadataencryptionkey"}
 // Do some encryption with myDEK
 // Wrap the DEK so we can safely store it
-wrappedDEK, err := client.Wrap(ctx, crkID, myDEK, nil)
+wrappedDEK, err := client.Wrap(ctx, crkIDOrAlias, myDEK, nil)
 
 
 // Unwrap the DEK
-dek, err := client.Unwrap(ctx, crkID, wrappedDEK, nil)
+dek, err := client.Unwrap(ctx, crkIDOrAlias, wrappedDEK, nil)
 // Do some encryption/decryption using the DEK
 // Discard the DEK
 dek = nil
 ```
 
 Note you can also pass additional authentication data (AAD) to wrap and unwrap calls
-to provide another level of protection for your DEK.  The AAD is a string array with 
+to provide another level of protection for your DEK.  The AAD is a string array with
 each element up to 255 chars.  For example:
 
 ```go
@@ -138,20 +165,21 @@ myAAD := []string{"First aad string", "second aad string", "third aad string"}
 myDEK := []byte{"thisisadataencryptionkey"}
 // Do some encryption with myDEK
 // Wrap the DEK so we can safely store it
-wrappedDEK, err := client.Wrap(ctx, crkID, myDEK, &myAAD)
+wrappedDEK, err := client.Wrap(ctx, crkIDOrAlias, myDEK, &myAAD)
 
 
 // Unwrap the DEK
-dek, err := client.Unwrap(ctx, crkID, wrappedDEK, &myAAD)
+dek, err := client.Unwrap(ctx, crkIDOrAlias, wrappedDEK, &myAAD)
 // Do some encryption/decryption using the DEK
 // Discard the DEK
 dek = nil
 ```
 
 Have key protect create a DEK for you:
+* To Get the **keyversion** along with DEK and wrapped DEK use **WrapCreateDEKV2()**
 
 ```go
-dek, wrappedDek, err := client.WrapCreateDEK(ctx, crkID, nil)
+dek, wrappedDek, err := client.WrapCreateDEK(ctx, crkIDOrAlias, nil)
 // Do some encrypt/decrypt with the dek
 // Discard the DEK
 dek = nil
@@ -163,11 +191,185 @@ Can also specify AAD:
 
 ```go
 myAAD := []string{"First aad string", "second aad string", "third aad string"}
-dek, wrappedDek, err := client.WrapCreateDEK(ctx, crkID, &myAAD)
+dek, wrappedDek, err := client.WrapCreateDEK(ctx, crkIDOrAlias, &myAAD)
 // Do some encrypt/decrypt with the dek
 // Discard the DEK
 dek = nil
 
 // Save the wrapped DEK for later.  Call Unwrap to use it, make
 // sure to specify the same AAD.
+```
+
+### Fetching keys based on query parameters
+
+```go
+
+limit := uint32(5)
+offset := uint32(0)
+extractable := false
+keyStates := []kp.KeyState{kp.KeyState(kp.Active), kp.KeyState(kp.Suspended)}
+searchStr := "foobar"
+searchQuery, _ := kp.GetKeySearchQuery(&searchStr, kp.ApplyNot(), kp.AddAliasScope())
+
+listKeysOptions := &kp.ListKeysOptions{
+  Limit : &limit,
+  Offset : &offset,
+  Extractable : &extractable,
+  State : keyStates,
+  Search: searchQuery,
+}
+
+keys, err := client.ListKeys(ctx, listKeysOptions)
+if err != nil {
+    fmt.Println(err)
+}
+fmt.Println(keys)
+```
+
+### Fetching keys in ascending or descending sorted order of parameters
+
+```go
+srtStr, _ := kp.GetKeySortStr(kp.WithCreationDate(), WithImportedDesc())
+
+listKeysOptions := &kp.ListKeysOptions{
+  Sort:srtStr,
+}
+
+keys, err := client.ListKeys(ctx, listKeysOptions)
+if err != nil {
+    fmt.Println(err)
+}
+fmt.Println(keys)
+```
+For more information about KeySearch visit: https://cloud.ibm.com/apidocs/key-protect#kp-get-key-search-api
+
+### Fetching key versions based on query parameters
+
+```go
+
+limit := uint32(2)
+offset := uint32(0)
+totalCount := true
+
+listkeyVersionsOptions := &kp.ListKeyVersionsOptions{
+  Limit : &limit,
+  Offset : &offset,
+  TotalCount : &totalCount,
+}
+
+keyVersions, err := client.ListKeyVersions(ctx, "key_id_or_alias", listkeyVersionsOptions)
+if err != nil {
+    fmt.Println(err)
+}
+fmt.Println(keyVersions)
+```
+
+### Enable instance rotation policy
+
+```go
+
+intervalMonth := 3
+enable := true
+
+err := client.SetRotationInstancePolicy(context.Background(), enable, &intervalMonth)
+if err != nil {
+    fmt.Println(err)
+}
+
+rotationInstancePolicy, err := client.GetRotationInstancePolicy(context.Background())
+if err != nil {
+  fmt.Println(err)
+}
+fmt.Println(rotationInstancePolicy)
+```
+
+### Set key rotation policy
+
+```go
+
+rotationInterval := 3
+enabled := true
+keyRotationPolicy, err := client.SetRotationPolicy(context.Background(), "key_id_or_alias", rotationInterval, enabled)
+if err != nil {
+  fmt.Println(err)
+}
+fmt.Println(keyRotationPolicy)
+```
+
+### Enable key rotation policy
+
+```go
+
+keyRotationPolicy, err := client.EnableRotationPolicy(context.Background(), "key_id_or_alias")
+if err != nil {
+  fmt.Println(err)
+}
+fmt.Println(keyRotationPolicy)
+```
+
+### List keys based on filter properties
+
+```go
+// Option-1 - Directly passing the filter query in the format that the API supports.
+filterQuery := "creationDate=gt:\"2022-07-05T00:00:00Z\" state=1,5 extractable=false"
+
+listKeysOptions := &kp.ListKeysOptions{
+  Filter:&filterQuery,
+}
+
+keys, err := client.ListKeys(ctx, listKeysOptions)
+if err != nil {
+    fmt.Println(err)
+}
+fmt.Println(keys)
+
+// Option-2 - Using the builder provided by SDK to construct the filter query
+fb := kp.GetFilterQueryBuilder()
+dateQ := time.Date(2022, 07, 04, 07, 43, 23, 100, time.UTC)
+
+filterQuery := fb.CreationDate().GreaterThan(dateQ).
+	State([]kp.KeyState{kp.KeyState(kp.Destroyed), kp.KeyState(kp.Active)}).
+	Extractable(true).
+	Build()
+
+listKeysOptions := &kp.ListKeysOptions{
+  Filter:&filterQuery,
+}
+
+keys, err := client.ListKeys(ctx, listKeysOptions)
+if err != nil {
+    fmt.Println(err)
+}
+fmt.Println(keys)
+```
+
+### Support for Adding Custom Header
+
+
+1) From ServiceClient (For Every API Call)
+```go
+cc := kp.ClientConfig{
+    BaseURL:    "BASE_URL",
+    APIKey:     "API_KEY",
+    InstanceID: "INSTANCE_ID",
+    Headers: http.Header{
+      "Custom-Header":  {"Custom-Value"},
+    },
+  }
+```
+
+2) From ServiceCall (Per API Call)
+
+* Define Header just before the API Call and Empty out when done.
+
+```go
+client.Config.Headers = make(http.Header))
+client.Config.Headers.Set("Custom-Header", "Custom-Header-Value")
+
+key, err := client.CreateKey(params)
+  if err != nil {
+    panic(err)
+  }
+
+client.Config.Headers = http.Header{}
 ```

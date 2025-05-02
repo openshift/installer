@@ -19,7 +19,7 @@ import (
 // DefaultServiceURL is the default URL to make service requests to.
 const DefaultServiceURL = "https://us-south.functions.cloud.ibm.com"
 
-//FunctionClient ...
+// FunctionClient ...
 func FunctionClient(c *bluemix.Config) (*whisk.Client, error) {
 	baseEndpoint := getBaseURL(c.Region)
 	u, err := url.Parse(fmt.Sprintf("%s/api", baseEndpoint))
@@ -35,7 +35,7 @@ func FunctionClient(c *bluemix.Config) (*whisk.Client, error) {
 	return functionsClient, err
 }
 
-//getBaseURL ..
+// getBaseURL ..
 func getBaseURL(region string) string {
 	baseEndpoint := fmt.Sprintf(DefaultServiceURL)
 	if region != "us-south" {

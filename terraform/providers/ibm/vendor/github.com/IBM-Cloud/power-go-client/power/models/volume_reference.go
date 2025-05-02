@@ -70,6 +70,9 @@ type VolumeReference struct {
 	// Required: true
 	Name *string `json:"name"`
 
+	// true if volume does not exist on storage controller, as volume has been deleted by deleting its paired volume from the mapped replication site.
+	OutOfBandDeleted bool `json:"outOfBandDeleted,omitempty"`
+
 	// indicates whether master/aux volume is playing the primary role
 	// Enum: [master aux]
 	PrimaryRole string `json:"primaryRole,omitempty"`
@@ -78,7 +81,7 @@ type VolumeReference struct {
 	PvmInstanceIDs []string `json:"pvmInstanceIDs"`
 
 	// True if volume is replication enabled otherwise false
-	ReplicationEnabled bool `json:"replicationEnabled,omitempty"`
+	ReplicationEnabled *bool `json:"replicationEnabled,omitempty"`
 
 	// shows the replication status of a volume
 	ReplicationStatus string `json:"replicationStatus,omitempty"`

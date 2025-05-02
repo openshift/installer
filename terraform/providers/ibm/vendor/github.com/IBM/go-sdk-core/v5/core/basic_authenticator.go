@@ -22,8 +22,7 @@ import (
 // BasicAuthenticator takes a user-supplied username and password, and adds
 // them to requests via an Authorization header of the form:
 //
-// 		Authorization: Basic <encoded username and password>
-//
+//	Authorization: Basic <encoded username and password>
 type BasicAuthenticator struct {
 	// Username is the user-supplied basic auth username [required].
 	Username string
@@ -62,8 +61,7 @@ func (BasicAuthenticator) AuthenticationType() string {
 //
 // Basic Authorization will be added to the request's headers in the form:
 //
-// 		Authorization: Basic <encoded username and password>
-//
+//	Authorization: Basic <encoded username and password>
 func (this *BasicAuthenticator) Authenticate(request *http.Request) error {
 	request.SetBasicAuth(this.Username, this.Password)
 	return nil

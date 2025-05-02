@@ -52,10 +52,12 @@ func NewPcloudEventsGetqueryParamsWithHTTPClient(client *http.Client) *PcloudEve
 	}
 }
 
-/* PcloudEventsGetqueryParams contains all the parameters to send to the API endpoint
-   for the pcloud events getquery operation.
+/*
+PcloudEventsGetqueryParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud events getquery operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudEventsGetqueryParams struct {
 

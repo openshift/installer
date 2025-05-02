@@ -148,8 +148,8 @@ func dataSourceIBMPrivateDNSGLBMonitorsRead(d *schema.ResourceData, meta interfa
 		dnsMonitor[pdnsGlbMonitorID] = *instance.ID
 		dnsMonitor[pdnsGlbMonitorName] = *instance.Name
 		dnsMonitor[pdnsGlbMonitorType] = *instance.Type
-		dnsMonitor[pdnsGlbMonitorCreatedOn] = *instance.CreatedOn
-		dnsMonitor[pdnsGlbMonitorModifiedOn] = *instance.ModifiedOn
+		dnsMonitor[pdnsGlbMonitorCreatedOn] = (*instance.CreatedOn).String()
+		dnsMonitor[pdnsGlbMonitorModifiedOn] = (*instance.ModifiedOn).String()
 		dnsMonitor[pdnsGlbMonitorPort] = *instance.Port
 		dnsMonitor[pdnsGlbMonitorInterval] = *instance.Interval
 		dnsMonitor[pdnsGlbMonitorRetries] = *instance.Retries

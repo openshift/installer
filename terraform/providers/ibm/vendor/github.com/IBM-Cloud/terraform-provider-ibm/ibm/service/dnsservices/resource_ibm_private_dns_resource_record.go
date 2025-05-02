@@ -344,11 +344,11 @@ func resourceIBMPrivateDNSResourceRecordRead(d *schema.ResourceData, meta interf
 	d.Set(pdnsRecordName, recordName)
 	d.Set(pdnsRecordType, response.Type)
 	d.Set(pdnsRecordTTL, response.TTL)
-	d.Set(pdnsRecordCreatedOn, response.CreatedOn)
-	d.Set(pdnsRecordModifiedOn, response.ModifiedOn)
+	d.Set(pdnsRecordCreatedOn, response.CreatedOn.String())
+	d.Set(pdnsRecordModifiedOn, response.ModifiedOn.String())
 
 	if *response.Type == "SRV" {
-		data := response.Rdata.(map[string]interface{})
+		data := response.Rdata
 		d.Set(pdnsSrvPort, data["port"])
 		d.Set(pdnsSrvPriority, data["priority"])
 		d.Set(pdnsSrvWeight, data["weight"])
@@ -358,24 +358,24 @@ func resourceIBMPrivateDNSResourceRecordRead(d *schema.ResourceData, meta interf
 	}
 
 	if *response.Type == "MX" {
-		data := response.Rdata.(map[string]interface{})
+		data := response.Rdata
 		d.Set(pdnsMxPreference, data["preference"])
 		d.Set(pdnsRdata, data["exchange"].(string))
 	}
 	if *response.Type == "A" || *response.Type == "AAAA" {
-		data := response.Rdata.(map[string]interface{})
+		data := response.Rdata
 		d.Set(pdnsRdata, data["ip"].(string))
 	}
 	if *response.Type == "CNAME" {
-		data := response.Rdata.(map[string]interface{})
+		data := response.Rdata
 		d.Set(pdnsRdata, data["cname"].(string))
 	}
 	if *response.Type == "PTR" {
-		data := response.Rdata.(map[string]interface{})
+		data := response.Rdata
 		d.Set(pdnsRdata, data["ptrdname"].(string))
 	}
 	if *response.Type == "TXT" {
-		data := response.Rdata.(map[string]interface{})
+		data := response.Rdata
 		d.Set(pdnsRdata, data["text"].(string))
 	}
 

@@ -131,6 +131,8 @@ type envConfig struct {
 	//
 	// AWS_S3_USE_ARN_REGION=true
 	S3UseARNRegion bool
+	// AWS_USE_DUALSTACK_ENDPOINT=true
+	UseDualStackEndpoint endpoints.DualStackEndpointState
 }
 
 var (
@@ -178,6 +180,9 @@ var (
 	}
 	useClientTLSKey = []string{
 		"AWS_SDK_GO_CLIENT_TLS_KEY",
+	}
+	awsUseDualStackEndpoint = []string{
+		"AWS_USE_DUALSTACK_ENDPOINT",
 	}
 )
 

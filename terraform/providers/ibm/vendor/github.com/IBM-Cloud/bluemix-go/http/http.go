@@ -20,8 +20,14 @@ func NewHTTPClient(config *bluemix.Config) *http.Client {
 }
 
 func makeTransport(config *bluemix.Config) http.RoundTripper {
+	proxyFunc := http.ProxyFromEnvironment
+	if config.HTTPClient != nil && config.HTTPClient.Transport != nil {
+		if t, ok := config.HTTPClient.Transport.(*http.Transport); ok {
+			proxyFunc = t.Proxy
+		}
+	}
 	return NewTraceLoggingTransport(&http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+		Proxy: proxyFunc,
 		Dial: (&net.Dialer{
 			Timeout:   50 * time.Second,
 			KeepAlive: 30 * time.Second,

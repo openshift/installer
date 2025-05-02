@@ -99,6 +99,11 @@ func DataSourceIBMISReservedIPs() *schema.Resource {
 							Computed:    true,
 							Description: "Reserved IP target id",
 						},
+						isReservedIPTargetCrn: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The crn for target.",
+						},
 					},
 				},
 			},
@@ -160,26 +165,35 @@ func dataSdataSourceIBMISReservedIPsRead(d *schema.ResourceData, meta interface{
 				{
 					target := targetIntf.(*vpcv1.ReservedIPTargetEndpointGatewayReference)
 					ipsOutput[isReservedIPTarget] = target.ID
+					ipsOutput[isReservedIPTargetCrn] = target.CRN
 				}
 			case "*vpcv1.ReservedIPTargetNetworkInterfaceReferenceTargetContext":
 				{
 					target := targetIntf.(*vpcv1.ReservedIPTargetNetworkInterfaceReferenceTargetContext)
 					ipsOutput[isReservedIPTarget] = target.ID
 				}
+			case "*vpcv1.ReservedIPTargetGenericResourceReference":
+				{
+					target := targetIntf.(*vpcv1.ReservedIPTargetGenericResourceReference)
+					ipsOutput[isReservedIPTargetCrn] = target.CRN
+				}
 			case "*vpcv1.ReservedIPTargetLoadBalancerReference":
 				{
 					target := targetIntf.(*vpcv1.ReservedIPTargetLoadBalancerReference)
 					ipsOutput[isReservedIPTarget] = target.ID
+					ipsOutput[isReservedIPTargetCrn] = target.CRN
 				}
 			case "*vpcv1.ReservedIPTargetVPNGatewayReference":
 				{
 					target := targetIntf.(*vpcv1.ReservedIPTargetVPNGatewayReference)
 					ipsOutput[isReservedIPTarget] = target.ID
+					ipsOutput[isReservedIPTargetCrn] = target.CRN
 				}
 			case "*vpcv1.ReservedIPTarget":
 				{
 					target := targetIntf.(*vpcv1.ReservedIPTarget)
 					ipsOutput[isReservedIPTarget] = target.ID
+					ipsOutput[isReservedIPTargetCrn] = target.CRN
 				}
 			}
 		}

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -26,6 +27,7 @@ const (
 	isPublicGatewayZone              = "zone"
 	isPublicGatewayFloatingIPAddress = "address"
 	isPublicGatewayTags              = "tags"
+	isPublicGatewayAccessTags        = "access_tags"
 
 	isPublicGatewayProvisioning     = "provisioning"
 	isPublicGatewayProvisioningDone = "available"
@@ -49,10 +51,16 @@ func ResourceIBMISPublicGateway() *schema.Resource {
 			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
 
-		CustomizeDiff: customdiff.Sequence(
-			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
-				return flex.ResourceTagsCustomizeDiff(diff)
-			},
+		CustomizeDiff: customdiff.All(
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceTagsCustomizeDiff(diff)
+				},
+			),
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceValidateAccessTags(diff, v)
+				}),
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -106,6 +114,15 @@ func ResourceIBMISPublicGateway() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_public_gateway", "tags")},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "Service tags for the public gateway instance",
+			},
+
+			isPublicGatewayAccessTags: {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_public_gateway", "accesstag")},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access management tags",
 			},
 
 			flex.ResourceControllerURL: {
@@ -169,6 +186,16 @@ func ResourceIBMISPublicGatewayValidator() *validate.ResourceValidator {
 			MinValueLength:             1,
 			MaxValueLength:             128})
 
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "accesstag",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-]):([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-])$`,
+			MinValueLength:             1,
+			MaxValueLength:             128})
+
 	ibmISPublicGatewayResourceValidator := validate.ResourceValidator{ResourceName: "ibm_is_public_gateway", Schema: validateSchema}
 	return &ibmISPublicGatewayResourceValidator
 }
@@ -229,12 +256,22 @@ func resourceIBMISPublicGatewayCreate(d *schema.ResourceData, meta interface{}) 
 	v := os.Getenv("IC_ENV_TAGS")
 	if _, ok := d.GetOk(isPublicGatewayTags); ok || v != "" {
 		oldList, newList := d.GetChange(isPublicGatewayTags)
-		err = flex.UpdateTagsUsingCRN(oldList, newList, meta, *publicgw.CRN)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *publicgw.CRN, "", isUserTagType)
 		if err != nil {
 			log.Printf(
 				"Error on create of vpc public gateway (%s) tags: %s", d.Id(), err)
 		}
 	}
+
+	if _, ok := d.GetOk(isPublicGatewayAccessTags); ok {
+		oldList, newList := d.GetChange(isPublicGatewayAccessTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *publicgw.CRN, "", isAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on create of vpc public gateway (%s) access tags: %s", d.Id(), err)
+		}
+	}
+
 	return resourceIBMISPublicGatewayRead(d, meta)
 }
 
@@ -300,12 +337,21 @@ func resourceIBMISPublicGatewayRead(d *schema.ResourceData, meta interface{}) er
 	d.Set(isPublicGatewayStatus, *publicgw.Status)
 	d.Set(isPublicGatewayZone, *publicgw.Zone.Name)
 	d.Set(isPublicGatewayVPC, *publicgw.VPC.ID)
-	tags, err := flex.GetTagsUsingCRN(meta, *publicgw.CRN)
+	tags, err := flex.GetGlobalTagsUsingCRN(meta, *publicgw.CRN, "", isUserTagType)
 	if err != nil {
 		log.Printf(
 			"Error on get of vpc public gateway (%s) tags: %s", id, err)
 	}
 	d.Set(isPublicGatewayTags, tags)
+
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *publicgw.CRN, "", isAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of vpc public gateway (%s) access tags: %s", d.Id(), err)
+	}
+
+	d.Set(isPublicGatewayAccessTags, accesstags)
+
 	controller, err := flex.GetBaseController(meta)
 	if err != nil {
 		return err
@@ -345,12 +391,29 @@ func resourceIBMISPublicGatewayUpdate(d *schema.ResourceData, meta interface{}) 
 			return fmt.Errorf("[ERROR] Error getting Public Gateway : %s\n%s", err, response)
 		}
 		oldList, newList := d.GetChange(isPublicGatewayTags)
-		err = flex.UpdateTagsUsingCRN(oldList, newList, meta, *publicgw.CRN)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *publicgw.CRN, "", isUserTagType)
 		if err != nil {
 			log.Printf(
 				"Error on update of resource Public Gateway (%s) tags: %s", id, err)
 		}
 	}
+
+	if d.HasChange(isPublicGatewayAccessTags) {
+		getPublicGatewayOptions := &vpcv1.GetPublicGatewayOptions{
+			ID: &id,
+		}
+		publicgw, response, err := sess.GetPublicGateway(getPublicGatewayOptions)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error getting Public Gateway : %s\n%s", err, response)
+		}
+		oldList, newList := d.GetChange(isPublicGatewayTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *publicgw.CRN, "", isAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on update of resource Public Gateway (%s) access tags: %s", d.Id(), err)
+		}
+	}
+
 	if hasChanged {
 		updatePublicGatewayOptions := &vpcv1.UpdatePublicGatewayOptions{
 			ID: &id,
@@ -395,7 +458,32 @@ func resourceIBMISPublicGatewayDelete(d *schema.ResourceData, meta interface{}) 
 	}
 	response, err = sess.DeletePublicGateway(deletePublicGatewayOptions)
 	if err != nil {
-		return fmt.Errorf("[ERROR] Error Deleting Public Gateway : %s\n%s", err, response)
+		if response.StatusCode == 409 && strings.Contains(strings.ToLower(err.Error()), strings.ToLower("The Public Gateway is in use by subnet")) {
+			listSubnetsOptions := &vpcv1.ListSubnetsOptions{}
+			subnets, _, _ := sess.ListSubnets(listSubnetsOptions)
+			for _, s := range subnets.Subnets {
+				if s.PublicGateway != nil && id == *s.PublicGateway.ID {
+					unsetSubnetPublicGatewayOptions := &vpcv1.UnsetSubnetPublicGatewayOptions{
+						ID: s.ID,
+					}
+					res, errSub := sess.UnsetSubnetPublicGateway(unsetSubnetPublicGatewayOptions)
+					if res.StatusCode == 204 {
+						_, err = isWaitForSubnetPublicGatewayUnset(sess, *s.ID, d.Timeout(schema.TimeoutDelete))
+						if err != nil {
+							return err
+						}
+						response, err = sess.DeletePublicGateway(deletePublicGatewayOptions)
+						if err != nil {
+							return fmt.Errorf("[ERROR] Error Deleting Public Gateway : %s\n%s", err, response)
+						}
+					} else {
+						return fmt.Errorf("[ERROR] Error Unsetting Public Gateway : %s\n%s", errSub, res)
+					}
+				}
+			}
+		} else {
+			return fmt.Errorf("[ERROR] Error Deleting Public Gateway : error is %s\n%s", err, response)
+		}
 	}
 	_, err = isWaitForPublicGatewayDeleted(sess, id, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
@@ -454,4 +542,37 @@ func resourceIBMISPublicGatewayExists(d *schema.ResourceData, meta interface{}) 
 		return false, fmt.Errorf("[ERROR] Error getting Public Gateway: %s\n%s", err, response)
 	}
 	return true, nil
+}
+
+func isWaitForSubnetPublicGatewayUnset(subnetC *vpcv1.VpcV1, id string, timeout time.Duration) (interface{}, error) {
+	log.Printf("Waiting for public gateway (%s) to be unset.", id)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"retry", "wait"},
+		Target:     []string{"done", ""},
+		Refresh:    isSubnetPublicGatewayUnsetRefreshFunc(subnetC, id),
+		Timeout:    timeout,
+		Delay:      10 * time.Second,
+		MinTimeout: 10 * time.Second,
+	}
+
+	return stateConf.WaitForState()
+}
+
+func isSubnetPublicGatewayUnsetRefreshFunc(subnetC *vpcv1.VpcV1, id string) resource.StateRefreshFunc {
+	log.Printf("Waiting for public gateway (%s) to be unset.", id)
+	return func() (interface{}, string, error) {
+		getSubnetPublicGatewayOptions := &vpcv1.GetSubnetPublicGatewayOptions{
+			ID: &id,
+		}
+		subnetPublicGateway, response, err := subnetC.GetSubnetPublicGateway(getSubnetPublicGatewayOptions)
+		if err != nil {
+			if response.StatusCode == 404 {
+				return subnetPublicGateway, "done", nil
+			}
+			return subnetPublicGateway, "", fmt.Errorf("[ERROR] Error getting Subnet PublicGateway : %s\n%s", err, response)
+		}
+
+		return subnetPublicGateway, "wait", nil
+	}
 }

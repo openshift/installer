@@ -263,7 +263,7 @@ func resourceIBMEnSlackDestinationDelete(context context.Context, d *schema.Reso
 }
 
 func SlackdestinationConfigMapToDestinationConfig(configParams map[string]interface{}, destinationtype string) en.DestinationConfig {
-	params := new(en.DestinationConfigParams)
+	params := new(en.DestinationConfigOneOf)
 	if configParams["url"] != nil {
 		params.URL = core.StringPtr(configParams["url"].(string))
 	}

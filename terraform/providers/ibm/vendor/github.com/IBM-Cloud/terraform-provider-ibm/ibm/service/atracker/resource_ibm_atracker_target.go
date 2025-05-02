@@ -41,7 +41,7 @@ func ResourceIBMAtrackerTarget() *schema.Resource {
 				Required:         true,
 				ForceNew:         true,
 				ValidateFunc:     validate.InvokeValidator("ibm_atracker_target", "target_type"),
-				Description:      "The type of the target. It can be cloud_object_storage or logdna. Based on this type you must include cos_endpoint or logdna_endpoint.",
+				Description:      "The type of the target. It can be cloud_object_storage, logdna or event_streams. Based on this type you must include cos_endpoint, logdna_endpoint or eventstreams_endpoint.",
 			},
 			"cos_endpoint": {
 				Type:        schema.TypeList,
@@ -98,6 +98,39 @@ func ResourceIBMAtrackerTarget() *schema.Resource {
 							Sensitive:        true,
 							DiffSuppressFunc: flex.ApplyOnce,
 							Description:      "The LogDNA ingestion key is used for routing logs to a specific LogDNA instance.",
+						},
+					},
+				},
+			},
+			"eventstreams_endpoint": &schema.Schema{
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Description: "Property values for an Event Streams Endpoint in requests.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"target_crn": &schema.Schema{
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The CRN of the Event Streams instance.",
+						},
+						"brokers": &schema.Schema{
+							Type:        schema.TypeList,
+							Required:    true,
+							Description: "List of broker endpoints.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+						},
+						"topic": &schema.Schema{
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The messsage hub topic defined in the Event Streams instance.",
+						},
+						"api_key": &schema.Schema{ // pragma: allowlist secret
+							Type:             schema.TypeString,
+							Required:         true,
+							Sensitive:        true,
+							DiffSuppressFunc: flex.ApplyOnce,
+							Description:      "The user password (api key) for the message hub topic in the Event Streams instance.",
 						},
 					},
 				},
@@ -222,7 +255,7 @@ func ResourceIBMAtrackerTargetValidator() *validate.ResourceValidator {
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
 			Required:                   true,
-			AllowedValues:              "cloud_object_storage, logdna",
+			AllowedValues:              "cloud_object_storage, logdna, event_streams",
 		},
 		validate.ValidateSchema{
 			Identifier:                 "region",
@@ -240,7 +273,7 @@ func ResourceIBMAtrackerTargetValidator() *validate.ResourceValidator {
 }
 
 func resourceIBMAtrackerTargetCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	_, atrackerClient, err := getAtrackerClients(meta)
+	atrackerClient, err := getAtrackerClients(meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -263,6 +296,13 @@ func resourceIBMAtrackerTargetCreate(context context.Context, d *schema.Resource
 		}
 		createTargetOptions.SetLogdnaEndpoint(logdnaEndpointModel)
 	}
+	if _, ok := d.GetOk("eventstreams_endpoint"); ok {
+		eventstreamsEndpointModel, err := resourceIBMAtrackerTargetMapToEventstreamsEndpointPrototype(d.Get("eventstreams_endpoint.0").(map[string]interface{}))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		createTargetOptions.SetEventstreamsEndpoint(eventstreamsEndpointModel)
+	}
 	if _, ok := d.GetOk("region"); ok {
 		createTargetOptions.SetRegion(d.Get("region").(string))
 	}
@@ -279,7 +319,7 @@ func resourceIBMAtrackerTargetCreate(context context.Context, d *schema.Resource
 }
 
 func resourceIBMAtrackerTargetRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	_, atrackerClient, err := getAtrackerClients(meta)
+	atrackerClient, err := getAtrackerClients(meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -340,6 +380,15 @@ func resourceIBMAtrackerTargetRead(context context.Context, d *schema.ResourceDa
 			return diag.FromErr(fmt.Errorf("Error setting logdna_endpoint: %s", err))
 		}
 	}
+	if target.EventstreamsEndpoint != nil {
+		eventstreamsEndpointMap, err := resourceIBMAtrackerTargetEventstreamsEndpointPrototypeToMap(target.EventstreamsEndpoint)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if err = d.Set("eventstreams_endpoint", []map[string]interface{}{eventstreamsEndpointMap}); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting eventstreams_endpoint: %s", err))
+		}
+	}
 
 	if target.CRN != nil {
 		if err = d.Set("crn", target.CRN); err != nil {
@@ -383,7 +432,7 @@ func resourceIBMAtrackerTargetRead(context context.Context, d *schema.ResourceDa
 }
 
 func resourceIBMAtrackerTargetUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	_, atrackerClient, err := getAtrackerClients(meta)
+	atrackerClient, err := getAtrackerClients(meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -394,7 +443,7 @@ func resourceIBMAtrackerTargetUpdate(context context.Context, d *schema.Resource
 
 	hasChange := false
 
-	if d.HasChange("name") || d.HasChange("cos_endpoint") || d.HasChange("region") || d.HasChange("logdna_endpoint") {
+	if d.HasChange("name") || d.HasChange("cos_endpoint") || d.HasChange("region") || d.HasChange("logdna_endpoint") || d.HasChange("eventstreams_endpoint") {
 		replaceTargetOptions.SetName(d.Get("name").(string))
 
 		_, hasCosEndpoint := d.GetOk("cos_endpoint.0")
@@ -414,6 +463,15 @@ func resourceIBMAtrackerTargetUpdate(context context.Context, d *schema.Resource
 			}
 			replaceTargetOptions.SetLogdnaEndpoint(logdnaEndpoint)
 		}
+		_, hasEventstreamsEndpoint := d.GetOk("eventstreams_endpoint.0")
+		if hasEventstreamsEndpoint {
+			eventstreamsEndpoint, err := resourceIBMAtrackerTargetMapToEventstreamsEndpointPrototype(d.Get("eventstreams_endpoint.0").(map[string]interface{}))
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			replaceTargetOptions.SetEventstreamsEndpoint(eventstreamsEndpoint)
+		}
+
 		hasChange = true
 	}
 
@@ -429,7 +487,7 @@ func resourceIBMAtrackerTargetUpdate(context context.Context, d *schema.Resource
 }
 
 func resourceIBMAtrackerTargetDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	_, atrackerClient, err := getAtrackerClients(meta)
+	atrackerClient, err := getAtrackerClients(meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -468,6 +526,19 @@ func resourceIBMAtrackerTargetMapToLogdnaEndpointPrototype(modelMap map[string]i
 	return model, nil
 }
 
+func resourceIBMAtrackerTargetMapToEventstreamsEndpointPrototype(modelMap map[string]interface{}) (*atrackerv2.EventstreamsEndpointPrototype, error) {
+	model := &atrackerv2.EventstreamsEndpointPrototype{}
+	model.TargetCRN = core.StringPtr(modelMap["target_crn"].(string))
+	model.Topic = core.StringPtr(modelMap["topic"].(string))
+	brokers := []string{}
+	for _, brokersItem := range modelMap["brokers"].([]interface{}) {
+		brokers = append(brokers, brokersItem.(string))
+	}
+	model.Brokers = brokers
+	model.APIKey = core.StringPtr(modelMap["api_key"].(string)) // pragma: whitelist secret
+	return model, nil
+}
+
 func resourceIBMAtrackerTargetCosEndpointPrototypeToMap(model *atrackerv2.CosEndpoint) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["endpoint"] = model.Endpoint
@@ -484,6 +555,16 @@ func resourceIBMAtrackerTargetLogdnaEndpointPrototypeToMap(model *atrackerv2.Log
 	modelMap := make(map[string]interface{})
 	modelMap["target_crn"] = model.TargetCRN
 	modelMap["ingestion_key"] = REDACTED_TEXT // pragma: whitelist secret
+	return modelMap, nil
+}
+
+func resourceIBMAtrackerTargetEventstreamsEndpointPrototypeToMap(model *atrackerv2.EventstreamsEndpoint) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["target_crn"] = model.TargetCRN
+	modelMap["brokers"] = model.Brokers
+	modelMap["topic"] = model.Topic
+	// TODO: remove after deprecation
+	modelMap["api_key"] = REDACTED_TEXT // pragma: whitelist secret
 	return modelMap, nil
 }
 

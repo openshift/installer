@@ -9,6 +9,7 @@ import (
 	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -24,6 +25,9 @@ func DataSourceIBMDatabasePointInTimeRecovery() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Deployment ID.",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_database_point_in_time_recovery",
+					"deployment_id"),
 			},
 			"earliest_point_in_time_recovery_time": &schema.Schema{
 				Type:     schema.TypeString,
@@ -31,6 +35,23 @@ func DataSourceIBMDatabasePointInTimeRecovery() *schema.Resource {
 			},
 		},
 	}
+}
+
+func DataSourceIBMDatabasePointInTimeRecoveryValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "deployment_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cloud-database",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMDatabasePointInTimeRecoveryValidator := validate.ResourceValidator{ResourceName: "ibm_database_point_in_time_recovery", Schema: validateSchema}
+	return &iBMDatabasePointInTimeRecoveryValidator
 }
 
 func DataSourceIBMDatabasePointInTimeRecoveryRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

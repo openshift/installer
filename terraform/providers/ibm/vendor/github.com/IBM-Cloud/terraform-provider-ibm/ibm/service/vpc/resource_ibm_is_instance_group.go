@@ -25,7 +25,10 @@ const (
 	// HEALTHY ...
 	HEALTHY = "healthy"
 	// DELETING ...
-	DELETING = "deleting"
+	DELETING                     = "deleting"
+	isInstanceGroupAccessTags    = "access_tags"
+	isInstanceGroupUserTagType   = "user"
+	isInstanceGroupAccessTagType = "access"
 )
 
 func ResourceIBMISInstanceGroup() *schema.Resource {
@@ -37,10 +40,17 @@ func ResourceIBMISInstanceGroup() *schema.Resource {
 		Exists:   resourceIBMISInstanceGroupExists,
 		Importer: &schema.ResourceImporter{},
 
-		CustomizeDiff: customdiff.Sequence(
-			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
-				return flex.ResourceTagsCustomizeDiff(diff)
-			},
+		CustomizeDiff: customdiff.All(
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceTagsCustomizeDiff(diff)
+				},
+			),
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceValidateAccessTags(diff, v)
+				},
+			),
 		),
 
 		Timeouts: &schema.ResourceTimeout{
@@ -146,6 +156,15 @@ func ResourceIBMISInstanceGroup() *schema.Resource {
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "List of tags for instance group",
 			},
+
+			isInstanceGroupAccessTags: {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_instance_group", "accesstag")},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access management tags",
+			},
 		},
 	}
 }
@@ -183,6 +202,15 @@ func ResourceIBMISInstanceGroupValidator() *validate.ResourceValidator {
 			Type:                       validate.TypeString,
 			Optional:                   true,
 			Regexp:                     `^[A-Za-z0-9:_ .-]+$`,
+			MinValueLength:             1,
+			MaxValueLength:             128})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "accesstag",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-]):([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-])$`,
 			MinValueLength:             1,
 			MaxValueLength:             128})
 
@@ -257,10 +285,19 @@ func resourceIBMISInstanceGroupCreate(d *schema.ResourceData, meta interface{}) 
 	v := os.Getenv("IC_ENV_TAGS")
 	if _, ok := d.GetOk("tags"); ok || v != "" {
 		oldList, newList := d.GetChange("tags")
-		err = flex.UpdateTagsUsingCRN(oldList, newList, meta, *instanceGroup.CRN)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *instanceGroup.CRN, "", isInstanceGroupUserTagType)
 		if err != nil {
 			log.Printf(
 				"Error on create of instance group (%s) tags: %s", d.Id(), err)
+		}
+	}
+
+	if _, ok := d.GetOk(isInstanceGroupAccessTags); ok {
+		oldList, newList := d.GetChange(isInstanceGroupAccessTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *instanceGroup.CRN, "", isInstanceGroupAccessTagType)
+		if err != nil {
+			log.Printf(
+				"[ERROR] Error on create of instance group (%s) tags: %s", d.Id(), err)
 		}
 	}
 
@@ -376,6 +413,7 @@ func resourceIBMISInstanceGroupRead(d *schema.ResourceData, meta interface{}) er
 	d.Set("name", *instanceGroup.Name)
 	d.Set("instance_template", *instanceGroup.InstanceTemplate.ID)
 	d.Set("instances", *instanceGroup.MembershipCount)
+	d.Set("instance_count", *instanceGroup.MembershipCount)
 	d.Set("resource_group", *instanceGroup.ResourceGroup.ID)
 	if instanceGroup.ApplicationPort != nil {
 		d.Set("application_port", *instanceGroup.ApplicationPort)

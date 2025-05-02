@@ -38,7 +38,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudEventsGet gets a single event
+PcloudEventsGet gets a single event
 */
 func (a *Client) PcloudEventsGet(params *PcloudEventsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudEventsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -77,7 +77,7 @@ func (a *Client) PcloudEventsGet(params *PcloudEventsGetParams, authInfo runtime
 }
 
 /*
-  PcloudEventsGetquery gets events from this cloud instance since a specific timestamp
+PcloudEventsGetquery gets events from this cloud instance since a specific timestamp
 */
 func (a *Client) PcloudEventsGetquery(params *PcloudEventsGetqueryParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudEventsGetqueryOK, error) {
 	// TODO: Validate the params before sending

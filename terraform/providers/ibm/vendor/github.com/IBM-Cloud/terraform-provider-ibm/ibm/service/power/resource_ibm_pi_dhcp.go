@@ -209,9 +209,13 @@ func resourceIBMPIDhcpRead(ctx context.Context, d *schema.ResourceData, meta int
 
 	if dhcpServer.Network != nil {
 		dhcpNetwork := dhcpServer.Network
-		d.Set(Attr_DhcpNetworkDeprecated, *dhcpNetwork.ID)
-		d.Set(Attr_DhcpNetworkID, *dhcpNetwork.ID)
-		d.Set(Attr_DhcpNetworkName, *dhcpNetwork.Name)
+		if dhcpNetwork.ID != nil {
+			d.Set(Attr_DhcpNetworkDeprecated, *dhcpNetwork.ID)
+			d.Set(Attr_DhcpNetworkID, *dhcpNetwork.ID)
+		}
+		if dhcpNetwork.Name != nil {
+			d.Set(Attr_DhcpNetworkName, *dhcpNetwork.Name)
+		}
 	}
 
 	if dhcpServer.Leases != nil {

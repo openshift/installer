@@ -87,9 +87,8 @@ func resourceIBMPIPlacementGroupCreate(ctx context.Context, d *schema.ResourceDa
 	}
 
 	response, err := client.Create(body)
-	if err != nil {
-		log.Printf("[DEBUG]  err %s", err)
-		return diag.FromErr(err)
+	if err != nil || response == nil {
+		return diag.FromErr(fmt.Errorf("error creating the shared processor pool: %s", err))
 	}
 
 	log.Printf("Printing the placement group %+v", &response)

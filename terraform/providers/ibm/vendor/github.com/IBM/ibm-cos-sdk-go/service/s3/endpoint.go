@@ -3,6 +3,7 @@ package s3
 import (
 	"fmt"
 	"github.com/IBM/ibm-cos-sdk-go/aws/awserr"
+	"github.com/IBM/ibm-cos-sdk-go/aws/endpoints"
 	"net/url"
 	"strings"
 
@@ -201,7 +202,7 @@ func updateRequestAccessPointEndpoint(req *request.Request, accessPoint arn.Acce
 
 func updateRequestS3ObjectLambdaAccessPointEndpoint(req *request.Request, accessPoint arn.S3ObjectLambdaAccessPointARN) error {
 	// DualStack not supported
-	if aws.BoolValue(req.Config.UseDualStack) {
+	if isUseDualStackEndpoint(req) {
 		return s3shared.NewClientConfiguredForDualStackError(accessPoint,
 			req.ClientInfo.PartitionID, aws.StringValue(req.Config.Region), nil)
 	}
@@ -232,7 +233,7 @@ func updateRequestOutpostAccessPointEndpoint(req *request.Request, accessPoint a
 	}
 
 	// Dualstack not supported
-	if aws.BoolValue(req.Config.UseDualStack) {
+	if isUseDualStackEndpoint(req) {
 		return s3shared.NewClientConfiguredForDualStackError(accessPoint,
 			req.ClientInfo.PartitionID, aws.StringValue(req.Config.Region), nil)
 	}
@@ -257,7 +258,7 @@ func removeBucketFromPath(u *url.URL) {
 
 func buildWriteGetObjectResponseEndpoint(req *request.Request) {
 	// DualStack not supported
-	if aws.BoolValue(req.Config.UseDualStack) {
+	if isUseDualStackEndpoint(req) {
 		req.Error = awserr.New("ConfigurationError", "client configured for dualstack but not supported for operation", nil)
 		return
 	}
@@ -272,7 +273,7 @@ func buildWriteGetObjectResponseEndpoint(req *request.Request) {
 	signingRegion := req.ClientInfo.SigningRegion
 
 	if !hasCustomEndpoint(req) {
-		endpoint, err := resolveRegionalEndpoint(req, aws.StringValue(req.Config.Region), EndpointsID)
+		endpoint, err := resolveRegionalEndpoint(req, aws.StringValue(req.Config.Region), req.ClientInfo.ResolvedRegion, EndpointsID)
 		if err != nil {
 			req.Error = awserr.New(request.ErrCodeSerialization, "failed to resolve endpoint", err)
 			return
@@ -287,4 +288,11 @@ func buildWriteGetObjectResponseEndpoint(req *request.Request) {
 	}
 
 	redirectSigner(req, signingName, signingRegion)
+}
+
+func isUseDualStackEndpoint(req *request.Request) bool {
+	if req.Config.UseDualStackEndpoint != endpoints.DualStackEndpointStateUnset {
+		return req.Config.UseDualStackEndpoint == endpoints.DualStackEndpointStateEnabled
+	}
+	return aws.BoolValue(req.Config.UseDualStack)
 }

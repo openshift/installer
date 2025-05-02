@@ -75,7 +75,8 @@ func NewInternalV1StorageRegionsThresholdsPutAccepted() *InternalV1StorageRegion
 	return &InternalV1StorageRegionsThresholdsPutAccepted{}
 }
 
-/* InternalV1StorageRegionsThresholdsPutAccepted describes a response with status code 202, with default header values.
+/*
+InternalV1StorageRegionsThresholdsPutAccepted describes a response with status code 202, with default header values.
 
 OK, region-zone default threshold settings update
 */
@@ -83,9 +84,39 @@ type InternalV1StorageRegionsThresholdsPutAccepted struct {
 	Payload *models.Thresholds
 }
 
+// IsSuccess returns true when this internal v1 storage regions thresholds put accepted response has a 2xx status code
+func (o *InternalV1StorageRegionsThresholdsPutAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this internal v1 storage regions thresholds put accepted response has a 3xx status code
+func (o *InternalV1StorageRegionsThresholdsPutAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 storage regions thresholds put accepted response has a 4xx status code
+func (o *InternalV1StorageRegionsThresholdsPutAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this internal v1 storage regions thresholds put accepted response has a 5xx status code
+func (o *InternalV1StorageRegionsThresholdsPutAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 storage regions thresholds put accepted response a status code equal to that given
+func (o *InternalV1StorageRegionsThresholdsPutAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutAccepted) Error() string {
 	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutAccepted  %+v", 202, o.Payload)
 }
+
+func (o *InternalV1StorageRegionsThresholdsPutAccepted) String() string {
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutAccepted  %+v", 202, o.Payload)
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutAccepted) GetPayload() *models.Thresholds {
 	return o.Payload
 }
@@ -107,7 +138,8 @@ func NewInternalV1StorageRegionsThresholdsPutBadRequest() *InternalV1StorageRegi
 	return &InternalV1StorageRegionsThresholdsPutBadRequest{}
 }
 
-/* InternalV1StorageRegionsThresholdsPutBadRequest describes a response with status code 400, with default header values.
+/*
+InternalV1StorageRegionsThresholdsPutBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -115,9 +147,39 @@ type InternalV1StorageRegionsThresholdsPutBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this internal v1 storage regions thresholds put bad request response has a 2xx status code
+func (o *InternalV1StorageRegionsThresholdsPutBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this internal v1 storage regions thresholds put bad request response has a 3xx status code
+func (o *InternalV1StorageRegionsThresholdsPutBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 storage regions thresholds put bad request response has a 4xx status code
+func (o *InternalV1StorageRegionsThresholdsPutBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this internal v1 storage regions thresholds put bad request response has a 5xx status code
+func (o *InternalV1StorageRegionsThresholdsPutBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 storage regions thresholds put bad request response a status code equal to that given
+func (o *InternalV1StorageRegionsThresholdsPutBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *InternalV1StorageRegionsThresholdsPutBadRequest) String() string {
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -139,7 +201,8 @@ func NewInternalV1StorageRegionsThresholdsPutUnauthorized() *InternalV1StorageRe
 	return &InternalV1StorageRegionsThresholdsPutUnauthorized{}
 }
 
-/* InternalV1StorageRegionsThresholdsPutUnauthorized describes a response with status code 401, with default header values.
+/*
+InternalV1StorageRegionsThresholdsPutUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -147,9 +210,39 @@ type InternalV1StorageRegionsThresholdsPutUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this internal v1 storage regions thresholds put unauthorized response has a 2xx status code
+func (o *InternalV1StorageRegionsThresholdsPutUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this internal v1 storage regions thresholds put unauthorized response has a 3xx status code
+func (o *InternalV1StorageRegionsThresholdsPutUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 storage regions thresholds put unauthorized response has a 4xx status code
+func (o *InternalV1StorageRegionsThresholdsPutUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this internal v1 storage regions thresholds put unauthorized response has a 5xx status code
+func (o *InternalV1StorageRegionsThresholdsPutUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 storage regions thresholds put unauthorized response a status code equal to that given
+func (o *InternalV1StorageRegionsThresholdsPutUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *InternalV1StorageRegionsThresholdsPutUnauthorized) String() string {
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -171,7 +264,8 @@ func NewInternalV1StorageRegionsThresholdsPutForbidden() *InternalV1StorageRegio
 	return &InternalV1StorageRegionsThresholdsPutForbidden{}
 }
 
-/* InternalV1StorageRegionsThresholdsPutForbidden describes a response with status code 403, with default header values.
+/*
+InternalV1StorageRegionsThresholdsPutForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -179,9 +273,39 @@ type InternalV1StorageRegionsThresholdsPutForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this internal v1 storage regions thresholds put forbidden response has a 2xx status code
+func (o *InternalV1StorageRegionsThresholdsPutForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this internal v1 storage regions thresholds put forbidden response has a 3xx status code
+func (o *InternalV1StorageRegionsThresholdsPutForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 storage regions thresholds put forbidden response has a 4xx status code
+func (o *InternalV1StorageRegionsThresholdsPutForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this internal v1 storage regions thresholds put forbidden response has a 5xx status code
+func (o *InternalV1StorageRegionsThresholdsPutForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 storage regions thresholds put forbidden response a status code equal to that given
+func (o *InternalV1StorageRegionsThresholdsPutForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutForbidden) Error() string {
 	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutForbidden  %+v", 403, o.Payload)
 }
+
+func (o *InternalV1StorageRegionsThresholdsPutForbidden) String() string {
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutForbidden  %+v", 403, o.Payload)
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -203,7 +327,8 @@ func NewInternalV1StorageRegionsThresholdsPutConflict() *InternalV1StorageRegion
 	return &InternalV1StorageRegionsThresholdsPutConflict{}
 }
 
-/* InternalV1StorageRegionsThresholdsPutConflict describes a response with status code 409, with default header values.
+/*
+InternalV1StorageRegionsThresholdsPutConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -211,9 +336,39 @@ type InternalV1StorageRegionsThresholdsPutConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this internal v1 storage regions thresholds put conflict response has a 2xx status code
+func (o *InternalV1StorageRegionsThresholdsPutConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this internal v1 storage regions thresholds put conflict response has a 3xx status code
+func (o *InternalV1StorageRegionsThresholdsPutConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 storage regions thresholds put conflict response has a 4xx status code
+func (o *InternalV1StorageRegionsThresholdsPutConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this internal v1 storage regions thresholds put conflict response has a 5xx status code
+func (o *InternalV1StorageRegionsThresholdsPutConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 storage regions thresholds put conflict response a status code equal to that given
+func (o *InternalV1StorageRegionsThresholdsPutConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutConflict) Error() string {
 	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutConflict  %+v", 409, o.Payload)
 }
+
+func (o *InternalV1StorageRegionsThresholdsPutConflict) String() string {
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutConflict  %+v", 409, o.Payload)
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -235,7 +390,8 @@ func NewInternalV1StorageRegionsThresholdsPutUnprocessableEntity() *InternalV1St
 	return &InternalV1StorageRegionsThresholdsPutUnprocessableEntity{}
 }
 
-/* InternalV1StorageRegionsThresholdsPutUnprocessableEntity describes a response with status code 422, with default header values.
+/*
+InternalV1StorageRegionsThresholdsPutUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -243,9 +399,39 @@ type InternalV1StorageRegionsThresholdsPutUnprocessableEntity struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this internal v1 storage regions thresholds put unprocessable entity response has a 2xx status code
+func (o *InternalV1StorageRegionsThresholdsPutUnprocessableEntity) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this internal v1 storage regions thresholds put unprocessable entity response has a 3xx status code
+func (o *InternalV1StorageRegionsThresholdsPutUnprocessableEntity) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 storage regions thresholds put unprocessable entity response has a 4xx status code
+func (o *InternalV1StorageRegionsThresholdsPutUnprocessableEntity) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this internal v1 storage regions thresholds put unprocessable entity response has a 5xx status code
+func (o *InternalV1StorageRegionsThresholdsPutUnprocessableEntity) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 storage regions thresholds put unprocessable entity response a status code equal to that given
+func (o *InternalV1StorageRegionsThresholdsPutUnprocessableEntity) IsCode(code int) bool {
+	return code == 422
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutUnprocessableEntity  %+v", 422, o.Payload)
 }
+
+func (o *InternalV1StorageRegionsThresholdsPutUnprocessableEntity) String() string {
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutUnprocessableEntity  %+v", 422, o.Payload)
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutUnprocessableEntity) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -267,7 +453,8 @@ func NewInternalV1StorageRegionsThresholdsPutInternalServerError() *InternalV1St
 	return &InternalV1StorageRegionsThresholdsPutInternalServerError{}
 }
 
-/* InternalV1StorageRegionsThresholdsPutInternalServerError describes a response with status code 500, with default header values.
+/*
+InternalV1StorageRegionsThresholdsPutInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -275,9 +462,39 @@ type InternalV1StorageRegionsThresholdsPutInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this internal v1 storage regions thresholds put internal server error response has a 2xx status code
+func (o *InternalV1StorageRegionsThresholdsPutInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this internal v1 storage regions thresholds put internal server error response has a 3xx status code
+func (o *InternalV1StorageRegionsThresholdsPutInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 storage regions thresholds put internal server error response has a 4xx status code
+func (o *InternalV1StorageRegionsThresholdsPutInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this internal v1 storage regions thresholds put internal server error response has a 5xx status code
+func (o *InternalV1StorageRegionsThresholdsPutInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this internal v1 storage regions thresholds put internal server error response a status code equal to that given
+func (o *InternalV1StorageRegionsThresholdsPutInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutInternalServerError) Error() string {
 	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *InternalV1StorageRegionsThresholdsPutInternalServerError) String() string {
+	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

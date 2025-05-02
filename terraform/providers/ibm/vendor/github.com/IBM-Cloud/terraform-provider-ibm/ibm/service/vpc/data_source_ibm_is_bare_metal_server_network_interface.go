@@ -18,6 +18,7 @@ import (
 const (
 	isBareMetalServerNicEnableInfraNAT        = "enable_infrastructure_nat"
 	isBareMetalServerNicFloatingIPs           = "floating_ips"
+	isBareMetalServerNicFloatingIPId          = "id"
 	isBareMetalServerNicIpAddress             = "address"
 	isBareMetalServerNicIpCRN                 = "crn"
 	isBareMetalServerNicIpHref                = "href"
@@ -91,8 +92,15 @@ func DataSourceIBMIsBareMetalServerNetworkInterface() *schema.Resource {
 						isBareMetalServerNicIpID: {
 							Type:        schema.TypeString,
 							Computed:    true,
+							Deprecated:  "This field is deprecated - replaced by id",
 							Description: "The unique identifier for this floating IP",
 						},
+						isBareMetalServerNicFloatingIPId: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for this floating IP",
+						},
+
 						isBareMetalServerNicIpName: {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -243,8 +251,9 @@ func dataSourceIBMISBareMetalServerNetworkInterfaceRead(context context.Context,
 			if nic.FloatingIps != nil {
 				for _, ip := range nic.FloatingIps {
 					currentIP := map[string]interface{}{
-						isBareMetalServerNicIpID:      *ip.ID,
-						isBareMetalServerNicIpAddress: *ip.Address,
+						isBareMetalServerNicIpID:         *ip.ID,
+						isBareMetalServerNicFloatingIPId: *ip.ID,
+						isBareMetalServerNicIpAddress:    *ip.Address,
 					}
 					floatingIPList = append(floatingIPList, currentIP)
 				}
@@ -316,8 +325,9 @@ func dataSourceIBMISBareMetalServerNetworkInterfaceRead(context context.Context,
 			if nic.FloatingIps != nil {
 				for _, ip := range nic.FloatingIps {
 					currentIP := map[string]interface{}{
-						isBareMetalServerNicIpID:      *ip.ID,
-						isBareMetalServerNicIpAddress: *ip.Address,
+						isBareMetalServerNicIpID:         *ip.ID,
+						isBareMetalServerNicFloatingIPId: *ip.ID,
+						isBareMetalServerNicIpAddress:    *ip.Address,
 					}
 					floatingIPList = append(floatingIPList, currentIP)
 				}
@@ -370,6 +380,67 @@ func dataSourceIBMISBareMetalServerNetworkInterfaceRead(context context.Context,
 			d.Set(isBareMetalServerNicType, *nic.Type)
 			d.Set(isBareMetalServerNicAllowInterfaceToFloat, *nic.AllowInterfaceToFloat)
 			d.Set(isBareMetalServerNicVlan, *nic.Vlan)
+		}
+	case "*vpcv1.BareMetalServerNetworkInterfaceByHiperSocket":
+		{
+			nic := nicIntf.(*vpcv1.BareMetalServerNetworkInterfaceByHiperSocket)
+			d.SetId(*nic.ID)
+			d.Set(isBareMetalServerNicAllowIPSpoofing, *nic.AllowIPSpoofing)
+			d.Set(isBareMetalServerNicEnableInfraNAT, *nic.EnableInfrastructureNat)
+
+			floatingIPList := make([]map[string]interface{}, 0)
+			if nic.FloatingIps != nil {
+				for _, ip := range nic.FloatingIps {
+					currentIP := map[string]interface{}{
+						isBareMetalServerNicIpID:      *ip.ID,
+						isBareMetalServerNicIpAddress: *ip.Address,
+					}
+					floatingIPList = append(floatingIPList, currentIP)
+				}
+			}
+			d.Set(isBareMetalServerNicFloatingIPs, floatingIPList)
+
+			d.Set(isBareMetalServerNicHref, *nic.Href)
+			d.Set(isBareMetalServerNicID, *nic.ID)
+			d.Set(isBareMetalServerNicInterfaceType, *nic.InterfaceType)
+
+			d.Set(isBareMetalServerNicMacAddress, *nic.MacAddress)
+			d.Set(isBareMetalServerNicName, *nic.Name)
+			d.Set(isBareMetalServerNicPortSpeed, *nic.PortSpeed)
+
+			primaryIpList := make([]map[string]interface{}, 0)
+			currentIP := map[string]interface{}{}
+			if nic.PrimaryIP.Href != nil {
+				currentIP[isBareMetalServerNicIpAddress] = *nic.PrimaryIP.Address
+			}
+			if nic.PrimaryIP.Href != nil {
+				currentIP[isBareMetalServerNicIpHref] = *nic.PrimaryIP.Href
+			}
+			if nic.PrimaryIP.Name != nil {
+				currentIP[isBareMetalServerNicIpName] = *nic.PrimaryIP.Name
+			}
+			if nic.PrimaryIP.ID != nil {
+				currentIP[isBareMetalServerNicIpID] = *nic.PrimaryIP.ID
+			}
+			if nic.PrimaryIP.ResourceType != nil {
+				currentIP[isBareMetalServerNicResourceType] = *nic.PrimaryIP.ResourceType
+			}
+			primaryIpList = append(primaryIpList, currentIP)
+			d.Set(isBareMetalServerNicPrimaryIP, primaryIpList)
+
+			d.Set(isBareMetalServerNicResourceType, *nic.ResourceType)
+
+			if len(nic.SecurityGroups) != 0 {
+				secgrpList := []string{}
+				for i := 0; i < len(nic.SecurityGroups); i++ {
+					secgrpList = append(secgrpList, string(*(nic.SecurityGroups[i].ID)))
+				}
+				d.Set(isBareMetalServerNicSecurityGroups, flex.NewStringSet(schema.HashString, secgrpList))
+			}
+
+			d.Set(isBareMetalServerNicStatus, *nic.Status)
+			d.Set(isBareMetalServerNicSubnet, *nic.Subnet.ID)
+			d.Set(isBareMetalServerNicType, *nic.Type)
 		}
 	}
 	return nil

@@ -392,7 +392,7 @@ func ValidateSecurityRuleEtherType(v interface{}, k string) (ws []string, errors
 	return
 }
 
-//ValidateIP...
+// ValidateIP...
 func ValidateIP(v interface{}, k string) (ws []string, errors []error) {
 	address := v.(string)
 	if net.ParseIP(address) == nil {
@@ -403,7 +403,7 @@ func ValidateIP(v interface{}, k string) (ws []string, errors []error) {
 	return
 }
 
-//ValidateCIDR...
+// ValidateCIDR...
 func ValidateCIDR(v interface{}, k string) (ws []string, errors []error) {
 	address := v.(string)
 	_, _, err := net.ParseCIDR(address)
@@ -415,7 +415,7 @@ func ValidateCIDR(v interface{}, k string) (ws []string, errors []error) {
 	return
 }
 
-//validateCIDRAddress...
+// validateCIDRAddress...
 func validateCIDRAddress() schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
 		address := v.(string)
@@ -429,7 +429,7 @@ func validateCIDRAddress() schema.SchemaValidateFunc {
 	}
 }
 
-//validateOverlappingAddress...
+// validateOverlappingAddress...
 func validateOverlappingAddress() schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
 		nonOverlappingCIDR := map[string]bool{
@@ -451,7 +451,7 @@ func validateOverlappingAddress() schema.SchemaValidateFunc {
 	}
 }
 
-//ValidateRemoteIP...
+// ValidateRemoteIP...
 func ValidateRemoteIP(v interface{}, k string) (ws []string, errors []error) {
 	_, err1 := ValidateCIDR(v, k)
 	_, err2 := ValidateIP(v, k)
@@ -464,7 +464,7 @@ func ValidateRemoteIP(v interface{}, k string) (ws []string, errors []error) {
 	return
 }
 
-//validateIPorCIDR...
+// validateIPorCIDR...
 func validateIPorCIDR() schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
 		_, err1 := ValidateCIDR(v, k)
@@ -862,7 +862,7 @@ func ValidateAuthProtocol(v interface{}, k string) (ws []string, errors []error)
 	return
 }
 
-//ValidateIPVersion
+// ValidateIPVersion
 func ValidateIPVersion(v interface{}, k string) (ws []string, errors []error) {
 	validVersions := map[string]bool{
 		"ipv4": true,
@@ -962,6 +962,26 @@ func ValidateAllowedRangeInt(start, end int) schema.SchemaValidateFunc {
 	}
 }
 
+func ValidateAllowedPolicyType(policyType []string) schema.SchemaValidateFunc {
+	return func(v interface{}, k string) (ws []string, errors []error) {
+		value := v.(string)
+		var setTrue bool
+		for _, s := range policyType {
+			if value == s {
+				setTrue = true
+				break
+			}
+		}
+		if !setTrue {
+			errors = append(errors, fmt.Errorf(
+				"%q must contain a valid policy type, the value should be exactly either of (%s), got %s",
+				k, policyType, value))
+
+		}
+		return
+	}
+}
+
 func validateDeadPeerDetectionTimeout(v interface{}, k string) (ws []string, errors []error) {
 	secs := v.(int)
 	if secs < 15 || secs > 86399 {
@@ -997,7 +1017,7 @@ func ValidateLBListenerConnectionLimit(v interface{}, k string) (ws []string, er
 	return
 }
 
-//ValidateISName
+// ValidateISName
 func ValidateISName(v interface{}, k string) (ws []string, errors []error) {
 	name := v.(string)
 	acceptedcharacters, _ := regexp.MatchString(`^[a-z][-a-z0-9]*$`, name)
@@ -1053,6 +1073,7 @@ const (
 )
 
 // MarshalText implements the encoding.TextMarshaler interface.
+//
 //	Without this function, when FunctionalIdentifier is marshaled, it prints 0,1,2.. instead
 //	of printing IntBetween, IntAtLeast, IntAtMost.. in JSON Output
 func (f FunctionIdentifier) MarshalText() ([]byte, error) {

@@ -22,6 +22,11 @@ func DataSourceIBMISPublicGateways() *schema.Resource {
 		Read: dataSourceIBMISPublicGatewaysRead,
 
 		Schema: map[string]*schema.Schema{
+			isPublicGatewayResourceGroup: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The unique identifier of the resource group this public gateway belongs to",
+			},
 			isPublicGateways: {
 				Type:        schema.TypeList,
 				Description: "List of public gateways",
@@ -76,6 +81,13 @@ func DataSourceIBMISPublicGateways() *schema.Resource {
 							Elem:        &schema.Schema{Type: schema.TypeString},
 							Set:         flex.ResourceIBMVPCHash,
 							Description: "Service tags for the public gateway instance",
+						},
+						isPublicGatewayAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "List of access management tags",
 						},
 
 						flex.ResourceControllerURL: {
@@ -179,12 +191,21 @@ func publicGatewaysGet(d *schema.ResourceData, meta interface{}, name string) er
 			}
 			l[isPublicGatewayFloatingIP] = floatIP
 		}
-		tags, err := flex.GetTagsUsingCRN(meta, *publicgw.CRN)
+		tags, err := flex.GetGlobalTagsUsingCRN(meta, *publicgw.CRN, "", isUserTagType)
 		if err != nil {
 			log.Printf(
 				"Error on get of vpc public gateway (%s) tags: %s", *publicgw.ID, err)
 		}
 		l[isPublicGatewayTags] = tags
+
+		accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *publicgw.CRN, "", isAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on get of vpc public gateway (%s) access tags: %s", d.Id(), err)
+		}
+
+		l[isPublicGatewayAccessTags] = accesstags
+
 		controller, err := flex.GetBaseController(meta)
 		if err != nil {
 			return err

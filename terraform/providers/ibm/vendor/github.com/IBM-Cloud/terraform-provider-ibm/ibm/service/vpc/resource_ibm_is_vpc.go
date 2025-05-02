@@ -58,6 +58,10 @@ const (
 	isVPCSecurityGroupRulePortMin   = "port_min"
 	isVPCSecurityGroupRuleProtocol  = "protocol"
 	isVPCSecurityGroupID            = "group_id"
+	isVPCAccessTags                 = "access_tags"
+	isVPCUserTagType                = "user"
+	isVPCAccessTagType              = "access"
+	isVPCNoSgAclRules               = "no_sg_acl_rules"
 )
 
 func ResourceIBMISVPC() *schema.Resource {
@@ -74,10 +78,16 @@ func ResourceIBMISVPC() *schema.Resource {
 			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
 
-		CustomizeDiff: customdiff.Sequence(
-			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
-				return flex.ResourceTagsCustomizeDiff(diff)
-			},
+		CustomizeDiff: customdiff.All(
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceTagsCustomizeDiff(diff)
+				},
+			),
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceValidateAccessTags(diff, v)
+				}),
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -109,6 +119,14 @@ func ResourceIBMISVPC() *schema.Resource {
 				Default:     false,
 				Optional:    true,
 				Description: "Set to true if classic access needs to enabled to VPC",
+			},
+
+			isVPCNoSgAclRules: {
+				Type:             schema.TypeBool,
+				Default:          false,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Optional:         true,
+				Description:      "Delete all rules attached with default security group and default acl",
 			},
 
 			isVPCName: {
@@ -182,7 +200,14 @@ func ResourceIBMISVPC() *schema.Resource {
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "List of tags",
 			},
-
+			isVPCAccessTags: {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_vpc", "accesstag")},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access management tags",
+			},
 			isVPCCRN: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -379,6 +404,13 @@ func ResourceIBMISVPCValidator() *validate.ResourceValidator {
 			AllowedValues:              address_prefix_management})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
+			Identifier:                 "id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "is",
+			CloudDataRange:             []string{"service:vpc", "resolved_to:id"}})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
 			Identifier:                 isVPCName,
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
@@ -421,6 +453,15 @@ func ResourceIBMISVPCValidator() *validate.ResourceValidator {
 			Type:                       validate.TypeString,
 			Optional:                   true,
 			Regexp:                     `^[A-Za-z0-9:_ .-]+$`,
+			MinValueLength:             1,
+			MaxValueLength:             128})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "accesstag",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-]):([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-])$`,
 			MinValueLength:             1,
 			MaxValueLength:             128})
 
@@ -494,13 +535,29 @@ func vpcCreate(d *schema.ResourceData, meta interface{}, name, apm, rg string, i
 	if err != nil {
 		return err
 	}
+
+	if sgAclRules, ok := d.GetOk(isVPCNoSgAclRules); ok {
+		sgAclRules := sgAclRules.(bool)
+		if sgAclRules {
+			deleteDefaultNetworkACLRules(sess, *vpc.ID)
+			deleteDefaultSecurityGroupRules(sess, *vpc.ID)
+		}
+	}
 	v := os.Getenv("IC_ENV_TAGS")
 	if _, ok := d.GetOk(isVPCTags); ok || v != "" {
 		oldList, newList := d.GetChange(isVPCTags)
-		err = flex.UpdateTagsUsingCRN(oldList, newList, meta, *vpc.CRN)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *vpc.CRN, "", isVPCUserTagType)
 		if err != nil {
 			log.Printf(
 				"Error on create of resource vpc (%s) tags: %s", d.Id(), err)
+		}
+	}
+	if _, ok := d.GetOk(isVPCAccessTags); ok {
+		oldList, newList := d.GetChange(isVPCAccessTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *vpc.CRN, "", isVPCAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on create of resource vpc (%s) access tags: %s", d.Id(), err)
 		}
 	}
 	return nil
@@ -519,6 +576,78 @@ func isWaitForVPCAvailable(vpc *vpcv1.VpcV1, id string, timeout time.Duration) (
 	}
 
 	return stateConf.WaitForState()
+}
+
+func deleteDefaultNetworkACLRules(sess *vpcv1.VpcV1, vpcID string) error {
+	getVPCDefaultNetworkACLOptions := sess.NewGetVPCDefaultNetworkACLOptions(vpcID)
+	result, detail, err := sess.GetVPCDefaultNetworkACL(getVPCDefaultNetworkACLOptions)
+	if err != nil || result == nil {
+		log.Printf("Error reading details of VPC Default Network ACL:%s", detail)
+		return err
+	}
+
+	if result.Rules != nil {
+		for _, sourceRule := range result.Rules {
+			sourceRuleVal := sourceRule.(*vpcv1.NetworkACLRuleItemNetworkACLRuleProtocolAll)
+			if sourceRuleVal.ID != nil {
+				getNetworkAclRuleOptions := &vpcv1.GetNetworkACLRuleOptions{
+					NetworkACLID: result.ID,
+					ID:           sourceRuleVal.ID,
+				}
+				_, response, err := sess.GetNetworkACLRule(getNetworkAclRuleOptions)
+
+				if err != nil {
+					return fmt.Errorf("[ERROR] Error Getting Network ACL Rule  (%s): %s\n%s", *sourceRuleVal.ID, err, response)
+				}
+
+				deleteNetworkAclRuleOptions := &vpcv1.DeleteNetworkACLRuleOptions{
+					NetworkACLID: result.ID,
+					ID:           sourceRuleVal.ID,
+				}
+				response, err = sess.DeleteNetworkACLRule(deleteNetworkAclRuleOptions)
+				if err != nil {
+					return fmt.Errorf("[ERROR] Error Deleting Network ACL Rule : %s\n%s", err, response)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func deleteDefaultSecurityGroupRules(sess *vpcv1.VpcV1, vpcID string) error {
+	getVPCDefaultSecurityGroupOptions := sess.NewGetVPCDefaultSecurityGroupOptions(vpcID)
+	result, detail, err := sess.GetVPCDefaultSecurityGroup(getVPCDefaultSecurityGroupOptions)
+	if err != nil || result == nil {
+		log.Printf("Error reading details of VPC Default Security Group:%s", detail)
+		return err
+	}
+
+	if result.Rules != nil {
+		for _, sourceRule := range result.Rules {
+			sourceRuleVal := sourceRule.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll)
+			if sourceRuleVal.ID != nil {
+				getSecurityGroupRuleOptions := &vpcv1.GetSecurityGroupRuleOptions{
+					SecurityGroupID: result.ID,
+					ID:              sourceRuleVal.ID,
+				}
+				_, response, err := sess.GetSecurityGroupRule(getSecurityGroupRuleOptions)
+
+				if err != nil {
+					return fmt.Errorf("[ERROR] Error Getting Security Group Rule  (%s): %s\n%s", *sourceRuleVal.ID, err, response)
+				}
+
+				deleteSecurityGroupRuleOptions := &vpcv1.DeleteSecurityGroupRuleOptions{
+					SecurityGroupID: result.ID,
+					ID:              sourceRuleVal.ID,
+				}
+				response, err = sess.DeleteSecurityGroupRule(deleteSecurityGroupRuleOptions)
+				if err != nil {
+					return fmt.Errorf("[ERROR] Error Deleting Security Group Rule : %s\n%s", err, response)
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func isVPCRefreshFunc(vpc *vpcv1.VpcV1, id string) resource.StateRefreshFunc {
@@ -588,12 +717,18 @@ func vpcGet(d *schema.ResourceData, meta interface{}, id string) error {
 		d.Set(isVPCDefaultRoutingTable, *vpc.DefaultRoutingTable.ID)
 		d.Set(isVPCDefaultRoutingTableName, *vpc.DefaultRoutingTable.Name)
 	}
-	tags, err := flex.GetTagsUsingCRN(meta, *vpc.CRN)
+	tags, err := flex.GetGlobalTagsUsingCRN(meta, *vpc.CRN, "", isVPCUserTagType)
 	if err != nil {
 		log.Printf(
 			"Error on get of resource vpc (%s) tags: %s", d.Id(), err)
 	}
 	d.Set(isVPCTags, tags)
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *vpc.CRN, "", isVPCAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource vpc (%s) access tags: %s", d.Id(), err)
+	}
+	d.Set(isVPCAccessTags, accesstags)
 	controller, err := flex.GetBaseController(meta)
 	if err != nil {
 		return err
@@ -807,10 +942,25 @@ func vpcUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasCha
 			return fmt.Errorf("[ERROR] Error getting VPC : %s\n%s", err, response)
 		}
 		oldList, newList := d.GetChange(isVPCTags)
-		err = flex.UpdateTagsUsingCRN(oldList, newList, meta, *vpc.CRN)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *vpc.CRN, "", isVPCUserTagType)
 		if err != nil {
 			log.Printf(
 				"Error on update of resource vpc (%s) tags: %s", d.Id(), err)
+		}
+	}
+	if d.HasChange(isVPCAccessTags) {
+		getvpcOptions := &vpcv1.GetVPCOptions{
+			ID: &id,
+		}
+		vpc, response, err := sess.GetVPC(getvpcOptions)
+		if err != nil {
+			return fmt.Errorf("Error getting VPC : %s\n%s", err, response)
+		}
+		oldList, newList := d.GetChange(isVPCAccessTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *vpc.CRN, "", isVPCAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on update of resource VPC (%s) access tags: %s", d.Id(), err)
 		}
 	}
 

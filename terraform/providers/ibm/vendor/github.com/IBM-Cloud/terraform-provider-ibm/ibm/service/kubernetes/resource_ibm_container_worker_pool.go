@@ -37,6 +37,9 @@ func ResourceIBMContainerWorkerPool() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "Cluster name",
+				ValidateFunc: validate.InvokeValidator(
+					"ibm_container_worker_pool",
+					"cluster"),
 			},
 
 			"machine_type": {
@@ -54,10 +57,11 @@ func ResourceIBMContainerWorkerPool() *schema.Resource {
 			},
 
 			"size_per_zone": {
-				Type:         schema.TypeInt,
-				Required:     true,
-				ValidateFunc: validate.ValidateSizePerZone,
-				Description:  "Number of nodes per zone",
+				Type:             schema.TypeInt,
+				Required:         true,
+				ValidateFunc:     validate.ValidateSizePerZone,
+				Description:      "Number of nodes per zone",
+				DiffSuppressFunc: SuppressResizeForAutoscaledWorkerpool,
 			},
 
 			"entitlement": {
@@ -65,6 +69,14 @@ func ResourceIBMContainerWorkerPool() *schema.Resource {
 				Optional:         true,
 				DiffSuppressFunc: flex.ApplyOnce,
 				Description:      "Entitlement option reduces additional OCP Licence cost in Openshift Clusters",
+			},
+
+			"operating_system": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The operating system of the workers in the worker pool.",
 			},
 
 			"hardware": {
@@ -173,10 +185,17 @@ func ResourceIBMContainerWorkerPool() *schema.Resource {
 				ForceNew:         true,
 				DiffSuppressFunc: flex.ApplyOnce,
 			},
+
 			flex.ResourceControllerURL: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The URL of the IBM Cloud dashboard that can be used to explore and view details about this cluster",
+			},
+
+			"autoscale_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Autoscaling is enabled on the workerpool",
 			},
 		},
 	}
@@ -192,6 +211,14 @@ func ResourceIBMContainerWorkerPoolValidator() *validate.ResourceValidator {
 			Type:                       validate.TypeString,
 			Required:                   true,
 			AllowedValues:              tainteffects})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
 
 	containerWorkerPoolTaintsValidator := validate.ResourceValidator{ResourceName: "ibm_container_worker_pool", Schema: validateSchema}
 	return &containerWorkerPoolTaintsValidator
@@ -234,6 +261,10 @@ func resourceIBMContainerWorkerPoolCreate(d *schema.ResourceData, meta interface
 		workerPoolConfig.Entitlement = v.(string)
 	}
 
+	if v, ok := d.GetOk("operating_system"); ok {
+		workerPoolConfig.OperatingSystem = v.(string)
+	}
+
 	params := v1.WorkerPoolRequest{
 		WorkerPoolConfig: workerPoolConfig,
 		DiskEncryption:   d.Get("disk_encryption").(bool),
@@ -251,6 +282,12 @@ func resourceIBMContainerWorkerPoolCreate(d *schema.ResourceData, meta interface
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", clusterNameorID, res.ID))
+
+	if taintRes, ok := d.GetOk("taints"); ok {
+		if err := updateWorkerpoolTaints(d, meta, clusterNameorID, workerPoolConfig.Name, taintRes.(*schema.Set).List()); err != nil {
+			return err
+		}
+	}
 
 	return resourceIBMContainerWorkerPoolRead(d, meta)
 }
@@ -295,6 +332,7 @@ func resourceIBMContainerWorkerPoolRead(d *schema.ResourceData, meta interface{}
 	d.Set("hardware", hardware)
 	d.Set("state", workerPool.State)
 	d.Set("labels", flex.IgnoreSystemLabels(workerPool.Labels))
+	d.Set("operating_system", workerPool.OperatingSystem)
 	d.Set("zones", flex.FlattenZones(workerPool.Zones))
 	d.Set("cluster", cluster)
 	if strings.Contains(machineType, "encrypted") {
@@ -302,6 +340,7 @@ func resourceIBMContainerWorkerPoolRead(d *schema.ResourceData, meta interface{}
 	} else {
 		d.Set("disk_encryption", false)
 	}
+	d.Set("autoscale_enabled", workerPool.AutoscaleEnabled)
 	controller, err := flex.GetBaseController(meta)
 	if err != nil {
 		return err
@@ -338,6 +377,7 @@ func resourceIBMContainerWorkerPoolUpdate(d *schema.ResourceData, meta interface
 			return fmt.Errorf("[ERROR] Error waiting for workers of worker pool (%s) of cluster (%s) to become ready: %s", workerPoolNameorID, clusterNameorID, err)
 		}
 	}
+
 	if d.HasChange("labels") {
 		labels := make(map[string]string)
 		if l, ok := d.GetOk("labels"); ok {
@@ -355,20 +395,14 @@ func resourceIBMContainerWorkerPoolUpdate(d *schema.ResourceData, meta interface
 			return fmt.Errorf("[ERROR] Error waiting for workers of worker pool (%s) of cluster (%s) to become ready: %s", workerPoolNameorID, clusterNameorID, err)
 		}
 	}
-	if d.HasChange("taints") {
-		taintParam := expandWorkerPoolTaints(d, meta, clusterNameorID, workerPoolNameorID)
 
-		targetEnv, err := getVpcClusterTargetHeader(d, meta)
-		if err != nil {
-			return err
+	if d.HasChange("taints") {
+		var taints []interface{}
+		if taintRes, ok := d.GetOk("taints"); ok {
+			taints = taintRes.(*schema.Set).List()
 		}
-		ClusterClient, err := meta.(conns.ClientSession).VpcContainerAPI()
-		if err != nil {
+		if err := updateWorkerpoolTaints(d, meta, clusterNameorID, workerPoolNameorID, taints); err != nil {
 			return err
-		}
-		err = ClusterClient.WorkerPools().UpdateWorkerPoolTaints(taintParam, targetEnv)
-		if err != nil {
-			return fmt.Errorf("[ERROR] Error updating the taints: %s", err)
 		}
 	}
 

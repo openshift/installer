@@ -52,10 +52,12 @@ func NewServiceBrokerSwaggerspecParamsWithHTTPClient(client *http.Client) *Servi
 	}
 }
 
-/* ServiceBrokerSwaggerspecParams contains all the parameters to send to the API endpoint
-   for the service broker swaggerspec operation.
+/*
+ServiceBrokerSwaggerspecParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the service broker swaggerspec operation.
+
+	Typically these are written to a http.Request.
 */
 type ServiceBrokerSwaggerspecParams struct {
 	timeout    time.Duration
