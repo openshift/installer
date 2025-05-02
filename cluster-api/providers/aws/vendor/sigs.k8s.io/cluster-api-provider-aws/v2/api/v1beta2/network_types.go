@@ -207,6 +207,10 @@ type TargetGroupAttribute string
 var (
 	// TargetGroupAttributeEnablePreserveClientIP defines the attribute key for enabling preserve client IP.
 	TargetGroupAttributeEnablePreserveClientIP = "preserve_client_ip.enabled"
+
+	TargetGroupAttributeEnableConnectionTermination = "target_health_state.unhealthy.connection_termination.enabled"
+
+	TargetGroupAttributeUnhealthyDrainingIntervalSeconds = "target_health_state.unhealthy.draining_interval_seconds"
 )
 
 // LoadBalancerAttribute defines a set of attributes for a V2 load balancer.
@@ -351,6 +355,10 @@ type NetworkSpec struct {
 	// AdditionalControlPlaneIngressRules is an optional set of ingress rules to add to the control plane
 	// +optional
 	AdditionalControlPlaneIngressRules []IngressRule `json:"additionalControlPlaneIngressRules,omitempty"`
+
+	// AdditionalNodeIngressRules is an optional set of ingress rules to add to every node
+	// +optional
+	AdditionalNodeIngressRules []IngressRule `json:"additionalNodeIngressRules,omitempty"`
 
 	// NodePortIngressRuleCidrBlocks is an optional set of CIDR blocks to allow traffic to nodes' NodePort services.
 	// If none are specified here, all IPs are allowed to connect.

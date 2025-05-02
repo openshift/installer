@@ -473,6 +473,11 @@ func (s *Service) createCluster(eksClusterName string) (*eks.Cluster, error) {
 		Tags:                    tags,
 		KubernetesNetworkConfig: netConfig,
 	}
+	// Only set BootstrapSelfManagedAddons if it's explicitly set to false in the spec
+	// Default is true, so we don't need to set it in that case
+	if !s.scope.BootstrapSelfManagedAddons() {
+		input.BootstrapSelfManagedAddons = aws.Bool(false)
+	}
 
 	var out *eks.CreateClusterOutput
 	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {

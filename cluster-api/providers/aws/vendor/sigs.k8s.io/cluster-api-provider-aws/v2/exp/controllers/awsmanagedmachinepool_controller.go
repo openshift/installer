@@ -41,10 +41,10 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/ec2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/eks"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	expclusterv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
-	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
@@ -72,7 +72,7 @@ func (r *AWSManagedMachinePoolReconciler) SetupWithManager(ctx context.Context, 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&expinfrav1.AWSManagedMachinePool{}).
 		WithOptions(options).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
 		Watches(
 			&expclusterv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(machinePoolToInfrastructureMapFunc(gvk)),
@@ -120,9 +120,8 @@ func (r *AWSManagedMachinePoolReconciler) Reconcile(ctx context.Context, req ctr
 		return reconcile.Result{}, nil
 	}
 
-	if annotations.IsPaused(cluster, awsPool) {
-		log.Info("Reconciliation is paused for this object")
-		return ctrl.Result{}, nil
+	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, awsPool); err != nil || isPaused || conditionChanged {
+		return ctrl.Result{}, err
 	}
 
 	log = log.WithValues("cluster", klog.KObj(cluster))

@@ -59,9 +59,9 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/ssm"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/userdata"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/util/paused"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
-	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
@@ -183,11 +183,6 @@ func (r *AWSMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	if annotations.IsPaused(cluster, awsMachine) {
-		log.Info("AWSMachine or linked Cluster is marked as paused. Won't reconcile")
-		return ctrl.Result{}, nil
-	}
-
 	log = log.WithValues("cluster", klog.KObj(cluster))
 
 	infraCluster, err := r.getInfraCluster(ctx, log, cluster, awsMachine)
@@ -201,10 +196,15 @@ func (r *AWSMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	infrav1.SetDefaults_AWSMachineSpec(&awsMachine.Spec)
 
+	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, awsMachine); err != nil || isPaused || conditionChanged {
+		return ctrl.Result{}, err
+	}
+
 	// Create the machine scope
 	machineScope, err := scope.NewMachineScope(scope.MachineScopeParams{
 		Client:       r.Client,
 		Cluster:      cluster,
+		Logger:       log,
 		Machine:      machine,
 		InfraCluster: infraCluster,
 		AWSMachine:   awsMachine,
@@ -254,7 +254,7 @@ func (r *AWSMachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 			&infrav1.AWSCluster{},
 			handler.EnqueueRequestsFromMapFunc(AWSClusterToAWSMachines),
 		).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
 		WithEventFilter(
 			predicate.Funcs{
 				// Avoid reconciling if the event triggering the reconciliation is related to incremental status updates
