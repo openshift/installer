@@ -166,6 +166,9 @@ func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string) (b
 	}
 
 	vpc, err := client.GetVPCByName(ctx, vpcName)
+	if err != nil {
+		return false, err
+	}
 	for _, network := range networks {
 		if network == *vpc.CRN {
 			return true, nil
