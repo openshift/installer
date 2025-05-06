@@ -7,8 +7,10 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
+	"github.com/go-openapi/swag"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -19,6 +21,7 @@ import (
 	operv1 "github.com/openshift/api/operator/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
+	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
@@ -455,6 +458,10 @@ func (a *AgentClusterInstall) finish() error {
 		return errors.Wrapf(err, "invalid PlatformType configured")
 	}
 
+	if err := a.validateDiskEncryption().ToAggregate(); err != nil {
+		return errors.Wrapf(err, "invalid DiskEncryption configured")
+	}
+
 	agentClusterInstallData, err := yaml.Marshal(a.Config)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal agent installer AgentClusterInstall")
@@ -582,4 +589,23 @@ func (a *AgentClusterInstall) GetExternalPlatformName() string {
 		return a.Config.Spec.ExternalPlatformSpec.PlatformName
 	}
 	return ""
+}
+
+func (a *AgentClusterInstall) validateDiskEncryption() field.ErrorList {
+	var allErrs field.ErrorList
+	supportedEnableOn := []string{models.DiskEncryptionEnableOnNone, models.DiskEncryptionEnableOnAll, models.DiskEncryptionEnableOnMasters, models.DiskEncryptionEnableOnWorkers}
+	supportedMode := []string{models.DiskEncryptionModeTpmv2, models.DiskEncryptionModeTang}
+
+	if a.Config.Spec.DiskEncryption != nil {
+		if !slices.Contains(supportedEnableOn, swag.StringValue(a.Config.Spec.DiskEncryption.EnableOn)) {
+			fieldPath := field.NewPath("spec", "diskEncryption", "enableOn")
+			allErrs = append(allErrs, field.NotSupported(fieldPath, a.Config.Spec.DiskEncryption.EnableOn, supportedEnableOn))
+		}
+
+		if !slices.Contains(supportedMode, swag.StringValue(a.Config.Spec.DiskEncryption.Mode)) {
+			fieldPath := field.NewPath("spec", "diskEncryption", "mode")
+			allErrs = append(allErrs, field.NotSupported(fieldPath, a.Config.Spec.DiskEncryption.Mode, supportedMode))
+		}
+	}
+	return allErrs
 }

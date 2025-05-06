@@ -353,6 +353,9 @@ metadata:
 spec:
   apiVIP: 192.168.111.5
   ingressVIP: 192.168.111.4
+  diskEncryption:
+    enableOn: workers
+    mode: tpmv2
   platformType: BareMetal
   clusterDeploymentRef:
     name: ostest
@@ -379,8 +382,12 @@ spec:
 					Namespace: "cluster0",
 				},
 				Spec: hiveext.AgentClusterInstallSpec{
-					APIVIP:       "192.168.111.5",
-					IngressVIP:   "192.168.111.4",
+					APIVIP:     "192.168.111.5",
+					IngressVIP: "192.168.111.4",
+					DiskEncryption: &hiveext.DiskEncryption{
+						EnableOn: swag.String("workers"),
+						Mode:     swag.String("tpmv2"),
+					},
 					PlatformType: hiveext.BareMetalPlatformType,
 					ClusterDeploymentRef: corev1.LocalObjectReference{
 						Name: "ostest",
@@ -866,6 +873,40 @@ spec:
     ssh-rsa AAAAmyKey`,
 			expectedFound: false,
 			expectedError: "invalid PlatformType configured: spec.platformType: Unsupported value: \"aws\": supported values: \"BareMetal\", \"VSphere\", \"Nutanix\", \"None\", \"External\"",
+		},
+		{
+			name: "invalid-disk-encryption",
+			data: `
+metadata:
+  name: test-agent-cluster-install
+  namespace: cluster0
+spec:
+  apiVIP: 192.168.111.5
+  ingressVIP: 192.168.111.4
+  platformType: baremetal
+  clusterDeploymentRef:
+    name: ostest
+  diskEncryption:
+    enableOn: worker
+    mode: tmpv2
+  imageSetRef:
+    name: openshift-v4.10.0
+  networking:
+    machineNetwork:
+    - cidr: 10.10.11.0/24
+    clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+    serviceNetwork:
+    - 172.30.0.0/16
+    networkType: OVNKubernetes
+  provisionRequirements:
+    controlPlaneAgents: 3
+    workerAgents: 2
+  sshPublicKey: |
+    ssh-rsa AAAAmyKey`,
+			expectedFound: false,
+			expectedError: "invalid DiskEncryption configured: [spec.diskEncryption.enableOn: Unsupported value: \"worker\": supported values: \"none\", \"all\", \"masters\", \"workers\", spec.diskEncryption.mode: Unsupported value: \"tmpv2\": supported values: \"tpmv2\", \"tang\"]",
 		},
 	}
 	for _, tc := range cases {
