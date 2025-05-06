@@ -302,12 +302,16 @@ func FindImageUUIDByName(ctx context.Context, ntnxclient *nutanixclientv3.Client
 	res, err := ntnxclient.V3.ListImage(ctx, &nutanixclientv3.DSMetadata{
 		Filter: utils.StringPtr(fmt.Sprintf("name==%s", imageName)),
 	})
-	if err != nil || len(res.Entities) == 0 {
-		return nil, fmt.Errorf("failed to find image by name %q. err: %w", imageName, err)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find image by name %q in PC/PE. err: %w", imageName, err)
+	}
+
+	if len(res.Entities) == 0 {
+		return nil, fmt.Errorf("no image with name %q is found in PC/PE", imageName)
 	}
 
 	if len(res.Entities) > 1 {
-		return nil, fmt.Errorf("found more than one (%v) images with name %q", len(res.Entities), imageName)
+		return nil, fmt.Errorf("found more than one (%v) images with name %q in PC/PE", len(res.Entities), imageName)
 	}
 
 	return res.Entities[0].Metadata.UUID, nil
