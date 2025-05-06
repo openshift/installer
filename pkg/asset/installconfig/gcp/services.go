@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"cloud.google.com/go/storage"
 	"github.com/sirupsen/logrus"
@@ -66,6 +67,11 @@ func FormatGCPEndpoint(service configv1.GCPServiceEndpointName, endpoint string,
 	if endpointURL.Host == "" {
 		logrus.Debugf("GCP endpoint did not set a host, setting host to %s", endpoint)
 		endpointURL.Host = endpoint
+		endpointURL.Path = ""
+	}
+
+	if strings.HasSuffix(endpointURL.Host, "/") {
+		endpointURL.Host = endpointURL.Host[:len(endpointURL.Host)-1]
 	}
 
 	endpointURL.Scheme = "https"
