@@ -71,6 +71,15 @@ spec:
                       properties:
                         address:
                           type: string
+                        certificateVerification:
+                          default: Enabled
+                          description: |-
+                            CertificateVerification Defines whether ssl certificate verification is required or not.
+                            If omitted, the platform chooses a default, that default is enabled.
+                          enum:
+                          - Enabled
+                          - Disabled
+                          type: string
                         hostName:
                           type: string
                         password:
@@ -1384,6 +1393,15 @@ spec:
                         properties:
                           address:
                             type: string
+                          certificateVerification:
+                            default: Enabled
+                            description: |-
+                              CertificateVerification Defines whether ssl certificate verification is required or not.
+                              If omitted, the platform chooses a default, that default is enabled.
+                            enum:
+                            - Enabled
+                            - Disabled
+                            type: string
                           hostName:
                             type: string
                           password:
@@ -2635,6 +2653,15 @@ spec:
                         host's management controller.
                       properties:
                         address:
+                          type: string
+                        certificateVerification:
+                          default: Enabled
+                          description: |-
+                            CertificateVerification Defines whether ssl certificate verification is required or not.
+                            If omitted, the platform chooses a default, that default is enabled.
+                          enum:
+                          - Enabled
+                          - Disabled
                           type: string
                         hostName:
                           type: string

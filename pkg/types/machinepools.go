@@ -158,10 +158,26 @@ type Fencing struct {
 	Credentials []*Credential `json:"credentials,omitempty"`
 }
 
+// CertificateVerificationPolicy represents the options for CertificateVerification .
+type CertificateVerificationPolicy string
+
+const (
+	// CertificateVerificationEnabled enables ssl certificate verification.
+	CertificateVerificationEnabled CertificateVerificationPolicy = "Enabled"
+	// CertificateVerificationDisabled disables ssl certificate verification.
+	CertificateVerificationDisabled CertificateVerificationPolicy = "Disabled"
+)
+
 // Credential stores the information about a baremetal host's management controller.
 type Credential struct {
 	HostName string `json:"hostName,omitempty" validate:"required,uniqueField"`
 	Username string `json:"username" validate:"required"`
 	Password string `json:"password" validate:"required"`
 	Address  string `json:"address" validate:"required,uniqueField"`
+	// CertificateVerification Defines whether ssl certificate verification is required or not.
+	// If omitted, the platform chooses a default, that default is enabled.
+	// +kubebuilder:default:="Enabled"
+	// +kubebuilder:validation:Enum=Enabled;Disabled
+	// +optional
+	CertificateVerification CertificateVerificationPolicy `json:"certificateVerification,omitempty"`
 }
