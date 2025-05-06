@@ -7,17 +7,20 @@ package models
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 )
 
 // TransitGatewayInstance transit gateway instance
 //
 // swagger:model TransitGatewayInstance
 type TransitGatewayInstance struct {
+
+	// errors
+	Errors []*TransitConnectionErrorItem `json:"errors,omitempty"`
 
 	// IBM Resource Group ID associated with the PowerVS Service Instance
 	// Example: 2bf1887bf5c947b1966de2bd88220489
@@ -39,16 +42,15 @@ type TransitGatewayInstance struct {
 	// Example: 3a5798f1-4d2b-4e0a-9311-9b0fd6b94698
 	ServiceID string `json:"serviceId,omitempty"`
 
-	// transit connection error
-	// Required: true
-	TransitConnectionError *TransitConnectionError `json:"transitConnectionError"`
+	// The trace id for debugging purposes
+	Trace string `json:"trace,omitempty"`
 }
 
 // Validate validates this transit gateway instance
 func (m *TransitGatewayInstance) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateTransitConnectionError(formats); err != nil {
+	if err := m.validateErrors(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -58,21 +60,27 @@ func (m *TransitGatewayInstance) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *TransitGatewayInstance) validateTransitConnectionError(formats strfmt.Registry) error {
-
-	if err := validate.Required("transitConnectionError", "body", m.TransitConnectionError); err != nil {
-		return err
+func (m *TransitGatewayInstance) validateErrors(formats strfmt.Registry) error {
+	if swag.IsZero(m.Errors) { // not required
+		return nil
 	}
 
-	if m.TransitConnectionError != nil {
-		if err := m.TransitConnectionError.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("transitConnectionError")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("transitConnectionError")
-			}
-			return err
+	for i := 0; i < len(m.Errors); i++ {
+		if swag.IsZero(m.Errors[i]) { // not required
+			continue
 		}
+
+		if m.Errors[i] != nil {
+			if err := m.Errors[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("errors" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("errors" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -82,7 +90,7 @@ func (m *TransitGatewayInstance) validateTransitConnectionError(formats strfmt.R
 func (m *TransitGatewayInstance) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.contextValidateTransitConnectionError(ctx, formats); err != nil {
+	if err := m.contextValidateErrors(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -92,17 +100,21 @@ func (m *TransitGatewayInstance) ContextValidate(ctx context.Context, formats st
 	return nil
 }
 
-func (m *TransitGatewayInstance) contextValidateTransitConnectionError(ctx context.Context, formats strfmt.Registry) error {
+func (m *TransitGatewayInstance) contextValidateErrors(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.TransitConnectionError != nil {
-		if err := m.TransitConnectionError.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("transitConnectionError")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("transitConnectionError")
+	for i := 0; i < len(m.Errors); i++ {
+
+		if m.Errors[i] != nil {
+			if err := m.Errors[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("errors" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("errors" + "." + strconv.Itoa(i))
+				}
+				return err
 			}
-			return err
 		}
+
 	}
 
 	return nil

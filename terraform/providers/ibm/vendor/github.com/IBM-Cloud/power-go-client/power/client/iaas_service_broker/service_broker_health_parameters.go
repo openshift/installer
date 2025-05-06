@@ -52,10 +52,12 @@ func NewServiceBrokerHealthParamsWithHTTPClient(client *http.Client) *ServiceBro
 	}
 }
 
-/* ServiceBrokerHealthParams contains all the parameters to send to the API endpoint
-   for the service broker health operation.
+/*
+ServiceBrokerHealthParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the service broker health operation.
+
+	Typically these are written to a http.Request.
 */
 type ServiceBrokerHealthParams struct {
 	timeout    time.Duration

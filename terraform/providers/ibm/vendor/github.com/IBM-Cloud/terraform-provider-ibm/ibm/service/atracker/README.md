@@ -3,6 +3,11 @@
 This area is primarily for IBM provider contributors and maintainers. For information on _using_ Terraform and the IBM provider, see the links below.
 
 
+## Environment variables to set for the tests
+* COS_API_KEY   : API Key used for creating COS targets
+* INGESTION_KEY : LogDNA Ingestion Key used for creating Logdna targets
+* IES_API_KEY   : Event streams password used for creating Event streams targets
+
 ## Handy Links
 * [Find out about contributing](../../../CONTRIBUTING.md) to the IBM provider!
 * IBM Provider Docs: [Home](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs)

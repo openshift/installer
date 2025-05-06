@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -39,6 +40,7 @@ func ResourceIBMEnterpriseAccount() *schema.Resource {
 			"name": {
 				Type:         schema.TypeString,
 				Optional:     true,
+				Computed:     true,
 				Description:  "The name of the account. This field must have 3 - 60 characters.",
 				ForceNew:     true,
 				ValidateFunc: validate.ValidateAllowedEnterpriseNameValue(),
@@ -46,8 +48,29 @@ func ResourceIBMEnterpriseAccount() *schema.Resource {
 			"owner_iam_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "The IAM ID of the account owner, such as `IBMid-0123ABC`. The IAM ID must already exist.",
 				ForceNew:    true,
+			},
+			"traits": {
+				Type:             schema.TypeSet,
+				Description:      "The traits object can be used to set properties on child accounts of an enterprise. You can pass a field to opt-out of Multi-Factor Authentication setting or setup enterprise IAM settings when creating a child account in the enterprise. This is an optional field.",
+				Optional:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"mfa": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "By default MFA will be enabled on a child account. To opt out, pass the traits object with the mfa field set to empty string. This is an optional field.",
+						},
+						"enterprise_iam_managed": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "The Enterprise IAM settings property will be turned off for a newly created child account by default. You can enable this property by passing 'true' in this boolean field. This is an optional field.",
+						},
+					},
+				},
 			},
 			"url": {
 				Type:        schema.TypeString,
@@ -166,6 +189,9 @@ func resourceIbmEnterpriseAccountCreate(context context.Context, d *schema.Resou
 		createAccountOptions.SetParent(d.Get("parent").(string))
 		createAccountOptions.SetName(d.Get("name").(string))
 		createAccountOptions.SetOwnerIamID(d.Get("owner_iam_id").(string))
+		if _, ok := d.GetOk("Traits"); ok {
+			createAccountOptions.SetTraits(d.Get("traits").(*enterprisemanagementv1.CreateAccountRequestTraits))
+		}
 		createAccountResponse, response, err := enterpriseManagementClient.CreateAccountWithContext(context, createAccountOptions)
 		if err != nil {
 			log.Printf("[DEBUG] CreateAccountWithContext failed %s\n%s", err, response)
@@ -301,7 +327,20 @@ func resourceIbmEnterpriseAccountUpdate(context context.Context, d *schema.Resou
 
 func resourceIbmEnterpriseAccountDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
-	d.SetId("")
+	enterpriseManagementClient, err := meta.(conns.ClientSession).EnterpriseManagementV1()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	deleteAccountOptions := &enterprisemanagementv1.DeleteAccountOptions{}
+
+	deleteAccountOptions.SetAccountID(d.Id())
+
+	response, err := enterpriseManagementClient.DeleteAccountWithContext(context, deleteAccountOptions)
+	if err != nil {
+		log.Printf("[DEBUG] DeleteAccountWithContext failed %s\n%s", err, response)
+		return diag.FromErr(fmt.Errorf("DeleteAccountWithContext failed %s\n%s", err, response))
+	}
 
 	return nil
 }

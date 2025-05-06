@@ -38,7 +38,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudLocationsDisasterrecoveryGet gets the disaster recovery site details for the current location
+PcloudLocationsDisasterrecoveryGet gets the disaster recovery site details for the current location
 */
 func (a *Client) PcloudLocationsDisasterrecoveryGet(params *PcloudLocationsDisasterrecoveryGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudLocationsDisasterrecoveryGetOK, error) {
 	// TODO: Validate the params before sending
@@ -77,7 +77,7 @@ func (a *Client) PcloudLocationsDisasterrecoveryGet(params *PcloudLocationsDisas
 }
 
 /*
-  PcloudLocationsDisasterrecoveryGetall gets all disaster recovery locations supported by power virtual server
+PcloudLocationsDisasterrecoveryGetall gets all disaster recovery locations supported by power virtual server
 */
 func (a *Client) PcloudLocationsDisasterrecoveryGetall(params *PcloudLocationsDisasterrecoveryGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudLocationsDisasterrecoveryGetallOK, error) {
 	// TODO: Validate the params before sending

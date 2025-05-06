@@ -51,7 +51,8 @@ func NewServiceInstanceLastOperationGetOK() *ServiceInstanceLastOperationGetOK {
 	return &ServiceInstanceLastOperationGetOK{}
 }
 
-/* ServiceInstanceLastOperationGetOK describes a response with status code 200, with default header values.
+/*
+ServiceInstanceLastOperationGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -59,9 +60,39 @@ type ServiceInstanceLastOperationGetOK struct {
 	Payload *models.LastOperationResource
 }
 
+// IsSuccess returns true when this service instance last operation get o k response has a 2xx status code
+func (o *ServiceInstanceLastOperationGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service instance last operation get o k response has a 3xx status code
+func (o *ServiceInstanceLastOperationGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance last operation get o k response has a 4xx status code
+func (o *ServiceInstanceLastOperationGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service instance last operation get o k response has a 5xx status code
+func (o *ServiceInstanceLastOperationGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance last operation get o k response a status code equal to that given
+func (o *ServiceInstanceLastOperationGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceInstanceLastOperationGetOK) Error() string {
 	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceInstanceLastOperationGetOK) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceInstanceLastOperationGetOK) GetPayload() *models.LastOperationResource {
 	return o.Payload
 }
@@ -83,7 +114,8 @@ func NewServiceInstanceLastOperationGetBadRequest() *ServiceInstanceLastOperatio
 	return &ServiceInstanceLastOperationGetBadRequest{}
 }
 
-/* ServiceInstanceLastOperationGetBadRequest describes a response with status code 400, with default header values.
+/*
+ServiceInstanceLastOperationGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -91,9 +123,39 @@ type ServiceInstanceLastOperationGetBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service instance last operation get bad request response has a 2xx status code
+func (o *ServiceInstanceLastOperationGetBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance last operation get bad request response has a 3xx status code
+func (o *ServiceInstanceLastOperationGetBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance last operation get bad request response has a 4xx status code
+func (o *ServiceInstanceLastOperationGetBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance last operation get bad request response has a 5xx status code
+func (o *ServiceInstanceLastOperationGetBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance last operation get bad request response a status code equal to that given
+func (o *ServiceInstanceLastOperationGetBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *ServiceInstanceLastOperationGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *ServiceInstanceLastOperationGetBadRequest) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *ServiceInstanceLastOperationGetBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -115,7 +177,8 @@ func NewServiceInstanceLastOperationGetGone() *ServiceInstanceLastOperationGetGo
 	return &ServiceInstanceLastOperationGetGone{}
 }
 
-/* ServiceInstanceLastOperationGetGone describes a response with status code 410, with default header values.
+/*
+ServiceInstanceLastOperationGetGone describes a response with status code 410, with default header values.
 
 Gone
 */
@@ -123,9 +186,39 @@ type ServiceInstanceLastOperationGetGone struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service instance last operation get gone response has a 2xx status code
+func (o *ServiceInstanceLastOperationGetGone) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance last operation get gone response has a 3xx status code
+func (o *ServiceInstanceLastOperationGetGone) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance last operation get gone response has a 4xx status code
+func (o *ServiceInstanceLastOperationGetGone) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance last operation get gone response has a 5xx status code
+func (o *ServiceInstanceLastOperationGetGone) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance last operation get gone response a status code equal to that given
+func (o *ServiceInstanceLastOperationGetGone) IsCode(code int) bool {
+	return code == 410
+}
+
 func (o *ServiceInstanceLastOperationGetGone) Error() string {
 	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetGone  %+v", 410, o.Payload)
 }
+
+func (o *ServiceInstanceLastOperationGetGone) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetGone  %+v", 410, o.Payload)
+}
+
 func (o *ServiceInstanceLastOperationGetGone) GetPayload() *models.Error {
 	return o.Payload
 }

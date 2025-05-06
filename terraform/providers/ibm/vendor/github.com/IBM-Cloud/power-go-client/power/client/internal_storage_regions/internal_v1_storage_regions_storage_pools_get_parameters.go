@@ -52,10 +52,12 @@ func NewInternalV1StorageRegionsStoragePoolsGetParamsWithHTTPClient(client *http
 	}
 }
 
-/* InternalV1StorageRegionsStoragePoolsGetParams contains all the parameters to send to the API endpoint
-   for the internal v1 storage regions storage pools get operation.
+/*
+InternalV1StorageRegionsStoragePoolsGetParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the internal v1 storage regions storage pools get operation.
+
+	Typically these are written to a http.Request.
 */
 type InternalV1StorageRegionsStoragePoolsGetParams struct {
 

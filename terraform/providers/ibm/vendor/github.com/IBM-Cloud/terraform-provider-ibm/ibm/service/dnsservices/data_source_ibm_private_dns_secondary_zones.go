@@ -117,8 +117,8 @@ func dataSourceIBMDNSSecondaryZonesRead(context context.Context, d *schema.Resou
 		secondaryZone[pdnsSZZone] = *instance.Zone
 		secondaryZone[pdnsSZEnabled] = *instance.Enabled
 		secondaryZone[pdnsSZTransferFrom] = instance.TransferFrom
-		secondaryZone[pdnsSZCreatedOn] = *instance.CreatedOn
-		secondaryZone[pdnsSZModifiedOn] = *instance.ModifiedOn
+		secondaryZone[pdnsSZCreatedOn] = (*instance.CreatedOn).String()
+		secondaryZone[pdnsSZModifiedOn] = (*instance.ModifiedOn).String()
 
 		secondaryZones = append(secondaryZones, secondaryZone)
 	}

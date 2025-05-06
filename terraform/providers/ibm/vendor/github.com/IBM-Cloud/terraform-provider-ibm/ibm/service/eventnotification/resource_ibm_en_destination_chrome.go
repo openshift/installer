@@ -70,6 +70,11 @@ func ResourceIBMEnChromeDestination() *schema.Resource {
 										Optional:    true,
 										Description: "The website url",
 									},
+									"pre_prod": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: "The flag to enable destination as pre-prod or prod",
+									},
 								},
 							},
 						},
@@ -268,13 +273,17 @@ func resourceIBMEnChromeDestinationDelete(context context.Context, d *schema.Res
 }
 
 func ChromedestinationConfigMapToDestinationConfig(configParams map[string]interface{}) en.DestinationConfig {
-	params := new(en.DestinationConfigParams)
+	params := new(en.DestinationConfigOneOf)
 	if configParams["api_key"] != nil {
 		params.APIKey = core.StringPtr(configParams["api_key"].(string))
 	}
 
 	if configParams["website_url"] != nil {
 		params.WebsiteURL = core.StringPtr(configParams["website_url"].(string))
+	}
+
+	if configParams["pre_prod"] != nil {
+		params.PreProd = core.BoolPtr(configParams["pre_prod"].(bool))
 	}
 
 	destinationConfig := new(en.DestinationConfig)

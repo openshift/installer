@@ -65,6 +65,11 @@ func DataSourceIBMSatelliteClusterWorkerPool() *schema.Resource {
 				Set:         schema.HashString,
 				Description: "Host labels on the workers",
 			},
+			"operating_system": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The operating system of the hosts in the worker pool",
+			},
 			"resource_group_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -143,6 +148,7 @@ func dataSourceIBMSatelliteClusterWorkerPoolRead(d *schema.ResourceData, meta in
 	d.Set("worker_count", *workerPool.WorkerCount)
 	d.Set("worker_pool_labels", workerPool.Labels)
 	d.Set("host_labels", workerPool.HostLabels)
+	d.Set("operating_system", *workerPool.OperatingSystem)
 	d.Set("zones", zones)
 	d.Set("cluster", cluster)
 	d.Set("auto_scale_enabled", *workerPool.AutoscaleEnabled)

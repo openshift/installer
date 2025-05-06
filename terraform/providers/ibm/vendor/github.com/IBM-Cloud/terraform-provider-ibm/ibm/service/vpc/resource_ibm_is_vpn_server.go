@@ -12,6 +12,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -27,6 +28,10 @@ const (
 
 	isVPNServerStatusDeleting = "deleting"
 	isVPNServerStatusDeleted  = "deleted"
+
+	isVPNServerAccessTags    = "access_tags"
+	isVPNServerUserTagType   = "user"
+	isVPNServerAccessTagType = "access"
 )
 
 func ResourceIBMIsVPNServer() *schema.Resource {
@@ -42,6 +47,13 @@ func ResourceIBMIsVPNServer() *schema.Resource {
 			Update: schema.DefaultTimeout(10 * time.Minute),
 			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
+
+		CustomizeDiff: customdiff.All(
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceValidateAccessTags(diff, v)
+				}),
+		),
 
 		Schema: map[string]*schema.Schema{
 			"certificate_crn": &schema.Schema{
@@ -305,6 +317,15 @@ func ResourceIBMIsVPNServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+
+			isVPNServerAccessTags: {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_vpn_server", "accesstag")},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access management tags",
+			},
 		},
 	}
 }
@@ -356,7 +377,17 @@ func ResourceIBMIsVPNServerValidator() *validate.ResourceValidator {
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
 			Required:                   true,
-			AllowedValues:              "certificate , username"},
+			AllowedValues:              "certificate , username",
+		},
+		validate.ValidateSchema{
+			Identifier:                 "accesstag",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-]):([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-])$`,
+			MinValueLength:             1,
+			MaxValueLength:             128,
+		},
 	)
 
 	resourceValidator := validate.ResourceValidator{ResourceName: "ibm_is_vpn_server", Schema: validateSchema}
@@ -485,6 +516,15 @@ func resourceIBMIsVPNServerCreate(context context.Context, d *schema.ResourceDat
 	_, err = isWaitForVPNServerStable(context, sess, d, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] VPNServer failed %s\n", err))
+	}
+
+	if _, ok := d.GetOk(isVPNServerAccessTags); ok {
+		oldList, newList := d.GetChange(isVPNServerAccessTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *vpnServer.CRN, "", isVPNServerAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on create of resource vpc (%s) access tags: %s", d.Id(), err)
+		}
 	}
 
 	return resourceIBMIsVPNServerRead(context, d, meta)
@@ -673,6 +713,13 @@ func resourceIBMIsVPNServerRead(context context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting version: %s", err))
 	}
 
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *vpnServer.CRN, "", isVPNServerAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource vpn server (%s) access tags: %s", d.Id(), err)
+	}
+	d.Set(isVPNServerAccessTags, accesstags)
+
 	return nil
 }
 
@@ -828,7 +875,7 @@ func resourceIBMIsVPNServerUpdate(context context.Context, d *schema.ResourceDat
 
 	getVPNServerOptions := &vpcv1.GetVPNServerOptions{}
 	getVPNServerOptions.SetID(d.Id())
-	_, response, err := sess.GetVPNServerWithContext(context, getVPNServerOptions)
+	vpnServer, response, err := sess.GetVPNServerWithContext(context, getVPNServerOptions)
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
@@ -839,6 +886,14 @@ func resourceIBMIsVPNServerUpdate(context context.Context, d *schema.ResourceDat
 	}
 	eTag := response.Headers.Get("ETag") // Getting Etag from the response headers.
 
+	if d.HasChange(isVPNServerAccessTags) {
+		oldList, newList := d.GetChange(isVPNServerAccessTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *vpnServer.CRN, "", isVPNServerAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on update of resource vpn server (%s) access tags: %s", d.Id(), err)
+		}
+	}
 	// Upgrade or Downgrade of Subnet
 	if d.HasChange("subnets") {
 		var subnets []vpcv1.SubnetIdentityIntf

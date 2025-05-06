@@ -21,7 +21,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -332,7 +332,6 @@ func (service *BaseService) SetUserAgent(userAgentString string) {
 	service.UserAgent = userAgentString
 }
 
-//
 // Request invokes the specified HTTP request and returns the response.
 //
 // Parameters:
@@ -347,7 +346,6 @@ func (service *BaseService) SetUserAgent(userAgentString string) {
 // detailedResponse: a DetailedResponse instance containing the status code, headers, etc.
 //
 // err: a non-nil error object if an error occurred
-//
 func (service *BaseService) Request(req *http.Request, result interface{}) (detailedResponse *DetailedResponse, err error) {
 	// Add default headers.
 	if service.DefaultHeaders != nil {
@@ -389,7 +387,7 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 
 	// If debug is enabled, then dump the request.
 	if GetLogger().IsLogLevelEnabled(LevelDebug) {
-		buf, dumpErr := httputil.DumpRequestOut(req, req.Body != nil)
+		buf, dumpErr := httputil.DumpRequestOut(req, !IsNil(req.Body))
 		if dumpErr == nil {
 			GetLogger().Debug("Request:\n%s\n", RedactSecrets(string(buf)))
 		} else {
@@ -409,7 +407,7 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 
 	// If debug is enabled, then dump the response.
 	if GetLogger().IsLogLevelEnabled(LevelDebug) {
-		buf, dumpErr := httputil.DumpResponse(httpResponse, httpResponse.Body != nil)
+		buf, dumpErr := httputil.DumpResponse(httpResponse, !IsNil(httpResponse.Body))
 		if err == nil {
 			GetLogger().Debug("Response:\n%s\n", RedactSecrets(string(buf)))
 		} else {
@@ -432,11 +430,11 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 		var responseBody []byte
 
 		// First, read the response body into a byte array.
-		if httpResponse.Body != nil {
+		if !IsNil(httpResponse.Body) {
 			var readErr error
 
-			defer httpResponse.Body.Close()
-			responseBody, readErr = ioutil.ReadAll(httpResponse.Body)
+			defer httpResponse.Body.Close() // #nosec G307
+			responseBody, readErr = io.ReadAll(httpResponse.Body)
 			if readErr != nil {
 				err = fmt.Errorf(ERRORMSG_READ_RESPONSE_BODY, readErr.Error())
 				return
@@ -482,8 +480,8 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 		} else {
 
 			// First, read the response body into a byte array.
-			defer httpResponse.Body.Close()
-			responseBody, readErr := ioutil.ReadAll(httpResponse.Body)
+			defer httpResponse.Body.Close() // #nosec G307
+			responseBody, readErr := io.ReadAll(httpResponse.Body)
 			if readErr != nil {
 				err = fmt.Errorf(ERRORMSG_READ_RESPONSE_BODY, readErr.Error())
 				return
@@ -535,6 +533,10 @@ func (service *BaseService) Request(req *http.Request, result interface{}) (deta
 				return
 			}
 		}
+	} else if !IsNil(httpResponse.Body) {
+		// We weren't expecting a response, but we have a reponse body,
+		// so we need to close it now since we're not going to consume it.
+		_ = httpResponse.Body.Close()
 	}
 
 	return
@@ -554,15 +556,15 @@ type Error struct {
 
 // decodeAsMap: Decode the specified JSON byte-stream into a map (akin to a generic JSON object).
 // Notes:
-// 1) This function will return the map (result of decoding the byte-stream) as well as the raw
-// byte buffer.  We return the byte buffer in addition to the decoded map so that the caller can
-// re-use (if necessary) the stream of bytes after we've consumed them via the JSON decode step.
-// 2) The primary return value of this function will be:
-//    a) an instance of map[string]interface{} if the specified byte-stream was successfully
-//       decoded as JSON.
-//    b) the string form of the byte-stream if the byte-stream could not be successfully
-//       decoded as JSON.
-// 3) This function will close the io.ReadCloser before returning.
+//  1. This function will return the map (result of decoding the byte-stream) as well as the raw
+//     byte buffer.  We return the byte buffer in addition to the decoded map so that the caller can
+//     re-use (if necessary) the stream of bytes after we've consumed them via the JSON decode step.
+//  2. The primary return value of this function will be:
+//     a) an instance of map[string]interface{} if the specified byte-stream was successfully
+//     decoded as JSON.
+//     b) the string form of the byte-stream if the byte-stream could not be successfully
+//     decoded as JSON.
+//  3. This function will close the io.ReadCloser before returning.
 func decodeAsMap(byteBuffer []byte) (result map[string]interface{}, err error) {
 	err = json.NewDecoder(bytes.NewReader(byteBuffer)).Decode(&result)
 	return
@@ -634,21 +636,21 @@ func isRetryableClient(client *http.Client) bool {
 // - Result: "normal" request processing without any automatic retries being performed
 //
 // In a scenario where retries ARE enabled:
-// - BaseService.Client will be a "shim" http.Client instance
-// - BaseService.Client.Transport will be an instance of retryablehttp.RoundTripper
-// - BaseService.Client.Do() calls retryablehttp.RoundTripper.RoundTrip() (via the shim)
-//   to invoke the request
-// - The retryablehttp.RoundTripper instance is configured with the retryablehttp.Client
-//   instance which holds the various retry config properties (max retries, max interval, etc.)
-// - The retryablehttp.RoundTripper.RoundTrip() method triggers the retry logic in the retryablehttp.Client
-// - The retryablehttp.Client instance's HTTPClient field holds a "normal" http.Client instance,
-//   which is used to invoke individual requests within the retry loop.
-// - To summarize, there are three client instances used for request processing in this scenario:
-//   - The "shim" http.Client instance (BaseService.Client)
-//   - The retryablehttp.Client instance that implements the retry logic
-//   - The "normal" http.Client instance embedded in the retryablehttp.Client which is used to invoke
+//   - BaseService.Client will be a "shim" http.Client instance
+//   - BaseService.Client.Transport will be an instance of retryablehttp.RoundTripper
+//   - BaseService.Client.Do() calls retryablehttp.RoundTripper.RoundTrip() (via the shim)
+//     to invoke the request
+//   - The retryablehttp.RoundTripper instance is configured with the retryablehttp.Client
+//     instance which holds the various retry config properties (max retries, max interval, etc.)
+//   - The retryablehttp.RoundTripper.RoundTrip() method triggers the retry logic in the retryablehttp.Client
+//   - The retryablehttp.Client instance's HTTPClient field holds a "normal" http.Client instance,
+//     which is used to invoke individual requests within the retry loop.
+//   - To summarize, there are three client instances used for request processing in this scenario:
+//     1. The "shim" http.Client instance (BaseService.Client)
+//     2. The retryablehttp.Client instance that implements the retry logic
+//     3. The "normal" http.Client instance embedded in the retryablehttp.Client which is used to invoke
 //     individual requests within the retry logic
-// - Result: Each request is invoked such that the automatic retry logic is employed
+//   - Result: Each request is invoked such that the automatic retry logic is employed
 func (service *BaseService) EnableRetries(maxRetries int, maxRetryInterval time.Duration) {
 	if isRetryableClient(service.Client) {
 		// If retries are already enabled, then we just need to adjust

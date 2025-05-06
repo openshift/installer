@@ -20,6 +20,7 @@ const (
 	isDefaultRoutingTableSubnetsList    = "subnets"
 	isDefaultRTVpcID                    = "vpc"
 	isDefaultRTDirectLinkIngress        = "route_direct_link_ingress"
+	isDefaultRTInternetIngress          = "route_internet_ingress"
 	isDefaultRTTransitGatewayIngress    = "route_transit_gateway_ingress"
 	isDefaultRTVPCZoneIngress           = "route_vpc_zone_ingress"
 	isDefaultRTDefault                  = "is_default"
@@ -68,6 +69,11 @@ func DataSourceIBMISVPCDefaultRoutingTable() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "If set to true, this routing table will be used to route traffic that originates from Direct Link to this VPC.",
+			},
+			isDefaultRTInternetIngress: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "If set to true, this routing table will be used to route traffic that originates from the internet. For this to succeed, the VPC must not already have a routing table with this property set to true.",
 			},
 			isDefaultRTTransitGatewayIngress: {
 				Type:        schema.TypeBool,
@@ -149,6 +155,7 @@ func dataSourceIBMISVPCDefaultRoutingTableGet(d *schema.ResourceData, meta inter
 	d.Set(isDefaultRoutingTableCreatedAt, createdAt.String())
 	d.Set(isDefaultRoutingTableLifecycleState, *result.LifecycleState)
 	d.Set(isDefaultRTDirectLinkIngress, *result.RouteDirectLinkIngress)
+	d.Set(isDefaultRTInternetIngress, *result.RouteInternetIngress)
 	d.Set(isDefaultRTTransitGatewayIngress, *result.RouteTransitGatewayIngress)
 	d.Set(isDefaultRTVPCZoneIngress, *result.RouteVPCZoneIngress)
 	d.Set(isDefaultRTDefault, *result.IsDefault)

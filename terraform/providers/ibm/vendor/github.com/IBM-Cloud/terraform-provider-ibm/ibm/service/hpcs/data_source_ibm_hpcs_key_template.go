@@ -149,6 +149,18 @@ func DataSourceIbmKeyTemplate() *schema.Resource {
 							Computed:    true,
 							Description: "Type of keystore.",
 						},
+						"google_key_protection_level": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"google_key_purpose": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"google_kms_algorithm": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -245,7 +257,8 @@ func DataSourceIbmKeyTemplateRead(context context.Context, d *schema.ResourceDat
 	keystores := []map[string]interface{}{}
 	if template.Keystores != nil {
 		for _, modelItem := range template.Keystores {
-			modelMap, err := DataSourceIbmKeyTemplateKeystoresPropertiesToMap(&modelItem)
+			// TODO: Worried about this line
+			modelMap, err := dataSourceIbmHpcsKeyTemplateKeystoresPropertiesCreateToMap(modelItem)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -297,7 +310,83 @@ func DataSourceIbmKeyTemplateKeyPropertiesToMap(model *ukov4.KeyProperties) (map
 	return modelMap, nil
 }
 
-func DataSourceIbmKeyTemplateKeystoresPropertiesToMap(model *ukov4.KeystoresProperties) (map[string]interface{}, error) {
+// func DataSourceIbmKeyTemplateKeystoresPropertiesToMap(model *ukov4.KeystoresProperties) (map[string]interface{}, error) {
+func dataSourceIbmHpcsKeyTemplateKeystoresPropertiesCreateToMap(model ukov4.KeystoresPropertiesCreateIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*ukov4.KeystoresPropertiesCreateGoogleKms); ok {
+		return dataSourceIbmHpcsKeyTemplateKeystoresPropertiesCreateGoogleKmsToMap(model.(*ukov4.KeystoresPropertiesCreateGoogleKms))
+	} else if _, ok := model.(*ukov4.KeystoresPropertiesCreateAwsKms); ok {
+		return dataSourceIbmHpcsKeyTemplateKeystoresPropertiesCreateAwsKmsToMap(model.(*ukov4.KeystoresPropertiesCreateAwsKms))
+	} else if _, ok := model.(*ukov4.KeystoresPropertiesCreateIbmCloudKms); ok {
+		return dataSourceIbmHpcsKeyTemplateKeystoresPropertiesCreateIbmCloudKmsToMap(model.(*ukov4.KeystoresPropertiesCreateIbmCloudKms))
+	} else if _, ok := model.(*ukov4.KeystoresPropertiesCreateAzure); ok {
+		return dataSourceIbmHpcsKeyTemplateKeystoresPropertiesCreateAzureToMap(model.(*ukov4.KeystoresPropertiesCreateAzure))
+	} else if _, ok := model.(*ukov4.KeystoresPropertiesCreate); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*ukov4.KeystoresPropertiesCreate)
+		if model.Group != nil {
+			modelMap["group"] = *model.Group
+		}
+		if model.Type != nil {
+			modelMap["type"] = *model.Type
+		}
+		if model.GoogleKeyProtectionLevel != nil {
+			modelMap["google_key_protection_level"] = *model.GoogleKeyProtectionLevel
+		}
+		if model.GoogleKeyPurpose != nil {
+			modelMap["google_key_purpose"] = *model.GoogleKeyPurpose
+		}
+		if model.GoogleKmsAlgorithm != nil {
+			modelMap["google_kms_algorithm"] = *model.GoogleKmsAlgorithm
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized ukov4.KeystoresPropertiesCreateIntf subtype encountered")
+	}
+}
+
+func dataSourceIbmHpcsKeyTemplateKeystoresPropertiesCreateGoogleKmsToMap(model *ukov4.KeystoresPropertiesCreateGoogleKms) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Group != nil {
+		modelMap["group"] = *model.Group
+	}
+	if model.Type != nil {
+		modelMap["type"] = *model.Type
+	}
+	if model.GoogleKeyProtectionLevel != nil {
+		modelMap["google_key_protection_level"] = *model.GoogleKeyProtectionLevel
+	}
+	if model.GoogleKeyPurpose != nil {
+		modelMap["google_key_purpose"] = *model.GoogleKeyPurpose
+	}
+	if model.GoogleKmsAlgorithm != nil {
+		modelMap["google_kms_algorithm"] = *model.GoogleKmsAlgorithm
+	}
+	return modelMap, nil
+}
+
+func dataSourceIbmHpcsKeyTemplateKeystoresPropertiesCreateAwsKmsToMap(model *ukov4.KeystoresPropertiesCreateAwsKms) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Group != nil {
+		modelMap["group"] = *model.Group
+	}
+	if model.Type != nil {
+		modelMap["type"] = *model.Type
+	}
+	return modelMap, nil
+}
+
+func dataSourceIbmHpcsKeyTemplateKeystoresPropertiesCreateIbmCloudKmsToMap(model *ukov4.KeystoresPropertiesCreateIbmCloudKms) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Group != nil {
+		modelMap["group"] = *model.Group
+	}
+	if model.Type != nil {
+		modelMap["type"] = *model.Type
+	}
+	return modelMap, nil
+}
+
+func dataSourceIbmHpcsKeyTemplateKeystoresPropertiesCreateAzureToMap(model *ukov4.KeystoresPropertiesCreateAzure) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.Group != nil {
 		modelMap["group"] = *model.Group

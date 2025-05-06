@@ -68,6 +68,17 @@ const CreateVolumeOperationFailed = "failed to perform the Create volume Operati
 const CreateVolumeV2OperationFailed = "failed to perform the Create volume Operation V2 for volume %s with error %w"
 const AttachVolumeOperationFailed = "failed to perform the Attach volume Operation for volume %s with error %w"
 const DetachVolumeOperationFailed = "failed to perform the Detach volume Operation for volume %s with error %w"
+const GetVolumeRemoteCopyRelationshipsOperationFailed = "failed to Get remote copy relationships of a volume %s for the cloud instance %s with error %w"
+const GetVolumeFlashCopyMappingOperationFailed = "failed to Get flash copy mapping of a volume %s for the cloud instance %s with error %w"
+
+// start of volume onboarding
+const GetVolumeOnboardingOperationFailed = "failed to perform the Get Volume Onboarding Operation for volume-onboarding ID:%s for the cloud instance %s with error %w"
+const GetAllVolumeOnboardingsOperationFailed = "failed to perform the Get All Volume Onboardings Operation for the cloud instance %s with error %w"
+const CreateVolumeOnboardingsOperationFailed = "failed to perform the Create Volume Onboarding Operation for the cloud instance %s with error %w"
+
+// start of disaster recovery
+const GetDisasterRecoveryLocationOperationFailed = "failed to perform the Get Disaster Recovery Location Operation for the cloud instance %s with error %w"
+const GetAllDisasterRecoveryLocationOperationFailed = "failed to perform the Get All Disaster Recovery Location Operation of power virtual server with error %w"
 
 // start of Clone Messages
 const StartCloneOperationFailed = "failed to start the clone operation for volumes-clone %s with error %w"
@@ -85,6 +96,28 @@ const DeleteCloudInstanceOperationFailed = "failed to delete the Cloud instance 
 const GetPIKeyOperationFailed = "failed to Get PI Key %s with error %w"
 const CreatePIKeyOperationFailed = "failed to Create PI Key with error %w"
 const DeletePIKeyOperationFailed = "failed to Delete PI Key %s with error %w"
+
+// start of Volume Groups
+const GetVolumeGroupOperationFailed = "failed to Get volume-group %s for the cloud instance %s with error %w"
+const GetVolumeGroupDetailsOperationFailed = "failed to Get volume-group %s details for the cloud instance %s with error %w"
+const CreateVolumeGroupOperationFailed = "failed to perform the Create volume-group Operation for the cloud instance %s with error %w"
+const DeleteVolumeGroupOperationFailed = "failed to perform Delete volume-group Operation for volume-group %s with error %w"
+const GetLiveVolumeGroupDetailsOperationFailed = "failed to Get live details of volume-group %s for the cloud instance %s with error %w"
+const VolumeGroupActionOperationFailed = "failed to perform action on volume-group %s for the cloud instance %s with error %w"
+const GetVolumeGroupRemoteCopyRelationshipsOperationFailed = "failed to Get remote copy relationships of the volumes belonging to volume group %s for the cloud instance %s with error %w"
+
+// start of Shared processor pool Messages
+const GetSharedProcessorPoolOperationFailed = "failed to perform Get Shared Processor Pool Operation for pool %s with error %w"
+const CreateSharedProcessorPoolOperationFailed = "failed to perform Create Shared Processor Pool Operation for cloud instance %s with error  %w"
+const DeleteSharedProcessorPoolOperationFailed = "failed to perform Delete Shared Processor Pool Operation for pool %s with error %w"
+const UpdateSharedProcessorPoolOperationFailed = "failed to perform Update Shared Processor Pool Operation for pool %s with error %w"
+
+// start of Shared processor pool placement group Messages
+const GetSPPPlacementGroupOperationFailed = "failed to perform Get Shared Processor Pool Placement Group Operation for placement group %s with error %w"
+const CreateSPPPlacementGroupOperationFailed = "failed to perform Create Shared Processor Pool Placement Group Operation for cloud instance %s with error  %w"
+const DeleteSPPPlacementGroupOperationFailed = "failed to perform Delete Shared Processor Pool Placement Group Operation for placement group %s with error %w"
+const AddMemberSPPPlacementGroupOperationFailed = "failed to perform Add Member Operation for pool %s and shared processor pool placement group %s with error %w"
+const DeleteMemberSPPPlacementGroupOperationFailed = "failed to perform Delete Member Operation for pool %s and shared processor pool placement group %s with error %w"
 
 // ErrorTarget ...
 type ErrorTarget struct {

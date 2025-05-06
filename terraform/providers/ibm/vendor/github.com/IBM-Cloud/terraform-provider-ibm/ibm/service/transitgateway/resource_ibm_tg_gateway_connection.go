@@ -8,11 +8,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/networking-go-sdk/transitgatewayapisv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
 const (
@@ -73,7 +74,7 @@ func ResourceIBMTransitGatewayConnection() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_tg_connection", tgNetworkType),
-				Description:  "Defines what type of network is connected via this connection. Allowable values (classic,directlink,vpc,gre_tunnel)",
+				Description:  "Defines what type of network is connected via this connection. Allowable values (classic,directlink,vpc,gre_tunnel,unbound_gre_tunnel,power_virtual_server)",
 			},
 			tgName: {
 				Type:         schema.TypeString,
@@ -87,14 +88,14 @@ func ResourceIBMTransitGatewayConnection() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
-				Description: "The ID of the network being connected via this connection. This field is required for some types, such as 'vpc' or 'directlink'. The value of this is the CRN of the VPC or direct link gateway to be connected. This field is required to be unspecified for network type 'classic'.",
+				Description: "The ID of the network being connected via this connection. This field is required for some types, such as 'vpc' or 'directlink' or 'power_virtual_server'. The value of this is the CRN of the VPC or direct link or power_virtual_server gateway to be connected. This field is required to be unspecified for network type 'classic', 'gre_tunnel', and 'unbound_gre_tunnel'.",
 			},
 			tgNetworkAccountID: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
-				Description: "The ID of the account which owns the network that is being connected. Generally only used if the network is in a different account than the gateway.",
+				Description: "The ID of the account which owns the network that is being connected. Generally only used if the network is in a different account than the gateway. This field is required for type 'unbound_gre_tunnel' when the associated_network_type is 'classic' and the GRE tunnel is in a different account than the gateway.",
 			},
 			tgBaseConnectionId: {
 				Type:        schema.TypeString,
@@ -103,47 +104,53 @@ func ResourceIBMTransitGatewayConnection() *schema.Resource {
 				ForceNew:    true,
 				Description: "The ID of a network_type 'classic' connection a tunnel is configured over. This field only applies to network type 'gre_tunnel' connections.",
 			},
+			tgBaseNetworkType: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "The type of network the unbound gre tunnel is targeting. This field is required for network type 'unbound_gre_tunnel'.",
+			},
 			tgLocalGatewayIp: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
-				Description: "The local gateway IP address. This field only applies to network type 'gre_tunnel' connections.",
+				Description: "The local gateway IP address. This field only applies to network type 'gre_tunnel' and 'unbound_gre_tunnel' connections.",
 			},
 			tgLocalTunnelIp: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
-				Description: "The local tunnel IP address. This field only applies to network type 'gre_tunnel' connections.",
+				Description: "The local tunnel IP address. This field only applies to network type 'gre_tunnel' and 'unbound_gre_tunnel' connections.",
 			},
 			tgRemoteBgpAsn: {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
-				Description: "The remote network BGP ASN. This field only applies to network type 'gre_tunnel' connections.",
+				Description: "The remote network BGP ASN. This field only applies to network type 'gre_tunnel' and 'unbound_gre_tunnel' connections.",
 			},
 			tgRemoteGatewayIp: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
-				Description: "The remote gateway IP address. This field only applies to network type 'gre_tunnel' connections.",
+				Description: "The remote gateway IP address. This field only applies to network type 'gre_tunnel' and 'unbound_gre_tunnel' connections.",
 			},
 			tgRemoteTunnelIp: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
-				Description: "The remote tunnel IP address. This field only applies to network type 'gre_tunnel' connections.",
+				Description: "The remote tunnel IP address. This field only applies to network type 'gre_tunnel' and 'unbound_gre_tunnel' connections.",
 			},
 			tgZone: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
-				Description: "Location of GRE tunnel. This field only applies to network type 'gre_tunnel' connections.",
+				Description: "Location of GRE tunnel. This field only applies to network type 'gre_tunnel' and 'unbound_gre_tunnel' connections.",
 			},
 			tgCreatedAt: {
 				Type:        schema.TypeString,
@@ -176,7 +183,7 @@ func ResourceIBMTransitGatewayConnection() *schema.Resource {
 func ResourceIBMTransitGatewayConnectionValidator() *validate.ResourceValidator {
 
 	validateSchema := make([]validate.ValidateSchema, 0)
-	networkType := "classic, directlink, vpc, gre_tunnel"
+	networkType := "classic, directlink, vpc, gre_tunnel, unbound_gre_tunnel, power_virtual_server"
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
 			Identifier:                 tgNetworkType,
@@ -228,6 +235,10 @@ func resourceIBMTransitGatewayConnectionCreate(d *schema.ResourceData, meta inte
 		baseConnectionId := d.Get(tgBaseConnectionId).(string)
 		createTransitGatewayConnectionOptions.SetBaseConnectionID(baseConnectionId)
 	}
+	if _, ok := d.GetOk(tgBaseNetworkType); ok {
+		baseNetworkType := d.Get(tgBaseNetworkType).(string)
+		createTransitGatewayConnectionOptions.SetBaseNetworkType(baseNetworkType)
+	}
 	if _, ok := d.GetOk(tgLocalGatewayIp); ok {
 		localGatewayIp := d.Get(tgLocalGatewayIp).(string)
 		createTransitGatewayConnectionOptions.SetLocalGatewayIp(localGatewayIp)
@@ -237,7 +248,7 @@ func resourceIBMTransitGatewayConnectionCreate(d *schema.ResourceData, meta inte
 		createTransitGatewayConnectionOptions.SetLocalTunnelIp(localTunnelIp)
 	}
 	if _, ok := d.GetOk(tgRemoteBgpAsn); ok {
-		remoteBgpAsn := d.Get(tgRemoteBgpAsn).(string)
+		remoteBgpAsn := int64(d.Get(tgRemoteBgpAsn).(int))
 		createTransitGatewayConnectionOptions.SetRemoteBgpAsn(remoteBgpAsn)
 	}
 	if _, ok := d.GetOk(tgRemoteGatewayIp); ok {

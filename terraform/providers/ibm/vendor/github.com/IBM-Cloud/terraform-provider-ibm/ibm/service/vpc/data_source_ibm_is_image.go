@@ -5,10 +5,21 @@ package vpc
 
 import (
 	"fmt"
+	"log"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+const (
+	isImageCatalogOffering         = "catalog_offering"
+	isImageCatalogOfferingManaged  = "managed"
+	isImageCatalogOfferingVersion  = "version"
+	isImageCatalogOfferingCrn      = "crn"
+	isImageCatalogOfferingDeleted  = "deleted"
+	isImageCatalogOfferingMoreInfo = "more_info"
 )
 
 func DataSourceIBMISImage() *schema.Resource {
@@ -79,6 +90,69 @@ func DataSourceIBMISImage() *schema.Resource {
 				Computed:    true,
 				Description: "Source volume id of the image",
 			},
+			isImageCreatedAt: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The date and time that the image was created",
+			},
+			isImageDeprecationAt: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The deprecation date and time (UTC) for this image. If absent, no deprecation date and time has been set.",
+			},
+			isImageObsolescenceAt: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The obsolescence date and time (UTC) for this image. If absent, no obsolescence date and time has been set.",
+			},
+			isImageCatalogOffering: {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isImageCatalogOfferingManaged: {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Indicates whether this image is managed as part of a catalog offering. A managed image can be provisioned using its catalog offering CRN or catalog offering version CRN.",
+						},
+						isImageCatalogOfferingVersion: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The catalog offering version associated with this image.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									// isImageCatalogOfferingDeleted: {
+									// 	Type:        schema.TypeList,
+									// 	Computed:    true,
+									// 	Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+									// 	Elem: &schema.Resource{
+									// 		Schema: map[string]*schema.Schema{
+									// 			isImageCatalogOfferingMoreInfo: {
+									// 				Type:        schema.TypeString,
+									// 				Computed:    true,
+									// 				Description: "Link to documentation about deleted resources.",
+									// 			},
+									// 		},
+									// 	},
+									// },
+									isImageCatalogOfferingCrn: {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this version of the IBM Cloud catalog offering.",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			isImageAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access tags",
+			},
 		},
 	}
 }
@@ -134,6 +208,12 @@ func imageGetByName(d *schema.ResourceData, meta interface{}, name, visibility s
 		fmt.Printf("[WARN] Given image %s is deprecated and soon will be obsolete.", name)
 	}
 	d.Set("name", *image.Name)
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *image.CRN, "", isImageAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource image (%s) access tags: %s", d.Id(), err)
+	}
+	d.Set(isImageAccessTags, accesstags)
 	d.Set("visibility", *image.Visibility)
 	d.Set("os", *image.OperatingSystem.Name)
 	d.Set("architecture", *image.OperatingSystem.Architecture)
@@ -149,6 +229,21 @@ func imageGetByName(d *schema.ResourceData, meta interface{}, name, visibility s
 	}
 	if image.SourceVolume != nil {
 		d.Set("source_volume", *image.SourceVolume.ID)
+	}
+	if image.CreatedAt != nil {
+		d.Set(isImageCreatedAt, image.CreatedAt.String())
+	}
+	if image.DeprecationAt != nil {
+		d.Set(isImageDeprecationAt, image.DeprecationAt.String())
+	}
+	if image.ObsolescenceAt != nil {
+		d.Set(isImageObsolescenceAt, image.ObsolescenceAt.String())
+	}
+	if image.CatalogOffering != nil {
+		catalogOfferingList := []map[string]interface{}{}
+		catalogOfferingMap := dataSourceImageCollectionCatalogOfferingToMap(*image.CatalogOffering)
+		catalogOfferingList = append(catalogOfferingList, catalogOfferingMap)
+		d.Set(isImageCatalogOffering, catalogOfferingList)
 	}
 	return nil
 
@@ -193,5 +288,35 @@ func imageGetById(d *schema.ResourceData, meta interface{}, identifier string) e
 	if image.SourceVolume != nil {
 		d.Set("source_volume", *image.SourceVolume.ID)
 	}
+	if image.CatalogOffering != nil {
+		catalogOfferingList := []map[string]interface{}{}
+		catalogOfferingMap := dataSourceImageCollectionCatalogOfferingToMap(*image.CatalogOffering)
+		catalogOfferingList = append(catalogOfferingList, catalogOfferingMap)
+		d.Set(isImageCatalogOffering, catalogOfferingList)
+	}
 	return nil
+}
+
+func dataSourceImageCollectionCatalogOfferingToMap(imageCatalogOfferingItem vpcv1.ImageCatalogOffering) (imageCatalogOfferingMap map[string]interface{}) {
+	imageCatalogOfferingMap = map[string]interface{}{}
+	if imageCatalogOfferingItem.Managed != nil {
+		imageCatalogOfferingMap[isImageCatalogOfferingManaged] = imageCatalogOfferingItem.Managed
+	}
+	if imageCatalogOfferingItem.Version != nil {
+		imageCatalogOfferingVersionList := []map[string]interface{}{}
+		imageCatalogOfferingVersionMap := map[string]interface{}{}
+		imageCatalogOfferingVersionMap[isImageCatalogOfferingCrn] = imageCatalogOfferingItem.Version.CRN
+
+		// if imageCatalogOfferingItem.Version.Deleted != nil {
+		// 	imageCatalogOfferingVersionDeletedList := []map[string]interface{}{}
+		// 	imageCatalogOfferingVersionDeletedMap := map[string]interface{}{}
+		// 	imageCatalogOfferingVersionDeletedMap[isImageCatalogOfferingMoreInfo] = imageCatalogOfferingItem.Version.Deleted.MoreInfo
+		// 	imageCatalogOfferingVersionDeletedList = append(imageCatalogOfferingVersionDeletedList, imageCatalogOfferingVersionDeletedMap)
+		// 	imageCatalogOfferingVersionMap[isImageCatalogOfferingDeleted] = imageCatalogOfferingVersionDeletedList
+		// }
+		imageCatalogOfferingVersionList = append(imageCatalogOfferingVersionList, imageCatalogOfferingVersionMap)
+		imageCatalogOfferingMap[isImageCatalogOfferingVersion] = imageCatalogOfferingVersionList
+	}
+
+	return imageCatalogOfferingMap
 }

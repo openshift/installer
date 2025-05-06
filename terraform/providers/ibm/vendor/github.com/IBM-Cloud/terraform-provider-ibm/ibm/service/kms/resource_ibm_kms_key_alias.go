@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	kp "github.com/IBM/keyprotect-go-client"
-	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -60,37 +58,11 @@ func ResourceIBMKmskeyAlias() *schema.Resource {
 }
 
 func resourceIBMKmsKeyAliasCreate(d *schema.ResourceData, meta interface{}) error {
-	kpAPI, err := meta.(conns.ClientSession).KeyManagementAPI()
+	instanceID := getInstanceIDFromCRN(d.Get("instance_id").(string))
+	kpAPI, _, err := populateKPClient(d, meta, instanceID)
 	if err != nil {
 		return err
 	}
-
-	instanceID := d.Get("instance_id").(string)
-	CrnInstanceID := strings.Split(instanceID, ":")
-	if len(CrnInstanceID) > 3 {
-		instanceID = CrnInstanceID[len(CrnInstanceID)-3]
-	}
-	endpointType := d.Get("endpoint_type").(string)
-
-	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
-	if err != nil {
-		return err
-	}
-	resourceInstanceGet := rc.GetResourceInstanceOptions{
-		ID: &instanceID,
-	}
-
-	instanceData, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
-	if err != nil || instanceData == nil {
-		return fmt.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
-	}
-	extensions := instanceData.Extensions
-	URL, err := KmsEndpointURL(kpAPI, endpointType, extensions)
-	if err != nil {
-		return err
-	}
-	kpAPI.URL = URL
-	kpAPI.Config.InstanceID = instanceID
 
 	aliasName := d.Get("alias").(string)
 	var id string
@@ -115,39 +87,15 @@ func resourceIBMKmsKeyAliasCreate(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceIBMKmsKeyAliasRead(d *schema.ResourceData, meta interface{}) error {
-	kpAPI, err := meta.(conns.ClientSession).KeyManagementAPI()
-	if err != nil {
-		return err
-	}
 	id := strings.Split(d.Id(), ":alias:")
 	if len(id) < 2 {
 		return fmt.Errorf("[ERROR] Incorrect ID %s: Id should be a combination of keyAlias:alias:keyCRN", d.Id())
 	}
-	crn := id[1]
-	crnData := strings.Split(crn, ":")
-	endpointType := d.Get("endpoint_type").(string)
-	instanceID := crnData[len(crnData)-3]
-	keyid := crnData[len(crnData)-1]
-
-	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
+	_, instanceID, keyid := getInstanceAndKeyDataFromCRN(id[1])
+	kpAPI, _, err := populateKPClient(d, meta, instanceID)
 	if err != nil {
 		return err
 	}
-	resourceInstanceGet := rc.GetResourceInstanceOptions{
-		ID: &instanceID,
-	}
-
-	instanceData, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
-	if err != nil || instanceData == nil {
-		return fmt.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
-	}
-	extensions := instanceData.Extensions
-	URL, err := KmsEndpointURL(kpAPI, endpointType, extensions)
-	if err != nil {
-		return err
-	}
-	kpAPI.URL = URL
-	kpAPI.Config.InstanceID = instanceID
 	key, err := kpAPI.GetKey(context.Background(), keyid)
 	if err != nil {
 		kpError := err.(*kp.Error)
@@ -173,36 +121,12 @@ func resourceIBMKmsKeyAliasRead(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourceIBMKmsKeyAliasDelete(d *schema.ResourceData, meta interface{}) error {
-	kpAPI, err := meta.(conns.ClientSession).KeyManagementAPI()
-	if err != nil {
-		return err
-	}
 	id := strings.Split(d.Id(), ":alias:")
-	crn := id[1]
-	crnData := strings.Split(crn, ":")
-	endpointType := d.Get("endpoint_type").(string)
-	instanceID := crnData[len(crnData)-3]
-	keyid := crnData[len(crnData)-1]
-
-	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
+	_, instanceID, keyid := getInstanceAndKeyDataFromCRN(id[1])
+	kpAPI, _, err := populateKPClient(d, meta, instanceID)
 	if err != nil {
 		return err
 	}
-	resourceInstanceGet := rc.GetResourceInstanceOptions{
-		ID: &instanceID,
-	}
-
-	instanceData, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
-	if err != nil || instanceData == nil {
-		return fmt.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
-	}
-	extensions := instanceData.Extensions
-	URL, err := KmsEndpointURL(kpAPI, endpointType, extensions)
-	if err != nil {
-		return err
-	}
-	kpAPI.URL = URL
-	kpAPI.Config.InstanceID = instanceID
 	err1 := kpAPI.DeleteKeyAlias(context.Background(), id[0], keyid)
 	if err1 != nil {
 		kpError := err1.(*kp.Error)

@@ -815,8 +815,12 @@ func resourceIbmSatelliteEndpointEndpointPerformanceConnectorsItemToMap(endpoint
 
 	endpointPerformanceConnectorsItemMap["connector"] = endpointPerformanceConnectorsItem.Connector
 	endpointPerformanceConnectorsItemMap["connections"] = flex.IntValue(endpointPerformanceConnectorsItem.Connections)
-	endpointPerformanceConnectorsItemMap["rxBW"] = flex.IntValue(endpointPerformanceConnectorsItem.RxBW)
-	endpointPerformanceConnectorsItemMap["txBW"] = flex.IntValue(endpointPerformanceConnectorsItem.TxBW)
+	if endpointPerformanceConnectorsItem.RxBW != nil {
+		endpointPerformanceConnectorsItemMap["rxBW"] = flex.IntValue(endpointPerformanceConnectorsItem.RxBW)
+	}
+	if endpointPerformanceConnectorsItem.TxBW != nil {
+		endpointPerformanceConnectorsItemMap["txBW"] = flex.IntValue(endpointPerformanceConnectorsItem.TxBW)
+	}
 
 	return endpointPerformanceConnectorsItemMap
 }

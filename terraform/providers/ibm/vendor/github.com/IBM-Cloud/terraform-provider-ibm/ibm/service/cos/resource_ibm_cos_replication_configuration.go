@@ -89,10 +89,9 @@ func ResourceIBMCOSBucketReplicationConfiguration() *schema.Resource {
 							Description: "Indicates whether to replicate delete markers. It should be either Enable or Disable",
 						},
 						"destination_bucket_crn": {
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validate.ValidateRegexps(`^crn:.+:.+:.+:.+:.+:a\/[0-9a-f]{32}:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:bucket:[a-z-A-Z]*[0-9]*$`),
-							Description:  "The Cloud Resource Name (CRN) of the bucket where you want COS to store the results",
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The Cloud Resource Name (CRN) of the bucket where you want COS to store the results",
 						},
 					},
 				},

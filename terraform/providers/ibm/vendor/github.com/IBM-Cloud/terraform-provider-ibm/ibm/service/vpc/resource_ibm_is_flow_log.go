@@ -32,6 +32,7 @@ const (
 	isFlowLogAutoDelete            = "auto_delete"
 	isFlowLogVpc                   = "vpc"
 	isFlowLogTags                  = "tags"
+	isFlowLogAccessTags            = "access_tags"
 )
 
 func ResourceIBMISFlowLog() *schema.Resource {
@@ -49,10 +50,16 @@ func ResourceIBMISFlowLog() *schema.Resource {
 			Update: schema.DefaultTimeout(30 * time.Minute),
 		},
 
-		CustomizeDiff: customdiff.Sequence(
-			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
-				return flex.ResourceTagsCustomizeDiff(diff)
-			},
+		CustomizeDiff: customdiff.All(
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceTagsCustomizeDiff(diff)
+				},
+			),
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceValidateAccessTags(diff, v)
+				}),
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -138,6 +145,15 @@ func ResourceIBMISFlowLog() *schema.Resource {
 				Description: "Tags for the VPC Flow logs",
 			},
 
+			isFlowLogAccessTags: {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_flow_log", "accesstag")},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access management tags",
+			},
+
 			flex.ResourceControllerURL: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -193,6 +209,15 @@ func ResourceIBMISFlowLogValidator() *validate.ResourceValidator {
 			Regexp:                     `^[A-Za-z0-9:_ .-]+$`,
 			MinValueLength:             1,
 			MaxValueLength:             128})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "accesstag",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-]):([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-])$`,
+			MinValueLength:             1,
+			MaxValueLength:             128})
 
 	ibmISFlowLogValidator := validate.ResourceValidator{ResourceName: "ibm_is_flow_log", Schema: validateSchema}
 	return &ibmISFlowLogValidator
@@ -240,13 +265,20 @@ func resourceIBMISFlowLogCreate(d *schema.ResourceData, meta interface{}) error 
 	v := os.Getenv("IC_ENV_TAGS")
 	if _, ok := d.GetOk(isFlowLogTags); ok || v != "" {
 		oldList, newList := d.GetChange(isFlowLogTags)
-		err = flex.UpdateTagsUsingCRN(oldList, newList, meta, *flowlogCollector.CRN)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *flowlogCollector.CRN, "", isUserTagType)
 		if err != nil {
 			log.Printf(
 				"Error on create of resource vpc flow log (%s) tags: %s", d.Id(), err)
 		}
 	}
-
+	if _, ok := d.GetOk(isFlowLogAccessTags); ok {
+		oldList, newList := d.GetChange(isFlowLogAccessTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *flowlogCollector.CRN, "", isAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on create of resource VPC Flow Log (%s) access tags: %s", d.Id(), err)
+		}
+	}
 	return resourceIBMISFlowLogRead(d, meta)
 }
 
@@ -306,12 +338,19 @@ func resourceIBMISFlowLogRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set(isFlowLogStorageBucket, *bucket.Name)
 	}
 
-	tags, err := flex.GetTagsUsingCRN(meta, *flowlogCollector.CRN)
+	tags, err := flex.GetGlobalTagsUsingCRN(meta, *flowlogCollector.CRN, "", isUserTagType)
 	if err != nil {
 		log.Printf(
 			"Error on get of resource vpc flow log (%s) tags: %s", d.Id(), err)
 	}
 	d.Set(isFlowLogTags, tags)
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *flowlogCollector.CRN, "", isAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource VPC Flow Log (%s) access tags: %s", d.Id(), err)
+	}
+	d.Set(isFlowLogAccessTags, accesstags)
+
 	controller, err := flex.GetBaseController(meta)
 	if err != nil {
 		return err
@@ -349,10 +388,19 @@ func resourceIBMISFlowLogUpdate(d *schema.ResourceData, meta interface{}) error 
 
 	if d.HasChange(isFlowLogTags) {
 		oldList, newList := d.GetChange(isFlowLogTags)
-		err = flex.UpdateTagsUsingCRN(oldList, newList, meta, *flowlogCollector.CRN)
+		err := flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *flowlogCollector.CRN, "", isUserTagType)
 		if err != nil {
 			log.Printf(
 				"Error on update of resource flow log (%s) tags: %s", *flowlogCollector.ID, err)
+		}
+	}
+
+	if d.HasChange(isFlowLogAccessTags) {
+		oldList, newList := d.GetChange(isFlowLogAccessTags)
+		err := flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *flowlogCollector.CRN, "", isAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on update of resource flow log (%s) access tags: %s", d.Id(), err)
 		}
 	}
 

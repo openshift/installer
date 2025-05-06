@@ -250,6 +250,18 @@ func DataSourceIbmManagedKey() *schema.Resource {
 								},
 							},
 						},
+						"google_key_protection_level": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"google_key_purpose": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"google_kms_algorithm": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -404,7 +416,8 @@ func DataSourceIbmManagedKeyRead(context context.Context, d *schema.ResourceData
 	instances := []map[string]interface{}{}
 	if managedKey.Instances != nil {
 		for _, modelItem := range managedKey.Instances {
-			modelMap, err := DataSourceIbmManagedKeyKeyInstanceToMap(&modelItem)
+			// TODO: I'm worried about this line
+			modelMap, err := dataSourceIbmHpcsManagedKeyKeyInstanceToMap(modelItem)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -489,7 +502,62 @@ func DataSourceIbmManagedKeyTargetKeystoreReferenceToMap(model *ukov4.TargetKeys
 	return modelMap, nil
 }
 
-func DataSourceIbmManagedKeyKeyInstanceToMap(model *ukov4.KeyInstance) (map[string]interface{}, error) {
+// func DataSourceIbmManagedKeyKeyInstanceToMap(model *ukov4.KeyInstance) (map[string]interface{}, error) {
+func dataSourceIbmHpcsManagedKeyKeyInstanceToMap(model ukov4.KeyInstanceIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*ukov4.KeyInstanceGoogleKms); ok {
+		return dataSourceIbmHpcsManagedKeyKeyInstanceGoogleKmsToMap(model.(*ukov4.KeyInstanceGoogleKms))
+	} else if _, ok := model.(*ukov4.KeyInstanceAwsKms); ok {
+		return dataSourceIbmHpcsManagedKeyKeyInstanceAwsKmsToMap(model.(*ukov4.KeyInstanceAwsKms))
+	} else if _, ok := model.(*ukov4.KeyInstanceIbmCloudKms); ok {
+		return dataSourceIbmHpcsManagedKeyKeyInstanceIbmCloudKmsToMap(model.(*ukov4.KeyInstanceIbmCloudKms))
+	} else if _, ok := model.(*ukov4.KeyInstanceAzure); ok {
+		return dataSourceIbmHpcsManagedKeyKeyInstanceAzureToMap(model.(*ukov4.KeyInstanceAzure))
+	} else if _, ok := model.(*ukov4.KeyInstance); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*ukov4.KeyInstance)
+		if model.ID != nil {
+			modelMap["id"] = *model.ID
+		}
+		if model.LabelInKeystore != nil {
+			modelMap["label_in_keystore"] = *model.LabelInKeystore
+		}
+		if model.Type != nil {
+			modelMap["type"] = *model.Type
+		}
+		if model.Keystore != nil {
+			keystoreMap, err := dataSourceIbmHpcsManagedKeyInstanceInKeystoreToMap(model.Keystore)
+			if err != nil {
+				return modelMap, err
+			}
+			modelMap["keystore"] = []map[string]interface{}{keystoreMap}
+		}
+		if model.GoogleKeyProtectionLevel != nil {
+			modelMap["google_key_protection_level"] = *model.GoogleKeyProtectionLevel
+		}
+		if model.GoogleKeyPurpose != nil {
+			modelMap["google_key_purpose"] = *model.GoogleKeyPurpose
+		}
+		if model.GoogleKmsAlgorithm != nil {
+			modelMap["google_kms_algorithm"] = *model.GoogleKmsAlgorithm
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized ukov4.KeyInstanceIntf subtype encountered")
+	}
+}
+
+func dataSourceIbmHpcsManagedKeyInstanceInKeystoreToMap(model *ukov4.InstanceInKeystore) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Group != nil {
+		modelMap["group"] = *model.Group
+	}
+	if model.Type != nil {
+		modelMap["type"] = *model.Type
+	}
+	return modelMap, nil
+}
+
+func dataSourceIbmHpcsManagedKeyKeyInstanceGoogleKmsToMap(model *ukov4.KeyInstanceGoogleKms) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.ID != nil {
 		modelMap["id"] = *model.ID
@@ -501,7 +569,39 @@ func DataSourceIbmManagedKeyKeyInstanceToMap(model *ukov4.KeyInstance) (map[stri
 		modelMap["type"] = *model.Type
 	}
 	if model.Keystore != nil {
-		keystoreMap, err := DataSourceIbmManagedKeyInstanceInKeystoreToMap(model.Keystore)
+		// TODO: I'm worried about this line
+		keystoreMap, err := dataSourceIbmHpcsManagedKeyInstanceInKeystoreToMap(model.Keystore)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["keystore"] = []map[string]interface{}{keystoreMap}
+	}
+	if model.GoogleKeyProtectionLevel != nil {
+		modelMap["google_key_protection_level"] = *model.GoogleKeyProtectionLevel
+	}
+	if model.GoogleKeyPurpose != nil {
+		modelMap["google_key_purpose"] = *model.GoogleKeyPurpose
+	}
+	if model.GoogleKmsAlgorithm != nil {
+		modelMap["google_kms_algorithm"] = *model.GoogleKmsAlgorithm
+	}
+	return modelMap, nil
+}
+
+// func DataSourceIbmManagedKeyInstanceInKeystoreToMap(model *ukov4.InstanceInKeystore) (map[string]interface{}, error) {
+func dataSourceIbmHpcsManagedKeyKeyInstanceAwsKmsToMap(model *ukov4.KeyInstanceAwsKms) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.ID != nil {
+		modelMap["id"] = *model.ID
+	}
+	if model.LabelInKeystore != nil {
+		modelMap["label_in_keystore"] = *model.LabelInKeystore
+	}
+	if model.Type != nil {
+		modelMap["type"] = *model.Type
+	}
+	if model.Keystore != nil {
+		keystoreMap, err := dataSourceIbmHpcsManagedKeyInstanceInKeystoreToMap(model.Keystore)
 		if err != nil {
 			return modelMap, err
 		}
@@ -510,13 +610,44 @@ func DataSourceIbmManagedKeyKeyInstanceToMap(model *ukov4.KeyInstance) (map[stri
 	return modelMap, nil
 }
 
-func DataSourceIbmManagedKeyInstanceInKeystoreToMap(model *ukov4.InstanceInKeystore) (map[string]interface{}, error) {
+func dataSourceIbmHpcsManagedKeyKeyInstanceIbmCloudKmsToMap(model *ukov4.KeyInstanceIbmCloudKms) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	if model.Group != nil {
-		modelMap["group"] = *model.Group
+	if model.ID != nil {
+		modelMap["id"] = *model.ID
+	}
+	if model.LabelInKeystore != nil {
+		modelMap["label_in_keystore"] = *model.LabelInKeystore
 	}
 	if model.Type != nil {
 		modelMap["type"] = *model.Type
+	}
+	if model.Keystore != nil {
+		keystoreMap, err := dataSourceIbmHpcsManagedKeyInstanceInKeystoreToMap(model.Keystore)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["keystore"] = []map[string]interface{}{keystoreMap}
+	}
+	return modelMap, nil
+}
+
+func dataSourceIbmHpcsManagedKeyKeyInstanceAzureToMap(model *ukov4.KeyInstanceAzure) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.ID != nil {
+		modelMap["id"] = *model.ID
+	}
+	if model.LabelInKeystore != nil {
+		modelMap["label_in_keystore"] = *model.LabelInKeystore
+	}
+	if model.Type != nil {
+		modelMap["type"] = *model.Type
+	}
+	if model.Keystore != nil {
+		keystoreMap, err := dataSourceIbmHpcsManagedKeyInstanceInKeystoreToMap(model.Keystore)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["keystore"] = []map[string]interface{}{keystoreMap}
 	}
 	return modelMap, nil
 }

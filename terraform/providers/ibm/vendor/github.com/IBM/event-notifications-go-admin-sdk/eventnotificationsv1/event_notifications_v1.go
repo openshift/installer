@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2022.
+ * (C) Copyright IBM Corp. 2023.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.46.0-a4e29da0-20220224-210428
+ * IBM OpenAPI SDK Code Generator Version: 3.54.0-af6d2126-20220803-151219
  */
 
 // Package eventnotificationsv1 : Operations and models for the EventNotificationsV1 service
@@ -28,6 +28,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"strconv"
 	"time"
 
 	common "github.com/IBM/event-notifications-go-admin-sdk/common"
@@ -163,6 +164,8 @@ func (eventNotifications *EventNotificationsV1) DisableRetries() {
 }
 
 // SendNotifications : Send a notification
+// Send Notifications body from the instance. For more information about Event Notifications payload, see
+// [here](https://cloud.ibm.com/docs/event-notifications?topic=event-notifications-en-spec-payload).
 func (eventNotifications *EventNotificationsV1) SendNotifications(sendNotificationsOptions *SendNotificationsOptions) (result *NotificationResponse, response *core.DetailedResponse, err error) {
 	return eventNotifications.SendNotificationsWithContext(context.Background(), sendNotificationsOptions)
 }
@@ -200,60 +203,6 @@ func (eventNotifications *EventNotificationsV1) SendNotificationsWithContext(ctx
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
-	if sendNotificationsOptions.CeIbmenseverity != nil {
-		builder.AddHeader("ce-ibmenseverity", fmt.Sprint(*sendNotificationsOptions.CeIbmenseverity))
-	}
-	if sendNotificationsOptions.CeIbmendefaultshort != nil {
-		builder.AddHeader("ce-ibmendefaultshort", fmt.Sprint(*sendNotificationsOptions.CeIbmendefaultshort))
-	}
-	if sendNotificationsOptions.CeIbmendefaultlong != nil {
-		builder.AddHeader("ce-ibmendefaultlong", fmt.Sprint(*sendNotificationsOptions.CeIbmendefaultlong))
-	}
-	if sendNotificationsOptions.CeIbmenfcmbody != nil {
-		builder.AddHeader("ce-ibmenfcmbody", fmt.Sprint(*sendNotificationsOptions.CeIbmenfcmbody))
-	}
-	if sendNotificationsOptions.CeIbmenapnsbody != nil {
-		builder.AddHeader("ce-ibmenapnsbody", fmt.Sprint(*sendNotificationsOptions.CeIbmenapnsbody))
-	}
-	if sendNotificationsOptions.CeIbmensafaribody != nil {
-		builder.AddHeader("ce-ibmensafaribody", fmt.Sprint(*sendNotificationsOptions.CeIbmensafaribody))
-	}
-	if sendNotificationsOptions.CeIbmenpushto != nil {
-		builder.AddHeader("ce-ibmenpushto", fmt.Sprint(*sendNotificationsOptions.CeIbmenpushto))
-	}
-	if sendNotificationsOptions.CeIbmenapnsheaders != nil {
-		builder.AddHeader("ce-ibmenapnsheaders", fmt.Sprint(*sendNotificationsOptions.CeIbmenapnsheaders))
-	}
-	if sendNotificationsOptions.CeIbmenchromebody != nil {
-		builder.AddHeader("ce-ibmenchromebody", fmt.Sprint(*sendNotificationsOptions.CeIbmenchromebody))
-	}
-	if sendNotificationsOptions.CeIbmenfirefoxbody != nil {
-		builder.AddHeader("ce-ibmenfirefoxbody", fmt.Sprint(*sendNotificationsOptions.CeIbmenfirefoxbody))
-	}
-	if sendNotificationsOptions.CeIbmenchromeheaders != nil {
-		builder.AddHeader("ce-ibmenchromeheaders", fmt.Sprint(*sendNotificationsOptions.CeIbmenchromeheaders))
-	}
-	if sendNotificationsOptions.CeIbmenfirefoxheaders != nil {
-		builder.AddHeader("ce-ibmenfirefoxheaders", fmt.Sprint(*sendNotificationsOptions.CeIbmenfirefoxheaders))
-	}
-	if sendNotificationsOptions.CeIbmensourceid != nil {
-		builder.AddHeader("ce-ibmensourceid", fmt.Sprint(*sendNotificationsOptions.CeIbmensourceid))
-	}
-	if sendNotificationsOptions.CeID != nil {
-		builder.AddHeader("ce-id", fmt.Sprint(*sendNotificationsOptions.CeID))
-	}
-	if sendNotificationsOptions.CeSource != nil {
-		builder.AddHeader("ce-source", fmt.Sprint(*sendNotificationsOptions.CeSource))
-	}
-	if sendNotificationsOptions.CeType != nil {
-		builder.AddHeader("ce-type", fmt.Sprint(*sendNotificationsOptions.CeType))
-	}
-	if sendNotificationsOptions.CeSpecversion != nil {
-		builder.AddHeader("ce-specversion", fmt.Sprint(*sendNotificationsOptions.CeSpecversion))
-	}
-	if sendNotificationsOptions.CeTime != nil {
-		builder.AddHeader("ce-time", fmt.Sprint(*sendNotificationsOptions.CeTime))
-	}
 
 	if sendNotificationsOptions.Body != nil {
 		_, err = builder.SetBodyContentJSON(sendNotificationsOptions.Body)
@@ -499,7 +448,7 @@ func (eventNotifications *EventNotificationsV1) ListSourcesWithContext(ctx conte
 }
 
 // GetSource : Get a Source
-// Get a Sources.
+// Get a Source.
 func (eventNotifications *EventNotificationsV1) GetSource(getSourceOptions *GetSourceOptions) (result *Source, response *core.DetailedResponse, err error) {
 	return eventNotifications.GetSourceWithContext(context.Background(), getSourceOptions)
 }
@@ -1078,7 +1027,7 @@ func (eventNotifications *EventNotificationsV1) CreateDestinationWithContext(ctx
 			core.StringNilMapper(createDestinationOptions.Icon16x16ContentType), createDestinationOptions.Icon16x16)
 	}
 	if createDestinationOptions.Icon16x162x != nil {
-		builder.AddFormData("icon_16x16@2x", "",
+		builder.AddFormData("icon_16x16_2x", "",
 			core.StringNilMapper(createDestinationOptions.Icon16x162xContentType), createDestinationOptions.Icon16x162x)
 	}
 	if createDestinationOptions.Icon32x32 != nil {
@@ -1086,7 +1035,7 @@ func (eventNotifications *EventNotificationsV1) CreateDestinationWithContext(ctx
 			core.StringNilMapper(createDestinationOptions.Icon32x32ContentType), createDestinationOptions.Icon32x32)
 	}
 	if createDestinationOptions.Icon32x322x != nil {
-		builder.AddFormData("icon_32x32@2x", "",
+		builder.AddFormData("icon_32x32_2x", "",
 			core.StringNilMapper(createDestinationOptions.Icon32x322xContentType), createDestinationOptions.Icon32x322x)
 	}
 	if createDestinationOptions.Icon128x128 != nil {
@@ -1094,7 +1043,7 @@ func (eventNotifications *EventNotificationsV1) CreateDestinationWithContext(ctx
 			core.StringNilMapper(createDestinationOptions.Icon128x128ContentType), createDestinationOptions.Icon128x128)
 	}
 	if createDestinationOptions.Icon128x1282x != nil {
-		builder.AddFormData("icon_128x128@2x", "",
+		builder.AddFormData("icon_128x128_2x", "",
 			core.StringNilMapper(createDestinationOptions.Icon128x1282xContentType), createDestinationOptions.Icon128x1282x)
 	}
 
@@ -1312,7 +1261,7 @@ func (eventNotifications *EventNotificationsV1) UpdateDestinationWithContext(ctx
 			core.StringNilMapper(updateDestinationOptions.Icon16x16ContentType), updateDestinationOptions.Icon16x16)
 	}
 	if updateDestinationOptions.Icon16x162x != nil {
-		builder.AddFormData("icon_16x16@2x", "",
+		builder.AddFormData("icon_16x16_2x", "",
 			core.StringNilMapper(updateDestinationOptions.Icon16x162xContentType), updateDestinationOptions.Icon16x162x)
 	}
 	if updateDestinationOptions.Icon32x32 != nil {
@@ -1320,7 +1269,7 @@ func (eventNotifications *EventNotificationsV1) UpdateDestinationWithContext(ctx
 			core.StringNilMapper(updateDestinationOptions.Icon32x32ContentType), updateDestinationOptions.Icon32x32)
 	}
 	if updateDestinationOptions.Icon32x322x != nil {
-		builder.AddFormData("icon_32x32@2x", "",
+		builder.AddFormData("icon_32x32_2x", "",
 			core.StringNilMapper(updateDestinationOptions.Icon32x322xContentType), updateDestinationOptions.Icon32x322x)
 	}
 	if updateDestinationOptions.Icon128x128 != nil {
@@ -1328,7 +1277,7 @@ func (eventNotifications *EventNotificationsV1) UpdateDestinationWithContext(ctx
 			core.StringNilMapper(updateDestinationOptions.Icon128x128ContentType), updateDestinationOptions.Icon128x128)
 	}
 	if updateDestinationOptions.Icon128x1282x != nil {
-		builder.AddFormData("icon_128x128@2x", "",
+		builder.AddFormData("icon_128x128_2x", "",
 			core.StringNilMapper(updateDestinationOptions.Icon128x1282xContentType), updateDestinationOptions.Icon128x1282x)
 	}
 
@@ -1402,54 +1351,57 @@ func (eventNotifications *EventNotificationsV1) DeleteDestinationWithContext(ctx
 	return
 }
 
-// ListDestinationDevices : Get list of Destination devices
-// Get list of Destination devices.
-func (eventNotifications *EventNotificationsV1) ListDestinationDevices(listDestinationDevicesOptions *ListDestinationDevicesOptions) (result *DestinationDevicesList, response *core.DetailedResponse, err error) {
-	return eventNotifications.ListDestinationDevicesWithContext(context.Background(), listDestinationDevicesOptions)
+// CreateTagsSubscription : Create a new tag subscription
+// Create a new tag subscription.
+func (eventNotifications *EventNotificationsV1) CreateTagsSubscription(createTagsSubscriptionOptions *CreateTagsSubscriptionOptions) (result *DestinationTagsSubscriptionResponse, response *core.DetailedResponse, err error) {
+	return eventNotifications.CreateTagsSubscriptionWithContext(context.Background(), createTagsSubscriptionOptions)
 }
 
-// ListDestinationDevicesWithContext is an alternate form of the ListDestinationDevices method which supports a Context parameter
-func (eventNotifications *EventNotificationsV1) ListDestinationDevicesWithContext(ctx context.Context, listDestinationDevicesOptions *ListDestinationDevicesOptions) (result *DestinationDevicesList, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(listDestinationDevicesOptions, "listDestinationDevicesOptions cannot be nil")
+// CreateTagsSubscriptionWithContext is an alternate form of the CreateTagsSubscription method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) CreateTagsSubscriptionWithContext(ctx context.Context, createTagsSubscriptionOptions *CreateTagsSubscriptionOptions) (result *DestinationTagsSubscriptionResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createTagsSubscriptionOptions, "createTagsSubscriptionOptions cannot be nil")
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(listDestinationDevicesOptions, "listDestinationDevicesOptions")
+	err = core.ValidateStruct(createTagsSubscriptionOptions, "createTagsSubscriptionOptions")
 	if err != nil {
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"instance_id": *listDestinationDevicesOptions.InstanceID,
-		"id":          *listDestinationDevicesOptions.ID,
+		"instance_id": *createTagsSubscriptionOptions.InstanceID,
+		"id":          *createTagsSubscriptionOptions.ID,
 	}
 
-	builder := core.NewRequestBuilder(core.GET)
+	builder := core.NewRequestBuilder(core.POST)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}/devices`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}/tag_subscriptions`, pathParamsMap)
 	if err != nil {
 		return
 	}
 
-	for headerName, headerValue := range listDestinationDevicesOptions.Headers {
+	for headerName, headerValue := range createTagsSubscriptionOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "ListDestinationDevices")
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "CreateTagsSubscription")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
 
-	if listDestinationDevicesOptions.Limit != nil {
-		builder.AddQuery("limit", fmt.Sprint(*listDestinationDevicesOptions.Limit))
+	body := make(map[string]interface{})
+	if createTagsSubscriptionOptions.DeviceID != nil {
+		body["device_id"] = createTagsSubscriptionOptions.DeviceID
 	}
-	if listDestinationDevicesOptions.Offset != nil {
-		builder.AddQuery("offset", fmt.Sprint(*listDestinationDevicesOptions.Offset))
+	if createTagsSubscriptionOptions.TagName != nil {
+		body["tag_name"] = createTagsSubscriptionOptions.TagName
 	}
-	if listDestinationDevicesOptions.Search != nil {
-		builder.AddQuery("search", fmt.Sprint(*listDestinationDevicesOptions.Search))
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
 	}
 
 	request, err := builder.Build()
@@ -1463,7 +1415,7 @@ func (eventNotifications *EventNotificationsV1) ListDestinationDevicesWithContex
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDestinationDevicesList)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDestinationTagsSubscriptionResponse)
 		if err != nil {
 			return
 		}
@@ -1473,145 +1425,8 @@ func (eventNotifications *EventNotificationsV1) ListDestinationDevicesWithContex
 	return
 }
 
-// GetDestinationDevicesReport : Retrieves report of destination devices registered
-// Retrieves report of destination devices registered.
-func (eventNotifications *EventNotificationsV1) GetDestinationDevicesReport(getDestinationDevicesReportOptions *GetDestinationDevicesReportOptions) (result *DestinationDevicesReport, response *core.DetailedResponse, err error) {
-	return eventNotifications.GetDestinationDevicesReportWithContext(context.Background(), getDestinationDevicesReportOptions)
-}
-
-// GetDestinationDevicesReportWithContext is an alternate form of the GetDestinationDevicesReport method which supports a Context parameter
-func (eventNotifications *EventNotificationsV1) GetDestinationDevicesReportWithContext(ctx context.Context, getDestinationDevicesReportOptions *GetDestinationDevicesReportOptions) (result *DestinationDevicesReport, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getDestinationDevicesReportOptions, "getDestinationDevicesReportOptions cannot be nil")
-	if err != nil {
-		return
-	}
-	err = core.ValidateStruct(getDestinationDevicesReportOptions, "getDestinationDevicesReportOptions")
-	if err != nil {
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"instance_id": *getDestinationDevicesReportOptions.InstanceID,
-		"id":          *getDestinationDevicesReportOptions.ID,
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}/devices/report`, pathParamsMap)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range getDestinationDevicesReportOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "GetDestinationDevicesReport")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if getDestinationDevicesReportOptions.Days != nil {
-		builder.AddQuery("days", fmt.Sprint(*getDestinationDevicesReportOptions.Days))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = eventNotifications.Service.Request(request, &rawResponse)
-	if err != nil {
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDestinationDevicesReport)
-		if err != nil {
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// ListTagsSubscriptionsDevice : List all Tag Subscriptions for a device
-// List all Tag Subscriptions for a device.
-func (eventNotifications *EventNotificationsV1) ListTagsSubscriptionsDevice(listTagsSubscriptionsDeviceOptions *ListTagsSubscriptionsDeviceOptions) (result *TagsSubscriptionList, response *core.DetailedResponse, err error) {
-	return eventNotifications.ListTagsSubscriptionsDeviceWithContext(context.Background(), listTagsSubscriptionsDeviceOptions)
-}
-
-// ListTagsSubscriptionsDeviceWithContext is an alternate form of the ListTagsSubscriptionsDevice method which supports a Context parameter
-func (eventNotifications *EventNotificationsV1) ListTagsSubscriptionsDeviceWithContext(ctx context.Context, listTagsSubscriptionsDeviceOptions *ListTagsSubscriptionsDeviceOptions) (result *TagsSubscriptionList, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(listTagsSubscriptionsDeviceOptions, "listTagsSubscriptionsDeviceOptions cannot be nil")
-	if err != nil {
-		return
-	}
-	err = core.ValidateStruct(listTagsSubscriptionsDeviceOptions, "listTagsSubscriptionsDeviceOptions")
-	if err != nil {
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"instance_id": *listTagsSubscriptionsDeviceOptions.InstanceID,
-		"id":          *listTagsSubscriptionsDeviceOptions.ID,
-		"device_id":   *listTagsSubscriptionsDeviceOptions.DeviceID,
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}/tag_subscriptions/devices/{device_id}`, pathParamsMap)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range listTagsSubscriptionsDeviceOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "ListTagsSubscriptionsDevice")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if listTagsSubscriptionsDeviceOptions.TagName != nil {
-		builder.AddQuery("tag_name", fmt.Sprint(*listTagsSubscriptionsDeviceOptions.TagName))
-	}
-	if listTagsSubscriptionsDeviceOptions.Limit != nil {
-		builder.AddQuery("limit", fmt.Sprint(*listTagsSubscriptionsDeviceOptions.Limit))
-	}
-	if listTagsSubscriptionsDeviceOptions.Offset != nil {
-		builder.AddQuery("offset", fmt.Sprint(*listTagsSubscriptionsDeviceOptions.Offset))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = eventNotifications.Service.Request(request, &rawResponse)
-	if err != nil {
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTagsSubscriptionList)
-		if err != nil {
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// ListTagsSubscription : List all Tag Subscriptions
-// List all Tag Subscriptions.
+// ListTagsSubscription : List all tag subscriptions
+// List all tag subscriptions.
 func (eventNotifications *EventNotificationsV1) ListTagsSubscription(listTagsSubscriptionOptions *ListTagsSubscriptionOptions) (result *TagsSubscriptionList, response *core.DetailedResponse, err error) {
 	return eventNotifications.ListTagsSubscriptionWithContext(context.Background(), listTagsSubscriptionOptions)
 }
@@ -1690,82 +1505,8 @@ func (eventNotifications *EventNotificationsV1) ListTagsSubscriptionWithContext(
 	return
 }
 
-// CreateTagsSubscription : Create a new Tag subscription
-// Create a new Tag subscription.
-func (eventNotifications *EventNotificationsV1) CreateTagsSubscription(createTagsSubscriptionOptions *CreateTagsSubscriptionOptions) (result *DestinationTagsSubscriptionResponse, response *core.DetailedResponse, err error) {
-	return eventNotifications.CreateTagsSubscriptionWithContext(context.Background(), createTagsSubscriptionOptions)
-}
-
-// CreateTagsSubscriptionWithContext is an alternate form of the CreateTagsSubscription method which supports a Context parameter
-func (eventNotifications *EventNotificationsV1) CreateTagsSubscriptionWithContext(ctx context.Context, createTagsSubscriptionOptions *CreateTagsSubscriptionOptions) (result *DestinationTagsSubscriptionResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(createTagsSubscriptionOptions, "createTagsSubscriptionOptions cannot be nil")
-	if err != nil {
-		return
-	}
-	err = core.ValidateStruct(createTagsSubscriptionOptions, "createTagsSubscriptionOptions")
-	if err != nil {
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"instance_id": *createTagsSubscriptionOptions.InstanceID,
-		"id":          *createTagsSubscriptionOptions.ID,
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/destinations/{id}/tag_subscriptions`, pathParamsMap)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range createTagsSubscriptionOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "CreateTagsSubscription")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-	builder.AddHeader("Content-Type", "application/json")
-
-	body := make(map[string]interface{})
-	if createTagsSubscriptionOptions.DeviceID != nil {
-		body["device_id"] = createTagsSubscriptionOptions.DeviceID
-	}
-	if createTagsSubscriptionOptions.TagName != nil {
-		body["tag_name"] = createTagsSubscriptionOptions.TagName
-	}
-	_, err = builder.SetBodyContentJSON(body)
-	if err != nil {
-		return
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = eventNotifications.Service.Request(request, &rawResponse)
-	if err != nil {
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDestinationTagsSubscriptionResponse)
-		if err != nil {
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// DeleteTagsSubscription : Delete a Tag subcription
-// Delete a Tag subcription.
+// DeleteTagsSubscription : Delete a tag subscription
+// Delete a tag subscription.
 func (eventNotifications *EventNotificationsV1) DeleteTagsSubscription(deleteTagsSubscriptionOptions *DeleteTagsSubscriptionOptions) (response *core.DetailedResponse, err error) {
 	return eventNotifications.DeleteTagsSubscriptionWithContext(context.Background(), deleteTagsSubscriptionOptions)
 }
@@ -2159,6 +1900,211 @@ func (eventNotifications *EventNotificationsV1) UpdateSubscriptionWithContext(ct
 	return
 }
 
+// ListIntegrations : List all Integrations
+// List of all KMS Integrations.
+func (eventNotifications *EventNotificationsV1) ListIntegrations(listIntegrationsOptions *ListIntegrationsOptions) (result *IntegrationList, response *core.DetailedResponse, err error) {
+	return eventNotifications.ListIntegrationsWithContext(context.Background(), listIntegrationsOptions)
+}
+
+// ListIntegrationsWithContext is an alternate form of the ListIntegrations method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) ListIntegrationsWithContext(ctx context.Context, listIntegrationsOptions *ListIntegrationsOptions) (result *IntegrationList, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listIntegrationsOptions, "listIntegrationsOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(listIntegrationsOptions, "listIntegrationsOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *listIntegrationsOptions.InstanceID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/integrations`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listIntegrationsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "ListIntegrations")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listIntegrationsOptions.Offset != nil {
+		builder.AddQuery("offset", fmt.Sprint(*listIntegrationsOptions.Offset))
+	}
+	if listIntegrationsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listIntegrationsOptions.Limit))
+	}
+	if listIntegrationsOptions.Search != nil {
+		builder.AddQuery("search", fmt.Sprint(*listIntegrationsOptions.Search))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIntegrationList)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetIntegration : Get a single Integration
+// Get a single KMS Integration.
+func (eventNotifications *EventNotificationsV1) GetIntegration(getIntegrationOptions *GetIntegrationOptions) (result *IntegrationGetResponse, response *core.DetailedResponse, err error) {
+	return eventNotifications.GetIntegrationWithContext(context.Background(), getIntegrationOptions)
+}
+
+// GetIntegrationWithContext is an alternate form of the GetIntegration method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) GetIntegrationWithContext(ctx context.Context, getIntegrationOptions *GetIntegrationOptions) (result *IntegrationGetResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getIntegrationOptions, "getIntegrationOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(getIntegrationOptions, "getIntegrationOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *getIntegrationOptions.InstanceID,
+		"id":          *getIntegrationOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/integrations/{id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getIntegrationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "GetIntegration")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIntegrationGetResponse)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ReplaceIntegration : Update an existing Integration
+// Update an existing KMS Integration.
+func (eventNotifications *EventNotificationsV1) ReplaceIntegration(replaceIntegrationOptions *ReplaceIntegrationOptions) (result *IntegrationGetResponse, response *core.DetailedResponse, err error) {
+	return eventNotifications.ReplaceIntegrationWithContext(context.Background(), replaceIntegrationOptions)
+}
+
+// ReplaceIntegrationWithContext is an alternate form of the ReplaceIntegration method which supports a Context parameter
+func (eventNotifications *EventNotificationsV1) ReplaceIntegrationWithContext(ctx context.Context, replaceIntegrationOptions *ReplaceIntegrationOptions) (result *IntegrationGetResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(replaceIntegrationOptions, "replaceIntegrationOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(replaceIntegrationOptions, "replaceIntegrationOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"instance_id": *replaceIntegrationOptions.InstanceID,
+		"id":          *replaceIntegrationOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = eventNotifications.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(eventNotifications.Service.Options.URL, `/v1/instances/{instance_id}/integrations/{id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range replaceIntegrationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("event_notifications", "V1", "ReplaceIntegration")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if replaceIntegrationOptions.Type != nil {
+		body["type"] = replaceIntegrationOptions.Type
+	}
+	if replaceIntegrationOptions.Metadata != nil {
+		body["metadata"] = replaceIntegrationOptions.Metadata
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = eventNotifications.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIntegrationGetResponse)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // BulkNotificationResponse : Payload describing a notifications response.
 type BulkNotificationResponse struct {
 	// Bulk Notification ID.
@@ -2188,7 +2134,7 @@ type CreateDestinationOptions struct {
 	// Unique identifier for IBM Cloud Event Notifications instance.
 	InstanceID *string `json:"instance_id" validate:"required,ne="`
 
-	// The Destintion name.
+	// The Destination name.
 	Name *string `json:"name" validate:"required"`
 
 	// The type of Destination Webhook.
@@ -2213,10 +2159,10 @@ type CreateDestinationOptions struct {
 	Icon16x16ContentType *string `json:"icon_16x16_content_type,omitempty"`
 
 	// Safari icon 16x16@2x.
-	Icon16x162x io.ReadCloser `json:"icon_16x16@2x,omitempty"`
+	Icon16x162x io.ReadCloser `json:"icon_16x16_2x,omitempty"`
 
 	// The content type of icon16x162x.
-	Icon16x162xContentType *string `json:"icon_16x16@2x_content_type,omitempty"`
+	Icon16x162xContentType *string `json:"icon_16x16_2x_content_type,omitempty"`
 
 	// Safari icon 32x32.
 	Icon32x32 io.ReadCloser `json:"icon_32x32,omitempty"`
@@ -2225,10 +2171,10 @@ type CreateDestinationOptions struct {
 	Icon32x32ContentType *string `json:"icon_32x32_content_type,omitempty"`
 
 	// Safari icon 32x32@2x.
-	Icon32x322x io.ReadCloser `json:"icon_32x32@2x,omitempty"`
+	Icon32x322x io.ReadCloser `json:"icon_32x32_2x,omitempty"`
 
 	// The content type of icon32x322x.
-	Icon32x322xContentType *string `json:"icon_32x32@2x_content_type,omitempty"`
+	Icon32x322xContentType *string `json:"icon_32x32_2x_content_type,omitempty"`
 
 	// Safari icon 128x128.
 	Icon128x128 io.ReadCloser `json:"icon_128x128,omitempty"`
@@ -2237,10 +2183,10 @@ type CreateDestinationOptions struct {
 	Icon128x128ContentType *string `json:"icon_128x128_content_type,omitempty"`
 
 	// Safari icon 128x128@2x.
-	Icon128x1282x io.ReadCloser `json:"icon_128x128@2x,omitempty"`
+	Icon128x1282x io.ReadCloser `json:"icon_128x128_2x,omitempty"`
 
 	// The content type of icon128x1282x.
-	Icon128x1282xContentType *string `json:"icon_128x128@2x_content_type,omitempty"`
+	Icon128x1282xContentType *string `json:"icon_128x128_2x_content_type,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2249,11 +2195,18 @@ type CreateDestinationOptions struct {
 // Constants associated with the CreateDestinationOptions.Type property.
 // The type of Destination Webhook.
 const (
+	CreateDestinationOptionsTypeIbmceConst       = "ibmce"
+	CreateDestinationOptionsTypeIbmcfConst       = "ibmcf"
+	CreateDestinationOptionsTypeIbmcosConst      = "ibmcos"
+	CreateDestinationOptionsTypeMsteamsConst     = "msteams"
+	CreateDestinationOptionsTypePagerdutyConst   = "pagerduty"
 	CreateDestinationOptionsTypePushAndroidConst = "push_android"
 	CreateDestinationOptionsTypePushChromeConst  = "push_chrome"
 	CreateDestinationOptionsTypePushFirefoxConst = "push_firefox"
+	CreateDestinationOptionsTypePushHuaweiConst  = "push_huawei"
 	CreateDestinationOptionsTypePushIosConst     = "push_ios"
 	CreateDestinationOptionsTypePushSafariConst  = "push_safari"
+	CreateDestinationOptionsTypeServicenowConst  = "servicenow"
 	CreateDestinationOptionsTypeSlackConst       = "slack"
 	CreateDestinationOptionsTypeWebhookConst     = "webhook"
 )
@@ -2589,7 +2542,7 @@ type CreateTopicOptions struct {
 	Description *string `json:"description,omitempty"`
 
 	// List of sources.
-	Sources []TopicUpdateSourcesItem `json:"sources,omitempty"`
+	Sources []SourcesItems `json:"sources,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2622,7 +2575,7 @@ func (_options *CreateTopicOptions) SetDescription(description string) *CreateTo
 }
 
 // SetSources : Allow user to set Sources
-func (_options *CreateTopicOptions) SetSources(sources []TopicUpdateSourcesItem) *CreateTopicOptions {
+func (_options *CreateTopicOptions) SetSources(sources []SourcesItems) *CreateTopicOptions {
 	_options.Sources = sources
 	return _options
 }
@@ -2755,7 +2708,7 @@ type DeleteTagsSubscriptionOptions struct {
 	// Unique identifier for Destination.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// DeviceID of the destination tagsubscription.
+	// Device ID of the destination tagsubscription.
 	DeviceID *string `json:"device_id,omitempty"`
 
 	// TagName of the subscription.
@@ -2852,7 +2805,8 @@ type Destination struct {
 	// Destination description.
 	Description *string `json:"description" validate:"required"`
 
-	// Destination type Email/SMS/Webhook/FCM.
+	// Destination type
+	// Email/SMS/Webhook/FCM/Slack/MSTeams/PagerDuty/IBMCloudFunctions/IBMCodeEngine/ServiceNow/IBMCloudObjectStorage/Huawei.
 	Type *string `json:"type" validate:"required"`
 
 	// Payload describing a destination configuration.
@@ -2869,12 +2823,20 @@ type Destination struct {
 }
 
 // Constants associated with the Destination.Type property.
-// Destination type Email/SMS/Webhook/FCM.
+// Destination type
+// Email/SMS/Webhook/FCM/Slack/MSTeams/PagerDuty/IBMCloudFunctions/IBMCodeEngine/ServiceNow/IBMCloudObjectStorage/Huawei.
 const (
+	DestinationTypeIbmceConst       = "ibmce"
+	DestinationTypeIbmcfConst       = "ibmcf"
+	DestinationTypeIbmcosConst      = "ibmcos"
+	DestinationTypeMsteamsConst     = "msteams"
+	DestinationTypePagerdutyConst   = "pagerduty"
 	DestinationTypePushAndroidConst = "push_android"
+	DestinationTypePushHuaweiConst  = "push_huawei"
 	DestinationTypePushIosConst     = "push_ios"
 	DestinationTypePushSafariConst  = "push_safari"
 	DestinationTypeSMTPIBMConst     = "smtp_ibm"
+	DestinationTypeServicenowConst  = "servicenow"
 	DestinationTypeSlackConst       = "slack"
 	DestinationTypeSmsIBMConst      = "sms_ibm"
 	DestinationTypeWebhookConst     = "webhook"
@@ -2921,11 +2883,11 @@ func UnmarshalDestination(m map[string]json.RawMessage, result interface{}) (err
 
 // DestinationConfig : Payload describing a destination configuration.
 type DestinationConfig struct {
-	Params DestinationConfigParamsIntf `json:"params" validate:"required"`
+	Params DestinationConfigOneOfIntf `json:"params" validate:"required"`
 }
 
 // NewDestinationConfig : Instantiate DestinationConfig (Generic Model Constructor)
-func (*EventNotificationsV1) NewDestinationConfig(params DestinationConfigParamsIntf) (_model *DestinationConfig, err error) {
+func (*EventNotificationsV1) NewDestinationConfig(params DestinationConfigOneOfIntf) (_model *DestinationConfig, err error) {
 	_model = &DestinationConfig{
 		Params: params,
 	}
@@ -2936,7 +2898,7 @@ func (*EventNotificationsV1) NewDestinationConfig(params DestinationConfigParams
 // UnmarshalDestinationConfig unmarshals an instance of DestinationConfig from the specified map of raw messages.
 func UnmarshalDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(DestinationConfig)
-	err = core.UnmarshalModel(m, "params", &obj.Params, UnmarshalDestinationConfigParams)
+	err = core.UnmarshalModel(m, "params", &obj.Params, UnmarshalDestinationConfigOneOf)
 	if err != nil {
 		return
 	}
@@ -2944,16 +2906,22 @@ func UnmarshalDestinationConfig(m map[string]json.RawMessage, result interface{}
 	return
 }
 
-// DestinationConfigParams : DestinationConfigParams struct
+// DestinationConfigOneOf : DestinationConfigOneOf struct
 // Models which "extend" this model:
-// - DestinationConfigParamsWebhookDestinationConfig
-// - DestinationConfigParamsFcmDestinationConfig
-// - DestinationConfigParamsIosDestinationConfig
-// - DestinationConfigParamsChromeDestinationConfig
-// - DestinationConfigParamsFirefoxDestinationConfig
-// - DestinationConfigParamsSlackDestinationConfig
-// - DestinationConfigParamsSafariDestinationConfig
-type DestinationConfigParams struct {
+// - DestinationConfigOneOfWebhookDestinationConfig
+// - DestinationConfigOneOfFcmDestinationConfig
+// - DestinationConfigOneOfIosDestinationConfig
+// - DestinationConfigOneOfChromeDestinationConfig
+// - DestinationConfigOneOfFirefoxDestinationConfig
+// - DestinationConfigOneOfSlackDestinationConfig
+// - DestinationConfigOneOfSafariDestinationConfig
+// - DestinationConfigOneOfMsTeamsDestinationConfig
+// - DestinationConfigOneOfIBMCloudFunctionsDestinationConfig
+// - DestinationConfigOneOfPagerDutyDestinationConfig
+// - DestinationConfigOneOfServiceNowDestinationConfig
+// - DestinationConfigOneOfIBMCloudObjectStorageDestinationConfig
+// - DestinationConfigOneOfHuaweiDestinationConfig
+type DestinationConfigOneOf struct {
 	// URL of webhook.
 	URL *string `json:"url,omitempty"`
 
@@ -2972,10 +2940,22 @@ type DestinationConfigParams struct {
 	// FCM sender_id.
 	SenderID *string `json:"sender_id,omitempty"`
 
+	// If pre prod enabled.
+	PreProd *bool `json:"pre_prod,omitempty"`
+
+	// FCM project_id.
+	ProjectID *string `json:"project_id,omitempty"`
+
+	// FCM private_key.
+	PrivateKey *string `json:"private_key,omitempty"`
+
+	// FCM client_email.
+	ClientEmail *string `json:"client_email,omitempty"`
+
 	// Authentication type (p8 or p12).
 	CertType *string `json:"cert_type,omitempty"`
 
-	// Sandbox mode for IOS destinations.
+	// Sandbox mode for iOS destinations.
 	IsSandbox *bool `json:"is_sandbox,omitempty"`
 
 	// Password for certificate (Required when cert_type is p12).
@@ -2999,34 +2979,58 @@ type DestinationConfigParams struct {
 	// Chrome VAPID public key.
 	PublicKey *string `json:"public_key,omitempty"`
 
-	// Websire url.
+	// Website url.
 	WebsiteName *string `json:"website_name,omitempty"`
 
-	// Websire url.
+	// Website url.
 	URLFormatString *string `json:"url_format_string,omitempty"`
 
-	// Websire url.
+	// Website url.
 	WebsitePushID *string `json:"website_push_id,omitempty"`
+
+	// Routing Key (Integration Key) for the team in PagerDuty account.
+	RoutingKey *string `json:"routing_key,omitempty"`
+
+	// ClientID for the ServiceNow account oauth.
+	ClientID *string `json:"client_id,omitempty"`
+
+	// ClientSecret for the ServiceNow account oauth.
+	ClientSecret *string `json:"client_secret,omitempty"`
+
+	// Username for ServiceNow account REST API.
+	Username *string `json:"username,omitempty"`
+
+	// Instance name for ServiceNow account.
+	InstanceName *string `json:"instance_name,omitempty"`
+
+	// Bucket Name for Cloud Object Storage.
+	BucketName *string `json:"bucket_name,omitempty"`
+
+	// Instance Id of Cloud Object Storage.
+	InstanceID *string `json:"instance_id,omitempty"`
+
+	// End Point of Cloud Object Storage.
+	Endpoint *string `json:"endpoint,omitempty"`
 }
 
-// Constants associated with the DestinationConfigParams.Verb property.
+// Constants associated with the DestinationConfigOneOf.Verb property.
 // HTTP method of webhook.
 const (
-	DestinationConfigParamsVerbGetConst  = "get"
-	DestinationConfigParamsVerbPostConst = "post"
+	DestinationConfigOneOfVerbGetConst  = "get"
+	DestinationConfigOneOfVerbPostConst = "post"
 )
 
-func (*DestinationConfigParams) isaDestinationConfigParams() bool {
+func (*DestinationConfigOneOf) isaDestinationConfigOneOf() bool {
 	return true
 }
 
-type DestinationConfigParamsIntf interface {
-	isaDestinationConfigParams() bool
+type DestinationConfigOneOfIntf interface {
+	isaDestinationConfigOneOf() bool
 }
 
-// UnmarshalDestinationConfigParams unmarshals an instance of DestinationConfigParams from the specified map of raw messages.
-func UnmarshalDestinationConfigParams(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DestinationConfigParams)
+// UnmarshalDestinationConfigOneOf unmarshals an instance of DestinationConfigOneOf from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOf(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOf)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
 		return
@@ -3048,6 +3052,22 @@ func UnmarshalDestinationConfigParams(m map[string]json.RawMessage, result inter
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sender_id", &obj.SenderID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "project_id", &obj.ProjectID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "private_key", &obj.PrivateKey)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "client_email", &obj.ClientEmail)
 	if err != nil {
 		return
 	}
@@ -3099,145 +3119,35 @@ func UnmarshalDestinationConfigParams(m map[string]json.RawMessage, result inter
 	if err != nil {
 		return
 	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// DestinationDevicesList : Payload describing a destination devices list request.
-type DestinationDevicesList struct {
-	// Total number of destination devices.
-	TotalCount *int64 `json:"total_count" validate:"required"`
-
-	// Current offset.
-	Offset *int64 `json:"offset" validate:"required"`
-
-	// limit to show destination devices.
-	Limit *int64 `json:"limit" validate:"required"`
-
-	// List of devices.
-	Devices []DestinationDevicesListItem `json:"devices" validate:"required"`
-}
-
-// UnmarshalDestinationDevicesList unmarshals an instance of DestinationDevicesList from the specified map of raw messages.
-func UnmarshalDestinationDevicesList(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DestinationDevicesList)
-	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	err = core.UnmarshalPrimitive(m, "routing_key", &obj.RoutingKey)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
+	err = core.UnmarshalPrimitive(m, "client_id", &obj.ClientID)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	err = core.UnmarshalPrimitive(m, "client_secret", &obj.ClientSecret)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "devices", &obj.Devices, UnmarshalDestinationDevicesListItem)
+	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
 	if err != nil {
 		return
 	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// DestinationDevicesListItem : device object.
-type DestinationDevicesListItem struct {
-	// device ID.
-	ID *string `json:"id" validate:"required"`
-
-	// user ID.
-	UserID *string `json:"user_id,omitempty"`
-
-	// Destination platform.
-	Platform *string `json:"platform" validate:"required"`
-
-	// Destination device token.
-	Token *string `json:"token" validate:"required"`
-
-	// Updated at.
-	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
-}
-
-// UnmarshalDestinationDevicesListItem unmarshals an instance of DestinationDevicesListItem from the specified map of raw messages.
-func UnmarshalDestinationDevicesListItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DestinationDevicesListItem)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	err = core.UnmarshalPrimitive(m, "instance_name", &obj.InstanceName)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "user_id", &obj.UserID)
+	err = core.UnmarshalPrimitive(m, "bucket_name", &obj.BucketName)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "platform", &obj.Platform)
+	err = core.UnmarshalPrimitive(m, "instance_id", &obj.InstanceID)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "token", &obj.Token)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// DestinationDevicesReport : Payload describing a destination devices report.
-type DestinationDevicesReport struct {
-	// Android Devices Registered.
-	Android *int64 `json:"android" validate:"required"`
-
-	// ios Devices Registered.
-	Ios *int64 `json:"ios" validate:"required"`
-
-	// chrome web Devices Registered.
-	Chrome *int64 `json:"chrome" validate:"required"`
-
-	// firefox web Devices Registered.
-	Firefox *int64 `json:"firefox" validate:"required"`
-
-	// safari web Devices Registered.
-	Safari *int64 `json:"safari" validate:"required"`
-
-	// chromeAppExt Devices Registered.
-	ChromeAppExt *int64 `json:"chromeAppExt" validate:"required"`
-
-	// Total Devices Registered.
-	All *int64 `json:"all" validate:"required"`
-}
-
-// UnmarshalDestinationDevicesReport unmarshals an instance of DestinationDevicesReport from the specified map of raw messages.
-func UnmarshalDestinationDevicesReport(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DestinationDevicesReport)
-	err = core.UnmarshalPrimitive(m, "android", &obj.Android)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "ios", &obj.Ios)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "chrome", &obj.Chrome)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "firefox", &obj.Firefox)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "safari", &obj.Safari)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "chromeAppExt", &obj.ChromeAppExt)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "all", &obj.All)
+	err = core.UnmarshalPrimitive(m, "endpoint", &obj.Endpoint)
 	if err != nil {
 		return
 	}
@@ -3258,6 +3168,15 @@ type DestinationList struct {
 
 	// List of destinations.
 	Destinations []DestinationListItem `json:"destinations" validate:"required"`
+
+	// Response having URL of the page.
+	First *PageHrefResponse `json:"first,omitempty"`
+
+	// Response having URL of the page.
+	Previous *PageHrefResponse `json:"previous,omitempty"`
+
+	// Response having URL of the page.
+	Next *PageHrefResponse `json:"next,omitempty"`
 }
 
 // UnmarshalDestinationList unmarshals an instance of DestinationList from the specified map of raw messages.
@@ -3279,8 +3198,37 @@ func UnmarshalDestinationList(m map[string]json.RawMessage, result interface{}) 
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *DestinationList) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
+	if err != nil || offset == nil {
+		return nil, err
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
 }
 
 // DestinationListItem : Destination object.
@@ -3310,10 +3258,17 @@ type DestinationListItem struct {
 // Constants associated with the DestinationListItem.Type property.
 // Destination type.
 const (
+	DestinationListItemTypeIbmceConst       = "ibmce"
+	DestinationListItemTypeIbmcfConst       = "ibmcf"
+	DestinationListItemTypeIbmcosConst      = "ibmcos"
+	DestinationListItemTypeMsteamsConst     = "msteams"
+	DestinationListItemTypePagerdutyConst   = "pagerduty"
 	DestinationListItemTypePushAndroidConst = "push_android"
+	DestinationListItemTypePushHuaweiConst  = "push_huawei"
 	DestinationListItemTypePushIosConst     = "push_ios"
 	DestinationListItemTypePushSafariConst  = "push_safari"
 	DestinationListItemTypeSMTPIBMConst     = "smtp_ibm"
+	DestinationListItemTypeServicenowConst  = "servicenow"
 	DestinationListItemTypeSlackConst       = "slack"
 	DestinationListItemTypeSmsIBMConst      = "sms_ibm"
 	DestinationListItemTypeWebhookConst     = "webhook"
@@ -3378,11 +3333,18 @@ type DestinationResponse struct {
 // Constants associated with the DestinationResponse.Type property.
 // Destination type.
 const (
+	DestinationResponseTypeIbmceConst       = "ibmce"
+	DestinationResponseTypeIbmcfConst       = "ibmcf"
+	DestinationResponseTypeIbmcosConst      = "ibmcos"
+	DestinationResponseTypeMsteamsConst     = "msteams"
+	DestinationResponseTypePagerdutyConst   = "pagerduty"
 	DestinationResponseTypePushAndroidConst = "push_android"
 	DestinationResponseTypePushChromeConst  = "push_chrome"
 	DestinationResponseTypePushFirefoxConst = "push_firefox"
+	DestinationResponseTypePushHuaweiConst  = "push_huawei"
 	DestinationResponseTypePushIosConst     = "push_ios"
 	DestinationResponseTypePushSafariConst  = "push_safari"
+	DestinationResponseTypeServicenowConst  = "servicenow"
 	DestinationResponseTypeSlackConst       = "slack"
 	DestinationResponseTypeWebhookConst     = "webhook"
 )
@@ -3429,7 +3391,7 @@ type DestinationTagsSubscriptionResponse struct {
 	// The name of the tag its subscribed.
 	TagName *string `json:"tag_name" validate:"required"`
 
-	// The user identifier for the the device registration.
+	// The user identifier for the device registration.
 	UserID *string `json:"user_id,omitempty"`
 
 	// Last updated time.
@@ -3463,40 +3425,30 @@ func UnmarshalDestinationTagsSubscriptionResponse(m map[string]json.RawMessage, 
 	return
 }
 
-// EmailUpdateAttributesTo : The email ids.
-type EmailUpdateAttributesTo struct {
-	// The email ids.
-	Add []string `json:"add,omitempty"`
+// EmailAttributesResponseInvitedItems : EmailAttributesResponseInvitedItems struct
+type EmailAttributesResponseInvitedItems struct {
+	// email address.
+	Email *string `json:"email,omitempty"`
 
-	// The email ids for removal.
-	Remove []string `json:"remove,omitempty"`
+	// last updated time.
+	UpdatedAt *strfmt.DateTime `json:"updated_at,omitempty"`
+
+	// time of expiration.
+	ExpiresAt *strfmt.DateTime `json:"expires_at,omitempty"`
 }
 
-// UnmarshalEmailUpdateAttributesTo unmarshals an instance of EmailUpdateAttributesTo from the specified map of raw messages.
-func UnmarshalEmailUpdateAttributesTo(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(EmailUpdateAttributesTo)
-	err = core.UnmarshalPrimitive(m, "add", &obj.Add)
+// UnmarshalEmailAttributesResponseInvitedItems unmarshals an instance of EmailAttributesResponseInvitedItems from the specified map of raw messages.
+func UnmarshalEmailAttributesResponseInvitedItems(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EmailAttributesResponseInvitedItems)
+	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
 	if err != nil {
 		return
 	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// EmailUpdateAttributesUnsubscribed : The email ids.
-type EmailUpdateAttributesUnsubscribed struct {
-	// The email ids unsubscribed.
-	Remove []string `json:"remove,omitempty"`
-}
-
-// UnmarshalEmailUpdateAttributesUnsubscribed unmarshals an instance of EmailUpdateAttributesUnsubscribed from the specified map of raw messages.
-func UnmarshalEmailUpdateAttributesUnsubscribed(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(EmailUpdateAttributesUnsubscribed)
-	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
+	err = core.UnmarshalPrimitive(m, "expires_at", &obj.ExpiresAt)
 	if err != nil {
 		return
 	}
@@ -3504,53 +3456,28 @@ func UnmarshalEmailUpdateAttributesUnsubscribed(m map[string]json.RawMessage, re
 	return
 }
 
-// GetDestinationDevicesReportOptions : The GetDestinationDevicesReport options.
-type GetDestinationDevicesReportOptions struct {
-	// Unique identifier for IBM Cloud Event Notifications instance.
-	InstanceID *string `json:"instance_id" validate:"required,ne="`
+// EmailAttributesResponseSubscribedUnsubscribedItems : EmailAttributesResponseSubscribedUnsubscribedItems struct
+type EmailAttributesResponseSubscribedUnsubscribedItems struct {
+	// email address.
+	Email *string `json:"email,omitempty"`
 
-	// Unique identifier for Destination.
-	ID *string `json:"id" validate:"required,ne="`
-
-	// Number of days report has to be generated from
-	// * `Note :` Max value is 90
-	// * Min or default value is 1.
-	Days *int64 `json:"days,omitempty"`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
+	// last updated time.
+	UpdatedAt *strfmt.DateTime `json:"updated_at,omitempty"`
 }
 
-// NewGetDestinationDevicesReportOptions : Instantiate GetDestinationDevicesReportOptions
-func (*EventNotificationsV1) NewGetDestinationDevicesReportOptions(instanceID string, id string) *GetDestinationDevicesReportOptions {
-	return &GetDestinationDevicesReportOptions{
-		InstanceID: core.StringPtr(instanceID),
-		ID:         core.StringPtr(id),
+// UnmarshalEmailAttributesResponseSubscribedUnsubscribedItems unmarshals an instance of EmailAttributesResponseSubscribedUnsubscribedItems from the specified map of raw messages.
+func UnmarshalEmailAttributesResponseSubscribedUnsubscribedItems(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EmailAttributesResponseSubscribedUnsubscribedItems)
+	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
+	if err != nil {
+		return
 	}
-}
-
-// SetInstanceID : Allow user to set InstanceID
-func (_options *GetDestinationDevicesReportOptions) SetInstanceID(instanceID string) *GetDestinationDevicesReportOptions {
-	_options.InstanceID = core.StringPtr(instanceID)
-	return _options
-}
-
-// SetID : Allow user to set ID
-func (_options *GetDestinationDevicesReportOptions) SetID(id string) *GetDestinationDevicesReportOptions {
-	_options.ID = core.StringPtr(id)
-	return _options
-}
-
-// SetDays : Allow user to set Days
-func (_options *GetDestinationDevicesReportOptions) SetDays(days int64) *GetDestinationDevicesReportOptions {
-	_options.Days = core.Int64Ptr(days)
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *GetDestinationDevicesReportOptions) SetHeaders(param map[string]string) *GetDestinationDevicesReportOptions {
-	options.Headers = param
-	return options
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // GetDestinationOptions : The GetDestination options.
@@ -3587,6 +3514,44 @@ func (_options *GetDestinationOptions) SetID(id string) *GetDestinationOptions {
 
 // SetHeaders : Allow user to set Headers
 func (options *GetDestinationOptions) SetHeaders(param map[string]string) *GetDestinationOptions {
+	options.Headers = param
+	return options
+}
+
+// GetIntegrationOptions : The GetIntegration options.
+type GetIntegrationOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for integration.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetIntegrationOptions : Instantiate GetIntegrationOptions
+func (*EventNotificationsV1) NewGetIntegrationOptions(instanceID string, id string) *GetIntegrationOptions {
+	return &GetIntegrationOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *GetIntegrationOptions) SetInstanceID(instanceID string) *GetIntegrationOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetIntegrationOptions) SetID(id string) *GetIntegrationOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetIntegrationOptions) SetHeaders(param map[string]string) *GetIntegrationOptions {
 	options.Headers = param
 	return options
 }
@@ -3714,69 +3679,212 @@ func (options *GetTopicOptions) SetHeaders(param map[string]string) *GetTopicOpt
 	return options
 }
 
-// ListDestinationDevicesOptions : The ListDestinationDevices options.
-type ListDestinationDevicesOptions struct {
-	// Unique identifier for IBM Cloud Event Notifications instance.
-	InstanceID *string `json:"instance_id" validate:"required,ne="`
+// IntegrationGetResponse : Integration response object.
+type IntegrationGetResponse struct {
+	// ID of the integration.
+	ID *strfmt.UUID `json:"id" validate:"required"`
 
-	// Unique identifier for Destination.
-	ID *string `json:"id" validate:"required,ne="`
+	// Integration type. Allowed values are kms and hs-crypto.
+	Type *string `json:"type" validate:"required"`
 
-	// Page limit for paginated results.
-	Limit *int64 `json:"limit,omitempty"`
+	// Integration Metadata object.
+	Metadata *IntegrationMetadata `json:"metadata" validate:"required"`
 
-	// offset for paginated results.
-	Offset *int64 `json:"offset,omitempty"`
+	// Creation time of an integration.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// Search string for filtering results.
-	Search *string `json:"search,omitempty"`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
+	// Last update time of an integration.
+	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
 }
 
-// NewListDestinationDevicesOptions : Instantiate ListDestinationDevicesOptions
-func (*EventNotificationsV1) NewListDestinationDevicesOptions(instanceID string, id string) *ListDestinationDevicesOptions {
-	return &ListDestinationDevicesOptions{
-		InstanceID: core.StringPtr(instanceID),
-		ID:         core.StringPtr(id),
+// UnmarshalIntegrationGetResponse unmarshals an instance of IntegrationGetResponse from the specified map of raw messages.
+func UnmarshalIntegrationGetResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IntegrationGetResponse)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
 	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "metadata", &obj.Metadata, UnmarshalIntegrationMetadata)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
-// SetInstanceID : Allow user to set InstanceID
-func (_options *ListDestinationDevicesOptions) SetInstanceID(instanceID string) *ListDestinationDevicesOptions {
-	_options.InstanceID = core.StringPtr(instanceID)
-	return _options
+// IntegrationList : all Integrations response object.
+type IntegrationList struct {
+	// Number of integrations.
+	TotalCount *int64 `json:"total_count" validate:"required"`
+
+	// Current offset.
+	Offset *int64 `json:"offset" validate:"required"`
+
+	// limit to show integrations.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// List of integrations.
+	Integrations []IntegrationListItem `json:"integrations" validate:"required"`
+
+	// Response having URL of the page.
+	First *PageHrefResponse `json:"first,omitempty"`
+
+	// Response having URL of the page.
+	Previous *PageHrefResponse `json:"previous,omitempty"`
+
+	// Response having URL of the page.
+	Next *PageHrefResponse `json:"next,omitempty"`
 }
 
-// SetID : Allow user to set ID
-func (_options *ListDestinationDevicesOptions) SetID(id string) *ListDestinationDevicesOptions {
-	_options.ID = core.StringPtr(id)
-	return _options
+// UnmarshalIntegrationList unmarshals an instance of IntegrationList from the specified map of raw messages.
+func UnmarshalIntegrationList(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IntegrationList)
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "integrations", &obj.Integrations, UnmarshalIntegrationListItem)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
-// SetLimit : Allow user to set Limit
-func (_options *ListDestinationDevicesOptions) SetLimit(limit int64) *ListDestinationDevicesOptions {
-	_options.Limit = core.Int64Ptr(limit)
-	return _options
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *IntegrationList) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
+	if err != nil || offset == nil {
+		return nil, err
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
 }
 
-// SetOffset : Allow user to set Offset
-func (_options *ListDestinationDevicesOptions) SetOffset(offset int64) *ListDestinationDevicesOptions {
-	_options.Offset = core.Int64Ptr(offset)
-	return _options
+// IntegrationListItem : all Integrations response object.
+type IntegrationListItem struct {
+	// ID of the integration.
+	ID *strfmt.UUID `json:"id" validate:"required"`
+
+	// Integration type. Allowed values are kms and hs-crypto.
+	Type *string `json:"type" validate:"required"`
+
+	// Integration Metadata object.
+	Metadata *IntegrationMetadata `json:"metadata" validate:"required"`
+
+	// Creation time of an integration.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// Update time of an integration.
+	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
 }
 
-// SetSearch : Allow user to set Search
-func (_options *ListDestinationDevicesOptions) SetSearch(search string) *ListDestinationDevicesOptions {
-	_options.Search = core.StringPtr(search)
-	return _options
+// UnmarshalIntegrationListItem unmarshals an instance of IntegrationListItem from the specified map of raw messages.
+func UnmarshalIntegrationListItem(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IntegrationListItem)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "metadata", &obj.Metadata, UnmarshalIntegrationMetadata)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
-// SetHeaders : Allow user to set Headers
-func (options *ListDestinationDevicesOptions) SetHeaders(param map[string]string) *ListDestinationDevicesOptions {
-	options.Headers = param
-	return options
+// IntegrationMetadata : Integration Metadata object.
+type IntegrationMetadata struct {
+	// KMS url for key management.
+	Endpoint *string `json:"endpoint" validate:"required"`
+
+	// CRN of the KMS instance.
+	CRN *string `json:"crn" validate:"required"`
+
+	// Root Key ID of KMS.
+	RootKeyID *string `json:"root_key_id" validate:"required"`
+}
+
+// NewIntegrationMetadata : Instantiate IntegrationMetadata (Generic Model Constructor)
+func (*EventNotificationsV1) NewIntegrationMetadata(endpoint string, crn string, rootKeyID string) (_model *IntegrationMetadata, err error) {
+	_model = &IntegrationMetadata{
+		Endpoint:  core.StringPtr(endpoint),
+		CRN:       core.StringPtr(crn),
+		RootKeyID: core.StringPtr(rootKeyID),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalIntegrationMetadata unmarshals an instance of IntegrationMetadata from the specified map of raw messages.
+func UnmarshalIntegrationMetadata(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IntegrationMetadata)
+	err = core.UnmarshalPrimitive(m, "endpoint", &obj.Endpoint)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "root_key_id", &obj.RootKeyID)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // ListDestinationsOptions : The ListDestinations options.
@@ -3830,6 +3938,61 @@ func (_options *ListDestinationsOptions) SetSearch(search string) *ListDestinati
 
 // SetHeaders : Allow user to set Headers
 func (options *ListDestinationsOptions) SetHeaders(param map[string]string) *ListDestinationsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListIntegrationsOptions : The ListIntegrations options.
+type ListIntegrationsOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// offset for paginated results.
+	Offset *int64 `json:"offset,omitempty"`
+
+	// Page limit for paginated results.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Search string for filtering results.
+	Search *string `json:"search,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListIntegrationsOptions : Instantiate ListIntegrationsOptions
+func (*EventNotificationsV1) NewListIntegrationsOptions(instanceID string) *ListIntegrationsOptions {
+	return &ListIntegrationsOptions{
+		InstanceID: core.StringPtr(instanceID),
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *ListIntegrationsOptions) SetInstanceID(instanceID string) *ListIntegrationsOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetOffset : Allow user to set Offset
+func (_options *ListIntegrationsOptions) SetOffset(offset int64) *ListIntegrationsOptions {
+	_options.Offset = core.Int64Ptr(offset)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListIntegrationsOptions) SetLimit(limit int64) *ListIntegrationsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetSearch : Allow user to set Search
+func (_options *ListIntegrationsOptions) SetSearch(search string) *ListIntegrationsOptions {
+	_options.Search = core.StringPtr(search)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListIntegrationsOptions) SetHeaders(param map[string]string) *ListIntegrationsOptions {
 	options.Headers = param
 	return options
 }
@@ -3952,7 +4115,7 @@ type ListTagsSubscriptionOptions struct {
 	// Unique identifier for Destination.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// DeviceID of the destination tagsubscription.
+	// Device ID of the destination tagsubscription.
 	DeviceID *string `json:"device_id,omitempty"`
 
 	// UserID of the destination.
@@ -4036,81 +4199,6 @@ func (options *ListTagsSubscriptionOptions) SetHeaders(param map[string]string) 
 	return options
 }
 
-// ListTagsSubscriptionsDeviceOptions : The ListTagsSubscriptionsDevice options.
-type ListTagsSubscriptionsDeviceOptions struct {
-	// Unique identifier for IBM Cloud Event Notifications instance.
-	InstanceID *string `json:"instance_id" validate:"required,ne="`
-
-	// Unique identifier for Destination.
-	ID *string `json:"id" validate:"required,ne="`
-
-	// DeviceID of the destination.
-	DeviceID *string `json:"device_id" validate:"required,ne="`
-
-	// TagName of the subscription.
-	TagName *string `json:"tag_name,omitempty"`
-
-	// Page limit for paginated results.
-	Limit *int64 `json:"limit,omitempty"`
-
-	// offset for paginated results.
-	Offset *int64 `json:"offset,omitempty"`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewListTagsSubscriptionsDeviceOptions : Instantiate ListTagsSubscriptionsDeviceOptions
-func (*EventNotificationsV1) NewListTagsSubscriptionsDeviceOptions(instanceID string, id string, deviceID string) *ListTagsSubscriptionsDeviceOptions {
-	return &ListTagsSubscriptionsDeviceOptions{
-		InstanceID: core.StringPtr(instanceID),
-		ID:         core.StringPtr(id),
-		DeviceID:   core.StringPtr(deviceID),
-	}
-}
-
-// SetInstanceID : Allow user to set InstanceID
-func (_options *ListTagsSubscriptionsDeviceOptions) SetInstanceID(instanceID string) *ListTagsSubscriptionsDeviceOptions {
-	_options.InstanceID = core.StringPtr(instanceID)
-	return _options
-}
-
-// SetID : Allow user to set ID
-func (_options *ListTagsSubscriptionsDeviceOptions) SetID(id string) *ListTagsSubscriptionsDeviceOptions {
-	_options.ID = core.StringPtr(id)
-	return _options
-}
-
-// SetDeviceID : Allow user to set DeviceID
-func (_options *ListTagsSubscriptionsDeviceOptions) SetDeviceID(deviceID string) *ListTagsSubscriptionsDeviceOptions {
-	_options.DeviceID = core.StringPtr(deviceID)
-	return _options
-}
-
-// SetTagName : Allow user to set TagName
-func (_options *ListTagsSubscriptionsDeviceOptions) SetTagName(tagName string) *ListTagsSubscriptionsDeviceOptions {
-	_options.TagName = core.StringPtr(tagName)
-	return _options
-}
-
-// SetLimit : Allow user to set Limit
-func (_options *ListTagsSubscriptionsDeviceOptions) SetLimit(limit int64) *ListTagsSubscriptionsDeviceOptions {
-	_options.Limit = core.Int64Ptr(limit)
-	return _options
-}
-
-// SetOffset : Allow user to set Offset
-func (_options *ListTagsSubscriptionsDeviceOptions) SetOffset(offset int64) *ListTagsSubscriptionsDeviceOptions {
-	_options.Offset = core.Int64Ptr(offset)
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *ListTagsSubscriptionsDeviceOptions) SetHeaders(param map[string]string) *ListTagsSubscriptionsDeviceOptions {
-	options.Headers = param
-	return options
-}
-
 // ListTopicsOptions : The ListTopics options.
 type ListTopicsOptions struct {
 	// Unique identifier for IBM Cloud Event Notifications instance.
@@ -4168,73 +4256,90 @@ func (options *ListTopicsOptions) SetHeaders(param map[string]string) *ListTopic
 
 // NotificationCreate : Payload describing a notification create request.
 type NotificationCreate struct {
-	// The Notifications data for webhook.
-	Data map[string]interface{} `json:"data,omitempty"`
+	// The version of the notification specification.
+	Specversion *string `json:"specversion" validate:"required"`
 
-	// The Notifications id.
+	// The time notification was created.
+	Time *strfmt.DateTime `json:"time,omitempty"`
+
+	// The unique identifier of the notification.
+	ID *string `json:"id" validate:"required"`
+
+	// The source of notifications.
+	Source *string `json:"source" validate:"required"`
+
+	// The notifications type.
+	Type *string `json:"type" validate:"required"`
+
+	// The severity of the notification.
 	Ibmenseverity *string `json:"ibmenseverity,omitempty"`
 
-	// The Notifications FCM body.
-	Ibmenfcmbody *string `json:"ibmenfcmbody,omitempty"`
-
-	// The Notifications APNS body.
-	Ibmenapnsbody *string `json:"ibmenapnsbody,omitempty"`
-
-	// The Notifications safari body.
-	Ibmensafaribody *string `json:"ibmensafaribody,omitempty"`
-
-	// This field should not be empty. The allowed fields are fcm_devices, apns_devices, chrome_devices, firefox_devices,
-	// platforms, tags and user_ids. If platforms or tags or user_ids are being used then do not use fcm_devices /
-	// apns_devices / chrome_devices / firefox_devices with it.
-	Ibmenpushto *string `json:"ibmenpushto,omitempty"`
-
-	// Headers for an APNs notification.
-	Ibmenapnsheaders *string `json:"ibmenapnsheaders,omitempty"`
+	// The source id of the notification.
+	Ibmensourceid *string `json:"ibmensourceid" validate:"required"`
 
 	// Default short text for the message.
-	Ibmendefaultshort *string `json:"ibmendefaultshort,omitempty"`
+	Ibmendefaultshort *string `json:"ibmendefaultshort" validate:"required"`
 
 	// Default long text for the message.
-	Ibmendefaultlong *string `json:"ibmendefaultlong,omitempty"`
+	Ibmendefaultlong *string `json:"ibmendefaultlong" validate:"required"`
 
-	// The Notifications Chrome body.
-	Ibmenchromebody *string `json:"ibmenchromebody,omitempty"`
-
-	// The Notifications Firefox body.
-	Ibmenfirefoxbody *string `json:"ibmenfirefoxbody,omitempty"`
-
-	// Headers for a Chrome notification.
-	Ibmenchromeheaders *string `json:"ibmenchromeheaders,omitempty"`
-
-	// Headers for an FireFox notification.
-	Ibmenfirefoxheaders *string `json:"ibmenfirefoxheaders,omitempty"`
-
-	// The Event Notifications source id.
-	Ibmensourceid *string `json:"ibmensourceid,omitempty"`
-
-	// The Notifications content type.
-	Datacontenttype *string `json:"datacontenttype,omitempty"`
-
-	// The Notifications subject.
+	// The subject of the notification.
 	Subject *string `json:"subject,omitempty"`
 
-	// The Notifications id.
-	ID *string `json:"id,omitempty"`
+	// The payload for webhook notification.
+	Data map[string]interface{} `json:"data,omitempty"`
 
-	// The source of Notifications.
-	Source *string `json:"source,omitempty"`
+	// The notification content type.
+	Datacontenttype *string `json:"datacontenttype,omitempty"`
 
-	// The Notifications type.
-	Type *string `json:"type,omitempty"`
+	// If platforms or tags or user_ids is used then do not use fcm_devices / apns_devices / chrome_devices /
+	// firefox_devices / safari_devices with it. Value should be stringified.
+	Ibmenpushto *string `json:"ibmenpushto,omitempty"`
 
-	// The Notifications specversion.
-	Specversion *string `json:"specversion,omitempty"`
+	// Payload describing a notification FCM body. Value should be stringified.
+	Ibmenfcmbody *string `json:"ibmenfcmbody,omitempty"`
 
-	// The Notifications time.
-	Time *string `json:"time,omitempty"`
+	// Payload describing a notification APNs body. Value should be stringified.
+	Ibmenapnsbody *string `json:"ibmenapnsbody,omitempty"`
+
+	// Headers for iOS notification. Value should be stringified.
+	Ibmenapnsheaders *string `json:"ibmenapnsheaders,omitempty"`
+
+	// Notification payload for Chrome. Value should be stringified.
+	Ibmenchromebody *string `json:"ibmenchromebody,omitempty"`
+
+	// Headers for a Chrome notification. Value should be stringified.
+	Ibmenchromeheaders *string `json:"ibmenchromeheaders,omitempty"`
+
+	// Notification payload for Firefox. Value should be stringified.
+	Ibmenfirefoxbody *string `json:"ibmenfirefoxbody,omitempty"`
+
+	// Headers for a Firefox notification. Value should be stringified.
+	Ibmenfirefoxheaders *string `json:"ibmenfirefoxheaders,omitempty"`
+
+	// Payload describing a notification Huawei body. Value should be stringified.
+	Ibmenhuaweibody *string `json:"ibmenhuaweibody,omitempty"`
+
+	// Payload describing a notification Safari body. Value should be stringified.
+	Ibmensafaribody *string `json:"ibmensafaribody,omitempty"`
 
 	// Allows users to set arbitrary properties
 	additionalProperties map[string]interface{}
+}
+
+// NewNotificationCreate : Instantiate NotificationCreate (Generic Model Constructor)
+func (*EventNotificationsV1) NewNotificationCreate(specversion string, id string, source string, typeVar string, ibmensourceid string, ibmendefaultshort string, ibmendefaultlong string) (_model *NotificationCreate, err error) {
+	_model = &NotificationCreate{
+		Specversion:       core.StringPtr(specversion),
+		ID:                core.StringPtr(id),
+		Source:            core.StringPtr(source),
+		Type:              core.StringPtr(typeVar),
+		Ibmensourceid:     core.StringPtr(ibmensourceid),
+		Ibmendefaultshort: core.StringPtr(ibmendefaultshort),
+		Ibmendefaultlong:  core.StringPtr(ibmendefaultlong),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
 }
 
 // SetProperty allows the user to set an arbitrary property on an instance of NotificationCreate
@@ -4271,53 +4376,11 @@ func (o *NotificationCreate) MarshalJSON() (buffer []byte, err error) {
 			m[k] = v
 		}
 	}
-	if o.Data != nil {
-		m["data"] = o.Data
+	if o.Specversion != nil {
+		m["specversion"] = o.Specversion
 	}
-	if o.Ibmenseverity != nil {
-		m["ibmenseverity"] = o.Ibmenseverity
-	}
-	if o.Ibmenfcmbody != nil {
-		m["ibmenfcmbody"] = o.Ibmenfcmbody
-	}
-	if o.Ibmenapnsbody != nil {
-		m["ibmenapnsbody"] = o.Ibmenapnsbody
-	}
-	if o.Ibmensafaribody != nil {
-		m["ibmensafaribody"] = o.Ibmensafaribody
-	}
-	if o.Ibmenpushto != nil {
-		m["ibmenpushto"] = o.Ibmenpushto
-	}
-	if o.Ibmenapnsheaders != nil {
-		m["ibmenapnsheaders"] = o.Ibmenapnsheaders
-	}
-	if o.Ibmendefaultshort != nil {
-		m["ibmendefaultshort"] = o.Ibmendefaultshort
-	}
-	if o.Ibmendefaultlong != nil {
-		m["ibmendefaultlong"] = o.Ibmendefaultlong
-	}
-	if o.Ibmenchromebody != nil {
-		m["ibmenchromebody"] = o.Ibmenchromebody
-	}
-	if o.Ibmenfirefoxbody != nil {
-		m["ibmenfirefoxbody"] = o.Ibmenfirefoxbody
-	}
-	if o.Ibmenchromeheaders != nil {
-		m["ibmenchromeheaders"] = o.Ibmenchromeheaders
-	}
-	if o.Ibmenfirefoxheaders != nil {
-		m["ibmenfirefoxheaders"] = o.Ibmenfirefoxheaders
-	}
-	if o.Ibmensourceid != nil {
-		m["ibmensourceid"] = o.Ibmensourceid
-	}
-	if o.Datacontenttype != nil {
-		m["datacontenttype"] = o.Datacontenttype
-	}
-	if o.Subject != nil {
-		m["subject"] = o.Subject
+	if o.Time != nil {
+		m["time"] = o.Time
 	}
 	if o.ID != nil {
 		m["id"] = o.ID
@@ -4328,11 +4391,56 @@ func (o *NotificationCreate) MarshalJSON() (buffer []byte, err error) {
 	if o.Type != nil {
 		m["type"] = o.Type
 	}
-	if o.Specversion != nil {
-		m["specversion"] = o.Specversion
+	if o.Ibmenseverity != nil {
+		m["ibmenseverity"] = o.Ibmenseverity
 	}
-	if o.Time != nil {
-		m["time"] = o.Time
+	if o.Ibmensourceid != nil {
+		m["ibmensourceid"] = o.Ibmensourceid
+	}
+	if o.Ibmendefaultshort != nil {
+		m["ibmendefaultshort"] = o.Ibmendefaultshort
+	}
+	if o.Ibmendefaultlong != nil {
+		m["ibmendefaultlong"] = o.Ibmendefaultlong
+	}
+	if o.Subject != nil {
+		m["subject"] = o.Subject
+	}
+	if o.Data != nil {
+		m["data"] = o.Data
+	}
+	if o.Datacontenttype != nil {
+		m["datacontenttype"] = o.Datacontenttype
+	}
+	if o.Ibmenpushto != nil {
+		m["ibmenpushto"] = o.Ibmenpushto
+	}
+	if o.Ibmenfcmbody != nil {
+		m["ibmenfcmbody"] = o.Ibmenfcmbody
+	}
+	if o.Ibmenapnsbody != nil {
+		m["ibmenapnsbody"] = o.Ibmenapnsbody
+	}
+	if o.Ibmenapnsheaders != nil {
+		m["ibmenapnsheaders"] = o.Ibmenapnsheaders
+	}
+	if o.Ibmenchromebody != nil {
+		m["ibmenchromebody"] = o.Ibmenchromebody
+	}
+	if o.Ibmenchromeheaders != nil {
+		m["ibmenchromeheaders"] = o.Ibmenchromeheaders
+	}
+	if o.Ibmenfirefoxbody != nil {
+		m["ibmenfirefoxbody"] = o.Ibmenfirefoxbody
+	}
+	if o.Ibmenfirefoxheaders != nil {
+		m["ibmenfirefoxheaders"] = o.Ibmenfirefoxheaders
+	}
+	if o.Ibmenhuaweibody != nil {
+		m["ibmenhuaweibody"] = o.Ibmenhuaweibody
+	}
+	if o.Ibmensafaribody != nil {
+		m["ibmensafaribody"] = o.Ibmensafaribody
 	}
 	buffer, err = json.Marshal(m)
 	return
@@ -4341,86 +4449,16 @@ func (o *NotificationCreate) MarshalJSON() (buffer []byte, err error) {
 // UnmarshalNotificationCreate unmarshals an instance of NotificationCreate from the specified map of raw messages.
 func UnmarshalNotificationCreate(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(NotificationCreate)
-	err = core.UnmarshalPrimitive(m, "data", &obj.Data)
+	err = core.UnmarshalPrimitive(m, "specversion", &obj.Specversion)
 	if err != nil {
 		return
 	}
-	delete(m, "data")
-	err = core.UnmarshalPrimitive(m, "ibmenseverity", &obj.Ibmenseverity)
+	delete(m, "specversion")
+	err = core.UnmarshalPrimitive(m, "time", &obj.Time)
 	if err != nil {
 		return
 	}
-	delete(m, "ibmenseverity")
-	err = core.UnmarshalPrimitive(m, "ibmenfcmbody", &obj.Ibmenfcmbody)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmenfcmbody")
-	err = core.UnmarshalPrimitive(m, "ibmenapnsbody", &obj.Ibmenapnsbody)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmenapnsbody")
-	err = core.UnmarshalPrimitive(m, "ibmensafaribody", &obj.Ibmensafaribody)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmensafaribody")
-	err = core.UnmarshalPrimitive(m, "ibmenpushto", &obj.Ibmenpushto)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmenpushto")
-	err = core.UnmarshalPrimitive(m, "ibmenapnsheaders", &obj.Ibmenapnsheaders)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmenapnsheaders")
-	err = core.UnmarshalPrimitive(m, "ibmendefaultshort", &obj.Ibmendefaultshort)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmendefaultshort")
-	err = core.UnmarshalPrimitive(m, "ibmendefaultlong", &obj.Ibmendefaultlong)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmendefaultlong")
-	err = core.UnmarshalPrimitive(m, "ibmenchromebody", &obj.Ibmenchromebody)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmenchromebody")
-	err = core.UnmarshalPrimitive(m, "ibmenfirefoxbody", &obj.Ibmenfirefoxbody)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmenfirefoxbody")
-	err = core.UnmarshalPrimitive(m, "ibmenchromeheaders", &obj.Ibmenchromeheaders)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmenchromeheaders")
-	err = core.UnmarshalPrimitive(m, "ibmenfirefoxheaders", &obj.Ibmenfirefoxheaders)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmenfirefoxheaders")
-	err = core.UnmarshalPrimitive(m, "ibmensourceid", &obj.Ibmensourceid)
-	if err != nil {
-		return
-	}
-	delete(m, "ibmensourceid")
-	err = core.UnmarshalPrimitive(m, "datacontenttype", &obj.Datacontenttype)
-	if err != nil {
-		return
-	}
-	delete(m, "datacontenttype")
-	err = core.UnmarshalPrimitive(m, "subject", &obj.Subject)
-	if err != nil {
-		return
-	}
-	delete(m, "subject")
+	delete(m, "time")
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		return
@@ -4436,16 +4474,91 @@ func UnmarshalNotificationCreate(m map[string]json.RawMessage, result interface{
 		return
 	}
 	delete(m, "type")
-	err = core.UnmarshalPrimitive(m, "specversion", &obj.Specversion)
+	err = core.UnmarshalPrimitive(m, "ibmenseverity", &obj.Ibmenseverity)
 	if err != nil {
 		return
 	}
-	delete(m, "specversion")
-	err = core.UnmarshalPrimitive(m, "time", &obj.Time)
+	delete(m, "ibmenseverity")
+	err = core.UnmarshalPrimitive(m, "ibmensourceid", &obj.Ibmensourceid)
 	if err != nil {
 		return
 	}
-	delete(m, "time")
+	delete(m, "ibmensourceid")
+	err = core.UnmarshalPrimitive(m, "ibmendefaultshort", &obj.Ibmendefaultshort)
+	if err != nil {
+		return
+	}
+	delete(m, "ibmendefaultshort")
+	err = core.UnmarshalPrimitive(m, "ibmendefaultlong", &obj.Ibmendefaultlong)
+	if err != nil {
+		return
+	}
+	delete(m, "ibmendefaultlong")
+	err = core.UnmarshalPrimitive(m, "subject", &obj.Subject)
+	if err != nil {
+		return
+	}
+	delete(m, "subject")
+	err = core.UnmarshalPrimitive(m, "data", &obj.Data)
+	if err != nil {
+		return
+	}
+	delete(m, "data")
+	err = core.UnmarshalPrimitive(m, "datacontenttype", &obj.Datacontenttype)
+	if err != nil {
+		return
+	}
+	delete(m, "datacontenttype")
+	err = core.UnmarshalPrimitive(m, "ibmenpushto", &obj.Ibmenpushto)
+	if err != nil {
+		return
+	}
+	delete(m, "ibmenpushto")
+	err = core.UnmarshalPrimitive(m, "ibmenfcmbody", &obj.Ibmenfcmbody)
+	if err != nil {
+		return
+	}
+	delete(m, "ibmenfcmbody")
+	err = core.UnmarshalPrimitive(m, "ibmenapnsbody", &obj.Ibmenapnsbody)
+	if err != nil {
+		return
+	}
+	delete(m, "ibmenapnsbody")
+	err = core.UnmarshalPrimitive(m, "ibmenapnsheaders", &obj.Ibmenapnsheaders)
+	if err != nil {
+		return
+	}
+	delete(m, "ibmenapnsheaders")
+	err = core.UnmarshalPrimitive(m, "ibmenchromebody", &obj.Ibmenchromebody)
+	if err != nil {
+		return
+	}
+	delete(m, "ibmenchromebody")
+	err = core.UnmarshalPrimitive(m, "ibmenchromeheaders", &obj.Ibmenchromeheaders)
+	if err != nil {
+		return
+	}
+	delete(m, "ibmenchromeheaders")
+	err = core.UnmarshalPrimitive(m, "ibmenfirefoxbody", &obj.Ibmenfirefoxbody)
+	if err != nil {
+		return
+	}
+	delete(m, "ibmenfirefoxbody")
+	err = core.UnmarshalPrimitive(m, "ibmenfirefoxheaders", &obj.Ibmenfirefoxheaders)
+	if err != nil {
+		return
+	}
+	delete(m, "ibmenfirefoxheaders")
+	err = core.UnmarshalPrimitive(m, "ibmenhuaweibody", &obj.Ibmenhuaweibody)
+	if err != nil {
+		return
+	}
+	delete(m, "ibmenhuaweibody")
+	err = core.UnmarshalPrimitive(m, "ibmensafaribody", &obj.Ibmensafaribody)
+	if err != nil {
+		return
+	}
+	delete(m, "ibmensafaribody")
 	for k := range m {
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
@@ -4476,6 +4589,81 @@ func UnmarshalNotificationResponse(m map[string]json.RawMessage, result interfac
 	return
 }
 
+// PageHrefResponse : Response having URL of the page.
+type PageHrefResponse struct {
+	// URL to the page.
+	Href *string `json:"href" validate:"required"`
+}
+
+// UnmarshalPageHrefResponse unmarshals an instance of PageHrefResponse from the specified map of raw messages.
+func UnmarshalPageHrefResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PageHrefResponse)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ReplaceIntegrationOptions : The ReplaceIntegration options.
+type ReplaceIntegrationOptions struct {
+	// Unique identifier for IBM Cloud Event Notifications instance.
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
+	// Unique identifier for integration.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Integration type. Allowed values are kms and hs-crypto.
+	Type *string `json:"type" validate:"required"`
+
+	// Integration Metadata object.
+	Metadata *IntegrationMetadata `json:"metadata" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewReplaceIntegrationOptions : Instantiate ReplaceIntegrationOptions
+func (*EventNotificationsV1) NewReplaceIntegrationOptions(instanceID string, id string, typeVar string, metadata *IntegrationMetadata) *ReplaceIntegrationOptions {
+	return &ReplaceIntegrationOptions{
+		InstanceID: core.StringPtr(instanceID),
+		ID:         core.StringPtr(id),
+		Type:       core.StringPtr(typeVar),
+		Metadata:   metadata,
+	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *ReplaceIntegrationOptions) SetInstanceID(instanceID string) *ReplaceIntegrationOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *ReplaceIntegrationOptions) SetID(id string) *ReplaceIntegrationOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetType : Allow user to set Type
+func (_options *ReplaceIntegrationOptions) SetType(typeVar string) *ReplaceIntegrationOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetMetadata : Allow user to set Metadata
+func (_options *ReplaceIntegrationOptions) SetMetadata(metadata *IntegrationMetadata) *ReplaceIntegrationOptions {
+	_options.Metadata = metadata
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ReplaceIntegrationOptions) SetHeaders(param map[string]string) *ReplaceIntegrationOptions {
+	options.Headers = param
+	return options
+}
+
 // ReplaceTopicOptions : The ReplaceTopic options.
 type ReplaceTopicOptions struct {
 	// Unique identifier for IBM Cloud Event Notifications instance.
@@ -4491,7 +4679,7 @@ type ReplaceTopicOptions struct {
 	Description *string `json:"description,omitempty"`
 
 	// List of sources.
-	Sources []TopicUpdateSourcesItem `json:"sources,omitempty"`
+	Sources []SourcesItems `json:"sources,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -4530,7 +4718,7 @@ func (_options *ReplaceTopicOptions) SetDescription(description string) *Replace
 }
 
 // SetSources : Allow user to set Sources
-func (_options *ReplaceTopicOptions) SetSources(sources []TopicUpdateSourcesItem) *ReplaceTopicOptions {
+func (_options *ReplaceTopicOptions) SetSources(sources []SourcesItems) *ReplaceTopicOptions {
 	_options.Sources = sources
 	return _options
 }
@@ -4626,6 +4814,61 @@ func UnmarshalRulesGet(m map[string]json.RawMessage, result interface{}) (err er
 	return
 }
 
+// SmsAttributesItems : The sms attributes.
+type SmsAttributesItems struct {
+	// Phone number.
+	PhoneNumber *string `json:"phone_number,omitempty"`
+
+	// last updated time.
+	UpdatedAt *strfmt.DateTime `json:"updated_at,omitempty"`
+}
+
+// UnmarshalSmsAttributesItems unmarshals an instance of SmsAttributesItems from the specified map of raw messages.
+func UnmarshalSmsAttributesItems(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SmsAttributesItems)
+	err = core.UnmarshalPrimitive(m, "phone_number", &obj.PhoneNumber)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SmsInviteAttributesItems : The sms attributes.
+type SmsInviteAttributesItems struct {
+	// Phone number.
+	PhoneNumber *string `json:"phone_number,omitempty"`
+
+	// last updated time.
+	UpdatedAt *strfmt.DateTime `json:"updated_at,omitempty"`
+
+	// time of expiration.
+	ExpiresAt *strfmt.DateTime `json:"expires_at,omitempty"`
+}
+
+// UnmarshalSmsInviteAttributesItems unmarshals an instance of SmsInviteAttributesItems from the specified map of raw messages.
+func UnmarshalSmsInviteAttributesItems(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SmsInviteAttributesItems)
+	err = core.UnmarshalPrimitive(m, "phone_number", &obj.PhoneNumber)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "expires_at", &obj.ExpiresAt)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // SendBulkNotificationsOptions : The SendBulkNotifications options.
 type SendBulkNotificationsOptions struct {
 	// Unique identifier for IBM Cloud Event Notifications instance.
@@ -4671,60 +4914,6 @@ type SendNotificationsOptions struct {
 	// Payload describing a notification create request.
 	Body *NotificationCreate `json:"body,omitempty"`
 
-	// The Notification severity.
-	CeIbmenseverity *string `json:"ce-ibmenseverity,omitempty"`
-
-	// The Notification default short text.
-	CeIbmendefaultshort *string `json:"ce-ibmendefaultshort,omitempty"`
-
-	// The Notification default long text.
-	CeIbmendefaultlong *string `json:"ce-ibmendefaultlong,omitempty"`
-
-	// The FCM Notification body.
-	CeIbmenfcmbody *string `json:"ce-ibmenfcmbody,omitempty"`
-
-	// The APNS Notification body.
-	CeIbmenapnsbody *string `json:"ce-ibmenapnsbody,omitempty"`
-
-	// The safari Notification body.
-	CeIbmensafaribody *string `json:"ce-ibmensafaribody,omitempty"`
-
-	// Push Notifications Targets.
-	CeIbmenpushto *string `json:"ce-ibmenpushto,omitempty"`
-
-	// Push Notifications APNS Headers.
-	CeIbmenapnsheaders *string `json:"ce-ibmenapnsheaders,omitempty"`
-
-	// Push Notifications Chrome body.
-	CeIbmenchromebody *string `json:"ce-ibmenchromebody,omitempty"`
-
-	// Push Notifications Firefox body.
-	CeIbmenfirefoxbody *string `json:"ce-ibmenfirefoxbody,omitempty"`
-
-	// Push Notifications Chrome Headers.
-	CeIbmenchromeheaders *string `json:"ce-ibmenchromeheaders,omitempty"`
-
-	// Push Notifications Firefox Headers.
-	CeIbmenfirefoxheaders *string `json:"ce-ibmenfirefoxheaders,omitempty"`
-
-	// Event Notifications Target source ID.
-	CeIbmensourceid *string `json:"ce-ibmensourceid,omitempty"`
-
-	// custom ID to track notifications from client side (Mandatory identifier for the binary mode).
-	CeID *string `json:"ce-id,omitempty"`
-
-	// custom source odentifier from the client side.
-	CeSource *string `json:"ce-source,omitempty"`
-
-	// Type identifier for source filters.
-	CeType *string `json:"ce-type,omitempty"`
-
-	// Version of the Cloud Event specification (Mandatory header to make the request Binary Mode).
-	CeSpecversion *string `json:"ce-specversion,omitempty"`
-
-	// The time of the notification.
-	CeTime *string `json:"ce-time,omitempty"`
-
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -4745,114 +4934,6 @@ func (_options *SendNotificationsOptions) SetInstanceID(instanceID string) *Send
 // SetBody : Allow user to set Body
 func (_options *SendNotificationsOptions) SetBody(body *NotificationCreate) *SendNotificationsOptions {
 	_options.Body = body
-	return _options
-}
-
-// SetCeIbmenseverity : Allow user to set CeIbmenseverity
-func (_options *SendNotificationsOptions) SetCeIbmenseverity(ceIbmenseverity string) *SendNotificationsOptions {
-	_options.CeIbmenseverity = core.StringPtr(ceIbmenseverity)
-	return _options
-}
-
-// SetCeIbmendefaultshort : Allow user to set CeIbmendefaultshort
-func (_options *SendNotificationsOptions) SetCeIbmendefaultshort(ceIbmendefaultshort string) *SendNotificationsOptions {
-	_options.CeIbmendefaultshort = core.StringPtr(ceIbmendefaultshort)
-	return _options
-}
-
-// SetCeIbmendefaultlong : Allow user to set CeIbmendefaultlong
-func (_options *SendNotificationsOptions) SetCeIbmendefaultlong(ceIbmendefaultlong string) *SendNotificationsOptions {
-	_options.CeIbmendefaultlong = core.StringPtr(ceIbmendefaultlong)
-	return _options
-}
-
-// SetCeIbmenfcmbody : Allow user to set CeIbmenfcmbody
-func (_options *SendNotificationsOptions) SetCeIbmenfcmbody(ceIbmenfcmbody string) *SendNotificationsOptions {
-	_options.CeIbmenfcmbody = core.StringPtr(ceIbmenfcmbody)
-	return _options
-}
-
-// SetCeIbmenapnsbody : Allow user to set CeIbmenapnsbody
-func (_options *SendNotificationsOptions) SetCeIbmenapnsbody(ceIbmenapnsbody string) *SendNotificationsOptions {
-	_options.CeIbmenapnsbody = core.StringPtr(ceIbmenapnsbody)
-	return _options
-}
-
-// SetCeIbmensafaribody : Allow user to set CeIbmensafaribody
-func (_options *SendNotificationsOptions) SetCeIbmensafaribody(ceIbmensafaribody string) *SendNotificationsOptions {
-	_options.CeIbmensafaribody = core.StringPtr(ceIbmensafaribody)
-	return _options
-}
-
-// SetCeIbmenpushto : Allow user to set CeIbmenpushto
-func (_options *SendNotificationsOptions) SetCeIbmenpushto(ceIbmenpushto string) *SendNotificationsOptions {
-	_options.CeIbmenpushto = core.StringPtr(ceIbmenpushto)
-	return _options
-}
-
-// SetCeIbmenapnsheaders : Allow user to set CeIbmenapnsheaders
-func (_options *SendNotificationsOptions) SetCeIbmenapnsheaders(ceIbmenapnsheaders string) *SendNotificationsOptions {
-	_options.CeIbmenapnsheaders = core.StringPtr(ceIbmenapnsheaders)
-	return _options
-}
-
-// SetCeIbmenchromebody : Allow user to set CeIbmenchromebody
-func (_options *SendNotificationsOptions) SetCeIbmenchromebody(ceIbmenchromebody string) *SendNotificationsOptions {
-	_options.CeIbmenchromebody = core.StringPtr(ceIbmenchromebody)
-	return _options
-}
-
-// SetCeIbmenfirefoxbody : Allow user to set CeIbmenfirefoxbody
-func (_options *SendNotificationsOptions) SetCeIbmenfirefoxbody(ceIbmenfirefoxbody string) *SendNotificationsOptions {
-	_options.CeIbmenfirefoxbody = core.StringPtr(ceIbmenfirefoxbody)
-	return _options
-}
-
-// SetCeIbmenchromeheaders : Allow user to set CeIbmenchromeheaders
-func (_options *SendNotificationsOptions) SetCeIbmenchromeheaders(ceIbmenchromeheaders string) *SendNotificationsOptions {
-	_options.CeIbmenchromeheaders = core.StringPtr(ceIbmenchromeheaders)
-	return _options
-}
-
-// SetCeIbmenfirefoxheaders : Allow user to set CeIbmenfirefoxheaders
-func (_options *SendNotificationsOptions) SetCeIbmenfirefoxheaders(ceIbmenfirefoxheaders string) *SendNotificationsOptions {
-	_options.CeIbmenfirefoxheaders = core.StringPtr(ceIbmenfirefoxheaders)
-	return _options
-}
-
-// SetCeIbmensourceid : Allow user to set CeIbmensourceid
-func (_options *SendNotificationsOptions) SetCeIbmensourceid(ceIbmensourceid string) *SendNotificationsOptions {
-	_options.CeIbmensourceid = core.StringPtr(ceIbmensourceid)
-	return _options
-}
-
-// SetCeID : Allow user to set CeID
-func (_options *SendNotificationsOptions) SetCeID(ceID string) *SendNotificationsOptions {
-	_options.CeID = core.StringPtr(ceID)
-	return _options
-}
-
-// SetCeSource : Allow user to set CeSource
-func (_options *SendNotificationsOptions) SetCeSource(ceSource string) *SendNotificationsOptions {
-	_options.CeSource = core.StringPtr(ceSource)
-	return _options
-}
-
-// SetCeType : Allow user to set CeType
-func (_options *SendNotificationsOptions) SetCeType(ceType string) *SendNotificationsOptions {
-	_options.CeType = core.StringPtr(ceType)
-	return _options
-}
-
-// SetCeSpecversion : Allow user to set CeSpecversion
-func (_options *SendNotificationsOptions) SetCeSpecversion(ceSpecversion string) *SendNotificationsOptions {
-	_options.CeSpecversion = core.StringPtr(ceSpecversion)
-	return _options
-}
-
-// SetCeTime : Allow user to set CeTime
-func (_options *SendNotificationsOptions) SetCeTime(ceTime string) *SendNotificationsOptions {
-	_options.CeTime = core.StringPtr(ceTime)
 	return _options
 }
 
@@ -4941,6 +5022,15 @@ type SourceList struct {
 
 	// List of sources.
 	Sources []SourceListItem `json:"sources" validate:"required"`
+
+	// Response having URL of the page.
+	First *PageHrefResponse `json:"first,omitempty"`
+
+	// Response having URL of the page.
+	Previous *PageHrefResponse `json:"previous,omitempty"`
+
+	// Response having URL of the page.
+	Next *PageHrefResponse `json:"next,omitempty"`
 }
 
 // UnmarshalSourceList unmarshals an instance of SourceList from the specified map of raw messages.
@@ -4962,8 +5052,37 @@ func UnmarshalSourceList(m map[string]json.RawMessage, result interface{}) (err 
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *SourceList) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
+	if err != nil || offset == nil {
+		return nil, err
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
 }
 
 // SourceListItem : Payload describing a source list item.
@@ -5070,8 +5189,42 @@ func UnmarshalSourceResponse(m map[string]json.RawMessage, result interface{}) (
 	return
 }
 
-// SourcesListItem : SourcesListItem struct
-type SourcesListItem struct {
+// SourcesItems : SourcesItems struct
+type SourcesItems struct {
+	// ID of the source.
+	ID *string `json:"id" validate:"required"`
+
+	// List of rules.
+	Rules []Rules `json:"rules" validate:"required"`
+}
+
+// NewSourcesItems : Instantiate SourcesItems (Generic Model Constructor)
+func (*EventNotificationsV1) NewSourcesItems(id string, rules []Rules) (_model *SourcesItems, err error) {
+	_model = &SourcesItems{
+		ID:    core.StringPtr(id),
+		Rules: rules,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalSourcesItems unmarshals an instance of SourcesItems from the specified map of raw messages.
+func UnmarshalSourcesItems(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SourcesItems)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalRules)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SourcesListItems : Payload describing a source list item.
+type SourcesListItems struct {
 	// ID of the source.
 	ID *string `json:"id" validate:"required"`
 
@@ -5079,12 +5232,12 @@ type SourcesListItem struct {
 	Name *string `json:"name" validate:"required"`
 
 	// List of rules.
-	Rules []RulesGet `json:"rules" validate:"required"`
+	Rules []RulesGet `json:"rules,omitempty"`
 }
 
-// UnmarshalSourcesListItem unmarshals an instance of SourcesListItem from the specified map of raw messages.
-func UnmarshalSourcesListItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(SourcesListItem)
+// UnmarshalSourcesListItems unmarshals an instance of SourcesListItems from the specified map of raw messages.
+func UnmarshalSourcesListItems(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SourcesListItems)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		return
@@ -5142,12 +5295,19 @@ type Subscription struct {
 // Constants associated with the Subscription.DestinationType property.
 // The type of destination.
 const (
+	SubscriptionDestinationTypeIbmceConst       = "ibmce"
+	SubscriptionDestinationTypeIbmcfConst       = "ibmcf"
+	SubscriptionDestinationTypeIbmcosConst      = "ibmcos"
+	SubscriptionDestinationTypeMsteamsConst     = "msteams"
+	SubscriptionDestinationTypePagerdutyConst   = "pagerduty"
 	SubscriptionDestinationTypePushAndroidConst = "push_android"
 	SubscriptionDestinationTypePushChromeConst  = "push_chrome"
 	SubscriptionDestinationTypePushFirefoxConst = "push_firefox"
+	SubscriptionDestinationTypePushHuaweiConst  = "push_huawei"
 	SubscriptionDestinationTypePushIosConst     = "push_ios"
 	SubscriptionDestinationTypePushSafariConst  = "push_safari"
 	SubscriptionDestinationTypeSMTPIBMConst     = "smtp_ibm"
+	SubscriptionDestinationTypeServicenowConst  = "servicenow"
 	SubscriptionDestinationTypeSlackConst       = "slack"
 	SubscriptionDestinationTypeSmsIBMConst      = "sms_ibm"
 	SubscriptionDestinationTypeWebhookConst     = "webhook"
@@ -5301,15 +5461,40 @@ func UnmarshalSubscription(m map[string]json.RawMessage, result interface{}) (er
 // - SubscriptionAttributesEmailAttributesResponse
 // - SubscriptionAttributesWebhookAttributesResponse
 // - SubscriptionAttributesSlackAttributesResponse
+// - SubscriptionAttributesServiceNowAttributesResponse
 type SubscriptionAttributes struct {
+	// The subscribed list.
+	Subscribed []SmsAttributesItems `json:"subscribed,omitempty"`
+
+	// The unsubscribe list.
+	Unsubscribed []SmsAttributesItems `json:"unsubscribed,omitempty"`
+
+	// The email id string.
+	Invited []SmsInviteAttributesItems `json:"invited,omitempty"`
+
+	// Whether to add the notification payload to the email.
+	AddNotificationPayload *bool `json:"add_notification_payload,omitempty"`
+
+	// The email address to reply to.
+	ReplyToMail *string `json:"reply_to_mail,omitempty"`
+
+	// The email name to reply to.
+	ReplyToName *string `json:"reply_to_name,omitempty"`
+
+	// The email name of From.
+	FromName *string `json:"from_name,omitempty"`
+
 	// Signing webhook attributes.
 	SigningEnabled *bool `json:"signing_enabled,omitempty"`
 
-	// Decision for Notification Payload to be added.
-	AddNotificationPayload *bool `json:"add_notification_payload,omitempty"`
-
 	// Attachment Color for Slack Notification.
 	AttachmentColor *string `json:"attachment_color,omitempty"`
+
+	// Assigned name from ServiceNow account.
+	AssignedTo *string `json:"assigned_to,omitempty"`
+
+	// Assigned group name from ServiceNow account.
+	AssignmentGroup *string `json:"assignment_group,omitempty"`
 
 	// Allows users to set arbitrary properties
 	additionalProperties map[string]interface{}
@@ -5361,14 +5546,38 @@ func (o *SubscriptionAttributes) MarshalJSON() (buffer []byte, err error) {
 			m[k] = v
 		}
 	}
-	if o.SigningEnabled != nil {
-		m["signing_enabled"] = o.SigningEnabled
+	if o.Subscribed != nil {
+		m["subscribed"] = o.Subscribed
+	}
+	if o.Unsubscribed != nil {
+		m["unsubscribed"] = o.Unsubscribed
+	}
+	if o.Invited != nil {
+		m["invited"] = o.Invited
 	}
 	if o.AddNotificationPayload != nil {
 		m["add_notification_payload"] = o.AddNotificationPayload
 	}
+	if o.ReplyToMail != nil {
+		m["reply_to_mail"] = o.ReplyToMail
+	}
+	if o.ReplyToName != nil {
+		m["reply_to_name"] = o.ReplyToName
+	}
+	if o.FromName != nil {
+		m["from_name"] = o.FromName
+	}
+	if o.SigningEnabled != nil {
+		m["signing_enabled"] = o.SigningEnabled
+	}
 	if o.AttachmentColor != nil {
 		m["attachment_color"] = o.AttachmentColor
+	}
+	if o.AssignedTo != nil {
+		m["assigned_to"] = o.AssignedTo
+	}
+	if o.AssignmentGroup != nil {
+		m["assignment_group"] = o.AssignmentGroup
 	}
 	buffer, err = json.Marshal(m)
 	return
@@ -5377,21 +5586,61 @@ func (o *SubscriptionAttributes) MarshalJSON() (buffer []byte, err error) {
 // UnmarshalSubscriptionAttributes unmarshals an instance of SubscriptionAttributes from the specified map of raw messages.
 func UnmarshalSubscriptionAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SubscriptionAttributes)
-	err = core.UnmarshalPrimitive(m, "signing_enabled", &obj.SigningEnabled)
+	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalSmsAttributesItems)
 	if err != nil {
 		return
 	}
-	delete(m, "signing_enabled")
+	delete(m, "subscribed")
+	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalSmsAttributesItems)
+	if err != nil {
+		return
+	}
+	delete(m, "unsubscribed")
+	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalSmsInviteAttributesItems)
+	if err != nil {
+		return
+	}
+	delete(m, "invited")
 	err = core.UnmarshalPrimitive(m, "add_notification_payload", &obj.AddNotificationPayload)
 	if err != nil {
 		return
 	}
 	delete(m, "add_notification_payload")
+	err = core.UnmarshalPrimitive(m, "reply_to_mail", &obj.ReplyToMail)
+	if err != nil {
+		return
+	}
+	delete(m, "reply_to_mail")
+	err = core.UnmarshalPrimitive(m, "reply_to_name", &obj.ReplyToName)
+	if err != nil {
+		return
+	}
+	delete(m, "reply_to_name")
+	err = core.UnmarshalPrimitive(m, "from_name", &obj.FromName)
+	if err != nil {
+		return
+	}
+	delete(m, "from_name")
+	err = core.UnmarshalPrimitive(m, "signing_enabled", &obj.SigningEnabled)
+	if err != nil {
+		return
+	}
+	delete(m, "signing_enabled")
 	err = core.UnmarshalPrimitive(m, "attachment_color", &obj.AttachmentColor)
 	if err != nil {
 		return
 	}
 	delete(m, "attachment_color")
+	err = core.UnmarshalPrimitive(m, "assigned_to", &obj.AssignedTo)
+	if err != nil {
+		return
+	}
+	delete(m, "assigned_to")
+	err = core.UnmarshalPrimitive(m, "assignment_group", &obj.AssignmentGroup)
+	if err != nil {
+		return
+	}
+	delete(m, "assignment_group")
 	for k := range m {
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
@@ -5412,9 +5661,10 @@ func UnmarshalSubscriptionAttributes(m map[string]json.RawMessage, result interf
 // - SubscriptionCreateAttributesWebhookAttributes
 // - SubscriptionCreateAttributesFcmAttributes
 // - SubscriptionCreateAttributesSlackAttributes
+// - SubscriptionCreateAttributesServiceNowAttributes
 type SubscriptionCreateAttributes struct {
-	// The phone number to send the SMS to.
-	To []string `json:"to,omitempty"`
+	// The sms id string.
+	Invited []string `json:"invited,omitempty"`
 
 	// Whether to add the notification payload to the email.
 	AddNotificationPayload *bool `json:"add_notification_payload,omitempty"`
@@ -5433,6 +5683,12 @@ type SubscriptionCreateAttributes struct {
 
 	// Attachment Color for the slack message.
 	AttachmentColor *string `json:"attachment_color,omitempty"`
+
+	// Name of user ServiceNow incident will be assigned to.
+	AssignedTo *string `json:"assigned_to,omitempty"`
+
+	// Group Name to which incident will be assigned to.
+	AssignmentGroup *string `json:"assignment_group,omitempty"`
 }
 
 func (*SubscriptionCreateAttributes) isaSubscriptionCreateAttributes() bool {
@@ -5446,7 +5702,7 @@ type SubscriptionCreateAttributesIntf interface {
 // UnmarshalSubscriptionCreateAttributes unmarshals an instance of SubscriptionCreateAttributes from the specified map of raw messages.
 func UnmarshalSubscriptionCreateAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SubscriptionCreateAttributes)
-	err = core.UnmarshalPrimitive(m, "to", &obj.To)
+	err = core.UnmarshalPrimitive(m, "invited", &obj.Invited)
 	if err != nil {
 		return
 	}
@@ -5474,6 +5730,14 @@ func UnmarshalSubscriptionCreateAttributes(m map[string]json.RawMessage, result 
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "assigned_to", &obj.AssignedTo)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "assignment_group", &obj.AssignmentGroup)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -5491,6 +5755,15 @@ type SubscriptionList struct {
 
 	// List of subscriptions.
 	Subscriptions []SubscriptionListItem `json:"subscriptions" validate:"required"`
+
+	// Response having URL of the page.
+	First *PageHrefResponse `json:"first,omitempty"`
+
+	// Response having URL of the page.
+	Previous *PageHrefResponse `json:"previous,omitempty"`
+
+	// Response having URL of the page.
+	Next *PageHrefResponse `json:"next,omitempty"`
 }
 
 // UnmarshalSubscriptionList unmarshals an instance of SubscriptionList from the specified map of raw messages.
@@ -5512,8 +5785,37 @@ func UnmarshalSubscriptionList(m map[string]json.RawMessage, result interface{})
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *SubscriptionList) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
+	if err != nil || offset == nil {
+		return nil, err
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
 }
 
 // SubscriptionListItem : Subscription list item.
@@ -5549,12 +5851,19 @@ type SubscriptionListItem struct {
 // Constants associated with the SubscriptionListItem.DestinationType property.
 // The type of destination.
 const (
+	SubscriptionListItemDestinationTypeIbmceConst       = "ibmce"
+	SubscriptionListItemDestinationTypeIbmcfConst       = "ibmcf"
+	SubscriptionListItemDestinationTypeIbmcosConst      = "ibmcos"
+	SubscriptionListItemDestinationTypeMsteamsConst     = "msteams"
+	SubscriptionListItemDestinationTypePagerdutyConst   = "pagerduty"
 	SubscriptionListItemDestinationTypePushAndroidConst = "push_android"
 	SubscriptionListItemDestinationTypePushChromeConst  = "push_chrome"
 	SubscriptionListItemDestinationTypePushFirefoxConst = "push_firefox"
+	SubscriptionListItemDestinationTypePushHuaweiConst  = "push_huawei"
 	SubscriptionListItemDestinationTypePushIosConst     = "push_ios"
 	SubscriptionListItemDestinationTypePushSafariConst  = "push_safari"
 	SubscriptionListItemDestinationTypeSMTPIBMConst     = "smtp_ibm"
+	SubscriptionListItemDestinationTypeServicenowConst  = "servicenow"
 	SubscriptionListItemDestinationTypeSlackConst       = "slack"
 	SubscriptionListItemDestinationTypeSmsIBMConst      = "sms_ibm"
 	SubscriptionListItemDestinationTypeWebhookConst     = "webhook"
@@ -5605,13 +5914,20 @@ func UnmarshalSubscriptionListItem(m map[string]json.RawMessage, result interfac
 
 // SubscriptionUpdateAttributes : SubscriptionUpdateAttributes struct
 // Models which "extend" this model:
-// - SubscriptionUpdateAttributesSmsAttributes
+// - SubscriptionUpdateAttributesSmsUpdateAttributes
 // - SubscriptionUpdateAttributesEmailUpdateAttributes
 // - SubscriptionUpdateAttributesWebhookAttributes
 // - SubscriptionUpdateAttributesSlackAttributes
+// - SubscriptionUpdateAttributesServiceNowAttributes
 type SubscriptionUpdateAttributes struct {
-	// The phone number to send the SMS to.
-	To []string `json:"to,omitempty"`
+	// The email ids or phone numbers.
+	Invited *UpdateAttributesInvited `json:"invited,omitempty"`
+
+	// The email ids or phone numbers.
+	Subscribed *UpdateAttributesSubscribed `json:"subscribed,omitempty"`
+
+	// The email ids or phone numbers.
+	Unsubscribed *UpdateAttributesUnsubscribed `json:"unsubscribed,omitempty"`
 
 	// Whether to add the notification payload to the email.
 	AddNotificationPayload *bool `json:"add_notification_payload,omitempty"`
@@ -5625,17 +5941,17 @@ type SubscriptionUpdateAttributes struct {
 	// The email name of From.
 	FromName *string `json:"from_name,omitempty"`
 
-	// The email ids invited.
-	Invited []string `json:"invited,omitempty"`
-
-	// The email ids.
-	Unsubscribed *EmailUpdateAttributesUnsubscribed `json:"unsubscribed,omitempty"`
-
 	// Signing webhook attributes.
 	SigningEnabled *bool `json:"signing_enabled,omitempty"`
 
 	// Attachment Color for the slack message.
 	AttachmentColor *string `json:"attachment_color,omitempty"`
+
+	// Name of user ServiceNow incident will be assigned to.
+	AssignedTo *string `json:"assigned_to,omitempty"`
+
+	// Group Name to which incident will be assigned to.
+	AssignmentGroup *string `json:"assignment_group,omitempty"`
 }
 
 func (*SubscriptionUpdateAttributes) isaSubscriptionUpdateAttributes() bool {
@@ -5649,7 +5965,15 @@ type SubscriptionUpdateAttributesIntf interface {
 // UnmarshalSubscriptionUpdateAttributes unmarshals an instance of SubscriptionUpdateAttributes from the specified map of raw messages.
 func UnmarshalSubscriptionUpdateAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SubscriptionUpdateAttributes)
-	err = core.UnmarshalPrimitive(m, "to", &obj.To)
+	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalUpdateAttributesInvited)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalUpdateAttributesSubscribed)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalUpdateAttributesUnsubscribed)
 	if err != nil {
 		return
 	}
@@ -5669,19 +5993,19 @@ func UnmarshalSubscriptionUpdateAttributes(m map[string]json.RawMessage, result 
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "invited", &obj.Invited)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalEmailUpdateAttributesUnsubscribed)
-	if err != nil {
-		return
-	}
 	err = core.UnmarshalPrimitive(m, "signing_enabled", &obj.SigningEnabled)
 	if err != nil {
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "attachment_color", &obj.AttachmentColor)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "assigned_to", &obj.AssignedTo)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "assignment_group", &obj.AssignmentGroup)
 	if err != nil {
 		return
 	}
@@ -5702,6 +6026,15 @@ type TagsSubscriptionList struct {
 
 	// List of tags.
 	TagSubscriptions []TagsSubscriptionListItem `json:"tag_subscriptions" validate:"required"`
+
+	// Response having URL of the page.
+	First *PageHrefResponse `json:"first,omitempty"`
+
+	// Response having URL of the page.
+	Previous *PageHrefResponse `json:"previous,omitempty"`
+
+	// Response having URL of the page.
+	Next *PageHrefResponse `json:"next,omitempty"`
 }
 
 // UnmarshalTagsSubscriptionList unmarshals an instance of TagsSubscriptionList from the specified map of raw messages.
@@ -5723,8 +6056,37 @@ func UnmarshalTagsSubscriptionList(m map[string]json.RawMessage, result interfac
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *TagsSubscriptionList) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
+	if err != nil || offset == nil {
+		return nil, err
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
 }
 
 // TagsSubscriptionListItem : Tags subscription object.
@@ -5738,7 +6100,7 @@ type TagsSubscriptionListItem struct {
 	// The name of the tag its subscribed.
 	TagName *string `json:"tag_name" validate:"required"`
 
-	// The user identifier for the the device registration.
+	// The user identifier for the device registration.
 	UserID *string `json:"user_id,omitempty"`
 
 	// Updated at.
@@ -5790,7 +6152,7 @@ type Topic struct {
 	SourceCount *int64 `json:"source_count" validate:"required"`
 
 	// List of sources.
-	Sources []SourcesListItem `json:"sources" validate:"required"`
+	Sources []SourcesListItems `json:"sources" validate:"required"`
 
 	// Number of subscriptions.
 	SubscriptionCount *int64 `json:"subscription_count" validate:"required"`
@@ -5822,7 +6184,7 @@ func UnmarshalTopic(m map[string]json.RawMessage, result interface{}) (err error
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "sources", &obj.Sources, UnmarshalSourcesListItem)
+	err = core.UnmarshalModel(m, "sources", &obj.Sources, UnmarshalSourcesListItems)
 	if err != nil {
 		return
 	}
@@ -5851,6 +6213,15 @@ type TopicList struct {
 
 	// List of topics.
 	Topics []TopicsListItem `json:"topics" validate:"required"`
+
+	// Response having URL of the page.
+	First *PageHrefResponse `json:"first,omitempty"`
+
+	// Response having URL of the page.
+	Previous *PageHrefResponse `json:"previous,omitempty"`
+
+	// Response having URL of the page.
+	Next *PageHrefResponse `json:"next,omitempty"`
 }
 
 // UnmarshalTopicList unmarshals an instance of TopicList from the specified map of raw messages.
@@ -5872,8 +6243,37 @@ func UnmarshalTopicList(m map[string]json.RawMessage, result interface{}) (err e
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageHrefResponse)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *TopicList) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
+	if err != nil || offset == nil {
+		return nil, err
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
 }
 
 // TopicResponse : Topic object.
@@ -5907,40 +6307,6 @@ func UnmarshalTopicResponse(m map[string]json.RawMessage, result interface{}) (e
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// TopicUpdateSourcesItem : TopicUpdateSourcesItem struct
-type TopicUpdateSourcesItem struct {
-	// ID of the source.
-	ID *string `json:"id" validate:"required"`
-
-	// List of rules.
-	Rules []Rules `json:"rules" validate:"required"`
-}
-
-// NewTopicUpdateSourcesItem : Instantiate TopicUpdateSourcesItem (Generic Model Constructor)
-func (*EventNotificationsV1) NewTopicUpdateSourcesItem(id string, rules []Rules) (_model *TopicUpdateSourcesItem, err error) {
-	_model = &TopicUpdateSourcesItem{
-		ID:    core.StringPtr(id),
-		Rules: rules,
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-// UnmarshalTopicUpdateSourcesItem unmarshals an instance of TopicUpdateSourcesItem from the specified map of raw messages.
-func UnmarshalTopicUpdateSourcesItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(TopicUpdateSourcesItem)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalRules)
 	if err != nil {
 		return
 	}
@@ -6000,6 +6366,64 @@ func UnmarshalTopicsListItem(m map[string]json.RawMessage, result interface{}) (
 	return
 }
 
+// UpdateAttributesInvited : The email ids or phone numbers.
+type UpdateAttributesInvited struct {
+	// The email ids or phone numbers to be invited.
+	Add []string `json:"add,omitempty"`
+
+	// The email ids or phone numbers for removal.
+	Remove []string `json:"remove,omitempty"`
+}
+
+// UnmarshalUpdateAttributesInvited unmarshals an instance of UpdateAttributesInvited from the specified map of raw messages.
+func UnmarshalUpdateAttributesInvited(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(UpdateAttributesInvited)
+	err = core.UnmarshalPrimitive(m, "add", &obj.Add)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UpdateAttributesSubscribed : The email ids or phone numbers.
+type UpdateAttributesSubscribed struct {
+	// The email ids or phone numbers to be unsubscribed.
+	Remove []string `json:"remove,omitempty"`
+}
+
+// UnmarshalUpdateAttributesSubscribed unmarshals an instance of UpdateAttributesSubscribed from the specified map of raw messages.
+func UnmarshalUpdateAttributesSubscribed(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(UpdateAttributesSubscribed)
+	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UpdateAttributesUnsubscribed : The email ids or phone numbers.
+type UpdateAttributesUnsubscribed struct {
+	// The email ids or phone numbers to be unsubscribed.
+	Remove []string `json:"remove,omitempty"`
+}
+
+// UnmarshalUpdateAttributesUnsubscribed unmarshals an instance of UpdateAttributesUnsubscribed from the specified map of raw messages.
+func UnmarshalUpdateAttributesUnsubscribed(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(UpdateAttributesUnsubscribed)
+	err = core.UnmarshalPrimitive(m, "remove", &obj.Remove)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // UpdateDestinationOptions : The UpdateDestination options.
 type UpdateDestinationOptions struct {
 	// Unique identifier for IBM Cloud Event Notifications instance.
@@ -6030,10 +6454,10 @@ type UpdateDestinationOptions struct {
 	Icon16x16ContentType *string `json:"icon_16x16_content_type,omitempty"`
 
 	// Safari icon 16x16@2x.
-	Icon16x162x io.ReadCloser `json:"icon_16x16@2x,omitempty"`
+	Icon16x162x io.ReadCloser `json:"icon_16x16_2x,omitempty"`
 
 	// The content type of icon16x162x.
-	Icon16x162xContentType *string `json:"icon_16x16@2x_content_type,omitempty"`
+	Icon16x162xContentType *string `json:"icon_16x16_2x_content_type,omitempty"`
 
 	// Safari icon 32x32.
 	Icon32x32 io.ReadCloser `json:"icon_32x32,omitempty"`
@@ -6042,10 +6466,10 @@ type UpdateDestinationOptions struct {
 	Icon32x32ContentType *string `json:"icon_32x32_content_type,omitempty"`
 
 	// Safari icon 32x32@2x.
-	Icon32x322x io.ReadCloser `json:"icon_32x32@2x,omitempty"`
+	Icon32x322x io.ReadCloser `json:"icon_32x32_2x,omitempty"`
 
 	// The content type of icon32x322x.
-	Icon32x322xContentType *string `json:"icon_32x32@2x_content_type,omitempty"`
+	Icon32x322xContentType *string `json:"icon_32x32_2x_content_type,omitempty"`
 
 	// Safari icon 128x128.
 	Icon128x128 io.ReadCloser `json:"icon_128x128,omitempty"`
@@ -6054,10 +6478,10 @@ type UpdateDestinationOptions struct {
 	Icon128x128ContentType *string `json:"icon_128x128_content_type,omitempty"`
 
 	// Safari icon 128x128@2x.
-	Icon128x1282x io.ReadCloser `json:"icon_128x128@2x,omitempty"`
+	Icon128x1282x io.ReadCloser `json:"icon_128x128_2x,omitempty"`
 
 	// The content type of icon128x1282x.
-	Icon128x1282xContentType *string `json:"icon_128x128@2x_content_type,omitempty"`
+	Icon128x1282xContentType *string `json:"icon_128x128_2x_content_type,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -6320,9 +6744,9 @@ func (options *UpdateSubscriptionOptions) SetHeaders(param map[string]string) *U
 	return options
 }
 
-// DestinationConfigParamsChromeDestinationConfig : Payload describing a Chrome destination configuration.
-// This model "extends" DestinationConfigParams
-type DestinationConfigParamsChromeDestinationConfig struct {
+// DestinationConfigOneOfChromeDestinationConfig : Payload describing a Chrome destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfChromeDestinationConfig struct {
 	// FCM api_key.
 	APIKey *string `json:"api_key" validate:"required"`
 
@@ -6331,11 +6755,14 @@ type DestinationConfigParamsChromeDestinationConfig struct {
 
 	// Chrome VAPID public key.
 	PublicKey *string `json:"public_key,omitempty"`
+
+	// If pre prod enabled.
+	PreProd *bool `json:"pre_prod,omitempty"`
 }
 
-// NewDestinationConfigParamsChromeDestinationConfig : Instantiate DestinationConfigParamsChromeDestinationConfig (Generic Model Constructor)
-func (*EventNotificationsV1) NewDestinationConfigParamsChromeDestinationConfig(apiKey string, websiteURL string) (_model *DestinationConfigParamsChromeDestinationConfig, err error) {
-	_model = &DestinationConfigParamsChromeDestinationConfig{
+// NewDestinationConfigOneOfChromeDestinationConfig : Instantiate DestinationConfigOneOfChromeDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfChromeDestinationConfig(apiKey string, websiteURL string) (_model *DestinationConfigOneOfChromeDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfChromeDestinationConfig{
 		APIKey:     core.StringPtr(apiKey),
 		WebsiteURL: core.StringPtr(websiteURL),
 	}
@@ -6343,13 +6770,13 @@ func (*EventNotificationsV1) NewDestinationConfigParamsChromeDestinationConfig(a
 	return
 }
 
-func (*DestinationConfigParamsChromeDestinationConfig) isaDestinationConfigParams() bool {
+func (*DestinationConfigOneOfChromeDestinationConfig) isaDestinationConfigOneOf() bool {
 	return true
 }
 
-// UnmarshalDestinationConfigParamsChromeDestinationConfig unmarshals an instance of DestinationConfigParamsChromeDestinationConfig from the specified map of raw messages.
-func UnmarshalDestinationConfigParamsChromeDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DestinationConfigParamsChromeDestinationConfig)
+// UnmarshalDestinationConfigOneOfChromeDestinationConfig unmarshals an instance of DestinationConfigOneOfChromeDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfChromeDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfChromeDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "api_key", &obj.APIKey)
 	if err != nil {
 		return
@@ -6362,37 +6789,43 @@ func UnmarshalDestinationConfigParamsChromeDestinationConfig(m map[string]json.R
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// DestinationConfigParamsFcmDestinationConfig : Payload describing a FCM destination configuration.
-// This model "extends" DestinationConfigParams
-type DestinationConfigParamsFcmDestinationConfig struct {
+// DestinationConfigOneOfFcmDestinationConfig : Payload describing an FCM destination configuration. project_id, private_key and client_email for FCM HTTP v1 APIs.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfFcmDestinationConfig struct {
 	// FCM server_key.
-	ServerKey *string `json:"server_key" validate:"required"`
+	ServerKey *string `json:"server_key,omitempty"`
 
 	// FCM sender_id.
-	SenderID *string `json:"sender_id" validate:"required"`
+	SenderID *string `json:"sender_id,omitempty"`
+
+	// If pre prod enabled.
+	PreProd *bool `json:"pre_prod,omitempty"`
+
+	// FCM project_id.
+	ProjectID *string `json:"project_id,omitempty"`
+
+	// FCM private_key.
+	PrivateKey *string `json:"private_key,omitempty"`
+
+	// FCM client_email.
+	ClientEmail *string `json:"client_email,omitempty"`
 }
 
-// NewDestinationConfigParamsFcmDestinationConfig : Instantiate DestinationConfigParamsFcmDestinationConfig (Generic Model Constructor)
-func (*EventNotificationsV1) NewDestinationConfigParamsFcmDestinationConfig(serverKey string, senderID string) (_model *DestinationConfigParamsFcmDestinationConfig, err error) {
-	_model = &DestinationConfigParamsFcmDestinationConfig{
-		ServerKey: core.StringPtr(serverKey),
-		SenderID:  core.StringPtr(senderID),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-func (*DestinationConfigParamsFcmDestinationConfig) isaDestinationConfigParams() bool {
+func (*DestinationConfigOneOfFcmDestinationConfig) isaDestinationConfigOneOf() bool {
 	return true
 }
 
-// UnmarshalDestinationConfigParamsFcmDestinationConfig unmarshals an instance of DestinationConfigParamsFcmDestinationConfig from the specified map of raw messages.
-func UnmarshalDestinationConfigParamsFcmDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DestinationConfigParamsFcmDestinationConfig)
+// UnmarshalDestinationConfigOneOfFcmDestinationConfig unmarshals an instance of DestinationConfigOneOfFcmDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfFcmDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfFcmDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "server_key", &obj.ServerKey)
 	if err != nil {
 		return
@@ -6401,36 +6834,55 @@ func UnmarshalDestinationConfigParamsFcmDestinationConfig(m map[string]json.RawM
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "project_id", &obj.ProjectID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "private_key", &obj.PrivateKey)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "client_email", &obj.ClientEmail)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// DestinationConfigParamsFirefoxDestinationConfig : Payload describing a Firefox destination configuration.
-// This model "extends" DestinationConfigParams
-type DestinationConfigParamsFirefoxDestinationConfig struct {
+// DestinationConfigOneOfFirefoxDestinationConfig : Payload describing a Firefox destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfFirefoxDestinationConfig struct {
 	// Website url.
 	WebsiteURL *string `json:"website_url" validate:"required"`
 
 	// Chrome VAPID public key.
 	PublicKey *string `json:"public_key,omitempty"`
+
+	// If pre prod enabled.
+	PreProd *bool `json:"pre_prod,omitempty"`
 }
 
-// NewDestinationConfigParamsFirefoxDestinationConfig : Instantiate DestinationConfigParamsFirefoxDestinationConfig (Generic Model Constructor)
-func (*EventNotificationsV1) NewDestinationConfigParamsFirefoxDestinationConfig(websiteURL string) (_model *DestinationConfigParamsFirefoxDestinationConfig, err error) {
-	_model = &DestinationConfigParamsFirefoxDestinationConfig{
+// NewDestinationConfigOneOfFirefoxDestinationConfig : Instantiate DestinationConfigOneOfFirefoxDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfFirefoxDestinationConfig(websiteURL string) (_model *DestinationConfigOneOfFirefoxDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfFirefoxDestinationConfig{
 		WebsiteURL: core.StringPtr(websiteURL),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
-func (*DestinationConfigParamsFirefoxDestinationConfig) isaDestinationConfigParams() bool {
+func (*DestinationConfigOneOfFirefoxDestinationConfig) isaDestinationConfigOneOf() bool {
 	return true
 }
 
-// UnmarshalDestinationConfigParamsFirefoxDestinationConfig unmarshals an instance of DestinationConfigParamsFirefoxDestinationConfig from the specified map of raw messages.
-func UnmarshalDestinationConfigParamsFirefoxDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DestinationConfigParamsFirefoxDestinationConfig)
+// UnmarshalDestinationConfigOneOfFirefoxDestinationConfig unmarshals an instance of DestinationConfigOneOfFirefoxDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfFirefoxDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfFirefoxDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "website_url", &obj.WebsiteURL)
 	if err != nil {
 		return
@@ -6439,17 +6891,152 @@ func UnmarshalDestinationConfigParamsFirefoxDestinationConfig(m map[string]json.
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// DestinationConfigParamsIosDestinationConfig : Payload describing a IOS destination configuration.
-// This model "extends" DestinationConfigParams
-type DestinationConfigParamsIosDestinationConfig struct {
+// DestinationConfigOneOfHuaweiDestinationConfig : Payload describing a Huawei destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfHuaweiDestinationConfig struct {
+	// ClientID for the Huawei account oauth.
+	ClientID *string `json:"client_id" validate:"required"`
+
+	// ClientSecret for the Huawei account oauth.
+	ClientSecret *string `json:"client_secret" validate:"required"`
+
+	// If pre prod enabled.
+	PreProd *bool `json:"pre_prod,omitempty"`
+}
+
+// NewDestinationConfigOneOfHuaweiDestinationConfig : Instantiate DestinationConfigOneOfHuaweiDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfHuaweiDestinationConfig(clientID string, clientSecret string) (_model *DestinationConfigOneOfHuaweiDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfHuaweiDestinationConfig{
+		ClientID:     core.StringPtr(clientID),
+		ClientSecret: core.StringPtr(clientSecret),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*DestinationConfigOneOfHuaweiDestinationConfig) isaDestinationConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalDestinationConfigOneOfHuaweiDestinationConfig unmarshals an instance of DestinationConfigOneOfHuaweiDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfHuaweiDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfHuaweiDestinationConfig)
+	err = core.UnmarshalPrimitive(m, "client_id", &obj.ClientID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "client_secret", &obj.ClientSecret)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// DestinationConfigOneOfIBMCloudFunctionsDestinationConfig : Payload describing an IBM Cloud Functions destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfIBMCloudFunctionsDestinationConfig struct {
+	// URL of IBM Cloud Functions Trigger EndPoint.
+	URL *string `json:"url" validate:"required"`
+
+	// API Key with access of IBM Cloud Functions IAM Namespace.
+	APIKey *string `json:"api_key,omitempty"`
+}
+
+// NewDestinationConfigOneOfIBMCloudFunctionsDestinationConfig : Instantiate DestinationConfigOneOfIBMCloudFunctionsDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfIBMCloudFunctionsDestinationConfig(url string) (_model *DestinationConfigOneOfIBMCloudFunctionsDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfIBMCloudFunctionsDestinationConfig{
+		URL: core.StringPtr(url),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*DestinationConfigOneOfIBMCloudFunctionsDestinationConfig) isaDestinationConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalDestinationConfigOneOfIBMCloudFunctionsDestinationConfig unmarshals an instance of DestinationConfigOneOfIBMCloudFunctionsDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfIBMCloudFunctionsDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfIBMCloudFunctionsDestinationConfig)
+	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "api_key", &obj.APIKey)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// DestinationConfigOneOfIBMCloudObjectStorageDestinationConfig : Payload describing a Cloud Object Storage destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfIBMCloudObjectStorageDestinationConfig struct {
+	// Bucket Name for Cloud Object Storage.
+	BucketName *string `json:"bucket_name" validate:"required"`
+
+	// Instance Id of Cloud Object Storage.
+	InstanceID *string `json:"instance_id" validate:"required"`
+
+	// End Point of Cloud Object Storage.
+	Endpoint *string `json:"endpoint" validate:"required"`
+}
+
+// NewDestinationConfigOneOfIBMCloudObjectStorageDestinationConfig : Instantiate DestinationConfigOneOfIBMCloudObjectStorageDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfIBMCloudObjectStorageDestinationConfig(bucketName string, instanceID string, endpoint string) (_model *DestinationConfigOneOfIBMCloudObjectStorageDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfIBMCloudObjectStorageDestinationConfig{
+		BucketName: core.StringPtr(bucketName),
+		InstanceID: core.StringPtr(instanceID),
+		Endpoint:   core.StringPtr(endpoint),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*DestinationConfigOneOfIBMCloudObjectStorageDestinationConfig) isaDestinationConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalDestinationConfigOneOfIBMCloudObjectStorageDestinationConfig unmarshals an instance of DestinationConfigOneOfIBMCloudObjectStorageDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfIBMCloudObjectStorageDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfIBMCloudObjectStorageDestinationConfig)
+	err = core.UnmarshalPrimitive(m, "bucket_name", &obj.BucketName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "instance_id", &obj.InstanceID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "endpoint", &obj.Endpoint)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// DestinationConfigOneOfIosDestinationConfig : Payload describing an iOS destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfIosDestinationConfig struct {
 	// Authentication type (p8 or p12).
 	CertType *string `json:"cert_type" validate:"required"`
 
-	// Sandbox mode for IOS destinations.
+	// Sandbox mode for iOS destinations.
 	IsSandbox *bool `json:"is_sandbox" validate:"required"`
 
 	// Password for certificate (Required when cert_type is p12).
@@ -6463,11 +7050,14 @@ type DestinationConfigParamsIosDestinationConfig struct {
 
 	// Bundle ID for token (Required when cert_type is p8).
 	BundleID *string `json:"bundle_id,omitempty"`
+
+	// If pre prod enabled.
+	PreProd *bool `json:"pre_prod,omitempty"`
 }
 
-// NewDestinationConfigParamsIosDestinationConfig : Instantiate DestinationConfigParamsIosDestinationConfig (Generic Model Constructor)
-func (*EventNotificationsV1) NewDestinationConfigParamsIosDestinationConfig(certType string, isSandbox bool) (_model *DestinationConfigParamsIosDestinationConfig, err error) {
-	_model = &DestinationConfigParamsIosDestinationConfig{
+// NewDestinationConfigOneOfIosDestinationConfig : Instantiate DestinationConfigOneOfIosDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfIosDestinationConfig(certType string, isSandbox bool) (_model *DestinationConfigOneOfIosDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfIosDestinationConfig{
 		CertType:  core.StringPtr(certType),
 		IsSandbox: core.BoolPtr(isSandbox),
 	}
@@ -6475,13 +7065,13 @@ func (*EventNotificationsV1) NewDestinationConfigParamsIosDestinationConfig(cert
 	return
 }
 
-func (*DestinationConfigParamsIosDestinationConfig) isaDestinationConfigParams() bool {
+func (*DestinationConfigOneOfIosDestinationConfig) isaDestinationConfigOneOf() bool {
 	return true
 }
 
-// UnmarshalDestinationConfigParamsIosDestinationConfig unmarshals an instance of DestinationConfigParamsIosDestinationConfig from the specified map of raw messages.
-func UnmarshalDestinationConfigParamsIosDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DestinationConfigParamsIosDestinationConfig)
+// UnmarshalDestinationConfigOneOfIosDestinationConfig unmarshals an instance of DestinationConfigOneOfIosDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfIosDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfIosDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "cert_type", &obj.CertType)
 	if err != nil {
 		return
@@ -6506,35 +7096,113 @@ func UnmarshalDestinationConfigParamsIosDestinationConfig(m map[string]json.RawM
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// DestinationConfigParamsSafariDestinationConfig : Payload describing a safari destination configuration.
-// This model "extends" DestinationConfigParams
-type DestinationConfigParamsSafariDestinationConfig struct {
+// DestinationConfigOneOfMsTeamsDestinationConfig : Payload describing a MS Teams destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfMsTeamsDestinationConfig struct {
+	// URL of MS Teams Incoming Notifications.
+	URL *string `json:"url" validate:"required"`
+}
+
+// NewDestinationConfigOneOfMsTeamsDestinationConfig : Instantiate DestinationConfigOneOfMsTeamsDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfMsTeamsDestinationConfig(url string) (_model *DestinationConfigOneOfMsTeamsDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfMsTeamsDestinationConfig{
+		URL: core.StringPtr(url),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*DestinationConfigOneOfMsTeamsDestinationConfig) isaDestinationConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalDestinationConfigOneOfMsTeamsDestinationConfig unmarshals an instance of DestinationConfigOneOfMsTeamsDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfMsTeamsDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfMsTeamsDestinationConfig)
+	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// DestinationConfigOneOfPagerDutyDestinationConfig : Payload describing a PagerDuty destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfPagerDutyDestinationConfig struct {
+	// API Key for the PagerDuty account.
+	APIKey *string `json:"api_key" validate:"required"`
+
+	// Routing Key (Integration Key) for the team in PagerDuty account.
+	RoutingKey *string `json:"routing_key" validate:"required"`
+}
+
+// NewDestinationConfigOneOfPagerDutyDestinationConfig : Instantiate DestinationConfigOneOfPagerDutyDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfPagerDutyDestinationConfig(apiKey string, routingKey string) (_model *DestinationConfigOneOfPagerDutyDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfPagerDutyDestinationConfig{
+		APIKey:     core.StringPtr(apiKey),
+		RoutingKey: core.StringPtr(routingKey),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*DestinationConfigOneOfPagerDutyDestinationConfig) isaDestinationConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalDestinationConfigOneOfPagerDutyDestinationConfig unmarshals an instance of DestinationConfigOneOfPagerDutyDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfPagerDutyDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfPagerDutyDestinationConfig)
+	err = core.UnmarshalPrimitive(m, "api_key", &obj.APIKey)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "routing_key", &obj.RoutingKey)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// DestinationConfigOneOfSafariDestinationConfig : Payload describing a Safari destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfSafariDestinationConfig struct {
 	// Authentication type p12.
-	CertType *string `json:"cert_type,omitempty"`
+	CertType *string `json:"cert_type" validate:"required"`
 
 	// Password for certificate (Required when cert_type is p12).
 	Password *string `json:"password" validate:"required"`
 
-	// Websire url.
+	// Website url.
 	WebsiteURL *string `json:"website_url" validate:"required"`
 
-	// Websire url.
+	// Website url.
 	WebsiteName *string `json:"website_name" validate:"required"`
 
-	// Websire url.
+	// Website url.
 	URLFormatString *string `json:"url_format_string" validate:"required"`
 
-	// Websire url.
+	// Website url.
 	WebsitePushID *string `json:"website_push_id" validate:"required"`
+
+	// If pre prod enabled.
+	PreProd *bool `json:"pre_prod,omitempty"`
 }
 
-// NewDestinationConfigParamsSafariDestinationConfig : Instantiate DestinationConfigParamsSafariDestinationConfig (Generic Model Constructor)
-func (*EventNotificationsV1) NewDestinationConfigParamsSafariDestinationConfig(password string, websiteURL string, websiteName string, urlFormatString string, websitePushID string) (_model *DestinationConfigParamsSafariDestinationConfig, err error) {
-	_model = &DestinationConfigParamsSafariDestinationConfig{
+// NewDestinationConfigOneOfSafariDestinationConfig : Instantiate DestinationConfigOneOfSafariDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfSafariDestinationConfig(certType string, password string, websiteURL string, websiteName string, urlFormatString string, websitePushID string) (_model *DestinationConfigOneOfSafariDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfSafariDestinationConfig{
+		CertType:        core.StringPtr(certType),
 		Password:        core.StringPtr(password),
 		WebsiteURL:      core.StringPtr(websiteURL),
 		WebsiteName:     core.StringPtr(websiteName),
@@ -6545,13 +7213,13 @@ func (*EventNotificationsV1) NewDestinationConfigParamsSafariDestinationConfig(p
 	return
 }
 
-func (*DestinationConfigParamsSafariDestinationConfig) isaDestinationConfigParams() bool {
+func (*DestinationConfigOneOfSafariDestinationConfig) isaDestinationConfigOneOf() bool {
 	return true
 }
 
-// UnmarshalDestinationConfigParamsSafariDestinationConfig unmarshals an instance of DestinationConfigParamsSafariDestinationConfig from the specified map of raw messages.
-func UnmarshalDestinationConfigParamsSafariDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DestinationConfigParamsSafariDestinationConfig)
+// UnmarshalDestinationConfigOneOfSafariDestinationConfig unmarshals an instance of DestinationConfigOneOfSafariDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfSafariDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfSafariDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "cert_type", &obj.CertType)
 	if err != nil {
 		return
@@ -6576,33 +7244,100 @@ func UnmarshalDestinationConfigParamsSafariDestinationConfig(m map[string]json.R
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "pre_prod", &obj.PreProd)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// DestinationConfigParamsSlackDestinationConfig : Payload describing a slack destination configuration.
-// This model "extends" DestinationConfigParams
-type DestinationConfigParamsSlackDestinationConfig struct {
-	// URL of Slack Incoming Webhook.
+// DestinationConfigOneOfServiceNowDestinationConfig : Payload describing a ServiceNow destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfServiceNowDestinationConfig struct {
+	// ClientID for the ServiceNow account oauth.
+	ClientID *string `json:"client_id" validate:"required"`
+
+	// ClientSecret for the ServiceNow account oauth.
+	ClientSecret *string `json:"client_secret" validate:"required"`
+
+	// Username for ServiceNow account REST API.
+	Username *string `json:"username" validate:"required"`
+
+	// Password for ServiceNow account REST API.
+	Password *string `json:"password" validate:"required"`
+
+	// Instance name for ServiceNow account.
+	InstanceName *string `json:"instance_name" validate:"required"`
+}
+
+// NewDestinationConfigOneOfServiceNowDestinationConfig : Instantiate DestinationConfigOneOfServiceNowDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfServiceNowDestinationConfig(clientID string, clientSecret string, username string, password string, instanceName string) (_model *DestinationConfigOneOfServiceNowDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfServiceNowDestinationConfig{
+		ClientID:     core.StringPtr(clientID),
+		ClientSecret: core.StringPtr(clientSecret),
+		Username:     core.StringPtr(username),
+		Password:     core.StringPtr(password),
+		InstanceName: core.StringPtr(instanceName),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*DestinationConfigOneOfServiceNowDestinationConfig) isaDestinationConfigOneOf() bool {
+	return true
+}
+
+// UnmarshalDestinationConfigOneOfServiceNowDestinationConfig unmarshals an instance of DestinationConfigOneOfServiceNowDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfServiceNowDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfServiceNowDestinationConfig)
+	err = core.UnmarshalPrimitive(m, "client_id", &obj.ClientID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "client_secret", &obj.ClientSecret)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "instance_name", &obj.InstanceName)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// DestinationConfigOneOfSlackDestinationConfig : Payload describing a Slack destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfSlackDestinationConfig struct {
+	// URL of Slack Incoming Notifications.
 	URL *string `json:"url" validate:"required"`
 }
 
-// NewDestinationConfigParamsSlackDestinationConfig : Instantiate DestinationConfigParamsSlackDestinationConfig (Generic Model Constructor)
-func (*EventNotificationsV1) NewDestinationConfigParamsSlackDestinationConfig(url string) (_model *DestinationConfigParamsSlackDestinationConfig, err error) {
-	_model = &DestinationConfigParamsSlackDestinationConfig{
+// NewDestinationConfigOneOfSlackDestinationConfig : Instantiate DestinationConfigOneOfSlackDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfSlackDestinationConfig(url string) (_model *DestinationConfigOneOfSlackDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfSlackDestinationConfig{
 		URL: core.StringPtr(url),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
-func (*DestinationConfigParamsSlackDestinationConfig) isaDestinationConfigParams() bool {
+func (*DestinationConfigOneOfSlackDestinationConfig) isaDestinationConfigOneOf() bool {
 	return true
 }
 
-// UnmarshalDestinationConfigParamsSlackDestinationConfig unmarshals an instance of DestinationConfigParamsSlackDestinationConfig from the specified map of raw messages.
-func UnmarshalDestinationConfigParamsSlackDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DestinationConfigParamsSlackDestinationConfig)
+// UnmarshalDestinationConfigOneOfSlackDestinationConfig unmarshals an instance of DestinationConfigOneOfSlackDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfSlackDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfSlackDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
 		return
@@ -6611,9 +7346,9 @@ func UnmarshalDestinationConfigParamsSlackDestinationConfig(m map[string]json.Ra
 	return
 }
 
-// DestinationConfigParamsWebhookDestinationConfig : Payload describing a webhook destination configuration.
-// This model "extends" DestinationConfigParams
-type DestinationConfigParamsWebhookDestinationConfig struct {
+// DestinationConfigOneOfWebhookDestinationConfig : Payload describing a webhook destination configuration.
+// This model "extends" DestinationConfigOneOf
+type DestinationConfigOneOfWebhookDestinationConfig struct {
 	// URL of webhook.
 	URL *string `json:"url" validate:"required"`
 
@@ -6627,16 +7362,16 @@ type DestinationConfigParamsWebhookDestinationConfig struct {
 	SensitiveHeaders []string `json:"sensitive_headers,omitempty"`
 }
 
-// Constants associated with the DestinationConfigParamsWebhookDestinationConfig.Verb property.
+// Constants associated with the DestinationConfigOneOfWebhookDestinationConfig.Verb property.
 // HTTP method of webhook.
 const (
-	DestinationConfigParamsWebhookDestinationConfigVerbGetConst  = "get"
-	DestinationConfigParamsWebhookDestinationConfigVerbPostConst = "post"
+	DestinationConfigOneOfWebhookDestinationConfigVerbGetConst  = "get"
+	DestinationConfigOneOfWebhookDestinationConfigVerbPostConst = "post"
 )
 
-// NewDestinationConfigParamsWebhookDestinationConfig : Instantiate DestinationConfigParamsWebhookDestinationConfig (Generic Model Constructor)
-func (*EventNotificationsV1) NewDestinationConfigParamsWebhookDestinationConfig(url string, verb string) (_model *DestinationConfigParamsWebhookDestinationConfig, err error) {
-	_model = &DestinationConfigParamsWebhookDestinationConfig{
+// NewDestinationConfigOneOfWebhookDestinationConfig : Instantiate DestinationConfigOneOfWebhookDestinationConfig (Generic Model Constructor)
+func (*EventNotificationsV1) NewDestinationConfigOneOfWebhookDestinationConfig(url string, verb string) (_model *DestinationConfigOneOfWebhookDestinationConfig, err error) {
+	_model = &DestinationConfigOneOfWebhookDestinationConfig{
 		URL:  core.StringPtr(url),
 		Verb: core.StringPtr(verb),
 	}
@@ -6644,13 +7379,13 @@ func (*EventNotificationsV1) NewDestinationConfigParamsWebhookDestinationConfig(
 	return
 }
 
-func (*DestinationConfigParamsWebhookDestinationConfig) isaDestinationConfigParams() bool {
+func (*DestinationConfigOneOfWebhookDestinationConfig) isaDestinationConfigOneOf() bool {
 	return true
 }
 
-// UnmarshalDestinationConfigParamsWebhookDestinationConfig unmarshals an instance of DestinationConfigParamsWebhookDestinationConfig from the specified map of raw messages.
-func UnmarshalDestinationConfigParamsWebhookDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DestinationConfigParamsWebhookDestinationConfig)
+// UnmarshalDestinationConfigOneOfWebhookDestinationConfig unmarshals an instance of DestinationConfigOneOfWebhookDestinationConfig from the specified map of raw messages.
+func UnmarshalDestinationConfigOneOfWebhookDestinationConfig(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(DestinationConfigOneOfWebhookDestinationConfig)
 	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
 	if err != nil {
 		return
@@ -6674,6 +7409,26 @@ func UnmarshalDestinationConfigParamsWebhookDestinationConfig(m map[string]json.
 // SubscriptionAttributesEmailAttributesResponse : The attributes reponse for an email destination.
 // This model "extends" SubscriptionAttributes
 type SubscriptionAttributesEmailAttributesResponse struct {
+	// The email id string.
+	Invited []EmailAttributesResponseInvitedItems `json:"invited,omitempty"`
+
+	// The unsubscribe list.
+	Subscribed []EmailAttributesResponseSubscribedUnsubscribedItems `json:"subscribed,omitempty"`
+
+	// The subscribed list.
+	Unsubscribed []EmailAttributesResponseSubscribedUnsubscribedItems `json:"unsubscribed,omitempty"`
+
+	// Whether to add the notification payload to the email.
+	AddNotificationPayload *bool `json:"add_notification_payload" validate:"required"`
+
+	// The email address to reply to.
+	ReplyToMail *string `json:"reply_to_mail" validate:"required"`
+
+	// The email name to reply to.
+	ReplyToName *string `json:"reply_to_name" validate:"required"`
+
+	// The email name of From.
+	FromName *string `json:"from_name" validate:"required"`
 
 	// Allows users to set arbitrary properties
 	additionalProperties map[string]interface{}
@@ -6717,6 +7472,27 @@ func (o *SubscriptionAttributesEmailAttributesResponse) MarshalJSON() (buffer []
 			m[k] = v
 		}
 	}
+	if o.Invited != nil {
+		m["invited"] = o.Invited
+	}
+	if o.Subscribed != nil {
+		m["subscribed"] = o.Subscribed
+	}
+	if o.Unsubscribed != nil {
+		m["unsubscribed"] = o.Unsubscribed
+	}
+	if o.AddNotificationPayload != nil {
+		m["add_notification_payload"] = o.AddNotificationPayload
+	}
+	if o.ReplyToMail != nil {
+		m["reply_to_mail"] = o.ReplyToMail
+	}
+	if o.ReplyToName != nil {
+		m["reply_to_name"] = o.ReplyToName
+	}
+	if o.FromName != nil {
+		m["from_name"] = o.FromName
+	}
 	buffer, err = json.Marshal(m)
 	return
 }
@@ -6724,6 +7500,41 @@ func (o *SubscriptionAttributesEmailAttributesResponse) MarshalJSON() (buffer []
 // UnmarshalSubscriptionAttributesEmailAttributesResponse unmarshals an instance of SubscriptionAttributesEmailAttributesResponse from the specified map of raw messages.
 func UnmarshalSubscriptionAttributesEmailAttributesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SubscriptionAttributesEmailAttributesResponse)
+	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalEmailAttributesResponseInvitedItems)
+	if err != nil {
+		return
+	}
+	delete(m, "invited")
+	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalEmailAttributesResponseSubscribedUnsubscribedItems)
+	if err != nil {
+		return
+	}
+	delete(m, "subscribed")
+	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalEmailAttributesResponseSubscribedUnsubscribedItems)
+	if err != nil {
+		return
+	}
+	delete(m, "unsubscribed")
+	err = core.UnmarshalPrimitive(m, "add_notification_payload", &obj.AddNotificationPayload)
+	if err != nil {
+		return
+	}
+	delete(m, "add_notification_payload")
+	err = core.UnmarshalPrimitive(m, "reply_to_mail", &obj.ReplyToMail)
+	if err != nil {
+		return
+	}
+	delete(m, "reply_to_mail")
+	err = core.UnmarshalPrimitive(m, "reply_to_name", &obj.ReplyToName)
+	if err != nil {
+		return
+	}
+	delete(m, "reply_to_name")
+	err = core.UnmarshalPrimitive(m, "from_name", &obj.FromName)
+	if err != nil {
+		return
+	}
+	delete(m, "from_name")
 	for k := range m {
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
@@ -6740,6 +7551,14 @@ func UnmarshalSubscriptionAttributesEmailAttributesResponse(m map[string]json.Ra
 // SubscriptionAttributesSmsAttributesResponse : SMS attributes object.
 // This model "extends" SubscriptionAttributes
 type SubscriptionAttributesSmsAttributesResponse struct {
+	// The subscribed list.
+	Subscribed []SmsAttributesItems `json:"subscribed,omitempty"`
+
+	// The unsubscribe list.
+	Unsubscribed []SmsAttributesItems `json:"unsubscribed,omitempty"`
+
+	// The email id string.
+	Invited []SmsInviteAttributesItems `json:"invited,omitempty"`
 
 	// Allows users to set arbitrary properties
 	additionalProperties map[string]interface{}
@@ -6783,6 +7602,15 @@ func (o *SubscriptionAttributesSmsAttributesResponse) MarshalJSON() (buffer []by
 			m[k] = v
 		}
 	}
+	if o.Subscribed != nil {
+		m["subscribed"] = o.Subscribed
+	}
+	if o.Unsubscribed != nil {
+		m["unsubscribed"] = o.Unsubscribed
+	}
+	if o.Invited != nil {
+		m["invited"] = o.Invited
+	}
 	buffer, err = json.Marshal(m)
 	return
 }
@@ -6790,6 +7618,21 @@ func (o *SubscriptionAttributesSmsAttributesResponse) MarshalJSON() (buffer []by
 // UnmarshalSubscriptionAttributesSmsAttributesResponse unmarshals an instance of SubscriptionAttributesSmsAttributesResponse from the specified map of raw messages.
 func UnmarshalSubscriptionAttributesSmsAttributesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SubscriptionAttributesSmsAttributesResponse)
+	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalSmsAttributesItems)
+	if err != nil {
+		return
+	}
+	delete(m, "subscribed")
+	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalSmsAttributesItems)
+	if err != nil {
+		return
+	}
+	delete(m, "unsubscribed")
+	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalSmsInviteAttributesItems)
+	if err != nil {
+		return
+	}
+	delete(m, "invited")
 	for k := range m {
 		var v interface{}
 		e := core.UnmarshalPrimitive(m, k, &v)
@@ -6803,11 +7646,98 @@ func UnmarshalSubscriptionAttributesSmsAttributesResponse(m map[string]json.RawM
 	return
 }
 
-// SubscriptionAttributesSlackAttributesResponse : The attributes for a slack notification.
+// SubscriptionAttributesServiceNowAttributesResponse : The attributes for a ServiceNow notification.
+// This model "extends" SubscriptionAttributes
+type SubscriptionAttributesServiceNowAttributesResponse struct {
+	// Assigned name from ServiceNow account.
+	AssignedTo *string `json:"assigned_to,omitempty"`
+
+	// Assigned group name from ServiceNow account.
+	AssignmentGroup *string `json:"assignment_group,omitempty"`
+
+	// Allows users to set arbitrary properties
+	additionalProperties map[string]interface{}
+}
+
+func (*SubscriptionAttributesServiceNowAttributesResponse) isaSubscriptionAttributes() bool {
+	return true
+}
+
+// SetProperty allows the user to set an arbitrary property on an instance of SubscriptionAttributesServiceNowAttributesResponse
+func (o *SubscriptionAttributesServiceNowAttributesResponse) SetProperty(key string, value interface{}) {
+	if o.additionalProperties == nil {
+		o.additionalProperties = make(map[string]interface{})
+	}
+	o.additionalProperties[key] = value
+}
+
+// SetProperties allows the user to set a map of arbitrary properties on an instance of SubscriptionAttributesServiceNowAttributesResponse
+func (o *SubscriptionAttributesServiceNowAttributesResponse) SetProperties(m map[string]interface{}) {
+	o.additionalProperties = make(map[string]interface{})
+	for k, v := range m {
+		o.additionalProperties[k] = v
+	}
+}
+
+// GetProperty allows the user to retrieve an arbitrary property from an instance of SubscriptionAttributesServiceNowAttributesResponse
+func (o *SubscriptionAttributesServiceNowAttributesResponse) GetProperty(key string) interface{} {
+	return o.additionalProperties[key]
+}
+
+// GetProperties allows the user to retrieve the map of arbitrary properties from an instance of SubscriptionAttributesServiceNowAttributesResponse
+func (o *SubscriptionAttributesServiceNowAttributesResponse) GetProperties() map[string]interface{} {
+	return o.additionalProperties
+}
+
+// MarshalJSON performs custom serialization for instances of SubscriptionAttributesServiceNowAttributesResponse
+func (o *SubscriptionAttributesServiceNowAttributesResponse) MarshalJSON() (buffer []byte, err error) {
+	m := make(map[string]interface{})
+	if len(o.additionalProperties) > 0 {
+		for k, v := range o.additionalProperties {
+			m[k] = v
+		}
+	}
+	if o.AssignedTo != nil {
+		m["assigned_to"] = o.AssignedTo
+	}
+	if o.AssignmentGroup != nil {
+		m["assignment_group"] = o.AssignmentGroup
+	}
+	buffer, err = json.Marshal(m)
+	return
+}
+
+// UnmarshalSubscriptionAttributesServiceNowAttributesResponse unmarshals an instance of SubscriptionAttributesServiceNowAttributesResponse from the specified map of raw messages.
+func UnmarshalSubscriptionAttributesServiceNowAttributesResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionAttributesServiceNowAttributesResponse)
+	err = core.UnmarshalPrimitive(m, "assigned_to", &obj.AssignedTo)
+	if err != nil {
+		return
+	}
+	delete(m, "assigned_to")
+	err = core.UnmarshalPrimitive(m, "assignment_group", &obj.AssignmentGroup)
+	if err != nil {
+		return
+	}
+	delete(m, "assignment_group")
+	for k := range m {
+		var v interface{}
+		e := core.UnmarshalPrimitive(m, k, &v)
+		if e != nil {
+			err = e
+			return
+		}
+		obj.SetProperty(k, v)
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionAttributesSlackAttributesResponse : The attributes for a Slack notification.
 // This model "extends" SubscriptionAttributes
 type SubscriptionAttributesSlackAttributesResponse struct {
 	// Attachment Color for Slack Notification.
-	AttachmentColor *string `json:"attachment_color" validate:"required"`
+	AttachmentColor *string `json:"attachment_color,omitempty"`
 
 	// Allows users to set arbitrary properties
 	additionalProperties map[string]interface{}
@@ -6970,7 +7900,7 @@ func UnmarshalSubscriptionAttributesWebhookAttributesResponse(m map[string]json.
 // This model "extends" SubscriptionCreateAttributes
 type SubscriptionCreateAttributesEmailAttributes struct {
 	// The email id string.
-	To []string `json:"to" validate:"required"`
+	Invited []string `json:"invited" validate:"required"`
 
 	// Whether to add the notification payload to the email.
 	AddNotificationPayload *bool `json:"add_notification_payload" validate:"required"`
@@ -6986,9 +7916,9 @@ type SubscriptionCreateAttributesEmailAttributes struct {
 }
 
 // NewSubscriptionCreateAttributesEmailAttributes : Instantiate SubscriptionCreateAttributesEmailAttributes (Generic Model Constructor)
-func (*EventNotificationsV1) NewSubscriptionCreateAttributesEmailAttributes(to []string, addNotificationPayload bool, replyToMail string, replyToName string, fromName string) (_model *SubscriptionCreateAttributesEmailAttributes, err error) {
+func (*EventNotificationsV1) NewSubscriptionCreateAttributesEmailAttributes(invited []string, addNotificationPayload bool, replyToMail string, replyToName string, fromName string) (_model *SubscriptionCreateAttributesEmailAttributes, err error) {
 	_model = &SubscriptionCreateAttributesEmailAttributes{
-		To:                     to,
+		Invited:                invited,
 		AddNotificationPayload: core.BoolPtr(addNotificationPayload),
 		ReplyToMail:            core.StringPtr(replyToMail),
 		ReplyToName:            core.StringPtr(replyToName),
@@ -7005,7 +7935,7 @@ func (*SubscriptionCreateAttributesEmailAttributes) isaSubscriptionCreateAttribu
 // UnmarshalSubscriptionCreateAttributesEmailAttributes unmarshals an instance of SubscriptionCreateAttributesEmailAttributes from the specified map of raw messages.
 func UnmarshalSubscriptionCreateAttributesEmailAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SubscriptionCreateAttributesEmailAttributes)
-	err = core.UnmarshalPrimitive(m, "to", &obj.To)
+	err = core.UnmarshalPrimitive(m, "invited", &obj.Invited)
 	if err != nil {
 		return
 	}
@@ -7045,17 +7975,17 @@ func UnmarshalSubscriptionCreateAttributesFcmAttributes(m map[string]json.RawMes
 	return
 }
 
-// SubscriptionCreateAttributesSmsAttributes : SMS attributes object.
+// SubscriptionCreateAttributesSmsAttributes : The attributes for an sms notification.
 // This model "extends" SubscriptionCreateAttributes
 type SubscriptionCreateAttributesSmsAttributes struct {
-	// The phone number to send the SMS to.
-	To []string `json:"to" validate:"required"`
+	// The sms id string.
+	Invited []string `json:"invited" validate:"required"`
 }
 
 // NewSubscriptionCreateAttributesSmsAttributes : Instantiate SubscriptionCreateAttributesSmsAttributes (Generic Model Constructor)
-func (*EventNotificationsV1) NewSubscriptionCreateAttributesSmsAttributes(to []string) (_model *SubscriptionCreateAttributesSmsAttributes, err error) {
+func (*EventNotificationsV1) NewSubscriptionCreateAttributesSmsAttributes(invited []string) (_model *SubscriptionCreateAttributesSmsAttributes, err error) {
 	_model = &SubscriptionCreateAttributesSmsAttributes{
-		To: to,
+		Invited: invited,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
@@ -7068,7 +7998,36 @@ func (*SubscriptionCreateAttributesSmsAttributes) isaSubscriptionCreateAttribute
 // UnmarshalSubscriptionCreateAttributesSmsAttributes unmarshals an instance of SubscriptionCreateAttributesSmsAttributes from the specified map of raw messages.
 func UnmarshalSubscriptionCreateAttributesSmsAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SubscriptionCreateAttributesSmsAttributes)
-	err = core.UnmarshalPrimitive(m, "to", &obj.To)
+	err = core.UnmarshalPrimitive(m, "invited", &obj.Invited)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionCreateAttributesServiceNowAttributes : The attributes for a ServiceNow notification.
+// This model "extends" SubscriptionCreateAttributes
+type SubscriptionCreateAttributesServiceNowAttributes struct {
+	// Name of user ServiceNow incident will be assigned to.
+	AssignedTo *string `json:"assigned_to,omitempty"`
+
+	// Group Name to which incident will be assigned to.
+	AssignmentGroup *string `json:"assignment_group,omitempty"`
+}
+
+func (*SubscriptionCreateAttributesServiceNowAttributes) isaSubscriptionCreateAttributes() bool {
+	return true
+}
+
+// UnmarshalSubscriptionCreateAttributesServiceNowAttributes unmarshals an instance of SubscriptionCreateAttributesServiceNowAttributes from the specified map of raw messages.
+func UnmarshalSubscriptionCreateAttributesServiceNowAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionCreateAttributesServiceNowAttributes)
+	err = core.UnmarshalPrimitive(m, "assigned_to", &obj.AssignedTo)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "assignment_group", &obj.AssignmentGroup)
 	if err != nil {
 		return
 	}
@@ -7080,16 +8039,7 @@ func UnmarshalSubscriptionCreateAttributesSmsAttributes(m map[string]json.RawMes
 // This model "extends" SubscriptionCreateAttributes
 type SubscriptionCreateAttributesSlackAttributes struct {
 	// Attachment Color for the slack message.
-	AttachmentColor *string `json:"attachment_color" validate:"required"`
-}
-
-// NewSubscriptionCreateAttributesSlackAttributes : Instantiate SubscriptionCreateAttributesSlackAttributes (Generic Model Constructor)
-func (*EventNotificationsV1) NewSubscriptionCreateAttributesSlackAttributes(attachmentColor string) (_model *SubscriptionCreateAttributesSlackAttributes, err error) {
-	_model = &SubscriptionCreateAttributesSlackAttributes{
-		AttachmentColor: core.StringPtr(attachmentColor),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
+	AttachmentColor *string `json:"attachment_color,omitempty"`
 }
 
 func (*SubscriptionCreateAttributesSlackAttributes) isaSubscriptionCreateAttributes() bool {
@@ -7141,8 +8091,8 @@ func UnmarshalSubscriptionCreateAttributesWebhookAttributes(m map[string]json.Ra
 // SubscriptionUpdateAttributesEmailUpdateAttributes : The attributes for an email notification.
 // This model "extends" SubscriptionUpdateAttributes
 type SubscriptionUpdateAttributesEmailUpdateAttributes struct {
-	// The email ids.
-	To *EmailUpdateAttributesTo `json:"to" validate:"required"`
+	// The email ids or phone numbers.
+	Invited *UpdateAttributesInvited `json:"invited,omitempty"`
 
 	// Whether to add the notification payload to the email.
 	AddNotificationPayload *bool `json:"add_notification_payload" validate:"required"`
@@ -7156,17 +8106,16 @@ type SubscriptionUpdateAttributesEmailUpdateAttributes struct {
 	// The email name of From.
 	FromName *string `json:"from_name" validate:"required"`
 
-	// The email ids invited.
-	Invited []string `json:"invited,omitempty"`
+	// The email ids or phone numbers.
+	Subscribed *UpdateAttributesSubscribed `json:"subscribed,omitempty"`
 
-	// The email ids.
-	Unsubscribed *EmailUpdateAttributesUnsubscribed `json:"unsubscribed,omitempty"`
+	// The email ids or phone numbers.
+	Unsubscribed *UpdateAttributesUnsubscribed `json:"unsubscribed,omitempty"`
 }
 
 // NewSubscriptionUpdateAttributesEmailUpdateAttributes : Instantiate SubscriptionUpdateAttributesEmailUpdateAttributes (Generic Model Constructor)
-func (*EventNotificationsV1) NewSubscriptionUpdateAttributesEmailUpdateAttributes(to *EmailUpdateAttributesTo, addNotificationPayload bool, replyToMail string, replyToName string, fromName string) (_model *SubscriptionUpdateAttributesEmailUpdateAttributes, err error) {
+func (*EventNotificationsV1) NewSubscriptionUpdateAttributesEmailUpdateAttributes(addNotificationPayload bool, replyToMail string, replyToName string, fromName string) (_model *SubscriptionUpdateAttributesEmailUpdateAttributes, err error) {
 	_model = &SubscriptionUpdateAttributesEmailUpdateAttributes{
-		To:                     to,
 		AddNotificationPayload: core.BoolPtr(addNotificationPayload),
 		ReplyToMail:            core.StringPtr(replyToMail),
 		ReplyToName:            core.StringPtr(replyToName),
@@ -7183,7 +8132,7 @@ func (*SubscriptionUpdateAttributesEmailUpdateAttributes) isaSubscriptionUpdateA
 // UnmarshalSubscriptionUpdateAttributesEmailUpdateAttributes unmarshals an instance of SubscriptionUpdateAttributesEmailUpdateAttributes from the specified map of raw messages.
 func UnmarshalSubscriptionUpdateAttributesEmailUpdateAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SubscriptionUpdateAttributesEmailUpdateAttributes)
-	err = core.UnmarshalModel(m, "to", &obj.To, UnmarshalEmailUpdateAttributesTo)
+	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalUpdateAttributesInvited)
 	if err != nil {
 		return
 	}
@@ -7203,11 +8152,11 @@ func UnmarshalSubscriptionUpdateAttributesEmailUpdateAttributes(m map[string]jso
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "invited", &obj.Invited)
+	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalUpdateAttributesSubscribed)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalEmailUpdateAttributesUnsubscribed)
+	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalUpdateAttributesUnsubscribed)
 	if err != nil {
 		return
 	}
@@ -7215,30 +8164,64 @@ func UnmarshalSubscriptionUpdateAttributesEmailUpdateAttributes(m map[string]jso
 	return
 }
 
-// SubscriptionUpdateAttributesSmsAttributes : SMS attributes object.
+// SubscriptionUpdateAttributesSmsUpdateAttributes : SMS attributes object.
 // This model "extends" SubscriptionUpdateAttributes
-type SubscriptionUpdateAttributesSmsAttributes struct {
-	// The phone number to send the SMS to.
-	To []string `json:"to" validate:"required"`
+type SubscriptionUpdateAttributesSmsUpdateAttributes struct {
+	// The email ids or phone numbers.
+	Invited *UpdateAttributesInvited `json:"invited,omitempty"`
+
+	// The email ids or phone numbers.
+	Subscribed *UpdateAttributesSubscribed `json:"subscribed,omitempty"`
+
+	// The email ids or phone numbers.
+	Unsubscribed *UpdateAttributesUnsubscribed `json:"unsubscribed,omitempty"`
 }
 
-// NewSubscriptionUpdateAttributesSmsAttributes : Instantiate SubscriptionUpdateAttributesSmsAttributes (Generic Model Constructor)
-func (*EventNotificationsV1) NewSubscriptionUpdateAttributesSmsAttributes(to []string) (_model *SubscriptionUpdateAttributesSmsAttributes, err error) {
-	_model = &SubscriptionUpdateAttributesSmsAttributes{
-		To: to,
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-func (*SubscriptionUpdateAttributesSmsAttributes) isaSubscriptionUpdateAttributes() bool {
+func (*SubscriptionUpdateAttributesSmsUpdateAttributes) isaSubscriptionUpdateAttributes() bool {
 	return true
 }
 
-// UnmarshalSubscriptionUpdateAttributesSmsAttributes unmarshals an instance of SubscriptionUpdateAttributesSmsAttributes from the specified map of raw messages.
-func UnmarshalSubscriptionUpdateAttributesSmsAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(SubscriptionUpdateAttributesSmsAttributes)
-	err = core.UnmarshalPrimitive(m, "to", &obj.To)
+// UnmarshalSubscriptionUpdateAttributesSmsUpdateAttributes unmarshals an instance of SubscriptionUpdateAttributesSmsUpdateAttributes from the specified map of raw messages.
+func UnmarshalSubscriptionUpdateAttributesSmsUpdateAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionUpdateAttributesSmsUpdateAttributes)
+	err = core.UnmarshalModel(m, "invited", &obj.Invited, UnmarshalUpdateAttributesInvited)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "subscribed", &obj.Subscribed, UnmarshalUpdateAttributesSubscribed)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "unsubscribed", &obj.Unsubscribed, UnmarshalUpdateAttributesUnsubscribed)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SubscriptionUpdateAttributesServiceNowAttributes : The attributes for a ServiceNow notification.
+// This model "extends" SubscriptionUpdateAttributes
+type SubscriptionUpdateAttributesServiceNowAttributes struct {
+	// Name of user ServiceNow incident will be assigned to.
+	AssignedTo *string `json:"assigned_to,omitempty"`
+
+	// Group Name to which incident will be assigned to.
+	AssignmentGroup *string `json:"assignment_group,omitempty"`
+}
+
+func (*SubscriptionUpdateAttributesServiceNowAttributes) isaSubscriptionUpdateAttributes() bool {
+	return true
+}
+
+// UnmarshalSubscriptionUpdateAttributesServiceNowAttributes unmarshals an instance of SubscriptionUpdateAttributesServiceNowAttributes from the specified map of raw messages.
+func UnmarshalSubscriptionUpdateAttributesServiceNowAttributes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SubscriptionUpdateAttributesServiceNowAttributes)
+	err = core.UnmarshalPrimitive(m, "assigned_to", &obj.AssignedTo)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "assignment_group", &obj.AssignmentGroup)
 	if err != nil {
 		return
 	}
@@ -7250,16 +8233,7 @@ func UnmarshalSubscriptionUpdateAttributesSmsAttributes(m map[string]json.RawMes
 // This model "extends" SubscriptionUpdateAttributes
 type SubscriptionUpdateAttributesSlackAttributes struct {
 	// Attachment Color for the slack message.
-	AttachmentColor *string `json:"attachment_color" validate:"required"`
-}
-
-// NewSubscriptionUpdateAttributesSlackAttributes : Instantiate SubscriptionUpdateAttributesSlackAttributes (Generic Model Constructor)
-func (*EventNotificationsV1) NewSubscriptionUpdateAttributesSlackAttributes(attachmentColor string) (_model *SubscriptionUpdateAttributesSlackAttributes, err error) {
-	_model = &SubscriptionUpdateAttributesSlackAttributes{
-		AttachmentColor: core.StringPtr(attachmentColor),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
+	AttachmentColor *string `json:"attachment_color,omitempty"`
 }
 
 func (*SubscriptionUpdateAttributesSlackAttributes) isaSubscriptionUpdateAttributes() bool {
@@ -7306,4 +8280,514 @@ func UnmarshalSubscriptionUpdateAttributesWebhookAttributes(m map[string]json.Ra
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// SourcesPager can be used to simplify the use of the "ListSources" method.
+type SourcesPager struct {
+	hasNext     bool
+	options     *ListSourcesOptions
+	client      *EventNotificationsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewSourcesPager returns a new SourcesPager instance.
+func (eventNotifications *EventNotificationsV1) NewSourcesPager(options *ListSourcesOptions) (pager *SourcesPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListSourcesOptions = *options
+	pager = &SourcesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  eventNotifications,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *SourcesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *SourcesPager) GetNextWithContext(ctx context.Context) (page []SourceListItem, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListSourcesWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Sources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *SourcesPager) GetAllWithContext(ctx context.Context) (allItems []SourceListItem, err error) {
+	for pager.HasNext() {
+		var nextPage []SourceListItem
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *SourcesPager) GetNext() (page []SourceListItem, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *SourcesPager) GetAll() (allItems []SourceListItem, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+// TopicsPager can be used to simplify the use of the "ListTopics" method.
+type TopicsPager struct {
+	hasNext     bool
+	options     *ListTopicsOptions
+	client      *EventNotificationsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewTopicsPager returns a new TopicsPager instance.
+func (eventNotifications *EventNotificationsV1) NewTopicsPager(options *ListTopicsOptions) (pager *TopicsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListTopicsOptions = *options
+	pager = &TopicsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  eventNotifications,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *TopicsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *TopicsPager) GetNextWithContext(ctx context.Context) (page []TopicsListItem, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListTopicsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Topics
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *TopicsPager) GetAllWithContext(ctx context.Context) (allItems []TopicsListItem, err error) {
+	for pager.HasNext() {
+		var nextPage []TopicsListItem
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *TopicsPager) GetNext() (page []TopicsListItem, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *TopicsPager) GetAll() (allItems []TopicsListItem, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+// DestinationsPager can be used to simplify the use of the "ListDestinations" method.
+type DestinationsPager struct {
+	hasNext     bool
+	options     *ListDestinationsOptions
+	client      *EventNotificationsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewDestinationsPager returns a new DestinationsPager instance.
+func (eventNotifications *EventNotificationsV1) NewDestinationsPager(options *ListDestinationsOptions) (pager *DestinationsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListDestinationsOptions = *options
+	pager = &DestinationsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  eventNotifications,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *DestinationsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *DestinationsPager) GetNextWithContext(ctx context.Context) (page []DestinationListItem, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListDestinationsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Destinations
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *DestinationsPager) GetAllWithContext(ctx context.Context) (allItems []DestinationListItem, err error) {
+	for pager.HasNext() {
+		var nextPage []DestinationListItem
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *DestinationsPager) GetNext() (page []DestinationListItem, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *DestinationsPager) GetAll() (allItems []DestinationListItem, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+// TagsSubscriptionPager can be used to simplify the use of the "ListTagsSubscription" method.
+type TagsSubscriptionPager struct {
+	hasNext     bool
+	options     *ListTagsSubscriptionOptions
+	client      *EventNotificationsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewTagsSubscriptionPager returns a new TagsSubscriptionPager instance.
+func (eventNotifications *EventNotificationsV1) NewTagsSubscriptionPager(options *ListTagsSubscriptionOptions) (pager *TagsSubscriptionPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListTagsSubscriptionOptions = *options
+	pager = &TagsSubscriptionPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  eventNotifications,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *TagsSubscriptionPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *TagsSubscriptionPager) GetNextWithContext(ctx context.Context) (page []TagsSubscriptionListItem, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListTagsSubscriptionWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.TagSubscriptions
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *TagsSubscriptionPager) GetAllWithContext(ctx context.Context) (allItems []TagsSubscriptionListItem, err error) {
+	for pager.HasNext() {
+		var nextPage []TagsSubscriptionListItem
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *TagsSubscriptionPager) GetNext() (page []TagsSubscriptionListItem, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *TagsSubscriptionPager) GetAll() (allItems []TagsSubscriptionListItem, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+// SubscriptionsPager can be used to simplify the use of the "ListSubscriptions" method.
+type SubscriptionsPager struct {
+	hasNext     bool
+	options     *ListSubscriptionsOptions
+	client      *EventNotificationsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewSubscriptionsPager returns a new SubscriptionsPager instance.
+func (eventNotifications *EventNotificationsV1) NewSubscriptionsPager(options *ListSubscriptionsOptions) (pager *SubscriptionsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListSubscriptionsOptions = *options
+	pager = &SubscriptionsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  eventNotifications,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *SubscriptionsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *SubscriptionsPager) GetNextWithContext(ctx context.Context) (page []SubscriptionListItem, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListSubscriptionsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Subscriptions
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *SubscriptionsPager) GetAllWithContext(ctx context.Context) (allItems []SubscriptionListItem, err error) {
+	for pager.HasNext() {
+		var nextPage []SubscriptionListItem
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *SubscriptionsPager) GetNext() (page []SubscriptionListItem, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *SubscriptionsPager) GetAll() (allItems []SubscriptionListItem, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+// IntegrationsPager can be used to simplify the use of the "ListIntegrations" method.
+type IntegrationsPager struct {
+	hasNext     bool
+	options     *ListIntegrationsOptions
+	client      *EventNotificationsV1
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewIntegrationsPager returns a new IntegrationsPager instance.
+func (eventNotifications *EventNotificationsV1) NewIntegrationsPager(options *ListIntegrationsOptions) (pager *IntegrationsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListIntegrationsOptions = *options
+	pager = &IntegrationsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  eventNotifications,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *IntegrationsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *IntegrationsPager) GetNextWithContext(ctx context.Context) (page []IntegrationListItem, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListIntegrationsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Integrations
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *IntegrationsPager) GetAllWithContext(ctx context.Context) (allItems []IntegrationListItem, err error) {
+	for pager.HasNext() {
+		var nextPage []IntegrationListItem
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *IntegrationsPager) GetNext() (page []IntegrationListItem, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *IntegrationsPager) GetAll() (allItems []IntegrationListItem, err error) {
+	return pager.GetAllWithContext(context.Background())
 }
