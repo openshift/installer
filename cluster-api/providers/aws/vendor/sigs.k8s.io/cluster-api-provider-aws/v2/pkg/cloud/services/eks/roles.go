@@ -95,7 +95,7 @@ func (s *Service) reconcileControlPlaneIAMRole() error {
 			return fmt.Errorf("getting role %s: %w", *s.scope.ControlPlane.Spec.RoleName, ErrClusterRoleNotFound)
 		}
 
-		role, err = s.CreateRole(*s.scope.ControlPlane.Spec.RoleName, s.scope.Name(), eksiam.ControlPlaneTrustRelationship(false), s.scope.AdditionalTags())
+		role, err = s.CreateRole(*s.scope.ControlPlane.Spec.RoleName, s.scope.Name(), eksiam.ControlPlaneTrustRelationship(false), s.scope.AdditionalTags(), s.scope.ControlPlane.Spec.RolePath, s.scope.ControlPlane.Spec.RolePermissionsBoundary)
 		if err != nil {
 			record.Warnf(s.scope.ControlPlane, "FailedIAMRoleCreation", "Failed to create control plane IAM role %q: %v", *s.scope.ControlPlane.Spec.RoleName, err)
 
@@ -204,7 +204,7 @@ func (s *NodegroupService) reconcileNodegroupIAMRole() error {
 			return ErrNodegroupRoleNotFound
 		}
 
-		role, err = s.CreateRole(s.scope.ManagedMachinePool.Spec.RoleName, s.scope.ClusterName(), eksiam.NodegroupTrustRelationship(), s.scope.AdditionalTags())
+		role, err = s.CreateRole(s.scope.ManagedMachinePool.Spec.RoleName, s.scope.ClusterName(), eksiam.NodegroupTrustRelationship(), s.scope.AdditionalTags(), s.scope.ManagedMachinePool.Spec.RolePath, s.scope.ManagedMachinePool.Spec.RolePermissionsBoundary)
 		if err != nil {
 			record.Warnf(s.scope.ManagedMachinePool, "FailedIAMRoleCreation", "Failed to create nodegroup IAM role %q: %v", s.scope.RoleName(), err)
 			return err
@@ -329,7 +329,7 @@ func (s *FargateService) reconcileFargateIAMRole() (requeue bool, err error) {
 		}
 
 		createdRole = true
-		role, err = s.CreateRole(s.scope.RoleName(), s.scope.ClusterName(), eksiam.FargateTrustRelationship(), s.scope.AdditionalTags())
+		role, err = s.CreateRole(s.scope.RoleName(), s.scope.ClusterName(), eksiam.FargateTrustRelationship(), s.scope.AdditionalTags(), s.scope.FargateProfile.Spec.RolePath, s.scope.FargateProfile.Spec.RolePermissionsBoundary)
 		if err != nil {
 			record.Warnf(s.scope.FargateProfile, "FailedIAMRoleCreation", "Failed to create fargate IAM role %q: %v", s.scope.RoleName(), err)
 			return false, errors.Wrap(err, "failed to create role")

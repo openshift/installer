@@ -130,6 +130,9 @@ func (src *AWSManagedMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.AvailabilityZoneSubnetType = restored.Spec.AvailabilityZoneSubnetType
 	}
 
+	dst.Spec.RolePath = restored.Spec.RolePath
+	dst.Spec.RolePermissionsBoundary = restored.Spec.RolePermissionsBoundary
+
 	return nil
 }
 
@@ -169,14 +172,33 @@ func (r *AWSManagedMachinePoolList) ConvertFrom(srcRaw conversion.Hub) error {
 // ConvertTo converts the v1beta1 AWSFargateProfile receiver to a v1beta2 AWSFargateProfile.
 func (src *AWSFargateProfile) ConvertTo(dstRaw conversion.Hub) error {
 	dst := dstRaw.(*infrav1exp.AWSFargateProfile)
-	return Convert_v1beta1_AWSFargateProfile_To_v1beta2_AWSFargateProfile(src, dst, nil)
+
+	if err := Convert_v1beta1_AWSFargateProfile_To_v1beta2_AWSFargateProfile(src, dst, nil); err != nil {
+		return err
+	}
+
+	// Manually restore data.
+	restored := &infrav1exp.AWSFargateProfile{}
+	if ok, err := utilconversion.UnmarshalData(src, restored); err != nil || !ok {
+		return err
+	}
+
+	dst.Spec.RolePath = restored.Spec.RolePath
+	dst.Spec.RolePermissionsBoundary = restored.Spec.RolePermissionsBoundary
+
+	return nil
 }
 
 // ConvertFrom converts the v1beta2 AWSFargateProfile receiver to v1beta1 AWSFargateProfile.
 func (r *AWSFargateProfile) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*infrav1exp.AWSFargateProfile)
 
-	return Convert_v1beta2_AWSFargateProfile_To_v1beta1_AWSFargateProfile(src, r, nil)
+	if err := Convert_v1beta2_AWSFargateProfile_To_v1beta1_AWSFargateProfile(src, r, nil); err != nil {
+		return err
+	}
+
+	// Preserve Hub data on down-conversion.
+	return utilconversion.MarshalData(src, r)
 }
 
 // ConvertTo converts the v1beta1 AWSFargateProfileList receiver to a v1beta2 AWSFargateProfileList.
@@ -238,4 +260,8 @@ func Convert_v1beta2_AutoScalingGroup_To_v1beta1_AutoScalingGroup(in *infrav1exp
 func Convert_v1beta2_RefreshPreferences_To_v1beta1_RefreshPreferences(in *infrav1exp.RefreshPreferences, out *RefreshPreferences, s apiconversion.Scope) error {
 	// spec.refreshPreferences.disable has been added to v1beta2.
 	return autoConvert_v1beta2_RefreshPreferences_To_v1beta1_RefreshPreferences(in, out, s)
+}
+
+func Convert_v1beta2_FargateProfileSpec_To_v1beta1_FargateProfileSpec(in *infrav1exp.FargateProfileSpec, out *FargateProfileSpec, s apiconversion.Scope) error {
+	return autoConvert_v1beta2_FargateProfileSpec_To_v1beta1_FargateProfileSpec(in, out, s)
 }

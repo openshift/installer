@@ -296,9 +296,8 @@ func (r *AWSCluster) validateNetwork() field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("ipamPool"), r.Spec.NetworkSpec.VPC.IPAMPool, "ipamPool must have either id or name"))
 	}
 
-	for _, rule := range r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules {
-		allErrs = append(allErrs, r.validateIngressRule(rule)...)
-	}
+	allErrs = append(allErrs, r.validateIngressRules(field.NewPath("spec", "network", "additionalControlPlaneIngressRules"), r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules)...)
+	allErrs = append(allErrs, r.validateIngressRules(field.NewPath("spec", "network", "additionalNodeIngressRules"), r.Spec.NetworkSpec.AdditionalNodeIngressRules)...)
 
 	for cidrBlockIndex, cidrBlock := range r.Spec.NetworkSpec.NodePortIngressRuleCidrBlocks {
 		if _, _, err := net.ParseCIDR(cidrBlock); err != nil {
@@ -374,18 +373,11 @@ func (r *AWSCluster) validateControlPlaneLBs() (admission.Warnings, field.ErrorL
 
 	// Additional listeners are only supported for NLBs.
 	// Validate the control plane load balancers.
-	loadBalancers := []*AWSLoadBalancerSpec{
-		r.Spec.ControlPlaneLoadBalancer,
-		r.Spec.SecondaryControlPlaneLoadBalancer,
+	if r.Spec.ControlPlaneLoadBalancer != nil {
+		allErrs = append(allErrs, r.validateIngressRules(field.NewPath("spec", "controlPlaneLoadBalancer", "ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules)...)
 	}
-	for _, cp := range loadBalancers {
-		if cp == nil {
-			continue
-		}
-
-		for _, rule := range cp.IngressRules {
-			allErrs = append(allErrs, r.validateIngressRule(rule)...)
-		}
+	if r.Spec.SecondaryControlPlaneLoadBalancer != nil {
+		allErrs = append(allErrs, r.validateIngressRules(field.NewPath("spec", "secondaryControlPlaneLoadBalancer", "ingressRules"), r.Spec.SecondaryControlPlaneLoadBalancer.IngressRules)...)
 	}
 
 	if r.Spec.ControlPlaneLoadBalancer.LoadBalancerType == LoadBalancerTypeDisabled {
@@ -429,15 +421,18 @@ func (r *AWSCluster) validateControlPlaneLBs() (admission.Warnings, field.ErrorL
 	return allWarnings, allErrs
 }
 
-func (r *AWSCluster) validateIngressRule(rule IngressRule) field.ErrorList {
+func (r *AWSCluster) validateIngressRules(path *field.Path, rules []IngressRule) field.ErrorList {
 	var allErrs field.ErrorList
-	if rule.NatGatewaysIPsSource {
-		if rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil || rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("additionalControlPlaneIngressRules"), r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
-		}
-	} else {
-		if (rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil) && (rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil) {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
+	for ruleIndex, rule := range rules {
+		rulePath := path.Index(ruleIndex)
+		if rule.NatGatewaysIPsSource {
+			if rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil || rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil {
+				allErrs = append(allErrs, field.Invalid(rulePath, rules, "natGatewaysIPsSource cannot be used together with CIDR blocks, security group IDs or security group roles"))
+			}
+		} else {
+			if (rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil) && (rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil) {
+				allErrs = append(allErrs, field.Invalid(rulePath, rules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
+			}
 		}
 	}
 	return allErrs
