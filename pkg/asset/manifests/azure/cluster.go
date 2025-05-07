@@ -362,17 +362,21 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 	if err != nil {
 		return "", fmt.Errorf("failed to get azure ip availability: %w", err)
 	}
-	if *availableIP.Available {
+	if availableIP == nil {
+		return "", errors.New("failed to get available IP in given machine network: this error may be caused by lack of necessary permissions")
+	}
+	ipAvail := *availableIP
+	if ipAvail.Available != nil && *ipAvail.Available {
 		for _, cidrRange := range machineCidr {
 			if cidrRange.CIDR.Contains(net.ParseIP(lbip)) {
 				return lbip, nil
 			}
 		}
 	}
-	if *availableIP.AvailableIPAddresses == nil || len(*availableIP.AvailableIPAddresses) == 0 {
+	if ipAvail.AvailableIPAddresses == nil || len(*ipAvail.AvailableIPAddresses) == 0 {
 		return "", fmt.Errorf("failed to get an available IP in given virtual network for LB: %w", err)
 	}
-	for _, ip := range *availableIP.AvailableIPAddresses {
+	for _, ip := range *ipAvail.AvailableIPAddresses {
 		for _, cidrRange := range machineCidr {
 			if cidrRange.CIDR.Contains(net.ParseIP(lbip)) {
 				return ip, nil
