@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -110,8 +111,33 @@ func validateInstanceAndDiskType(fldPath *field.Path, diskType, instanceType, ar
 	return nil
 }
 
+func validateInstanceAndConfidentialCompute(fldPath *field.Path, instanceType string, onHostMaintenance gcp.OnHostMaintenanceType, confidentialCompute gcp.ConfidentialComputePolicy) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if confidentialCompute == gcp.ConfidentialComputePolicy(gcp.DisabledFeature) {
+		// Nothing to validate here
+		return allErrs
+	}
+
+	if onHostMaintenance != gcp.OnHostMaintenanceTerminate {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("onHostMaintenance"), onHostMaintenance, fmt.Sprintf("onHostMaintenace must be set to Terminate when confidentialCompute is %s", confidentialCompute)))
+	}
+
+	machineType, _, _ := strings.Cut(instanceType, "-")
+	if confidentialCompute == gcp.ConfidentialComputePolicy(gcp.EnabledFeature) {
+		confidentialCompute = gcp.ConfidentialComputePolicySEV
+	}
+	supportedMachineTypes, ok := gcp.ConfidentialComputePolicyToSupportedInstanceType[confidentialCompute]
+	if !ok {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("confidentialCompute"), confidentialCompute, fmt.Sprintf("Unknown confidential computing technology %s", confidentialCompute)))
+	} else if !slices.Contains(supportedMachineTypes, machineType) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), instanceType, fmt.Sprintf("Machine type do not support %s. Machine types supporting %s: %s", confidentialCompute, confidentialCompute, strings.Join(supportedMachineTypes, ", "))))
+	}
+
+	return allErrs
+}
+
 // ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
-func ValidateInstanceType(client API, fieldPath *field.Path, project, region string, zones []string, diskType string, instanceType string, req resourceRequirements, arch string) field.ErrorList {
+func ValidateInstanceType(client API, fieldPath *field.Path, project, region string, zones []string, diskType string, instanceType string, req resourceRequirements, arch string, onHostMaintenance string, confidentialCompute string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	typeMeta, typeZones, err := client.GetMachineTypeWithZones(context.TODO(), project, region, instanceType)
@@ -125,6 +151,14 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, region str
 	if fieldErr := validateInstanceAndDiskType(fieldPath, diskType, instanceType, arch); fieldErr != nil {
 		return append(allErrs, fieldErr)
 	}
+
+	allErrs = append(allErrs,
+		validateInstanceAndConfidentialCompute(
+			fieldPath,
+			instanceType,
+			gcp.OnHostMaintenanceType(onHostMaintenance),
+			gcp.ConfidentialComputePolicy(confidentialCompute),
+		)...)
 
 	userZones := sets.New(zones...)
 	if len(userZones) == 0 {
@@ -183,6 +217,8 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 
 	defaultInstanceType := ""
 	defaultDiskType := gcp.PDSSD
+	defaultOnHostMaintenance := string(gcp.OnHostMaintenanceMigrate)
+	defaultConfidentialCompute := string(gcp.DisabledFeature)
 	defaultZones := []string{}
 
 	// Default requirements need to be sufficient to support Control Plane instances.
@@ -199,6 +235,14 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			defaultDiskType = ic.GCP.DefaultMachinePlatform.DiskType
 		}
 
+		if ic.GCP.DefaultMachinePlatform.OnHostMaintenance != "" {
+			defaultOnHostMaintenance = ic.GCP.DefaultMachinePlatform.OnHostMaintenance
+		}
+
+		if ic.GCP.DefaultMachinePlatform.ConfidentialCompute != "" {
+			defaultConfidentialCompute = ic.GCP.DefaultMachinePlatform.ConfidentialCompute
+		}
+
 		if ic.GCP.DefaultMachinePlatform.InstanceType != "" {
 			allErrs = append(allErrs,
 				ValidateInstanceType(
@@ -211,6 +255,8 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 					ic.GCP.DefaultMachinePlatform.InstanceType,
 					defaultInstanceReq,
 					unknownArchitecture,
+					defaultOnHostMaintenance,
+					defaultConfidentialCompute,
 				)...)
 		}
 	}
@@ -219,6 +265,8 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	instanceType := defaultInstanceType
 	arch := types.ArchitectureAMD64
 	cpDiskType := defaultDiskType
+	cpOnHostMaintenance := defaultOnHostMaintenance
+	cpConfidentialCompute := defaultConfidentialCompute
 	if ic.ControlPlane != nil {
 		arch = string(ic.ControlPlane.Architecture)
 		if instanceType == "" {
@@ -233,6 +281,12 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			}
 			if ic.ControlPlane.Platform.GCP.DiskType != "" {
 				cpDiskType = ic.ControlPlane.Platform.GCP.DiskType
+			}
+			if ic.ControlPlane.Platform.GCP.OnHostMaintenance != "" {
+				cpOnHostMaintenance = ic.ControlPlane.Platform.GCP.OnHostMaintenance
+			}
+			if ic.ControlPlane.Platform.GCP.ConfidentialCompute != "" {
+				cpConfidentialCompute = ic.ControlPlane.Platform.GCP.ConfidentialCompute
 			}
 		}
 	}
@@ -256,6 +310,8 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 				instanceType,
 				controlPlaneReq,
 				arch,
+				cpOnHostMaintenance,
+				cpConfidentialCompute,
 			)...)
 	}
 
@@ -264,6 +320,8 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		zones := defaultZones
 		instanceType := defaultInstanceType
 		diskType := defaultDiskType
+		onHostMaintenance := defaultOnHostMaintenance
+		confidentialCompute := defaultConfidentialCompute
 		if instanceType == "" {
 			instanceType = DefaultInstanceTypeForArch(compute.Architecture)
 		}
@@ -277,6 +335,12 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			}
 			if len(compute.Platform.GCP.Zones) > 0 {
 				zones = compute.Platform.GCP.Zones
+			}
+			if compute.Platform.GCP.OnHostMaintenance != "" {
+				onHostMaintenance = compute.Platform.GCP.OnHostMaintenance
+			}
+			if compute.Platform.GCP.ConfidentialCompute != "" {
+				confidentialCompute = compute.Platform.GCP.ConfidentialCompute
 			}
 		}
 
@@ -295,6 +359,8 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 				instanceType,
 				computeReq,
 				string(arch),
+				onHostMaintenance,
+				confidentialCompute,
 			)...)
 	}
 
