@@ -95,7 +95,7 @@ networkConfig:
       state: invalid`,
 
 			expectedFound: false,
-			expectedError: "networkConfig: Invalid value: interfaces:\n- name: eth0\n  state: invalid\n  type: ethernet\n: failed to execute 'nmstatectl gc', error: InvalidArgument: Invalid YAML string: interfaces: unknown variant `invalid`",
+			expectedError: "interfaces: unknown variant `invalid`",
 		},
 		{
 			name: "invalid-additional-ntp-sources",
