@@ -137,6 +137,7 @@ aliases:
     - tlbueno
     - jcapiitao
     - Roshan-R
+    - PeaceRebel
   coreos-reviewers:
     - c4rt0
     - cgwalters
@@ -161,6 +162,7 @@ aliases:
     - tlbueno
     - jcapiitao
     - Roshan-R
+    - PeaceRebel
   agent-reviewers:
     - andfasano
     - bfournie
