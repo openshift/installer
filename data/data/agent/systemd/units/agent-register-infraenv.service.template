@@ -17,7 +17,7 @@ ExecStart=podman run --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log
 ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
 ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
 
-KillMode=none
+KillMode=mixed
 Type=oneshot
 Restart=on-failure
 RestartSec=30
