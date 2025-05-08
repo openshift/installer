@@ -105,11 +105,13 @@ aliases:
   nutanix-approvers:
     - adiantum
     - rvanderp3
+    - jcpowermac
     - thunderboltsid
     - yanhua121
   nutanix-reviewers:
     - adiantum
     - rvanderp3
+    - jcpowermac
     - thunderboltsid
     - yanhua121
   # Keep in sync with the `coreos-approvers` and `coreos-reviewers` lists in https://github.com/openshift/release/blob/master/OWNERS_ALIASES
