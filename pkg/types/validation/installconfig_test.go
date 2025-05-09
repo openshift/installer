@@ -2808,8 +2808,11 @@ func TestValidateTNF(t *testing.T) {
 		expected     string
 	}{
 		{
-			config:   installConfig().CpReplicas(3).build(),
-			name:     "valid_empty_credentials",
+			config: installConfig().
+				PlatformBMWithHosts().
+				CpReplicas(3).
+				build(),
+			name:     "valid_empty_credentials_for_non_tnf",
 			expected: "",
 		},
 		{
@@ -2829,15 +2832,26 @@ func TestValidateTNF(t *testing.T) {
 					Credential(c1().CertificateVerification(types.CertificateVerificationDisabled), c2())).
 				CpReplicas(2).
 				build(),
-			name:     "valid_with_disabled_cert_verification",
+			name:     "valid_disabled_cert_verification",
 			expected: "",
 		},
 		{
 			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(c1().CertificateVerification("Invalid"), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "invalid_cert_verification",
+			expected: "controlPlane.fencing.credentials\\[0\\]\\[CertificateVerification\\]: Invalid value: \"Invalid\": invalid certificate verification; \"Invalid\" should set to one of the following: \\['Enabled' \\(default\\), 'Disabled'\\]",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
 					Credential(c1(), c2(), c3())).
 				CpReplicas(2).build(),
-			name:     "invalid_number_of_credentials_for_dual_replica",
+			name:     "invalid_number_of_credentials",
 			expected: "controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 3 credentials were found",
 		},
 		{
@@ -2862,56 +2876,63 @@ func TestValidateTNF(t *testing.T) {
 		},
 		{
 			config: installConfig().
+				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
 					Credential(c1(), c2())).
 				CpReplicas(3).build(),
-			name:     "invalid_number_of_credentials_for_non_dual_replica",
+			name:     "invalid_number_of_credentials_for_non_tnf",
 			expected: "controlPlane.fencing.credentials: Forbidden: there should not be any fencing credentials configured for a non dual replica control plane \\(Two Nodes Fencing\\) cluster, instead 2 credentials were found",
 		},
 		{
 			config: installConfig().
+				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
 					Credential(
-						c1().BMCAddress("ipmi://192.168.111.1"),
-						c2().BMCAddress("ipmi://192.168.111.1"))).
+						c1().FencingCredentialAddress("ipmi://192.168.111.1"),
+						c2().FencingCredentialAddress("ipmi://192.168.111.1"))).
 				CpReplicas(2).build(),
-			name:     "duplicate_bmc_address",
+			name:     "fencing_credential_address_not_unique",
 			expected: "controlPlane.fencing.credentials\\[1\\].address: Duplicate value: \"ipmi://192.168.111.1\"",
 		},
 		{
 			config: installConfig().
+				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
-					Credential(c1().BMCAddress(""), c2())).
+					Credential(c1().FencingCredentialAddress(""), c2())).
 				CpReplicas(2).build(),
-			name:     "bmc_address_required",
+			name:     "fencing_credential_address_required",
 			expected: "controlPlane.fencing.credentials\\[0\\].address: Required value: missing Address",
 		},
 		{
 			config: installConfig().
+				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
-					Credential(c1(), c2().BMCUsername(""))).
+					Credential(c1(), c2().FencingCredentialUsername(""))).
 				CpReplicas(2).build(),
-			name:     "bmc_username_required",
+			name:     "fencing_credential_username_required",
 			expected: "controlPlane.fencing.credentials\\[1\\].username: Required value: missing Username",
 		},
 		{
 			config: installConfig().
+				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
-					Credential(c1().BMCPassword(""), c2())).
+					Credential(c1().FencingCredentialPassword(""), c2())).
 				CpReplicas(2).build(),
-			name:     "bmc_password_required",
+			name:     "fencing_credential_password_required",
 			expected: "controlPlane.fencing.credentials\\[0\\].password: Required value: missing Password",
 		},
 		{
 			config: installConfig().
+				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
 					Credential(c1().HostName(""), c2())).
 				CpReplicas(2).build(),
-			name:     "host_name_required",
+			name:     "fencing_credential_host_name_required",
 			expected: "controlPlane.fencing.credentials\\[0\\].hostName: Required value: missing HostName",
 		},
 		{
 			config: installConfig().
+				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
 					Architecture(types.ArchitectureAMD64).
 					Credential(c1(), c2())).
@@ -2922,7 +2943,7 @@ func TestValidateTNF(t *testing.T) {
 						Replicas(ptr.Int64(3)).
 						Credential(c1())).
 				CpReplicas(2).build(),
-			name:         "host_name_required",
+			name:         "fencing_only_valid_for_control_plane",
 			checkCompute: true,
 			expected:     `compute\[\d+\]\.fencing: Invalid value: types\.Fencing\{Credentials:\[\]\*types\.Credential\{\(\*types\.Credential\)\(\S+\)\}\}: fencing is only valid for control plane`,
 		},
@@ -2933,7 +2954,27 @@ func TestValidateTNF(t *testing.T) {
 					Credential(c1(), c2())).
 				CpReplicas(2).
 				build(),
-			name:     "tnf_supported_platforms",
+			name:     "supported_platform_bm",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformExternal().
+				MachinePoolCP(machinePool().
+					Credential(c1(), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "supported_platform_ext",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformNone().
+				MachinePoolCP(machinePool().
+					Credential(c1(), c2())).
+				CpReplicas(2).
+				build(),
+			name:     "supported_platform_none",
 			expected: "",
 		},
 		{
@@ -2943,7 +2984,7 @@ func TestValidateTNF(t *testing.T) {
 					Credential(c1(), c2())).
 				CpReplicas(2).
 				build(),
-			name:     "tnf_unsupported_platform",
+			name:     "unsupported_platform",
 			expected: "controlPlane.fencing: Forbidden: fencing is only supported on baremetal, external or none platforms, instead aws platform was found",
 		},
 	}
@@ -3012,17 +3053,17 @@ func (hb *credentialBuilder) HostName(value string) *credentialBuilder {
 	return hb
 }
 
-func (hb *credentialBuilder) BMCAddress(value string) *credentialBuilder {
+func (hb *credentialBuilder) FencingCredentialAddress(value string) *credentialBuilder {
 	hb.Credential.Address = value
 	return hb
 }
 
-func (hb *credentialBuilder) BMCUsername(value string) *credentialBuilder {
+func (hb *credentialBuilder) FencingCredentialUsername(value string) *credentialBuilder {
 	hb.Credential.Username = value
 	return hb
 }
 
-func (hb *credentialBuilder) BMCPassword(value string) *credentialBuilder {
+func (hb *credentialBuilder) FencingCredentialPassword(value string) *credentialBuilder {
 	hb.Credential.Password = value
 	return hb
 }
@@ -3090,6 +3131,16 @@ func (icb *installConfigBuilder) PlatformAWS() *installConfigBuilder {
 
 func (icb *installConfigBuilder) PlatformBMWithHosts() *installConfigBuilder {
 	icb.InstallConfig.Platform = types.Platform{BareMetal: validBareMetalPlatform()}
+	return icb
+}
+
+func (icb *installConfigBuilder) PlatformNone() *installConfigBuilder {
+	icb.InstallConfig.Platform = types.Platform{None: &none.Platform{}}
+	return icb
+}
+
+func (icb *installConfigBuilder) PlatformExternal() *installConfigBuilder {
+	icb.InstallConfig.Platform = types.Platform{External: &external.Platform{}}
 	return icb
 }
 
