@@ -39,6 +39,7 @@ func (*Ingress) Name() string {
 func (*Ingress) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		&installconfig.ClusterID{},
 	}
 }
 
@@ -51,6 +52,7 @@ func (*Ingress) Dependencies() []asset.Asset {
 // to use the internal publishing strategy.
 func (ing *Ingress) Generate(_ context.Context, dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
+	clusterID := &installconfig.ClusterID{}
 	dependencies.Get(installConfig)
 
 	ing.FileList = []*asset.File{}
@@ -64,7 +66,7 @@ func (ing *Ingress) Generate(_ context.Context, dependencies asset.Parents) erro
 		Data:     clusterConfig,
 	})
 
-	defaultIngressController, err := ing.generateDefaultIngressController(installConfig.Config)
+	defaultIngressController, err := ing.generateDefaultIngressController(installConfig.Config, clusterID.InfraID)
 	if err != nil {
 		return errors.Wrap(err, "failed to create default ingresscontroller")
 	}
@@ -135,7 +137,7 @@ func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, 
 	return yaml.Marshal(obj)
 }
 
-func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig) ([]byte, error) {
+func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig, infraID string) ([]byte, error) {
 	// getDefaultIngressController returns an object representing the default Ingress Controller
 	// with empty LoadBalancer spec.
 	getDefaultIngressController := func() *operatorv1.IngressController {
@@ -161,6 +163,61 @@ func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig
 
 	switch config.Platform.Name() {
 	case aws.Name:
+		// default ingress
+		obj = getDefaultIngressController()
+		lbSpec := obj.Spec.EndpointPublishingStrategy.LoadBalancer
+
+		if config.PublicIngress() {
+			lbSpec.Scope = operatorv1.ExternalLoadBalancer
+		} else {
+			lbSpec.Scope = operatorv1.InternalLoadBalancer
+		}
+		if config.AWS.LBType == configv1.NLB {
+			lbSpec.ProviderParameters = &operatorv1.ProviderLoadBalancerParameters{
+				Type: operatorv1.AWSLoadBalancerProvider,
+				AWS: &operatorv1.AWSLoadBalancerParameters{
+					Type:                          operatorv1.AWSNetworkLoadBalancer,
+					NetworkLoadBalancerParameters: &operatorv1.AWSNetworkLoadBalancerParameters{},
+				},
+			}
+		} else {
+			lbSpec.ProviderParameters = &operatorv1.ProviderLoadBalancerParameters{
+				Type: operatorv1.AWSLoadBalancerProvider,
+				AWS: &operatorv1.AWSLoadBalancerParameters{
+					Type:                          operatorv1.AWSNetworkLoadBalancer,
+					ClassicLoadBalancerParameters: &operatorv1.AWSClassicLoadBalancerParameters{},
+				},
+			}
+		}
+
+		// Enable features
+
+		// Feature: BYO SG
+		// TODO check feature gate
+		// TODO: must validate that managed can't be added with BYO SG
+		// TODO: do we need to expose BYO SG API? (AFAIK for minimalist no, no CU asked for now)
+		// Check if NLB with SG is enabled. Those options are valid:
+		// Option 1) Unmanaged SG (by CCM). Users provided Security Groups. There is a Magic word "CREATE" to make installer creates the SG.
+		// Option 2) Manage SG (by CCM). Users set the flag to make CCM manages the SG when creating NLB.
+		// Those options are mutual exclusive.
+		if config.AWS.LBType == configv1.NLB &&
+			config.AWS.IngressController != nil {
+			nlb := lbSpec.ProviderParameters.AWS.NetworkLoadBalancerParameters
+			if config.AWS.IngressController.SecurityGroupEnabled { // Option 2) Managed
+				nlb.ManagedSecurityGroup = true
+			} else if len(config.AWS.IngressController.SecurityGroups) > 0 { // Option 1) Unmanaged
+				// "CREATE" is a magic word used to demonstrate the Option 1) installer managed SG, CCM unmanaged SGs
+				if config.AWS.IngressController.SecurityGroups[0] == "CREATE" {
+					nlb.SecurityGroups = []operatorv1.AWSSecurityGroup{operatorv1.AWSSecurityGroup(fmt.Sprintf("%s-ingress-lb", infraID))}
+				} else {
+					for _, sg := range config.AWS.IngressController.SecurityGroups {
+						nlb.SecurityGroups = []operatorv1.AWSSecurityGroup{operatorv1.AWSSecurityGroup(sg)}
+					}
+				}
+			}
+		}
+
+		// Feature: BYO VPC/subnet
 		subnetIDsByRole := make(map[aws.SubnetRoleType][]operatorv1.AWSSubnetID)
 		for _, subnet := range config.AWS.VPC.Subnets {
 			for _, role := range subnet.Roles {
@@ -170,42 +227,17 @@ func (ing *Ingress) generateDefaultIngressController(config *types.InstallConfig
 
 		// BYO-subnet install case and subnet roles are specified.
 		if len(subnetIDsByRole) > 0 {
-			obj = getDefaultIngressController()
-			lbSpec := obj.Spec.EndpointPublishingStrategy.LoadBalancer
-
-			if config.PublicIngress() {
-				lbSpec.Scope = operatorv1.ExternalLoadBalancer
-			} else {
-				lbSpec.Scope = operatorv1.InternalLoadBalancer
-			}
-
 			if config.AWS.LBType == configv1.NLB {
-				lbSpec.ProviderParameters = &operatorv1.ProviderLoadBalancerParameters{
-					Type: operatorv1.AWSLoadBalancerProvider,
-					AWS: &operatorv1.AWSLoadBalancerParameters{
-						Type: operatorv1.AWSNetworkLoadBalancer,
-						NetworkLoadBalancerParameters: &operatorv1.AWSNetworkLoadBalancerParameters{
-							Subnets: &operatorv1.AWSSubnets{
-								IDs: subnetIDsByRole[aws.IngressControllerLBSubnetRole],
-							},
-						},
-					},
+				lbSpec.ProviderParameters.AWS.NetworkLoadBalancerParameters.Subnets = &operatorv1.AWSSubnets{
+					IDs: subnetIDsByRole[aws.IngressControllerLBSubnetRole],
 				}
 			} else {
-				lbSpec.ProviderParameters = &operatorv1.ProviderLoadBalancerParameters{
-					Type: operatorv1.AWSLoadBalancerProvider,
-					AWS: &operatorv1.AWSLoadBalancerParameters{
-						Type: operatorv1.AWSClassicLoadBalancer,
-						ClassicLoadBalancerParameters: &operatorv1.AWSClassicLoadBalancerParameters{
-							Subnets: &operatorv1.AWSSubnets{
-								IDs: subnetIDsByRole[aws.IngressControllerLBSubnetRole],
-							},
-						},
-					},
+				lbSpec.ProviderParameters.AWS.ClassicLoadBalancerParameters.Subnets = &operatorv1.AWSSubnets{
+					IDs: subnetIDsByRole[aws.IngressControllerLBSubnetRole],
 				}
 			}
-			break
 		}
+
 		// Fall back to existing logic similar to other platforms otherwise.
 		// i.e. managed subnets or no subnet roles are specified.
 		fallthrough
