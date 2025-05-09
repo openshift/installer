@@ -51,6 +51,7 @@ var (
 		"Standard_D8ps_v5":   {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64", "TrustedLaunchDisabled": "True"},
 		"Standard_D4ps_v5":   {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64", "TrustedLaunchDisabled": "True"},
 		"Standard_DC8ads_v5": {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64", "ConfidentialComputingType": "SNP"},
+		"Standard_DC8eds_v5": {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64", "ConfidentialComputingType": "TDX"},
 		"Standard_DC8s_v3":   {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64", "ConfidentialComputingType": "SGX"},
 	}
 
@@ -120,6 +121,14 @@ var (
 
 	validConfidentialVMInstanceTypes = func(ic *types.InstallConfig) {
 		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_DC8ads_v5"
+	}
+
+	validConfidentialVMSNPInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_DC8ads_v5"
+	}
+
+	validConfidentialVMTDXInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_DC8eds_v5"
 	}
 
 	invalidConfidentialVMInstanceTypes = func(ic *types.InstallConfig) {
@@ -524,8 +533,13 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			errorMsg: `compute\[0\].platform.azure.vmNetworkingType: Invalid value: "Accelerated": vm networking type is not supported for instance type Standard_B4ms`,
 		},
 		{
-			name:     "Supported ConfidentialVM security type",
-			edits:    editFunctions{validConfidentialVMInstanceTypes, securityTypeConfidentialVMControlPlane},
+			name:     "Supported ConfidentialVM security type SNP",
+			edits:    editFunctions{validConfidentialVMSNPInstanceTypes, securityTypeConfidentialVMControlPlane},
+			errorMsg: "",
+		},
+		{
+			name:     "Supported ConfidentialVM security type TDX",
+			edits:    editFunctions{validConfidentialVMTDXInstanceTypes, securityTypeConfidentialVMControlPlane},
 			errorMsg: "",
 		},
 		{

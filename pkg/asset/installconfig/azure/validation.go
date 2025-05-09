@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -23,6 +24,18 @@ import (
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/azure/defaults"
 )
+
+const (
+	// confidentialComputingTypeSNP is the AMD SEV-SNP confidential computing type.
+	confidentialComputingTypeSNP = "SNP"
+	// confidentialComputingTypeTDX is the Intel TDX confidential computing type.
+	confidentialComputingTypeTDX = "TDX"
+)
+
+var supportedConfidentialComputingTypes = []string{
+	confidentialComputingTypeSNP,
+	confidentialComputingTypeTDX,
+}
 
 type resourceRequirements struct {
 	minimumVCpus  int64
@@ -220,18 +233,19 @@ func validateSecurityType(fieldPath *field.Path, securityType aztypes.SecurityTy
 
 	_, hasTrustedLaunchDisabled := capabilities["TrustedLaunchDisabled"]
 	confidentialComputingType, hasConfidentialComputingType := capabilities["ConfidentialComputingType"]
-	isConfidentialComputingTypeSNP := confidentialComputingType == "SNP"
+	hasSupportedConfidentialComputingType := slices.Contains(supportedConfidentialComputingTypes, confidentialComputingType)
 
 	var reason string
 	supportedSecurityType := true
 	switch securityType {
 	case aztypes.SecurityTypesConfidentialVM:
-		supportedSecurityType = hasConfidentialComputingType && isConfidentialComputingTypeSNP
+		supportedSecurityType = hasConfidentialComputingType && hasSupportedConfidentialComputingType
 
 		if !hasConfidentialComputingType {
 			reason = "no support for Confidential Computing"
-		} else if !isConfidentialComputingTypeSNP {
-			reason = "no support for AMD-SEV SNP"
+		} else if !hasSupportedConfidentialComputingType {
+			reason = fmt.Sprintf("no support for required confidential computing type (found: %s, supported: %s)",
+				confidentialComputingType, strings.Join(supportedConfidentialComputingTypes, ", "))
 		}
 	case aztypes.SecurityTypesTrustedLaunch:
 		supportedSecurityType = !(hasTrustedLaunchDisabled || hasConfidentialComputingType)
