@@ -50,6 +50,18 @@ const (
 	ArchitectureARM64 = "arm64"
 )
 
+type DataDiskType string
+
+const (
+	Etcd        DataDiskType = "etcd"
+	Swap        DataDiskType = "swap"
+	UserDefined DataDiskType = "user-defined"
+)
+
+type DataDisk struct {
+	Type DataDiskType `json:"type,omitempty"`
+}
+
 // MachinePool is a pool of machines to be installed.
 type MachinePool struct {
 	// Name is the name of the machine pool.
@@ -83,6 +95,9 @@ type MachinePool struct {
 	// Fencing may only be set for control plane nodes.
 	// +optional
 	Fencing *Fencing `json:"fencing,omitempty"`
+
+	// datadisk
+	DataDisks []DataDisk `json:"dataDisks,omitempty"`
 }
 
 // MachinePoolPlatform is the platform-specific configuration for a machine
