@@ -121,7 +121,7 @@ var (
 		name: "Agent create certificates",
 		command: &cobra.Command{
 			Use:    "certificates",
-			Short:  "Generates the tls certificates that can be used to create kubeconfig",
+			Short:  "Generates the tls certificates that can be used to create kubeconfig, along with kubeadmin-password",
 			Args:   cobra.ExactArgs(0),
 			Hidden: true,
 		},
@@ -130,6 +130,7 @@ var (
 			&tls.KubeAPIServerLocalhostSignerCertKey{},
 			&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 			&tls.AdminKubeConfigSignerCertKey{},
+			&image.AgentPassword{},
 		},
 	}
 
