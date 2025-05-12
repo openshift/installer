@@ -57,9 +57,11 @@
 * `standardHCSFamily`
 * `standardHXFamily`
 * `standardLASv3Family`
+* `standardLasv4Family`
 * `standardLSFamily`
 * `standardLSv2Family`
 * `standardLSv3Family`
+* `standardLsv4Family`
 * `standardMDSHighMemoryv3Family`
 * `standardMDSMediumMemoryv2Family`
 * `standardMDSMediumMemoryv3Family`
