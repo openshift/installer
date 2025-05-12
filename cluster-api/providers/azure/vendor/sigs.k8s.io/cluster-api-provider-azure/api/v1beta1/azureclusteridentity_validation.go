@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -26,6 +28,10 @@ func (c *AzureClusterIdentity) validateClusterIdentity() (admission.Warnings, er
 	var allErrs field.ErrorList
 	if c.Spec.Type != UserAssignedMSI && c.Spec.ResourceID != "" {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "resourceID"), c.Spec.ResourceID))
+	}
+	if c.Spec.Type != UserAssignedIdentityCredential && (c.Spec.UserAssignedIdentityCredentialsPath != "" || c.Spec.UserAssignedIdentityCredentialsCloudType != "") {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "userAssignedIdentityCredentialsPath"), fmt.Sprintf("%s can only be set when AzureClusterIdentity is of type UserAssignedIdentityCredential", c.Spec.UserAssignedIdentityCredentialsPath)))
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "userAssignedIdentityCredentialsCloudType"), fmt.Sprintf("%s can only be set when AzureClusterIdentity is of type UserAssignedIdentityCredential ", c.Spec.UserAssignedIdentityCredentialsCloudType)))
 	}
 	if len(allErrs) == 0 {
 		return nil, nil

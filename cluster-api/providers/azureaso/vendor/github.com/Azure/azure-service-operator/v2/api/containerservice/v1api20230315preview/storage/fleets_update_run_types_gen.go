@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,8 +32,8 @@ import (
 type FleetsUpdateRun struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Fleets_UpdateRun_Spec   `json:"spec,omitempty"`
-	Status            Fleets_UpdateRun_STATUS `json:"status,omitempty"`
+	Spec              FleetsUpdateRun_Spec   `json:"spec,omitempty"`
+	Status            FleetsUpdateRun_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &FleetsUpdateRun{}
@@ -45,6 +48,26 @@ func (updateRun *FleetsUpdateRun) SetConditions(conditions conditions.Conditions
 	updateRun.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &FleetsUpdateRun{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (updateRun *FleetsUpdateRun) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if updateRun.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return updateRun.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &FleetsUpdateRun{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (updateRun *FleetsUpdateRun) SecretDestinationExpressions() []*core.DestinationExpression {
+	if updateRun.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return updateRun.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &FleetsUpdateRun{}
 
 // AzureName returns the Azure name of the resource
@@ -54,7 +77,7 @@ func (updateRun *FleetsUpdateRun) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-03-15-preview"
 func (updateRun FleetsUpdateRun) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-03-15-preview"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -88,7 +111,7 @@ func (updateRun *FleetsUpdateRun) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (updateRun *FleetsUpdateRun) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Fleets_UpdateRun_STATUS{}
+	return &FleetsUpdateRun_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -100,13 +123,13 @@ func (updateRun *FleetsUpdateRun) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (updateRun *FleetsUpdateRun) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Fleets_UpdateRun_STATUS); ok {
+	if st, ok := status.(*FleetsUpdateRun_STATUS); ok {
 		updateRun.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Fleets_UpdateRun_STATUS
+	var st FleetsUpdateRun_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -139,13 +162,14 @@ type FleetsUpdateRunList struct {
 	Items           []FleetsUpdateRun `json:"items"`
 }
 
-// Storage version of v1api20230315preview.Fleets_UpdateRun_Spec
-type Fleets_UpdateRun_Spec struct {
+// Storage version of v1api20230315preview.FleetsUpdateRun_Spec
+type FleetsUpdateRun_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName            string                `json:"azureName,omitempty"`
-	ManagedClusterUpdate *ManagedClusterUpdate `json:"managedClusterUpdate,omitempty"`
-	OriginalVersion      string                `json:"originalVersion,omitempty"`
+	AzureName            string                       `json:"azureName,omitempty"`
+	ManagedClusterUpdate *ManagedClusterUpdate        `json:"managedClusterUpdate,omitempty"`
+	OperatorSpec         *FleetsUpdateRunOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion      string                       `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -156,10 +180,10 @@ type Fleets_UpdateRun_Spec struct {
 	Strategy    *UpdateRunStrategy                 `json:"strategy,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Fleets_UpdateRun_Spec{}
+var _ genruntime.ConvertibleSpec = &FleetsUpdateRun_Spec{}
 
-// ConvertSpecFrom populates our Fleets_UpdateRun_Spec from the provided source
-func (updateRun *Fleets_UpdateRun_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our FleetsUpdateRun_Spec from the provided source
+func (updateRun *FleetsUpdateRun_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == updateRun {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -167,8 +191,8 @@ func (updateRun *Fleets_UpdateRun_Spec) ConvertSpecFrom(source genruntime.Conver
 	return source.ConvertSpecTo(updateRun)
 }
 
-// ConvertSpecTo populates the provided destination from our Fleets_UpdateRun_Spec
-func (updateRun *Fleets_UpdateRun_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our FleetsUpdateRun_Spec
+func (updateRun *FleetsUpdateRun_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == updateRun {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -176,8 +200,8 @@ func (updateRun *Fleets_UpdateRun_Spec) ConvertSpecTo(destination genruntime.Con
 	return destination.ConvertSpecFrom(updateRun)
 }
 
-// Storage version of v1api20230315preview.Fleets_UpdateRun_STATUS
-type Fleets_UpdateRun_STATUS struct {
+// Storage version of v1api20230315preview.FleetsUpdateRun_STATUS
+type FleetsUpdateRun_STATUS struct {
 	Conditions           []conditions.Condition       `json:"conditions,omitempty"`
 	ETag                 *string                      `json:"eTag,omitempty"`
 	Id                   *string                      `json:"id,omitempty"`
@@ -191,10 +215,10 @@ type Fleets_UpdateRun_STATUS struct {
 	Type                 *string                      `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Fleets_UpdateRun_STATUS{}
+var _ genruntime.ConvertibleStatus = &FleetsUpdateRun_STATUS{}
 
-// ConvertStatusFrom populates our Fleets_UpdateRun_STATUS from the provided source
-func (updateRun *Fleets_UpdateRun_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our FleetsUpdateRun_STATUS from the provided source
+func (updateRun *FleetsUpdateRun_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == updateRun {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -202,13 +226,21 @@ func (updateRun *Fleets_UpdateRun_STATUS) ConvertStatusFrom(source genruntime.Co
 	return source.ConvertStatusTo(updateRun)
 }
 
-// ConvertStatusTo populates the provided destination from our Fleets_UpdateRun_STATUS
-func (updateRun *Fleets_UpdateRun_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our FleetsUpdateRun_STATUS
+func (updateRun *FleetsUpdateRun_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == updateRun {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(updateRun)
+}
+
+// Storage version of v1api20230315preview.FleetsUpdateRunOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type FleetsUpdateRunOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20230315preview.ManagedClusterUpdate

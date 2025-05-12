@@ -25,6 +25,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
@@ -300,7 +301,6 @@ func hasModelModifyingDifferences(infraVMSS *azure.VMSS, vmss armcompute.Virtual
 func (s *ScaleSetSpec) generateExtensions(ctx context.Context) ([]armcompute.VirtualMachineScaleSetExtension, error) {
 	extensions := make([]armcompute.VirtualMachineScaleSetExtension, len(s.VMSSExtensionSpecs))
 	for i, extensionSpec := range s.VMSSExtensionSpecs {
-		extensionSpec := extensionSpec
 		parameters, err := extensionSpec.Parameters(ctx, nil)
 		if err != nil {
 			return nil, err
@@ -343,7 +343,7 @@ func (s *ScaleSetSpec) getVirtualMachineScaleSetNetworkConfiguration() *[]armcom
 		ipconfigs := []armcompute.VirtualMachineScaleSetIPConfiguration{}
 		for j := 0; j < n.PrivateIPConfigs; j++ {
 			ipconfig := armcompute.VirtualMachineScaleSetIPConfiguration{
-				Name: ptr.To(fmt.Sprintf("ipConfig" + strconv.Itoa(j))),
+				Name: ptr.To(fmt.Sprintf("ipConfig%d", j)),
 				Properties: &armcompute.VirtualMachineScaleSetIPConfigurationProperties{
 					PrivateIPAddressVersion: ptr.To(armcompute.IPVersionIPv4),
 					Subnet: &armcompute.APIEntityReference{

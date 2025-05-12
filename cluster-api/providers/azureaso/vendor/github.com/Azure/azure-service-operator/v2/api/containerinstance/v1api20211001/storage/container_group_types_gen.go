@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,6 +48,26 @@ func (group *ContainerGroup) SetConditions(conditions conditions.Conditions) {
 	group.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &ContainerGroup{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (group *ContainerGroup) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if group.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return group.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ContainerGroup{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (group *ContainerGroup) SecretDestinationExpressions() []*core.DestinationExpression {
+	if group.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return group.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &ContainerGroup{}
 
 // AzureName returns the Azure name of the resource
@@ -54,7 +77,7 @@ func (group *ContainerGroup) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-10-01"
 func (group ContainerGroup) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-10-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -149,18 +172,19 @@ const APIVersion_Value = APIVersion("2021-10-01")
 type ContainerGroup_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName                string                     `json:"azureName,omitempty"`
-	Containers               []Container                `json:"containers,omitempty"`
-	Diagnostics              *ContainerGroupDiagnostics `json:"diagnostics,omitempty"`
-	DnsConfig                *DnsConfiguration          `json:"dnsConfig,omitempty"`
-	EncryptionProperties     *EncryptionProperties      `json:"encryptionProperties,omitempty"`
-	Identity                 *ContainerGroupIdentity    `json:"identity,omitempty"`
-	ImageRegistryCredentials []ImageRegistryCredential  `json:"imageRegistryCredentials,omitempty"`
-	InitContainers           []InitContainerDefinition  `json:"initContainers,omitempty"`
-	IpAddress                *IpAddress                 `json:"ipAddress,omitempty"`
-	Location                 *string                    `json:"location,omitempty"`
-	OriginalVersion          string                     `json:"originalVersion,omitempty"`
-	OsType                   *string                    `json:"osType,omitempty"`
+	AzureName                string                      `json:"azureName,omitempty"`
+	Containers               []Container                 `json:"containers,omitempty"`
+	Diagnostics              *ContainerGroupDiagnostics  `json:"diagnostics,omitempty"`
+	DnsConfig                *DnsConfiguration           `json:"dnsConfig,omitempty"`
+	EncryptionProperties     *EncryptionProperties       `json:"encryptionProperties,omitempty"`
+	Identity                 *ContainerGroupIdentity     `json:"identity,omitempty"`
+	ImageRegistryCredentials []ImageRegistryCredential   `json:"imageRegistryCredentials,omitempty"`
+	InitContainers           []InitContainerDefinition   `json:"initContainers,omitempty"`
+	IpAddress                *IpAddress                  `json:"ipAddress,omitempty"`
+	Location                 *string                     `json:"location,omitempty"`
+	OperatorSpec             *ContainerGroupOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion          string                      `json:"originalVersion,omitempty"`
+	OsType                   *string                     `json:"osType,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -312,6 +336,14 @@ type ContainerGroupIdentity_STATUS struct {
 	TenantId               *string                                  `json:"tenantId,omitempty"`
 	Type                   *string                                  `json:"type,omitempty"`
 	UserAssignedIdentities map[string]UserAssignedIdentities_STATUS `json:"userAssignedIdentities,omitempty"`
+}
+
+// Storage version of v1api20211001.ContainerGroupOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ContainerGroupOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20211001.ContainerGroupSubnetId

@@ -24,7 +24,8 @@ func (extension *SqlDatabaseExtension) ClassifyError(
 	cloudError *genericarmclient.CloudError,
 	_ string,
 	_ logr.Logger,
-	next extensions.ErrorClassifierFunc) (core.CloudErrorDetails, error) {
+	next extensions.ErrorClassifierFunc,
+) (core.CloudErrorDetails, error) {
 	details, err := next(cloudError)
 	if err != nil {
 		return core.CloudErrorDetails{}, err

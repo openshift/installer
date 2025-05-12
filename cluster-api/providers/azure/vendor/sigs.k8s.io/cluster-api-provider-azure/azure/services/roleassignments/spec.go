@@ -53,7 +53,7 @@ func (s *RoleAssignmentSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the RoleAssignmentSpec.
-func (s *RoleAssignmentSpec) Parameters(ctx context.Context, existing interface{}) (interface{}, error) {
+func (s *RoleAssignmentSpec) Parameters(_ context.Context, existing interface{}) (interface{}, error) {
 	if existing != nil {
 		if _, ok := existing.(armauthorization.RoleAssignment); !ok {
 			return nil, errors.Errorf("%T is not an armauthorization.RoleAssignment", existing)

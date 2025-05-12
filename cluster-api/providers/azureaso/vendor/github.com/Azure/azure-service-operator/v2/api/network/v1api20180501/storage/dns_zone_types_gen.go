@@ -4,9 +4,12 @@
 package storage
 
 import (
-	v20200601s "github.com/Azure/azure-service-operator/v2/api/network/v1api20200601/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20200601/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -45,6 +48,26 @@ func (zone *DnsZone) SetConditions(conditions conditions.Conditions) {
 	zone.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &DnsZone{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (zone *DnsZone) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if zone.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return zone.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &DnsZone{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (zone *DnsZone) SecretDestinationExpressions() []*core.DestinationExpression {
+	if zone.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return zone.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &DnsZone{}
 
 // AzureName returns the Azure name of the resource
@@ -54,7 +77,7 @@ func (zone *DnsZone) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2018-05-01"
 func (zone DnsZone) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2018-05-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -149,9 +172,10 @@ const APIVersion_Value = APIVersion("2018-05-01")
 type DnsZone_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string  `json:"azureName,omitempty"`
-	Location        *string `json:"location,omitempty"`
-	OriginalVersion string  `json:"originalVersion,omitempty"`
+	AzureName       string               `json:"azureName,omitempty"`
+	Location        *string              `json:"location,omitempty"`
+	OperatorSpec    *DnsZoneOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string               `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -224,6 +248,14 @@ func (zone *DnsZone_STATUS) ConvertStatusTo(destination genruntime.ConvertibleSt
 	return destination.ConvertStatusFrom(zone)
 }
 
+// Storage version of v1api20180501.DnsZoneOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type DnsZoneOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
 // Storage version of v1api20180501.SubResource
 // A reference to a another resource
 type SubResource struct {
@@ -234,7 +266,7 @@ type SubResource struct {
 }
 
 // AssignProperties_From_SubResource populates our SubResource from the provided source SubResource
-func (resource *SubResource) AssignProperties_From_SubResource(source *v20200601s.SubResource) error {
+func (resource *SubResource) AssignProperties_From_SubResource(source *storage.SubResource) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -267,7 +299,7 @@ func (resource *SubResource) AssignProperties_From_SubResource(source *v20200601
 }
 
 // AssignProperties_To_SubResource populates the provided destination SubResource from our SubResource
-func (resource *SubResource) AssignProperties_To_SubResource(destination *v20200601s.SubResource) error {
+func (resource *SubResource) AssignProperties_To_SubResource(destination *storage.SubResource) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
 
@@ -307,7 +339,7 @@ type SubResource_STATUS struct {
 }
 
 // AssignProperties_From_SubResource_STATUS populates our SubResource_STATUS from the provided source SubResource_STATUS
-func (resource *SubResource_STATUS) AssignProperties_From_SubResource_STATUS(source *v20200601s.SubResource_STATUS) error {
+func (resource *SubResource_STATUS) AssignProperties_From_SubResource_STATUS(source *storage.SubResource_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -335,7 +367,7 @@ func (resource *SubResource_STATUS) AssignProperties_From_SubResource_STATUS(sou
 }
 
 // AssignProperties_To_SubResource_STATUS populates the provided destination SubResource_STATUS from our SubResource_STATUS
-func (resource *SubResource_STATUS) AssignProperties_To_SubResource_STATUS(destination *v20200601s.SubResource_STATUS) error {
+func (resource *SubResource_STATUS) AssignProperties_To_SubResource_STATUS(destination *storage.SubResource_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
 
@@ -363,13 +395,13 @@ func (resource *SubResource_STATUS) AssignProperties_To_SubResource_STATUS(desti
 }
 
 type augmentConversionForSubResource interface {
-	AssignPropertiesFrom(src *v20200601s.SubResource) error
-	AssignPropertiesTo(dst *v20200601s.SubResource) error
+	AssignPropertiesFrom(src *storage.SubResource) error
+	AssignPropertiesTo(dst *storage.SubResource) error
 }
 
 type augmentConversionForSubResource_STATUS interface {
-	AssignPropertiesFrom(src *v20200601s.SubResource_STATUS) error
-	AssignPropertiesTo(dst *v20200601s.SubResource_STATUS) error
+	AssignPropertiesFrom(src *storage.SubResource_STATUS) error
+	AssignPropertiesTo(dst *storage.SubResource_STATUS) error
 }
 
 func init() {

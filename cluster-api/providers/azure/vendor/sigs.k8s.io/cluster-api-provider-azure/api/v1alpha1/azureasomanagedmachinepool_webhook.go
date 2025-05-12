@@ -23,9 +23,10 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"sigs.k8s.io/cluster-api-provider-azure/feature"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	"sigs.k8s.io/cluster-api-provider-azure/feature"
 )
 
 // SetupAzureASOManagedMachinePoolWebhookWithManager sets up and registers the webhook with the manager.
@@ -44,7 +45,7 @@ type azureASOManagedMachinePoolWebhook struct {
 // +kubebuilder:webhook:verbs=create,path=/validate-infrastructure-cluster-x-k8s-io-v1alpha1-azureasomanagedmachinepool,mutating=false,failurePolicy=fail,groups=infrastructure.cluster.x-k8s.io,resources=azureasomanagedmachinepools,versions=v1alpha1,name=validation.azureasomanagedmachinepool.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (ampw *azureASOManagedMachinePoolWebhook) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (ampw *azureASOManagedMachinePoolWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
 	_, ok := obj.(*AzureASOManagedMachinePool)
 	if !ok {
 		return nil, apierrors.NewBadRequest("expected an AzureASOManagedMachinePool")
@@ -59,11 +60,11 @@ func (ampw *azureASOManagedMachinePoolWebhook) ValidateCreate(ctx context.Contex
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (ampw *azureASOManagedMachinePoolWebhook) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+func (ampw *azureASOManagedMachinePoolWebhook) ValidateUpdate(_ context.Context, _, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (ampw *azureASOManagedMachinePoolWebhook) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (ampw *azureASOManagedMachinePoolWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }

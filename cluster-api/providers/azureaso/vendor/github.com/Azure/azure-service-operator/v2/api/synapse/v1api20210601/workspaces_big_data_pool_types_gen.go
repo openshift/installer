@@ -5,10 +5,14 @@ package v1api20210601
 
 import (
 	"fmt"
-	v20210601s "github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type WorkspacesBigDataPool struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Workspaces_BigDataPool_Spec   `json:"spec,omitempty"`
-	Status            Workspaces_BigDataPool_STATUS `json:"status,omitempty"`
+	Spec              WorkspacesBigDataPool_Spec   `json:"spec,omitempty"`
+	Status            WorkspacesBigDataPool_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &WorkspacesBigDataPool{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &WorkspacesBigDataPool{}
 
 // ConvertFrom populates our WorkspacesBigDataPool from the provided hub WorkspacesBigDataPool
 func (pool *WorkspacesBigDataPool) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20210601s.WorkspacesBigDataPool)
+	source, ok := hub.(*storage.WorkspacesBigDataPool)
 	if !ok {
 		return fmt.Errorf("expected synapse/v1api20210601/storage/WorkspacesBigDataPool but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (pool *WorkspacesBigDataPool) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub WorkspacesBigDataPool from our WorkspacesBigDataPool
 func (pool *WorkspacesBigDataPool) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20210601s.WorkspacesBigDataPool)
+	destination, ok := hub.(*storage.WorkspacesBigDataPool)
 	if !ok {
 		return fmt.Errorf("expected synapse/v1api20210601/storage/WorkspacesBigDataPool but received %T instead", hub)
 	}
@@ -90,15 +94,35 @@ func (pool *WorkspacesBigDataPool) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the WorkspacesBigDataPool resource
 func (pool *WorkspacesBigDataPool) defaultImpl() { pool.defaultAzureName() }
 
+var _ configmaps.Exporter = &WorkspacesBigDataPool{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (pool *WorkspacesBigDataPool) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if pool.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return pool.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &WorkspacesBigDataPool{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (pool *WorkspacesBigDataPool) SecretDestinationExpressions() []*core.DestinationExpression {
+	if pool.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return pool.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &WorkspacesBigDataPool{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (pool *WorkspacesBigDataPool) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Workspaces_BigDataPool_STATUS); ok {
-		return pool.Spec.Initialize_From_Workspaces_BigDataPool_STATUS(s)
+	if s, ok := status.(*WorkspacesBigDataPool_STATUS); ok {
+		return pool.Spec.Initialize_From_WorkspacesBigDataPool_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Workspaces_BigDataPool_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type WorkspacesBigDataPool_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &WorkspacesBigDataPool{}
@@ -110,7 +134,7 @@ func (pool *WorkspacesBigDataPool) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-06-01"
 func (pool WorkspacesBigDataPool) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-06-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -144,7 +168,7 @@ func (pool *WorkspacesBigDataPool) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (pool *WorkspacesBigDataPool) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Workspaces_BigDataPool_STATUS{}
+	return &WorkspacesBigDataPool_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -156,13 +180,13 @@ func (pool *WorkspacesBigDataPool) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (pool *WorkspacesBigDataPool) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Workspaces_BigDataPool_STATUS); ok {
+	if st, ok := status.(*WorkspacesBigDataPool_STATUS); ok {
 		pool.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Workspaces_BigDataPool_STATUS
+	var st WorkspacesBigDataPool_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -208,7 +232,7 @@ func (pool *WorkspacesBigDataPool) ValidateUpdate(old runtime.Object) (admission
 
 // createValidations validates the creation of the resource
 func (pool *WorkspacesBigDataPool) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){pool.validateResourceReferences, pool.validateOwnerReference}
+	return []func() (admission.Warnings, error){pool.validateResourceReferences, pool.validateOwnerReference, pool.validateSecretDestinations, pool.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +250,21 @@ func (pool *WorkspacesBigDataPool) updateValidations() []func(old runtime.Object
 		func(old runtime.Object) (admission.Warnings, error) {
 			return pool.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return pool.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return pool.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (pool *WorkspacesBigDataPool) validateConfigMapDestinations() (admission.Warnings, error) {
+	if pool.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(pool, nil, pool.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -243,6 +281,14 @@ func (pool *WorkspacesBigDataPool) validateResourceReferences() (admission.Warni
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (pool *WorkspacesBigDataPool) validateSecretDestinations() (admission.Warnings, error) {
+	if pool.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(pool, nil, pool.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (pool *WorkspacesBigDataPool) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*WorkspacesBigDataPool)
@@ -254,24 +300,24 @@ func (pool *WorkspacesBigDataPool) validateWriteOnceProperties(old runtime.Objec
 }
 
 // AssignProperties_From_WorkspacesBigDataPool populates our WorkspacesBigDataPool from the provided source WorkspacesBigDataPool
-func (pool *WorkspacesBigDataPool) AssignProperties_From_WorkspacesBigDataPool(source *v20210601s.WorkspacesBigDataPool) error {
+func (pool *WorkspacesBigDataPool) AssignProperties_From_WorkspacesBigDataPool(source *storage.WorkspacesBigDataPool) error {
 
 	// ObjectMeta
 	pool.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Workspaces_BigDataPool_Spec
-	err := spec.AssignProperties_From_Workspaces_BigDataPool_Spec(&source.Spec)
+	var spec WorkspacesBigDataPool_Spec
+	err := spec.AssignProperties_From_WorkspacesBigDataPool_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Workspaces_BigDataPool_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_WorkspacesBigDataPool_Spec() to populate field Spec")
 	}
 	pool.Spec = spec
 
 	// Status
-	var status Workspaces_BigDataPool_STATUS
-	err = status.AssignProperties_From_Workspaces_BigDataPool_STATUS(&source.Status)
+	var status WorkspacesBigDataPool_STATUS
+	err = status.AssignProperties_From_WorkspacesBigDataPool_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Workspaces_BigDataPool_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_WorkspacesBigDataPool_STATUS() to populate field Status")
 	}
 	pool.Status = status
 
@@ -280,24 +326,24 @@ func (pool *WorkspacesBigDataPool) AssignProperties_From_WorkspacesBigDataPool(s
 }
 
 // AssignProperties_To_WorkspacesBigDataPool populates the provided destination WorkspacesBigDataPool from our WorkspacesBigDataPool
-func (pool *WorkspacesBigDataPool) AssignProperties_To_WorkspacesBigDataPool(destination *v20210601s.WorkspacesBigDataPool) error {
+func (pool *WorkspacesBigDataPool) AssignProperties_To_WorkspacesBigDataPool(destination *storage.WorkspacesBigDataPool) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *pool.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20210601s.Workspaces_BigDataPool_Spec
-	err := pool.Spec.AssignProperties_To_Workspaces_BigDataPool_Spec(&spec)
+	var spec storage.WorkspacesBigDataPool_Spec
+	err := pool.Spec.AssignProperties_To_WorkspacesBigDataPool_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Workspaces_BigDataPool_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_WorkspacesBigDataPool_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20210601s.Workspaces_BigDataPool_STATUS
-	err = pool.Status.AssignProperties_To_Workspaces_BigDataPool_STATUS(&status)
+	var status storage.WorkspacesBigDataPool_STATUS
+	err = pool.Status.AssignProperties_To_WorkspacesBigDataPool_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Workspaces_BigDataPool_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_WorkspacesBigDataPool_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -324,7 +370,7 @@ type WorkspacesBigDataPoolList struct {
 	Items           []WorkspacesBigDataPool `json:"items"`
 }
 
-type Workspaces_BigDataPool_Spec struct {
+type WorkspacesBigDataPool_Spec struct {
 	// AutoPause: Auto-pausing properties
 	AutoPause *AutoPauseProperties `json:"autoPause,omitempty"`
 
@@ -369,6 +415,10 @@ type Workspaces_BigDataPool_Spec struct {
 	// NodeSizeFamily: The kind of nodes that the Big Data pool provides.
 	NodeSizeFamily *BigDataPoolResourceProperties_NodeSizeFamily `json:"nodeSizeFamily,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *WorkspacesBigDataPoolOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -394,14 +444,14 @@ type Workspaces_BigDataPool_Spec struct {
 	Tags map[string]string `json:"tags,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Workspaces_BigDataPool_Spec{}
+var _ genruntime.ARMTransformer = &WorkspacesBigDataPool_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (pool *Workspaces_BigDataPool_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (pool *WorkspacesBigDataPool_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if pool == nil {
 		return nil, nil
 	}
-	result := &Workspaces_BigDataPool_Spec_ARM{}
+	result := &arm.WorkspacesBigDataPool_Spec{}
 
 	// Set property "Location":
 	if pool.Location != nil {
@@ -430,14 +480,14 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertToARM(resolved genruntime.Conver
 		pool.SparkConfigProperties != nil ||
 		pool.SparkEventsFolder != nil ||
 		pool.SparkVersion != nil {
-		result.Properties = &BigDataPoolResourceProperties_ARM{}
+		result.Properties = &arm.BigDataPoolResourceProperties{}
 	}
 	if pool.AutoPause != nil {
 		autoPause_ARM, err := (*pool.AutoPause).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		autoPause := *autoPause_ARM.(*AutoPauseProperties_ARM)
+		autoPause := *autoPause_ARM.(*arm.AutoPauseProperties)
 		result.Properties.AutoPause = &autoPause
 	}
 	if pool.AutoScale != nil {
@@ -445,7 +495,7 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertToARM(resolved genruntime.Conver
 		if err != nil {
 			return nil, err
 		}
-		autoScale := *autoScale_ARM.(*AutoScaleProperties_ARM)
+		autoScale := *autoScale_ARM.(*arm.AutoScaleProperties)
 		result.Properties.AutoScale = &autoScale
 	}
 	if pool.CacheSize != nil {
@@ -457,7 +507,7 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertToARM(resolved genruntime.Conver
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.CustomLibraries = append(result.Properties.CustomLibraries, *item_ARM.(*LibraryInfo_ARM))
+		result.Properties.CustomLibraries = append(result.Properties.CustomLibraries, *item_ARM.(*arm.LibraryInfo))
 	}
 	if pool.DefaultSparkLogFolder != nil {
 		defaultSparkLogFolder := *pool.DefaultSparkLogFolder
@@ -468,7 +518,7 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertToARM(resolved genruntime.Conver
 		if err != nil {
 			return nil, err
 		}
-		dynamicExecutorAllocation := *dynamicExecutorAllocation_ARM.(*DynamicExecutorAllocation_ARM)
+		dynamicExecutorAllocation := *dynamicExecutorAllocation_ARM.(*arm.DynamicExecutorAllocation)
 		result.Properties.DynamicExecutorAllocation = &dynamicExecutorAllocation
 	}
 	if pool.IsAutotuneEnabled != nil {
@@ -484,7 +534,7 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertToARM(resolved genruntime.Conver
 		if err != nil {
 			return nil, err
 		}
-		libraryRequirements := *libraryRequirements_ARM.(*LibraryRequirements_ARM)
+		libraryRequirements := *libraryRequirements_ARM.(*arm.LibraryRequirements)
 		result.Properties.LibraryRequirements = &libraryRequirements
 	}
 	if pool.NodeCount != nil {
@@ -492,11 +542,15 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertToARM(resolved genruntime.Conver
 		result.Properties.NodeCount = &nodeCount
 	}
 	if pool.NodeSize != nil {
-		nodeSize := *pool.NodeSize
+		var temp string
+		temp = string(*pool.NodeSize)
+		nodeSize := arm.BigDataPoolResourceProperties_NodeSize(temp)
 		result.Properties.NodeSize = &nodeSize
 	}
 	if pool.NodeSizeFamily != nil {
-		nodeSizeFamily := *pool.NodeSizeFamily
+		var temp string
+		temp = string(*pool.NodeSizeFamily)
+		nodeSizeFamily := arm.BigDataPoolResourceProperties_NodeSizeFamily(temp)
 		result.Properties.NodeSizeFamily = &nodeSizeFamily
 	}
 	if pool.ProvisioningState != nil {
@@ -512,7 +566,7 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertToARM(resolved genruntime.Conver
 		if err != nil {
 			return nil, err
 		}
-		sparkConfigProperties := *sparkConfigProperties_ARM.(*SparkConfigProperties_ARM)
+		sparkConfigProperties := *sparkConfigProperties_ARM.(*arm.SparkConfigProperties)
 		result.Properties.SparkConfigProperties = &sparkConfigProperties
 	}
 	if pool.SparkEventsFolder != nil {
@@ -535,15 +589,15 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertToARM(resolved genruntime.Conver
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (pool *Workspaces_BigDataPool_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Workspaces_BigDataPool_Spec_ARM{}
+func (pool *WorkspacesBigDataPool_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.WorkspacesBigDataPool_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (pool *Workspaces_BigDataPool_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Workspaces_BigDataPool_Spec_ARM)
+func (pool *WorkspacesBigDataPool_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.WorkspacesBigDataPool_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Workspaces_BigDataPool_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.WorkspacesBigDataPool_Spec, got %T", armInput)
 	}
 
 	// Set property "AutoPause":
@@ -673,7 +727,9 @@ func (pool *Workspaces_BigDataPool_Spec) PopulateFromARM(owner genruntime.Arbitr
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.NodeSize != nil {
-			nodeSize := *typedInput.Properties.NodeSize
+			var temp string
+			temp = string(*typedInput.Properties.NodeSize)
+			nodeSize := BigDataPoolResourceProperties_NodeSize(temp)
 			pool.NodeSize = &nodeSize
 		}
 	}
@@ -682,10 +738,14 @@ func (pool *Workspaces_BigDataPool_Spec) PopulateFromARM(owner genruntime.Arbitr
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.NodeSizeFamily != nil {
-			nodeSizeFamily := *typedInput.Properties.NodeSizeFamily
+			var temp string
+			temp = string(*typedInput.Properties.NodeSizeFamily)
+			nodeSizeFamily := BigDataPoolResourceProperties_NodeSizeFamily(temp)
 			pool.NodeSizeFamily = &nodeSizeFamily
 		}
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	pool.Owner = &genruntime.KnownResourceReference{
@@ -755,25 +815,25 @@ func (pool *Workspaces_BigDataPool_Spec) PopulateFromARM(owner genruntime.Arbitr
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Workspaces_BigDataPool_Spec{}
+var _ genruntime.ConvertibleSpec = &WorkspacesBigDataPool_Spec{}
 
-// ConvertSpecFrom populates our Workspaces_BigDataPool_Spec from the provided source
-func (pool *Workspaces_BigDataPool_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20210601s.Workspaces_BigDataPool_Spec)
+// ConvertSpecFrom populates our WorkspacesBigDataPool_Spec from the provided source
+func (pool *WorkspacesBigDataPool_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.WorkspacesBigDataPool_Spec)
 	if ok {
 		// Populate our instance from source
-		return pool.AssignProperties_From_Workspaces_BigDataPool_Spec(src)
+		return pool.AssignProperties_From_WorkspacesBigDataPool_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20210601s.Workspaces_BigDataPool_Spec{}
+	src = &storage.WorkspacesBigDataPool_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = pool.AssignProperties_From_Workspaces_BigDataPool_Spec(src)
+	err = pool.AssignProperties_From_WorkspacesBigDataPool_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -781,17 +841,17 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertSpecFrom(source genruntime.Conve
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Workspaces_BigDataPool_Spec
-func (pool *Workspaces_BigDataPool_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20210601s.Workspaces_BigDataPool_Spec)
+// ConvertSpecTo populates the provided destination from our WorkspacesBigDataPool_Spec
+func (pool *WorkspacesBigDataPool_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.WorkspacesBigDataPool_Spec)
 	if ok {
 		// Populate destination from our instance
-		return pool.AssignProperties_To_Workspaces_BigDataPool_Spec(dst)
+		return pool.AssignProperties_To_WorkspacesBigDataPool_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20210601s.Workspaces_BigDataPool_Spec{}
-	err := pool.AssignProperties_To_Workspaces_BigDataPool_Spec(dst)
+	dst = &storage.WorkspacesBigDataPool_Spec{}
+	err := pool.AssignProperties_To_WorkspacesBigDataPool_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -805,8 +865,8 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertSpecTo(destination genruntime.Co
 	return nil
 }
 
-// AssignProperties_From_Workspaces_BigDataPool_Spec populates our Workspaces_BigDataPool_Spec from the provided source Workspaces_BigDataPool_Spec
-func (pool *Workspaces_BigDataPool_Spec) AssignProperties_From_Workspaces_BigDataPool_Spec(source *v20210601s.Workspaces_BigDataPool_Spec) error {
+// AssignProperties_From_WorkspacesBigDataPool_Spec populates our WorkspacesBigDataPool_Spec from the provided source WorkspacesBigDataPool_Spec
+func (pool *WorkspacesBigDataPool_Spec) AssignProperties_From_WorkspacesBigDataPool_Spec(source *storage.WorkspacesBigDataPool_Spec) error {
 
 	// AutoPause
 	if source.AutoPause != nil {
@@ -907,18 +967,32 @@ func (pool *Workspaces_BigDataPool_Spec) AssignProperties_From_Workspaces_BigDat
 
 	// NodeSize
 	if source.NodeSize != nil {
-		nodeSize := BigDataPoolResourceProperties_NodeSize(*source.NodeSize)
-		pool.NodeSize = &nodeSize
+		nodeSize := *source.NodeSize
+		nodeSizeTemp := genruntime.ToEnum(nodeSize, bigDataPoolResourceProperties_NodeSize_Values)
+		pool.NodeSize = &nodeSizeTemp
 	} else {
 		pool.NodeSize = nil
 	}
 
 	// NodeSizeFamily
 	if source.NodeSizeFamily != nil {
-		nodeSizeFamily := BigDataPoolResourceProperties_NodeSizeFamily(*source.NodeSizeFamily)
-		pool.NodeSizeFamily = &nodeSizeFamily
+		nodeSizeFamily := *source.NodeSizeFamily
+		nodeSizeFamilyTemp := genruntime.ToEnum(nodeSizeFamily, bigDataPoolResourceProperties_NodeSizeFamily_Values)
+		pool.NodeSizeFamily = &nodeSizeFamilyTemp
 	} else {
 		pool.NodeSizeFamily = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec WorkspacesBigDataPoolOperatorSpec
+		err := operatorSpec.AssignProperties_From_WorkspacesBigDataPoolOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_WorkspacesBigDataPoolOperatorSpec() to populate field OperatorSpec")
+		}
+		pool.OperatorSpec = &operatorSpec
+	} else {
+		pool.OperatorSpec = nil
 	}
 
 	// Owner
@@ -965,14 +1039,14 @@ func (pool *Workspaces_BigDataPool_Spec) AssignProperties_From_Workspaces_BigDat
 	return nil
 }
 
-// AssignProperties_To_Workspaces_BigDataPool_Spec populates the provided destination Workspaces_BigDataPool_Spec from our Workspaces_BigDataPool_Spec
-func (pool *Workspaces_BigDataPool_Spec) AssignProperties_To_Workspaces_BigDataPool_Spec(destination *v20210601s.Workspaces_BigDataPool_Spec) error {
+// AssignProperties_To_WorkspacesBigDataPool_Spec populates the provided destination WorkspacesBigDataPool_Spec from our WorkspacesBigDataPool_Spec
+func (pool *WorkspacesBigDataPool_Spec) AssignProperties_To_WorkspacesBigDataPool_Spec(destination *storage.WorkspacesBigDataPool_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AutoPause
 	if pool.AutoPause != nil {
-		var autoPause v20210601s.AutoPauseProperties
+		var autoPause storage.AutoPauseProperties
 		err := pool.AutoPause.AssignProperties_To_AutoPauseProperties(&autoPause)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_AutoPauseProperties() to populate field AutoPause")
@@ -984,7 +1058,7 @@ func (pool *Workspaces_BigDataPool_Spec) AssignProperties_To_Workspaces_BigDataP
 
 	// AutoScale
 	if pool.AutoScale != nil {
-		var autoScale v20210601s.AutoScaleProperties
+		var autoScale storage.AutoScaleProperties
 		err := pool.AutoScale.AssignProperties_To_AutoScaleProperties(&autoScale)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_AutoScaleProperties() to populate field AutoScale")
@@ -1002,11 +1076,11 @@ func (pool *Workspaces_BigDataPool_Spec) AssignProperties_To_Workspaces_BigDataP
 
 	// CustomLibraries
 	if pool.CustomLibraries != nil {
-		customLibraryList := make([]v20210601s.LibraryInfo, len(pool.CustomLibraries))
+		customLibraryList := make([]storage.LibraryInfo, len(pool.CustomLibraries))
 		for customLibraryIndex, customLibraryItem := range pool.CustomLibraries {
 			// Shadow the loop variable to avoid aliasing
 			customLibraryItem := customLibraryItem
-			var customLibrary v20210601s.LibraryInfo
+			var customLibrary storage.LibraryInfo
 			err := customLibraryItem.AssignProperties_To_LibraryInfo(&customLibrary)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_LibraryInfo() to populate field CustomLibraries")
@@ -1023,7 +1097,7 @@ func (pool *Workspaces_BigDataPool_Spec) AssignProperties_To_Workspaces_BigDataP
 
 	// DynamicExecutorAllocation
 	if pool.DynamicExecutorAllocation != nil {
-		var dynamicExecutorAllocation v20210601s.DynamicExecutorAllocation
+		var dynamicExecutorAllocation storage.DynamicExecutorAllocation
 		err := pool.DynamicExecutorAllocation.AssignProperties_To_DynamicExecutorAllocation(&dynamicExecutorAllocation)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DynamicExecutorAllocation() to populate field DynamicExecutorAllocation")
@@ -1051,7 +1125,7 @@ func (pool *Workspaces_BigDataPool_Spec) AssignProperties_To_Workspaces_BigDataP
 
 	// LibraryRequirements
 	if pool.LibraryRequirements != nil {
-		var libraryRequirement v20210601s.LibraryRequirements
+		var libraryRequirement storage.LibraryRequirements
 		err := pool.LibraryRequirements.AssignProperties_To_LibraryRequirements(&libraryRequirement)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_LibraryRequirements() to populate field LibraryRequirements")
@@ -1083,6 +1157,18 @@ func (pool *Workspaces_BigDataPool_Spec) AssignProperties_To_Workspaces_BigDataP
 		destination.NodeSizeFamily = nil
 	}
 
+	// OperatorSpec
+	if pool.OperatorSpec != nil {
+		var operatorSpec storage.WorkspacesBigDataPoolOperatorSpec
+		err := pool.OperatorSpec.AssignProperties_To_WorkspacesBigDataPoolOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_WorkspacesBigDataPoolOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
 	// OriginalVersion
 	destination.OriginalVersion = pool.OriginalVersion()
 
@@ -1107,7 +1193,7 @@ func (pool *Workspaces_BigDataPool_Spec) AssignProperties_To_Workspaces_BigDataP
 
 	// SparkConfigProperties
 	if pool.SparkConfigProperties != nil {
-		var sparkConfigProperty v20210601s.SparkConfigProperties
+		var sparkConfigProperty storage.SparkConfigProperties
 		err := pool.SparkConfigProperties.AssignProperties_To_SparkConfigProperties(&sparkConfigProperty)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SparkConfigProperties() to populate field SparkConfigProperties")
@@ -1137,8 +1223,8 @@ func (pool *Workspaces_BigDataPool_Spec) AssignProperties_To_Workspaces_BigDataP
 	return nil
 }
 
-// Initialize_From_Workspaces_BigDataPool_STATUS populates our Workspaces_BigDataPool_Spec from the provided source Workspaces_BigDataPool_STATUS
-func (pool *Workspaces_BigDataPool_Spec) Initialize_From_Workspaces_BigDataPool_STATUS(source *Workspaces_BigDataPool_STATUS) error {
+// Initialize_From_WorkspacesBigDataPool_STATUS populates our WorkspacesBigDataPool_Spec from the provided source WorkspacesBigDataPool_STATUS
+func (pool *WorkspacesBigDataPool_Spec) Initialize_From_WorkspacesBigDataPool_STATUS(source *WorkspacesBigDataPool_STATUS) error {
 
 	// AutoPause
 	if source.AutoPause != nil {
@@ -1236,7 +1322,7 @@ func (pool *Workspaces_BigDataPool_Spec) Initialize_From_Workspaces_BigDataPool_
 
 	// NodeSize
 	if source.NodeSize != nil {
-		nodeSize := BigDataPoolResourceProperties_NodeSize(*source.NodeSize)
+		nodeSize := genruntime.ToEnum(string(*source.NodeSize), bigDataPoolResourceProperties_NodeSize_Values)
 		pool.NodeSize = &nodeSize
 	} else {
 		pool.NodeSize = nil
@@ -1244,7 +1330,7 @@ func (pool *Workspaces_BigDataPool_Spec) Initialize_From_Workspaces_BigDataPool_
 
 	// NodeSizeFamily
 	if source.NodeSizeFamily != nil {
-		nodeSizeFamily := BigDataPoolResourceProperties_NodeSizeFamily(*source.NodeSizeFamily)
+		nodeSizeFamily := genruntime.ToEnum(string(*source.NodeSizeFamily), bigDataPoolResourceProperties_NodeSizeFamily_Values)
 		pool.NodeSizeFamily = &nodeSizeFamily
 	} else {
 		pool.NodeSizeFamily = nil
@@ -1287,14 +1373,14 @@ func (pool *Workspaces_BigDataPool_Spec) Initialize_From_Workspaces_BigDataPool_
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (pool *Workspaces_BigDataPool_Spec) OriginalVersion() string {
+func (pool *WorkspacesBigDataPool_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (pool *Workspaces_BigDataPool_Spec) SetAzureName(azureName string) { pool.AzureName = azureName }
+func (pool *WorkspacesBigDataPool_Spec) SetAzureName(azureName string) { pool.AzureName = azureName }
 
-type Workspaces_BigDataPool_STATUS struct {
+type WorkspacesBigDataPool_STATUS struct {
 	// AutoPause: Auto-pausing properties
 	AutoPause *AutoPauseProperties_STATUS `json:"autoPause,omitempty"`
 
@@ -1372,25 +1458,25 @@ type Workspaces_BigDataPool_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Workspaces_BigDataPool_STATUS{}
+var _ genruntime.ConvertibleStatus = &WorkspacesBigDataPool_STATUS{}
 
-// ConvertStatusFrom populates our Workspaces_BigDataPool_STATUS from the provided source
-func (pool *Workspaces_BigDataPool_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20210601s.Workspaces_BigDataPool_STATUS)
+// ConvertStatusFrom populates our WorkspacesBigDataPool_STATUS from the provided source
+func (pool *WorkspacesBigDataPool_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.WorkspacesBigDataPool_STATUS)
 	if ok {
 		// Populate our instance from source
-		return pool.AssignProperties_From_Workspaces_BigDataPool_STATUS(src)
+		return pool.AssignProperties_From_WorkspacesBigDataPool_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20210601s.Workspaces_BigDataPool_STATUS{}
+	src = &storage.WorkspacesBigDataPool_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = pool.AssignProperties_From_Workspaces_BigDataPool_STATUS(src)
+	err = pool.AssignProperties_From_WorkspacesBigDataPool_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -1398,17 +1484,17 @@ func (pool *Workspaces_BigDataPool_STATUS) ConvertStatusFrom(source genruntime.C
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Workspaces_BigDataPool_STATUS
-func (pool *Workspaces_BigDataPool_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20210601s.Workspaces_BigDataPool_STATUS)
+// ConvertStatusTo populates the provided destination from our WorkspacesBigDataPool_STATUS
+func (pool *WorkspacesBigDataPool_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.WorkspacesBigDataPool_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return pool.AssignProperties_To_Workspaces_BigDataPool_STATUS(dst)
+		return pool.AssignProperties_To_WorkspacesBigDataPool_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20210601s.Workspaces_BigDataPool_STATUS{}
-	err := pool.AssignProperties_To_Workspaces_BigDataPool_STATUS(dst)
+	dst = &storage.WorkspacesBigDataPool_STATUS{}
+	err := pool.AssignProperties_To_WorkspacesBigDataPool_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -1422,18 +1508,18 @@ func (pool *Workspaces_BigDataPool_STATUS) ConvertStatusTo(destination genruntim
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Workspaces_BigDataPool_STATUS{}
+var _ genruntime.FromARMConverter = &WorkspacesBigDataPool_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (pool *Workspaces_BigDataPool_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Workspaces_BigDataPool_STATUS_ARM{}
+func (pool *WorkspacesBigDataPool_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.WorkspacesBigDataPool_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (pool *Workspaces_BigDataPool_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Workspaces_BigDataPool_STATUS_ARM)
+func (pool *WorkspacesBigDataPool_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.WorkspacesBigDataPool_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Workspaces_BigDataPool_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.WorkspacesBigDataPool_STATUS, got %T", armInput)
 	}
 
 	// Set property "AutoPause":
@@ -1592,7 +1678,9 @@ func (pool *Workspaces_BigDataPool_STATUS) PopulateFromARM(owner genruntime.Arbi
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.NodeSize != nil {
-			nodeSize := *typedInput.Properties.NodeSize
+			var temp string
+			temp = string(*typedInput.Properties.NodeSize)
+			nodeSize := BigDataPoolResourceProperties_NodeSize_STATUS(temp)
 			pool.NodeSize = &nodeSize
 		}
 	}
@@ -1601,7 +1689,9 @@ func (pool *Workspaces_BigDataPool_STATUS) PopulateFromARM(owner genruntime.Arbi
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.NodeSizeFamily != nil {
-			nodeSizeFamily := *typedInput.Properties.NodeSizeFamily
+			var temp string
+			temp = string(*typedInput.Properties.NodeSizeFamily)
+			nodeSizeFamily := BigDataPoolResourceProperties_NodeSizeFamily_STATUS(temp)
 			pool.NodeSizeFamily = &nodeSizeFamily
 		}
 	}
@@ -1674,8 +1764,8 @@ func (pool *Workspaces_BigDataPool_STATUS) PopulateFromARM(owner genruntime.Arbi
 	return nil
 }
 
-// AssignProperties_From_Workspaces_BigDataPool_STATUS populates our Workspaces_BigDataPool_STATUS from the provided source Workspaces_BigDataPool_STATUS
-func (pool *Workspaces_BigDataPool_STATUS) AssignProperties_From_Workspaces_BigDataPool_STATUS(source *v20210601s.Workspaces_BigDataPool_STATUS) error {
+// AssignProperties_From_WorkspacesBigDataPool_STATUS populates our WorkspacesBigDataPool_STATUS from the provided source WorkspacesBigDataPool_STATUS
+func (pool *WorkspacesBigDataPool_STATUS) AssignProperties_From_WorkspacesBigDataPool_STATUS(source *storage.WorkspacesBigDataPool_STATUS) error {
 
 	// AutoPause
 	if source.AutoPause != nil {
@@ -1788,16 +1878,18 @@ func (pool *Workspaces_BigDataPool_STATUS) AssignProperties_From_Workspaces_BigD
 
 	// NodeSize
 	if source.NodeSize != nil {
-		nodeSize := BigDataPoolResourceProperties_NodeSize_STATUS(*source.NodeSize)
-		pool.NodeSize = &nodeSize
+		nodeSize := *source.NodeSize
+		nodeSizeTemp := genruntime.ToEnum(nodeSize, bigDataPoolResourceProperties_NodeSize_STATUS_Values)
+		pool.NodeSize = &nodeSizeTemp
 	} else {
 		pool.NodeSize = nil
 	}
 
 	// NodeSizeFamily
 	if source.NodeSizeFamily != nil {
-		nodeSizeFamily := BigDataPoolResourceProperties_NodeSizeFamily_STATUS(*source.NodeSizeFamily)
-		pool.NodeSizeFamily = &nodeSizeFamily
+		nodeSizeFamily := *source.NodeSizeFamily
+		nodeSizeFamilyTemp := genruntime.ToEnum(nodeSizeFamily, bigDataPoolResourceProperties_NodeSizeFamily_STATUS_Values)
+		pool.NodeSizeFamily = &nodeSizeFamilyTemp
 	} else {
 		pool.NodeSizeFamily = nil
 	}
@@ -1841,14 +1933,14 @@ func (pool *Workspaces_BigDataPool_STATUS) AssignProperties_From_Workspaces_BigD
 	return nil
 }
 
-// AssignProperties_To_Workspaces_BigDataPool_STATUS populates the provided destination Workspaces_BigDataPool_STATUS from our Workspaces_BigDataPool_STATUS
-func (pool *Workspaces_BigDataPool_STATUS) AssignProperties_To_Workspaces_BigDataPool_STATUS(destination *v20210601s.Workspaces_BigDataPool_STATUS) error {
+// AssignProperties_To_WorkspacesBigDataPool_STATUS populates the provided destination WorkspacesBigDataPool_STATUS from our WorkspacesBigDataPool_STATUS
+func (pool *WorkspacesBigDataPool_STATUS) AssignProperties_To_WorkspacesBigDataPool_STATUS(destination *storage.WorkspacesBigDataPool_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AutoPause
 	if pool.AutoPause != nil {
-		var autoPause v20210601s.AutoPauseProperties_STATUS
+		var autoPause storage.AutoPauseProperties_STATUS
 		err := pool.AutoPause.AssignProperties_To_AutoPauseProperties_STATUS(&autoPause)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_AutoPauseProperties_STATUS() to populate field AutoPause")
@@ -1860,7 +1952,7 @@ func (pool *Workspaces_BigDataPool_STATUS) AssignProperties_To_Workspaces_BigDat
 
 	// AutoScale
 	if pool.AutoScale != nil {
-		var autoScale v20210601s.AutoScaleProperties_STATUS
+		var autoScale storage.AutoScaleProperties_STATUS
 		err := pool.AutoScale.AssignProperties_To_AutoScaleProperties_STATUS(&autoScale)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_AutoScaleProperties_STATUS() to populate field AutoScale")
@@ -1881,11 +1973,11 @@ func (pool *Workspaces_BigDataPool_STATUS) AssignProperties_To_Workspaces_BigDat
 
 	// CustomLibraries
 	if pool.CustomLibraries != nil {
-		customLibraryList := make([]v20210601s.LibraryInfo_STATUS, len(pool.CustomLibraries))
+		customLibraryList := make([]storage.LibraryInfo_STATUS, len(pool.CustomLibraries))
 		for customLibraryIndex, customLibraryItem := range pool.CustomLibraries {
 			// Shadow the loop variable to avoid aliasing
 			customLibraryItem := customLibraryItem
-			var customLibrary v20210601s.LibraryInfo_STATUS
+			var customLibrary storage.LibraryInfo_STATUS
 			err := customLibraryItem.AssignProperties_To_LibraryInfo_STATUS(&customLibrary)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_LibraryInfo_STATUS() to populate field CustomLibraries")
@@ -1902,7 +1994,7 @@ func (pool *Workspaces_BigDataPool_STATUS) AssignProperties_To_Workspaces_BigDat
 
 	// DynamicExecutorAllocation
 	if pool.DynamicExecutorAllocation != nil {
-		var dynamicExecutorAllocation v20210601s.DynamicExecutorAllocation_STATUS
+		var dynamicExecutorAllocation storage.DynamicExecutorAllocation_STATUS
 		err := pool.DynamicExecutorAllocation.AssignProperties_To_DynamicExecutorAllocation_STATUS(&dynamicExecutorAllocation)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DynamicExecutorAllocation_STATUS() to populate field DynamicExecutorAllocation")
@@ -1936,7 +2028,7 @@ func (pool *Workspaces_BigDataPool_STATUS) AssignProperties_To_Workspaces_BigDat
 
 	// LibraryRequirements
 	if pool.LibraryRequirements != nil {
-		var libraryRequirement v20210601s.LibraryRequirements_STATUS
+		var libraryRequirement storage.LibraryRequirements_STATUS
 		err := pool.LibraryRequirements.AssignProperties_To_LibraryRequirements_STATUS(&libraryRequirement)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_LibraryRequirements_STATUS() to populate field LibraryRequirements")
@@ -1984,7 +2076,7 @@ func (pool *Workspaces_BigDataPool_STATUS) AssignProperties_To_Workspaces_BigDat
 
 	// SparkConfigProperties
 	if pool.SparkConfigProperties != nil {
-		var sparkConfigProperty v20210601s.SparkConfigProperties_STATUS
+		var sparkConfigProperty storage.SparkConfigProperties_STATUS
 		err := pool.SparkConfigProperties.AssignProperties_To_SparkConfigProperties_STATUS(&sparkConfigProperty)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SparkConfigProperties_STATUS() to populate field SparkConfigProperties")
@@ -2033,7 +2125,7 @@ func (properties *AutoPauseProperties) ConvertToARM(resolved genruntime.ConvertT
 	if properties == nil {
 		return nil, nil
 	}
-	result := &AutoPauseProperties_ARM{}
+	result := &arm.AutoPauseProperties{}
 
 	// Set property "DelayInMinutes":
 	if properties.DelayInMinutes != nil {
@@ -2051,14 +2143,14 @@ func (properties *AutoPauseProperties) ConvertToARM(resolved genruntime.ConvertT
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *AutoPauseProperties) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AutoPauseProperties_ARM{}
+	return &arm.AutoPauseProperties{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *AutoPauseProperties) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AutoPauseProperties_ARM)
+	typedInput, ok := armInput.(arm.AutoPauseProperties)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AutoPauseProperties_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AutoPauseProperties, got %T", armInput)
 	}
 
 	// Set property "DelayInMinutes":
@@ -2078,7 +2170,7 @@ func (properties *AutoPauseProperties) PopulateFromARM(owner genruntime.Arbitrar
 }
 
 // AssignProperties_From_AutoPauseProperties populates our AutoPauseProperties from the provided source AutoPauseProperties
-func (properties *AutoPauseProperties) AssignProperties_From_AutoPauseProperties(source *v20210601s.AutoPauseProperties) error {
+func (properties *AutoPauseProperties) AssignProperties_From_AutoPauseProperties(source *storage.AutoPauseProperties) error {
 
 	// DelayInMinutes
 	properties.DelayInMinutes = genruntime.ClonePointerToInt(source.DelayInMinutes)
@@ -2096,7 +2188,7 @@ func (properties *AutoPauseProperties) AssignProperties_From_AutoPauseProperties
 }
 
 // AssignProperties_To_AutoPauseProperties populates the provided destination AutoPauseProperties from our AutoPauseProperties
-func (properties *AutoPauseProperties) AssignProperties_To_AutoPauseProperties(destination *v20210601s.AutoPauseProperties) error {
+func (properties *AutoPauseProperties) AssignProperties_To_AutoPauseProperties(destination *storage.AutoPauseProperties) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2153,14 +2245,14 @@ var _ genruntime.FromARMConverter = &AutoPauseProperties_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *AutoPauseProperties_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AutoPauseProperties_STATUS_ARM{}
+	return &arm.AutoPauseProperties_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *AutoPauseProperties_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AutoPauseProperties_STATUS_ARM)
+	typedInput, ok := armInput.(arm.AutoPauseProperties_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AutoPauseProperties_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AutoPauseProperties_STATUS, got %T", armInput)
 	}
 
 	// Set property "DelayInMinutes":
@@ -2180,7 +2272,7 @@ func (properties *AutoPauseProperties_STATUS) PopulateFromARM(owner genruntime.A
 }
 
 // AssignProperties_From_AutoPauseProperties_STATUS populates our AutoPauseProperties_STATUS from the provided source AutoPauseProperties_STATUS
-func (properties *AutoPauseProperties_STATUS) AssignProperties_From_AutoPauseProperties_STATUS(source *v20210601s.AutoPauseProperties_STATUS) error {
+func (properties *AutoPauseProperties_STATUS) AssignProperties_From_AutoPauseProperties_STATUS(source *storage.AutoPauseProperties_STATUS) error {
 
 	// DelayInMinutes
 	properties.DelayInMinutes = genruntime.ClonePointerToInt(source.DelayInMinutes)
@@ -2198,7 +2290,7 @@ func (properties *AutoPauseProperties_STATUS) AssignProperties_From_AutoPausePro
 }
 
 // AssignProperties_To_AutoPauseProperties_STATUS populates the provided destination AutoPauseProperties_STATUS from our AutoPauseProperties_STATUS
-func (properties *AutoPauseProperties_STATUS) AssignProperties_To_AutoPauseProperties_STATUS(destination *v20210601s.AutoPauseProperties_STATUS) error {
+func (properties *AutoPauseProperties_STATUS) AssignProperties_To_AutoPauseProperties_STATUS(destination *storage.AutoPauseProperties_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2243,7 +2335,7 @@ func (properties *AutoScaleProperties) ConvertToARM(resolved genruntime.ConvertT
 	if properties == nil {
 		return nil, nil
 	}
-	result := &AutoScaleProperties_ARM{}
+	result := &arm.AutoScaleProperties{}
 
 	// Set property "Enabled":
 	if properties.Enabled != nil {
@@ -2267,14 +2359,14 @@ func (properties *AutoScaleProperties) ConvertToARM(resolved genruntime.ConvertT
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *AutoScaleProperties) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AutoScaleProperties_ARM{}
+	return &arm.AutoScaleProperties{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *AutoScaleProperties) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AutoScaleProperties_ARM)
+	typedInput, ok := armInput.(arm.AutoScaleProperties)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AutoScaleProperties_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AutoScaleProperties, got %T", armInput)
 	}
 
 	// Set property "Enabled":
@@ -2300,7 +2392,7 @@ func (properties *AutoScaleProperties) PopulateFromARM(owner genruntime.Arbitrar
 }
 
 // AssignProperties_From_AutoScaleProperties populates our AutoScaleProperties from the provided source AutoScaleProperties
-func (properties *AutoScaleProperties) AssignProperties_From_AutoScaleProperties(source *v20210601s.AutoScaleProperties) error {
+func (properties *AutoScaleProperties) AssignProperties_From_AutoScaleProperties(source *storage.AutoScaleProperties) error {
 
 	// Enabled
 	if source.Enabled != nil {
@@ -2321,7 +2413,7 @@ func (properties *AutoScaleProperties) AssignProperties_From_AutoScaleProperties
 }
 
 // AssignProperties_To_AutoScaleProperties populates the provided destination AutoScaleProperties from our AutoScaleProperties
-func (properties *AutoScaleProperties) AssignProperties_To_AutoScaleProperties(destination *v20210601s.AutoScaleProperties) error {
+func (properties *AutoScaleProperties) AssignProperties_To_AutoScaleProperties(destination *storage.AutoScaleProperties) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2387,14 +2479,14 @@ var _ genruntime.FromARMConverter = &AutoScaleProperties_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *AutoScaleProperties_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AutoScaleProperties_STATUS_ARM{}
+	return &arm.AutoScaleProperties_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *AutoScaleProperties_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AutoScaleProperties_STATUS_ARM)
+	typedInput, ok := armInput.(arm.AutoScaleProperties_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AutoScaleProperties_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AutoScaleProperties_STATUS, got %T", armInput)
 	}
 
 	// Set property "Enabled":
@@ -2420,7 +2512,7 @@ func (properties *AutoScaleProperties_STATUS) PopulateFromARM(owner genruntime.A
 }
 
 // AssignProperties_From_AutoScaleProperties_STATUS populates our AutoScaleProperties_STATUS from the provided source AutoScaleProperties_STATUS
-func (properties *AutoScaleProperties_STATUS) AssignProperties_From_AutoScaleProperties_STATUS(source *v20210601s.AutoScaleProperties_STATUS) error {
+func (properties *AutoScaleProperties_STATUS) AssignProperties_From_AutoScaleProperties_STATUS(source *storage.AutoScaleProperties_STATUS) error {
 
 	// Enabled
 	if source.Enabled != nil {
@@ -2441,7 +2533,7 @@ func (properties *AutoScaleProperties_STATUS) AssignProperties_From_AutoScalePro
 }
 
 // AssignProperties_To_AutoScaleProperties_STATUS populates the provided destination AutoScaleProperties_STATUS from our AutoScaleProperties_STATUS
-func (properties *AutoScaleProperties_STATUS) AssignProperties_To_AutoScaleProperties_STATUS(destination *v20210601s.AutoScaleProperties_STATUS) error {
+func (properties *AutoScaleProperties_STATUS) AssignProperties_To_AutoScaleProperties_STATUS(destination *storage.AutoScaleProperties_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2483,6 +2575,17 @@ const (
 	BigDataPoolResourceProperties_NodeSize_XXXLarge = BigDataPoolResourceProperties_NodeSize("XXXLarge")
 )
 
+// Mapping from string to BigDataPoolResourceProperties_NodeSize
+var bigDataPoolResourceProperties_NodeSize_Values = map[string]BigDataPoolResourceProperties_NodeSize{
+	"large":    BigDataPoolResourceProperties_NodeSize_Large,
+	"medium":   BigDataPoolResourceProperties_NodeSize_Medium,
+	"none":     BigDataPoolResourceProperties_NodeSize_None,
+	"small":    BigDataPoolResourceProperties_NodeSize_Small,
+	"xlarge":   BigDataPoolResourceProperties_NodeSize_XLarge,
+	"xxlarge":  BigDataPoolResourceProperties_NodeSize_XXLarge,
+	"xxxlarge": BigDataPoolResourceProperties_NodeSize_XXXLarge,
+}
+
 type BigDataPoolResourceProperties_NodeSize_STATUS string
 
 const (
@@ -2495,6 +2598,17 @@ const (
 	BigDataPoolResourceProperties_NodeSize_STATUS_XXXLarge = BigDataPoolResourceProperties_NodeSize_STATUS("XXXLarge")
 )
 
+// Mapping from string to BigDataPoolResourceProperties_NodeSize_STATUS
+var bigDataPoolResourceProperties_NodeSize_STATUS_Values = map[string]BigDataPoolResourceProperties_NodeSize_STATUS{
+	"large":    BigDataPoolResourceProperties_NodeSize_STATUS_Large,
+	"medium":   BigDataPoolResourceProperties_NodeSize_STATUS_Medium,
+	"none":     BigDataPoolResourceProperties_NodeSize_STATUS_None,
+	"small":    BigDataPoolResourceProperties_NodeSize_STATUS_Small,
+	"xlarge":   BigDataPoolResourceProperties_NodeSize_STATUS_XLarge,
+	"xxlarge":  BigDataPoolResourceProperties_NodeSize_STATUS_XXLarge,
+	"xxxlarge": BigDataPoolResourceProperties_NodeSize_STATUS_XXXLarge,
+}
+
 // +kubebuilder:validation:Enum={"HardwareAcceleratedFPGA","HardwareAcceleratedGPU","MemoryOptimized","None"}
 type BigDataPoolResourceProperties_NodeSizeFamily string
 
@@ -2505,6 +2619,14 @@ const (
 	BigDataPoolResourceProperties_NodeSizeFamily_None                    = BigDataPoolResourceProperties_NodeSizeFamily("None")
 )
 
+// Mapping from string to BigDataPoolResourceProperties_NodeSizeFamily
+var bigDataPoolResourceProperties_NodeSizeFamily_Values = map[string]BigDataPoolResourceProperties_NodeSizeFamily{
+	"hardwareacceleratedfpga": BigDataPoolResourceProperties_NodeSizeFamily_HardwareAcceleratedFPGA,
+	"hardwareacceleratedgpu":  BigDataPoolResourceProperties_NodeSizeFamily_HardwareAcceleratedGPU,
+	"memoryoptimized":         BigDataPoolResourceProperties_NodeSizeFamily_MemoryOptimized,
+	"none":                    BigDataPoolResourceProperties_NodeSizeFamily_None,
+}
+
 type BigDataPoolResourceProperties_NodeSizeFamily_STATUS string
 
 const (
@@ -2513,6 +2635,14 @@ const (
 	BigDataPoolResourceProperties_NodeSizeFamily_STATUS_MemoryOptimized         = BigDataPoolResourceProperties_NodeSizeFamily_STATUS("MemoryOptimized")
 	BigDataPoolResourceProperties_NodeSizeFamily_STATUS_None                    = BigDataPoolResourceProperties_NodeSizeFamily_STATUS("None")
 )
+
+// Mapping from string to BigDataPoolResourceProperties_NodeSizeFamily_STATUS
+var bigDataPoolResourceProperties_NodeSizeFamily_STATUS_Values = map[string]BigDataPoolResourceProperties_NodeSizeFamily_STATUS{
+	"hardwareacceleratedfpga": BigDataPoolResourceProperties_NodeSizeFamily_STATUS_HardwareAcceleratedFPGA,
+	"hardwareacceleratedgpu":  BigDataPoolResourceProperties_NodeSizeFamily_STATUS_HardwareAcceleratedGPU,
+	"memoryoptimized":         BigDataPoolResourceProperties_NodeSizeFamily_STATUS_MemoryOptimized,
+	"none":                    BigDataPoolResourceProperties_NodeSizeFamily_STATUS_None,
+}
 
 // Dynamic Executor Allocation Properties
 type DynamicExecutorAllocation struct {
@@ -2533,7 +2663,7 @@ func (allocation *DynamicExecutorAllocation) ConvertToARM(resolved genruntime.Co
 	if allocation == nil {
 		return nil, nil
 	}
-	result := &DynamicExecutorAllocation_ARM{}
+	result := &arm.DynamicExecutorAllocation{}
 
 	// Set property "Enabled":
 	if allocation.Enabled != nil {
@@ -2557,14 +2687,14 @@ func (allocation *DynamicExecutorAllocation) ConvertToARM(resolved genruntime.Co
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (allocation *DynamicExecutorAllocation) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DynamicExecutorAllocation_ARM{}
+	return &arm.DynamicExecutorAllocation{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (allocation *DynamicExecutorAllocation) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DynamicExecutorAllocation_ARM)
+	typedInput, ok := armInput.(arm.DynamicExecutorAllocation)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DynamicExecutorAllocation_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DynamicExecutorAllocation, got %T", armInput)
 	}
 
 	// Set property "Enabled":
@@ -2590,7 +2720,7 @@ func (allocation *DynamicExecutorAllocation) PopulateFromARM(owner genruntime.Ar
 }
 
 // AssignProperties_From_DynamicExecutorAllocation populates our DynamicExecutorAllocation from the provided source DynamicExecutorAllocation
-func (allocation *DynamicExecutorAllocation) AssignProperties_From_DynamicExecutorAllocation(source *v20210601s.DynamicExecutorAllocation) error {
+func (allocation *DynamicExecutorAllocation) AssignProperties_From_DynamicExecutorAllocation(source *storage.DynamicExecutorAllocation) error {
 
 	// Enabled
 	if source.Enabled != nil {
@@ -2611,7 +2741,7 @@ func (allocation *DynamicExecutorAllocation) AssignProperties_From_DynamicExecut
 }
 
 // AssignProperties_To_DynamicExecutorAllocation populates the provided destination DynamicExecutorAllocation from our DynamicExecutorAllocation
-func (allocation *DynamicExecutorAllocation) AssignProperties_To_DynamicExecutorAllocation(destination *v20210601s.DynamicExecutorAllocation) error {
+func (allocation *DynamicExecutorAllocation) AssignProperties_To_DynamicExecutorAllocation(destination *storage.DynamicExecutorAllocation) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2677,14 +2807,14 @@ var _ genruntime.FromARMConverter = &DynamicExecutorAllocation_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (allocation *DynamicExecutorAllocation_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DynamicExecutorAllocation_STATUS_ARM{}
+	return &arm.DynamicExecutorAllocation_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (allocation *DynamicExecutorAllocation_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DynamicExecutorAllocation_STATUS_ARM)
+	typedInput, ok := armInput.(arm.DynamicExecutorAllocation_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DynamicExecutorAllocation_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DynamicExecutorAllocation_STATUS, got %T", armInput)
 	}
 
 	// Set property "Enabled":
@@ -2710,7 +2840,7 @@ func (allocation *DynamicExecutorAllocation_STATUS) PopulateFromARM(owner genrun
 }
 
 // AssignProperties_From_DynamicExecutorAllocation_STATUS populates our DynamicExecutorAllocation_STATUS from the provided source DynamicExecutorAllocation_STATUS
-func (allocation *DynamicExecutorAllocation_STATUS) AssignProperties_From_DynamicExecutorAllocation_STATUS(source *v20210601s.DynamicExecutorAllocation_STATUS) error {
+func (allocation *DynamicExecutorAllocation_STATUS) AssignProperties_From_DynamicExecutorAllocation_STATUS(source *storage.DynamicExecutorAllocation_STATUS) error {
 
 	// Enabled
 	if source.Enabled != nil {
@@ -2731,7 +2861,7 @@ func (allocation *DynamicExecutorAllocation_STATUS) AssignProperties_From_Dynami
 }
 
 // AssignProperties_To_DynamicExecutorAllocation_STATUS populates the provided destination DynamicExecutorAllocation_STATUS from our DynamicExecutorAllocation_STATUS
-func (allocation *DynamicExecutorAllocation_STATUS) AssignProperties_To_DynamicExecutorAllocation_STATUS(destination *v20210601s.DynamicExecutorAllocation_STATUS) error {
+func (allocation *DynamicExecutorAllocation_STATUS) AssignProperties_To_DynamicExecutorAllocation_STATUS(destination *storage.DynamicExecutorAllocation_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2782,7 +2912,7 @@ func (info *LibraryInfo) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 	if info == nil {
 		return nil, nil
 	}
-	result := &LibraryInfo_ARM{}
+	result := &arm.LibraryInfo{}
 
 	// Set property "ContainerName":
 	if info.ContainerName != nil {
@@ -2812,14 +2942,14 @@ func (info *LibraryInfo) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (info *LibraryInfo) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LibraryInfo_ARM{}
+	return &arm.LibraryInfo{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (info *LibraryInfo) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LibraryInfo_ARM)
+	typedInput, ok := armInput.(arm.LibraryInfo)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LibraryInfo_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LibraryInfo, got %T", armInput)
 	}
 
 	// Set property "ContainerName":
@@ -2851,7 +2981,7 @@ func (info *LibraryInfo) PopulateFromARM(owner genruntime.ArbitraryOwnerReferenc
 }
 
 // AssignProperties_From_LibraryInfo populates our LibraryInfo from the provided source LibraryInfo
-func (info *LibraryInfo) AssignProperties_From_LibraryInfo(source *v20210601s.LibraryInfo) error {
+func (info *LibraryInfo) AssignProperties_From_LibraryInfo(source *storage.LibraryInfo) error {
 
 	// ContainerName
 	info.ContainerName = genruntime.ClonePointerToString(source.ContainerName)
@@ -2870,7 +3000,7 @@ func (info *LibraryInfo) AssignProperties_From_LibraryInfo(source *v20210601s.Li
 }
 
 // AssignProperties_To_LibraryInfo populates the provided destination LibraryInfo from our LibraryInfo
-func (info *LibraryInfo) AssignProperties_To_LibraryInfo(destination *v20210601s.LibraryInfo) error {
+func (info *LibraryInfo) AssignProperties_To_LibraryInfo(destination *storage.LibraryInfo) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2944,14 +3074,14 @@ var _ genruntime.FromARMConverter = &LibraryInfo_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (info *LibraryInfo_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LibraryInfo_STATUS_ARM{}
+	return &arm.LibraryInfo_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (info *LibraryInfo_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LibraryInfo_STATUS_ARM)
+	typedInput, ok := armInput.(arm.LibraryInfo_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LibraryInfo_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LibraryInfo_STATUS, got %T", armInput)
 	}
 
 	// Set property "ContainerName":
@@ -3001,7 +3131,7 @@ func (info *LibraryInfo_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerR
 }
 
 // AssignProperties_From_LibraryInfo_STATUS populates our LibraryInfo_STATUS from the provided source LibraryInfo_STATUS
-func (info *LibraryInfo_STATUS) AssignProperties_From_LibraryInfo_STATUS(source *v20210601s.LibraryInfo_STATUS) error {
+func (info *LibraryInfo_STATUS) AssignProperties_From_LibraryInfo_STATUS(source *storage.LibraryInfo_STATUS) error {
 
 	// ContainerName
 	info.ContainerName = genruntime.ClonePointerToString(source.ContainerName)
@@ -3029,7 +3159,7 @@ func (info *LibraryInfo_STATUS) AssignProperties_From_LibraryInfo_STATUS(source 
 }
 
 // AssignProperties_To_LibraryInfo_STATUS populates the provided destination LibraryInfo_STATUS from our LibraryInfo_STATUS
-func (info *LibraryInfo_STATUS) AssignProperties_To_LibraryInfo_STATUS(destination *v20210601s.LibraryInfo_STATUS) error {
+func (info *LibraryInfo_STATUS) AssignProperties_To_LibraryInfo_STATUS(destination *storage.LibraryInfo_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3081,7 +3211,7 @@ func (requirements *LibraryRequirements) ConvertToARM(resolved genruntime.Conver
 	if requirements == nil {
 		return nil, nil
 	}
-	result := &LibraryRequirements_ARM{}
+	result := &arm.LibraryRequirements{}
 
 	// Set property "Content":
 	if requirements.Content != nil {
@@ -3099,14 +3229,14 @@ func (requirements *LibraryRequirements) ConvertToARM(resolved genruntime.Conver
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (requirements *LibraryRequirements) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LibraryRequirements_ARM{}
+	return &arm.LibraryRequirements{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (requirements *LibraryRequirements) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LibraryRequirements_ARM)
+	typedInput, ok := armInput.(arm.LibraryRequirements)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LibraryRequirements_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LibraryRequirements, got %T", armInput)
 	}
 
 	// Set property "Content":
@@ -3126,7 +3256,7 @@ func (requirements *LibraryRequirements) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_LibraryRequirements populates our LibraryRequirements from the provided source LibraryRequirements
-func (requirements *LibraryRequirements) AssignProperties_From_LibraryRequirements(source *v20210601s.LibraryRequirements) error {
+func (requirements *LibraryRequirements) AssignProperties_From_LibraryRequirements(source *storage.LibraryRequirements) error {
 
 	// Content
 	requirements.Content = genruntime.ClonePointerToString(source.Content)
@@ -3139,7 +3269,7 @@ func (requirements *LibraryRequirements) AssignProperties_From_LibraryRequiremen
 }
 
 // AssignProperties_To_LibraryRequirements populates the provided destination LibraryRequirements from our LibraryRequirements
-func (requirements *LibraryRequirements) AssignProperties_To_LibraryRequirements(destination *v20210601s.LibraryRequirements) error {
+func (requirements *LibraryRequirements) AssignProperties_To_LibraryRequirements(destination *storage.LibraryRequirements) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3189,14 +3319,14 @@ var _ genruntime.FromARMConverter = &LibraryRequirements_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (requirements *LibraryRequirements_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LibraryRequirements_STATUS_ARM{}
+	return &arm.LibraryRequirements_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (requirements *LibraryRequirements_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LibraryRequirements_STATUS_ARM)
+	typedInput, ok := armInput.(arm.LibraryRequirements_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LibraryRequirements_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LibraryRequirements_STATUS, got %T", armInput)
 	}
 
 	// Set property "Content":
@@ -3222,7 +3352,7 @@ func (requirements *LibraryRequirements_STATUS) PopulateFromARM(owner genruntime
 }
 
 // AssignProperties_From_LibraryRequirements_STATUS populates our LibraryRequirements_STATUS from the provided source LibraryRequirements_STATUS
-func (requirements *LibraryRequirements_STATUS) AssignProperties_From_LibraryRequirements_STATUS(source *v20210601s.LibraryRequirements_STATUS) error {
+func (requirements *LibraryRequirements_STATUS) AssignProperties_From_LibraryRequirements_STATUS(source *storage.LibraryRequirements_STATUS) error {
 
 	// Content
 	requirements.Content = genruntime.ClonePointerToString(source.Content)
@@ -3238,7 +3368,7 @@ func (requirements *LibraryRequirements_STATUS) AssignProperties_From_LibraryReq
 }
 
 // AssignProperties_To_LibraryRequirements_STATUS populates the provided destination LibraryRequirements_STATUS from our LibraryRequirements_STATUS
-func (requirements *LibraryRequirements_STATUS) AssignProperties_To_LibraryRequirements_STATUS(destination *v20210601s.LibraryRequirements_STATUS) error {
+func (requirements *LibraryRequirements_STATUS) AssignProperties_To_LibraryRequirements_STATUS(destination *storage.LibraryRequirements_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3281,11 +3411,13 @@ func (properties *SparkConfigProperties) ConvertToARM(resolved genruntime.Conver
 	if properties == nil {
 		return nil, nil
 	}
-	result := &SparkConfigProperties_ARM{}
+	result := &arm.SparkConfigProperties{}
 
 	// Set property "ConfigurationType":
 	if properties.ConfigurationType != nil {
-		configurationType := *properties.ConfigurationType
+		var temp string
+		temp = string(*properties.ConfigurationType)
+		configurationType := arm.SparkConfigProperties_ConfigurationType(temp)
 		result.ConfigurationType = &configurationType
 	}
 
@@ -3305,19 +3437,21 @@ func (properties *SparkConfigProperties) ConvertToARM(resolved genruntime.Conver
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *SparkConfigProperties) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SparkConfigProperties_ARM{}
+	return &arm.SparkConfigProperties{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *SparkConfigProperties) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SparkConfigProperties_ARM)
+	typedInput, ok := armInput.(arm.SparkConfigProperties)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SparkConfigProperties_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SparkConfigProperties, got %T", armInput)
 	}
 
 	// Set property "ConfigurationType":
 	if typedInput.ConfigurationType != nil {
-		configurationType := *typedInput.ConfigurationType
+		var temp string
+		temp = string(*typedInput.ConfigurationType)
+		configurationType := SparkConfigProperties_ConfigurationType(temp)
 		properties.ConfigurationType = &configurationType
 	}
 
@@ -3338,12 +3472,13 @@ func (properties *SparkConfigProperties) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_SparkConfigProperties populates our SparkConfigProperties from the provided source SparkConfigProperties
-func (properties *SparkConfigProperties) AssignProperties_From_SparkConfigProperties(source *v20210601s.SparkConfigProperties) error {
+func (properties *SparkConfigProperties) AssignProperties_From_SparkConfigProperties(source *storage.SparkConfigProperties) error {
 
 	// ConfigurationType
 	if source.ConfigurationType != nil {
-		configurationType := SparkConfigProperties_ConfigurationType(*source.ConfigurationType)
-		properties.ConfigurationType = &configurationType
+		configurationType := *source.ConfigurationType
+		configurationTypeTemp := genruntime.ToEnum(configurationType, sparkConfigProperties_ConfigurationType_Values)
+		properties.ConfigurationType = &configurationTypeTemp
 	} else {
 		properties.ConfigurationType = nil
 	}
@@ -3359,7 +3494,7 @@ func (properties *SparkConfigProperties) AssignProperties_From_SparkConfigProper
 }
 
 // AssignProperties_To_SparkConfigProperties populates the provided destination SparkConfigProperties from our SparkConfigProperties
-func (properties *SparkConfigProperties) AssignProperties_To_SparkConfigProperties(destination *v20210601s.SparkConfigProperties) error {
+func (properties *SparkConfigProperties) AssignProperties_To_SparkConfigProperties(destination *storage.SparkConfigProperties) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3393,7 +3528,7 @@ func (properties *SparkConfigProperties) Initialize_From_SparkConfigProperties_S
 
 	// ConfigurationType
 	if source.ConfigurationType != nil {
-		configurationType := SparkConfigProperties_ConfigurationType(*source.ConfigurationType)
+		configurationType := genruntime.ToEnum(string(*source.ConfigurationType), sparkConfigProperties_ConfigurationType_Values)
 		properties.ConfigurationType = &configurationType
 	} else {
 		properties.ConfigurationType = nil
@@ -3428,19 +3563,21 @@ var _ genruntime.FromARMConverter = &SparkConfigProperties_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *SparkConfigProperties_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SparkConfigProperties_STATUS_ARM{}
+	return &arm.SparkConfigProperties_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *SparkConfigProperties_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SparkConfigProperties_STATUS_ARM)
+	typedInput, ok := armInput.(arm.SparkConfigProperties_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SparkConfigProperties_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SparkConfigProperties_STATUS, got %T", armInput)
 	}
 
 	// Set property "ConfigurationType":
 	if typedInput.ConfigurationType != nil {
-		configurationType := *typedInput.ConfigurationType
+		var temp string
+		temp = string(*typedInput.ConfigurationType)
+		configurationType := SparkConfigProperties_ConfigurationType_STATUS(temp)
 		properties.ConfigurationType = &configurationType
 	}
 
@@ -3467,12 +3604,13 @@ func (properties *SparkConfigProperties_STATUS) PopulateFromARM(owner genruntime
 }
 
 // AssignProperties_From_SparkConfigProperties_STATUS populates our SparkConfigProperties_STATUS from the provided source SparkConfigProperties_STATUS
-func (properties *SparkConfigProperties_STATUS) AssignProperties_From_SparkConfigProperties_STATUS(source *v20210601s.SparkConfigProperties_STATUS) error {
+func (properties *SparkConfigProperties_STATUS) AssignProperties_From_SparkConfigProperties_STATUS(source *storage.SparkConfigProperties_STATUS) error {
 
 	// ConfigurationType
 	if source.ConfigurationType != nil {
-		configurationType := SparkConfigProperties_ConfigurationType_STATUS(*source.ConfigurationType)
-		properties.ConfigurationType = &configurationType
+		configurationType := *source.ConfigurationType
+		configurationTypeTemp := genruntime.ToEnum(configurationType, sparkConfigProperties_ConfigurationType_STATUS_Values)
+		properties.ConfigurationType = &configurationTypeTemp
 	} else {
 		properties.ConfigurationType = nil
 	}
@@ -3491,7 +3629,7 @@ func (properties *SparkConfigProperties_STATUS) AssignProperties_From_SparkConfi
 }
 
 // AssignProperties_To_SparkConfigProperties_STATUS populates the provided destination SparkConfigProperties_STATUS from our SparkConfigProperties_STATUS
-func (properties *SparkConfigProperties_STATUS) AssignProperties_To_SparkConfigProperties_STATUS(destination *v20210601s.SparkConfigProperties_STATUS) error {
+func (properties *SparkConfigProperties_STATUS) AssignProperties_To_SparkConfigProperties_STATUS(destination *storage.SparkConfigProperties_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3523,6 +3661,110 @@ func (properties *SparkConfigProperties_STATUS) AssignProperties_To_SparkConfigP
 	return nil
 }
 
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type WorkspacesBigDataPoolOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_WorkspacesBigDataPoolOperatorSpec populates our WorkspacesBigDataPoolOperatorSpec from the provided source WorkspacesBigDataPoolOperatorSpec
+func (operator *WorkspacesBigDataPoolOperatorSpec) AssignProperties_From_WorkspacesBigDataPoolOperatorSpec(source *storage.WorkspacesBigDataPoolOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_WorkspacesBigDataPoolOperatorSpec populates the provided destination WorkspacesBigDataPoolOperatorSpec from our WorkspacesBigDataPoolOperatorSpec
+func (operator *WorkspacesBigDataPoolOperatorSpec) AssignProperties_To_WorkspacesBigDataPoolOperatorSpec(destination *storage.WorkspacesBigDataPoolOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 // +kubebuilder:validation:Enum={"Artifact","File"}
 type SparkConfigProperties_ConfigurationType string
 
@@ -3531,12 +3773,24 @@ const (
 	SparkConfigProperties_ConfigurationType_File     = SparkConfigProperties_ConfigurationType("File")
 )
 
+// Mapping from string to SparkConfigProperties_ConfigurationType
+var sparkConfigProperties_ConfigurationType_Values = map[string]SparkConfigProperties_ConfigurationType{
+	"artifact": SparkConfigProperties_ConfigurationType_Artifact,
+	"file":     SparkConfigProperties_ConfigurationType_File,
+}
+
 type SparkConfigProperties_ConfigurationType_STATUS string
 
 const (
 	SparkConfigProperties_ConfigurationType_STATUS_Artifact = SparkConfigProperties_ConfigurationType_STATUS("Artifact")
 	SparkConfigProperties_ConfigurationType_STATUS_File     = SparkConfigProperties_ConfigurationType_STATUS("File")
 )
+
+// Mapping from string to SparkConfigProperties_ConfigurationType_STATUS
+var sparkConfigProperties_ConfigurationType_STATUS_Values = map[string]SparkConfigProperties_ConfigurationType_STATUS{
+	"artifact": SparkConfigProperties_ConfigurationType_STATUS_Artifact,
+	"file":     SparkConfigProperties_ConfigurationType_STATUS_File,
+}
 
 func init() {
 	SchemeBuilder.Register(&WorkspacesBigDataPool{}, &WorkspacesBigDataPoolList{})

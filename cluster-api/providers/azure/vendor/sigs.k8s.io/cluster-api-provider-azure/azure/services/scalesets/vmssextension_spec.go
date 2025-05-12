@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 )
 
@@ -47,7 +48,7 @@ func (s *VMSSExtensionSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the VMSS extension.
-func (s *VMSSExtensionSpec) Parameters(ctx context.Context, existing interface{}) (interface{}, error) {
+func (s *VMSSExtensionSpec) Parameters(_ context.Context, existing interface{}) (interface{}, error) {
 	if existing != nil {
 		_, ok := existing.(armcompute.VirtualMachineScaleSetExtension)
 		if !ok {

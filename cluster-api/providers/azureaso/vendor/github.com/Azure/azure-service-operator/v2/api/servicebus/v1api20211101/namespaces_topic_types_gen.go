@@ -5,10 +5,14 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type NamespacesTopic struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Namespaces_Topic_Spec   `json:"spec,omitempty"`
-	Status            Namespaces_Topic_STATUS `json:"status,omitempty"`
+	Spec              NamespacesTopic_Spec   `json:"spec,omitempty"`
+	Status            NamespacesTopic_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &NamespacesTopic{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &NamespacesTopic{}
 
 // ConvertFrom populates our NamespacesTopic from the provided hub NamespacesTopic
 func (topic *NamespacesTopic) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20211101s.NamespacesTopic)
+	source, ok := hub.(*storage.NamespacesTopic)
 	if !ok {
 		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesTopic but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (topic *NamespacesTopic) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub NamespacesTopic from our NamespacesTopic
 func (topic *NamespacesTopic) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20211101s.NamespacesTopic)
+	destination, ok := hub.(*storage.NamespacesTopic)
 	if !ok {
 		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesTopic but received %T instead", hub)
 	}
@@ -90,15 +94,35 @@ func (topic *NamespacesTopic) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the NamespacesTopic resource
 func (topic *NamespacesTopic) defaultImpl() { topic.defaultAzureName() }
 
+var _ configmaps.Exporter = &NamespacesTopic{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (topic *NamespacesTopic) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if topic.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return topic.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &NamespacesTopic{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (topic *NamespacesTopic) SecretDestinationExpressions() []*core.DestinationExpression {
+	if topic.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return topic.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &NamespacesTopic{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (topic *NamespacesTopic) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Namespaces_Topic_STATUS); ok {
-		return topic.Spec.Initialize_From_Namespaces_Topic_STATUS(s)
+	if s, ok := status.(*NamespacesTopic_STATUS); ok {
+		return topic.Spec.Initialize_From_NamespacesTopic_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Namespaces_Topic_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type NamespacesTopic_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &NamespacesTopic{}
@@ -110,7 +134,7 @@ func (topic *NamespacesTopic) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-11-01"
 func (topic NamespacesTopic) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -144,7 +168,7 @@ func (topic *NamespacesTopic) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (topic *NamespacesTopic) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Namespaces_Topic_STATUS{}
+	return &NamespacesTopic_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -156,13 +180,13 @@ func (topic *NamespacesTopic) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (topic *NamespacesTopic) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Namespaces_Topic_STATUS); ok {
+	if st, ok := status.(*NamespacesTopic_STATUS); ok {
 		topic.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Namespaces_Topic_STATUS
+	var st NamespacesTopic_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -208,7 +232,7 @@ func (topic *NamespacesTopic) ValidateUpdate(old runtime.Object) (admission.Warn
 
 // createValidations validates the creation of the resource
 func (topic *NamespacesTopic) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){topic.validateResourceReferences, topic.validateOwnerReference}
+	return []func() (admission.Warnings, error){topic.validateResourceReferences, topic.validateOwnerReference, topic.validateSecretDestinations, topic.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +250,21 @@ func (topic *NamespacesTopic) updateValidations() []func(old runtime.Object) (ad
 		func(old runtime.Object) (admission.Warnings, error) {
 			return topic.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return topic.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return topic.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (topic *NamespacesTopic) validateConfigMapDestinations() (admission.Warnings, error) {
+	if topic.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(topic, nil, topic.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -243,6 +281,14 @@ func (topic *NamespacesTopic) validateResourceReferences() (admission.Warnings, 
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (topic *NamespacesTopic) validateSecretDestinations() (admission.Warnings, error) {
+	if topic.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(topic, nil, topic.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (topic *NamespacesTopic) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*NamespacesTopic)
@@ -254,24 +300,24 @@ func (topic *NamespacesTopic) validateWriteOnceProperties(old runtime.Object) (a
 }
 
 // AssignProperties_From_NamespacesTopic populates our NamespacesTopic from the provided source NamespacesTopic
-func (topic *NamespacesTopic) AssignProperties_From_NamespacesTopic(source *v20211101s.NamespacesTopic) error {
+func (topic *NamespacesTopic) AssignProperties_From_NamespacesTopic(source *storage.NamespacesTopic) error {
 
 	// ObjectMeta
 	topic.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Namespaces_Topic_Spec
-	err := spec.AssignProperties_From_Namespaces_Topic_Spec(&source.Spec)
+	var spec NamespacesTopic_Spec
+	err := spec.AssignProperties_From_NamespacesTopic_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Namespaces_Topic_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_NamespacesTopic_Spec() to populate field Spec")
 	}
 	topic.Spec = spec
 
 	// Status
-	var status Namespaces_Topic_STATUS
-	err = status.AssignProperties_From_Namespaces_Topic_STATUS(&source.Status)
+	var status NamespacesTopic_STATUS
+	err = status.AssignProperties_From_NamespacesTopic_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Namespaces_Topic_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_NamespacesTopic_STATUS() to populate field Status")
 	}
 	topic.Status = status
 
@@ -280,24 +326,24 @@ func (topic *NamespacesTopic) AssignProperties_From_NamespacesTopic(source *v202
 }
 
 // AssignProperties_To_NamespacesTopic populates the provided destination NamespacesTopic from our NamespacesTopic
-func (topic *NamespacesTopic) AssignProperties_To_NamespacesTopic(destination *v20211101s.NamespacesTopic) error {
+func (topic *NamespacesTopic) AssignProperties_To_NamespacesTopic(destination *storage.NamespacesTopic) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *topic.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20211101s.Namespaces_Topic_Spec
-	err := topic.Spec.AssignProperties_To_Namespaces_Topic_Spec(&spec)
+	var spec storage.NamespacesTopic_Spec
+	err := topic.Spec.AssignProperties_To_NamespacesTopic_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Namespaces_Topic_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_NamespacesTopic_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20211101s.Namespaces_Topic_STATUS
-	err = topic.Status.AssignProperties_To_Namespaces_Topic_STATUS(&status)
+	var status storage.NamespacesTopic_STATUS
+	err = topic.Status.AssignProperties_To_NamespacesTopic_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Namespaces_Topic_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_NamespacesTopic_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -324,7 +370,7 @@ type NamespacesTopicList struct {
 	Items           []NamespacesTopic `json:"items"`
 }
 
-type Namespaces_Topic_Spec struct {
+type NamespacesTopic_Spec struct {
 	// AutoDeleteOnIdle: ISO 8601 timespan idle interval after which the topic is automatically deleted. The minimum duration
 	// is 5 minutes.
 	AutoDeleteOnIdle *string `json:"autoDeleteOnIdle,omitempty"`
@@ -361,6 +407,10 @@ type Namespaces_Topic_Spec struct {
 	// Default is 1024.
 	MaxSizeInMegabytes *int `json:"maxSizeInMegabytes,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *NamespacesTopicOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -374,14 +424,14 @@ type Namespaces_Topic_Spec struct {
 	SupportOrdering *bool `json:"supportOrdering,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Namespaces_Topic_Spec{}
+var _ genruntime.ARMTransformer = &NamespacesTopic_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (topic *Namespaces_Topic_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (topic *NamespacesTopic_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if topic == nil {
 		return nil, nil
 	}
-	result := &Namespaces_Topic_Spec_ARM{}
+	result := &arm.NamespacesTopic_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
@@ -397,7 +447,7 @@ func (topic *Namespaces_Topic_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		topic.MaxSizeInMegabytes != nil ||
 		topic.RequiresDuplicateDetection != nil ||
 		topic.SupportOrdering != nil {
-		result.Properties = &SBTopicProperties_ARM{}
+		result.Properties = &arm.SBTopicProperties{}
 	}
 	if topic.AutoDeleteOnIdle != nil {
 		autoDeleteOnIdle := *topic.AutoDeleteOnIdle
@@ -443,15 +493,15 @@ func (topic *Namespaces_Topic_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (topic *Namespaces_Topic_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Namespaces_Topic_Spec_ARM{}
+func (topic *NamespacesTopic_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.NamespacesTopic_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (topic *Namespaces_Topic_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Namespaces_Topic_Spec_ARM)
+func (topic *NamespacesTopic_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.NamespacesTopic_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Namespaces_Topic_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NamespacesTopic_Spec, got %T", armInput)
 	}
 
 	// Set property "AutoDeleteOnIdle":
@@ -529,6 +579,8 @@ func (topic *Namespaces_Topic_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	topic.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
@@ -557,25 +609,25 @@ func (topic *Namespaces_Topic_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Namespaces_Topic_Spec{}
+var _ genruntime.ConvertibleSpec = &NamespacesTopic_Spec{}
 
-// ConvertSpecFrom populates our Namespaces_Topic_Spec from the provided source
-func (topic *Namespaces_Topic_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20211101s.Namespaces_Topic_Spec)
+// ConvertSpecFrom populates our NamespacesTopic_Spec from the provided source
+func (topic *NamespacesTopic_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.NamespacesTopic_Spec)
 	if ok {
 		// Populate our instance from source
-		return topic.AssignProperties_From_Namespaces_Topic_Spec(src)
+		return topic.AssignProperties_From_NamespacesTopic_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20211101s.Namespaces_Topic_Spec{}
+	src = &storage.NamespacesTopic_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = topic.AssignProperties_From_Namespaces_Topic_Spec(src)
+	err = topic.AssignProperties_From_NamespacesTopic_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -583,17 +635,17 @@ func (topic *Namespaces_Topic_Spec) ConvertSpecFrom(source genruntime.Convertibl
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Namespaces_Topic_Spec
-func (topic *Namespaces_Topic_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20211101s.Namespaces_Topic_Spec)
+// ConvertSpecTo populates the provided destination from our NamespacesTopic_Spec
+func (topic *NamespacesTopic_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.NamespacesTopic_Spec)
 	if ok {
 		// Populate destination from our instance
-		return topic.AssignProperties_To_Namespaces_Topic_Spec(dst)
+		return topic.AssignProperties_To_NamespacesTopic_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20211101s.Namespaces_Topic_Spec{}
-	err := topic.AssignProperties_To_Namespaces_Topic_Spec(dst)
+	dst = &storage.NamespacesTopic_Spec{}
+	err := topic.AssignProperties_To_NamespacesTopic_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -607,8 +659,8 @@ func (topic *Namespaces_Topic_Spec) ConvertSpecTo(destination genruntime.Convert
 	return nil
 }
 
-// AssignProperties_From_Namespaces_Topic_Spec populates our Namespaces_Topic_Spec from the provided source Namespaces_Topic_Spec
-func (topic *Namespaces_Topic_Spec) AssignProperties_From_Namespaces_Topic_Spec(source *v20211101s.Namespaces_Topic_Spec) error {
+// AssignProperties_From_NamespacesTopic_Spec populates our NamespacesTopic_Spec from the provided source NamespacesTopic_Spec
+func (topic *NamespacesTopic_Spec) AssignProperties_From_NamespacesTopic_Spec(source *storage.NamespacesTopic_Spec) error {
 
 	// AutoDeleteOnIdle
 	topic.AutoDeleteOnIdle = genruntime.ClonePointerToString(source.AutoDeleteOnIdle)
@@ -652,6 +704,18 @@ func (topic *Namespaces_Topic_Spec) AssignProperties_From_Namespaces_Topic_Spec(
 	// MaxSizeInMegabytes
 	topic.MaxSizeInMegabytes = genruntime.ClonePointerToInt(source.MaxSizeInMegabytes)
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec NamespacesTopicOperatorSpec
+		err := operatorSpec.AssignProperties_From_NamespacesTopicOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_NamespacesTopicOperatorSpec() to populate field OperatorSpec")
+		}
+		topic.OperatorSpec = &operatorSpec
+	} else {
+		topic.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -680,8 +744,8 @@ func (topic *Namespaces_Topic_Spec) AssignProperties_From_Namespaces_Topic_Spec(
 	return nil
 }
 
-// AssignProperties_To_Namespaces_Topic_Spec populates the provided destination Namespaces_Topic_Spec from our Namespaces_Topic_Spec
-func (topic *Namespaces_Topic_Spec) AssignProperties_To_Namespaces_Topic_Spec(destination *v20211101s.Namespaces_Topic_Spec) error {
+// AssignProperties_To_NamespacesTopic_Spec populates the provided destination NamespacesTopic_Spec from our NamespacesTopic_Spec
+func (topic *NamespacesTopic_Spec) AssignProperties_To_NamespacesTopic_Spec(destination *storage.NamespacesTopic_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -727,6 +791,18 @@ func (topic *Namespaces_Topic_Spec) AssignProperties_To_Namespaces_Topic_Spec(de
 	// MaxSizeInMegabytes
 	destination.MaxSizeInMegabytes = genruntime.ClonePointerToInt(topic.MaxSizeInMegabytes)
 
+	// OperatorSpec
+	if topic.OperatorSpec != nil {
+		var operatorSpec storage.NamespacesTopicOperatorSpec
+		err := topic.OperatorSpec.AssignProperties_To_NamespacesTopicOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_NamespacesTopicOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
 	// OriginalVersion
 	destination.OriginalVersion = topic.OriginalVersion()
 
@@ -765,8 +841,8 @@ func (topic *Namespaces_Topic_Spec) AssignProperties_To_Namespaces_Topic_Spec(de
 	return nil
 }
 
-// Initialize_From_Namespaces_Topic_STATUS populates our Namespaces_Topic_Spec from the provided source Namespaces_Topic_STATUS
-func (topic *Namespaces_Topic_Spec) Initialize_From_Namespaces_Topic_STATUS(source *Namespaces_Topic_STATUS) error {
+// Initialize_From_NamespacesTopic_STATUS populates our NamespacesTopic_Spec from the provided source NamespacesTopic_STATUS
+func (topic *NamespacesTopic_Spec) Initialize_From_NamespacesTopic_STATUS(source *NamespacesTopic_STATUS) error {
 
 	// AutoDeleteOnIdle
 	topic.AutoDeleteOnIdle = genruntime.ClonePointerToString(source.AutoDeleteOnIdle)
@@ -828,14 +904,14 @@ func (topic *Namespaces_Topic_Spec) Initialize_From_Namespaces_Topic_STATUS(sour
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (topic *Namespaces_Topic_Spec) OriginalVersion() string {
+func (topic *NamespacesTopic_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (topic *Namespaces_Topic_Spec) SetAzureName(azureName string) { topic.AzureName = azureName }
+func (topic *NamespacesTopic_Spec) SetAzureName(azureName string) { topic.AzureName = azureName }
 
-type Namespaces_Topic_STATUS struct {
+type NamespacesTopic_STATUS struct {
 	// AccessedAt: Last time the message was sent, or a request was received, for this topic.
 	AccessedAt *string `json:"accessedAt,omitempty"`
 
@@ -914,25 +990,25 @@ type Namespaces_Topic_STATUS struct {
 	UpdatedAt *string `json:"updatedAt,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Namespaces_Topic_STATUS{}
+var _ genruntime.ConvertibleStatus = &NamespacesTopic_STATUS{}
 
-// ConvertStatusFrom populates our Namespaces_Topic_STATUS from the provided source
-func (topic *Namespaces_Topic_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20211101s.Namespaces_Topic_STATUS)
+// ConvertStatusFrom populates our NamespacesTopic_STATUS from the provided source
+func (topic *NamespacesTopic_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.NamespacesTopic_STATUS)
 	if ok {
 		// Populate our instance from source
-		return topic.AssignProperties_From_Namespaces_Topic_STATUS(src)
+		return topic.AssignProperties_From_NamespacesTopic_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20211101s.Namespaces_Topic_STATUS{}
+	src = &storage.NamespacesTopic_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = topic.AssignProperties_From_Namespaces_Topic_STATUS(src)
+	err = topic.AssignProperties_From_NamespacesTopic_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -940,17 +1016,17 @@ func (topic *Namespaces_Topic_STATUS) ConvertStatusFrom(source genruntime.Conver
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Namespaces_Topic_STATUS
-func (topic *Namespaces_Topic_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20211101s.Namespaces_Topic_STATUS)
+// ConvertStatusTo populates the provided destination from our NamespacesTopic_STATUS
+func (topic *NamespacesTopic_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.NamespacesTopic_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return topic.AssignProperties_To_Namespaces_Topic_STATUS(dst)
+		return topic.AssignProperties_To_NamespacesTopic_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20211101s.Namespaces_Topic_STATUS{}
-	err := topic.AssignProperties_To_Namespaces_Topic_STATUS(dst)
+	dst = &storage.NamespacesTopic_STATUS{}
+	err := topic.AssignProperties_To_NamespacesTopic_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -964,18 +1040,18 @@ func (topic *Namespaces_Topic_STATUS) ConvertStatusTo(destination genruntime.Con
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Namespaces_Topic_STATUS{}
+var _ genruntime.FromARMConverter = &NamespacesTopic_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (topic *Namespaces_Topic_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Namespaces_Topic_STATUS_ARM{}
+func (topic *NamespacesTopic_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.NamespacesTopic_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (topic *Namespaces_Topic_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Namespaces_Topic_STATUS_ARM)
+func (topic *NamespacesTopic_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.NamespacesTopic_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Namespaces_Topic_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NamespacesTopic_STATUS, got %T", armInput)
 	}
 
 	// Set property "AccessedAt":
@@ -1124,7 +1200,9 @@ func (topic *Namespaces_Topic_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Status != nil {
-			status := *typedInput.Properties.Status
+			var temp string
+			temp = string(*typedInput.Properties.Status)
+			status := EntityStatus_STATUS(temp)
 			topic.Status = &status
 		}
 	}
@@ -1177,8 +1255,8 @@ func (topic *Namespaces_Topic_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	return nil
 }
 
-// AssignProperties_From_Namespaces_Topic_STATUS populates our Namespaces_Topic_STATUS from the provided source Namespaces_Topic_STATUS
-func (topic *Namespaces_Topic_STATUS) AssignProperties_From_Namespaces_Topic_STATUS(source *v20211101s.Namespaces_Topic_STATUS) error {
+// AssignProperties_From_NamespacesTopic_STATUS populates our NamespacesTopic_STATUS from the provided source NamespacesTopic_STATUS
+func (topic *NamespacesTopic_STATUS) AssignProperties_From_NamespacesTopic_STATUS(source *storage.NamespacesTopic_STATUS) error {
 
 	// AccessedAt
 	topic.AccessedAt = genruntime.ClonePointerToString(source.AccessedAt)
@@ -1262,8 +1340,9 @@ func (topic *Namespaces_Topic_STATUS) AssignProperties_From_Namespaces_Topic_STA
 
 	// Status
 	if source.Status != nil {
-		status := EntityStatus_STATUS(*source.Status)
-		topic.Status = &status
+		status := *source.Status
+		statusTemp := genruntime.ToEnum(status, entityStatus_STATUS_Values)
+		topic.Status = &statusTemp
 	} else {
 		topic.Status = nil
 	}
@@ -1301,8 +1380,8 @@ func (topic *Namespaces_Topic_STATUS) AssignProperties_From_Namespaces_Topic_STA
 	return nil
 }
 
-// AssignProperties_To_Namespaces_Topic_STATUS populates the provided destination Namespaces_Topic_STATUS from our Namespaces_Topic_STATUS
-func (topic *Namespaces_Topic_STATUS) AssignProperties_To_Namespaces_Topic_STATUS(destination *v20211101s.Namespaces_Topic_STATUS) error {
+// AssignProperties_To_NamespacesTopic_STATUS populates the provided destination NamespacesTopic_STATUS from our NamespacesTopic_STATUS
+func (topic *NamespacesTopic_STATUS) AssignProperties_To_NamespacesTopic_STATUS(destination *storage.NamespacesTopic_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1317,7 +1396,7 @@ func (topic *Namespaces_Topic_STATUS) AssignProperties_To_Namespaces_Topic_STATU
 
 	// CountDetails
 	if topic.CountDetails != nil {
-		var countDetail v20211101s.MessageCountDetails_STATUS
+		var countDetail storage.MessageCountDetails_STATUS
 		err := topic.CountDetails.AssignProperties_To_MessageCountDetails_STATUS(&countDetail)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_MessageCountDetails_STATUS() to populate field CountDetails")
@@ -1407,7 +1486,7 @@ func (topic *Namespaces_Topic_STATUS) AssignProperties_To_Namespaces_Topic_STATU
 
 	// SystemData
 	if topic.SystemData != nil {
-		var systemDatum v20211101s.SystemData_STATUS
+		var systemDatum storage.SystemData_STATUS
 		err := topic.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
@@ -1422,6 +1501,110 @@ func (topic *Namespaces_Topic_STATUS) AssignProperties_To_Namespaces_Topic_STATU
 
 	// UpdatedAt
 	destination.UpdatedAt = genruntime.ClonePointerToString(topic.UpdatedAt)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type NamespacesTopicOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_NamespacesTopicOperatorSpec populates our NamespacesTopicOperatorSpec from the provided source NamespacesTopicOperatorSpec
+func (operator *NamespacesTopicOperatorSpec) AssignProperties_From_NamespacesTopicOperatorSpec(source *storage.NamespacesTopicOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesTopicOperatorSpec populates the provided destination NamespacesTopicOperatorSpec from our NamespacesTopicOperatorSpec
+func (operator *NamespacesTopicOperatorSpec) AssignProperties_To_NamespacesTopicOperatorSpec(destination *storage.NamespacesTopicOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {

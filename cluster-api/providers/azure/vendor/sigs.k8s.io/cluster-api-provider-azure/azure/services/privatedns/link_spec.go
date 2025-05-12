@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
@@ -55,7 +56,7 @@ func (s LinkSpec) ResourceGroupName() string {
 }
 
 // Parameters returns the parameters for the virtual network link.
-func (s LinkSpec) Parameters(ctx context.Context, existing interface{}) (params interface{}, err error) {
+func (s LinkSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
 	if existing != nil {
 		_, ok := existing.(armprivatedns.VirtualNetworkLink)
 		if !ok {

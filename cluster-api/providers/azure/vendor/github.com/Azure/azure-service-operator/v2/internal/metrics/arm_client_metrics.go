@@ -60,6 +60,6 @@ func (a *ARMClientMetrics) RecordAzureFailedRequestsTotal(resourceName string, m
 }
 
 // RecordAzureRequestsTime records the round-trip time taken by the request to ARM.
-func (a ARMClientMetrics) RecordAzureRequestsTime(resourceName string, requestTime time.Duration, method string) {
+func (a *ARMClientMetrics) RecordAzureRequestsTime(resourceName string, requestTime time.Duration, method string) {
 	a.azureRequestsTime.WithLabelValues(resourceName, method).Observe(requestTime.Seconds())
 }

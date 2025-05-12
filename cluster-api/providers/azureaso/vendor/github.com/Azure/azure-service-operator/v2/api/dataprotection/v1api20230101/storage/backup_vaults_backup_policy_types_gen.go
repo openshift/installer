@@ -4,19 +4,21 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/dataprotection/v1api20231101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
-
-// +kubebuilder:rbac:groups=dataprotection.azure.com,resources=backupvaultsbackuppolicies,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=dataprotection.azure.com,resources={backupvaultsbackuppolicies/status,backupvaultsbackuppolicies/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -28,8 +30,8 @@ import (
 type BackupVaultsBackupPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              BackupVaults_BackupPolicy_Spec   `json:"spec,omitempty"`
-	Status            BackupVaults_BackupPolicy_STATUS `json:"status,omitempty"`
+	Spec              BackupVaultsBackupPolicy_Spec   `json:"spec,omitempty"`
+	Status            BackupVaultsBackupPolicy_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &BackupVaultsBackupPolicy{}
@@ -44,6 +46,48 @@ func (policy *BackupVaultsBackupPolicy) SetConditions(conditions conditions.Cond
 	policy.Status.Conditions = conditions
 }
 
+var _ conversion.Convertible = &BackupVaultsBackupPolicy{}
+
+// ConvertFrom populates our BackupVaultsBackupPolicy from the provided hub BackupVaultsBackupPolicy
+func (policy *BackupVaultsBackupPolicy) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.BackupVaultsBackupPolicy)
+	if !ok {
+		return fmt.Errorf("expected dataprotection/v1api20231101/storage/BackupVaultsBackupPolicy but received %T instead", hub)
+	}
+
+	return policy.AssignProperties_From_BackupVaultsBackupPolicy(source)
+}
+
+// ConvertTo populates the provided hub BackupVaultsBackupPolicy from our BackupVaultsBackupPolicy
+func (policy *BackupVaultsBackupPolicy) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.BackupVaultsBackupPolicy)
+	if !ok {
+		return fmt.Errorf("expected dataprotection/v1api20231101/storage/BackupVaultsBackupPolicy but received %T instead", hub)
+	}
+
+	return policy.AssignProperties_To_BackupVaultsBackupPolicy(destination)
+}
+
+var _ configmaps.Exporter = &BackupVaultsBackupPolicy{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (policy *BackupVaultsBackupPolicy) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &BackupVaultsBackupPolicy{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (policy *BackupVaultsBackupPolicy) SecretDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &BackupVaultsBackupPolicy{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +97,7 @@ func (policy *BackupVaultsBackupPolicy) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-01-01"
 func (policy BackupVaultsBackupPolicy) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-01-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -87,7 +131,7 @@ func (policy *BackupVaultsBackupPolicy) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (policy *BackupVaultsBackupPolicy) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &BackupVaults_BackupPolicy_STATUS{}
+	return &BackupVaultsBackupPolicy_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -99,13 +143,13 @@ func (policy *BackupVaultsBackupPolicy) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (policy *BackupVaultsBackupPolicy) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*BackupVaults_BackupPolicy_STATUS); ok {
+	if st, ok := status.(*BackupVaultsBackupPolicy_STATUS); ok {
 		policy.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st BackupVaults_BackupPolicy_STATUS
+	var st BackupVaultsBackupPolicy_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -115,8 +159,75 @@ func (policy *BackupVaultsBackupPolicy) SetStatus(status genruntime.ConvertibleS
 	return nil
 }
 
-// Hub marks that this BackupVaultsBackupPolicy is the hub type for conversion
-func (policy *BackupVaultsBackupPolicy) Hub() {}
+// AssignProperties_From_BackupVaultsBackupPolicy populates our BackupVaultsBackupPolicy from the provided source BackupVaultsBackupPolicy
+func (policy *BackupVaultsBackupPolicy) AssignProperties_From_BackupVaultsBackupPolicy(source *storage.BackupVaultsBackupPolicy) error {
+
+	// ObjectMeta
+	policy.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec BackupVaultsBackupPolicy_Spec
+	err := spec.AssignProperties_From_BackupVaultsBackupPolicy_Spec(&source.Spec)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_From_BackupVaultsBackupPolicy_Spec() to populate field Spec")
+	}
+	policy.Spec = spec
+
+	// Status
+	var status BackupVaultsBackupPolicy_STATUS
+	err = status.AssignProperties_From_BackupVaultsBackupPolicy_STATUS(&source.Status)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_From_BackupVaultsBackupPolicy_STATUS() to populate field Status")
+	}
+	policy.Status = status
+
+	// Invoke the augmentConversionForBackupVaultsBackupPolicy interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBackupVaultsBackupPolicy); ok {
+		err := augmentedPolicy.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupVaultsBackupPolicy populates the provided destination BackupVaultsBackupPolicy from our BackupVaultsBackupPolicy
+func (policy *BackupVaultsBackupPolicy) AssignProperties_To_BackupVaultsBackupPolicy(destination *storage.BackupVaultsBackupPolicy) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *policy.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.BackupVaultsBackupPolicy_Spec
+	err := policy.Spec.AssignProperties_To_BackupVaultsBackupPolicy_Spec(&spec)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_To_BackupVaultsBackupPolicy_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.BackupVaultsBackupPolicy_STATUS
+	err = policy.Status.AssignProperties_To_BackupVaultsBackupPolicy_STATUS(&status)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_To_BackupVaultsBackupPolicy_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForBackupVaultsBackupPolicy interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBackupVaultsBackupPolicy); ok {
+		err := augmentedPolicy.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (policy *BackupVaultsBackupPolicy) OriginalGVK() *schema.GroupVersionKind {
@@ -138,12 +249,18 @@ type BackupVaultsBackupPolicyList struct {
 	Items           []BackupVaultsBackupPolicy `json:"items"`
 }
 
-// Storage version of v1api20230101.BackupVaults_BackupPolicy_Spec
-type BackupVaults_BackupPolicy_Spec struct {
+type augmentConversionForBackupVaultsBackupPolicy interface {
+	AssignPropertiesFrom(src *storage.BackupVaultsBackupPolicy) error
+	AssignPropertiesTo(dst *storage.BackupVaultsBackupPolicy) error
+}
+
+// Storage version of v1api20230101.BackupVaultsBackupPolicy_Spec
+type BackupVaultsBackupPolicy_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string `json:"azureName,omitempty"`
-	OriginalVersion string `json:"originalVersion,omitempty"`
+	AzureName       string                                `json:"azureName,omitempty"`
+	OperatorSpec    *BackupVaultsBackupPolicyOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string                                `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -154,28 +271,184 @@ type BackupVaults_BackupPolicy_Spec struct {
 	PropertyBag genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &BackupVaults_BackupPolicy_Spec{}
+var _ genruntime.ConvertibleSpec = &BackupVaultsBackupPolicy_Spec{}
 
-// ConvertSpecFrom populates our BackupVaults_BackupPolicy_Spec from the provided source
-func (policy *BackupVaults_BackupPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == policy {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+// ConvertSpecFrom populates our BackupVaultsBackupPolicy_Spec from the provided source
+func (policy *BackupVaultsBackupPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.BackupVaultsBackupPolicy_Spec)
+	if ok {
+		// Populate our instance from source
+		return policy.AssignProperties_From_BackupVaultsBackupPolicy_Spec(src)
 	}
 
-	return source.ConvertSpecTo(policy)
-}
-
-// ConvertSpecTo populates the provided destination from our BackupVaults_BackupPolicy_Spec
-func (policy *BackupVaults_BackupPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == policy {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	// Convert to an intermediate form
+	src = &storage.BackupVaultsBackupPolicy_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
-	return destination.ConvertSpecFrom(policy)
+	// Update our instance from src
+	err = policy.AssignProperties_From_BackupVaultsBackupPolicy_Spec(src)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
-// Storage version of v1api20230101.BackupVaults_BackupPolicy_STATUS
-type BackupVaults_BackupPolicy_STATUS struct {
+// ConvertSpecTo populates the provided destination from our BackupVaultsBackupPolicy_Spec
+func (policy *BackupVaultsBackupPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.BackupVaultsBackupPolicy_Spec)
+	if ok {
+		// Populate destination from our instance
+		return policy.AssignProperties_To_BackupVaultsBackupPolicy_Spec(dst)
+	}
+
+	// Convert to an intermediate form
+	dst = &storage.BackupVaultsBackupPolicy_Spec{}
+	err := policy.AssignProperties_To_BackupVaultsBackupPolicy_Spec(dst)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_BackupVaultsBackupPolicy_Spec populates our BackupVaultsBackupPolicy_Spec from the provided source BackupVaultsBackupPolicy_Spec
+func (policy *BackupVaultsBackupPolicy_Spec) AssignProperties_From_BackupVaultsBackupPolicy_Spec(source *storage.BackupVaultsBackupPolicy_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	policy.AzureName = source.AzureName
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec BackupVaultsBackupPolicyOperatorSpec
+		err := operatorSpec.AssignProperties_From_BackupVaultsBackupPolicyOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BackupVaultsBackupPolicyOperatorSpec() to populate field OperatorSpec")
+		}
+		policy.OperatorSpec = &operatorSpec
+	} else {
+		policy.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	policy.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		policy.Owner = &owner
+	} else {
+		policy.Owner = nil
+	}
+
+	// Properties
+	if source.Properties != nil {
+		var property BaseBackupPolicy
+		err := property.AssignProperties_From_BaseBackupPolicy(source.Properties)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BaseBackupPolicy() to populate field Properties")
+		}
+		policy.Properties = &property
+	} else {
+		policy.Properties = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		policy.PropertyBag = propertyBag
+	} else {
+		policy.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultsBackupPolicy_Spec interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBackupVaultsBackupPolicy_Spec); ok {
+		err := augmentedPolicy.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupVaultsBackupPolicy_Spec populates the provided destination BackupVaultsBackupPolicy_Spec from our BackupVaultsBackupPolicy_Spec
+func (policy *BackupVaultsBackupPolicy_Spec) AssignProperties_To_BackupVaultsBackupPolicy_Spec(destination *storage.BackupVaultsBackupPolicy_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(policy.PropertyBag)
+
+	// AzureName
+	destination.AzureName = policy.AzureName
+
+	// OperatorSpec
+	if policy.OperatorSpec != nil {
+		var operatorSpec storage.BackupVaultsBackupPolicyOperatorSpec
+		err := policy.OperatorSpec.AssignProperties_To_BackupVaultsBackupPolicyOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BackupVaultsBackupPolicyOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = policy.OriginalVersion
+
+	// Owner
+	if policy.Owner != nil {
+		owner := policy.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Properties
+	if policy.Properties != nil {
+		var property storage.BaseBackupPolicy
+		err := policy.Properties.AssignProperties_To_BaseBackupPolicy(&property)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BaseBackupPolicy() to populate field Properties")
+		}
+		destination.Properties = &property
+	} else {
+		destination.Properties = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultsBackupPolicy_Spec interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBackupVaultsBackupPolicy_Spec); ok {
+		err := augmentedPolicy.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// Storage version of v1api20230101.BackupVaultsBackupPolicy_STATUS
+type BackupVaultsBackupPolicy_STATUS struct {
 	Conditions  []conditions.Condition   `json:"conditions,omitempty"`
 	Id          *string                  `json:"id,omitempty"`
 	Name        *string                  `json:"name,omitempty"`
@@ -185,24 +458,316 @@ type BackupVaults_BackupPolicy_STATUS struct {
 	Type        *string                  `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &BackupVaults_BackupPolicy_STATUS{}
+var _ genruntime.ConvertibleStatus = &BackupVaultsBackupPolicy_STATUS{}
 
-// ConvertStatusFrom populates our BackupVaults_BackupPolicy_STATUS from the provided source
-func (policy *BackupVaults_BackupPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == policy {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+// ConvertStatusFrom populates our BackupVaultsBackupPolicy_STATUS from the provided source
+func (policy *BackupVaultsBackupPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.BackupVaultsBackupPolicy_STATUS)
+	if ok {
+		// Populate our instance from source
+		return policy.AssignProperties_From_BackupVaultsBackupPolicy_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(policy)
+	// Convert to an intermediate form
+	src = &storage.BackupVaultsBackupPolicy_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = policy.AssignProperties_From_BackupVaultsBackupPolicy_STATUS(src)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our BackupVaults_BackupPolicy_STATUS
-func (policy *BackupVaults_BackupPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == policy {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+// ConvertStatusTo populates the provided destination from our BackupVaultsBackupPolicy_STATUS
+func (policy *BackupVaultsBackupPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.BackupVaultsBackupPolicy_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return policy.AssignProperties_To_BackupVaultsBackupPolicy_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(policy)
+	// Convert to an intermediate form
+	dst = &storage.BackupVaultsBackupPolicy_STATUS{}
+	err := policy.AssignProperties_To_BackupVaultsBackupPolicy_STATUS(dst)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_BackupVaultsBackupPolicy_STATUS populates our BackupVaultsBackupPolicy_STATUS from the provided source BackupVaultsBackupPolicy_STATUS
+func (policy *BackupVaultsBackupPolicy_STATUS) AssignProperties_From_BackupVaultsBackupPolicy_STATUS(source *storage.BackupVaultsBackupPolicy_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	policy.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Id
+	policy.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Name
+	policy.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Properties
+	if source.Properties != nil {
+		var property BaseBackupPolicy_STATUS
+		err := property.AssignProperties_From_BaseBackupPolicy_STATUS(source.Properties)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BaseBackupPolicy_STATUS() to populate field Properties")
+		}
+		policy.Properties = &property
+	} else {
+		policy.Properties = nil
+	}
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		policy.SystemData = &systemDatum
+	} else {
+		policy.SystemData = nil
+	}
+
+	// Type
+	policy.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		policy.PropertyBag = propertyBag
+	} else {
+		policy.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultsBackupPolicy_STATUS interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBackupVaultsBackupPolicy_STATUS); ok {
+		err := augmentedPolicy.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupVaultsBackupPolicy_STATUS populates the provided destination BackupVaultsBackupPolicy_STATUS from our BackupVaultsBackupPolicy_STATUS
+func (policy *BackupVaultsBackupPolicy_STATUS) AssignProperties_To_BackupVaultsBackupPolicy_STATUS(destination *storage.BackupVaultsBackupPolicy_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(policy.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(policy.Conditions)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(policy.Id)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(policy.Name)
+
+	// Properties
+	if policy.Properties != nil {
+		var property storage.BaseBackupPolicy_STATUS
+		err := policy.Properties.AssignProperties_To_BaseBackupPolicy_STATUS(&property)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BaseBackupPolicy_STATUS() to populate field Properties")
+		}
+		destination.Properties = &property
+	} else {
+		destination.Properties = nil
+	}
+
+	// SystemData
+	if policy.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := policy.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(policy.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultsBackupPolicy_STATUS interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBackupVaultsBackupPolicy_STATUS); ok {
+		err := augmentedPolicy.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForBackupVaultsBackupPolicy_Spec interface {
+	AssignPropertiesFrom(src *storage.BackupVaultsBackupPolicy_Spec) error
+	AssignPropertiesTo(dst *storage.BackupVaultsBackupPolicy_Spec) error
+}
+
+type augmentConversionForBackupVaultsBackupPolicy_STATUS interface {
+	AssignPropertiesFrom(src *storage.BackupVaultsBackupPolicy_STATUS) error
+	AssignPropertiesTo(dst *storage.BackupVaultsBackupPolicy_STATUS) error
+}
+
+// Storage version of v1api20230101.BackupVaultsBackupPolicyOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type BackupVaultsBackupPolicyOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_BackupVaultsBackupPolicyOperatorSpec populates our BackupVaultsBackupPolicyOperatorSpec from the provided source BackupVaultsBackupPolicyOperatorSpec
+func (operator *BackupVaultsBackupPolicyOperatorSpec) AssignProperties_From_BackupVaultsBackupPolicyOperatorSpec(source *storage.BackupVaultsBackupPolicyOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultsBackupPolicyOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForBackupVaultsBackupPolicyOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupVaultsBackupPolicyOperatorSpec populates the provided destination BackupVaultsBackupPolicyOperatorSpec from our BackupVaultsBackupPolicyOperatorSpec
+func (operator *BackupVaultsBackupPolicyOperatorSpec) AssignProperties_To_BackupVaultsBackupPolicyOperatorSpec(destination *storage.BackupVaultsBackupPolicyOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultsBackupPolicyOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForBackupVaultsBackupPolicyOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.BaseBackupPolicy
@@ -211,10 +776,173 @@ type BaseBackupPolicy struct {
 	PropertyBag  genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_BaseBackupPolicy populates our BaseBackupPolicy from the provided source BaseBackupPolicy
+func (policy *BaseBackupPolicy) AssignProperties_From_BaseBackupPolicy(source *storage.BaseBackupPolicy) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BackupPolicy
+	if source.BackupPolicy != nil {
+		var backupPolicy BackupPolicy
+		err := backupPolicy.AssignProperties_From_BackupPolicy(source.BackupPolicy)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BackupPolicy() to populate field BackupPolicy")
+		}
+		policy.BackupPolicy = &backupPolicy
+	} else {
+		policy.BackupPolicy = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		policy.PropertyBag = propertyBag
+	} else {
+		policy.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBaseBackupPolicy interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBaseBackupPolicy); ok {
+		err := augmentedPolicy.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BaseBackupPolicy populates the provided destination BaseBackupPolicy from our BaseBackupPolicy
+func (policy *BaseBackupPolicy) AssignProperties_To_BaseBackupPolicy(destination *storage.BaseBackupPolicy) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(policy.PropertyBag)
+
+	// BackupPolicy
+	if policy.BackupPolicy != nil {
+		var backupPolicy storage.BackupPolicy
+		err := policy.BackupPolicy.AssignProperties_To_BackupPolicy(&backupPolicy)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BackupPolicy() to populate field BackupPolicy")
+		}
+		destination.BackupPolicy = &backupPolicy
+	} else {
+		destination.BackupPolicy = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBaseBackupPolicy interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBaseBackupPolicy); ok {
+		err := augmentedPolicy.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.BaseBackupPolicy_STATUS
 type BaseBackupPolicy_STATUS struct {
 	BackupPolicy *BackupPolicy_STATUS   `json:"backupPolicy,omitempty"`
 	PropertyBag  genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_BaseBackupPolicy_STATUS populates our BaseBackupPolicy_STATUS from the provided source BaseBackupPolicy_STATUS
+func (policy *BaseBackupPolicy_STATUS) AssignProperties_From_BaseBackupPolicy_STATUS(source *storage.BaseBackupPolicy_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BackupPolicy
+	if source.BackupPolicy != nil {
+		var backupPolicy BackupPolicy_STATUS
+		err := backupPolicy.AssignProperties_From_BackupPolicy_STATUS(source.BackupPolicy)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BackupPolicy_STATUS() to populate field BackupPolicy")
+		}
+		policy.BackupPolicy = &backupPolicy
+	} else {
+		policy.BackupPolicy = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		policy.PropertyBag = propertyBag
+	} else {
+		policy.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBaseBackupPolicy_STATUS interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBaseBackupPolicy_STATUS); ok {
+		err := augmentedPolicy.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BaseBackupPolicy_STATUS populates the provided destination BaseBackupPolicy_STATUS from our BaseBackupPolicy_STATUS
+func (policy *BaseBackupPolicy_STATUS) AssignProperties_To_BaseBackupPolicy_STATUS(destination *storage.BaseBackupPolicy_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(policy.PropertyBag)
+
+	// BackupPolicy
+	if policy.BackupPolicy != nil {
+		var backupPolicy storage.BackupPolicy_STATUS
+		err := policy.BackupPolicy.AssignProperties_To_BackupPolicy_STATUS(&backupPolicy)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BackupPolicy_STATUS() to populate field BackupPolicy")
+		}
+		destination.BackupPolicy = &backupPolicy
+	} else {
+		destination.BackupPolicy = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBaseBackupPolicy_STATUS interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBaseBackupPolicy_STATUS); ok {
+		err := augmentedPolicy.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForBackupVaultsBackupPolicyOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.BackupVaultsBackupPolicyOperatorSpec) error
+	AssignPropertiesTo(dst *storage.BackupVaultsBackupPolicyOperatorSpec) error
+}
+
+type augmentConversionForBaseBackupPolicy interface {
+	AssignPropertiesFrom(src *storage.BaseBackupPolicy) error
+	AssignPropertiesTo(dst *storage.BaseBackupPolicy) error
+}
+
+type augmentConversionForBaseBackupPolicy_STATUS interface {
+	AssignPropertiesFrom(src *storage.BaseBackupPolicy_STATUS) error
+	AssignPropertiesTo(dst *storage.BaseBackupPolicy_STATUS) error
 }
 
 // Storage version of v1api20230101.BackupPolicy
@@ -225,12 +953,218 @@ type BackupPolicy struct {
 	PropertyBag     genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_BackupPolicy populates our BackupPolicy from the provided source BackupPolicy
+func (policy *BackupPolicy) AssignProperties_From_BackupPolicy(source *storage.BackupPolicy) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DatasourceTypes
+	policy.DatasourceTypes = genruntime.CloneSliceOfString(source.DatasourceTypes)
+
+	// ObjectType
+	policy.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// PolicyRules
+	if source.PolicyRules != nil {
+		policyRuleList := make([]BasePolicyRule, len(source.PolicyRules))
+		for policyRuleIndex, policyRuleItem := range source.PolicyRules {
+			// Shadow the loop variable to avoid aliasing
+			policyRuleItem := policyRuleItem
+			var policyRule BasePolicyRule
+			err := policyRule.AssignProperties_From_BasePolicyRule(&policyRuleItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_BasePolicyRule() to populate field PolicyRules")
+			}
+			policyRuleList[policyRuleIndex] = policyRule
+		}
+		policy.PolicyRules = policyRuleList
+	} else {
+		policy.PolicyRules = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		policy.PropertyBag = propertyBag
+	} else {
+		policy.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupPolicy interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBackupPolicy); ok {
+		err := augmentedPolicy.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupPolicy populates the provided destination BackupPolicy from our BackupPolicy
+func (policy *BackupPolicy) AssignProperties_To_BackupPolicy(destination *storage.BackupPolicy) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(policy.PropertyBag)
+
+	// DatasourceTypes
+	destination.DatasourceTypes = genruntime.CloneSliceOfString(policy.DatasourceTypes)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(policy.ObjectType)
+
+	// PolicyRules
+	if policy.PolicyRules != nil {
+		policyRuleList := make([]storage.BasePolicyRule, len(policy.PolicyRules))
+		for policyRuleIndex, policyRuleItem := range policy.PolicyRules {
+			// Shadow the loop variable to avoid aliasing
+			policyRuleItem := policyRuleItem
+			var policyRule storage.BasePolicyRule
+			err := policyRuleItem.AssignProperties_To_BasePolicyRule(&policyRule)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_BasePolicyRule() to populate field PolicyRules")
+			}
+			policyRuleList[policyRuleIndex] = policyRule
+		}
+		destination.PolicyRules = policyRuleList
+	} else {
+		destination.PolicyRules = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupPolicy interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBackupPolicy); ok {
+		err := augmentedPolicy.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.BackupPolicy_STATUS
 type BackupPolicy_STATUS struct {
 	DatasourceTypes []string                `json:"datasourceTypes,omitempty"`
 	ObjectType      *string                 `json:"objectType,omitempty"`
 	PolicyRules     []BasePolicyRule_STATUS `json:"policyRules,omitempty"`
 	PropertyBag     genruntime.PropertyBag  `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_BackupPolicy_STATUS populates our BackupPolicy_STATUS from the provided source BackupPolicy_STATUS
+func (policy *BackupPolicy_STATUS) AssignProperties_From_BackupPolicy_STATUS(source *storage.BackupPolicy_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DatasourceTypes
+	policy.DatasourceTypes = genruntime.CloneSliceOfString(source.DatasourceTypes)
+
+	// ObjectType
+	policy.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// PolicyRules
+	if source.PolicyRules != nil {
+		policyRuleList := make([]BasePolicyRule_STATUS, len(source.PolicyRules))
+		for policyRuleIndex, policyRuleItem := range source.PolicyRules {
+			// Shadow the loop variable to avoid aliasing
+			policyRuleItem := policyRuleItem
+			var policyRule BasePolicyRule_STATUS
+			err := policyRule.AssignProperties_From_BasePolicyRule_STATUS(&policyRuleItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_BasePolicyRule_STATUS() to populate field PolicyRules")
+			}
+			policyRuleList[policyRuleIndex] = policyRule
+		}
+		policy.PolicyRules = policyRuleList
+	} else {
+		policy.PolicyRules = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		policy.PropertyBag = propertyBag
+	} else {
+		policy.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupPolicy_STATUS interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBackupPolicy_STATUS); ok {
+		err := augmentedPolicy.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupPolicy_STATUS populates the provided destination BackupPolicy_STATUS from our BackupPolicy_STATUS
+func (policy *BackupPolicy_STATUS) AssignProperties_To_BackupPolicy_STATUS(destination *storage.BackupPolicy_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(policy.PropertyBag)
+
+	// DatasourceTypes
+	destination.DatasourceTypes = genruntime.CloneSliceOfString(policy.DatasourceTypes)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(policy.ObjectType)
+
+	// PolicyRules
+	if policy.PolicyRules != nil {
+		policyRuleList := make([]storage.BasePolicyRule_STATUS, len(policy.PolicyRules))
+		for policyRuleIndex, policyRuleItem := range policy.PolicyRules {
+			// Shadow the loop variable to avoid aliasing
+			policyRuleItem := policyRuleItem
+			var policyRule storage.BasePolicyRule_STATUS
+			err := policyRuleItem.AssignProperties_To_BasePolicyRule_STATUS(&policyRule)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_BasePolicyRule_STATUS() to populate field PolicyRules")
+			}
+			policyRuleList[policyRuleIndex] = policyRule
+		}
+		destination.PolicyRules = policyRuleList
+	} else {
+		destination.PolicyRules = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupPolicy_STATUS interface (if implemented) to customize the conversion
+	var policyAsAny any = policy
+	if augmentedPolicy, ok := policyAsAny.(augmentConversionForBackupPolicy_STATUS); ok {
+		err := augmentedPolicy.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForBackupPolicy interface {
+	AssignPropertiesFrom(src *storage.BackupPolicy) error
+	AssignPropertiesTo(dst *storage.BackupPolicy) error
+}
+
+type augmentConversionForBackupPolicy_STATUS interface {
+	AssignPropertiesFrom(src *storage.BackupPolicy_STATUS) error
+	AssignPropertiesTo(dst *storage.BackupPolicy_STATUS) error
 }
 
 // Storage version of v1api20230101.BasePolicyRule
@@ -240,11 +1174,217 @@ type BasePolicyRule struct {
 	PropertyBag    genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_BasePolicyRule populates our BasePolicyRule from the provided source BasePolicyRule
+func (rule *BasePolicyRule) AssignProperties_From_BasePolicyRule(source *storage.BasePolicyRule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureBackup
+	if source.AzureBackup != nil {
+		var azureBackup AzureBackupRule
+		err := azureBackup.AssignProperties_From_AzureBackupRule(source.AzureBackup)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AzureBackupRule() to populate field AzureBackup")
+		}
+		rule.AzureBackup = &azureBackup
+	} else {
+		rule.AzureBackup = nil
+	}
+
+	// AzureRetention
+	if source.AzureRetention != nil {
+		var azureRetention AzureRetentionRule
+		err := azureRetention.AssignProperties_From_AzureRetentionRule(source.AzureRetention)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AzureRetentionRule() to populate field AzureRetention")
+		}
+		rule.AzureRetention = &azureRetention
+	} else {
+		rule.AzureRetention = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBasePolicyRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForBasePolicyRule); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BasePolicyRule populates the provided destination BasePolicyRule from our BasePolicyRule
+func (rule *BasePolicyRule) AssignProperties_To_BasePolicyRule(destination *storage.BasePolicyRule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// AzureBackup
+	if rule.AzureBackup != nil {
+		var azureBackup storage.AzureBackupRule
+		err := rule.AzureBackup.AssignProperties_To_AzureBackupRule(&azureBackup)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AzureBackupRule() to populate field AzureBackup")
+		}
+		destination.AzureBackup = &azureBackup
+	} else {
+		destination.AzureBackup = nil
+	}
+
+	// AzureRetention
+	if rule.AzureRetention != nil {
+		var azureRetention storage.AzureRetentionRule
+		err := rule.AzureRetention.AssignProperties_To_AzureRetentionRule(&azureRetention)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AzureRetentionRule() to populate field AzureRetention")
+		}
+		destination.AzureRetention = &azureRetention
+	} else {
+		destination.AzureRetention = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBasePolicyRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForBasePolicyRule); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.BasePolicyRule_STATUS
 type BasePolicyRule_STATUS struct {
 	AzureBackup    *AzureBackupRule_STATUS    `json:"azureBackupRule,omitempty"`
 	AzureRetention *AzureRetentionRule_STATUS `json:"azureRetentionRule,omitempty"`
 	PropertyBag    genruntime.PropertyBag     `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_BasePolicyRule_STATUS populates our BasePolicyRule_STATUS from the provided source BasePolicyRule_STATUS
+func (rule *BasePolicyRule_STATUS) AssignProperties_From_BasePolicyRule_STATUS(source *storage.BasePolicyRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureBackup
+	if source.AzureBackup != nil {
+		var azureBackup AzureBackupRule_STATUS
+		err := azureBackup.AssignProperties_From_AzureBackupRule_STATUS(source.AzureBackup)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AzureBackupRule_STATUS() to populate field AzureBackup")
+		}
+		rule.AzureBackup = &azureBackup
+	} else {
+		rule.AzureBackup = nil
+	}
+
+	// AzureRetention
+	if source.AzureRetention != nil {
+		var azureRetention AzureRetentionRule_STATUS
+		err := azureRetention.AssignProperties_From_AzureRetentionRule_STATUS(source.AzureRetention)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AzureRetentionRule_STATUS() to populate field AzureRetention")
+		}
+		rule.AzureRetention = &azureRetention
+	} else {
+		rule.AzureRetention = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBasePolicyRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForBasePolicyRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BasePolicyRule_STATUS populates the provided destination BasePolicyRule_STATUS from our BasePolicyRule_STATUS
+func (rule *BasePolicyRule_STATUS) AssignProperties_To_BasePolicyRule_STATUS(destination *storage.BasePolicyRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// AzureBackup
+	if rule.AzureBackup != nil {
+		var azureBackup storage.AzureBackupRule_STATUS
+		err := rule.AzureBackup.AssignProperties_To_AzureBackupRule_STATUS(&azureBackup)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AzureBackupRule_STATUS() to populate field AzureBackup")
+		}
+		destination.AzureBackup = &azureBackup
+	} else {
+		destination.AzureBackup = nil
+	}
+
+	// AzureRetention
+	if rule.AzureRetention != nil {
+		var azureRetention storage.AzureRetentionRule_STATUS
+		err := rule.AzureRetention.AssignProperties_To_AzureRetentionRule_STATUS(&azureRetention)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AzureRetentionRule_STATUS() to populate field AzureRetention")
+		}
+		destination.AzureRetention = &azureRetention
+	} else {
+		destination.AzureRetention = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBasePolicyRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForBasePolicyRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForBasePolicyRule interface {
+	AssignPropertiesFrom(src *storage.BasePolicyRule) error
+	AssignPropertiesTo(dst *storage.BasePolicyRule) error
+}
+
+type augmentConversionForBasePolicyRule_STATUS interface {
+	AssignPropertiesFrom(src *storage.BasePolicyRule_STATUS) error
+	AssignPropertiesTo(dst *storage.BasePolicyRule_STATUS) error
 }
 
 // Storage version of v1api20230101.AzureBackupRule
@@ -257,6 +1397,140 @@ type AzureBackupRule struct {
 	Trigger          *TriggerContext        `json:"trigger,omitempty"`
 }
 
+// AssignProperties_From_AzureBackupRule populates our AzureBackupRule from the provided source AzureBackupRule
+func (rule *AzureBackupRule) AssignProperties_From_AzureBackupRule(source *storage.AzureBackupRule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BackupParameters
+	if source.BackupParameters != nil {
+		var backupParameter BackupParameters
+		err := backupParameter.AssignProperties_From_BackupParameters(source.BackupParameters)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BackupParameters() to populate field BackupParameters")
+		}
+		rule.BackupParameters = &backupParameter
+	} else {
+		rule.BackupParameters = nil
+	}
+
+	// DataStore
+	if source.DataStore != nil {
+		var dataStore DataStoreInfoBase
+		err := dataStore.AssignProperties_From_DataStoreInfoBase(source.DataStore)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_DataStoreInfoBase() to populate field DataStore")
+		}
+		rule.DataStore = &dataStore
+	} else {
+		rule.DataStore = nil
+	}
+
+	// Name
+	rule.Name = genruntime.ClonePointerToString(source.Name)
+
+	// ObjectType
+	rule.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Trigger
+	if source.Trigger != nil {
+		var trigger TriggerContext
+		err := trigger.AssignProperties_From_TriggerContext(source.Trigger)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_TriggerContext() to populate field Trigger")
+		}
+		rule.Trigger = &trigger
+	} else {
+		rule.Trigger = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureBackupRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForAzureBackupRule); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AzureBackupRule populates the provided destination AzureBackupRule from our AzureBackupRule
+func (rule *AzureBackupRule) AssignProperties_To_AzureBackupRule(destination *storage.AzureBackupRule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// BackupParameters
+	if rule.BackupParameters != nil {
+		var backupParameter storage.BackupParameters
+		err := rule.BackupParameters.AssignProperties_To_BackupParameters(&backupParameter)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BackupParameters() to populate field BackupParameters")
+		}
+		destination.BackupParameters = &backupParameter
+	} else {
+		destination.BackupParameters = nil
+	}
+
+	// DataStore
+	if rule.DataStore != nil {
+		var dataStore storage.DataStoreInfoBase
+		err := rule.DataStore.AssignProperties_To_DataStoreInfoBase(&dataStore)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_DataStoreInfoBase() to populate field DataStore")
+		}
+		destination.DataStore = &dataStore
+	} else {
+		destination.DataStore = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(rule.Name)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(rule.ObjectType)
+
+	// Trigger
+	if rule.Trigger != nil {
+		var trigger storage.TriggerContext
+		err := rule.Trigger.AssignProperties_To_TriggerContext(&trigger)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_TriggerContext() to populate field Trigger")
+		}
+		destination.Trigger = &trigger
+	} else {
+		destination.Trigger = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureBackupRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForAzureBackupRule); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.AzureBackupRule_STATUS
 type AzureBackupRule_STATUS struct {
 	BackupParameters *BackupParameters_STATUS  `json:"backupParameters,omitempty"`
@@ -265,6 +1539,140 @@ type AzureBackupRule_STATUS struct {
 	ObjectType       *string                   `json:"objectType,omitempty"`
 	PropertyBag      genruntime.PropertyBag    `json:"$propertyBag,omitempty"`
 	Trigger          *TriggerContext_STATUS    `json:"trigger,omitempty"`
+}
+
+// AssignProperties_From_AzureBackupRule_STATUS populates our AzureBackupRule_STATUS from the provided source AzureBackupRule_STATUS
+func (rule *AzureBackupRule_STATUS) AssignProperties_From_AzureBackupRule_STATUS(source *storage.AzureBackupRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BackupParameters
+	if source.BackupParameters != nil {
+		var backupParameter BackupParameters_STATUS
+		err := backupParameter.AssignProperties_From_BackupParameters_STATUS(source.BackupParameters)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BackupParameters_STATUS() to populate field BackupParameters")
+		}
+		rule.BackupParameters = &backupParameter
+	} else {
+		rule.BackupParameters = nil
+	}
+
+	// DataStore
+	if source.DataStore != nil {
+		var dataStore DataStoreInfoBase_STATUS
+		err := dataStore.AssignProperties_From_DataStoreInfoBase_STATUS(source.DataStore)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_DataStoreInfoBase_STATUS() to populate field DataStore")
+		}
+		rule.DataStore = &dataStore
+	} else {
+		rule.DataStore = nil
+	}
+
+	// Name
+	rule.Name = genruntime.ClonePointerToString(source.Name)
+
+	// ObjectType
+	rule.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Trigger
+	if source.Trigger != nil {
+		var trigger TriggerContext_STATUS
+		err := trigger.AssignProperties_From_TriggerContext_STATUS(source.Trigger)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_TriggerContext_STATUS() to populate field Trigger")
+		}
+		rule.Trigger = &trigger
+	} else {
+		rule.Trigger = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureBackupRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForAzureBackupRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AzureBackupRule_STATUS populates the provided destination AzureBackupRule_STATUS from our AzureBackupRule_STATUS
+func (rule *AzureBackupRule_STATUS) AssignProperties_To_AzureBackupRule_STATUS(destination *storage.AzureBackupRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// BackupParameters
+	if rule.BackupParameters != nil {
+		var backupParameter storage.BackupParameters_STATUS
+		err := rule.BackupParameters.AssignProperties_To_BackupParameters_STATUS(&backupParameter)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BackupParameters_STATUS() to populate field BackupParameters")
+		}
+		destination.BackupParameters = &backupParameter
+	} else {
+		destination.BackupParameters = nil
+	}
+
+	// DataStore
+	if rule.DataStore != nil {
+		var dataStore storage.DataStoreInfoBase_STATUS
+		err := rule.DataStore.AssignProperties_To_DataStoreInfoBase_STATUS(&dataStore)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_DataStoreInfoBase_STATUS() to populate field DataStore")
+		}
+		destination.DataStore = &dataStore
+	} else {
+		destination.DataStore = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(rule.Name)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(rule.ObjectType)
+
+	// Trigger
+	if rule.Trigger != nil {
+		var trigger storage.TriggerContext_STATUS
+		err := rule.Trigger.AssignProperties_To_TriggerContext_STATUS(&trigger)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_TriggerContext_STATUS() to populate field Trigger")
+		}
+		destination.Trigger = &trigger
+	} else {
+		destination.Trigger = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureBackupRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForAzureBackupRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.AzureRetentionRule
@@ -276,6 +1684,120 @@ type AzureRetentionRule struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AzureRetentionRule populates our AzureRetentionRule from the provided source AzureRetentionRule
+func (rule *AzureRetentionRule) AssignProperties_From_AzureRetentionRule(source *storage.AzureRetentionRule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// IsDefault
+	if source.IsDefault != nil {
+		isDefault := *source.IsDefault
+		rule.IsDefault = &isDefault
+	} else {
+		rule.IsDefault = nil
+	}
+
+	// Lifecycles
+	if source.Lifecycles != nil {
+		lifecycleList := make([]SourceLifeCycle, len(source.Lifecycles))
+		for lifecycleIndex, lifecycleItem := range source.Lifecycles {
+			// Shadow the loop variable to avoid aliasing
+			lifecycleItem := lifecycleItem
+			var lifecycle SourceLifeCycle
+			err := lifecycle.AssignProperties_From_SourceLifeCycle(&lifecycleItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_SourceLifeCycle() to populate field Lifecycles")
+			}
+			lifecycleList[lifecycleIndex] = lifecycle
+		}
+		rule.Lifecycles = lifecycleList
+	} else {
+		rule.Lifecycles = nil
+	}
+
+	// Name
+	rule.Name = genruntime.ClonePointerToString(source.Name)
+
+	// ObjectType
+	rule.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureRetentionRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForAzureRetentionRule); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AzureRetentionRule populates the provided destination AzureRetentionRule from our AzureRetentionRule
+func (rule *AzureRetentionRule) AssignProperties_To_AzureRetentionRule(destination *storage.AzureRetentionRule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// IsDefault
+	if rule.IsDefault != nil {
+		isDefault := *rule.IsDefault
+		destination.IsDefault = &isDefault
+	} else {
+		destination.IsDefault = nil
+	}
+
+	// Lifecycles
+	if rule.Lifecycles != nil {
+		lifecycleList := make([]storage.SourceLifeCycle, len(rule.Lifecycles))
+		for lifecycleIndex, lifecycleItem := range rule.Lifecycles {
+			// Shadow the loop variable to avoid aliasing
+			lifecycleItem := lifecycleItem
+			var lifecycle storage.SourceLifeCycle
+			err := lifecycleItem.AssignProperties_To_SourceLifeCycle(&lifecycle)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_SourceLifeCycle() to populate field Lifecycles")
+			}
+			lifecycleList[lifecycleIndex] = lifecycle
+		}
+		destination.Lifecycles = lifecycleList
+	} else {
+		destination.Lifecycles = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(rule.Name)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(rule.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureRetentionRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForAzureRetentionRule); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.AzureRetentionRule_STATUS
 type AzureRetentionRule_STATUS struct {
 	IsDefault   *bool                    `json:"isDefault,omitempty"`
@@ -285,16 +1807,298 @@ type AzureRetentionRule_STATUS struct {
 	PropertyBag genruntime.PropertyBag   `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AzureRetentionRule_STATUS populates our AzureRetentionRule_STATUS from the provided source AzureRetentionRule_STATUS
+func (rule *AzureRetentionRule_STATUS) AssignProperties_From_AzureRetentionRule_STATUS(source *storage.AzureRetentionRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// IsDefault
+	if source.IsDefault != nil {
+		isDefault := *source.IsDefault
+		rule.IsDefault = &isDefault
+	} else {
+		rule.IsDefault = nil
+	}
+
+	// Lifecycles
+	if source.Lifecycles != nil {
+		lifecycleList := make([]SourceLifeCycle_STATUS, len(source.Lifecycles))
+		for lifecycleIndex, lifecycleItem := range source.Lifecycles {
+			// Shadow the loop variable to avoid aliasing
+			lifecycleItem := lifecycleItem
+			var lifecycle SourceLifeCycle_STATUS
+			err := lifecycle.AssignProperties_From_SourceLifeCycle_STATUS(&lifecycleItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_SourceLifeCycle_STATUS() to populate field Lifecycles")
+			}
+			lifecycleList[lifecycleIndex] = lifecycle
+		}
+		rule.Lifecycles = lifecycleList
+	} else {
+		rule.Lifecycles = nil
+	}
+
+	// Name
+	rule.Name = genruntime.ClonePointerToString(source.Name)
+
+	// ObjectType
+	rule.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureRetentionRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForAzureRetentionRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AzureRetentionRule_STATUS populates the provided destination AzureRetentionRule_STATUS from our AzureRetentionRule_STATUS
+func (rule *AzureRetentionRule_STATUS) AssignProperties_To_AzureRetentionRule_STATUS(destination *storage.AzureRetentionRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// IsDefault
+	if rule.IsDefault != nil {
+		isDefault := *rule.IsDefault
+		destination.IsDefault = &isDefault
+	} else {
+		destination.IsDefault = nil
+	}
+
+	// Lifecycles
+	if rule.Lifecycles != nil {
+		lifecycleList := make([]storage.SourceLifeCycle_STATUS, len(rule.Lifecycles))
+		for lifecycleIndex, lifecycleItem := range rule.Lifecycles {
+			// Shadow the loop variable to avoid aliasing
+			lifecycleItem := lifecycleItem
+			var lifecycle storage.SourceLifeCycle_STATUS
+			err := lifecycleItem.AssignProperties_To_SourceLifeCycle_STATUS(&lifecycle)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_SourceLifeCycle_STATUS() to populate field Lifecycles")
+			}
+			lifecycleList[lifecycleIndex] = lifecycle
+		}
+		destination.Lifecycles = lifecycleList
+	} else {
+		destination.Lifecycles = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(rule.Name)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(rule.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureRetentionRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForAzureRetentionRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAzureBackupRule interface {
+	AssignPropertiesFrom(src *storage.AzureBackupRule) error
+	AssignPropertiesTo(dst *storage.AzureBackupRule) error
+}
+
+type augmentConversionForAzureBackupRule_STATUS interface {
+	AssignPropertiesFrom(src *storage.AzureBackupRule_STATUS) error
+	AssignPropertiesTo(dst *storage.AzureBackupRule_STATUS) error
+}
+
+type augmentConversionForAzureRetentionRule interface {
+	AssignPropertiesFrom(src *storage.AzureRetentionRule) error
+	AssignPropertiesTo(dst *storage.AzureRetentionRule) error
+}
+
+type augmentConversionForAzureRetentionRule_STATUS interface {
+	AssignPropertiesFrom(src *storage.AzureRetentionRule_STATUS) error
+	AssignPropertiesTo(dst *storage.AzureRetentionRule_STATUS) error
+}
+
 // Storage version of v1api20230101.BackupParameters
 type BackupParameters struct {
 	AzureBackupParams *AzureBackupParams     `json:"azureBackupParams,omitempty"`
 	PropertyBag       genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_BackupParameters populates our BackupParameters from the provided source BackupParameters
+func (parameters *BackupParameters) AssignProperties_From_BackupParameters(source *storage.BackupParameters) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureBackupParams
+	if source.AzureBackupParams != nil {
+		var azureBackupParam AzureBackupParams
+		err := azureBackupParam.AssignProperties_From_AzureBackupParams(source.AzureBackupParams)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AzureBackupParams() to populate field AzureBackupParams")
+		}
+		parameters.AzureBackupParams = &azureBackupParam
+	} else {
+		parameters.AzureBackupParams = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		parameters.PropertyBag = propertyBag
+	} else {
+		parameters.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupParameters interface (if implemented) to customize the conversion
+	var parametersAsAny any = parameters
+	if augmentedParameters, ok := parametersAsAny.(augmentConversionForBackupParameters); ok {
+		err := augmentedParameters.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupParameters populates the provided destination BackupParameters from our BackupParameters
+func (parameters *BackupParameters) AssignProperties_To_BackupParameters(destination *storage.BackupParameters) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(parameters.PropertyBag)
+
+	// AzureBackupParams
+	if parameters.AzureBackupParams != nil {
+		var azureBackupParam storage.AzureBackupParams
+		err := parameters.AzureBackupParams.AssignProperties_To_AzureBackupParams(&azureBackupParam)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AzureBackupParams() to populate field AzureBackupParams")
+		}
+		destination.AzureBackupParams = &azureBackupParam
+	} else {
+		destination.AzureBackupParams = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupParameters interface (if implemented) to customize the conversion
+	var parametersAsAny any = parameters
+	if augmentedParameters, ok := parametersAsAny.(augmentConversionForBackupParameters); ok {
+		err := augmentedParameters.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.BackupParameters_STATUS
 type BackupParameters_STATUS struct {
 	AzureBackupParams *AzureBackupParams_STATUS `json:"azureBackupParams,omitempty"`
 	PropertyBag       genruntime.PropertyBag    `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_BackupParameters_STATUS populates our BackupParameters_STATUS from the provided source BackupParameters_STATUS
+func (parameters *BackupParameters_STATUS) AssignProperties_From_BackupParameters_STATUS(source *storage.BackupParameters_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureBackupParams
+	if source.AzureBackupParams != nil {
+		var azureBackupParam AzureBackupParams_STATUS
+		err := azureBackupParam.AssignProperties_From_AzureBackupParams_STATUS(source.AzureBackupParams)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AzureBackupParams_STATUS() to populate field AzureBackupParams")
+		}
+		parameters.AzureBackupParams = &azureBackupParam
+	} else {
+		parameters.AzureBackupParams = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		parameters.PropertyBag = propertyBag
+	} else {
+		parameters.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupParameters_STATUS interface (if implemented) to customize the conversion
+	var parametersAsAny any = parameters
+	if augmentedParameters, ok := parametersAsAny.(augmentConversionForBackupParameters_STATUS); ok {
+		err := augmentedParameters.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupParameters_STATUS populates the provided destination BackupParameters_STATUS from our BackupParameters_STATUS
+func (parameters *BackupParameters_STATUS) AssignProperties_To_BackupParameters_STATUS(destination *storage.BackupParameters_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(parameters.PropertyBag)
+
+	// AzureBackupParams
+	if parameters.AzureBackupParams != nil {
+		var azureBackupParam storage.AzureBackupParams_STATUS
+		err := parameters.AzureBackupParams.AssignProperties_To_AzureBackupParams_STATUS(&azureBackupParam)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AzureBackupParams_STATUS() to populate field AzureBackupParams")
+		}
+		destination.AzureBackupParams = &azureBackupParam
+	} else {
+		destination.AzureBackupParams = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupParameters_STATUS interface (if implemented) to customize the conversion
+	var parametersAsAny any = parameters
+	if augmentedParameters, ok := parametersAsAny.(augmentConversionForBackupParameters_STATUS); ok {
+		err := augmentedParameters.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.DataStoreInfoBase
@@ -305,12 +2109,136 @@ type DataStoreInfoBase struct {
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_DataStoreInfoBase populates our DataStoreInfoBase from the provided source DataStoreInfoBase
+func (base *DataStoreInfoBase) AssignProperties_From_DataStoreInfoBase(source *storage.DataStoreInfoBase) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DataStoreType
+	base.DataStoreType = genruntime.ClonePointerToString(source.DataStoreType)
+
+	// ObjectType
+	base.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		base.PropertyBag = propertyBag
+	} else {
+		base.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataStoreInfoBase interface (if implemented) to customize the conversion
+	var baseAsAny any = base
+	if augmentedBase, ok := baseAsAny.(augmentConversionForDataStoreInfoBase); ok {
+		err := augmentedBase.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DataStoreInfoBase populates the provided destination DataStoreInfoBase from our DataStoreInfoBase
+func (base *DataStoreInfoBase) AssignProperties_To_DataStoreInfoBase(destination *storage.DataStoreInfoBase) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(base.PropertyBag)
+
+	// DataStoreType
+	destination.DataStoreType = genruntime.ClonePointerToString(base.DataStoreType)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(base.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataStoreInfoBase interface (if implemented) to customize the conversion
+	var baseAsAny any = base
+	if augmentedBase, ok := baseAsAny.(augmentConversionForDataStoreInfoBase); ok {
+		err := augmentedBase.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.DataStoreInfoBase_STATUS
 // DataStoreInfo base
 type DataStoreInfoBase_STATUS struct {
 	DataStoreType *string                `json:"dataStoreType,omitempty"`
 	ObjectType    *string                `json:"objectType,omitempty"`
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_DataStoreInfoBase_STATUS populates our DataStoreInfoBase_STATUS from the provided source DataStoreInfoBase_STATUS
+func (base *DataStoreInfoBase_STATUS) AssignProperties_From_DataStoreInfoBase_STATUS(source *storage.DataStoreInfoBase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DataStoreType
+	base.DataStoreType = genruntime.ClonePointerToString(source.DataStoreType)
+
+	// ObjectType
+	base.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		base.PropertyBag = propertyBag
+	} else {
+		base.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataStoreInfoBase_STATUS interface (if implemented) to customize the conversion
+	var baseAsAny any = base
+	if augmentedBase, ok := baseAsAny.(augmentConversionForDataStoreInfoBase_STATUS); ok {
+		err := augmentedBase.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DataStoreInfoBase_STATUS populates the provided destination DataStoreInfoBase_STATUS from our DataStoreInfoBase_STATUS
+func (base *DataStoreInfoBase_STATUS) AssignProperties_To_DataStoreInfoBase_STATUS(destination *storage.DataStoreInfoBase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(base.PropertyBag)
+
+	// DataStoreType
+	destination.DataStoreType = genruntime.ClonePointerToString(base.DataStoreType)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(base.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDataStoreInfoBase_STATUS interface (if implemented) to customize the conversion
+	var baseAsAny any = base
+	if augmentedBase, ok := baseAsAny.(augmentConversionForDataStoreInfoBase_STATUS); ok {
+		err := augmentedBase.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.SourceLifeCycle
@@ -322,6 +2250,140 @@ type SourceLifeCycle struct {
 	TargetDataStoreCopySettings []TargetCopySetting    `json:"targetDataStoreCopySettings,omitempty"`
 }
 
+// AssignProperties_From_SourceLifeCycle populates our SourceLifeCycle from the provided source SourceLifeCycle
+func (cycle *SourceLifeCycle) AssignProperties_From_SourceLifeCycle(source *storage.SourceLifeCycle) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DeleteAfter
+	if source.DeleteAfter != nil {
+		var deleteAfter DeleteOption
+		err := deleteAfter.AssignProperties_From_DeleteOption(source.DeleteAfter)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_DeleteOption() to populate field DeleteAfter")
+		}
+		cycle.DeleteAfter = &deleteAfter
+	} else {
+		cycle.DeleteAfter = nil
+	}
+
+	// SourceDataStore
+	if source.SourceDataStore != nil {
+		var sourceDataStore DataStoreInfoBase
+		err := sourceDataStore.AssignProperties_From_DataStoreInfoBase(source.SourceDataStore)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_DataStoreInfoBase() to populate field SourceDataStore")
+		}
+		cycle.SourceDataStore = &sourceDataStore
+	} else {
+		cycle.SourceDataStore = nil
+	}
+
+	// TargetDataStoreCopySettings
+	if source.TargetDataStoreCopySettings != nil {
+		targetDataStoreCopySettingList := make([]TargetCopySetting, len(source.TargetDataStoreCopySettings))
+		for targetDataStoreCopySettingIndex, targetDataStoreCopySettingItem := range source.TargetDataStoreCopySettings {
+			// Shadow the loop variable to avoid aliasing
+			targetDataStoreCopySettingItem := targetDataStoreCopySettingItem
+			var targetDataStoreCopySetting TargetCopySetting
+			err := targetDataStoreCopySetting.AssignProperties_From_TargetCopySetting(&targetDataStoreCopySettingItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_TargetCopySetting() to populate field TargetDataStoreCopySettings")
+			}
+			targetDataStoreCopySettingList[targetDataStoreCopySettingIndex] = targetDataStoreCopySetting
+		}
+		cycle.TargetDataStoreCopySettings = targetDataStoreCopySettingList
+	} else {
+		cycle.TargetDataStoreCopySettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		cycle.PropertyBag = propertyBag
+	} else {
+		cycle.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSourceLifeCycle interface (if implemented) to customize the conversion
+	var cycleAsAny any = cycle
+	if augmentedCycle, ok := cycleAsAny.(augmentConversionForSourceLifeCycle); ok {
+		err := augmentedCycle.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SourceLifeCycle populates the provided destination SourceLifeCycle from our SourceLifeCycle
+func (cycle *SourceLifeCycle) AssignProperties_To_SourceLifeCycle(destination *storage.SourceLifeCycle) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(cycle.PropertyBag)
+
+	// DeleteAfter
+	if cycle.DeleteAfter != nil {
+		var deleteAfter storage.DeleteOption
+		err := cycle.DeleteAfter.AssignProperties_To_DeleteOption(&deleteAfter)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_DeleteOption() to populate field DeleteAfter")
+		}
+		destination.DeleteAfter = &deleteAfter
+	} else {
+		destination.DeleteAfter = nil
+	}
+
+	// SourceDataStore
+	if cycle.SourceDataStore != nil {
+		var sourceDataStore storage.DataStoreInfoBase
+		err := cycle.SourceDataStore.AssignProperties_To_DataStoreInfoBase(&sourceDataStore)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_DataStoreInfoBase() to populate field SourceDataStore")
+		}
+		destination.SourceDataStore = &sourceDataStore
+	} else {
+		destination.SourceDataStore = nil
+	}
+
+	// TargetDataStoreCopySettings
+	if cycle.TargetDataStoreCopySettings != nil {
+		targetDataStoreCopySettingList := make([]storage.TargetCopySetting, len(cycle.TargetDataStoreCopySettings))
+		for targetDataStoreCopySettingIndex, targetDataStoreCopySettingItem := range cycle.TargetDataStoreCopySettings {
+			// Shadow the loop variable to avoid aliasing
+			targetDataStoreCopySettingItem := targetDataStoreCopySettingItem
+			var targetDataStoreCopySetting storage.TargetCopySetting
+			err := targetDataStoreCopySettingItem.AssignProperties_To_TargetCopySetting(&targetDataStoreCopySetting)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_TargetCopySetting() to populate field TargetDataStoreCopySettings")
+			}
+			targetDataStoreCopySettingList[targetDataStoreCopySettingIndex] = targetDataStoreCopySetting
+		}
+		destination.TargetDataStoreCopySettings = targetDataStoreCopySettingList
+	} else {
+		destination.TargetDataStoreCopySettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSourceLifeCycle interface (if implemented) to customize the conversion
+	var cycleAsAny any = cycle
+	if augmentedCycle, ok := cycleAsAny.(augmentConversionForSourceLifeCycle); ok {
+		err := augmentedCycle.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.SourceLifeCycle_STATUS
 // Source LifeCycle
 type SourceLifeCycle_STATUS struct {
@@ -331,11 +2393,243 @@ type SourceLifeCycle_STATUS struct {
 	TargetDataStoreCopySettings []TargetCopySetting_STATUS `json:"targetDataStoreCopySettings,omitempty"`
 }
 
+// AssignProperties_From_SourceLifeCycle_STATUS populates our SourceLifeCycle_STATUS from the provided source SourceLifeCycle_STATUS
+func (cycle *SourceLifeCycle_STATUS) AssignProperties_From_SourceLifeCycle_STATUS(source *storage.SourceLifeCycle_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DeleteAfter
+	if source.DeleteAfter != nil {
+		var deleteAfter DeleteOption_STATUS
+		err := deleteAfter.AssignProperties_From_DeleteOption_STATUS(source.DeleteAfter)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_DeleteOption_STATUS() to populate field DeleteAfter")
+		}
+		cycle.DeleteAfter = &deleteAfter
+	} else {
+		cycle.DeleteAfter = nil
+	}
+
+	// SourceDataStore
+	if source.SourceDataStore != nil {
+		var sourceDataStore DataStoreInfoBase_STATUS
+		err := sourceDataStore.AssignProperties_From_DataStoreInfoBase_STATUS(source.SourceDataStore)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_DataStoreInfoBase_STATUS() to populate field SourceDataStore")
+		}
+		cycle.SourceDataStore = &sourceDataStore
+	} else {
+		cycle.SourceDataStore = nil
+	}
+
+	// TargetDataStoreCopySettings
+	if source.TargetDataStoreCopySettings != nil {
+		targetDataStoreCopySettingList := make([]TargetCopySetting_STATUS, len(source.TargetDataStoreCopySettings))
+		for targetDataStoreCopySettingIndex, targetDataStoreCopySettingItem := range source.TargetDataStoreCopySettings {
+			// Shadow the loop variable to avoid aliasing
+			targetDataStoreCopySettingItem := targetDataStoreCopySettingItem
+			var targetDataStoreCopySetting TargetCopySetting_STATUS
+			err := targetDataStoreCopySetting.AssignProperties_From_TargetCopySetting_STATUS(&targetDataStoreCopySettingItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_TargetCopySetting_STATUS() to populate field TargetDataStoreCopySettings")
+			}
+			targetDataStoreCopySettingList[targetDataStoreCopySettingIndex] = targetDataStoreCopySetting
+		}
+		cycle.TargetDataStoreCopySettings = targetDataStoreCopySettingList
+	} else {
+		cycle.TargetDataStoreCopySettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		cycle.PropertyBag = propertyBag
+	} else {
+		cycle.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSourceLifeCycle_STATUS interface (if implemented) to customize the conversion
+	var cycleAsAny any = cycle
+	if augmentedCycle, ok := cycleAsAny.(augmentConversionForSourceLifeCycle_STATUS); ok {
+		err := augmentedCycle.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SourceLifeCycle_STATUS populates the provided destination SourceLifeCycle_STATUS from our SourceLifeCycle_STATUS
+func (cycle *SourceLifeCycle_STATUS) AssignProperties_To_SourceLifeCycle_STATUS(destination *storage.SourceLifeCycle_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(cycle.PropertyBag)
+
+	// DeleteAfter
+	if cycle.DeleteAfter != nil {
+		var deleteAfter storage.DeleteOption_STATUS
+		err := cycle.DeleteAfter.AssignProperties_To_DeleteOption_STATUS(&deleteAfter)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_DeleteOption_STATUS() to populate field DeleteAfter")
+		}
+		destination.DeleteAfter = &deleteAfter
+	} else {
+		destination.DeleteAfter = nil
+	}
+
+	// SourceDataStore
+	if cycle.SourceDataStore != nil {
+		var sourceDataStore storage.DataStoreInfoBase_STATUS
+		err := cycle.SourceDataStore.AssignProperties_To_DataStoreInfoBase_STATUS(&sourceDataStore)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_DataStoreInfoBase_STATUS() to populate field SourceDataStore")
+		}
+		destination.SourceDataStore = &sourceDataStore
+	} else {
+		destination.SourceDataStore = nil
+	}
+
+	// TargetDataStoreCopySettings
+	if cycle.TargetDataStoreCopySettings != nil {
+		targetDataStoreCopySettingList := make([]storage.TargetCopySetting_STATUS, len(cycle.TargetDataStoreCopySettings))
+		for targetDataStoreCopySettingIndex, targetDataStoreCopySettingItem := range cycle.TargetDataStoreCopySettings {
+			// Shadow the loop variable to avoid aliasing
+			targetDataStoreCopySettingItem := targetDataStoreCopySettingItem
+			var targetDataStoreCopySetting storage.TargetCopySetting_STATUS
+			err := targetDataStoreCopySettingItem.AssignProperties_To_TargetCopySetting_STATUS(&targetDataStoreCopySetting)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_TargetCopySetting_STATUS() to populate field TargetDataStoreCopySettings")
+			}
+			targetDataStoreCopySettingList[targetDataStoreCopySettingIndex] = targetDataStoreCopySetting
+		}
+		destination.TargetDataStoreCopySettings = targetDataStoreCopySettingList
+	} else {
+		destination.TargetDataStoreCopySettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSourceLifeCycle_STATUS interface (if implemented) to customize the conversion
+	var cycleAsAny any = cycle
+	if augmentedCycle, ok := cycleAsAny.(augmentConversionForSourceLifeCycle_STATUS); ok {
+		err := augmentedCycle.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.TriggerContext
 type TriggerContext struct {
 	Adhoc       *AdhocBasedTriggerContext    `json:"adhocBasedTriggerContext,omitempty"`
 	PropertyBag genruntime.PropertyBag       `json:"$propertyBag,omitempty"`
 	Schedule    *ScheduleBasedTriggerContext `json:"scheduleBasedTriggerContext,omitempty"`
+}
+
+// AssignProperties_From_TriggerContext populates our TriggerContext from the provided source TriggerContext
+func (context *TriggerContext) AssignProperties_From_TriggerContext(source *storage.TriggerContext) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Adhoc
+	if source.Adhoc != nil {
+		var adhoc AdhocBasedTriggerContext
+		err := adhoc.AssignProperties_From_AdhocBasedTriggerContext(source.Adhoc)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AdhocBasedTriggerContext() to populate field Adhoc")
+		}
+		context.Adhoc = &adhoc
+	} else {
+		context.Adhoc = nil
+	}
+
+	// Schedule
+	if source.Schedule != nil {
+		var schedule ScheduleBasedTriggerContext
+		err := schedule.AssignProperties_From_ScheduleBasedTriggerContext(source.Schedule)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ScheduleBasedTriggerContext() to populate field Schedule")
+		}
+		context.Schedule = &schedule
+	} else {
+		context.Schedule = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		context.PropertyBag = propertyBag
+	} else {
+		context.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTriggerContext interface (if implemented) to customize the conversion
+	var contextAsAny any = context
+	if augmentedContext, ok := contextAsAny.(augmentConversionForTriggerContext); ok {
+		err := augmentedContext.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TriggerContext populates the provided destination TriggerContext from our TriggerContext
+func (context *TriggerContext) AssignProperties_To_TriggerContext(destination *storage.TriggerContext) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(context.PropertyBag)
+
+	// Adhoc
+	if context.Adhoc != nil {
+		var adhoc storage.AdhocBasedTriggerContext
+		err := context.Adhoc.AssignProperties_To_AdhocBasedTriggerContext(&adhoc)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AdhocBasedTriggerContext() to populate field Adhoc")
+		}
+		destination.Adhoc = &adhoc
+	} else {
+		destination.Adhoc = nil
+	}
+
+	// Schedule
+	if context.Schedule != nil {
+		var schedule storage.ScheduleBasedTriggerContext
+		err := context.Schedule.AssignProperties_To_ScheduleBasedTriggerContext(&schedule)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ScheduleBasedTriggerContext() to populate field Schedule")
+		}
+		destination.Schedule = &schedule
+	} else {
+		destination.Schedule = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTriggerContext interface (if implemented) to customize the conversion
+	var contextAsAny any = context
+	if augmentedContext, ok := contextAsAny.(augmentConversionForTriggerContext); ok {
+		err := augmentedContext.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.TriggerContext_STATUS
@@ -345,11 +2639,189 @@ type TriggerContext_STATUS struct {
 	Schedule    *ScheduleBasedTriggerContext_STATUS `json:"scheduleBasedTriggerContext,omitempty"`
 }
 
+// AssignProperties_From_TriggerContext_STATUS populates our TriggerContext_STATUS from the provided source TriggerContext_STATUS
+func (context *TriggerContext_STATUS) AssignProperties_From_TriggerContext_STATUS(source *storage.TriggerContext_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Adhoc
+	if source.Adhoc != nil {
+		var adhoc AdhocBasedTriggerContext_STATUS
+		err := adhoc.AssignProperties_From_AdhocBasedTriggerContext_STATUS(source.Adhoc)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AdhocBasedTriggerContext_STATUS() to populate field Adhoc")
+		}
+		context.Adhoc = &adhoc
+	} else {
+		context.Adhoc = nil
+	}
+
+	// Schedule
+	if source.Schedule != nil {
+		var schedule ScheduleBasedTriggerContext_STATUS
+		err := schedule.AssignProperties_From_ScheduleBasedTriggerContext_STATUS(source.Schedule)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ScheduleBasedTriggerContext_STATUS() to populate field Schedule")
+		}
+		context.Schedule = &schedule
+	} else {
+		context.Schedule = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		context.PropertyBag = propertyBag
+	} else {
+		context.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTriggerContext_STATUS interface (if implemented) to customize the conversion
+	var contextAsAny any = context
+	if augmentedContext, ok := contextAsAny.(augmentConversionForTriggerContext_STATUS); ok {
+		err := augmentedContext.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TriggerContext_STATUS populates the provided destination TriggerContext_STATUS from our TriggerContext_STATUS
+func (context *TriggerContext_STATUS) AssignProperties_To_TriggerContext_STATUS(destination *storage.TriggerContext_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(context.PropertyBag)
+
+	// Adhoc
+	if context.Adhoc != nil {
+		var adhoc storage.AdhocBasedTriggerContext_STATUS
+		err := context.Adhoc.AssignProperties_To_AdhocBasedTriggerContext_STATUS(&adhoc)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AdhocBasedTriggerContext_STATUS() to populate field Adhoc")
+		}
+		destination.Adhoc = &adhoc
+	} else {
+		destination.Adhoc = nil
+	}
+
+	// Schedule
+	if context.Schedule != nil {
+		var schedule storage.ScheduleBasedTriggerContext_STATUS
+		err := context.Schedule.AssignProperties_To_ScheduleBasedTriggerContext_STATUS(&schedule)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ScheduleBasedTriggerContext_STATUS() to populate field Schedule")
+		}
+		destination.Schedule = &schedule
+	} else {
+		destination.Schedule = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTriggerContext_STATUS interface (if implemented) to customize the conversion
+	var contextAsAny any = context
+	if augmentedContext, ok := contextAsAny.(augmentConversionForTriggerContext_STATUS); ok {
+		err := augmentedContext.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.AdhocBasedTriggerContext
 type AdhocBasedTriggerContext struct {
 	ObjectType      *string                    `json:"objectType,omitempty"`
 	PropertyBag     genruntime.PropertyBag     `json:"$propertyBag,omitempty"`
 	TaggingCriteria *AdhocBasedTaggingCriteria `json:"taggingCriteria,omitempty"`
+}
+
+// AssignProperties_From_AdhocBasedTriggerContext populates our AdhocBasedTriggerContext from the provided source AdhocBasedTriggerContext
+func (context *AdhocBasedTriggerContext) AssignProperties_From_AdhocBasedTriggerContext(source *storage.AdhocBasedTriggerContext) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ObjectType
+	context.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// TaggingCriteria
+	if source.TaggingCriteria != nil {
+		var taggingCriterion AdhocBasedTaggingCriteria
+		err := taggingCriterion.AssignProperties_From_AdhocBasedTaggingCriteria(source.TaggingCriteria)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AdhocBasedTaggingCriteria() to populate field TaggingCriteria")
+		}
+		context.TaggingCriteria = &taggingCriterion
+	} else {
+		context.TaggingCriteria = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		context.PropertyBag = propertyBag
+	} else {
+		context.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAdhocBasedTriggerContext interface (if implemented) to customize the conversion
+	var contextAsAny any = context
+	if augmentedContext, ok := contextAsAny.(augmentConversionForAdhocBasedTriggerContext); ok {
+		err := augmentedContext.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AdhocBasedTriggerContext populates the provided destination AdhocBasedTriggerContext from our AdhocBasedTriggerContext
+func (context *AdhocBasedTriggerContext) AssignProperties_To_AdhocBasedTriggerContext(destination *storage.AdhocBasedTriggerContext) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(context.PropertyBag)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(context.ObjectType)
+
+	// TaggingCriteria
+	if context.TaggingCriteria != nil {
+		var taggingCriterion storage.AdhocBasedTaggingCriteria
+		err := context.TaggingCriteria.AssignProperties_To_AdhocBasedTaggingCriteria(&taggingCriterion)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AdhocBasedTaggingCriteria() to populate field TaggingCriteria")
+		}
+		destination.TaggingCriteria = &taggingCriterion
+	} else {
+		destination.TaggingCriteria = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAdhocBasedTriggerContext interface (if implemented) to customize the conversion
+	var contextAsAny any = context
+	if augmentedContext, ok := contextAsAny.(augmentConversionForAdhocBasedTriggerContext); ok {
+		err := augmentedContext.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.AdhocBasedTriggerContext_STATUS
@@ -359,11 +2831,193 @@ type AdhocBasedTriggerContext_STATUS struct {
 	TaggingCriteria *AdhocBasedTaggingCriteria_STATUS `json:"taggingCriteria,omitempty"`
 }
 
+// AssignProperties_From_AdhocBasedTriggerContext_STATUS populates our AdhocBasedTriggerContext_STATUS from the provided source AdhocBasedTriggerContext_STATUS
+func (context *AdhocBasedTriggerContext_STATUS) AssignProperties_From_AdhocBasedTriggerContext_STATUS(source *storage.AdhocBasedTriggerContext_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ObjectType
+	context.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// TaggingCriteria
+	if source.TaggingCriteria != nil {
+		var taggingCriterion AdhocBasedTaggingCriteria_STATUS
+		err := taggingCriterion.AssignProperties_From_AdhocBasedTaggingCriteria_STATUS(source.TaggingCriteria)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AdhocBasedTaggingCriteria_STATUS() to populate field TaggingCriteria")
+		}
+		context.TaggingCriteria = &taggingCriterion
+	} else {
+		context.TaggingCriteria = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		context.PropertyBag = propertyBag
+	} else {
+		context.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAdhocBasedTriggerContext_STATUS interface (if implemented) to customize the conversion
+	var contextAsAny any = context
+	if augmentedContext, ok := contextAsAny.(augmentConversionForAdhocBasedTriggerContext_STATUS); ok {
+		err := augmentedContext.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AdhocBasedTriggerContext_STATUS populates the provided destination AdhocBasedTriggerContext_STATUS from our AdhocBasedTriggerContext_STATUS
+func (context *AdhocBasedTriggerContext_STATUS) AssignProperties_To_AdhocBasedTriggerContext_STATUS(destination *storage.AdhocBasedTriggerContext_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(context.PropertyBag)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(context.ObjectType)
+
+	// TaggingCriteria
+	if context.TaggingCriteria != nil {
+		var taggingCriterion storage.AdhocBasedTaggingCriteria_STATUS
+		err := context.TaggingCriteria.AssignProperties_To_AdhocBasedTaggingCriteria_STATUS(&taggingCriterion)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AdhocBasedTaggingCriteria_STATUS() to populate field TaggingCriteria")
+		}
+		destination.TaggingCriteria = &taggingCriterion
+	} else {
+		destination.TaggingCriteria = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAdhocBasedTriggerContext_STATUS interface (if implemented) to customize the conversion
+	var contextAsAny any = context
+	if augmentedContext, ok := contextAsAny.(augmentConversionForAdhocBasedTriggerContext_STATUS); ok {
+		err := augmentedContext.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForBackupParameters interface {
+	AssignPropertiesFrom(src *storage.BackupParameters) error
+	AssignPropertiesTo(dst *storage.BackupParameters) error
+}
+
+type augmentConversionForBackupParameters_STATUS interface {
+	AssignPropertiesFrom(src *storage.BackupParameters_STATUS) error
+	AssignPropertiesTo(dst *storage.BackupParameters_STATUS) error
+}
+
+type augmentConversionForDataStoreInfoBase interface {
+	AssignPropertiesFrom(src *storage.DataStoreInfoBase) error
+	AssignPropertiesTo(dst *storage.DataStoreInfoBase) error
+}
+
+type augmentConversionForDataStoreInfoBase_STATUS interface {
+	AssignPropertiesFrom(src *storage.DataStoreInfoBase_STATUS) error
+	AssignPropertiesTo(dst *storage.DataStoreInfoBase_STATUS) error
+}
+
+type augmentConversionForSourceLifeCycle interface {
+	AssignPropertiesFrom(src *storage.SourceLifeCycle) error
+	AssignPropertiesTo(dst *storage.SourceLifeCycle) error
+}
+
+type augmentConversionForSourceLifeCycle_STATUS interface {
+	AssignPropertiesFrom(src *storage.SourceLifeCycle_STATUS) error
+	AssignPropertiesTo(dst *storage.SourceLifeCycle_STATUS) error
+}
+
+type augmentConversionForTriggerContext interface {
+	AssignPropertiesFrom(src *storage.TriggerContext) error
+	AssignPropertiesTo(dst *storage.TriggerContext) error
+}
+
+type augmentConversionForTriggerContext_STATUS interface {
+	AssignPropertiesFrom(src *storage.TriggerContext_STATUS) error
+	AssignPropertiesTo(dst *storage.TriggerContext_STATUS) error
+}
+
 // Storage version of v1api20230101.AzureBackupParams
 type AzureBackupParams struct {
 	BackupType  *string                `json:"backupType,omitempty"`
 	ObjectType  *string                `json:"objectType,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_AzureBackupParams populates our AzureBackupParams from the provided source AzureBackupParams
+func (params *AzureBackupParams) AssignProperties_From_AzureBackupParams(source *storage.AzureBackupParams) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BackupType
+	params.BackupType = genruntime.ClonePointerToString(source.BackupType)
+
+	// ObjectType
+	params.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		params.PropertyBag = propertyBag
+	} else {
+		params.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureBackupParams interface (if implemented) to customize the conversion
+	var paramsAsAny any = params
+	if augmentedParams, ok := paramsAsAny.(augmentConversionForAzureBackupParams); ok {
+		err := augmentedParams.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AzureBackupParams populates the provided destination AzureBackupParams from our AzureBackupParams
+func (params *AzureBackupParams) AssignProperties_To_AzureBackupParams(destination *storage.AzureBackupParams) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(params.PropertyBag)
+
+	// BackupType
+	destination.BackupType = genruntime.ClonePointerToString(params.BackupType)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(params.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureBackupParams interface (if implemented) to customize the conversion
+	var paramsAsAny any = params
+	if augmentedParams, ok := paramsAsAny.(augmentConversionForAzureBackupParams); ok {
+		err := augmentedParams.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.AzureBackupParams_STATUS
@@ -373,16 +3027,226 @@ type AzureBackupParams_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AzureBackupParams_STATUS populates our AzureBackupParams_STATUS from the provided source AzureBackupParams_STATUS
+func (params *AzureBackupParams_STATUS) AssignProperties_From_AzureBackupParams_STATUS(source *storage.AzureBackupParams_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// BackupType
+	params.BackupType = genruntime.ClonePointerToString(source.BackupType)
+
+	// ObjectType
+	params.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		params.PropertyBag = propertyBag
+	} else {
+		params.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureBackupParams_STATUS interface (if implemented) to customize the conversion
+	var paramsAsAny any = params
+	if augmentedParams, ok := paramsAsAny.(augmentConversionForAzureBackupParams_STATUS); ok {
+		err := augmentedParams.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AzureBackupParams_STATUS populates the provided destination AzureBackupParams_STATUS from our AzureBackupParams_STATUS
+func (params *AzureBackupParams_STATUS) AssignProperties_To_AzureBackupParams_STATUS(destination *storage.AzureBackupParams_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(params.PropertyBag)
+
+	// BackupType
+	destination.BackupType = genruntime.ClonePointerToString(params.BackupType)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(params.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureBackupParams_STATUS interface (if implemented) to customize the conversion
+	var paramsAsAny any = params
+	if augmentedParams, ok := paramsAsAny.(augmentConversionForAzureBackupParams_STATUS); ok {
+		err := augmentedParams.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.DeleteOption
 type DeleteOption struct {
 	AbsoluteDeleteOption *AbsoluteDeleteOption  `json:"absoluteDeleteOption,omitempty"`
 	PropertyBag          genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_DeleteOption populates our DeleteOption from the provided source DeleteOption
+func (option *DeleteOption) AssignProperties_From_DeleteOption(source *storage.DeleteOption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AbsoluteDeleteOption
+	if source.AbsoluteDeleteOption != nil {
+		var absoluteDeleteOption AbsoluteDeleteOption
+		err := absoluteDeleteOption.AssignProperties_From_AbsoluteDeleteOption(source.AbsoluteDeleteOption)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AbsoluteDeleteOption() to populate field AbsoluteDeleteOption")
+		}
+		option.AbsoluteDeleteOption = &absoluteDeleteOption
+	} else {
+		option.AbsoluteDeleteOption = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		option.PropertyBag = propertyBag
+	} else {
+		option.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDeleteOption interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForDeleteOption); ok {
+		err := augmentedOption.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DeleteOption populates the provided destination DeleteOption from our DeleteOption
+func (option *DeleteOption) AssignProperties_To_DeleteOption(destination *storage.DeleteOption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(option.PropertyBag)
+
+	// AbsoluteDeleteOption
+	if option.AbsoluteDeleteOption != nil {
+		var absoluteDeleteOption storage.AbsoluteDeleteOption
+		err := option.AbsoluteDeleteOption.AssignProperties_To_AbsoluteDeleteOption(&absoluteDeleteOption)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AbsoluteDeleteOption() to populate field AbsoluteDeleteOption")
+		}
+		destination.AbsoluteDeleteOption = &absoluteDeleteOption
+	} else {
+		destination.AbsoluteDeleteOption = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDeleteOption interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForDeleteOption); ok {
+		err := augmentedOption.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.DeleteOption_STATUS
 type DeleteOption_STATUS struct {
 	AbsoluteDeleteOption *AbsoluteDeleteOption_STATUS `json:"absoluteDeleteOption,omitempty"`
 	PropertyBag          genruntime.PropertyBag       `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_DeleteOption_STATUS populates our DeleteOption_STATUS from the provided source DeleteOption_STATUS
+func (option *DeleteOption_STATUS) AssignProperties_From_DeleteOption_STATUS(source *storage.DeleteOption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AbsoluteDeleteOption
+	if source.AbsoluteDeleteOption != nil {
+		var absoluteDeleteOption AbsoluteDeleteOption_STATUS
+		err := absoluteDeleteOption.AssignProperties_From_AbsoluteDeleteOption_STATUS(source.AbsoluteDeleteOption)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AbsoluteDeleteOption_STATUS() to populate field AbsoluteDeleteOption")
+		}
+		option.AbsoluteDeleteOption = &absoluteDeleteOption
+	} else {
+		option.AbsoluteDeleteOption = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		option.PropertyBag = propertyBag
+	} else {
+		option.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDeleteOption_STATUS interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForDeleteOption_STATUS); ok {
+		err := augmentedOption.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DeleteOption_STATUS populates the provided destination DeleteOption_STATUS from our DeleteOption_STATUS
+func (option *DeleteOption_STATUS) AssignProperties_To_DeleteOption_STATUS(destination *storage.DeleteOption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(option.PropertyBag)
+
+	// AbsoluteDeleteOption
+	if option.AbsoluteDeleteOption != nil {
+		var absoluteDeleteOption storage.AbsoluteDeleteOption_STATUS
+		err := option.AbsoluteDeleteOption.AssignProperties_To_AbsoluteDeleteOption_STATUS(&absoluteDeleteOption)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AbsoluteDeleteOption_STATUS() to populate field AbsoluteDeleteOption")
+		}
+		destination.AbsoluteDeleteOption = &absoluteDeleteOption
+	} else {
+		destination.AbsoluteDeleteOption = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDeleteOption_STATUS interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForDeleteOption_STATUS); ok {
+		err := augmentedOption.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.ScheduleBasedTriggerContext
@@ -393,12 +3257,244 @@ type ScheduleBasedTriggerContext struct {
 	TaggingCriteria []TaggingCriteria      `json:"taggingCriteria,omitempty"`
 }
 
+// AssignProperties_From_ScheduleBasedTriggerContext populates our ScheduleBasedTriggerContext from the provided source ScheduleBasedTriggerContext
+func (context *ScheduleBasedTriggerContext) AssignProperties_From_ScheduleBasedTriggerContext(source *storage.ScheduleBasedTriggerContext) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ObjectType
+	context.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Schedule
+	if source.Schedule != nil {
+		var schedule BackupSchedule
+		err := schedule.AssignProperties_From_BackupSchedule(source.Schedule)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BackupSchedule() to populate field Schedule")
+		}
+		context.Schedule = &schedule
+	} else {
+		context.Schedule = nil
+	}
+
+	// TaggingCriteria
+	if source.TaggingCriteria != nil {
+		taggingCriterionList := make([]TaggingCriteria, len(source.TaggingCriteria))
+		for taggingCriterionIndex, taggingCriterionItem := range source.TaggingCriteria {
+			// Shadow the loop variable to avoid aliasing
+			taggingCriterionItem := taggingCriterionItem
+			var taggingCriterion TaggingCriteria
+			err := taggingCriterion.AssignProperties_From_TaggingCriteria(&taggingCriterionItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_TaggingCriteria() to populate field TaggingCriteria")
+			}
+			taggingCriterionList[taggingCriterionIndex] = taggingCriterion
+		}
+		context.TaggingCriteria = taggingCriterionList
+	} else {
+		context.TaggingCriteria = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		context.PropertyBag = propertyBag
+	} else {
+		context.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForScheduleBasedTriggerContext interface (if implemented) to customize the conversion
+	var contextAsAny any = context
+	if augmentedContext, ok := contextAsAny.(augmentConversionForScheduleBasedTriggerContext); ok {
+		err := augmentedContext.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ScheduleBasedTriggerContext populates the provided destination ScheduleBasedTriggerContext from our ScheduleBasedTriggerContext
+func (context *ScheduleBasedTriggerContext) AssignProperties_To_ScheduleBasedTriggerContext(destination *storage.ScheduleBasedTriggerContext) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(context.PropertyBag)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(context.ObjectType)
+
+	// Schedule
+	if context.Schedule != nil {
+		var schedule storage.BackupSchedule
+		err := context.Schedule.AssignProperties_To_BackupSchedule(&schedule)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BackupSchedule() to populate field Schedule")
+		}
+		destination.Schedule = &schedule
+	} else {
+		destination.Schedule = nil
+	}
+
+	// TaggingCriteria
+	if context.TaggingCriteria != nil {
+		taggingCriterionList := make([]storage.TaggingCriteria, len(context.TaggingCriteria))
+		for taggingCriterionIndex, taggingCriterionItem := range context.TaggingCriteria {
+			// Shadow the loop variable to avoid aliasing
+			taggingCriterionItem := taggingCriterionItem
+			var taggingCriterion storage.TaggingCriteria
+			err := taggingCriterionItem.AssignProperties_To_TaggingCriteria(&taggingCriterion)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_TaggingCriteria() to populate field TaggingCriteria")
+			}
+			taggingCriterionList[taggingCriterionIndex] = taggingCriterion
+		}
+		destination.TaggingCriteria = taggingCriterionList
+	} else {
+		destination.TaggingCriteria = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForScheduleBasedTriggerContext interface (if implemented) to customize the conversion
+	var contextAsAny any = context
+	if augmentedContext, ok := contextAsAny.(augmentConversionForScheduleBasedTriggerContext); ok {
+		err := augmentedContext.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.ScheduleBasedTriggerContext_STATUS
 type ScheduleBasedTriggerContext_STATUS struct {
 	ObjectType      *string                  `json:"objectType,omitempty"`
 	PropertyBag     genruntime.PropertyBag   `json:"$propertyBag,omitempty"`
 	Schedule        *BackupSchedule_STATUS   `json:"schedule,omitempty"`
 	TaggingCriteria []TaggingCriteria_STATUS `json:"taggingCriteria,omitempty"`
+}
+
+// AssignProperties_From_ScheduleBasedTriggerContext_STATUS populates our ScheduleBasedTriggerContext_STATUS from the provided source ScheduleBasedTriggerContext_STATUS
+func (context *ScheduleBasedTriggerContext_STATUS) AssignProperties_From_ScheduleBasedTriggerContext_STATUS(source *storage.ScheduleBasedTriggerContext_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ObjectType
+	context.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Schedule
+	if source.Schedule != nil {
+		var schedule BackupSchedule_STATUS
+		err := schedule.AssignProperties_From_BackupSchedule_STATUS(source.Schedule)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BackupSchedule_STATUS() to populate field Schedule")
+		}
+		context.Schedule = &schedule
+	} else {
+		context.Schedule = nil
+	}
+
+	// TaggingCriteria
+	if source.TaggingCriteria != nil {
+		taggingCriterionList := make([]TaggingCriteria_STATUS, len(source.TaggingCriteria))
+		for taggingCriterionIndex, taggingCriterionItem := range source.TaggingCriteria {
+			// Shadow the loop variable to avoid aliasing
+			taggingCriterionItem := taggingCriterionItem
+			var taggingCriterion TaggingCriteria_STATUS
+			err := taggingCriterion.AssignProperties_From_TaggingCriteria_STATUS(&taggingCriterionItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_TaggingCriteria_STATUS() to populate field TaggingCriteria")
+			}
+			taggingCriterionList[taggingCriterionIndex] = taggingCriterion
+		}
+		context.TaggingCriteria = taggingCriterionList
+	} else {
+		context.TaggingCriteria = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		context.PropertyBag = propertyBag
+	} else {
+		context.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForScheduleBasedTriggerContext_STATUS interface (if implemented) to customize the conversion
+	var contextAsAny any = context
+	if augmentedContext, ok := contextAsAny.(augmentConversionForScheduleBasedTriggerContext_STATUS); ok {
+		err := augmentedContext.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ScheduleBasedTriggerContext_STATUS populates the provided destination ScheduleBasedTriggerContext_STATUS from our ScheduleBasedTriggerContext_STATUS
+func (context *ScheduleBasedTriggerContext_STATUS) AssignProperties_To_ScheduleBasedTriggerContext_STATUS(destination *storage.ScheduleBasedTriggerContext_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(context.PropertyBag)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(context.ObjectType)
+
+	// Schedule
+	if context.Schedule != nil {
+		var schedule storage.BackupSchedule_STATUS
+		err := context.Schedule.AssignProperties_To_BackupSchedule_STATUS(&schedule)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BackupSchedule_STATUS() to populate field Schedule")
+		}
+		destination.Schedule = &schedule
+	} else {
+		destination.Schedule = nil
+	}
+
+	// TaggingCriteria
+	if context.TaggingCriteria != nil {
+		taggingCriterionList := make([]storage.TaggingCriteria_STATUS, len(context.TaggingCriteria))
+		for taggingCriterionIndex, taggingCriterionItem := range context.TaggingCriteria {
+			// Shadow the loop variable to avoid aliasing
+			taggingCriterionItem := taggingCriterionItem
+			var taggingCriterion storage.TaggingCriteria_STATUS
+			err := taggingCriterionItem.AssignProperties_To_TaggingCriteria_STATUS(&taggingCriterion)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_TaggingCriteria_STATUS() to populate field TaggingCriteria")
+			}
+			taggingCriterionList[taggingCriterionIndex] = taggingCriterion
+		}
+		destination.TaggingCriteria = taggingCriterionList
+	} else {
+		destination.TaggingCriteria = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForScheduleBasedTriggerContext_STATUS interface (if implemented) to customize the conversion
+	var contextAsAny any = context
+	if augmentedContext, ok := contextAsAny.(augmentConversionForScheduleBasedTriggerContext_STATUS); ok {
+		err := augmentedContext.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.TargetCopySetting
@@ -409,12 +3505,208 @@ type TargetCopySetting struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_TargetCopySetting populates our TargetCopySetting from the provided source TargetCopySetting
+func (setting *TargetCopySetting) AssignProperties_From_TargetCopySetting(source *storage.TargetCopySetting) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CopyAfter
+	if source.CopyAfter != nil {
+		var copyAfter CopyOption
+		err := copyAfter.AssignProperties_From_CopyOption(source.CopyAfter)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_CopyOption() to populate field CopyAfter")
+		}
+		setting.CopyAfter = &copyAfter
+	} else {
+		setting.CopyAfter = nil
+	}
+
+	// DataStore
+	if source.DataStore != nil {
+		var dataStore DataStoreInfoBase
+		err := dataStore.AssignProperties_From_DataStoreInfoBase(source.DataStore)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_DataStoreInfoBase() to populate field DataStore")
+		}
+		setting.DataStore = &dataStore
+	} else {
+		setting.DataStore = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		setting.PropertyBag = propertyBag
+	} else {
+		setting.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTargetCopySetting interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForTargetCopySetting); ok {
+		err := augmentedSetting.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TargetCopySetting populates the provided destination TargetCopySetting from our TargetCopySetting
+func (setting *TargetCopySetting) AssignProperties_To_TargetCopySetting(destination *storage.TargetCopySetting) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(setting.PropertyBag)
+
+	// CopyAfter
+	if setting.CopyAfter != nil {
+		var copyAfter storage.CopyOption
+		err := setting.CopyAfter.AssignProperties_To_CopyOption(&copyAfter)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_CopyOption() to populate field CopyAfter")
+		}
+		destination.CopyAfter = &copyAfter
+	} else {
+		destination.CopyAfter = nil
+	}
+
+	// DataStore
+	if setting.DataStore != nil {
+		var dataStore storage.DataStoreInfoBase
+		err := setting.DataStore.AssignProperties_To_DataStoreInfoBase(&dataStore)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_DataStoreInfoBase() to populate field DataStore")
+		}
+		destination.DataStore = &dataStore
+	} else {
+		destination.DataStore = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTargetCopySetting interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForTargetCopySetting); ok {
+		err := augmentedSetting.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.TargetCopySetting_STATUS
 // Target copy settings
 type TargetCopySetting_STATUS struct {
 	CopyAfter   *CopyOption_STATUS        `json:"copyAfter,omitempty"`
 	DataStore   *DataStoreInfoBase_STATUS `json:"dataStore,omitempty"`
 	PropertyBag genruntime.PropertyBag    `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_TargetCopySetting_STATUS populates our TargetCopySetting_STATUS from the provided source TargetCopySetting_STATUS
+func (setting *TargetCopySetting_STATUS) AssignProperties_From_TargetCopySetting_STATUS(source *storage.TargetCopySetting_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CopyAfter
+	if source.CopyAfter != nil {
+		var copyAfter CopyOption_STATUS
+		err := copyAfter.AssignProperties_From_CopyOption_STATUS(source.CopyAfter)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_CopyOption_STATUS() to populate field CopyAfter")
+		}
+		setting.CopyAfter = &copyAfter
+	} else {
+		setting.CopyAfter = nil
+	}
+
+	// DataStore
+	if source.DataStore != nil {
+		var dataStore DataStoreInfoBase_STATUS
+		err := dataStore.AssignProperties_From_DataStoreInfoBase_STATUS(source.DataStore)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_DataStoreInfoBase_STATUS() to populate field DataStore")
+		}
+		setting.DataStore = &dataStore
+	} else {
+		setting.DataStore = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		setting.PropertyBag = propertyBag
+	} else {
+		setting.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTargetCopySetting_STATUS interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForTargetCopySetting_STATUS); ok {
+		err := augmentedSetting.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TargetCopySetting_STATUS populates the provided destination TargetCopySetting_STATUS from our TargetCopySetting_STATUS
+func (setting *TargetCopySetting_STATUS) AssignProperties_To_TargetCopySetting_STATUS(destination *storage.TargetCopySetting_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(setting.PropertyBag)
+
+	// CopyAfter
+	if setting.CopyAfter != nil {
+		var copyAfter storage.CopyOption_STATUS
+		err := setting.CopyAfter.AssignProperties_To_CopyOption_STATUS(&copyAfter)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_CopyOption_STATUS() to populate field CopyAfter")
+		}
+		destination.CopyAfter = &copyAfter
+	} else {
+		destination.CopyAfter = nil
+	}
+
+	// DataStore
+	if setting.DataStore != nil {
+		var dataStore storage.DataStoreInfoBase_STATUS
+		err := setting.DataStore.AssignProperties_To_DataStoreInfoBase_STATUS(&dataStore)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_DataStoreInfoBase_STATUS() to populate field DataStore")
+		}
+		destination.DataStore = &dataStore
+	} else {
+		destination.DataStore = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTargetCopySetting_STATUS interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForTargetCopySetting_STATUS); ok {
+		err := augmentedSetting.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.AbsoluteDeleteOption
@@ -424,11 +3716,135 @@ type AbsoluteDeleteOption struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AbsoluteDeleteOption populates our AbsoluteDeleteOption from the provided source AbsoluteDeleteOption
+func (option *AbsoluteDeleteOption) AssignProperties_From_AbsoluteDeleteOption(source *storage.AbsoluteDeleteOption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Duration
+	option.Duration = genruntime.ClonePointerToString(source.Duration)
+
+	// ObjectType
+	option.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		option.PropertyBag = propertyBag
+	} else {
+		option.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAbsoluteDeleteOption interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForAbsoluteDeleteOption); ok {
+		err := augmentedOption.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AbsoluteDeleteOption populates the provided destination AbsoluteDeleteOption from our AbsoluteDeleteOption
+func (option *AbsoluteDeleteOption) AssignProperties_To_AbsoluteDeleteOption(destination *storage.AbsoluteDeleteOption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(option.PropertyBag)
+
+	// Duration
+	destination.Duration = genruntime.ClonePointerToString(option.Duration)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(option.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAbsoluteDeleteOption interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForAbsoluteDeleteOption); ok {
+		err := augmentedOption.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.AbsoluteDeleteOption_STATUS
 type AbsoluteDeleteOption_STATUS struct {
 	Duration    *string                `json:"duration,omitempty"`
 	ObjectType  *string                `json:"objectType,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_AbsoluteDeleteOption_STATUS populates our AbsoluteDeleteOption_STATUS from the provided source AbsoluteDeleteOption_STATUS
+func (option *AbsoluteDeleteOption_STATUS) AssignProperties_From_AbsoluteDeleteOption_STATUS(source *storage.AbsoluteDeleteOption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Duration
+	option.Duration = genruntime.ClonePointerToString(source.Duration)
+
+	// ObjectType
+	option.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		option.PropertyBag = propertyBag
+	} else {
+		option.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAbsoluteDeleteOption_STATUS interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForAbsoluteDeleteOption_STATUS); ok {
+		err := augmentedOption.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AbsoluteDeleteOption_STATUS populates the provided destination AbsoluteDeleteOption_STATUS from our AbsoluteDeleteOption_STATUS
+func (option *AbsoluteDeleteOption_STATUS) AssignProperties_To_AbsoluteDeleteOption_STATUS(destination *storage.AbsoluteDeleteOption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(option.PropertyBag)
+
+	// Duration
+	destination.Duration = genruntime.ClonePointerToString(option.Duration)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(option.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAbsoluteDeleteOption_STATUS interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForAbsoluteDeleteOption_STATUS); ok {
+		err := augmentedOption.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.AdhocBasedTaggingCriteria
@@ -438,11 +3854,209 @@ type AdhocBasedTaggingCriteria struct {
 	TagInfo     *RetentionTag          `json:"tagInfo,omitempty"`
 }
 
+// AssignProperties_From_AdhocBasedTaggingCriteria populates our AdhocBasedTaggingCriteria from the provided source AdhocBasedTaggingCriteria
+func (criteria *AdhocBasedTaggingCriteria) AssignProperties_From_AdhocBasedTaggingCriteria(source *storage.AdhocBasedTaggingCriteria) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// TagInfo
+	if source.TagInfo != nil {
+		var tagInfo RetentionTag
+		err := tagInfo.AssignProperties_From_RetentionTag(source.TagInfo)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_RetentionTag() to populate field TagInfo")
+		}
+		criteria.TagInfo = &tagInfo
+	} else {
+		criteria.TagInfo = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		criteria.PropertyBag = propertyBag
+	} else {
+		criteria.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAdhocBasedTaggingCriteria interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForAdhocBasedTaggingCriteria); ok {
+		err := augmentedCriteria.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AdhocBasedTaggingCriteria populates the provided destination AdhocBasedTaggingCriteria from our AdhocBasedTaggingCriteria
+func (criteria *AdhocBasedTaggingCriteria) AssignProperties_To_AdhocBasedTaggingCriteria(destination *storage.AdhocBasedTaggingCriteria) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(criteria.PropertyBag)
+
+	// TagInfo
+	if criteria.TagInfo != nil {
+		var tagInfo storage.RetentionTag
+		err := criteria.TagInfo.AssignProperties_To_RetentionTag(&tagInfo)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_RetentionTag() to populate field TagInfo")
+		}
+		destination.TagInfo = &tagInfo
+	} else {
+		destination.TagInfo = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAdhocBasedTaggingCriteria interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForAdhocBasedTaggingCriteria); ok {
+		err := augmentedCriteria.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.AdhocBasedTaggingCriteria_STATUS
 // Adhoc backup tagging criteria
 type AdhocBasedTaggingCriteria_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	TagInfo     *RetentionTag_STATUS   `json:"tagInfo,omitempty"`
+}
+
+// AssignProperties_From_AdhocBasedTaggingCriteria_STATUS populates our AdhocBasedTaggingCriteria_STATUS from the provided source AdhocBasedTaggingCriteria_STATUS
+func (criteria *AdhocBasedTaggingCriteria_STATUS) AssignProperties_From_AdhocBasedTaggingCriteria_STATUS(source *storage.AdhocBasedTaggingCriteria_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// TagInfo
+	if source.TagInfo != nil {
+		var tagInfo RetentionTag_STATUS
+		err := tagInfo.AssignProperties_From_RetentionTag_STATUS(source.TagInfo)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_RetentionTag_STATUS() to populate field TagInfo")
+		}
+		criteria.TagInfo = &tagInfo
+	} else {
+		criteria.TagInfo = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		criteria.PropertyBag = propertyBag
+	} else {
+		criteria.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAdhocBasedTaggingCriteria_STATUS interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForAdhocBasedTaggingCriteria_STATUS); ok {
+		err := augmentedCriteria.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AdhocBasedTaggingCriteria_STATUS populates the provided destination AdhocBasedTaggingCriteria_STATUS from our AdhocBasedTaggingCriteria_STATUS
+func (criteria *AdhocBasedTaggingCriteria_STATUS) AssignProperties_To_AdhocBasedTaggingCriteria_STATUS(destination *storage.AdhocBasedTaggingCriteria_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(criteria.PropertyBag)
+
+	// TagInfo
+	if criteria.TagInfo != nil {
+		var tagInfo storage.RetentionTag_STATUS
+		err := criteria.TagInfo.AssignProperties_To_RetentionTag_STATUS(&tagInfo)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_RetentionTag_STATUS() to populate field TagInfo")
+		}
+		destination.TagInfo = &tagInfo
+	} else {
+		destination.TagInfo = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAdhocBasedTaggingCriteria_STATUS interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForAdhocBasedTaggingCriteria_STATUS); ok {
+		err := augmentedCriteria.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAdhocBasedTriggerContext interface {
+	AssignPropertiesFrom(src *storage.AdhocBasedTriggerContext) error
+	AssignPropertiesTo(dst *storage.AdhocBasedTriggerContext) error
+}
+
+type augmentConversionForAdhocBasedTriggerContext_STATUS interface {
+	AssignPropertiesFrom(src *storage.AdhocBasedTriggerContext_STATUS) error
+	AssignPropertiesTo(dst *storage.AdhocBasedTriggerContext_STATUS) error
+}
+
+type augmentConversionForAzureBackupParams interface {
+	AssignPropertiesFrom(src *storage.AzureBackupParams) error
+	AssignPropertiesTo(dst *storage.AzureBackupParams) error
+}
+
+type augmentConversionForAzureBackupParams_STATUS interface {
+	AssignPropertiesFrom(src *storage.AzureBackupParams_STATUS) error
+	AssignPropertiesTo(dst *storage.AzureBackupParams_STATUS) error
+}
+
+type augmentConversionForDeleteOption interface {
+	AssignPropertiesFrom(src *storage.DeleteOption) error
+	AssignPropertiesTo(dst *storage.DeleteOption) error
+}
+
+type augmentConversionForDeleteOption_STATUS interface {
+	AssignPropertiesFrom(src *storage.DeleteOption_STATUS) error
+	AssignPropertiesTo(dst *storage.DeleteOption_STATUS) error
+}
+
+type augmentConversionForScheduleBasedTriggerContext interface {
+	AssignPropertiesFrom(src *storage.ScheduleBasedTriggerContext) error
+	AssignPropertiesTo(dst *storage.ScheduleBasedTriggerContext) error
+}
+
+type augmentConversionForScheduleBasedTriggerContext_STATUS interface {
+	AssignPropertiesFrom(src *storage.ScheduleBasedTriggerContext_STATUS) error
+	AssignPropertiesTo(dst *storage.ScheduleBasedTriggerContext_STATUS) error
+}
+
+type augmentConversionForTargetCopySetting interface {
+	AssignPropertiesFrom(src *storage.TargetCopySetting) error
+	AssignPropertiesTo(dst *storage.TargetCopySetting) error
+}
+
+type augmentConversionForTargetCopySetting_STATUS interface {
+	AssignPropertiesFrom(src *storage.TargetCopySetting_STATUS) error
+	AssignPropertiesTo(dst *storage.TargetCopySetting_STATUS) error
 }
 
 // Storage version of v1api20230101.BackupSchedule
@@ -453,12 +4067,136 @@ type BackupSchedule struct {
 	TimeZone               *string                `json:"timeZone,omitempty"`
 }
 
+// AssignProperties_From_BackupSchedule populates our BackupSchedule from the provided source BackupSchedule
+func (schedule *BackupSchedule) AssignProperties_From_BackupSchedule(source *storage.BackupSchedule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// RepeatingTimeIntervals
+	schedule.RepeatingTimeIntervals = genruntime.CloneSliceOfString(source.RepeatingTimeIntervals)
+
+	// TimeZone
+	schedule.TimeZone = genruntime.ClonePointerToString(source.TimeZone)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		schedule.PropertyBag = propertyBag
+	} else {
+		schedule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupSchedule interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForBackupSchedule); ok {
+		err := augmentedSchedule.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupSchedule populates the provided destination BackupSchedule from our BackupSchedule
+func (schedule *BackupSchedule) AssignProperties_To_BackupSchedule(destination *storage.BackupSchedule) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(schedule.PropertyBag)
+
+	// RepeatingTimeIntervals
+	destination.RepeatingTimeIntervals = genruntime.CloneSliceOfString(schedule.RepeatingTimeIntervals)
+
+	// TimeZone
+	destination.TimeZone = genruntime.ClonePointerToString(schedule.TimeZone)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupSchedule interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForBackupSchedule); ok {
+		err := augmentedSchedule.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.BackupSchedule_STATUS
 // Schedule for backup
 type BackupSchedule_STATUS struct {
 	PropertyBag            genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	RepeatingTimeIntervals []string               `json:"repeatingTimeIntervals,omitempty"`
 	TimeZone               *string                `json:"timeZone,omitempty"`
+}
+
+// AssignProperties_From_BackupSchedule_STATUS populates our BackupSchedule_STATUS from the provided source BackupSchedule_STATUS
+func (schedule *BackupSchedule_STATUS) AssignProperties_From_BackupSchedule_STATUS(source *storage.BackupSchedule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// RepeatingTimeIntervals
+	schedule.RepeatingTimeIntervals = genruntime.CloneSliceOfString(source.RepeatingTimeIntervals)
+
+	// TimeZone
+	schedule.TimeZone = genruntime.ClonePointerToString(source.TimeZone)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		schedule.PropertyBag = propertyBag
+	} else {
+		schedule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupSchedule_STATUS interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForBackupSchedule_STATUS); ok {
+		err := augmentedSchedule.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupSchedule_STATUS populates the provided destination BackupSchedule_STATUS from our BackupSchedule_STATUS
+func (schedule *BackupSchedule_STATUS) AssignProperties_To_BackupSchedule_STATUS(destination *storage.BackupSchedule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(schedule.PropertyBag)
+
+	// RepeatingTimeIntervals
+	destination.RepeatingTimeIntervals = genruntime.CloneSliceOfString(schedule.RepeatingTimeIntervals)
+
+	// TimeZone
+	destination.TimeZone = genruntime.ClonePointerToString(schedule.TimeZone)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupSchedule_STATUS interface (if implemented) to customize the conversion
+	var scheduleAsAny any = schedule
+	if augmentedSchedule, ok := scheduleAsAny.(augmentConversionForBackupSchedule_STATUS); ok {
+		err := augmentedSchedule.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.CopyOption
@@ -469,12 +4207,256 @@ type CopyOption struct {
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_CopyOption populates our CopyOption from the provided source CopyOption
+func (option *CopyOption) AssignProperties_From_CopyOption(source *storage.CopyOption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CopyOnExpiry
+	if source.CopyOnExpiry != nil {
+		var copyOnExpiry CopyOnExpiryOption
+		err := copyOnExpiry.AssignProperties_From_CopyOnExpiryOption(source.CopyOnExpiry)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_CopyOnExpiryOption() to populate field CopyOnExpiry")
+		}
+		option.CopyOnExpiry = &copyOnExpiry
+	} else {
+		option.CopyOnExpiry = nil
+	}
+
+	// CustomCopy
+	if source.CustomCopy != nil {
+		var customCopy CustomCopyOption
+		err := customCopy.AssignProperties_From_CustomCopyOption(source.CustomCopy)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_CustomCopyOption() to populate field CustomCopy")
+		}
+		option.CustomCopy = &customCopy
+	} else {
+		option.CustomCopy = nil
+	}
+
+	// ImmediateCopy
+	if source.ImmediateCopy != nil {
+		var immediateCopy ImmediateCopyOption
+		err := immediateCopy.AssignProperties_From_ImmediateCopyOption(source.ImmediateCopy)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ImmediateCopyOption() to populate field ImmediateCopy")
+		}
+		option.ImmediateCopy = &immediateCopy
+	} else {
+		option.ImmediateCopy = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		option.PropertyBag = propertyBag
+	} else {
+		option.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCopyOption interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForCopyOption); ok {
+		err := augmentedOption.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CopyOption populates the provided destination CopyOption from our CopyOption
+func (option *CopyOption) AssignProperties_To_CopyOption(destination *storage.CopyOption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(option.PropertyBag)
+
+	// CopyOnExpiry
+	if option.CopyOnExpiry != nil {
+		var copyOnExpiry storage.CopyOnExpiryOption
+		err := option.CopyOnExpiry.AssignProperties_To_CopyOnExpiryOption(&copyOnExpiry)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_CopyOnExpiryOption() to populate field CopyOnExpiry")
+		}
+		destination.CopyOnExpiry = &copyOnExpiry
+	} else {
+		destination.CopyOnExpiry = nil
+	}
+
+	// CustomCopy
+	if option.CustomCopy != nil {
+		var customCopy storage.CustomCopyOption
+		err := option.CustomCopy.AssignProperties_To_CustomCopyOption(&customCopy)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_CustomCopyOption() to populate field CustomCopy")
+		}
+		destination.CustomCopy = &customCopy
+	} else {
+		destination.CustomCopy = nil
+	}
+
+	// ImmediateCopy
+	if option.ImmediateCopy != nil {
+		var immediateCopy storage.ImmediateCopyOption
+		err := option.ImmediateCopy.AssignProperties_To_ImmediateCopyOption(&immediateCopy)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ImmediateCopyOption() to populate field ImmediateCopy")
+		}
+		destination.ImmediateCopy = &immediateCopy
+	} else {
+		destination.ImmediateCopy = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCopyOption interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForCopyOption); ok {
+		err := augmentedOption.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.CopyOption_STATUS
 type CopyOption_STATUS struct {
 	CopyOnExpiry  *CopyOnExpiryOption_STATUS  `json:"copyOnExpiryOption,omitempty"`
 	CustomCopy    *CustomCopyOption_STATUS    `json:"customCopyOption,omitempty"`
 	ImmediateCopy *ImmediateCopyOption_STATUS `json:"immediateCopyOption,omitempty"`
 	PropertyBag   genruntime.PropertyBag      `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_CopyOption_STATUS populates our CopyOption_STATUS from the provided source CopyOption_STATUS
+func (option *CopyOption_STATUS) AssignProperties_From_CopyOption_STATUS(source *storage.CopyOption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CopyOnExpiry
+	if source.CopyOnExpiry != nil {
+		var copyOnExpiry CopyOnExpiryOption_STATUS
+		err := copyOnExpiry.AssignProperties_From_CopyOnExpiryOption_STATUS(source.CopyOnExpiry)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_CopyOnExpiryOption_STATUS() to populate field CopyOnExpiry")
+		}
+		option.CopyOnExpiry = &copyOnExpiry
+	} else {
+		option.CopyOnExpiry = nil
+	}
+
+	// CustomCopy
+	if source.CustomCopy != nil {
+		var customCopy CustomCopyOption_STATUS
+		err := customCopy.AssignProperties_From_CustomCopyOption_STATUS(source.CustomCopy)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_CustomCopyOption_STATUS() to populate field CustomCopy")
+		}
+		option.CustomCopy = &customCopy
+	} else {
+		option.CustomCopy = nil
+	}
+
+	// ImmediateCopy
+	if source.ImmediateCopy != nil {
+		var immediateCopy ImmediateCopyOption_STATUS
+		err := immediateCopy.AssignProperties_From_ImmediateCopyOption_STATUS(source.ImmediateCopy)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ImmediateCopyOption_STATUS() to populate field ImmediateCopy")
+		}
+		option.ImmediateCopy = &immediateCopy
+	} else {
+		option.ImmediateCopy = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		option.PropertyBag = propertyBag
+	} else {
+		option.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCopyOption_STATUS interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForCopyOption_STATUS); ok {
+		err := augmentedOption.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CopyOption_STATUS populates the provided destination CopyOption_STATUS from our CopyOption_STATUS
+func (option *CopyOption_STATUS) AssignProperties_To_CopyOption_STATUS(destination *storage.CopyOption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(option.PropertyBag)
+
+	// CopyOnExpiry
+	if option.CopyOnExpiry != nil {
+		var copyOnExpiry storage.CopyOnExpiryOption_STATUS
+		err := option.CopyOnExpiry.AssignProperties_To_CopyOnExpiryOption_STATUS(&copyOnExpiry)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_CopyOnExpiryOption_STATUS() to populate field CopyOnExpiry")
+		}
+		destination.CopyOnExpiry = &copyOnExpiry
+	} else {
+		destination.CopyOnExpiry = nil
+	}
+
+	// CustomCopy
+	if option.CustomCopy != nil {
+		var customCopy storage.CustomCopyOption_STATUS
+		err := option.CustomCopy.AssignProperties_To_CustomCopyOption_STATUS(&customCopy)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_CustomCopyOption_STATUS() to populate field CustomCopy")
+		}
+		destination.CustomCopy = &customCopy
+	} else {
+		destination.CustomCopy = nil
+	}
+
+	// ImmediateCopy
+	if option.ImmediateCopy != nil {
+		var immediateCopy storage.ImmediateCopyOption_STATUS
+		err := option.ImmediateCopy.AssignProperties_To_ImmediateCopyOption_STATUS(&immediateCopy)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ImmediateCopyOption_STATUS() to populate field ImmediateCopy")
+		}
+		destination.ImmediateCopy = &immediateCopy
+	} else {
+		destination.ImmediateCopy = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCopyOption_STATUS interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForCopyOption_STATUS); ok {
+		err := augmentedOption.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.TaggingCriteria
@@ -487,6 +4469,138 @@ type TaggingCriteria struct {
 	TaggingPriority *int                   `json:"taggingPriority,omitempty"`
 }
 
+// AssignProperties_From_TaggingCriteria populates our TaggingCriteria from the provided source TaggingCriteria
+func (criteria *TaggingCriteria) AssignProperties_From_TaggingCriteria(source *storage.TaggingCriteria) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Criteria
+	if source.Criteria != nil {
+		criterionList := make([]BackupCriteria, len(source.Criteria))
+		for criterionIndex, criterionItem := range source.Criteria {
+			// Shadow the loop variable to avoid aliasing
+			criterionItem := criterionItem
+			var criterion BackupCriteria
+			err := criterion.AssignProperties_From_BackupCriteria(&criterionItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_BackupCriteria() to populate field Criteria")
+			}
+			criterionList[criterionIndex] = criterion
+		}
+		criteria.Criteria = criterionList
+	} else {
+		criteria.Criteria = nil
+	}
+
+	// IsDefault
+	if source.IsDefault != nil {
+		isDefault := *source.IsDefault
+		criteria.IsDefault = &isDefault
+	} else {
+		criteria.IsDefault = nil
+	}
+
+	// TagInfo
+	if source.TagInfo != nil {
+		var tagInfo RetentionTag
+		err := tagInfo.AssignProperties_From_RetentionTag(source.TagInfo)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_RetentionTag() to populate field TagInfo")
+		}
+		criteria.TagInfo = &tagInfo
+	} else {
+		criteria.TagInfo = nil
+	}
+
+	// TaggingPriority
+	criteria.TaggingPriority = genruntime.ClonePointerToInt(source.TaggingPriority)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		criteria.PropertyBag = propertyBag
+	} else {
+		criteria.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTaggingCriteria interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForTaggingCriteria); ok {
+		err := augmentedCriteria.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TaggingCriteria populates the provided destination TaggingCriteria from our TaggingCriteria
+func (criteria *TaggingCriteria) AssignProperties_To_TaggingCriteria(destination *storage.TaggingCriteria) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(criteria.PropertyBag)
+
+	// Criteria
+	if criteria.Criteria != nil {
+		criterionList := make([]storage.BackupCriteria, len(criteria.Criteria))
+		for criterionIndex, criterionItem := range criteria.Criteria {
+			// Shadow the loop variable to avoid aliasing
+			criterionItem := criterionItem
+			var criterion storage.BackupCriteria
+			err := criterionItem.AssignProperties_To_BackupCriteria(&criterion)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_BackupCriteria() to populate field Criteria")
+			}
+			criterionList[criterionIndex] = criterion
+		}
+		destination.Criteria = criterionList
+	} else {
+		destination.Criteria = nil
+	}
+
+	// IsDefault
+	if criteria.IsDefault != nil {
+		isDefault := *criteria.IsDefault
+		destination.IsDefault = &isDefault
+	} else {
+		destination.IsDefault = nil
+	}
+
+	// TagInfo
+	if criteria.TagInfo != nil {
+		var tagInfo storage.RetentionTag
+		err := criteria.TagInfo.AssignProperties_To_RetentionTag(&tagInfo)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_RetentionTag() to populate field TagInfo")
+		}
+		destination.TagInfo = &tagInfo
+	} else {
+		destination.TagInfo = nil
+	}
+
+	// TaggingPriority
+	destination.TaggingPriority = genruntime.ClonePointerToInt(criteria.TaggingPriority)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTaggingCriteria interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForTaggingCriteria); ok {
+		err := augmentedCriteria.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.TaggingCriteria_STATUS
 // Tagging criteria
 type TaggingCriteria_STATUS struct {
@@ -497,10 +4611,266 @@ type TaggingCriteria_STATUS struct {
 	TaggingPriority *int                    `json:"taggingPriority,omitempty"`
 }
 
+// AssignProperties_From_TaggingCriteria_STATUS populates our TaggingCriteria_STATUS from the provided source TaggingCriteria_STATUS
+func (criteria *TaggingCriteria_STATUS) AssignProperties_From_TaggingCriteria_STATUS(source *storage.TaggingCriteria_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Criteria
+	if source.Criteria != nil {
+		criterionList := make([]BackupCriteria_STATUS, len(source.Criteria))
+		for criterionIndex, criterionItem := range source.Criteria {
+			// Shadow the loop variable to avoid aliasing
+			criterionItem := criterionItem
+			var criterion BackupCriteria_STATUS
+			err := criterion.AssignProperties_From_BackupCriteria_STATUS(&criterionItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_BackupCriteria_STATUS() to populate field Criteria")
+			}
+			criterionList[criterionIndex] = criterion
+		}
+		criteria.Criteria = criterionList
+	} else {
+		criteria.Criteria = nil
+	}
+
+	// IsDefault
+	if source.IsDefault != nil {
+		isDefault := *source.IsDefault
+		criteria.IsDefault = &isDefault
+	} else {
+		criteria.IsDefault = nil
+	}
+
+	// TagInfo
+	if source.TagInfo != nil {
+		var tagInfo RetentionTag_STATUS
+		err := tagInfo.AssignProperties_From_RetentionTag_STATUS(source.TagInfo)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_RetentionTag_STATUS() to populate field TagInfo")
+		}
+		criteria.TagInfo = &tagInfo
+	} else {
+		criteria.TagInfo = nil
+	}
+
+	// TaggingPriority
+	criteria.TaggingPriority = genruntime.ClonePointerToInt(source.TaggingPriority)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		criteria.PropertyBag = propertyBag
+	} else {
+		criteria.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTaggingCriteria_STATUS interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForTaggingCriteria_STATUS); ok {
+		err := augmentedCriteria.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_TaggingCriteria_STATUS populates the provided destination TaggingCriteria_STATUS from our TaggingCriteria_STATUS
+func (criteria *TaggingCriteria_STATUS) AssignProperties_To_TaggingCriteria_STATUS(destination *storage.TaggingCriteria_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(criteria.PropertyBag)
+
+	// Criteria
+	if criteria.Criteria != nil {
+		criterionList := make([]storage.BackupCriteria_STATUS, len(criteria.Criteria))
+		for criterionIndex, criterionItem := range criteria.Criteria {
+			// Shadow the loop variable to avoid aliasing
+			criterionItem := criterionItem
+			var criterion storage.BackupCriteria_STATUS
+			err := criterionItem.AssignProperties_To_BackupCriteria_STATUS(&criterion)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_BackupCriteria_STATUS() to populate field Criteria")
+			}
+			criterionList[criterionIndex] = criterion
+		}
+		destination.Criteria = criterionList
+	} else {
+		destination.Criteria = nil
+	}
+
+	// IsDefault
+	if criteria.IsDefault != nil {
+		isDefault := *criteria.IsDefault
+		destination.IsDefault = &isDefault
+	} else {
+		destination.IsDefault = nil
+	}
+
+	// TagInfo
+	if criteria.TagInfo != nil {
+		var tagInfo storage.RetentionTag_STATUS
+		err := criteria.TagInfo.AssignProperties_To_RetentionTag_STATUS(&tagInfo)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_RetentionTag_STATUS() to populate field TagInfo")
+		}
+		destination.TagInfo = &tagInfo
+	} else {
+		destination.TagInfo = nil
+	}
+
+	// TaggingPriority
+	destination.TaggingPriority = genruntime.ClonePointerToInt(criteria.TaggingPriority)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForTaggingCriteria_STATUS interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForTaggingCriteria_STATUS); ok {
+		err := augmentedCriteria.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAbsoluteDeleteOption interface {
+	AssignPropertiesFrom(src *storage.AbsoluteDeleteOption) error
+	AssignPropertiesTo(dst *storage.AbsoluteDeleteOption) error
+}
+
+type augmentConversionForAbsoluteDeleteOption_STATUS interface {
+	AssignPropertiesFrom(src *storage.AbsoluteDeleteOption_STATUS) error
+	AssignPropertiesTo(dst *storage.AbsoluteDeleteOption_STATUS) error
+}
+
+type augmentConversionForAdhocBasedTaggingCriteria interface {
+	AssignPropertiesFrom(src *storage.AdhocBasedTaggingCriteria) error
+	AssignPropertiesTo(dst *storage.AdhocBasedTaggingCriteria) error
+}
+
+type augmentConversionForAdhocBasedTaggingCriteria_STATUS interface {
+	AssignPropertiesFrom(src *storage.AdhocBasedTaggingCriteria_STATUS) error
+	AssignPropertiesTo(dst *storage.AdhocBasedTaggingCriteria_STATUS) error
+}
+
+type augmentConversionForBackupSchedule interface {
+	AssignPropertiesFrom(src *storage.BackupSchedule) error
+	AssignPropertiesTo(dst *storage.BackupSchedule) error
+}
+
+type augmentConversionForBackupSchedule_STATUS interface {
+	AssignPropertiesFrom(src *storage.BackupSchedule_STATUS) error
+	AssignPropertiesTo(dst *storage.BackupSchedule_STATUS) error
+}
+
+type augmentConversionForCopyOption interface {
+	AssignPropertiesFrom(src *storage.CopyOption) error
+	AssignPropertiesTo(dst *storage.CopyOption) error
+}
+
+type augmentConversionForCopyOption_STATUS interface {
+	AssignPropertiesFrom(src *storage.CopyOption_STATUS) error
+	AssignPropertiesTo(dst *storage.CopyOption_STATUS) error
+}
+
+type augmentConversionForTaggingCriteria interface {
+	AssignPropertiesFrom(src *storage.TaggingCriteria) error
+	AssignPropertiesTo(dst *storage.TaggingCriteria) error
+}
+
+type augmentConversionForTaggingCriteria_STATUS interface {
+	AssignPropertiesFrom(src *storage.TaggingCriteria_STATUS) error
+	AssignPropertiesTo(dst *storage.TaggingCriteria_STATUS) error
+}
+
 // Storage version of v1api20230101.BackupCriteria
 type BackupCriteria struct {
 	PropertyBag                 genruntime.PropertyBag       `json:"$propertyBag,omitempty"`
 	ScheduleBasedBackupCriteria *ScheduleBasedBackupCriteria `json:"scheduleBasedBackupCriteria,omitempty"`
+}
+
+// AssignProperties_From_BackupCriteria populates our BackupCriteria from the provided source BackupCriteria
+func (criteria *BackupCriteria) AssignProperties_From_BackupCriteria(source *storage.BackupCriteria) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ScheduleBasedBackupCriteria
+	if source.ScheduleBasedBackupCriteria != nil {
+		var scheduleBasedBackupCriterion ScheduleBasedBackupCriteria
+		err := scheduleBasedBackupCriterion.AssignProperties_From_ScheduleBasedBackupCriteria(source.ScheduleBasedBackupCriteria)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ScheduleBasedBackupCriteria() to populate field ScheduleBasedBackupCriteria")
+		}
+		criteria.ScheduleBasedBackupCriteria = &scheduleBasedBackupCriterion
+	} else {
+		criteria.ScheduleBasedBackupCriteria = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		criteria.PropertyBag = propertyBag
+	} else {
+		criteria.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupCriteria interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForBackupCriteria); ok {
+		err := augmentedCriteria.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupCriteria populates the provided destination BackupCriteria from our BackupCriteria
+func (criteria *BackupCriteria) AssignProperties_To_BackupCriteria(destination *storage.BackupCriteria) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(criteria.PropertyBag)
+
+	// ScheduleBasedBackupCriteria
+	if criteria.ScheduleBasedBackupCriteria != nil {
+		var scheduleBasedBackupCriterion storage.ScheduleBasedBackupCriteria
+		err := criteria.ScheduleBasedBackupCriteria.AssignProperties_To_ScheduleBasedBackupCriteria(&scheduleBasedBackupCriterion)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ScheduleBasedBackupCriteria() to populate field ScheduleBasedBackupCriteria")
+		}
+		destination.ScheduleBasedBackupCriteria = &scheduleBasedBackupCriterion
+	} else {
+		destination.ScheduleBasedBackupCriteria = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupCriteria interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForBackupCriteria); ok {
+		err := augmentedCriteria.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.BackupCriteria_STATUS
@@ -509,16 +4879,202 @@ type BackupCriteria_STATUS struct {
 	ScheduleBasedBackupCriteria *ScheduleBasedBackupCriteria_STATUS `json:"scheduleBasedBackupCriteria,omitempty"`
 }
 
+// AssignProperties_From_BackupCriteria_STATUS populates our BackupCriteria_STATUS from the provided source BackupCriteria_STATUS
+func (criteria *BackupCriteria_STATUS) AssignProperties_From_BackupCriteria_STATUS(source *storage.BackupCriteria_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ScheduleBasedBackupCriteria
+	if source.ScheduleBasedBackupCriteria != nil {
+		var scheduleBasedBackupCriterion ScheduleBasedBackupCriteria_STATUS
+		err := scheduleBasedBackupCriterion.AssignProperties_From_ScheduleBasedBackupCriteria_STATUS(source.ScheduleBasedBackupCriteria)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ScheduleBasedBackupCriteria_STATUS() to populate field ScheduleBasedBackupCriteria")
+		}
+		criteria.ScheduleBasedBackupCriteria = &scheduleBasedBackupCriterion
+	} else {
+		criteria.ScheduleBasedBackupCriteria = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		criteria.PropertyBag = propertyBag
+	} else {
+		criteria.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupCriteria_STATUS interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForBackupCriteria_STATUS); ok {
+		err := augmentedCriteria.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupCriteria_STATUS populates the provided destination BackupCriteria_STATUS from our BackupCriteria_STATUS
+func (criteria *BackupCriteria_STATUS) AssignProperties_To_BackupCriteria_STATUS(destination *storage.BackupCriteria_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(criteria.PropertyBag)
+
+	// ScheduleBasedBackupCriteria
+	if criteria.ScheduleBasedBackupCriteria != nil {
+		var scheduleBasedBackupCriterion storage.ScheduleBasedBackupCriteria_STATUS
+		err := criteria.ScheduleBasedBackupCriteria.AssignProperties_To_ScheduleBasedBackupCriteria_STATUS(&scheduleBasedBackupCriterion)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ScheduleBasedBackupCriteria_STATUS() to populate field ScheduleBasedBackupCriteria")
+		}
+		destination.ScheduleBasedBackupCriteria = &scheduleBasedBackupCriterion
+	} else {
+		destination.ScheduleBasedBackupCriteria = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupCriteria_STATUS interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForBackupCriteria_STATUS); ok {
+		err := augmentedCriteria.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.CopyOnExpiryOption
 type CopyOnExpiryOption struct {
 	ObjectType  *string                `json:"objectType,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_CopyOnExpiryOption populates our CopyOnExpiryOption from the provided source CopyOnExpiryOption
+func (option *CopyOnExpiryOption) AssignProperties_From_CopyOnExpiryOption(source *storage.CopyOnExpiryOption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ObjectType
+	option.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		option.PropertyBag = propertyBag
+	} else {
+		option.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCopyOnExpiryOption interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForCopyOnExpiryOption); ok {
+		err := augmentedOption.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CopyOnExpiryOption populates the provided destination CopyOnExpiryOption from our CopyOnExpiryOption
+func (option *CopyOnExpiryOption) AssignProperties_To_CopyOnExpiryOption(destination *storage.CopyOnExpiryOption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(option.PropertyBag)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(option.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCopyOnExpiryOption interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForCopyOnExpiryOption); ok {
+		err := augmentedOption.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.CopyOnExpiryOption_STATUS
 type CopyOnExpiryOption_STATUS struct {
 	ObjectType  *string                `json:"objectType,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_CopyOnExpiryOption_STATUS populates our CopyOnExpiryOption_STATUS from the provided source CopyOnExpiryOption_STATUS
+func (option *CopyOnExpiryOption_STATUS) AssignProperties_From_CopyOnExpiryOption_STATUS(source *storage.CopyOnExpiryOption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ObjectType
+	option.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		option.PropertyBag = propertyBag
+	} else {
+		option.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCopyOnExpiryOption_STATUS interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForCopyOnExpiryOption_STATUS); ok {
+		err := augmentedOption.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CopyOnExpiryOption_STATUS populates the provided destination CopyOnExpiryOption_STATUS from our CopyOnExpiryOption_STATUS
+func (option *CopyOnExpiryOption_STATUS) AssignProperties_To_CopyOnExpiryOption_STATUS(destination *storage.CopyOnExpiryOption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(option.PropertyBag)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(option.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCopyOnExpiryOption_STATUS interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForCopyOnExpiryOption_STATUS); ok {
+		err := augmentedOption.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.CustomCopyOption
@@ -528,11 +5084,135 @@ type CustomCopyOption struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_CustomCopyOption populates our CustomCopyOption from the provided source CustomCopyOption
+func (option *CustomCopyOption) AssignProperties_From_CustomCopyOption(source *storage.CustomCopyOption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Duration
+	option.Duration = genruntime.ClonePointerToString(source.Duration)
+
+	// ObjectType
+	option.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		option.PropertyBag = propertyBag
+	} else {
+		option.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCustomCopyOption interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForCustomCopyOption); ok {
+		err := augmentedOption.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CustomCopyOption populates the provided destination CustomCopyOption from our CustomCopyOption
+func (option *CustomCopyOption) AssignProperties_To_CustomCopyOption(destination *storage.CustomCopyOption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(option.PropertyBag)
+
+	// Duration
+	destination.Duration = genruntime.ClonePointerToString(option.Duration)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(option.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCustomCopyOption interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForCustomCopyOption); ok {
+		err := augmentedOption.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.CustomCopyOption_STATUS
 type CustomCopyOption_STATUS struct {
 	Duration    *string                `json:"duration,omitempty"`
 	ObjectType  *string                `json:"objectType,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_CustomCopyOption_STATUS populates our CustomCopyOption_STATUS from the provided source CustomCopyOption_STATUS
+func (option *CustomCopyOption_STATUS) AssignProperties_From_CustomCopyOption_STATUS(source *storage.CustomCopyOption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Duration
+	option.Duration = genruntime.ClonePointerToString(source.Duration)
+
+	// ObjectType
+	option.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		option.PropertyBag = propertyBag
+	} else {
+		option.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCustomCopyOption_STATUS interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForCustomCopyOption_STATUS); ok {
+		err := augmentedOption.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CustomCopyOption_STATUS populates the provided destination CustomCopyOption_STATUS from our CustomCopyOption_STATUS
+func (option *CustomCopyOption_STATUS) AssignProperties_To_CustomCopyOption_STATUS(destination *storage.CustomCopyOption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(option.PropertyBag)
+
+	// Duration
+	destination.Duration = genruntime.ClonePointerToString(option.Duration)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(option.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCustomCopyOption_STATUS interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForCustomCopyOption_STATUS); ok {
+		err := augmentedOption.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.ImmediateCopyOption
@@ -541,10 +5221,122 @@ type ImmediateCopyOption struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_ImmediateCopyOption populates our ImmediateCopyOption from the provided source ImmediateCopyOption
+func (option *ImmediateCopyOption) AssignProperties_From_ImmediateCopyOption(source *storage.ImmediateCopyOption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ObjectType
+	option.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		option.PropertyBag = propertyBag
+	} else {
+		option.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForImmediateCopyOption interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForImmediateCopyOption); ok {
+		err := augmentedOption.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ImmediateCopyOption populates the provided destination ImmediateCopyOption from our ImmediateCopyOption
+func (option *ImmediateCopyOption) AssignProperties_To_ImmediateCopyOption(destination *storage.ImmediateCopyOption) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(option.PropertyBag)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(option.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForImmediateCopyOption interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForImmediateCopyOption); ok {
+		err := augmentedOption.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.ImmediateCopyOption_STATUS
 type ImmediateCopyOption_STATUS struct {
 	ObjectType  *string                `json:"objectType,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_ImmediateCopyOption_STATUS populates our ImmediateCopyOption_STATUS from the provided source ImmediateCopyOption_STATUS
+func (option *ImmediateCopyOption_STATUS) AssignProperties_From_ImmediateCopyOption_STATUS(source *storage.ImmediateCopyOption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ObjectType
+	option.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		option.PropertyBag = propertyBag
+	} else {
+		option.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForImmediateCopyOption_STATUS interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForImmediateCopyOption_STATUS); ok {
+		err := augmentedOption.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ImmediateCopyOption_STATUS populates the provided destination ImmediateCopyOption_STATUS from our ImmediateCopyOption_STATUS
+func (option *ImmediateCopyOption_STATUS) AssignProperties_To_ImmediateCopyOption_STATUS(destination *storage.ImmediateCopyOption_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(option.PropertyBag)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(option.ObjectType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForImmediateCopyOption_STATUS interface (if implemented) to customize the conversion
+	var optionAsAny any = option
+	if augmentedOption, ok := optionAsAny.(augmentConversionForImmediateCopyOption_STATUS); ok {
+		err := augmentedOption.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.RetentionTag
@@ -554,6 +5346,62 @@ type RetentionTag struct {
 	TagName     *string                `json:"tagName,omitempty"`
 }
 
+// AssignProperties_From_RetentionTag populates our RetentionTag from the provided source RetentionTag
+func (retentionTag *RetentionTag) AssignProperties_From_RetentionTag(source *storage.RetentionTag) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// TagName
+	retentionTag.TagName = genruntime.ClonePointerToString(source.TagName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		retentionTag.PropertyBag = propertyBag
+	} else {
+		retentionTag.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRetentionTag interface (if implemented) to customize the conversion
+	var retentionTagAsAny any = retentionTag
+	if augmentedRetentionTag, ok := retentionTagAsAny.(augmentConversionForRetentionTag); ok {
+		err := augmentedRetentionTag.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RetentionTag populates the provided destination RetentionTag from our RetentionTag
+func (retentionTag *RetentionTag) AssignProperties_To_RetentionTag(destination *storage.RetentionTag) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(retentionTag.PropertyBag)
+
+	// TagName
+	destination.TagName = genruntime.ClonePointerToString(retentionTag.TagName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRetentionTag interface (if implemented) to customize the conversion
+	var retentionTagAsAny any = retentionTag
+	if augmentedRetentionTag, ok := retentionTagAsAny.(augmentConversionForRetentionTag); ok {
+		err := augmentedRetentionTag.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.RetentionTag_STATUS
 // Retention tag
 type RetentionTag_STATUS struct {
@@ -561,6 +5409,124 @@ type RetentionTag_STATUS struct {
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	TagName     *string                `json:"tagName,omitempty"`
+}
+
+// AssignProperties_From_RetentionTag_STATUS populates our RetentionTag_STATUS from the provided source RetentionTag_STATUS
+func (retentionTag *RetentionTag_STATUS) AssignProperties_From_RetentionTag_STATUS(source *storage.RetentionTag_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ETag
+	retentionTag.ETag = genruntime.ClonePointerToString(source.ETag)
+
+	// Id
+	retentionTag.Id = genruntime.ClonePointerToString(source.Id)
+
+	// TagName
+	retentionTag.TagName = genruntime.ClonePointerToString(source.TagName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		retentionTag.PropertyBag = propertyBag
+	} else {
+		retentionTag.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRetentionTag_STATUS interface (if implemented) to customize the conversion
+	var retentionTagAsAny any = retentionTag
+	if augmentedRetentionTag, ok := retentionTagAsAny.(augmentConversionForRetentionTag_STATUS); ok {
+		err := augmentedRetentionTag.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RetentionTag_STATUS populates the provided destination RetentionTag_STATUS from our RetentionTag_STATUS
+func (retentionTag *RetentionTag_STATUS) AssignProperties_To_RetentionTag_STATUS(destination *storage.RetentionTag_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(retentionTag.PropertyBag)
+
+	// ETag
+	destination.ETag = genruntime.ClonePointerToString(retentionTag.ETag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(retentionTag.Id)
+
+	// TagName
+	destination.TagName = genruntime.ClonePointerToString(retentionTag.TagName)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRetentionTag_STATUS interface (if implemented) to customize the conversion
+	var retentionTagAsAny any = retentionTag
+	if augmentedRetentionTag, ok := retentionTagAsAny.(augmentConversionForRetentionTag_STATUS); ok {
+		err := augmentedRetentionTag.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForBackupCriteria interface {
+	AssignPropertiesFrom(src *storage.BackupCriteria) error
+	AssignPropertiesTo(dst *storage.BackupCriteria) error
+}
+
+type augmentConversionForBackupCriteria_STATUS interface {
+	AssignPropertiesFrom(src *storage.BackupCriteria_STATUS) error
+	AssignPropertiesTo(dst *storage.BackupCriteria_STATUS) error
+}
+
+type augmentConversionForCopyOnExpiryOption interface {
+	AssignPropertiesFrom(src *storage.CopyOnExpiryOption) error
+	AssignPropertiesTo(dst *storage.CopyOnExpiryOption) error
+}
+
+type augmentConversionForCopyOnExpiryOption_STATUS interface {
+	AssignPropertiesFrom(src *storage.CopyOnExpiryOption_STATUS) error
+	AssignPropertiesTo(dst *storage.CopyOnExpiryOption_STATUS) error
+}
+
+type augmentConversionForCustomCopyOption interface {
+	AssignPropertiesFrom(src *storage.CustomCopyOption) error
+	AssignPropertiesTo(dst *storage.CustomCopyOption) error
+}
+
+type augmentConversionForCustomCopyOption_STATUS interface {
+	AssignPropertiesFrom(src *storage.CustomCopyOption_STATUS) error
+	AssignPropertiesTo(dst *storage.CustomCopyOption_STATUS) error
+}
+
+type augmentConversionForImmediateCopyOption interface {
+	AssignPropertiesFrom(src *storage.ImmediateCopyOption) error
+	AssignPropertiesTo(dst *storage.ImmediateCopyOption) error
+}
+
+type augmentConversionForImmediateCopyOption_STATUS interface {
+	AssignPropertiesFrom(src *storage.ImmediateCopyOption_STATUS) error
+	AssignPropertiesTo(dst *storage.ImmediateCopyOption_STATUS) error
+}
+
+type augmentConversionForRetentionTag interface {
+	AssignPropertiesFrom(src *storage.RetentionTag) error
+	AssignPropertiesTo(dst *storage.RetentionTag) error
+}
+
+type augmentConversionForRetentionTag_STATUS interface {
+	AssignPropertiesFrom(src *storage.RetentionTag_STATUS) error
+	AssignPropertiesTo(dst *storage.RetentionTag_STATUS) error
 }
 
 // Storage version of v1api20230101.ScheduleBasedBackupCriteria
@@ -575,6 +5541,128 @@ type ScheduleBasedBackupCriteria struct {
 	WeeksOfTheMonth  []string               `json:"weeksOfTheMonth,omitempty"`
 }
 
+// AssignProperties_From_ScheduleBasedBackupCriteria populates our ScheduleBasedBackupCriteria from the provided source ScheduleBasedBackupCriteria
+func (criteria *ScheduleBasedBackupCriteria) AssignProperties_From_ScheduleBasedBackupCriteria(source *storage.ScheduleBasedBackupCriteria) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AbsoluteCriteria
+	criteria.AbsoluteCriteria = genruntime.CloneSliceOfString(source.AbsoluteCriteria)
+
+	// DaysOfMonth
+	if source.DaysOfMonth != nil {
+		daysOfMonthList := make([]Day, len(source.DaysOfMonth))
+		for daysOfMonthIndex, daysOfMonthItem := range source.DaysOfMonth {
+			// Shadow the loop variable to avoid aliasing
+			daysOfMonthItem := daysOfMonthItem
+			var daysOfMonth Day
+			err := daysOfMonth.AssignProperties_From_Day(&daysOfMonthItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_Day() to populate field DaysOfMonth")
+			}
+			daysOfMonthList[daysOfMonthIndex] = daysOfMonth
+		}
+		criteria.DaysOfMonth = daysOfMonthList
+	} else {
+		criteria.DaysOfMonth = nil
+	}
+
+	// DaysOfTheWeek
+	criteria.DaysOfTheWeek = genruntime.CloneSliceOfString(source.DaysOfTheWeek)
+
+	// MonthsOfYear
+	criteria.MonthsOfYear = genruntime.CloneSliceOfString(source.MonthsOfYear)
+
+	// ObjectType
+	criteria.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// ScheduleTimes
+	criteria.ScheduleTimes = genruntime.CloneSliceOfString(source.ScheduleTimes)
+
+	// WeeksOfTheMonth
+	criteria.WeeksOfTheMonth = genruntime.CloneSliceOfString(source.WeeksOfTheMonth)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		criteria.PropertyBag = propertyBag
+	} else {
+		criteria.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForScheduleBasedBackupCriteria interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForScheduleBasedBackupCriteria); ok {
+		err := augmentedCriteria.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ScheduleBasedBackupCriteria populates the provided destination ScheduleBasedBackupCriteria from our ScheduleBasedBackupCriteria
+func (criteria *ScheduleBasedBackupCriteria) AssignProperties_To_ScheduleBasedBackupCriteria(destination *storage.ScheduleBasedBackupCriteria) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(criteria.PropertyBag)
+
+	// AbsoluteCriteria
+	destination.AbsoluteCriteria = genruntime.CloneSliceOfString(criteria.AbsoluteCriteria)
+
+	// DaysOfMonth
+	if criteria.DaysOfMonth != nil {
+		daysOfMonthList := make([]storage.Day, len(criteria.DaysOfMonth))
+		for daysOfMonthIndex, daysOfMonthItem := range criteria.DaysOfMonth {
+			// Shadow the loop variable to avoid aliasing
+			daysOfMonthItem := daysOfMonthItem
+			var daysOfMonth storage.Day
+			err := daysOfMonthItem.AssignProperties_To_Day(&daysOfMonth)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_Day() to populate field DaysOfMonth")
+			}
+			daysOfMonthList[daysOfMonthIndex] = daysOfMonth
+		}
+		destination.DaysOfMonth = daysOfMonthList
+	} else {
+		destination.DaysOfMonth = nil
+	}
+
+	// DaysOfTheWeek
+	destination.DaysOfTheWeek = genruntime.CloneSliceOfString(criteria.DaysOfTheWeek)
+
+	// MonthsOfYear
+	destination.MonthsOfYear = genruntime.CloneSliceOfString(criteria.MonthsOfYear)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(criteria.ObjectType)
+
+	// ScheduleTimes
+	destination.ScheduleTimes = genruntime.CloneSliceOfString(criteria.ScheduleTimes)
+
+	// WeeksOfTheMonth
+	destination.WeeksOfTheMonth = genruntime.CloneSliceOfString(criteria.WeeksOfTheMonth)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForScheduleBasedBackupCriteria interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForScheduleBasedBackupCriteria); ok {
+		err := augmentedCriteria.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.ScheduleBasedBackupCriteria_STATUS
 type ScheduleBasedBackupCriteria_STATUS struct {
 	AbsoluteCriteria []string               `json:"absoluteCriteria,omitempty"`
@@ -587,6 +5675,138 @@ type ScheduleBasedBackupCriteria_STATUS struct {
 	WeeksOfTheMonth  []string               `json:"weeksOfTheMonth,omitempty"`
 }
 
+// AssignProperties_From_ScheduleBasedBackupCriteria_STATUS populates our ScheduleBasedBackupCriteria_STATUS from the provided source ScheduleBasedBackupCriteria_STATUS
+func (criteria *ScheduleBasedBackupCriteria_STATUS) AssignProperties_From_ScheduleBasedBackupCriteria_STATUS(source *storage.ScheduleBasedBackupCriteria_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AbsoluteCriteria
+	criteria.AbsoluteCriteria = genruntime.CloneSliceOfString(source.AbsoluteCriteria)
+
+	// DaysOfMonth
+	if source.DaysOfMonth != nil {
+		daysOfMonthList := make([]Day_STATUS, len(source.DaysOfMonth))
+		for daysOfMonthIndex, daysOfMonthItem := range source.DaysOfMonth {
+			// Shadow the loop variable to avoid aliasing
+			daysOfMonthItem := daysOfMonthItem
+			var daysOfMonth Day_STATUS
+			err := daysOfMonth.AssignProperties_From_Day_STATUS(&daysOfMonthItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_Day_STATUS() to populate field DaysOfMonth")
+			}
+			daysOfMonthList[daysOfMonthIndex] = daysOfMonth
+		}
+		criteria.DaysOfMonth = daysOfMonthList
+	} else {
+		criteria.DaysOfMonth = nil
+	}
+
+	// DaysOfTheWeek
+	criteria.DaysOfTheWeek = genruntime.CloneSliceOfString(source.DaysOfTheWeek)
+
+	// MonthsOfYear
+	criteria.MonthsOfYear = genruntime.CloneSliceOfString(source.MonthsOfYear)
+
+	// ObjectType
+	criteria.ObjectType = genruntime.ClonePointerToString(source.ObjectType)
+
+	// ScheduleTimes
+	criteria.ScheduleTimes = genruntime.CloneSliceOfString(source.ScheduleTimes)
+
+	// WeeksOfTheMonth
+	criteria.WeeksOfTheMonth = genruntime.CloneSliceOfString(source.WeeksOfTheMonth)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		criteria.PropertyBag = propertyBag
+	} else {
+		criteria.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForScheduleBasedBackupCriteria_STATUS interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForScheduleBasedBackupCriteria_STATUS); ok {
+		err := augmentedCriteria.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ScheduleBasedBackupCriteria_STATUS populates the provided destination ScheduleBasedBackupCriteria_STATUS from our ScheduleBasedBackupCriteria_STATUS
+func (criteria *ScheduleBasedBackupCriteria_STATUS) AssignProperties_To_ScheduleBasedBackupCriteria_STATUS(destination *storage.ScheduleBasedBackupCriteria_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(criteria.PropertyBag)
+
+	// AbsoluteCriteria
+	destination.AbsoluteCriteria = genruntime.CloneSliceOfString(criteria.AbsoluteCriteria)
+
+	// DaysOfMonth
+	if criteria.DaysOfMonth != nil {
+		daysOfMonthList := make([]storage.Day_STATUS, len(criteria.DaysOfMonth))
+		for daysOfMonthIndex, daysOfMonthItem := range criteria.DaysOfMonth {
+			// Shadow the loop variable to avoid aliasing
+			daysOfMonthItem := daysOfMonthItem
+			var daysOfMonth storage.Day_STATUS
+			err := daysOfMonthItem.AssignProperties_To_Day_STATUS(&daysOfMonth)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_Day_STATUS() to populate field DaysOfMonth")
+			}
+			daysOfMonthList[daysOfMonthIndex] = daysOfMonth
+		}
+		destination.DaysOfMonth = daysOfMonthList
+	} else {
+		destination.DaysOfMonth = nil
+	}
+
+	// DaysOfTheWeek
+	destination.DaysOfTheWeek = genruntime.CloneSliceOfString(criteria.DaysOfTheWeek)
+
+	// MonthsOfYear
+	destination.MonthsOfYear = genruntime.CloneSliceOfString(criteria.MonthsOfYear)
+
+	// ObjectType
+	destination.ObjectType = genruntime.ClonePointerToString(criteria.ObjectType)
+
+	// ScheduleTimes
+	destination.ScheduleTimes = genruntime.CloneSliceOfString(criteria.ScheduleTimes)
+
+	// WeeksOfTheMonth
+	destination.WeeksOfTheMonth = genruntime.CloneSliceOfString(criteria.WeeksOfTheMonth)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForScheduleBasedBackupCriteria_STATUS interface (if implemented) to customize the conversion
+	var criteriaAsAny any = criteria
+	if augmentedCriteria, ok := criteriaAsAny.(augmentConversionForScheduleBasedBackupCriteria_STATUS); ok {
+		err := augmentedCriteria.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForScheduleBasedBackupCriteria interface {
+	AssignPropertiesFrom(src *storage.ScheduleBasedBackupCriteria) error
+	AssignPropertiesTo(dst *storage.ScheduleBasedBackupCriteria) error
+}
+
+type augmentConversionForScheduleBasedBackupCriteria_STATUS interface {
+	AssignPropertiesFrom(src *storage.ScheduleBasedBackupCriteria_STATUS) error
+	AssignPropertiesTo(dst *storage.ScheduleBasedBackupCriteria_STATUS) error
+}
+
 // Storage version of v1api20230101.Day
 // Day of the week
 type Day struct {
@@ -595,12 +5815,166 @@ type Day struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_Day populates our Day from the provided source Day
+func (day *Day) AssignProperties_From_Day(source *storage.Day) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Date
+	day.Date = genruntime.ClonePointerToInt(source.Date)
+
+	// IsLast
+	if source.IsLast != nil {
+		isLast := *source.IsLast
+		day.IsLast = &isLast
+	} else {
+		day.IsLast = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		day.PropertyBag = propertyBag
+	} else {
+		day.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDay interface (if implemented) to customize the conversion
+	var dayAsAny any = day
+	if augmentedDay, ok := dayAsAny.(augmentConversionForDay); ok {
+		err := augmentedDay.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Day populates the provided destination Day from our Day
+func (day *Day) AssignProperties_To_Day(destination *storage.Day) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(day.PropertyBag)
+
+	// Date
+	destination.Date = genruntime.ClonePointerToInt(day.Date)
+
+	// IsLast
+	if day.IsLast != nil {
+		isLast := *day.IsLast
+		destination.IsLast = &isLast
+	} else {
+		destination.IsLast = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDay interface (if implemented) to customize the conversion
+	var dayAsAny any = day
+	if augmentedDay, ok := dayAsAny.(augmentConversionForDay); ok {
+		err := augmentedDay.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.Day_STATUS
 // Day of the week
 type Day_STATUS struct {
 	Date        *int                   `json:"date,omitempty"`
 	IsLast      *bool                  `json:"isLast,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_Day_STATUS populates our Day_STATUS from the provided source Day_STATUS
+func (day *Day_STATUS) AssignProperties_From_Day_STATUS(source *storage.Day_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Date
+	day.Date = genruntime.ClonePointerToInt(source.Date)
+
+	// IsLast
+	if source.IsLast != nil {
+		isLast := *source.IsLast
+		day.IsLast = &isLast
+	} else {
+		day.IsLast = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		day.PropertyBag = propertyBag
+	} else {
+		day.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDay_STATUS interface (if implemented) to customize the conversion
+	var dayAsAny any = day
+	if augmentedDay, ok := dayAsAny.(augmentConversionForDay_STATUS); ok {
+		err := augmentedDay.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Day_STATUS populates the provided destination Day_STATUS from our Day_STATUS
+func (day *Day_STATUS) AssignProperties_To_Day_STATUS(destination *storage.Day_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(day.PropertyBag)
+
+	// Date
+	destination.Date = genruntime.ClonePointerToInt(day.Date)
+
+	// IsLast
+	if day.IsLast != nil {
+		isLast := *day.IsLast
+		destination.IsLast = &isLast
+	} else {
+		destination.IsLast = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDay_STATUS interface (if implemented) to customize the conversion
+	var dayAsAny any = day
+	if augmentedDay, ok := dayAsAny.(augmentConversionForDay_STATUS); ok {
+		err := augmentedDay.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForDay interface {
+	AssignPropertiesFrom(src *storage.Day) error
+	AssignPropertiesTo(dst *storage.Day) error
+}
+
+type augmentConversionForDay_STATUS interface {
+	AssignPropertiesFrom(src *storage.Day_STATUS) error
+	AssignPropertiesTo(dst *storage.Day_STATUS) error
 }
 
 func init() {

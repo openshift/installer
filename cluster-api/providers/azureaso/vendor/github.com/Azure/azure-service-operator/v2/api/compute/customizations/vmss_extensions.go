@@ -28,15 +28,18 @@ import (
 
 var _ extensions.ErrorClassifier = &VirtualMachineScaleSetExtension{}
 
-var rawChildCollectionPath = []string{"properties", "virtualMachineProfile", "extensionProfile", "extensions"}
-var childCollectionPathARM = []string{"Properties", "VirtualMachineProfile", "ExtensionProfile", "Extensions"}
+var (
+	rawChildCollectionPath = []string{"properties", "virtualMachineProfile", "extensionProfile", "extensions"}
+	childCollectionPathARM = []string{"Properties", "VirtualMachineProfile", "ExtensionProfile", "Extensions"}
+)
 
 // ClassifyError evaluates the provided error, returning whether it is fatal or can be retried.
 func (e *VirtualMachineScaleSetExtension) ClassifyError(
 	cloudError *genericarmclient.CloudError,
 	apiVersion string,
 	log logr.Logger,
-	next extensions.ErrorClassifierFunc) (core.CloudErrorDetails, error) {
+	next extensions.ErrorClassifierFunc,
+) (core.CloudErrorDetails, error) {
 	details, err := next(cloudError)
 	if err != nil {
 		return core.CloudErrorDetails{}, err

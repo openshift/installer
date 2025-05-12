@@ -23,11 +23,12 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/common/labels"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const serviceName = "virtualnetworks"
@@ -70,7 +71,10 @@ func postCreateOrUpdateResourceHook(ctx context.Context, scope VNetScope, existi
 		return errors.Wrap(err, "failed to list subnets")
 	}
 	for _, subnet := range subnets.Items {
-		scope.UpdateSubnetCIDRs(subnet.AzureName(), converters.GetSubnetAddresses(subnet))
+		statusASOCIDRs := converters.GetSubnetAddresses(subnet)
+		if len(statusASOCIDRs) != 0 {
+			scope.UpdateSubnetCIDRs(subnet.AzureName(), statusASOCIDRs)
+		}
 	}
 	// Only update the vnet's CIDRBlocks when we also updated subnets' since the vnet is created before
 	// subnets to prevent an updated vnet CIDR from invalidating subnet CIDRs that were defaulted and do not

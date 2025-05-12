@@ -5,10 +5,14 @@ package v1api20200930
 
 import (
 	"fmt"
-	v20200930s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20200930/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/compute/v1api20200930/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/compute/v1api20200930/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,22 +53,36 @@ var _ conversion.Convertible = &Snapshot{}
 
 // ConvertFrom populates our Snapshot from the provided hub Snapshot
 func (snapshot *Snapshot) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20200930s.Snapshot)
-	if !ok {
-		return fmt.Errorf("expected compute/v1api20200930/storage/Snapshot but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.Snapshot
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return snapshot.AssignProperties_From_Snapshot(source)
+	err = snapshot.AssignProperties_From_Snapshot(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to snapshot")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub Snapshot from our Snapshot
 func (snapshot *Snapshot) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20200930s.Snapshot)
-	if !ok {
-		return fmt.Errorf("expected compute/v1api20200930/storage/Snapshot but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.Snapshot
+	err := snapshot.AssignProperties_To_Snapshot(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from snapshot")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return snapshot.AssignProperties_To_Snapshot(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-compute-azure-com-v1api20200930-snapshot,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=compute.azure.com,resources=snapshots,verbs=create;update,versions=v1api20200930,name=default.v1api20200930.snapshots.compute.azure.com,admissionReviewVersions=v1
@@ -90,15 +108,24 @@ func (snapshot *Snapshot) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the Snapshot resource
 func (snapshot *Snapshot) defaultImpl() { snapshot.defaultAzureName() }
 
-var _ genruntime.ImportableResource = &Snapshot{}
+var _ configmaps.Exporter = &Snapshot{}
 
-// InitializeSpec initializes the spec for this resource from the given status
-func (snapshot *Snapshot) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Snapshot_STATUS); ok {
-		return snapshot.Spec.Initialize_From_Snapshot_STATUS(s)
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (snapshot *Snapshot) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if snapshot.Spec.OperatorSpec == nil {
+		return nil
 	}
+	return snapshot.Spec.OperatorSpec.ConfigMapExpressions
+}
 
-	return fmt.Errorf("expected Status of type Snapshot_STATUS but received %T instead", status)
+var _ secrets.Exporter = &Snapshot{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (snapshot *Snapshot) SecretDestinationExpressions() []*core.DestinationExpression {
+	if snapshot.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return snapshot.Spec.OperatorSpec.SecretExpressions
 }
 
 var _ genruntime.KubernetesResource = &Snapshot{}
@@ -110,7 +137,7 @@ func (snapshot *Snapshot) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2020-09-30"
 func (snapshot Snapshot) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2020-09-30"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -208,7 +235,7 @@ func (snapshot *Snapshot) ValidateUpdate(old runtime.Object) (admission.Warnings
 
 // createValidations validates the creation of the resource
 func (snapshot *Snapshot) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){snapshot.validateResourceReferences, snapshot.validateOwnerReference}
+	return []func() (admission.Warnings, error){snapshot.validateResourceReferences, snapshot.validateOwnerReference, snapshot.validateSecretDestinations, snapshot.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +253,21 @@ func (snapshot *Snapshot) updateValidations() []func(old runtime.Object) (admiss
 		func(old runtime.Object) (admission.Warnings, error) {
 			return snapshot.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return snapshot.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return snapshot.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (snapshot *Snapshot) validateConfigMapDestinations() (admission.Warnings, error) {
+	if snapshot.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(snapshot, nil, snapshot.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -243,6 +284,14 @@ func (snapshot *Snapshot) validateResourceReferences() (admission.Warnings, erro
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (snapshot *Snapshot) validateSecretDestinations() (admission.Warnings, error) {
+	if snapshot.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(snapshot, nil, snapshot.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (snapshot *Snapshot) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*Snapshot)
@@ -254,7 +303,7 @@ func (snapshot *Snapshot) validateWriteOnceProperties(old runtime.Object) (admis
 }
 
 // AssignProperties_From_Snapshot populates our Snapshot from the provided source Snapshot
-func (snapshot *Snapshot) AssignProperties_From_Snapshot(source *v20200930s.Snapshot) error {
+func (snapshot *Snapshot) AssignProperties_From_Snapshot(source *storage.Snapshot) error {
 
 	// ObjectMeta
 	snapshot.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -280,13 +329,13 @@ func (snapshot *Snapshot) AssignProperties_From_Snapshot(source *v20200930s.Snap
 }
 
 // AssignProperties_To_Snapshot populates the provided destination Snapshot from our Snapshot
-func (snapshot *Snapshot) AssignProperties_To_Snapshot(destination *v20200930s.Snapshot) error {
+func (snapshot *Snapshot) AssignProperties_To_Snapshot(destination *storage.Snapshot) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *snapshot.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20200930s.Snapshot_Spec
+	var spec storage.Snapshot_Spec
 	err := snapshot.Spec.AssignProperties_To_Snapshot_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Snapshot_Spec() to populate field Spec")
@@ -294,7 +343,7 @@ func (snapshot *Snapshot) AssignProperties_To_Snapshot(destination *v20200930s.S
 	destination.Spec = spec
 
 	// Status
-	var status v20200930s.Snapshot_STATUS
+	var status storage.Snapshot_STATUS
 	err = snapshot.Status.AssignProperties_To_Snapshot_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Snapshot_STATUS() to populate field Status")
@@ -368,6 +417,10 @@ type Snapshot_Spec struct {
 	// NetworkAccessPolicy: Policy for accessing the disk via network.
 	NetworkAccessPolicy *NetworkAccessPolicy `json:"networkAccessPolicy,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *SnapshotOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// OsType: The Operating System type.
 	OsType *SnapshotProperties_OsType `json:"osType,omitempty"`
 
@@ -395,7 +448,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 	if snapshot == nil {
 		return nil, nil
 	}
-	result := &Snapshot_Spec_ARM{}
+	result := &arm.Snapshot_Spec{}
 
 	// Set property "ExtendedLocation":
 	if snapshot.ExtendedLocation != nil {
@@ -403,7 +456,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		if err != nil {
 			return nil, err
 		}
-		extendedLocation := *extendedLocation_ARM.(*ExtendedLocation_ARM)
+		extendedLocation := *extendedLocation_ARM.(*arm.ExtendedLocation)
 		result.ExtendedLocation = &extendedLocation
 	}
 
@@ -428,14 +481,14 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		snapshot.NetworkAccessPolicy != nil ||
 		snapshot.OsType != nil ||
 		snapshot.PurchasePlan != nil {
-		result.Properties = &SnapshotProperties_ARM{}
+		result.Properties = &arm.SnapshotProperties{}
 	}
 	if snapshot.CreationData != nil {
 		creationData_ARM, err := (*snapshot.CreationData).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		creationData := *creationData_ARM.(*CreationData_ARM)
+		creationData := *creationData_ARM.(*arm.CreationData)
 		result.Properties.CreationData = &creationData
 	}
 	if snapshot.DiskAccessReference != nil {
@@ -451,7 +504,9 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties.DiskSizeGB = &diskSizeGB
 	}
 	if snapshot.DiskState != nil {
-		diskState := *snapshot.DiskState
+		var temp string
+		temp = string(*snapshot.DiskState)
+		diskState := arm.DiskState(temp)
 		result.Properties.DiskState = &diskState
 	}
 	if snapshot.Encryption != nil {
@@ -459,7 +514,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		if err != nil {
 			return nil, err
 		}
-		encryption := *encryption_ARM.(*Encryption_ARM)
+		encryption := *encryption_ARM.(*arm.Encryption)
 		result.Properties.Encryption = &encryption
 	}
 	if snapshot.EncryptionSettingsCollection != nil {
@@ -467,11 +522,13 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		if err != nil {
 			return nil, err
 		}
-		encryptionSettingsCollection := *encryptionSettingsCollection_ARM.(*EncryptionSettingsCollection_ARM)
+		encryptionSettingsCollection := *encryptionSettingsCollection_ARM.(*arm.EncryptionSettingsCollection)
 		result.Properties.EncryptionSettingsCollection = &encryptionSettingsCollection
 	}
 	if snapshot.HyperVGeneration != nil {
-		hyperVGeneration := *snapshot.HyperVGeneration
+		var temp string
+		temp = string(*snapshot.HyperVGeneration)
+		hyperVGeneration := arm.SnapshotProperties_HyperVGeneration(temp)
 		result.Properties.HyperVGeneration = &hyperVGeneration
 	}
 	if snapshot.Incremental != nil {
@@ -479,11 +536,15 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		result.Properties.Incremental = &incremental
 	}
 	if snapshot.NetworkAccessPolicy != nil {
-		networkAccessPolicy := *snapshot.NetworkAccessPolicy
+		var temp string
+		temp = string(*snapshot.NetworkAccessPolicy)
+		networkAccessPolicy := arm.NetworkAccessPolicy(temp)
 		result.Properties.NetworkAccessPolicy = &networkAccessPolicy
 	}
 	if snapshot.OsType != nil {
-		osType := *snapshot.OsType
+		var temp string
+		temp = string(*snapshot.OsType)
+		osType := arm.SnapshotProperties_OsType(temp)
 		result.Properties.OsType = &osType
 	}
 	if snapshot.PurchasePlan != nil {
@@ -491,7 +552,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		if err != nil {
 			return nil, err
 		}
-		purchasePlan := *purchasePlan_ARM.(*PurchasePlan_ARM)
+		purchasePlan := *purchasePlan_ARM.(*arm.PurchasePlan)
 		result.Properties.PurchasePlan = &purchasePlan
 	}
 
@@ -501,7 +562,7 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		if err != nil {
 			return nil, err
 		}
-		sku := *sku_ARM.(*SnapshotSku_ARM)
+		sku := *sku_ARM.(*arm.SnapshotSku)
 		result.Sku = &sku
 	}
 
@@ -517,14 +578,14 @@ func (snapshot *Snapshot_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (snapshot *Snapshot_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Snapshot_Spec_ARM{}
+	return &arm.Snapshot_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (snapshot *Snapshot_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Snapshot_Spec_ARM)
+	typedInput, ok := armInput.(arm.Snapshot_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Snapshot_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Snapshot_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
@@ -559,7 +620,9 @@ func (snapshot *Snapshot_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.DiskState != nil {
-			diskState := *typedInput.Properties.DiskState
+			var temp string
+			temp = string(*typedInput.Properties.DiskState)
+			diskState := DiskState(temp)
 			snapshot.DiskState = &diskState
 		}
 	}
@@ -607,7 +670,9 @@ func (snapshot *Snapshot_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.HyperVGeneration != nil {
-			hyperVGeneration := *typedInput.Properties.HyperVGeneration
+			var temp string
+			temp = string(*typedInput.Properties.HyperVGeneration)
+			hyperVGeneration := SnapshotProperties_HyperVGeneration(temp)
 			snapshot.HyperVGeneration = &hyperVGeneration
 		}
 	}
@@ -631,16 +696,22 @@ func (snapshot *Snapshot_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.NetworkAccessPolicy != nil {
-			networkAccessPolicy := *typedInput.Properties.NetworkAccessPolicy
+			var temp string
+			temp = string(*typedInput.Properties.NetworkAccessPolicy)
+			networkAccessPolicy := NetworkAccessPolicy(temp)
 			snapshot.NetworkAccessPolicy = &networkAccessPolicy
 		}
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "OsType":
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.OsType != nil {
-			osType := *typedInput.Properties.OsType
+			var temp string
+			temp = string(*typedInput.Properties.OsType)
+			osType := SnapshotProperties_OsType(temp)
 			snapshot.OsType = &osType
 		}
 	}
@@ -692,14 +763,14 @@ var _ genruntime.ConvertibleSpec = &Snapshot_Spec{}
 
 // ConvertSpecFrom populates our Snapshot_Spec from the provided source
 func (snapshot *Snapshot_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20200930s.Snapshot_Spec)
+	src, ok := source.(*storage.Snapshot_Spec)
 	if ok {
 		// Populate our instance from source
 		return snapshot.AssignProperties_From_Snapshot_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20200930s.Snapshot_Spec{}
+	src = &storage.Snapshot_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -716,14 +787,14 @@ func (snapshot *Snapshot_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec
 
 // ConvertSpecTo populates the provided destination from our Snapshot_Spec
 func (snapshot *Snapshot_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20200930s.Snapshot_Spec)
+	dst, ok := destination.(*storage.Snapshot_Spec)
 	if ok {
 		// Populate destination from our instance
 		return snapshot.AssignProperties_To_Snapshot_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20200930s.Snapshot_Spec{}
+	dst = &storage.Snapshot_Spec{}
 	err := snapshot.AssignProperties_To_Snapshot_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -739,7 +810,7 @@ func (snapshot *Snapshot_Spec) ConvertSpecTo(destination genruntime.ConvertibleS
 }
 
 // AssignProperties_From_Snapshot_Spec populates our Snapshot_Spec from the provided source Snapshot_Spec
-func (snapshot *Snapshot_Spec) AssignProperties_From_Snapshot_Spec(source *v20200930s.Snapshot_Spec) error {
+func (snapshot *Snapshot_Spec) AssignProperties_From_Snapshot_Spec(source *storage.Snapshot_Spec) error {
 
 	// AzureName
 	snapshot.AzureName = source.AzureName
@@ -769,8 +840,9 @@ func (snapshot *Snapshot_Spec) AssignProperties_From_Snapshot_Spec(source *v2020
 
 	// DiskState
 	if source.DiskState != nil {
-		diskState := DiskState(*source.DiskState)
-		snapshot.DiskState = &diskState
+		diskState := *source.DiskState
+		diskStateTemp := genruntime.ToEnum(diskState, diskState_Values)
+		snapshot.DiskState = &diskStateTemp
 	} else {
 		snapshot.DiskState = nil
 	}
@@ -813,8 +885,9 @@ func (snapshot *Snapshot_Spec) AssignProperties_From_Snapshot_Spec(source *v2020
 
 	// HyperVGeneration
 	if source.HyperVGeneration != nil {
-		hyperVGeneration := SnapshotProperties_HyperVGeneration(*source.HyperVGeneration)
-		snapshot.HyperVGeneration = &hyperVGeneration
+		hyperVGeneration := *source.HyperVGeneration
+		hyperVGenerationTemp := genruntime.ToEnum(hyperVGeneration, snapshotProperties_HyperVGeneration_Values)
+		snapshot.HyperVGeneration = &hyperVGenerationTemp
 	} else {
 		snapshot.HyperVGeneration = nil
 	}
@@ -832,16 +905,30 @@ func (snapshot *Snapshot_Spec) AssignProperties_From_Snapshot_Spec(source *v2020
 
 	// NetworkAccessPolicy
 	if source.NetworkAccessPolicy != nil {
-		networkAccessPolicy := NetworkAccessPolicy(*source.NetworkAccessPolicy)
-		snapshot.NetworkAccessPolicy = &networkAccessPolicy
+		networkAccessPolicy := *source.NetworkAccessPolicy
+		networkAccessPolicyTemp := genruntime.ToEnum(networkAccessPolicy, networkAccessPolicy_Values)
+		snapshot.NetworkAccessPolicy = &networkAccessPolicyTemp
 	} else {
 		snapshot.NetworkAccessPolicy = nil
 	}
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec SnapshotOperatorSpec
+		err := operatorSpec.AssignProperties_From_SnapshotOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SnapshotOperatorSpec() to populate field OperatorSpec")
+		}
+		snapshot.OperatorSpec = &operatorSpec
+	} else {
+		snapshot.OperatorSpec = nil
+	}
+
 	// OsType
 	if source.OsType != nil {
-		osType := SnapshotProperties_OsType(*source.OsType)
-		snapshot.OsType = &osType
+		osType := *source.OsType
+		osTypeTemp := genruntime.ToEnum(osType, snapshotProperties_OsType_Values)
+		snapshot.OsType = &osTypeTemp
 	} else {
 		snapshot.OsType = nil
 	}
@@ -886,7 +973,7 @@ func (snapshot *Snapshot_Spec) AssignProperties_From_Snapshot_Spec(source *v2020
 }
 
 // AssignProperties_To_Snapshot_Spec populates the provided destination Snapshot_Spec from our Snapshot_Spec
-func (snapshot *Snapshot_Spec) AssignProperties_To_Snapshot_Spec(destination *v20200930s.Snapshot_Spec) error {
+func (snapshot *Snapshot_Spec) AssignProperties_To_Snapshot_Spec(destination *storage.Snapshot_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -895,7 +982,7 @@ func (snapshot *Snapshot_Spec) AssignProperties_To_Snapshot_Spec(destination *v2
 
 	// CreationData
 	if snapshot.CreationData != nil {
-		var creationDatum v20200930s.CreationData
+		var creationDatum storage.CreationData
 		err := snapshot.CreationData.AssignProperties_To_CreationData(&creationDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_CreationData() to populate field CreationData")
@@ -926,7 +1013,7 @@ func (snapshot *Snapshot_Spec) AssignProperties_To_Snapshot_Spec(destination *v2
 
 	// Encryption
 	if snapshot.Encryption != nil {
-		var encryption v20200930s.Encryption
+		var encryption storage.Encryption
 		err := snapshot.Encryption.AssignProperties_To_Encryption(&encryption)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Encryption() to populate field Encryption")
@@ -938,7 +1025,7 @@ func (snapshot *Snapshot_Spec) AssignProperties_To_Snapshot_Spec(destination *v2
 
 	// EncryptionSettingsCollection
 	if snapshot.EncryptionSettingsCollection != nil {
-		var encryptionSettingsCollection v20200930s.EncryptionSettingsCollection
+		var encryptionSettingsCollection storage.EncryptionSettingsCollection
 		err := snapshot.EncryptionSettingsCollection.AssignProperties_To_EncryptionSettingsCollection(&encryptionSettingsCollection)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_EncryptionSettingsCollection() to populate field EncryptionSettingsCollection")
@@ -950,7 +1037,7 @@ func (snapshot *Snapshot_Spec) AssignProperties_To_Snapshot_Spec(destination *v2
 
 	// ExtendedLocation
 	if snapshot.ExtendedLocation != nil {
-		var extendedLocation v20200930s.ExtendedLocation
+		var extendedLocation storage.ExtendedLocation
 		err := snapshot.ExtendedLocation.AssignProperties_To_ExtendedLocation(&extendedLocation)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
@@ -987,6 +1074,18 @@ func (snapshot *Snapshot_Spec) AssignProperties_To_Snapshot_Spec(destination *v2
 		destination.NetworkAccessPolicy = nil
 	}
 
+	// OperatorSpec
+	if snapshot.OperatorSpec != nil {
+		var operatorSpec storage.SnapshotOperatorSpec
+		err := snapshot.OperatorSpec.AssignProperties_To_SnapshotOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SnapshotOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
 	// OriginalVersion
 	destination.OriginalVersion = snapshot.OriginalVersion()
 
@@ -1008,7 +1107,7 @@ func (snapshot *Snapshot_Spec) AssignProperties_To_Snapshot_Spec(destination *v2
 
 	// PurchasePlan
 	if snapshot.PurchasePlan != nil {
-		var purchasePlan v20200930s.PurchasePlan
+		var purchasePlan storage.PurchasePlan
 		err := snapshot.PurchasePlan.AssignProperties_To_PurchasePlan(&purchasePlan)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_PurchasePlan() to populate field PurchasePlan")
@@ -1020,7 +1119,7 @@ func (snapshot *Snapshot_Spec) AssignProperties_To_Snapshot_Spec(destination *v2
 
 	// Sku
 	if snapshot.Sku != nil {
-		var sku v20200930s.SnapshotSku
+		var sku storage.SnapshotSku
 		err := snapshot.Sku.AssignProperties_To_SnapshotSku(&sku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SnapshotSku() to populate field Sku")
@@ -1039,142 +1138,6 @@ func (snapshot *Snapshot_Spec) AssignProperties_To_Snapshot_Spec(destination *v2
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Snapshot_STATUS populates our Snapshot_Spec from the provided source Snapshot_STATUS
-func (snapshot *Snapshot_Spec) Initialize_From_Snapshot_STATUS(source *Snapshot_STATUS) error {
-
-	// CreationData
-	if source.CreationData != nil {
-		var creationDatum CreationData
-		err := creationDatum.Initialize_From_CreationData_STATUS(source.CreationData)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_CreationData_STATUS() to populate field CreationData")
-		}
-		snapshot.CreationData = &creationDatum
-	} else {
-		snapshot.CreationData = nil
-	}
-
-	// DiskAccessReference
-	if source.DiskAccessId != nil {
-		diskAccessReference := genruntime.CreateResourceReferenceFromARMID(*source.DiskAccessId)
-		snapshot.DiskAccessReference = &diskAccessReference
-	} else {
-		snapshot.DiskAccessReference = nil
-	}
-
-	// DiskSizeGB
-	snapshot.DiskSizeGB = genruntime.ClonePointerToInt(source.DiskSizeGB)
-
-	// DiskState
-	if source.DiskState != nil {
-		diskState := DiskState(*source.DiskState)
-		snapshot.DiskState = &diskState
-	} else {
-		snapshot.DiskState = nil
-	}
-
-	// Encryption
-	if source.Encryption != nil {
-		var encryption Encryption
-		err := encryption.Initialize_From_Encryption_STATUS(source.Encryption)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Encryption_STATUS() to populate field Encryption")
-		}
-		snapshot.Encryption = &encryption
-	} else {
-		snapshot.Encryption = nil
-	}
-
-	// EncryptionSettingsCollection
-	if source.EncryptionSettingsCollection != nil {
-		var encryptionSettingsCollection EncryptionSettingsCollection
-		err := encryptionSettingsCollection.Initialize_From_EncryptionSettingsCollection_STATUS(source.EncryptionSettingsCollection)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_EncryptionSettingsCollection_STATUS() to populate field EncryptionSettingsCollection")
-		}
-		snapshot.EncryptionSettingsCollection = &encryptionSettingsCollection
-	} else {
-		snapshot.EncryptionSettingsCollection = nil
-	}
-
-	// ExtendedLocation
-	if source.ExtendedLocation != nil {
-		var extendedLocation ExtendedLocation
-		err := extendedLocation.Initialize_From_ExtendedLocation_STATUS(source.ExtendedLocation)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
-		}
-		snapshot.ExtendedLocation = &extendedLocation
-	} else {
-		snapshot.ExtendedLocation = nil
-	}
-
-	// HyperVGeneration
-	if source.HyperVGeneration != nil {
-		hyperVGeneration := SnapshotProperties_HyperVGeneration(*source.HyperVGeneration)
-		snapshot.HyperVGeneration = &hyperVGeneration
-	} else {
-		snapshot.HyperVGeneration = nil
-	}
-
-	// Incremental
-	if source.Incremental != nil {
-		incremental := *source.Incremental
-		snapshot.Incremental = &incremental
-	} else {
-		snapshot.Incremental = nil
-	}
-
-	// Location
-	snapshot.Location = genruntime.ClonePointerToString(source.Location)
-
-	// NetworkAccessPolicy
-	if source.NetworkAccessPolicy != nil {
-		networkAccessPolicy := NetworkAccessPolicy(*source.NetworkAccessPolicy)
-		snapshot.NetworkAccessPolicy = &networkAccessPolicy
-	} else {
-		snapshot.NetworkAccessPolicy = nil
-	}
-
-	// OsType
-	if source.OsType != nil {
-		osType := SnapshotProperties_OsType(*source.OsType)
-		snapshot.OsType = &osType
-	} else {
-		snapshot.OsType = nil
-	}
-
-	// PurchasePlan
-	if source.PurchasePlan != nil {
-		var purchasePlan PurchasePlan
-		err := purchasePlan.Initialize_From_PurchasePlan_STATUS(source.PurchasePlan)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_PurchasePlan_STATUS() to populate field PurchasePlan")
-		}
-		snapshot.PurchasePlan = &purchasePlan
-	} else {
-		snapshot.PurchasePlan = nil
-	}
-
-	// Sku
-	if source.Sku != nil {
-		var sku SnapshotSku
-		err := sku.Initialize_From_SnapshotSku_STATUS(source.Sku)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SnapshotSku_STATUS() to populate field Sku")
-		}
-		snapshot.Sku = &sku
-	} else {
-		snapshot.Sku = nil
-	}
-
-	// Tags
-	snapshot.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// No error
 	return nil
@@ -1272,14 +1235,14 @@ var _ genruntime.ConvertibleStatus = &Snapshot_STATUS{}
 
 // ConvertStatusFrom populates our Snapshot_STATUS from the provided source
 func (snapshot *Snapshot_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20200930s.Snapshot_STATUS)
+	src, ok := source.(*storage.Snapshot_STATUS)
 	if ok {
 		// Populate our instance from source
 		return snapshot.AssignProperties_From_Snapshot_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20200930s.Snapshot_STATUS{}
+	src = &storage.Snapshot_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -1296,14 +1259,14 @@ func (snapshot *Snapshot_STATUS) ConvertStatusFrom(source genruntime.Convertible
 
 // ConvertStatusTo populates the provided destination from our Snapshot_STATUS
 func (snapshot *Snapshot_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20200930s.Snapshot_STATUS)
+	dst, ok := destination.(*storage.Snapshot_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return snapshot.AssignProperties_To_Snapshot_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20200930s.Snapshot_STATUS{}
+	dst = &storage.Snapshot_STATUS{}
 	err := snapshot.AssignProperties_To_Snapshot_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -1322,14 +1285,14 @@ var _ genruntime.FromARMConverter = &Snapshot_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (snapshot *Snapshot_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Snapshot_STATUS_ARM{}
+	return &arm.Snapshot_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (snapshot *Snapshot_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Snapshot_STATUS_ARM)
+	typedInput, ok := armInput.(arm.Snapshot_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Snapshot_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Snapshot_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -1379,7 +1342,9 @@ func (snapshot *Snapshot_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.DiskState != nil {
-			diskState := *typedInput.Properties.DiskState
+			var temp string
+			temp = string(*typedInput.Properties.DiskState)
+			diskState := DiskState_STATUS(temp)
 			snapshot.DiskState = &diskState
 		}
 	}
@@ -1427,7 +1392,9 @@ func (snapshot *Snapshot_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.HyperVGeneration != nil {
-			hyperVGeneration := *typedInput.Properties.HyperVGeneration
+			var temp string
+			temp = string(*typedInput.Properties.HyperVGeneration)
+			hyperVGeneration := SnapshotProperties_HyperVGeneration_STATUS(temp)
 			snapshot.HyperVGeneration = &hyperVGeneration
 		}
 	}
@@ -1469,7 +1436,9 @@ func (snapshot *Snapshot_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.NetworkAccessPolicy != nil {
-			networkAccessPolicy := *typedInput.Properties.NetworkAccessPolicy
+			var temp string
+			temp = string(*typedInput.Properties.NetworkAccessPolicy)
+			networkAccessPolicy := NetworkAccessPolicy_STATUS(temp)
 			snapshot.NetworkAccessPolicy = &networkAccessPolicy
 		}
 	}
@@ -1478,7 +1447,9 @@ func (snapshot *Snapshot_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.OsType != nil {
-			osType := *typedInput.Properties.OsType
+			var temp string
+			temp = string(*typedInput.Properties.OsType)
+			osType := SnapshotProperties_OsType_STATUS(temp)
 			snapshot.OsType = &osType
 		}
 	}
@@ -1554,7 +1525,7 @@ func (snapshot *Snapshot_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwner
 }
 
 // AssignProperties_From_Snapshot_STATUS populates our Snapshot_STATUS from the provided source Snapshot_STATUS
-func (snapshot *Snapshot_STATUS) AssignProperties_From_Snapshot_STATUS(source *v20200930s.Snapshot_STATUS) error {
+func (snapshot *Snapshot_STATUS) AssignProperties_From_Snapshot_STATUS(source *storage.Snapshot_STATUS) error {
 
 	// Conditions
 	snapshot.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -1582,8 +1553,9 @@ func (snapshot *Snapshot_STATUS) AssignProperties_From_Snapshot_STATUS(source *v
 
 	// DiskState
 	if source.DiskState != nil {
-		diskState := DiskState_STATUS(*source.DiskState)
-		snapshot.DiskState = &diskState
+		diskState := *source.DiskState
+		diskStateTemp := genruntime.ToEnum(diskState, diskState_STATUS_Values)
+		snapshot.DiskState = &diskStateTemp
 	} else {
 		snapshot.DiskState = nil
 	}
@@ -1626,8 +1598,9 @@ func (snapshot *Snapshot_STATUS) AssignProperties_From_Snapshot_STATUS(source *v
 
 	// HyperVGeneration
 	if source.HyperVGeneration != nil {
-		hyperVGeneration := SnapshotProperties_HyperVGeneration_STATUS(*source.HyperVGeneration)
-		snapshot.HyperVGeneration = &hyperVGeneration
+		hyperVGeneration := *source.HyperVGeneration
+		hyperVGenerationTemp := genruntime.ToEnum(hyperVGeneration, snapshotProperties_HyperVGeneration_STATUS_Values)
+		snapshot.HyperVGeneration = &hyperVGenerationTemp
 	} else {
 		snapshot.HyperVGeneration = nil
 	}
@@ -1654,16 +1627,18 @@ func (snapshot *Snapshot_STATUS) AssignProperties_From_Snapshot_STATUS(source *v
 
 	// NetworkAccessPolicy
 	if source.NetworkAccessPolicy != nil {
-		networkAccessPolicy := NetworkAccessPolicy_STATUS(*source.NetworkAccessPolicy)
-		snapshot.NetworkAccessPolicy = &networkAccessPolicy
+		networkAccessPolicy := *source.NetworkAccessPolicy
+		networkAccessPolicyTemp := genruntime.ToEnum(networkAccessPolicy, networkAccessPolicy_STATUS_Values)
+		snapshot.NetworkAccessPolicy = &networkAccessPolicyTemp
 	} else {
 		snapshot.NetworkAccessPolicy = nil
 	}
 
 	// OsType
 	if source.OsType != nil {
-		osType := SnapshotProperties_OsType_STATUS(*source.OsType)
-		snapshot.OsType = &osType
+		osType := *source.OsType
+		osTypeTemp := genruntime.ToEnum(osType, snapshotProperties_OsType_STATUS_Values)
+		snapshot.OsType = &osTypeTemp
 	} else {
 		snapshot.OsType = nil
 	}
@@ -1712,7 +1687,7 @@ func (snapshot *Snapshot_STATUS) AssignProperties_From_Snapshot_STATUS(source *v
 }
 
 // AssignProperties_To_Snapshot_STATUS populates the provided destination Snapshot_STATUS from our Snapshot_STATUS
-func (snapshot *Snapshot_STATUS) AssignProperties_To_Snapshot_STATUS(destination *v20200930s.Snapshot_STATUS) error {
+func (snapshot *Snapshot_STATUS) AssignProperties_To_Snapshot_STATUS(destination *storage.Snapshot_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1721,7 +1696,7 @@ func (snapshot *Snapshot_STATUS) AssignProperties_To_Snapshot_STATUS(destination
 
 	// CreationData
 	if snapshot.CreationData != nil {
-		var creationDatum v20200930s.CreationData_STATUS
+		var creationDatum storage.CreationData_STATUS
 		err := snapshot.CreationData.AssignProperties_To_CreationData_STATUS(&creationDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_CreationData_STATUS() to populate field CreationData")
@@ -1750,7 +1725,7 @@ func (snapshot *Snapshot_STATUS) AssignProperties_To_Snapshot_STATUS(destination
 
 	// Encryption
 	if snapshot.Encryption != nil {
-		var encryption v20200930s.Encryption_STATUS
+		var encryption storage.Encryption_STATUS
 		err := snapshot.Encryption.AssignProperties_To_Encryption_STATUS(&encryption)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Encryption_STATUS() to populate field Encryption")
@@ -1762,7 +1737,7 @@ func (snapshot *Snapshot_STATUS) AssignProperties_To_Snapshot_STATUS(destination
 
 	// EncryptionSettingsCollection
 	if snapshot.EncryptionSettingsCollection != nil {
-		var encryptionSettingsCollection v20200930s.EncryptionSettingsCollection_STATUS
+		var encryptionSettingsCollection storage.EncryptionSettingsCollection_STATUS
 		err := snapshot.EncryptionSettingsCollection.AssignProperties_To_EncryptionSettingsCollection_STATUS(&encryptionSettingsCollection)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_EncryptionSettingsCollection_STATUS() to populate field EncryptionSettingsCollection")
@@ -1774,7 +1749,7 @@ func (snapshot *Snapshot_STATUS) AssignProperties_To_Snapshot_STATUS(destination
 
 	// ExtendedLocation
 	if snapshot.ExtendedLocation != nil {
-		var extendedLocation v20200930s.ExtendedLocation_STATUS
+		var extendedLocation storage.ExtendedLocation_STATUS
 		err := snapshot.ExtendedLocation.AssignProperties_To_ExtendedLocation_STATUS(&extendedLocation)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
@@ -1833,7 +1808,7 @@ func (snapshot *Snapshot_STATUS) AssignProperties_To_Snapshot_STATUS(destination
 
 	// PurchasePlan
 	if snapshot.PurchasePlan != nil {
-		var purchasePlan v20200930s.PurchasePlan_STATUS
+		var purchasePlan storage.PurchasePlan_STATUS
 		err := snapshot.PurchasePlan.AssignProperties_To_PurchasePlan_STATUS(&purchasePlan)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_PurchasePlan_STATUS() to populate field PurchasePlan")
@@ -1845,7 +1820,7 @@ func (snapshot *Snapshot_STATUS) AssignProperties_To_Snapshot_STATUS(destination
 
 	// Sku
 	if snapshot.Sku != nil {
-		var sku v20200930s.SnapshotSku_STATUS
+		var sku storage.SnapshotSku_STATUS
 		err := snapshot.Sku.AssignProperties_To_SnapshotSku_STATUS(&sku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SnapshotSku_STATUS() to populate field Sku")
@@ -1891,6 +1866,120 @@ const (
 	DiskState_Unattached    = DiskState("Unattached")
 )
 
+// Mapping from string to DiskState
+var diskState_Values = map[string]DiskState{
+	"activesas":     DiskState_ActiveSAS,
+	"activeupload":  DiskState_ActiveUpload,
+	"attached":      DiskState_Attached,
+	"readytoupload": DiskState_ReadyToUpload,
+	"reserved":      DiskState_Reserved,
+	"unattached":    DiskState_Unattached,
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type SnapshotOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_SnapshotOperatorSpec populates our SnapshotOperatorSpec from the provided source SnapshotOperatorSpec
+func (operator *SnapshotOperatorSpec) AssignProperties_From_SnapshotOperatorSpec(source *storage.SnapshotOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SnapshotOperatorSpec populates the provided destination SnapshotOperatorSpec from our SnapshotOperatorSpec
+func (operator *SnapshotOperatorSpec) AssignProperties_To_SnapshotOperatorSpec(destination *storage.SnapshotOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 // +kubebuilder:validation:Enum={"V1","V2"}
 type SnapshotProperties_HyperVGeneration string
 
@@ -1899,12 +1988,24 @@ const (
 	SnapshotProperties_HyperVGeneration_V2 = SnapshotProperties_HyperVGeneration("V2")
 )
 
+// Mapping from string to SnapshotProperties_HyperVGeneration
+var snapshotProperties_HyperVGeneration_Values = map[string]SnapshotProperties_HyperVGeneration{
+	"v1": SnapshotProperties_HyperVGeneration_V1,
+	"v2": SnapshotProperties_HyperVGeneration_V2,
+}
+
 type SnapshotProperties_HyperVGeneration_STATUS string
 
 const (
 	SnapshotProperties_HyperVGeneration_STATUS_V1 = SnapshotProperties_HyperVGeneration_STATUS("V1")
 	SnapshotProperties_HyperVGeneration_STATUS_V2 = SnapshotProperties_HyperVGeneration_STATUS("V2")
 )
+
+// Mapping from string to SnapshotProperties_HyperVGeneration_STATUS
+var snapshotProperties_HyperVGeneration_STATUS_Values = map[string]SnapshotProperties_HyperVGeneration_STATUS{
+	"v1": SnapshotProperties_HyperVGeneration_STATUS_V1,
+	"v2": SnapshotProperties_HyperVGeneration_STATUS_V2,
+}
 
 // +kubebuilder:validation:Enum={"Linux","Windows"}
 type SnapshotProperties_OsType string
@@ -1914,12 +2015,24 @@ const (
 	SnapshotProperties_OsType_Windows = SnapshotProperties_OsType("Windows")
 )
 
+// Mapping from string to SnapshotProperties_OsType
+var snapshotProperties_OsType_Values = map[string]SnapshotProperties_OsType{
+	"linux":   SnapshotProperties_OsType_Linux,
+	"windows": SnapshotProperties_OsType_Windows,
+}
+
 type SnapshotProperties_OsType_STATUS string
 
 const (
 	SnapshotProperties_OsType_STATUS_Linux   = SnapshotProperties_OsType_STATUS("Linux")
 	SnapshotProperties_OsType_STATUS_Windows = SnapshotProperties_OsType_STATUS("Windows")
 )
+
+// Mapping from string to SnapshotProperties_OsType_STATUS
+var snapshotProperties_OsType_STATUS_Values = map[string]SnapshotProperties_OsType_STATUS{
+	"linux":   SnapshotProperties_OsType_STATUS_Linux,
+	"windows": SnapshotProperties_OsType_STATUS_Windows,
+}
 
 // The snapshots sku name. Can be Standard_LRS, Premium_LRS, or Standard_ZRS. This is an optional parameter for incremental
 // snapshot and the default behavior is the SKU will be set to the same sku as the previous snapshot
@@ -1935,11 +2048,13 @@ func (snapshotSku *SnapshotSku) ConvertToARM(resolved genruntime.ConvertToARMRes
 	if snapshotSku == nil {
 		return nil, nil
 	}
-	result := &SnapshotSku_ARM{}
+	result := &arm.SnapshotSku{}
 
 	// Set property "Name":
 	if snapshotSku.Name != nil {
-		name := *snapshotSku.Name
+		var temp string
+		temp = string(*snapshotSku.Name)
+		name := arm.SnapshotSku_Name(temp)
 		result.Name = &name
 	}
 	return result, nil
@@ -1947,19 +2062,21 @@ func (snapshotSku *SnapshotSku) ConvertToARM(resolved genruntime.ConvertToARMRes
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (snapshotSku *SnapshotSku) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SnapshotSku_ARM{}
+	return &arm.SnapshotSku{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (snapshotSku *SnapshotSku) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SnapshotSku_ARM)
+	typedInput, ok := armInput.(arm.SnapshotSku)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SnapshotSku_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SnapshotSku, got %T", armInput)
 	}
 
 	// Set property "Name":
 	if typedInput.Name != nil {
-		name := *typedInput.Name
+		var temp string
+		temp = string(*typedInput.Name)
+		name := SnapshotSku_Name(temp)
 		snapshotSku.Name = &name
 	}
 
@@ -1968,12 +2085,13 @@ func (snapshotSku *SnapshotSku) PopulateFromARM(owner genruntime.ArbitraryOwnerR
 }
 
 // AssignProperties_From_SnapshotSku populates our SnapshotSku from the provided source SnapshotSku
-func (snapshotSku *SnapshotSku) AssignProperties_From_SnapshotSku(source *v20200930s.SnapshotSku) error {
+func (snapshotSku *SnapshotSku) AssignProperties_From_SnapshotSku(source *storage.SnapshotSku) error {
 
 	// Name
 	if source.Name != nil {
-		name := SnapshotSku_Name(*source.Name)
-		snapshotSku.Name = &name
+		name := *source.Name
+		nameTemp := genruntime.ToEnum(name, snapshotSku_Name_Values)
+		snapshotSku.Name = &nameTemp
 	} else {
 		snapshotSku.Name = nil
 	}
@@ -1983,7 +2101,7 @@ func (snapshotSku *SnapshotSku) AssignProperties_From_SnapshotSku(source *v20200
 }
 
 // AssignProperties_To_SnapshotSku populates the provided destination SnapshotSku from our SnapshotSku
-func (snapshotSku *SnapshotSku) AssignProperties_To_SnapshotSku(destination *v20200930s.SnapshotSku) error {
+func (snapshotSku *SnapshotSku) AssignProperties_To_SnapshotSku(destination *storage.SnapshotSku) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2006,21 +2124,6 @@ func (snapshotSku *SnapshotSku) AssignProperties_To_SnapshotSku(destination *v20
 	return nil
 }
 
-// Initialize_From_SnapshotSku_STATUS populates our SnapshotSku from the provided source SnapshotSku_STATUS
-func (snapshotSku *SnapshotSku) Initialize_From_SnapshotSku_STATUS(source *SnapshotSku_STATUS) error {
-
-	// Name
-	if source.Name != nil {
-		name := SnapshotSku_Name(*source.Name)
-		snapshotSku.Name = &name
-	} else {
-		snapshotSku.Name = nil
-	}
-
-	// No error
-	return nil
-}
-
 // The snapshots sku name. Can be Standard_LRS, Premium_LRS, or Standard_ZRS. This is an optional parameter for incremental
 // snapshot and the default behavior is the SKU will be set to the same sku as the previous snapshot
 type SnapshotSku_STATUS struct {
@@ -2035,19 +2138,21 @@ var _ genruntime.FromARMConverter = &SnapshotSku_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (snapshotSku *SnapshotSku_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SnapshotSku_STATUS_ARM{}
+	return &arm.SnapshotSku_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (snapshotSku *SnapshotSku_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SnapshotSku_STATUS_ARM)
+	typedInput, ok := armInput.(arm.SnapshotSku_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SnapshotSku_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SnapshotSku_STATUS, got %T", armInput)
 	}
 
 	// Set property "Name":
 	if typedInput.Name != nil {
-		name := *typedInput.Name
+		var temp string
+		temp = string(*typedInput.Name)
+		name := SnapshotSku_Name_STATUS(temp)
 		snapshotSku.Name = &name
 	}
 
@@ -2062,12 +2167,13 @@ func (snapshotSku *SnapshotSku_STATUS) PopulateFromARM(owner genruntime.Arbitrar
 }
 
 // AssignProperties_From_SnapshotSku_STATUS populates our SnapshotSku_STATUS from the provided source SnapshotSku_STATUS
-func (snapshotSku *SnapshotSku_STATUS) AssignProperties_From_SnapshotSku_STATUS(source *v20200930s.SnapshotSku_STATUS) error {
+func (snapshotSku *SnapshotSku_STATUS) AssignProperties_From_SnapshotSku_STATUS(source *storage.SnapshotSku_STATUS) error {
 
 	// Name
 	if source.Name != nil {
-		name := SnapshotSku_Name_STATUS(*source.Name)
-		snapshotSku.Name = &name
+		name := *source.Name
+		nameTemp := genruntime.ToEnum(name, snapshotSku_Name_STATUS_Values)
+		snapshotSku.Name = &nameTemp
 	} else {
 		snapshotSku.Name = nil
 	}
@@ -2080,7 +2186,7 @@ func (snapshotSku *SnapshotSku_STATUS) AssignProperties_From_SnapshotSku_STATUS(
 }
 
 // AssignProperties_To_SnapshotSku_STATUS populates the provided destination SnapshotSku_STATUS from our SnapshotSku_STATUS
-func (snapshotSku *SnapshotSku_STATUS) AssignProperties_To_SnapshotSku_STATUS(destination *v20200930s.SnapshotSku_STATUS) error {
+func (snapshotSku *SnapshotSku_STATUS) AssignProperties_To_SnapshotSku_STATUS(destination *storage.SnapshotSku_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2104,6 +2210,37 @@ func (snapshotSku *SnapshotSku_STATUS) AssignProperties_To_SnapshotSku_STATUS(de
 
 	// No error
 	return nil
+}
+
+// +kubebuilder:validation:Enum={"Premium_LRS","Standard_LRS","Standard_ZRS"}
+type SnapshotSku_Name string
+
+const (
+	SnapshotSku_Name_Premium_LRS  = SnapshotSku_Name("Premium_LRS")
+	SnapshotSku_Name_Standard_LRS = SnapshotSku_Name("Standard_LRS")
+	SnapshotSku_Name_Standard_ZRS = SnapshotSku_Name("Standard_ZRS")
+)
+
+// Mapping from string to SnapshotSku_Name
+var snapshotSku_Name_Values = map[string]SnapshotSku_Name{
+	"premium_lrs":  SnapshotSku_Name_Premium_LRS,
+	"standard_lrs": SnapshotSku_Name_Standard_LRS,
+	"standard_zrs": SnapshotSku_Name_Standard_ZRS,
+}
+
+type SnapshotSku_Name_STATUS string
+
+const (
+	SnapshotSku_Name_STATUS_Premium_LRS  = SnapshotSku_Name_STATUS("Premium_LRS")
+	SnapshotSku_Name_STATUS_Standard_LRS = SnapshotSku_Name_STATUS("Standard_LRS")
+	SnapshotSku_Name_STATUS_Standard_ZRS = SnapshotSku_Name_STATUS("Standard_ZRS")
+)
+
+// Mapping from string to SnapshotSku_Name_STATUS
+var snapshotSku_Name_STATUS_Values = map[string]SnapshotSku_Name_STATUS{
+	"premium_lrs":  SnapshotSku_Name_STATUS_Premium_LRS,
+	"standard_lrs": SnapshotSku_Name_STATUS_Standard_LRS,
+	"standard_zrs": SnapshotSku_Name_STATUS_Standard_ZRS,
 }
 
 func init() {

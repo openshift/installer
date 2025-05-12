@@ -1,62 +1,90 @@
+default_stages: [pre-commit, pre-push]
+default_install_hook_types: [pre-commit, pre-push]
 repos:
-- repo: https://github.com/gitleaks/gitleaks
-  rev: v8.16.3
-  hooks:
-  - id: gitleaks
-- repo: https://github.com/jumanjihouse/pre-commit-hooks
-  rev: 3.0.0
-  hooks:
-  - id: shellcheck
-    args: ["--external-sources"]
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
-  hooks:
-  - id: end-of-file-fixer
-  - id: trailing-whitespace
-- repo: https://github.com/pylint-dev/pylint
-  rev: v3.0.2
-  hooks:
-  - id: pylint
-    exclude: ^hack/boilerplate/boilerplate.py$
-- repo: local
-  hooks:
-  - id: make-verify-boilerplate
-    name: Verify boilerplate
-    description: Runs `make verify-boilerplate` to check for boilerplate headers.
-    entry: make verify-boilerplate
-    language: system
-- repo: local
-  hooks:
-  - id: make-verify-modules
-    name: Verify modules
-    description: Runs `make verify-modules` to verify go.sum go.mod are the latest.
-    entry: make verify-modules
-    language: system
-- repo: local
-  hooks:
-  - id: make-verify-shellcheck
-    name: Verify shellcheck
-    description: Runs `make verify-shellcheck` to verify shell files are passing lint.
-    entry: make verify-shellcheck
-    language: system
-- repo: local
-  hooks:
-  - id: make-verify-tiltfile
-    name: Verify tiltfile
-    description: Runs `make verify-tiltfile` to verify Tiltfile format.
-    entry: make verify-tiltfile
-    language: system
-- repo: local
-  hooks:
-  - id: make-codespell
-    name: Verify codespell
-    description: Runs `make verify-codespell` to verify codespell format.
-    entry: make verify-codespell
-    language: system
-- repo: local
-  hooks:
-  - id: make-lint
-    name: Lint codebase
-    description: Runs `make lint` to check for linter errors.
-    entry: make lint
-    language: system
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.1
+    hooks:
+      - id: gitleaks
+        stages: [pre-commit]
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.10.0
+    hooks:
+      - id: shellcheck
+        args: ["--external-sources"]
+        stages: [pre-commit]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+        stages: [pre-commit]
+      - id: trailing-whitespace
+        stages: [pre-commit]
+      - id: detect-private-key
+        stages: [pre-commit]
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v3.3.1
+    hooks:
+      - id: pylint
+        exclude: ^hack/boilerplate/boilerplate.py$
+        stages: [pre-commit]
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: forbid-binary
+        stages: [pre-commit]
+  - repo: local
+    hooks:
+      - id: make-modules
+        name: Run make verify-modules
+        entry: make verify-modules
+        stages: [pre-push]
+        language: system
+        require_serial: true
+      - id: make-gen
+        name: Run make generate
+        entry: make generate
+        stages: [pre-push]
+        language: system
+        require_serial: true
+      - id: make-verify-generate-local
+        name: Run make verify-generate-local
+        entry: make verify-generate-local
+        stages: [ pre-push ]
+        language: system
+        require_serial: true
+      - id: make-spellcheck
+        name: Run make verify-shellcheck
+        entry: make verify-shellcheck
+        stages: [pre-commit]
+        language: system
+        require_serial: true
+      - id: make-verify-codespell
+        name: Run make verify-codespell
+        entry: make verify-codespell
+        stages: [ pre-push ]
+        language: system
+        require_serial: true
+      - id: make-lint-fix
+        name: Run make lint-fix
+        entry: make lint-fix
+        stages: [pre-push]
+        language: system
+        require_serial: true
+      - id: make-conversions
+        name: Run make verify-conversions
+        entry: make verify-conversions
+        stages: [pre-push]
+        language: system
+        require_serial: true
+      - id: make-tiltfile
+        name: Run make verify-tiltfile
+        entry: make verify-tiltfile
+        stages: [pre-push]
+        language: system
+        require_serial: true
+      - id: make-test
+        name: Run make go-test
+        entry: make go-test
+        stages: [pre-push]
+        language: system
+        require_serial: true

@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type ServersSecurityAlertPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Servers_SecurityAlertPolicy_Spec   `json:"spec,omitempty"`
-	Status            Servers_SecurityAlertPolicy_STATUS `json:"status,omitempty"`
+	Spec              ServersSecurityAlertPolicy_Spec   `json:"spec,omitempty"`
+	Status            ServersSecurityAlertPolicy_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &ServersSecurityAlertPolicy{}
@@ -44,6 +47,26 @@ func (policy *ServersSecurityAlertPolicy) SetConditions(conditions conditions.Co
 	policy.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &ServersSecurityAlertPolicy{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (policy *ServersSecurityAlertPolicy) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ServersSecurityAlertPolicy{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (policy *ServersSecurityAlertPolicy) SecretDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &ServersSecurityAlertPolicy{}
 
 // AzureName returns the Azure name of the resource (always "Default")
@@ -53,7 +76,7 @@ func (policy *ServersSecurityAlertPolicy) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-11-01"
 func (policy ServersSecurityAlertPolicy) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -86,7 +109,7 @@ func (policy *ServersSecurityAlertPolicy) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (policy *ServersSecurityAlertPolicy) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Servers_SecurityAlertPolicy_STATUS{}
+	return &ServersSecurityAlertPolicy_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -98,13 +121,13 @@ func (policy *ServersSecurityAlertPolicy) Owner() *genruntime.ResourceReference 
 // SetStatus sets the status of this resource
 func (policy *ServersSecurityAlertPolicy) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Servers_SecurityAlertPolicy_STATUS); ok {
+	if st, ok := status.(*ServersSecurityAlertPolicy_STATUS); ok {
 		policy.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Servers_SecurityAlertPolicy_STATUS
+	var st ServersSecurityAlertPolicy_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -137,12 +160,13 @@ type ServersSecurityAlertPolicyList struct {
 	Items           []ServersSecurityAlertPolicy `json:"items"`
 }
 
-// Storage version of v1api20211101.Servers_SecurityAlertPolicy_Spec
-type Servers_SecurityAlertPolicy_Spec struct {
-	DisabledAlerts     []string `json:"disabledAlerts,omitempty"`
-	EmailAccountAdmins *bool    `json:"emailAccountAdmins,omitempty"`
-	EmailAddresses     []string `json:"emailAddresses,omitempty"`
-	OriginalVersion    string   `json:"originalVersion,omitempty"`
+// Storage version of v1api20211101.ServersSecurityAlertPolicy_Spec
+type ServersSecurityAlertPolicy_Spec struct {
+	DisabledAlerts     []string                                `json:"disabledAlerts,omitempty"`
+	EmailAccountAdmins *bool                                   `json:"emailAccountAdmins,omitempty"`
+	EmailAddresses     []string                                `json:"emailAddresses,omitempty"`
+	OperatorSpec       *ServersSecurityAlertPolicyOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion    string                                  `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -156,10 +180,10 @@ type Servers_SecurityAlertPolicy_Spec struct {
 	StorageEndpoint         *string                            `json:"storageEndpoint,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Servers_SecurityAlertPolicy_Spec{}
+var _ genruntime.ConvertibleSpec = &ServersSecurityAlertPolicy_Spec{}
 
-// ConvertSpecFrom populates our Servers_SecurityAlertPolicy_Spec from the provided source
-func (policy *Servers_SecurityAlertPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our ServersSecurityAlertPolicy_Spec from the provided source
+func (policy *ServersSecurityAlertPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -167,8 +191,8 @@ func (policy *Servers_SecurityAlertPolicy_Spec) ConvertSpecFrom(source genruntim
 	return source.ConvertSpecTo(policy)
 }
 
-// ConvertSpecTo populates the provided destination from our Servers_SecurityAlertPolicy_Spec
-func (policy *Servers_SecurityAlertPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our ServersSecurityAlertPolicy_Spec
+func (policy *ServersSecurityAlertPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -176,8 +200,8 @@ func (policy *Servers_SecurityAlertPolicy_Spec) ConvertSpecTo(destination genrun
 	return destination.ConvertSpecFrom(policy)
 }
 
-// Storage version of v1api20211101.Servers_SecurityAlertPolicy_STATUS
-type Servers_SecurityAlertPolicy_STATUS struct {
+// Storage version of v1api20211101.ServersSecurityAlertPolicy_STATUS
+type ServersSecurityAlertPolicy_STATUS struct {
 	Conditions         []conditions.Condition `json:"conditions,omitempty"`
 	CreationTime       *string                `json:"creationTime,omitempty"`
 	DisabledAlerts     []string               `json:"disabledAlerts,omitempty"`
@@ -193,10 +217,10 @@ type Servers_SecurityAlertPolicy_STATUS struct {
 	Type               *string                `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Servers_SecurityAlertPolicy_STATUS{}
+var _ genruntime.ConvertibleStatus = &ServersSecurityAlertPolicy_STATUS{}
 
-// ConvertStatusFrom populates our Servers_SecurityAlertPolicy_STATUS from the provided source
-func (policy *Servers_SecurityAlertPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our ServersSecurityAlertPolicy_STATUS from the provided source
+func (policy *ServersSecurityAlertPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -204,13 +228,21 @@ func (policy *Servers_SecurityAlertPolicy_STATUS) ConvertStatusFrom(source genru
 	return source.ConvertStatusTo(policy)
 }
 
-// ConvertStatusTo populates the provided destination from our Servers_SecurityAlertPolicy_STATUS
-func (policy *Servers_SecurityAlertPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our ServersSecurityAlertPolicy_STATUS
+func (policy *ServersSecurityAlertPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(policy)
+}
+
+// Storage version of v1api20211101.ServersSecurityAlertPolicyOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ServersSecurityAlertPolicyOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {

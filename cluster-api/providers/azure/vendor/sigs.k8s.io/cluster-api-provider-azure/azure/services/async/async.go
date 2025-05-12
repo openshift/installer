@@ -24,6 +24,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/pkg/errors"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
@@ -60,6 +61,7 @@ func (s *Service[C, D]) CreateOrUpdateResource(ctx context.Context, spec azure.R
 	resourceName := spec.ResourceName()
 	rgName := spec.ResourceGroupName()
 	futureType := infrav1.PutFuture
+	log.V(4).Info("CreateOrUpdateResource", "resourceName", resourceName, "rgName", rgName, "futureType", futureType)
 
 	// Check if there is an ongoing long-running operation.
 	resumeToken := ""
@@ -70,6 +72,7 @@ func (s *Service[C, D]) CreateOrUpdateResource(ctx context.Context, spec azure.R
 			return "", errors.Wrap(err, "could not decode future data, resetting long-running operation state")
 		}
 		resumeToken = t
+		log.V(4).Info("Found a resume token for this long running operation", "resumeToken", resumeToken)
 	}
 
 	// Only when no long running operation is currently in progress do we need to get the parameters.

@@ -32,6 +32,16 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util"
+	"sigs.k8s.io/cluster-api/util/annotations"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api/util/labels/format"
+	"sigs.k8s.io/cluster-api/util/patch"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	machinepool "sigs.k8s.io/cluster-api-provider-azure/azure/scope/strategies/machinepool_deployments"
@@ -43,16 +53,6 @@ import (
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/futures"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	capierrors "sigs.k8s.io/cluster-api/errors"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util"
-	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/conditions"
-	"sigs.k8s.io/cluster-api/util/labels/format"
-	"sigs.k8s.io/cluster-api/util/patch"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // ScalesetsServiceName is the name of the scalesets service.
@@ -454,7 +454,6 @@ func (m *MachinePoolScope) applyAzureMachinePoolMachines(ctx context.Context) er
 	deleted := false
 	// Delete MachinePool Machines for instances that no longer exist in Azure, i.e. deleted out-of-band
 	for key, ampm := range existingMachinesByProviderID {
-		ampm := ampm
 		if _, ok := azureMachinesByProviderID[key]; !ok {
 			deleted = true
 			log.V(4).Info("deleting AzureMachinePoolMachine because it no longer exists in the VMSS", "providerID", key)
@@ -648,7 +647,7 @@ func (m *MachinePoolScope) SetFailureMessage(v error) {
 }
 
 // SetFailureReason sets the AzureMachinePool status failure reason.
-func (m *MachinePoolScope) SetFailureReason(v capierrors.MachineStatusError) {
+func (m *MachinePoolScope) SetFailureReason(v string) {
 	m.AzureMachinePool.Status.FailureReason = &v
 }
 
@@ -800,7 +799,7 @@ func (m *MachinePoolScope) GetVMImage(ctx context.Context) (*infrav1.Image, erro
 		log.V(4).Info("No image specified for machine, using default Windows Image", "machine", m.MachinePool.GetName(), "runtime", runtime, "windowsServerVersion", windowsServerVersion)
 		defaultImage, err = svc.GetDefaultWindowsImage(ctx, m.Location(), ptr.Deref(m.MachinePool.Spec.Template.Spec.Version, ""), runtime, windowsServerVersion)
 	} else {
-		defaultImage, err = svc.GetDefaultUbuntuImage(ctx, m.Location(), ptr.Deref(m.MachinePool.Spec.Template.Spec.Version, ""))
+		defaultImage, err = svc.GetDefaultLinuxImage(ctx, m.Location(), ptr.Deref(m.MachinePool.Spec.Template.Spec.Version, ""))
 	}
 
 	if err != nil {
@@ -948,12 +947,12 @@ func (m *MachinePoolScope) PatchCAPIMachinePoolObject(ctx context.Context) error
 }
 
 // UpdateCAPIMachinePoolReplicas updates the associated MachinePool replica count.
-func (m *MachinePoolScope) UpdateCAPIMachinePoolReplicas(ctx context.Context, replicas *int32) {
+func (m *MachinePoolScope) UpdateCAPIMachinePoolReplicas(_ context.Context, replicas *int32) {
 	m.MachinePool.Spec.Replicas = replicas
 }
 
 // HasReplicasExternallyManaged returns true if the externally managed annotation is set on the CAPI MachinePool resource.
-func (m *MachinePoolScope) HasReplicasExternallyManaged(ctx context.Context) bool {
+func (m *MachinePoolScope) HasReplicasExternallyManaged(_ context.Context) bool {
 	return annotations.ReplicasManagedByExternalAutoscaler(m.MachinePool)
 }
 
@@ -963,7 +962,7 @@ func (m *MachinePoolScope) ReconcileReplicas(ctx context.Context, vmss *azure.VM
 		return nil
 	}
 
-	var replicas int32 = 0
+	var replicas int32
 	if m.MachinePool.Spec.Replicas != nil {
 		replicas = *m.MachinePool.Spec.Replicas
 	}

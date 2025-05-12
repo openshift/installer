@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type Policy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Service_Policy_Spec   `json:"spec,omitempty"`
-	Status            Service_Policy_STATUS `json:"status,omitempty"`
+	Spec              Policy_Spec   `json:"spec,omitempty"`
+	Status            Policy_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &Policy{}
@@ -44,6 +47,26 @@ func (policy *Policy) SetConditions(conditions conditions.Conditions) {
 	policy.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &Policy{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (policy *Policy) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Policy{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (policy *Policy) SecretDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &Policy{}
 
 // AzureName returns the Azure name of the resource (always "policy")
@@ -53,7 +76,7 @@ func (policy *Policy) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-08-01"
 func (policy Policy) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-08-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -88,7 +111,7 @@ func (policy *Policy) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (policy *Policy) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Service_Policy_STATUS{}
+	return &Policy_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -100,13 +123,13 @@ func (policy *Policy) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (policy *Policy) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Service_Policy_STATUS); ok {
+	if st, ok := status.(*Policy_STATUS); ok {
 		policy.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Service_Policy_STATUS
+	var st Policy_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -139,10 +162,11 @@ type PolicyList struct {
 	Items           []Policy `json:"items"`
 }
 
-// Storage version of v1api20220801.Service_Policy_Spec
-type Service_Policy_Spec struct {
-	Format          *string `json:"format,omitempty"`
-	OriginalVersion string  `json:"originalVersion,omitempty"`
+// Storage version of v1api20220801.Policy_Spec
+type Policy_Spec struct {
+	Format          *string             `json:"format,omitempty"`
+	OperatorSpec    *PolicyOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string              `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -153,10 +177,10 @@ type Service_Policy_Spec struct {
 	Value       *string                            `json:"value,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Service_Policy_Spec{}
+var _ genruntime.ConvertibleSpec = &Policy_Spec{}
 
-// ConvertSpecFrom populates our Service_Policy_Spec from the provided source
-func (policy *Service_Policy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our Policy_Spec from the provided source
+func (policy *Policy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -164,8 +188,8 @@ func (policy *Service_Policy_Spec) ConvertSpecFrom(source genruntime.Convertible
 	return source.ConvertSpecTo(policy)
 }
 
-// ConvertSpecTo populates the provided destination from our Service_Policy_Spec
-func (policy *Service_Policy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our Policy_Spec
+func (policy *Policy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -173,8 +197,8 @@ func (policy *Service_Policy_Spec) ConvertSpecTo(destination genruntime.Converti
 	return destination.ConvertSpecFrom(policy)
 }
 
-// Storage version of v1api20220801.Service_Policy_STATUS
-type Service_Policy_STATUS struct {
+// Storage version of v1api20220801.Policy_STATUS
+type Policy_STATUS struct {
 	Conditions  []conditions.Condition `json:"conditions,omitempty"`
 	Format      *string                `json:"format,omitempty"`
 	Id          *string                `json:"id,omitempty"`
@@ -184,10 +208,10 @@ type Service_Policy_STATUS struct {
 	Value       *string                `json:"value,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Service_Policy_STATUS{}
+var _ genruntime.ConvertibleStatus = &Policy_STATUS{}
 
-// ConvertStatusFrom populates our Service_Policy_STATUS from the provided source
-func (policy *Service_Policy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our Policy_STATUS from the provided source
+func (policy *Policy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -195,13 +219,21 @@ func (policy *Service_Policy_STATUS) ConvertStatusFrom(source genruntime.Convert
 	return source.ConvertStatusTo(policy)
 }
 
-// ConvertStatusTo populates the provided destination from our Service_Policy_STATUS
-func (policy *Service_Policy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our Policy_STATUS
+func (policy *Policy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(policy)
+}
+
+// Storage version of v1api20220801.PolicyOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type PolicyOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {

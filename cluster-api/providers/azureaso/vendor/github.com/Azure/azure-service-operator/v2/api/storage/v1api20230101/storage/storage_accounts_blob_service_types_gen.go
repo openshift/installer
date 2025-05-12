@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type StorageAccountsBlobService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              StorageAccounts_BlobService_Spec   `json:"spec,omitempty"`
-	Status            StorageAccounts_BlobService_STATUS `json:"status,omitempty"`
+	Spec              StorageAccountsBlobService_Spec   `json:"spec,omitempty"`
+	Status            StorageAccountsBlobService_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &StorageAccountsBlobService{}
@@ -44,6 +47,26 @@ func (service *StorageAccountsBlobService) SetConditions(conditions conditions.C
 	service.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &StorageAccountsBlobService{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (service *StorageAccountsBlobService) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if service.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return service.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &StorageAccountsBlobService{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (service *StorageAccountsBlobService) SecretDestinationExpressions() []*core.DestinationExpression {
+	if service.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return service.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &StorageAccountsBlobService{}
 
 // AzureName returns the Azure name of the resource (always "default")
@@ -53,7 +76,7 @@ func (service *StorageAccountsBlobService) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-01-01"
 func (service StorageAccountsBlobService) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-01-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -86,7 +109,7 @@ func (service *StorageAccountsBlobService) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (service *StorageAccountsBlobService) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &StorageAccounts_BlobService_STATUS{}
+	return &StorageAccountsBlobService_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -98,13 +121,13 @@ func (service *StorageAccountsBlobService) Owner() *genruntime.ResourceReference
 // SetStatus sets the status of this resource
 func (service *StorageAccountsBlobService) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*StorageAccounts_BlobService_STATUS); ok {
+	if st, ok := status.(*StorageAccountsBlobService_STATUS); ok {
 		service.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st StorageAccounts_BlobService_STATUS
+	var st StorageAccountsBlobService_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -137,17 +160,18 @@ type StorageAccountsBlobServiceList struct {
 	Items           []StorageAccountsBlobService `json:"items"`
 }
 
-// Storage version of v1api20230101.StorageAccounts_BlobService_Spec
-type StorageAccounts_BlobService_Spec struct {
-	AutomaticSnapshotPolicyEnabled *bool                         `json:"automaticSnapshotPolicyEnabled,omitempty"`
-	ChangeFeed                     *ChangeFeed                   `json:"changeFeed,omitempty"`
-	ContainerDeleteRetentionPolicy *DeleteRetentionPolicy        `json:"containerDeleteRetentionPolicy,omitempty"`
-	Cors                           *CorsRules                    `json:"cors,omitempty"`
-	DefaultServiceVersion          *string                       `json:"defaultServiceVersion,omitempty"`
-	DeleteRetentionPolicy          *DeleteRetentionPolicy        `json:"deleteRetentionPolicy,omitempty"`
-	IsVersioningEnabled            *bool                         `json:"isVersioningEnabled,omitempty"`
-	LastAccessTimeTrackingPolicy   *LastAccessTimeTrackingPolicy `json:"lastAccessTimeTrackingPolicy,omitempty"`
-	OriginalVersion                string                        `json:"originalVersion,omitempty"`
+// Storage version of v1api20230101.StorageAccountsBlobService_Spec
+type StorageAccountsBlobService_Spec struct {
+	AutomaticSnapshotPolicyEnabled *bool                                   `json:"automaticSnapshotPolicyEnabled,omitempty"`
+	ChangeFeed                     *ChangeFeed                             `json:"changeFeed,omitempty"`
+	ContainerDeleteRetentionPolicy *DeleteRetentionPolicy                  `json:"containerDeleteRetentionPolicy,omitempty"`
+	Cors                           *CorsRules                              `json:"cors,omitempty"`
+	DefaultServiceVersion          *string                                 `json:"defaultServiceVersion,omitempty"`
+	DeleteRetentionPolicy          *DeleteRetentionPolicy                  `json:"deleteRetentionPolicy,omitempty"`
+	IsVersioningEnabled            *bool                                   `json:"isVersioningEnabled,omitempty"`
+	LastAccessTimeTrackingPolicy   *LastAccessTimeTrackingPolicy           `json:"lastAccessTimeTrackingPolicy,omitempty"`
+	OperatorSpec                   *StorageAccountsBlobServiceOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion                string                                  `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -158,10 +182,10 @@ type StorageAccounts_BlobService_Spec struct {
 	RestorePolicy *RestorePolicyProperties           `json:"restorePolicy,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &StorageAccounts_BlobService_Spec{}
+var _ genruntime.ConvertibleSpec = &StorageAccountsBlobService_Spec{}
 
-// ConvertSpecFrom populates our StorageAccounts_BlobService_Spec from the provided source
-func (service *StorageAccounts_BlobService_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our StorageAccountsBlobService_Spec from the provided source
+func (service *StorageAccountsBlobService_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == service {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -169,8 +193,8 @@ func (service *StorageAccounts_BlobService_Spec) ConvertSpecFrom(source genrunti
 	return source.ConvertSpecTo(service)
 }
 
-// ConvertSpecTo populates the provided destination from our StorageAccounts_BlobService_Spec
-func (service *StorageAccounts_BlobService_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our StorageAccountsBlobService_Spec
+func (service *StorageAccountsBlobService_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == service {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -178,8 +202,8 @@ func (service *StorageAccounts_BlobService_Spec) ConvertSpecTo(destination genru
 	return destination.ConvertSpecFrom(service)
 }
 
-// Storage version of v1api20230101.StorageAccounts_BlobService_STATUS
-type StorageAccounts_BlobService_STATUS struct {
+// Storage version of v1api20230101.StorageAccountsBlobService_STATUS
+type StorageAccountsBlobService_STATUS struct {
 	AutomaticSnapshotPolicyEnabled *bool                                `json:"automaticSnapshotPolicyEnabled,omitempty"`
 	ChangeFeed                     *ChangeFeed_STATUS                   `json:"changeFeed,omitempty"`
 	Conditions                     []conditions.Condition               `json:"conditions,omitempty"`
@@ -197,10 +221,10 @@ type StorageAccounts_BlobService_STATUS struct {
 	Type                           *string                              `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &StorageAccounts_BlobService_STATUS{}
+var _ genruntime.ConvertibleStatus = &StorageAccountsBlobService_STATUS{}
 
-// ConvertStatusFrom populates our StorageAccounts_BlobService_STATUS from the provided source
-func (service *StorageAccounts_BlobService_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our StorageAccountsBlobService_STATUS from the provided source
+func (service *StorageAccountsBlobService_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == service {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -208,8 +232,8 @@ func (service *StorageAccounts_BlobService_STATUS) ConvertStatusFrom(source genr
 	return source.ConvertStatusTo(service)
 }
 
-// ConvertStatusTo populates the provided destination from our StorageAccounts_BlobService_STATUS
-func (service *StorageAccounts_BlobService_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our StorageAccountsBlobService_STATUS
+func (service *StorageAccountsBlobService_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == service {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -301,6 +325,14 @@ type RestorePolicyProperties_STATUS struct {
 	LastEnabledTime *string                `json:"lastEnabledTime,omitempty"`
 	MinRestoreTime  *string                `json:"minRestoreTime,omitempty"`
 	PropertyBag     genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// Storage version of v1api20230101.StorageAccountsBlobServiceOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type StorageAccountsBlobServiceOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20230101.CorsRule

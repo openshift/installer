@@ -5,7 +5,7 @@ APIVersion: Enum (1 value)
 └── "2022-07-01"
 ApplicationGateway: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
-├── Spec: Object (39 properties)
+├── Spec: Object (40 properties)
 │   ├── AuthenticationCertificates: Object (3 properties)[]
 │   │   ├── Data: *genruntime.SecretReference
 │   │   ├── Name: *string
@@ -155,6 +155,10 @@ ApplicationGateway: Resource
 │   │   ├── Name: *string
 │   │   └── PropertyBag: genruntime.PropertyBag
 │   ├── Location: *string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PrivateLinkConfigurations: Object (3 properties)[]
@@ -493,7 +497,7 @@ ApplicationGateway: Resource
     └── Zones: string[]
 BastionHost: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
-├── Spec: Object (15 properties)
+├── Spec: Object (16 properties)
 │   ├── AzureName: string
 │   ├── DisableCopyPaste: *bool
 │   ├── DnsName: *string
@@ -512,6 +516,10 @@ BastionHost: Resource
 │   │       ├── PropertyBag: genruntime.PropertyBag
 │   │       └── Reference: *genruntime.ResourceReference
 │   ├── Location: *string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PropertyBag: genruntime.PropertyBag
@@ -545,11 +553,15 @@ BastionHost: Resource
     └── Type: *string
 DnsForwardingRuleSetsForwardingRule: Resource
 ├── Owner: network/v1api20220701.DnsForwardingRuleset
-├── Spec: Object (8 properties)
+├── Spec: Object (9 properties)
 │   ├── AzureName: string
 │   ├── DomainName: *string
 │   ├── ForwardingRuleState: *string
 │   ├── Metadata: map[string]string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PropertyBag: genruntime.PropertyBag
@@ -581,14 +593,53 @@ DnsForwardingRuleSetsForwardingRule: Resource
     │   ├── Port: *int
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+DnsForwardingRuleSetsVirtualNetworkLink: Resource
+├── Owner: network/v1api20220701.DnsForwardingRuleset
+├── Spec: Object (7 properties)
+│   ├── AzureName: string
+│   ├── Metadata: map[string]string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
+│   ├── OriginalVersion: string
+│   ├── Owner: *genruntime.KnownResourceReference
+│   ├── PropertyBag: genruntime.PropertyBag
+│   └── VirtualNetwork: *Object (2 properties)
+│       ├── PropertyBag: genruntime.PropertyBag
+│       └── Reference: *genruntime.ResourceReference
+└── Status: Object (10 properties)
+    ├── Conditions: conditions.Condition[]
+    ├── Etag: *string
+    ├── Id: *string
+    ├── Metadata: map[string]string
+    ├── Name: *string
+    ├── PropertyBag: genruntime.PropertyBag
+    ├── ProvisioningState: *string
+    ├── SystemData: *Object (7 properties)
+    │   ├── CreatedAt: *string
+    │   ├── CreatedBy: *string
+    │   ├── CreatedByType: *string
+    │   ├── LastModifiedAt: *string
+    │   ├── LastModifiedBy: *string
+    │   ├── LastModifiedByType: *string
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── Type: *string
+    └── VirtualNetwork: *Object (2 properties)
+        ├── Id: *string
+        └── PropertyBag: genruntime.PropertyBag
 DnsForwardingRuleset: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
-├── Spec: Object (7 properties)
+├── Spec: Object (8 properties)
 │   ├── AzureName: string
 │   ├── DnsResolverOutboundEndpoints: Object (2 properties)[]
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   └── Reference: *genruntime.ResourceReference
 │   ├── Location: *string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PropertyBag: genruntime.PropertyBag
@@ -617,9 +668,13 @@ DnsForwardingRuleset: Resource
     └── Type: *string
 DnsResolver: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
-├── Spec: Object (7 properties)
+├── Spec: Object (8 properties)
 │   ├── AzureName: string
 │   ├── Location: *string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PropertyBag: genruntime.PropertyBag
@@ -652,7 +707,7 @@ DnsResolver: Resource
         └── PropertyBag: genruntime.PropertyBag
 DnsResolversInboundEndpoint: Resource
 ├── Owner: network/v1api20220701.DnsResolver
-├── Spec: Object (7 properties)
+├── Spec: Object (8 properties)
 │   ├── AzureName: string
 │   ├── IpConfigurations: Object (4 properties)[]
 │   │   ├── PrivateIpAddress: *string
@@ -662,6 +717,10 @@ DnsResolversInboundEndpoint: Resource
 │   │       ├── PropertyBag: genruntime.PropertyBag
 │   │       └── Reference: *genruntime.ResourceReference
 │   ├── Location: *string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PropertyBag: genruntime.PropertyBag
@@ -694,9 +753,13 @@ DnsResolversInboundEndpoint: Resource
     └── Type: *string
 DnsResolversOutboundEndpoint: Resource
 ├── Owner: network/v1api20220701.DnsResolver
-├── Spec: Object (7 properties)
+├── Spec: Object (8 properties)
 │   ├── AzureName: string
 │   ├── Location: *string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PropertyBag: genruntime.PropertyBag
@@ -728,10 +791,14 @@ DnsResolversOutboundEndpoint: Resource
     └── Type: *string
 NatGateway: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
-├── Spec: Object (11 properties)
+├── Spec: Object (12 properties)
 │   ├── AzureName: string
 │   ├── IdleTimeoutInMinutes: *int
 │   ├── Location: *string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PropertyBag: genruntime.PropertyBag
@@ -801,11 +868,13 @@ PrivateEndpoint: Resource
 │   │   ├── PrivateLinkServiceReference: *genruntime.ResourceReference
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   └── RequestMessage: *string
-│   ├── OperatorSpec: *Object (2 properties)
+│   ├── OperatorSpec: *Object (4 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
 │   │   ├── ConfigMaps: *Object (2 properties)
 │   │   │   ├── PrimaryNicPrivateIpAddress: *genruntime.ConfigMapDestination
 │   │   │   └── PropertyBag: genruntime.PropertyBag
-│   │   └── PropertyBag: genruntime.PropertyBag
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PrivateLinkServiceConnections: Object (6 properties)[]
@@ -892,8 +961,12 @@ PrivateEndpoint: Resource
     └── Type: *string
 PrivateEndpointsPrivateDnsZoneGroup: Resource
 ├── Owner: network/v1api20220701.PrivateEndpoint
-├── Spec: Object (5 properties)
+├── Spec: Object (6 properties)
 │   ├── AzureName: string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PrivateDnsZoneConfigs: Object (3 properties)[]
@@ -947,11 +1020,13 @@ PrivateLinkService: Resource
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   └── Reference: *genruntime.ResourceReference
 │   ├── Location: *string
-│   ├── OperatorSpec: *Object (2 properties)
+│   ├── OperatorSpec: *Object (4 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
 │   │   ├── ConfigMaps: *Object (2 properties)
 │   │   │   ├── Alias: *genruntime.ConfigMapDestination
 │   │   │   └── PropertyBag: genruntime.PropertyBag
-│   │   └── PropertyBag: genruntime.PropertyBag
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PropertyBag: genruntime.PropertyBag
@@ -1007,7 +1082,7 @@ PrivateLinkService: Resource
         └── Subscriptions: string[]
 PublicIPPrefix: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
-├── Spec: Object (14 properties)
+├── Spec: Object (15 properties)
 │   ├── AzureName: string
 │   ├── CustomIPPrefix: *Object (2 properties)
 │   │   ├── PropertyBag: genruntime.PropertyBag
@@ -1024,6 +1099,10 @@ PublicIPPrefix: Resource
 │   ├── NatGateway: *Object (2 properties)
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   └── Reference: *genruntime.ResourceReference
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PrefixLength: *int
@@ -1074,3 +1153,75 @@ PublicIPPrefix: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── Zones: string[]
+augmentConversionForApplicationSecurityGroupSpec_PrivateEndpoint_SubResourceEmbedded: Interface
+augmentConversionForApplicationSecurityGroup_STATUS_PrivateEndpoint_SubResourceEmbedded: Interface
+augmentConversionForBastionHost: Interface
+augmentConversionForBastionHostIPConfiguration: Interface
+augmentConversionForBastionHostIPConfiguration_STATUS: Interface
+augmentConversionForBastionHostOperatorSpec: Interface
+augmentConversionForBastionHost_STATUS: Interface
+augmentConversionForBastionHost_Spec: Interface
+augmentConversionForCustomDnsConfigPropertiesFormat_STATUS: Interface
+augmentConversionForExtendedLocation: Interface
+augmentConversionForExtendedLocation_STATUS: Interface
+augmentConversionForFrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded: Interface
+augmentConversionForFrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded: Interface
+augmentConversionForIpTag: Interface
+augmentConversionForIpTag_STATUS: Interface
+augmentConversionForManagedServiceIdentity: Interface
+augmentConversionForManagedServiceIdentity_STATUS: Interface
+augmentConversionForManagedServiceIdentity_UserAssignedIdentities_STATUS: Interface
+augmentConversionForNatGateway: Interface
+augmentConversionForNatGatewayOperatorSpec: Interface
+augmentConversionForNatGatewaySku: Interface
+augmentConversionForNatGatewaySku_STATUS: Interface
+augmentConversionForNatGatewaySpec_PublicIPPrefix_SubResourceEmbedded: Interface
+augmentConversionForNatGateway_STATUS: Interface
+augmentConversionForNatGateway_STATUS_PublicIPPrefix_SubResourceEmbedded: Interface
+augmentConversionForNatGateway_Spec: Interface
+augmentConversionForNetworkInterface_STATUS_PrivateEndpoint_SubResourceEmbedded: Interface
+augmentConversionForNetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded: Interface
+augmentConversionForPrivateDnsZoneConfig: Interface
+augmentConversionForPrivateDnsZoneConfig_STATUS: Interface
+augmentConversionForPrivateEndpoint: Interface
+augmentConversionForPrivateEndpointConnection_STATUS: Interface
+augmentConversionForPrivateEndpointIPConfiguration: Interface
+augmentConversionForPrivateEndpointIPConfiguration_STATUS: Interface
+augmentConversionForPrivateEndpointOperatorConfigMaps: Interface
+augmentConversionForPrivateEndpointOperatorSpec: Interface
+augmentConversionForPrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded: Interface
+augmentConversionForPrivateEndpoint_Spec: Interface
+augmentConversionForPrivateEndpointsPrivateDnsZoneGroup: Interface
+augmentConversionForPrivateEndpointsPrivateDnsZoneGroupOperatorSpec: Interface
+augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_STATUS: Interface
+augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_Spec: Interface
+augmentConversionForPrivateLinkService: Interface
+augmentConversionForPrivateLinkServiceConnection: Interface
+augmentConversionForPrivateLinkServiceConnectionState: Interface
+augmentConversionForPrivateLinkServiceConnectionState_STATUS: Interface
+augmentConversionForPrivateLinkServiceConnection_STATUS: Interface
+augmentConversionForPrivateLinkServiceIpConfiguration: Interface
+augmentConversionForPrivateLinkServiceIpConfiguration_STATUS: Interface
+augmentConversionForPrivateLinkServiceOperatorConfigMaps: Interface
+augmentConversionForPrivateLinkServiceOperatorSpec: Interface
+augmentConversionForPrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded: Interface
+augmentConversionForPrivateLinkService_Spec: Interface
+augmentConversionForPublicIPPrefix: Interface
+augmentConversionForPublicIPPrefixOperatorSpec: Interface
+augmentConversionForPublicIPPrefixSku: Interface
+augmentConversionForPublicIPPrefixSku_STATUS: Interface
+augmentConversionForPublicIPPrefix_STATUS: Interface
+augmentConversionForPublicIPPrefix_Spec: Interface
+augmentConversionForRecordSet_STATUS: Interface
+augmentConversionForReferencedPublicIpAddress_STATUS: Interface
+augmentConversionForResourceSet: Interface
+augmentConversionForResourceSet_STATUS: Interface
+augmentConversionForSku: Interface
+augmentConversionForSku_STATUS: Interface
+augmentConversionForSubResource: Interface
+augmentConversionForSubResource_STATUS: Interface
+augmentConversionForSubnet_PrivateEndpoint_SubResourceEmbedded: Interface
+augmentConversionForSubnet_PrivateLinkService_SubResourceEmbedded: Interface
+augmentConversionForSubnet_STATUS_PrivateEndpoint_SubResourceEmbedded: Interface
+augmentConversionForSubnet_STATUS_PrivateLinkService_SubResourceEmbedded: Interface
+augmentConversionForUserAssignedIdentityDetails: Interface

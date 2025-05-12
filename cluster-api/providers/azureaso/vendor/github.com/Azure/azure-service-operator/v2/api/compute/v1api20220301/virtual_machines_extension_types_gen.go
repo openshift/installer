@@ -5,10 +5,14 @@ package v1api20220301
 
 import (
 	"fmt"
-	v20220301s "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,8 +34,8 @@ import (
 type VirtualMachinesExtension struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              VirtualMachines_Extension_Spec   `json:"spec,omitempty"`
-	Status            VirtualMachines_Extension_STATUS `json:"status,omitempty"`
+	Spec              VirtualMachinesExtension_Spec   `json:"spec,omitempty"`
+	Status            VirtualMachinesExtension_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &VirtualMachinesExtension{}
@@ -50,7 +54,7 @@ var _ conversion.Convertible = &VirtualMachinesExtension{}
 
 // ConvertFrom populates our VirtualMachinesExtension from the provided hub VirtualMachinesExtension
 func (extension *VirtualMachinesExtension) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220301s.VirtualMachinesExtension)
+	source, ok := hub.(*storage.VirtualMachinesExtension)
 	if !ok {
 		return fmt.Errorf("expected compute/v1api20220301/storage/VirtualMachinesExtension but received %T instead", hub)
 	}
@@ -60,7 +64,7 @@ func (extension *VirtualMachinesExtension) ConvertFrom(hub conversion.Hub) error
 
 // ConvertTo populates the provided hub VirtualMachinesExtension from our VirtualMachinesExtension
 func (extension *VirtualMachinesExtension) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220301s.VirtualMachinesExtension)
+	destination, ok := hub.(*storage.VirtualMachinesExtension)
 	if !ok {
 		return fmt.Errorf("expected compute/v1api20220301/storage/VirtualMachinesExtension but received %T instead", hub)
 	}
@@ -91,15 +95,35 @@ func (extension *VirtualMachinesExtension) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the VirtualMachinesExtension resource
 func (extension *VirtualMachinesExtension) defaultImpl() { extension.defaultAzureName() }
 
+var _ configmaps.Exporter = &VirtualMachinesExtension{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (extension *VirtualMachinesExtension) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if extension.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return extension.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &VirtualMachinesExtension{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (extension *VirtualMachinesExtension) SecretDestinationExpressions() []*core.DestinationExpression {
+	if extension.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return extension.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &VirtualMachinesExtension{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (extension *VirtualMachinesExtension) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*VirtualMachines_Extension_STATUS); ok {
-		return extension.Spec.Initialize_From_VirtualMachines_Extension_STATUS(s)
+	if s, ok := status.(*VirtualMachinesExtension_STATUS); ok {
+		return extension.Spec.Initialize_From_VirtualMachinesExtension_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type VirtualMachines_Extension_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type VirtualMachinesExtension_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &VirtualMachinesExtension{}
@@ -111,7 +135,7 @@ func (extension *VirtualMachinesExtension) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-03-01"
 func (extension VirtualMachinesExtension) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-03-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -145,7 +169,7 @@ func (extension *VirtualMachinesExtension) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (extension *VirtualMachinesExtension) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &VirtualMachines_Extension_STATUS{}
+	return &VirtualMachinesExtension_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -157,13 +181,13 @@ func (extension *VirtualMachinesExtension) Owner() *genruntime.ResourceReference
 // SetStatus sets the status of this resource
 func (extension *VirtualMachinesExtension) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*VirtualMachines_Extension_STATUS); ok {
+	if st, ok := status.(*VirtualMachinesExtension_STATUS); ok {
 		extension.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st VirtualMachines_Extension_STATUS
+	var st VirtualMachinesExtension_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -209,7 +233,7 @@ func (extension *VirtualMachinesExtension) ValidateUpdate(old runtime.Object) (a
 
 // createValidations validates the creation of the resource
 func (extension *VirtualMachinesExtension) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){extension.validateResourceReferences, extension.validateOwnerReference}
+	return []func() (admission.Warnings, error){extension.validateResourceReferences, extension.validateOwnerReference, extension.validateSecretDestinations, extension.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -227,7 +251,21 @@ func (extension *VirtualMachinesExtension) updateValidations() []func(old runtim
 		func(old runtime.Object) (admission.Warnings, error) {
 			return extension.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return extension.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return extension.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (extension *VirtualMachinesExtension) validateConfigMapDestinations() (admission.Warnings, error) {
+	if extension.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(extension, nil, extension.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -244,6 +282,14 @@ func (extension *VirtualMachinesExtension) validateResourceReferences() (admissi
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (extension *VirtualMachinesExtension) validateSecretDestinations() (admission.Warnings, error) {
+	if extension.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(extension, nil, extension.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (extension *VirtualMachinesExtension) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*VirtualMachinesExtension)
@@ -255,24 +301,24 @@ func (extension *VirtualMachinesExtension) validateWriteOnceProperties(old runti
 }
 
 // AssignProperties_From_VirtualMachinesExtension populates our VirtualMachinesExtension from the provided source VirtualMachinesExtension
-func (extension *VirtualMachinesExtension) AssignProperties_From_VirtualMachinesExtension(source *v20220301s.VirtualMachinesExtension) error {
+func (extension *VirtualMachinesExtension) AssignProperties_From_VirtualMachinesExtension(source *storage.VirtualMachinesExtension) error {
 
 	// ObjectMeta
 	extension.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec VirtualMachines_Extension_Spec
-	err := spec.AssignProperties_From_VirtualMachines_Extension_Spec(&source.Spec)
+	var spec VirtualMachinesExtension_Spec
+	err := spec.AssignProperties_From_VirtualMachinesExtension_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_VirtualMachines_Extension_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_VirtualMachinesExtension_Spec() to populate field Spec")
 	}
 	extension.Spec = spec
 
 	// Status
-	var status VirtualMachines_Extension_STATUS
-	err = status.AssignProperties_From_VirtualMachines_Extension_STATUS(&source.Status)
+	var status VirtualMachinesExtension_STATUS
+	err = status.AssignProperties_From_VirtualMachinesExtension_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_VirtualMachines_Extension_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_VirtualMachinesExtension_STATUS() to populate field Status")
 	}
 	extension.Status = status
 
@@ -281,24 +327,24 @@ func (extension *VirtualMachinesExtension) AssignProperties_From_VirtualMachines
 }
 
 // AssignProperties_To_VirtualMachinesExtension populates the provided destination VirtualMachinesExtension from our VirtualMachinesExtension
-func (extension *VirtualMachinesExtension) AssignProperties_To_VirtualMachinesExtension(destination *v20220301s.VirtualMachinesExtension) error {
+func (extension *VirtualMachinesExtension) AssignProperties_To_VirtualMachinesExtension(destination *storage.VirtualMachinesExtension) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *extension.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20220301s.VirtualMachines_Extension_Spec
-	err := extension.Spec.AssignProperties_To_VirtualMachines_Extension_Spec(&spec)
+	var spec storage.VirtualMachinesExtension_Spec
+	err := extension.Spec.AssignProperties_To_VirtualMachinesExtension_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_VirtualMachines_Extension_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_VirtualMachinesExtension_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20220301s.VirtualMachines_Extension_STATUS
-	err = extension.Status.AssignProperties_To_VirtualMachines_Extension_STATUS(&status)
+	var status storage.VirtualMachinesExtension_STATUS
+	err = extension.Status.AssignProperties_To_VirtualMachinesExtension_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_VirtualMachines_Extension_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_VirtualMachinesExtension_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -325,7 +371,7 @@ type VirtualMachinesExtensionList struct {
 	Items           []VirtualMachinesExtension `json:"items"`
 }
 
-type VirtualMachines_Extension_Spec struct {
+type VirtualMachinesExtension_Spec struct {
 	// AutoUpgradeMinorVersion: Indicates whether the extension should use a newer minor version if one is available at
 	// deployment time. Once deployed, however, the extension will not upgrade minor versions unless redeployed, even with this
 	// property set to true.
@@ -347,6 +393,10 @@ type VirtualMachines_Extension_Spec struct {
 
 	// Location: Resource location
 	Location *string `json:"location,omitempty"`
+
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *VirtualMachinesExtensionOperatorSpec `json:"operatorSpec,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -382,14 +432,14 @@ type VirtualMachines_Extension_Spec struct {
 	TypeHandlerVersion *string `json:"typeHandlerVersion,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &VirtualMachines_Extension_Spec{}
+var _ genruntime.ARMTransformer = &VirtualMachinesExtension_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (extension *VirtualMachines_Extension_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (extension *VirtualMachinesExtension_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if extension == nil {
 		return nil, nil
 	}
-	result := &VirtualMachines_Extension_Spec_ARM{}
+	result := &arm.VirtualMachinesExtension_Spec{}
 
 	// Set property "Location":
 	if extension.Location != nil {
@@ -412,7 +462,7 @@ func (extension *VirtualMachines_Extension_Spec) ConvertToARM(resolved genruntim
 		extension.SuppressFailures != nil ||
 		extension.Type != nil ||
 		extension.TypeHandlerVersion != nil {
-		result.Properties = &VirtualMachineExtensionProperties_ARM{}
+		result.Properties = &arm.VirtualMachineExtensionProperties{}
 	}
 	if extension.AutoUpgradeMinorVersion != nil {
 		autoUpgradeMinorVersion := *extension.AutoUpgradeMinorVersion
@@ -431,7 +481,7 @@ func (extension *VirtualMachines_Extension_Spec) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		instanceView := *instanceView_ARM.(*VirtualMachineExtensionInstanceView_ARM)
+		instanceView := *instanceView_ARM.(*arm.VirtualMachineExtensionInstanceView)
 		result.Properties.InstanceView = &instanceView
 	}
 	if extension.ProtectedSettings != nil {
@@ -448,7 +498,7 @@ func (extension *VirtualMachines_Extension_Spec) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		protectedSettingsFromKeyVault := *protectedSettingsFromKeyVault_ARM.(*KeyVaultSecretReference_ARM)
+		protectedSettingsFromKeyVault := *protectedSettingsFromKeyVault_ARM.(*arm.KeyVaultSecretReference)
 		result.Properties.ProtectedSettingsFromKeyVault = &protectedSettingsFromKeyVault
 	}
 	if extension.Publisher != nil {
@@ -485,15 +535,15 @@ func (extension *VirtualMachines_Extension_Spec) ConvertToARM(resolved genruntim
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (extension *VirtualMachines_Extension_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualMachines_Extension_Spec_ARM{}
+func (extension *VirtualMachinesExtension_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.VirtualMachinesExtension_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (extension *VirtualMachines_Extension_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualMachines_Extension_Spec_ARM)
+func (extension *VirtualMachinesExtension_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.VirtualMachinesExtension_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualMachines_Extension_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualMachinesExtension_Spec, got %T", armInput)
 	}
 
 	// Set property "AutoUpgradeMinorVersion":
@@ -545,6 +595,8 @@ func (extension *VirtualMachines_Extension_Spec) PopulateFromARM(owner genruntim
 		location := *typedInput.Location
 		extension.Location = &location
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	extension.Owner = &genruntime.KnownResourceReference{
@@ -627,25 +679,25 @@ func (extension *VirtualMachines_Extension_Spec) PopulateFromARM(owner genruntim
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &VirtualMachines_Extension_Spec{}
+var _ genruntime.ConvertibleSpec = &VirtualMachinesExtension_Spec{}
 
-// ConvertSpecFrom populates our VirtualMachines_Extension_Spec from the provided source
-func (extension *VirtualMachines_Extension_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20220301s.VirtualMachines_Extension_Spec)
+// ConvertSpecFrom populates our VirtualMachinesExtension_Spec from the provided source
+func (extension *VirtualMachinesExtension_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.VirtualMachinesExtension_Spec)
 	if ok {
 		// Populate our instance from source
-		return extension.AssignProperties_From_VirtualMachines_Extension_Spec(src)
+		return extension.AssignProperties_From_VirtualMachinesExtension_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220301s.VirtualMachines_Extension_Spec{}
+	src = &storage.VirtualMachinesExtension_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = extension.AssignProperties_From_VirtualMachines_Extension_Spec(src)
+	err = extension.AssignProperties_From_VirtualMachinesExtension_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -653,17 +705,17 @@ func (extension *VirtualMachines_Extension_Spec) ConvertSpecFrom(source genrunti
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our VirtualMachines_Extension_Spec
-func (extension *VirtualMachines_Extension_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20220301s.VirtualMachines_Extension_Spec)
+// ConvertSpecTo populates the provided destination from our VirtualMachinesExtension_Spec
+func (extension *VirtualMachinesExtension_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.VirtualMachinesExtension_Spec)
 	if ok {
 		// Populate destination from our instance
-		return extension.AssignProperties_To_VirtualMachines_Extension_Spec(dst)
+		return extension.AssignProperties_To_VirtualMachinesExtension_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220301s.VirtualMachines_Extension_Spec{}
-	err := extension.AssignProperties_To_VirtualMachines_Extension_Spec(dst)
+	dst = &storage.VirtualMachinesExtension_Spec{}
+	err := extension.AssignProperties_To_VirtualMachinesExtension_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -677,8 +729,8 @@ func (extension *VirtualMachines_Extension_Spec) ConvertSpecTo(destination genru
 	return nil
 }
 
-// AssignProperties_From_VirtualMachines_Extension_Spec populates our VirtualMachines_Extension_Spec from the provided source VirtualMachines_Extension_Spec
-func (extension *VirtualMachines_Extension_Spec) AssignProperties_From_VirtualMachines_Extension_Spec(source *v20220301s.VirtualMachines_Extension_Spec) error {
+// AssignProperties_From_VirtualMachinesExtension_Spec populates our VirtualMachinesExtension_Spec from the provided source VirtualMachinesExtension_Spec
+func (extension *VirtualMachinesExtension_Spec) AssignProperties_From_VirtualMachinesExtension_Spec(source *storage.VirtualMachinesExtension_Spec) error {
 
 	// AutoUpgradeMinorVersion
 	if source.AutoUpgradeMinorVersion != nil {
@@ -716,6 +768,18 @@ func (extension *VirtualMachines_Extension_Spec) AssignProperties_From_VirtualMa
 
 	// Location
 	extension.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec VirtualMachinesExtensionOperatorSpec
+		err := operatorSpec.AssignProperties_From_VirtualMachinesExtensionOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachinesExtensionOperatorSpec() to populate field OperatorSpec")
+		}
+		extension.OperatorSpec = &operatorSpec
+	} else {
+		extension.OperatorSpec = nil
+	}
 
 	// Owner
 	if source.Owner != nil {
@@ -782,8 +846,8 @@ func (extension *VirtualMachines_Extension_Spec) AssignProperties_From_VirtualMa
 	return nil
 }
 
-// AssignProperties_To_VirtualMachines_Extension_Spec populates the provided destination VirtualMachines_Extension_Spec from our VirtualMachines_Extension_Spec
-func (extension *VirtualMachines_Extension_Spec) AssignProperties_To_VirtualMachines_Extension_Spec(destination *v20220301s.VirtualMachines_Extension_Spec) error {
+// AssignProperties_To_VirtualMachinesExtension_Spec populates the provided destination VirtualMachinesExtension_Spec from our VirtualMachinesExtension_Spec
+func (extension *VirtualMachinesExtension_Spec) AssignProperties_To_VirtualMachinesExtension_Spec(destination *storage.VirtualMachinesExtension_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -811,7 +875,7 @@ func (extension *VirtualMachines_Extension_Spec) AssignProperties_To_VirtualMach
 
 	// InstanceView
 	if extension.InstanceView != nil {
-		var instanceView v20220301s.VirtualMachineExtensionInstanceView
+		var instanceView storage.VirtualMachineExtensionInstanceView
 		err := extension.InstanceView.AssignProperties_To_VirtualMachineExtensionInstanceView(&instanceView)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineExtensionInstanceView() to populate field InstanceView")
@@ -823,6 +887,18 @@ func (extension *VirtualMachines_Extension_Spec) AssignProperties_To_VirtualMach
 
 	// Location
 	destination.Location = genruntime.ClonePointerToString(extension.Location)
+
+	// OperatorSpec
+	if extension.OperatorSpec != nil {
+		var operatorSpec storage.VirtualMachinesExtensionOperatorSpec
+		err := extension.OperatorSpec.AssignProperties_To_VirtualMachinesExtensionOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachinesExtensionOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OriginalVersion
 	destination.OriginalVersion = extension.OriginalVersion()
@@ -845,7 +921,7 @@ func (extension *VirtualMachines_Extension_Spec) AssignProperties_To_VirtualMach
 
 	// ProtectedSettingsFromKeyVault
 	if extension.ProtectedSettingsFromKeyVault != nil {
-		var protectedSettingsFromKeyVault v20220301s.KeyVaultSecretReference
+		var protectedSettingsFromKeyVault storage.KeyVaultSecretReference
 		err := extension.ProtectedSettingsFromKeyVault.AssignProperties_To_KeyVaultSecretReference(&protectedSettingsFromKeyVault)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultSecretReference() to populate field ProtectedSettingsFromKeyVault")
@@ -899,8 +975,8 @@ func (extension *VirtualMachines_Extension_Spec) AssignProperties_To_VirtualMach
 	return nil
 }
 
-// Initialize_From_VirtualMachines_Extension_STATUS populates our VirtualMachines_Extension_Spec from the provided source VirtualMachines_Extension_STATUS
-func (extension *VirtualMachines_Extension_Spec) Initialize_From_VirtualMachines_Extension_STATUS(source *VirtualMachines_Extension_STATUS) error {
+// Initialize_From_VirtualMachinesExtension_STATUS populates our VirtualMachinesExtension_Spec from the provided source VirtualMachinesExtension_STATUS
+func (extension *VirtualMachinesExtension_Spec) Initialize_From_VirtualMachinesExtension_STATUS(source *VirtualMachinesExtension_STATUS) error {
 
 	// AutoUpgradeMinorVersion
 	if source.AutoUpgradeMinorVersion != nil {
@@ -976,7 +1052,7 @@ func (extension *VirtualMachines_Extension_Spec) Initialize_From_VirtualMachines
 	extension.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// Type
-	extension.Type = genruntime.ClonePointerToString(source.Type)
+	extension.Type = genruntime.ClonePointerToString(source.PropertiesType)
 
 	// TypeHandlerVersion
 	extension.TypeHandlerVersion = genruntime.ClonePointerToString(source.TypeHandlerVersion)
@@ -986,16 +1062,16 @@ func (extension *VirtualMachines_Extension_Spec) Initialize_From_VirtualMachines
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (extension *VirtualMachines_Extension_Spec) OriginalVersion() string {
+func (extension *VirtualMachinesExtension_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (extension *VirtualMachines_Extension_Spec) SetAzureName(azureName string) {
+func (extension *VirtualMachinesExtension_Spec) SetAzureName(azureName string) {
 	extension.AzureName = azureName
 }
 
-type VirtualMachines_Extension_STATUS struct {
+type VirtualMachinesExtension_STATUS struct {
 	// AutoUpgradeMinorVersion: Indicates whether the extension should use a newer minor version if one is available at
 	// deployment time. Once deployed, however, the extension will not upgrade minor versions unless redeployed, even with this
 	// property set to true.
@@ -1053,25 +1129,25 @@ type VirtualMachines_Extension_STATUS struct {
 	TypeHandlerVersion *string `json:"typeHandlerVersion,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &VirtualMachines_Extension_STATUS{}
+var _ genruntime.ConvertibleStatus = &VirtualMachinesExtension_STATUS{}
 
-// ConvertStatusFrom populates our VirtualMachines_Extension_STATUS from the provided source
-func (extension *VirtualMachines_Extension_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20220301s.VirtualMachines_Extension_STATUS)
+// ConvertStatusFrom populates our VirtualMachinesExtension_STATUS from the provided source
+func (extension *VirtualMachinesExtension_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.VirtualMachinesExtension_STATUS)
 	if ok {
 		// Populate our instance from source
-		return extension.AssignProperties_From_VirtualMachines_Extension_STATUS(src)
+		return extension.AssignProperties_From_VirtualMachinesExtension_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220301s.VirtualMachines_Extension_STATUS{}
+	src = &storage.VirtualMachinesExtension_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = extension.AssignProperties_From_VirtualMachines_Extension_STATUS(src)
+	err = extension.AssignProperties_From_VirtualMachinesExtension_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -1079,17 +1155,17 @@ func (extension *VirtualMachines_Extension_STATUS) ConvertStatusFrom(source genr
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our VirtualMachines_Extension_STATUS
-func (extension *VirtualMachines_Extension_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20220301s.VirtualMachines_Extension_STATUS)
+// ConvertStatusTo populates the provided destination from our VirtualMachinesExtension_STATUS
+func (extension *VirtualMachinesExtension_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.VirtualMachinesExtension_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return extension.AssignProperties_To_VirtualMachines_Extension_STATUS(dst)
+		return extension.AssignProperties_To_VirtualMachinesExtension_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220301s.VirtualMachines_Extension_STATUS{}
-	err := extension.AssignProperties_To_VirtualMachines_Extension_STATUS(dst)
+	dst = &storage.VirtualMachinesExtension_STATUS{}
+	err := extension.AssignProperties_To_VirtualMachinesExtension_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -1103,18 +1179,18 @@ func (extension *VirtualMachines_Extension_STATUS) ConvertStatusTo(destination g
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &VirtualMachines_Extension_STATUS{}
+var _ genruntime.FromARMConverter = &VirtualMachinesExtension_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (extension *VirtualMachines_Extension_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualMachines_Extension_STATUS_ARM{}
+func (extension *VirtualMachinesExtension_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.VirtualMachinesExtension_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (extension *VirtualMachines_Extension_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualMachines_Extension_STATUS_ARM)
+func (extension *VirtualMachinesExtension_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.VirtualMachinesExtension_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualMachines_Extension_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualMachinesExtension_STATUS, got %T", armInput)
 	}
 
 	// Set property "AutoUpgradeMinorVersion":
@@ -1266,8 +1342,8 @@ func (extension *VirtualMachines_Extension_STATUS) PopulateFromARM(owner genrunt
 	return nil
 }
 
-// AssignProperties_From_VirtualMachines_Extension_STATUS populates our VirtualMachines_Extension_STATUS from the provided source VirtualMachines_Extension_STATUS
-func (extension *VirtualMachines_Extension_STATUS) AssignProperties_From_VirtualMachines_Extension_STATUS(source *v20220301s.VirtualMachines_Extension_STATUS) error {
+// AssignProperties_From_VirtualMachinesExtension_STATUS populates our VirtualMachinesExtension_STATUS from the provided source VirtualMachinesExtension_STATUS
+func (extension *VirtualMachinesExtension_STATUS) AssignProperties_From_VirtualMachinesExtension_STATUS(source *storage.VirtualMachinesExtension_STATUS) error {
 
 	// AutoUpgradeMinorVersion
 	if source.AutoUpgradeMinorVersion != nil {
@@ -1367,8 +1443,8 @@ func (extension *VirtualMachines_Extension_STATUS) AssignProperties_From_Virtual
 	return nil
 }
 
-// AssignProperties_To_VirtualMachines_Extension_STATUS populates the provided destination VirtualMachines_Extension_STATUS from our VirtualMachines_Extension_STATUS
-func (extension *VirtualMachines_Extension_STATUS) AssignProperties_To_VirtualMachines_Extension_STATUS(destination *v20220301s.VirtualMachines_Extension_STATUS) error {
+// AssignProperties_To_VirtualMachinesExtension_STATUS populates the provided destination VirtualMachinesExtension_STATUS from our VirtualMachinesExtension_STATUS
+func (extension *VirtualMachinesExtension_STATUS) AssignProperties_To_VirtualMachinesExtension_STATUS(destination *storage.VirtualMachinesExtension_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1399,7 +1475,7 @@ func (extension *VirtualMachines_Extension_STATUS) AssignProperties_To_VirtualMa
 
 	// InstanceView
 	if extension.InstanceView != nil {
-		var instanceView v20220301s.VirtualMachineExtensionInstanceView_STATUS
+		var instanceView storage.VirtualMachineExtensionInstanceView_STATUS
 		err := extension.InstanceView.AssignProperties_To_VirtualMachineExtensionInstanceView_STATUS(&instanceView)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineExtensionInstanceView_STATUS() to populate field InstanceView")
@@ -1420,7 +1496,7 @@ func (extension *VirtualMachines_Extension_STATUS) AssignProperties_To_VirtualMa
 
 	// ProtectedSettingsFromKeyVault
 	if extension.ProtectedSettingsFromKeyVault != nil {
-		var protectedSettingsFromKeyVault v20220301s.KeyVaultSecretReference_STATUS
+		var protectedSettingsFromKeyVault storage.KeyVaultSecretReference_STATUS
 		err := extension.ProtectedSettingsFromKeyVault.AssignProperties_To_KeyVaultSecretReference_STATUS(&protectedSettingsFromKeyVault)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultSecretReference_STATUS() to populate field ProtectedSettingsFromKeyVault")
@@ -1502,7 +1578,7 @@ func (view *VirtualMachineExtensionInstanceView) ConvertToARM(resolved genruntim
 	if view == nil {
 		return nil, nil
 	}
-	result := &VirtualMachineExtensionInstanceView_ARM{}
+	result := &arm.VirtualMachineExtensionInstanceView{}
 
 	// Set property "Name":
 	if view.Name != nil {
@@ -1516,7 +1592,7 @@ func (view *VirtualMachineExtensionInstanceView) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		result.Statuses = append(result.Statuses, *item_ARM.(*InstanceViewStatus_ARM))
+		result.Statuses = append(result.Statuses, *item_ARM.(*arm.InstanceViewStatus))
 	}
 
 	// Set property "Substatuses":
@@ -1525,7 +1601,7 @@ func (view *VirtualMachineExtensionInstanceView) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		result.Substatuses = append(result.Substatuses, *item_ARM.(*InstanceViewStatus_ARM))
+		result.Substatuses = append(result.Substatuses, *item_ARM.(*arm.InstanceViewStatus))
 	}
 
 	// Set property "Type":
@@ -1544,14 +1620,14 @@ func (view *VirtualMachineExtensionInstanceView) ConvertToARM(resolved genruntim
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (view *VirtualMachineExtensionInstanceView) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualMachineExtensionInstanceView_ARM{}
+	return &arm.VirtualMachineExtensionInstanceView{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (view *VirtualMachineExtensionInstanceView) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualMachineExtensionInstanceView_ARM)
+	typedInput, ok := armInput.(arm.VirtualMachineExtensionInstanceView)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualMachineExtensionInstanceView_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualMachineExtensionInstanceView, got %T", armInput)
 	}
 
 	// Set property "Name":
@@ -1597,7 +1673,7 @@ func (view *VirtualMachineExtensionInstanceView) PopulateFromARM(owner genruntim
 }
 
 // AssignProperties_From_VirtualMachineExtensionInstanceView populates our VirtualMachineExtensionInstanceView from the provided source VirtualMachineExtensionInstanceView
-func (view *VirtualMachineExtensionInstanceView) AssignProperties_From_VirtualMachineExtensionInstanceView(source *v20220301s.VirtualMachineExtensionInstanceView) error {
+func (view *VirtualMachineExtensionInstanceView) AssignProperties_From_VirtualMachineExtensionInstanceView(source *storage.VirtualMachineExtensionInstanceView) error {
 
 	// Name
 	view.Name = genruntime.ClonePointerToString(source.Name)
@@ -1649,7 +1725,7 @@ func (view *VirtualMachineExtensionInstanceView) AssignProperties_From_VirtualMa
 }
 
 // AssignProperties_To_VirtualMachineExtensionInstanceView populates the provided destination VirtualMachineExtensionInstanceView from our VirtualMachineExtensionInstanceView
-func (view *VirtualMachineExtensionInstanceView) AssignProperties_To_VirtualMachineExtensionInstanceView(destination *v20220301s.VirtualMachineExtensionInstanceView) error {
+func (view *VirtualMachineExtensionInstanceView) AssignProperties_To_VirtualMachineExtensionInstanceView(destination *storage.VirtualMachineExtensionInstanceView) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1658,11 +1734,11 @@ func (view *VirtualMachineExtensionInstanceView) AssignProperties_To_VirtualMach
 
 	// Statuses
 	if view.Statuses != nil {
-		statusList := make([]v20220301s.InstanceViewStatus, len(view.Statuses))
+		statusList := make([]storage.InstanceViewStatus, len(view.Statuses))
 		for statusIndex, statusItem := range view.Statuses {
 			// Shadow the loop variable to avoid aliasing
 			statusItem := statusItem
-			var status v20220301s.InstanceViewStatus
+			var status storage.InstanceViewStatus
 			err := statusItem.AssignProperties_To_InstanceViewStatus(&status)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_InstanceViewStatus() to populate field Statuses")
@@ -1676,11 +1752,11 @@ func (view *VirtualMachineExtensionInstanceView) AssignProperties_To_VirtualMach
 
 	// Substatuses
 	if view.Substatuses != nil {
-		substatusList := make([]v20220301s.InstanceViewStatus, len(view.Substatuses))
+		substatusList := make([]storage.InstanceViewStatus, len(view.Substatuses))
 		for substatusIndex, substatusItem := range view.Substatuses {
 			// Shadow the loop variable to avoid aliasing
 			substatusItem := substatusItem
-			var substatus v20220301s.InstanceViewStatus
+			var substatus storage.InstanceViewStatus
 			err := substatusItem.AssignProperties_To_InstanceViewStatus(&substatus)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_InstanceViewStatus() to populate field Substatuses")
@@ -1783,14 +1859,14 @@ var _ genruntime.FromARMConverter = &VirtualMachineExtensionInstanceView_STATUS{
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (view *VirtualMachineExtensionInstanceView_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualMachineExtensionInstanceView_STATUS_ARM{}
+	return &arm.VirtualMachineExtensionInstanceView_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (view *VirtualMachineExtensionInstanceView_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualMachineExtensionInstanceView_STATUS_ARM)
+	typedInput, ok := armInput.(arm.VirtualMachineExtensionInstanceView_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualMachineExtensionInstanceView_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualMachineExtensionInstanceView_STATUS, got %T", armInput)
 	}
 
 	// Set property "Name":
@@ -1836,7 +1912,7 @@ func (view *VirtualMachineExtensionInstanceView_STATUS) PopulateFromARM(owner ge
 }
 
 // AssignProperties_From_VirtualMachineExtensionInstanceView_STATUS populates our VirtualMachineExtensionInstanceView_STATUS from the provided source VirtualMachineExtensionInstanceView_STATUS
-func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_From_VirtualMachineExtensionInstanceView_STATUS(source *v20220301s.VirtualMachineExtensionInstanceView_STATUS) error {
+func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_From_VirtualMachineExtensionInstanceView_STATUS(source *storage.VirtualMachineExtensionInstanceView_STATUS) error {
 
 	// Name
 	view.Name = genruntime.ClonePointerToString(source.Name)
@@ -1888,7 +1964,7 @@ func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_From_Vi
 }
 
 // AssignProperties_To_VirtualMachineExtensionInstanceView_STATUS populates the provided destination VirtualMachineExtensionInstanceView_STATUS from our VirtualMachineExtensionInstanceView_STATUS
-func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_To_VirtualMachineExtensionInstanceView_STATUS(destination *v20220301s.VirtualMachineExtensionInstanceView_STATUS) error {
+func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_To_VirtualMachineExtensionInstanceView_STATUS(destination *storage.VirtualMachineExtensionInstanceView_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1897,11 +1973,11 @@ func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_To_Virt
 
 	// Statuses
 	if view.Statuses != nil {
-		statusList := make([]v20220301s.InstanceViewStatus_STATUS, len(view.Statuses))
+		statusList := make([]storage.InstanceViewStatus_STATUS, len(view.Statuses))
 		for statusIndex, statusItem := range view.Statuses {
 			// Shadow the loop variable to avoid aliasing
 			statusItem := statusItem
-			var status v20220301s.InstanceViewStatus_STATUS
+			var status storage.InstanceViewStatus_STATUS
 			err := statusItem.AssignProperties_To_InstanceViewStatus_STATUS(&status)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Statuses")
@@ -1915,11 +1991,11 @@ func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_To_Virt
 
 	// Substatuses
 	if view.Substatuses != nil {
-		substatusList := make([]v20220301s.InstanceViewStatus_STATUS, len(view.Substatuses))
+		substatusList := make([]storage.InstanceViewStatus_STATUS, len(view.Substatuses))
 		for substatusIndex, substatusItem := range view.Substatuses {
 			// Shadow the loop variable to avoid aliasing
 			substatusItem := substatusItem
-			var substatus v20220301s.InstanceViewStatus_STATUS
+			var substatus storage.InstanceViewStatus_STATUS
 			err := substatusItem.AssignProperties_To_InstanceViewStatus_STATUS(&substatus)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_InstanceViewStatus_STATUS() to populate field Substatuses")
@@ -1936,6 +2012,110 @@ func (view *VirtualMachineExtensionInstanceView_STATUS) AssignProperties_To_Virt
 
 	// TypeHandlerVersion
 	destination.TypeHandlerVersion = genruntime.ClonePointerToString(view.TypeHandlerVersion)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type VirtualMachinesExtensionOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_VirtualMachinesExtensionOperatorSpec populates our VirtualMachinesExtensionOperatorSpec from the provided source VirtualMachinesExtensionOperatorSpec
+func (operator *VirtualMachinesExtensionOperatorSpec) AssignProperties_From_VirtualMachinesExtensionOperatorSpec(source *storage.VirtualMachinesExtensionOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_VirtualMachinesExtensionOperatorSpec populates the provided destination VirtualMachinesExtensionOperatorSpec from our VirtualMachinesExtensionOperatorSpec
+func (operator *VirtualMachinesExtensionOperatorSpec) AssignProperties_To_VirtualMachinesExtensionOperatorSpec(destination *storage.VirtualMachinesExtensionOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -1973,7 +2153,7 @@ func (status *InstanceViewStatus) ConvertToARM(resolved genruntime.ConvertToARMR
 	if status == nil {
 		return nil, nil
 	}
-	result := &InstanceViewStatus_ARM{}
+	result := &arm.InstanceViewStatus{}
 
 	// Set property "Code":
 	if status.Code != nil {
@@ -1989,7 +2169,9 @@ func (status *InstanceViewStatus) ConvertToARM(resolved genruntime.ConvertToARMR
 
 	// Set property "Level":
 	if status.Level != nil {
-		level := *status.Level
+		var temp string
+		temp = string(*status.Level)
+		level := arm.InstanceViewStatus_Level(temp)
 		result.Level = &level
 	}
 
@@ -2009,14 +2191,14 @@ func (status *InstanceViewStatus) ConvertToARM(resolved genruntime.ConvertToARMR
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (status *InstanceViewStatus) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &InstanceViewStatus_ARM{}
+	return &arm.InstanceViewStatus{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (status *InstanceViewStatus) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(InstanceViewStatus_ARM)
+	typedInput, ok := armInput.(arm.InstanceViewStatus)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected InstanceViewStatus_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.InstanceViewStatus, got %T", armInput)
 	}
 
 	// Set property "Code":
@@ -2033,7 +2215,9 @@ func (status *InstanceViewStatus) PopulateFromARM(owner genruntime.ArbitraryOwne
 
 	// Set property "Level":
 	if typedInput.Level != nil {
-		level := *typedInput.Level
+		var temp string
+		temp = string(*typedInput.Level)
+		level := InstanceViewStatus_Level(temp)
 		status.Level = &level
 	}
 
@@ -2054,7 +2238,7 @@ func (status *InstanceViewStatus) PopulateFromARM(owner genruntime.ArbitraryOwne
 }
 
 // AssignProperties_From_InstanceViewStatus populates our InstanceViewStatus from the provided source InstanceViewStatus
-func (status *InstanceViewStatus) AssignProperties_From_InstanceViewStatus(source *v20220301s.InstanceViewStatus) error {
+func (status *InstanceViewStatus) AssignProperties_From_InstanceViewStatus(source *storage.InstanceViewStatus) error {
 
 	// Code
 	status.Code = genruntime.ClonePointerToString(source.Code)
@@ -2064,8 +2248,9 @@ func (status *InstanceViewStatus) AssignProperties_From_InstanceViewStatus(sourc
 
 	// Level
 	if source.Level != nil {
-		level := InstanceViewStatus_Level(*source.Level)
-		status.Level = &level
+		level := *source.Level
+		levelTemp := genruntime.ToEnum(level, instanceViewStatus_Level_Values)
+		status.Level = &levelTemp
 	} else {
 		status.Level = nil
 	}
@@ -2081,7 +2266,7 @@ func (status *InstanceViewStatus) AssignProperties_From_InstanceViewStatus(sourc
 }
 
 // AssignProperties_To_InstanceViewStatus populates the provided destination InstanceViewStatus from our InstanceViewStatus
-func (status *InstanceViewStatus) AssignProperties_To_InstanceViewStatus(destination *v20220301s.InstanceViewStatus) error {
+func (status *InstanceViewStatus) AssignProperties_To_InstanceViewStatus(destination *storage.InstanceViewStatus) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2127,7 +2312,7 @@ func (status *InstanceViewStatus) Initialize_From_InstanceViewStatus_STATUS(sour
 
 	// Level
 	if source.Level != nil {
-		level := InstanceViewStatus_Level(*source.Level)
+		level := genruntime.ToEnum(string(*source.Level), instanceViewStatus_Level_Values)
 		status.Level = &level
 	} else {
 		status.Level = nil
@@ -2151,6 +2336,13 @@ const (
 	InstanceViewStatus_Level_Info    = InstanceViewStatus_Level("Info")
 	InstanceViewStatus_Level_Warning = InstanceViewStatus_Level("Warning")
 )
+
+// Mapping from string to InstanceViewStatus_Level
+var instanceViewStatus_Level_Values = map[string]InstanceViewStatus_Level{
+	"error":   InstanceViewStatus_Level_Error,
+	"info":    InstanceViewStatus_Level_Info,
+	"warning": InstanceViewStatus_Level_Warning,
+}
 
 func init() {
 	SchemeBuilder.Register(&VirtualMachinesExtension{}, &VirtualMachinesExtensionList{})

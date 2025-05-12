@@ -15,8 +15,10 @@ type LockedSource struct {
 	src  rand.Source64
 }
 
-var _ rand.Source = &LockedSource{}
-var _ rand.Source64 = &LockedSource{}
+var (
+	_ rand.Source   = &LockedSource{}
+	_ rand.Source64 = &LockedSource{}
+)
 
 func (l *LockedSource) Int63() int64 {
 	l.lock.Lock()

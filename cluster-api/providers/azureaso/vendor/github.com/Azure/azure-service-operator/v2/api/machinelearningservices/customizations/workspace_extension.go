@@ -13,12 +13,12 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	storage "github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20210701/storage"
+	"github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20240401/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
@@ -26,15 +26,25 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 )
 
-var _ genruntime.KubernetesExporter = &WorkspaceExtension{}
+const (
+	appInsightsInstrumentationKey = "appInsightsInstrumentationKey"
+	primaryNotebookAccessKey      = "primaryNotebookAccessKey"
+	secondaryNotebookAccessKey    = "secondaryNotebookAccessKey"
+	userStorageKey                = "userStorageKey"
+	containerRegistryPassword     = "containerRegistryPassword"
+	containerRegistryPassword2    = "containerRegistryPassword2"
+	containerRegistryUserName     = "containerRegistryUserName"
+)
 
-func (ext *WorkspaceExtension) ExportKubernetesResources(
+var _ genruntime.KubernetesSecretExporter = &WorkspaceExtension{}
+
+func (ext *WorkspaceExtension) ExportKubernetesSecrets(
 	ctx context.Context,
 	obj genruntime.MetaObject,
+	additionalSecrets set.Set[string],
 	armClient *genericarmclient.GenericClient,
 	log logr.Logger,
-) ([]client.Object, error) {
-
+) (*genruntime.KubernetesSecretExportResult, error) {
 	// This has to be the current hub storage version. It will need to be updated
 	// if the hub storage version changes.
 	typedObj, ok := obj.(*storage.Workspace)
@@ -46,8 +56,9 @@ func (ext *WorkspaceExtension) ExportKubernetesResources(
 	// the hub type has been changed but this extension has not
 	var _ conversion.Hub = typedObj
 
-	hasSecrets := secretsSpecified(typedObj)
-	if !hasSecrets {
+	primarySecrets := secretsSpecified(typedObj)
+	requestedSecrets := set.Union(primarySecrets, additionalSecrets)
+	if len(requestedSecrets) == 0 {
 		log.V(Debug).Info("No secrets retrieval to perform as operatorSpec is empty")
 		return nil, nil
 	}
@@ -59,7 +70,7 @@ func (ext *WorkspaceExtension) ExportKubernetesResources(
 
 	var keys armmachinelearning.ListWorkspaceKeysResult
 	// Only bother calling ListKeys if there are secrets to retrieve
-	if hasSecrets {
+	if len(requestedSecrets) > 0 {
 		subscription := id.SubscriptionID
 		// Using armClient.ClientOptions() here ensures we share the same HTTP connection, so this is not opening a new
 		// connection each time through
@@ -82,33 +93,50 @@ func (ext *WorkspaceExtension) ExportKubernetesResources(
 		return nil, err
 	}
 
-	return secrets.SliceToClientObjectSlice(secretSlice), nil
+	resolvedSecrets := makeResolvedSecrets(keys)
+	return &genruntime.KubernetesSecretExportResult{
+		Objs:       secrets.SliceToClientObjectSlice(secretSlice),
+		RawSecrets: secrets.SelectSecrets(additionalSecrets, resolvedSecrets),
+	}, nil
 }
 
-func secretsSpecified(obj *storage.Workspace) bool {
+func secretsSpecified(obj *storage.Workspace) set.Set[string] {
 	if obj.Spec.OperatorSpec == nil || obj.Spec.OperatorSpec.Secrets == nil {
-		return false
+		return nil
 	}
 
 	operatorSecrets := obj.Spec.OperatorSpec.Secrets
 
-	if operatorSecrets.AppInsightsInstrumentationKey != nil ||
-		operatorSecrets.PrimaryNotebookAccessKey != nil ||
-		operatorSecrets.SecondaryNotebookAccessKey != nil ||
-		operatorSecrets.UserStorageKey != nil ||
-		operatorSecrets.ContainerRegistryPassword != nil ||
-		operatorSecrets.ContainerRegistryPassword2 != nil ||
-		operatorSecrets.ContainerRegistryUserName != nil {
-		return true
+	result := make(set.Set[string])
+	if operatorSecrets.AppInsightsInstrumentationKey != nil {
+		result.Add(appInsightsInstrumentationKey)
+	}
+	if operatorSecrets.PrimaryNotebookAccessKey != nil {
+		result.Add(primaryNotebookAccessKey)
+	}
+	if operatorSecrets.SecondaryNotebookAccessKey != nil {
+		result.Add(secondaryNotebookAccessKey)
+	}
+	if operatorSecrets.UserStorageKey != nil {
+		result.Add(userStorageKey)
+	}
+	if operatorSecrets.ContainerRegistryPassword != nil {
+		result.Add(containerRegistryPassword)
+	}
+	if operatorSecrets.ContainerRegistryPassword2 != nil {
+		result.Add(containerRegistryPassword2)
+	}
+	if operatorSecrets.ContainerRegistryUserName != nil {
+		result.Add(containerRegistryUserName)
 	}
 
-	return false
+	return result
 }
 
 func secretsToWrite(obj *storage.Workspace, keysResp armmachinelearning.ListWorkspaceKeysResult) ([]*v1.Secret, error) {
 	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
 	if operatorSpecSecrets == nil {
-		return nil, errors.Errorf("unexpected nil operatorspec")
+		return nil, nil
 	}
 
 	collector := secrets.NewCollector(obj.Namespace)
@@ -125,10 +153,39 @@ func secretsToWrite(obj *storage.Workspace, keysResp armmachinelearning.ListWork
 		collector.AddValue(operatorSpecSecrets.PrimaryNotebookAccessKey, to.Value(keysResp.NotebookAccessKeys.PrimaryAccessKey))
 		collector.AddValue(operatorSpecSecrets.SecondaryNotebookAccessKey, to.Value(keysResp.NotebookAccessKeys.SecondaryAccessKey))
 	}
-	if keysResp.ContainerRegistryCredentials != nil {
-	}
 
 	return collector.Values()
+}
+
+func makeResolvedSecrets(keys armmachinelearning.ListWorkspaceKeysResult) map[string]string {
+	resolvedSecrets := map[string]string{}
+	if to.Value(keys.AppInsightsInstrumentationKey) != "" {
+		resolvedSecrets[appInsightsInstrumentationKey] = to.Value(keys.AppInsightsInstrumentationKey)
+	}
+	if keys.NotebookAccessKeys != nil {
+		if to.Value(keys.NotebookAccessKeys.PrimaryAccessKey) != "" {
+			resolvedSecrets[primaryNotebookAccessKey] = to.Value(keys.NotebookAccessKeys.PrimaryAccessKey)
+		}
+		if to.Value(keys.NotebookAccessKeys.SecondaryAccessKey) != "" {
+			resolvedSecrets[secondaryNotebookAccessKey] = to.Value(keys.NotebookAccessKeys.SecondaryAccessKey)
+		}
+	}
+	creds, crUsername := getContainerRegCreds(keys)
+	if creds["password"] != "" {
+		resolvedSecrets[containerRegistryPassword] = creds["password"]
+	}
+	if creds["password2"] != "" {
+		resolvedSecrets[containerRegistryPassword2] = creds["password2"]
+	}
+	if crUsername != "" {
+		resolvedSecrets[containerRegistryUserName] = crUsername
+	}
+
+	if to.Value(keys.UserStorageKey) != "" {
+		resolvedSecrets[userStorageKey] = to.Value(keys.UserStorageKey)
+	}
+
+	return resolvedSecrets
 }
 
 func getContainerRegCreds(keysResp armmachinelearning.ListWorkspaceKeysResult) (map[string]string, string) {

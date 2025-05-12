@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"os"
 
 	asoconfig "github.com/Azure/azure-service-operator/v2/pkg/common/config"
 	"github.com/pkg/errors"
@@ -28,11 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/utils/ptr"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
-	"sigs.k8s.io/cluster-api-provider-azure/util/aso"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
@@ -43,6 +39,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
+	"sigs.k8s.io/cluster-api-provider-azure/util/aso"
+	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // ASOSecretReconciler reconciles ASO secrets associated with AzureCluster objects.
@@ -51,6 +54,7 @@ type ASOSecretReconciler struct {
 	Recorder         record.EventRecorder
 	Timeouts         reconciler.Timeouts
 	WatchFilterValue string
+	CredentialCache  azure.CredentialCache
 }
 
 // SetupWithManager initializes this controller with a manager.
@@ -64,8 +68,8 @@ func (asos *ASOSecretReconciler) SetupWithManager(ctx context.Context, mgr ctrl.
 	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&infrav1.AzureCluster{}).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, asos.WatchFilterValue)).
-		WithEventFilter(predicates.ResourceIsNotExternallyManaged(log)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, asos.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceIsNotExternallyManaged(mgr.GetScheme(), log)).
 		Named("ASOSecret").
 		Owns(&corev1.Secret{}).
 		// Add a watch on ASO secrets owned by an AzureManagedControlPlane
@@ -78,7 +82,7 @@ func (asos *ASOSecretReconciler) SetupWithManager(ctx context.Context, mgr ctrl.
 			&infrav1.AzureManagedControlPlane{},
 			&handler.EnqueueRequestForObject{},
 			builder.WithPredicates(
-				predicates.ResourceNotPausedAndHasFilterLabel(log, asos.WatchFilterValue),
+				predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, asos.WatchFilterValue),
 			),
 		).
 		// Add a watch on clusterv1.Cluster object for unpause notifications.
@@ -86,8 +90,8 @@ func (asos *ASOSecretReconciler) SetupWithManager(ctx context.Context, mgr ctrl.
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind(infrav1.AzureClusterKind), mgr.GetClient(), &infrav1.AzureCluster{})),
 			builder.WithPredicates(
-				predicates.ClusterUnpaused(log),
-				predicates.ResourceNotPausedAndHasFilterLabel(log, asos.WatchFilterValue),
+				predicates.ClusterUnpaused(mgr.GetScheme(), log),
+				predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, asos.WatchFilterValue),
 			),
 		).
 		Complete(asos)
@@ -139,12 +143,10 @@ func (asos *ASOSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request
 					fmt.Sprintf("AzureManagedControlPlane object %s/%s not found", req.Namespace, req.Name))
 				log.Info("object was not found")
 				return reconcile.Result{}, nil
-			} else {
-				return reconcile.Result{}, err
 			}
-		} else {
-			log = log.WithValues("AzureManagedControlPlane", req.Name)
+			return reconcile.Result{}, err
 		}
+		log = log.WithValues("AzureManagedControlPlane", req.Name)
 	}
 
 	var clusterIdentity *corev1.ObjectReference
@@ -167,10 +169,11 @@ func (asos *ASOSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 		// Create the scope.
 		clusterScope, err := scope.NewClusterScope(ctx, scope.ClusterScopeParams{
-			Client:       asos.Client,
-			Cluster:      cluster,
-			AzureCluster: ownerType,
-			Timeouts:     asos.Timeouts,
+			Client:          asos.Client,
+			Cluster:         cluster,
+			AzureCluster:    ownerType,
+			Timeouts:        asos.Timeouts,
+			CredentialCache: asos.CredentialCache,
 		})
 		if err != nil {
 			return reconcile.Result{}, errors.Wrap(err, "failed to create scope")
@@ -193,10 +196,11 @@ func (asos *ASOSecretReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 		// Create the scope.
 		clusterScope, err := scope.NewManagedControlPlaneScope(ctx, scope.ManagedControlPlaneScopeParams{
-			Client:       asos.Client,
-			Cluster:      cluster,
-			ControlPlane: ownerType,
-			Timeouts:     asos.Timeouts,
+			Client:          asos.Client,
+			Cluster:         cluster,
+			ControlPlane:    ownerType,
+			Timeouts:        asos.Timeouts,
+			CredentialCache: asos.CredentialCache,
 		})
 		if err != nil {
 			return reconcile.Result{}, errors.Wrap(err, "failed to create scope")
@@ -288,23 +292,33 @@ func (asos *ASOSecretReconciler) createSecretFromClusterIdentity(ctx context.Con
 		return newASOSecret, nil
 	}
 
-	// Fetch identity secret, if it exists
-	key = types.NamespacedName{
-		Namespace: identity.Spec.ClientSecret.Namespace,
-		Name:      identity.Spec.ClientSecret.Name,
-	}
-	identitySecret := &corev1.Secret{}
-	err := asos.Get(ctx, key, identitySecret)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch AzureClusterIdentity secret")
-	}
+	if identity.Spec.CertPath != "" {
+		certsContent, err := os.ReadFile(identity.Spec.CertPath)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to read certificate file")
+		}
 
-	switch identity.Spec.Type {
-	case infrav1.ServicePrincipal, infrav1.ManualServicePrincipal:
-		newASOSecret.Data[asoconfig.AzureClientSecret] = identitySecret.Data[scope.AzureSecretKey]
-	case infrav1.ServicePrincipalCertificate:
-		newASOSecret.Data[asoconfig.AzureClientCertificate] = identitySecret.Data["certificate"]
-		newASOSecret.Data[asoconfig.AzureClientCertificatePassword] = identitySecret.Data["password"]
+		newASOSecret.Data[asoconfig.AzureClientCertificate] = certsContent
+		newASOSecret.Data[asoconfig.AzureClientCertificatePassword] = []byte{}
+	} else {
+		// Fetch identity secret, if it exists
+		key = types.NamespacedName{
+			Namespace: identity.Spec.ClientSecret.Namespace,
+			Name:      identity.Spec.ClientSecret.Name,
+		}
+		identitySecret := &corev1.Secret{}
+		err := asos.Get(ctx, key, identitySecret)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch AzureClusterIdentity secret")
+		}
+
+		switch identity.Spec.Type {
+		case infrav1.ServicePrincipal, infrav1.ManualServicePrincipal:
+			newASOSecret.Data[asoconfig.AzureClientSecret] = identitySecret.Data[scope.AzureSecretKey]
+		case infrav1.ServicePrincipalCertificate:
+			newASOSecret.Data[asoconfig.AzureClientCertificate] = identitySecret.Data["certificate"]
+			newASOSecret.Data[asoconfig.AzureClientCertificatePassword] = identitySecret.Data["password"]
+		}
 	}
 	return newASOSecret, nil
 }

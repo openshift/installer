@@ -5,9 +5,12 @@ package storage
 
 import (
 	"fmt"
-	v20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -27,8 +30,8 @@ import (
 type NamedValue struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Service_NamedValue_Spec   `json:"spec,omitempty"`
-	Status            Service_NamedValue_STATUS `json:"status,omitempty"`
+	Spec              NamedValue_Spec   `json:"spec,omitempty"`
+	Status            NamedValue_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &NamedValue{}
@@ -47,7 +50,7 @@ var _ conversion.Convertible = &NamedValue{}
 
 // ConvertFrom populates our NamedValue from the provided hub NamedValue
 func (value *NamedValue) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220801s.NamedValue)
+	source, ok := hub.(*storage.NamedValue)
 	if !ok {
 		return fmt.Errorf("expected apimanagement/v1api20220801/storage/NamedValue but received %T instead", hub)
 	}
@@ -57,12 +60,32 @@ func (value *NamedValue) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub NamedValue from our NamedValue
 func (value *NamedValue) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220801s.NamedValue)
+	destination, ok := hub.(*storage.NamedValue)
 	if !ok {
 		return fmt.Errorf("expected apimanagement/v1api20220801/storage/NamedValue but received %T instead", hub)
 	}
 
 	return value.AssignProperties_To_NamedValue(destination)
+}
+
+var _ configmaps.Exporter = &NamedValue{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (value *NamedValue) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if value.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return value.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &NamedValue{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (value *NamedValue) SecretDestinationExpressions() []*core.DestinationExpression {
+	if value.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return value.Spec.OperatorSpec.SecretExpressions
 }
 
 var _ genruntime.KubernetesResource = &NamedValue{}
@@ -74,7 +97,7 @@ func (value *NamedValue) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-05-01-preview"
 func (value NamedValue) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-05-01-preview"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -109,7 +132,7 @@ func (value *NamedValue) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (value *NamedValue) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Service_NamedValue_STATUS{}
+	return &NamedValue_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -121,13 +144,13 @@ func (value *NamedValue) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (value *NamedValue) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Service_NamedValue_STATUS); ok {
+	if st, ok := status.(*NamedValue_STATUS); ok {
 		value.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Service_NamedValue_STATUS
+	var st NamedValue_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -138,24 +161,24 @@ func (value *NamedValue) SetStatus(status genruntime.ConvertibleStatus) error {
 }
 
 // AssignProperties_From_NamedValue populates our NamedValue from the provided source NamedValue
-func (value *NamedValue) AssignProperties_From_NamedValue(source *v20220801s.NamedValue) error {
+func (value *NamedValue) AssignProperties_From_NamedValue(source *storage.NamedValue) error {
 
 	// ObjectMeta
 	value.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Service_NamedValue_Spec
-	err := spec.AssignProperties_From_Service_NamedValue_Spec(&source.Spec)
+	var spec NamedValue_Spec
+	err := spec.AssignProperties_From_NamedValue_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Service_NamedValue_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_NamedValue_Spec() to populate field Spec")
 	}
 	value.Spec = spec
 
 	// Status
-	var status Service_NamedValue_STATUS
-	err = status.AssignProperties_From_Service_NamedValue_STATUS(&source.Status)
+	var status NamedValue_STATUS
+	err = status.AssignProperties_From_NamedValue_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Service_NamedValue_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_NamedValue_STATUS() to populate field Status")
 	}
 	value.Status = status
 
@@ -173,24 +196,24 @@ func (value *NamedValue) AssignProperties_From_NamedValue(source *v20220801s.Nam
 }
 
 // AssignProperties_To_NamedValue populates the provided destination NamedValue from our NamedValue
-func (value *NamedValue) AssignProperties_To_NamedValue(destination *v20220801s.NamedValue) error {
+func (value *NamedValue) AssignProperties_To_NamedValue(destination *storage.NamedValue) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *value.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20220801s.Service_NamedValue_Spec
-	err := value.Spec.AssignProperties_To_Service_NamedValue_Spec(&spec)
+	var spec storage.NamedValue_Spec
+	err := value.Spec.AssignProperties_To_NamedValue_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Service_NamedValue_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_NamedValue_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20220801s.Service_NamedValue_STATUS
-	err = value.Status.AssignProperties_To_Service_NamedValue_STATUS(&status)
+	var status storage.NamedValue_STATUS
+	err = value.Status.AssignProperties_To_NamedValue_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Service_NamedValue_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_NamedValue_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -228,17 +251,18 @@ type NamedValueList struct {
 }
 
 type augmentConversionForNamedValue interface {
-	AssignPropertiesFrom(src *v20220801s.NamedValue) error
-	AssignPropertiesTo(dst *v20220801s.NamedValue) error
+	AssignPropertiesFrom(src *storage.NamedValue) error
+	AssignPropertiesTo(dst *storage.NamedValue) error
 }
 
-// Storage version of v1api20230501preview.Service_NamedValue_Spec
-type Service_NamedValue_Spec struct {
+// Storage version of v1api20230501preview.NamedValue_Spec
+type NamedValue_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
 	AzureName       string                            `json:"azureName,omitempty"`
 	DisplayName     *string                           `json:"displayName,omitempty"`
 	KeyVault        *KeyVaultContractCreateProperties `json:"keyVault,omitempty"`
+	OperatorSpec    *NamedValueOperatorSpec           `json:"operatorSpec,omitempty"`
 	OriginalVersion string                            `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
@@ -252,25 +276,25 @@ type Service_NamedValue_Spec struct {
 	Value       *string                            `json:"value,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Service_NamedValue_Spec{}
+var _ genruntime.ConvertibleSpec = &NamedValue_Spec{}
 
-// ConvertSpecFrom populates our Service_NamedValue_Spec from the provided source
-func (value *Service_NamedValue_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20220801s.Service_NamedValue_Spec)
+// ConvertSpecFrom populates our NamedValue_Spec from the provided source
+func (value *NamedValue_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.NamedValue_Spec)
 	if ok {
 		// Populate our instance from source
-		return value.AssignProperties_From_Service_NamedValue_Spec(src)
+		return value.AssignProperties_From_NamedValue_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220801s.Service_NamedValue_Spec{}
+	src = &storage.NamedValue_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = value.AssignProperties_From_Service_NamedValue_Spec(src)
+	err = value.AssignProperties_From_NamedValue_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -278,17 +302,17 @@ func (value *Service_NamedValue_Spec) ConvertSpecFrom(source genruntime.Converti
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Service_NamedValue_Spec
-func (value *Service_NamedValue_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20220801s.Service_NamedValue_Spec)
+// ConvertSpecTo populates the provided destination from our NamedValue_Spec
+func (value *NamedValue_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.NamedValue_Spec)
 	if ok {
 		// Populate destination from our instance
-		return value.AssignProperties_To_Service_NamedValue_Spec(dst)
+		return value.AssignProperties_To_NamedValue_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220801s.Service_NamedValue_Spec{}
-	err := value.AssignProperties_To_Service_NamedValue_Spec(dst)
+	dst = &storage.NamedValue_Spec{}
+	err := value.AssignProperties_To_NamedValue_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -302,8 +326,8 @@ func (value *Service_NamedValue_Spec) ConvertSpecTo(destination genruntime.Conve
 	return nil
 }
 
-// AssignProperties_From_Service_NamedValue_Spec populates our Service_NamedValue_Spec from the provided source Service_NamedValue_Spec
-func (value *Service_NamedValue_Spec) AssignProperties_From_Service_NamedValue_Spec(source *v20220801s.Service_NamedValue_Spec) error {
+// AssignProperties_From_NamedValue_Spec populates our NamedValue_Spec from the provided source NamedValue_Spec
+func (value *NamedValue_Spec) AssignProperties_From_NamedValue_Spec(source *storage.NamedValue_Spec) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -323,6 +347,18 @@ func (value *Service_NamedValue_Spec) AssignProperties_From_Service_NamedValue_S
 		value.KeyVault = &keyVault
 	} else {
 		value.KeyVault = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec NamedValueOperatorSpec
+		err := operatorSpec.AssignProperties_From_NamedValueOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_NamedValueOperatorSpec() to populate field OperatorSpec")
+		}
+		value.OperatorSpec = &operatorSpec
+	} else {
+		value.OperatorSpec = nil
 	}
 
 	// OriginalVersion
@@ -357,9 +393,9 @@ func (value *Service_NamedValue_Spec) AssignProperties_From_Service_NamedValue_S
 		value.PropertyBag = nil
 	}
 
-	// Invoke the augmentConversionForService_NamedValue_Spec interface (if implemented) to customize the conversion
+	// Invoke the augmentConversionForNamedValue_Spec interface (if implemented) to customize the conversion
 	var valueAsAny any = value
-	if augmentedValue, ok := valueAsAny.(augmentConversionForService_NamedValue_Spec); ok {
+	if augmentedValue, ok := valueAsAny.(augmentConversionForNamedValue_Spec); ok {
 		err := augmentedValue.AssignPropertiesFrom(source)
 		if err != nil {
 			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
@@ -370,8 +406,8 @@ func (value *Service_NamedValue_Spec) AssignProperties_From_Service_NamedValue_S
 	return nil
 }
 
-// AssignProperties_To_Service_NamedValue_Spec populates the provided destination Service_NamedValue_Spec from our Service_NamedValue_Spec
-func (value *Service_NamedValue_Spec) AssignProperties_To_Service_NamedValue_Spec(destination *v20220801s.Service_NamedValue_Spec) error {
+// AssignProperties_To_NamedValue_Spec populates the provided destination NamedValue_Spec from our NamedValue_Spec
+func (value *NamedValue_Spec) AssignProperties_To_NamedValue_Spec(destination *storage.NamedValue_Spec) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(value.PropertyBag)
 
@@ -383,7 +419,7 @@ func (value *Service_NamedValue_Spec) AssignProperties_To_Service_NamedValue_Spe
 
 	// KeyVault
 	if value.KeyVault != nil {
-		var keyVault v20220801s.KeyVaultContractCreateProperties
+		var keyVault storage.KeyVaultContractCreateProperties
 		err := value.KeyVault.AssignProperties_To_KeyVaultContractCreateProperties(&keyVault)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultContractCreateProperties() to populate field KeyVault")
@@ -391,6 +427,18 @@ func (value *Service_NamedValue_Spec) AssignProperties_To_Service_NamedValue_Spe
 		destination.KeyVault = &keyVault
 	} else {
 		destination.KeyVault = nil
+	}
+
+	// OperatorSpec
+	if value.OperatorSpec != nil {
+		var operatorSpec storage.NamedValueOperatorSpec
+		err := value.OperatorSpec.AssignProperties_To_NamedValueOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_NamedValueOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
 	}
 
 	// OriginalVersion
@@ -425,9 +473,9 @@ func (value *Service_NamedValue_Spec) AssignProperties_To_Service_NamedValue_Spe
 		destination.PropertyBag = nil
 	}
 
-	// Invoke the augmentConversionForService_NamedValue_Spec interface (if implemented) to customize the conversion
+	// Invoke the augmentConversionForNamedValue_Spec interface (if implemented) to customize the conversion
 	var valueAsAny any = value
-	if augmentedValue, ok := valueAsAny.(augmentConversionForService_NamedValue_Spec); ok {
+	if augmentedValue, ok := valueAsAny.(augmentConversionForNamedValue_Spec); ok {
 		err := augmentedValue.AssignPropertiesTo(destination)
 		if err != nil {
 			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
@@ -438,8 +486,8 @@ func (value *Service_NamedValue_Spec) AssignProperties_To_Service_NamedValue_Spe
 	return nil
 }
 
-// Storage version of v1api20230501preview.Service_NamedValue_STATUS
-type Service_NamedValue_STATUS struct {
+// Storage version of v1api20230501preview.NamedValue_STATUS
+type NamedValue_STATUS struct {
 	Conditions        []conditions.Condition             `json:"conditions,omitempty"`
 	DisplayName       *string                            `json:"displayName,omitempty"`
 	Id                *string                            `json:"id,omitempty"`
@@ -453,25 +501,25 @@ type Service_NamedValue_STATUS struct {
 	Value             *string                            `json:"value,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Service_NamedValue_STATUS{}
+var _ genruntime.ConvertibleStatus = &NamedValue_STATUS{}
 
-// ConvertStatusFrom populates our Service_NamedValue_STATUS from the provided source
-func (value *Service_NamedValue_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20220801s.Service_NamedValue_STATUS)
+// ConvertStatusFrom populates our NamedValue_STATUS from the provided source
+func (value *NamedValue_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.NamedValue_STATUS)
 	if ok {
 		// Populate our instance from source
-		return value.AssignProperties_From_Service_NamedValue_STATUS(src)
+		return value.AssignProperties_From_NamedValue_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220801s.Service_NamedValue_STATUS{}
+	src = &storage.NamedValue_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = value.AssignProperties_From_Service_NamedValue_STATUS(src)
+	err = value.AssignProperties_From_NamedValue_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -479,17 +527,17 @@ func (value *Service_NamedValue_STATUS) ConvertStatusFrom(source genruntime.Conv
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Service_NamedValue_STATUS
-func (value *Service_NamedValue_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20220801s.Service_NamedValue_STATUS)
+// ConvertStatusTo populates the provided destination from our NamedValue_STATUS
+func (value *NamedValue_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.NamedValue_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return value.AssignProperties_To_Service_NamedValue_STATUS(dst)
+		return value.AssignProperties_To_NamedValue_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220801s.Service_NamedValue_STATUS{}
-	err := value.AssignProperties_To_Service_NamedValue_STATUS(dst)
+	dst = &storage.NamedValue_STATUS{}
+	err := value.AssignProperties_To_NamedValue_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -503,8 +551,8 @@ func (value *Service_NamedValue_STATUS) ConvertStatusTo(destination genruntime.C
 	return nil
 }
 
-// AssignProperties_From_Service_NamedValue_STATUS populates our Service_NamedValue_STATUS from the provided source Service_NamedValue_STATUS
-func (value *Service_NamedValue_STATUS) AssignProperties_From_Service_NamedValue_STATUS(source *v20220801s.Service_NamedValue_STATUS) error {
+// AssignProperties_From_NamedValue_STATUS populates our NamedValue_STATUS from the provided source NamedValue_STATUS
+func (value *NamedValue_STATUS) AssignProperties_From_NamedValue_STATUS(source *storage.NamedValue_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -569,9 +617,9 @@ func (value *Service_NamedValue_STATUS) AssignProperties_From_Service_NamedValue
 		value.PropertyBag = nil
 	}
 
-	// Invoke the augmentConversionForService_NamedValue_STATUS interface (if implemented) to customize the conversion
+	// Invoke the augmentConversionForNamedValue_STATUS interface (if implemented) to customize the conversion
 	var valueAsAny any = value
-	if augmentedValue, ok := valueAsAny.(augmentConversionForService_NamedValue_STATUS); ok {
+	if augmentedValue, ok := valueAsAny.(augmentConversionForNamedValue_STATUS); ok {
 		err := augmentedValue.AssignPropertiesFrom(source)
 		if err != nil {
 			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
@@ -582,8 +630,8 @@ func (value *Service_NamedValue_STATUS) AssignProperties_From_Service_NamedValue
 	return nil
 }
 
-// AssignProperties_To_Service_NamedValue_STATUS populates the provided destination Service_NamedValue_STATUS from our Service_NamedValue_STATUS
-func (value *Service_NamedValue_STATUS) AssignProperties_To_Service_NamedValue_STATUS(destination *v20220801s.Service_NamedValue_STATUS) error {
+// AssignProperties_To_NamedValue_STATUS populates the provided destination NamedValue_STATUS from our NamedValue_STATUS
+func (value *NamedValue_STATUS) AssignProperties_To_NamedValue_STATUS(destination *storage.NamedValue_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(value.PropertyBag)
 
@@ -598,7 +646,7 @@ func (value *Service_NamedValue_STATUS) AssignProperties_To_Service_NamedValue_S
 
 	// KeyVault
 	if value.KeyVault != nil {
-		var keyVault v20220801s.KeyVaultContractProperties_STATUS
+		var keyVault storage.KeyVaultContractProperties_STATUS
 		err := value.KeyVault.AssignProperties_To_KeyVaultContractProperties_STATUS(&keyVault)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultContractProperties_STATUS() to populate field KeyVault")
@@ -642,9 +690,9 @@ func (value *Service_NamedValue_STATUS) AssignProperties_To_Service_NamedValue_S
 		destination.PropertyBag = nil
 	}
 
-	// Invoke the augmentConversionForService_NamedValue_STATUS interface (if implemented) to customize the conversion
+	// Invoke the augmentConversionForNamedValue_STATUS interface (if implemented) to customize the conversion
 	var valueAsAny any = value
-	if augmentedValue, ok := valueAsAny.(augmentConversionForService_NamedValue_STATUS); ok {
+	if augmentedValue, ok := valueAsAny.(augmentConversionForNamedValue_STATUS); ok {
 		err := augmentedValue.AssignPropertiesTo(destination)
 		if err != nil {
 			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
@@ -655,14 +703,14 @@ func (value *Service_NamedValue_STATUS) AssignProperties_To_Service_NamedValue_S
 	return nil
 }
 
-type augmentConversionForService_NamedValue_Spec interface {
-	AssignPropertiesFrom(src *v20220801s.Service_NamedValue_Spec) error
-	AssignPropertiesTo(dst *v20220801s.Service_NamedValue_Spec) error
+type augmentConversionForNamedValue_Spec interface {
+	AssignPropertiesFrom(src *storage.NamedValue_Spec) error
+	AssignPropertiesTo(dst *storage.NamedValue_Spec) error
 }
 
-type augmentConversionForService_NamedValue_STATUS interface {
-	AssignPropertiesFrom(src *v20220801s.Service_NamedValue_STATUS) error
-	AssignPropertiesTo(dst *v20220801s.Service_NamedValue_STATUS) error
+type augmentConversionForNamedValue_STATUS interface {
+	AssignPropertiesFrom(src *storage.NamedValue_STATUS) error
+	AssignPropertiesTo(dst *storage.NamedValue_STATUS) error
 }
 
 // Storage version of v1api20230501preview.KeyVaultContractCreateProperties
@@ -675,7 +723,7 @@ type KeyVaultContractCreateProperties struct {
 }
 
 // AssignProperties_From_KeyVaultContractCreateProperties populates our KeyVaultContractCreateProperties from the provided source KeyVaultContractCreateProperties
-func (properties *KeyVaultContractCreateProperties) AssignProperties_From_KeyVaultContractCreateProperties(source *v20220801s.KeyVaultContractCreateProperties) error {
+func (properties *KeyVaultContractCreateProperties) AssignProperties_From_KeyVaultContractCreateProperties(source *storage.KeyVaultContractCreateProperties) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -714,7 +762,7 @@ func (properties *KeyVaultContractCreateProperties) AssignProperties_From_KeyVau
 }
 
 // AssignProperties_To_KeyVaultContractCreateProperties populates the provided destination KeyVaultContractCreateProperties from our KeyVaultContractCreateProperties
-func (properties *KeyVaultContractCreateProperties) AssignProperties_To_KeyVaultContractCreateProperties(destination *v20220801s.KeyVaultContractCreateProperties) error {
+func (properties *KeyVaultContractCreateProperties) AssignProperties_To_KeyVaultContractCreateProperties(destination *storage.KeyVaultContractCreateProperties) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(properties.PropertyBag)
 
@@ -762,7 +810,7 @@ type KeyVaultContractProperties_STATUS struct {
 }
 
 // AssignProperties_From_KeyVaultContractProperties_STATUS populates our KeyVaultContractProperties_STATUS from the provided source KeyVaultContractProperties_STATUS
-func (properties *KeyVaultContractProperties_STATUS) AssignProperties_From_KeyVaultContractProperties_STATUS(source *v20220801s.KeyVaultContractProperties_STATUS) error {
+func (properties *KeyVaultContractProperties_STATUS) AssignProperties_From_KeyVaultContractProperties_STATUS(source *storage.KeyVaultContractProperties_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -805,7 +853,7 @@ func (properties *KeyVaultContractProperties_STATUS) AssignProperties_From_KeyVa
 }
 
 // AssignProperties_To_KeyVaultContractProperties_STATUS populates the provided destination KeyVaultContractProperties_STATUS from our KeyVaultContractProperties_STATUS
-func (properties *KeyVaultContractProperties_STATUS) AssignProperties_To_KeyVaultContractProperties_STATUS(destination *v20220801s.KeyVaultContractProperties_STATUS) error {
+func (properties *KeyVaultContractProperties_STATUS) AssignProperties_To_KeyVaultContractProperties_STATUS(destination *storage.KeyVaultContractProperties_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(properties.PropertyBag)
 
@@ -814,7 +862,7 @@ func (properties *KeyVaultContractProperties_STATUS) AssignProperties_To_KeyVaul
 
 	// LastStatus
 	if properties.LastStatus != nil {
-		var lastStatus v20220801s.KeyVaultLastAccessStatusContractProperties_STATUS
+		var lastStatus storage.KeyVaultLastAccessStatusContractProperties_STATUS
 		err := properties.LastStatus.AssignProperties_To_KeyVaultLastAccessStatusContractProperties_STATUS(&lastStatus)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultLastAccessStatusContractProperties_STATUS() to populate field LastStatus")
@@ -847,14 +895,149 @@ func (properties *KeyVaultContractProperties_STATUS) AssignProperties_To_KeyVaul
 	return nil
 }
 
+// Storage version of v1api20230501preview.NamedValueOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type NamedValueOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_NamedValueOperatorSpec populates our NamedValueOperatorSpec from the provided source NamedValueOperatorSpec
+func (operator *NamedValueOperatorSpec) AssignProperties_From_NamedValueOperatorSpec(source *storage.NamedValueOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamedValueOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamedValueOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamedValueOperatorSpec populates the provided destination NamedValueOperatorSpec from our NamedValueOperatorSpec
+func (operator *NamedValueOperatorSpec) AssignProperties_To_NamedValueOperatorSpec(destination *storage.NamedValueOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamedValueOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamedValueOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 type augmentConversionForKeyVaultContractCreateProperties interface {
-	AssignPropertiesFrom(src *v20220801s.KeyVaultContractCreateProperties) error
-	AssignPropertiesTo(dst *v20220801s.KeyVaultContractCreateProperties) error
+	AssignPropertiesFrom(src *storage.KeyVaultContractCreateProperties) error
+	AssignPropertiesTo(dst *storage.KeyVaultContractCreateProperties) error
 }
 
 type augmentConversionForKeyVaultContractProperties_STATUS interface {
-	AssignPropertiesFrom(src *v20220801s.KeyVaultContractProperties_STATUS) error
-	AssignPropertiesTo(dst *v20220801s.KeyVaultContractProperties_STATUS) error
+	AssignPropertiesFrom(src *storage.KeyVaultContractProperties_STATUS) error
+	AssignPropertiesTo(dst *storage.KeyVaultContractProperties_STATUS) error
+}
+
+type augmentConversionForNamedValueOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.NamedValueOperatorSpec) error
+	AssignPropertiesTo(dst *storage.NamedValueOperatorSpec) error
 }
 
 // Storage version of v1api20230501preview.KeyVaultLastAccessStatusContractProperties_STATUS
@@ -867,7 +1050,7 @@ type KeyVaultLastAccessStatusContractProperties_STATUS struct {
 }
 
 // AssignProperties_From_KeyVaultLastAccessStatusContractProperties_STATUS populates our KeyVaultLastAccessStatusContractProperties_STATUS from the provided source KeyVaultLastAccessStatusContractProperties_STATUS
-func (properties *KeyVaultLastAccessStatusContractProperties_STATUS) AssignProperties_From_KeyVaultLastAccessStatusContractProperties_STATUS(source *v20220801s.KeyVaultLastAccessStatusContractProperties_STATUS) error {
+func (properties *KeyVaultLastAccessStatusContractProperties_STATUS) AssignProperties_From_KeyVaultLastAccessStatusContractProperties_STATUS(source *storage.KeyVaultLastAccessStatusContractProperties_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -901,7 +1084,7 @@ func (properties *KeyVaultLastAccessStatusContractProperties_STATUS) AssignPrope
 }
 
 // AssignProperties_To_KeyVaultLastAccessStatusContractProperties_STATUS populates the provided destination KeyVaultLastAccessStatusContractProperties_STATUS from our KeyVaultLastAccessStatusContractProperties_STATUS
-func (properties *KeyVaultLastAccessStatusContractProperties_STATUS) AssignProperties_To_KeyVaultLastAccessStatusContractProperties_STATUS(destination *v20220801s.KeyVaultLastAccessStatusContractProperties_STATUS) error {
+func (properties *KeyVaultLastAccessStatusContractProperties_STATUS) AssignProperties_To_KeyVaultLastAccessStatusContractProperties_STATUS(destination *storage.KeyVaultLastAccessStatusContractProperties_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(properties.PropertyBag)
 
@@ -935,8 +1118,8 @@ func (properties *KeyVaultLastAccessStatusContractProperties_STATUS) AssignPrope
 }
 
 type augmentConversionForKeyVaultLastAccessStatusContractProperties_STATUS interface {
-	AssignPropertiesFrom(src *v20220801s.KeyVaultLastAccessStatusContractProperties_STATUS) error
-	AssignPropertiesTo(dst *v20220801s.KeyVaultLastAccessStatusContractProperties_STATUS) error
+	AssignPropertiesFrom(src *storage.KeyVaultLastAccessStatusContractProperties_STATUS) error
+	AssignPropertiesTo(dst *storage.KeyVaultLastAccessStatusContractProperties_STATUS) error
 }
 
 func init() {

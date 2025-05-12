@@ -24,11 +24,12 @@ import (
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	ctrl "sigs.k8s.io/controller-runtime"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 type (
@@ -325,7 +326,7 @@ func orderRandom(machines []infrav1exp.AzureMachinePoolMachine) []infrav1exp.Azu
 // orderByDeleteMachineAnnotation will sort AzureMachinePoolMachines with the clusterv1.DeleteMachineAnnotation to the front of the list.
 // It will preserve the existing order of the list otherwise so that it respects the existing delete priority otherwise.
 func orderByDeleteMachineAnnotation(machines []infrav1exp.AzureMachinePoolMachine) []infrav1exp.AzureMachinePoolMachine {
-	sort.SliceStable(machines, func(i, j int) bool {
+	sort.SliceStable(machines, func(i, _ int) bool {
 		_, iHasAnnotation := machines[i].Annotations[clusterv1.DeleteMachineAnnotation]
 
 		return iHasAnnotation

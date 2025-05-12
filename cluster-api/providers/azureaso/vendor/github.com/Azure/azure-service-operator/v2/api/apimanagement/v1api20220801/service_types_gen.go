@@ -5,10 +5,14 @@ package v1api20220801
 
 import (
 	"fmt"
-	v20220801s "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &Service{}
 
 // ConvertFrom populates our Service from the provided hub Service
 func (service *Service) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220801s.Service)
+	source, ok := hub.(*storage.Service)
 	if !ok {
 		return fmt.Errorf("expected apimanagement/v1api20220801/storage/Service but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (service *Service) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub Service from our Service
 func (service *Service) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220801s.Service)
+	destination, ok := hub.(*storage.Service)
 	if !ok {
 		return fmt.Errorf("expected apimanagement/v1api20220801/storage/Service but received %T instead", hub)
 	}
@@ -90,6 +94,26 @@ func (service *Service) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the Service resource
 func (service *Service) defaultImpl() { service.defaultAzureName() }
 
+var _ configmaps.Exporter = &Service{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (service *Service) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if service.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return service.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Service{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (service *Service) SecretDestinationExpressions() []*core.DestinationExpression {
+	if service.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return service.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &Service{}
 
 // InitializeSpec initializes the spec for this resource from the given status
@@ -110,7 +134,7 @@ func (service *Service) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-08-01"
 func (service Service) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-08-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -208,7 +232,7 @@ func (service *Service) ValidateUpdate(old runtime.Object) (admission.Warnings, 
 
 // createValidations validates the creation of the resource
 func (service *Service) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){service.validateResourceReferences, service.validateOwnerReference, service.validateOptionalConfigMapReferences}
+	return []func() (admission.Warnings, error){service.validateResourceReferences, service.validateOwnerReference, service.validateSecretDestinations, service.validateConfigMapDestinations, service.validateOptionalConfigMapReferences}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -227,9 +251,23 @@ func (service *Service) updateValidations() []func(old runtime.Object) (admissio
 			return service.validateOwnerReference()
 		},
 		func(old runtime.Object) (admission.Warnings, error) {
+			return service.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return service.validateConfigMapDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
 			return service.validateOptionalConfigMapReferences()
 		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (service *Service) validateConfigMapDestinations() (admission.Warnings, error) {
+	if service.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(service, nil, service.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOptionalConfigMapReferences validates all optional configmap reference pairs to ensure that at most 1 is set
@@ -238,7 +276,7 @@ func (service *Service) validateOptionalConfigMapReferences() (admission.Warning
 	if err != nil {
 		return nil, err
 	}
-	return genruntime.ValidateOptionalConfigMapReferences(refs)
+	return configmaps.ValidateOptionalReferences(refs)
 }
 
 // validateOwnerReference validates the owner field
@@ -255,6 +293,14 @@ func (service *Service) validateResourceReferences() (admission.Warnings, error)
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (service *Service) validateSecretDestinations() (admission.Warnings, error) {
+	if service.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(service, nil, service.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (service *Service) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*Service)
@@ -266,7 +312,7 @@ func (service *Service) validateWriteOnceProperties(old runtime.Object) (admissi
 }
 
 // AssignProperties_From_Service populates our Service from the provided source Service
-func (service *Service) AssignProperties_From_Service(source *v20220801s.Service) error {
+func (service *Service) AssignProperties_From_Service(source *storage.Service) error {
 
 	// ObjectMeta
 	service.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -292,13 +338,13 @@ func (service *Service) AssignProperties_From_Service(source *v20220801s.Service
 }
 
 // AssignProperties_To_Service populates the provided destination Service from our Service
-func (service *Service) AssignProperties_To_Service(destination *v20220801s.Service) error {
+func (service *Service) AssignProperties_To_Service(destination *storage.Service) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *service.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20220801s.Service_Spec
+	var spec storage.Service_Spec
 	err := service.Spec.AssignProperties_To_Service_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Service_Spec() to populate field Spec")
@@ -306,7 +352,7 @@ func (service *Service) AssignProperties_To_Service(destination *v20220801s.Serv
 	destination.Spec = spec
 
 	// Status
-	var status v20220801s.Service_STATUS
+	var status storage.Service_STATUS
 	err = service.Status.AssignProperties_To_Service_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Service_STATUS() to populate field Status")
@@ -403,6 +449,10 @@ type Service_Spec struct {
 	// NotificationSenderEmail: Email address from which the notification will be sent.
 	NotificationSenderEmail *string `json:"notificationSenderEmail,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *ServiceOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -459,7 +509,7 @@ func (service *Service_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 	if service == nil {
 		return nil, nil
 	}
-	result := &Service_Spec_ARM{}
+	result := &arm.Service_Spec{}
 
 	// Set property "Identity":
 	if service.Identity != nil {
@@ -467,7 +517,7 @@ func (service *Service_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		if err != nil {
 			return nil, err
 		}
-		identity := *identity_ARM.(*ApiManagementServiceIdentity_ARM)
+		identity := *identity_ARM.(*arm.ApiManagementServiceIdentity)
 		result.Identity = &identity
 	}
 
@@ -497,21 +547,21 @@ func (service *Service_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		service.Restore != nil ||
 		service.VirtualNetworkConfiguration != nil ||
 		service.VirtualNetworkType != nil {
-		result.Properties = &ApiManagementServiceProperties_ARM{}
+		result.Properties = &arm.ApiManagementServiceProperties{}
 	}
 	for _, item := range service.AdditionalLocations {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.AdditionalLocations = append(result.Properties.AdditionalLocations, *item_ARM.(*AdditionalLocation_ARM))
+		result.Properties.AdditionalLocations = append(result.Properties.AdditionalLocations, *item_ARM.(*arm.AdditionalLocation))
 	}
 	if service.ApiVersionConstraint != nil {
 		apiVersionConstraint_ARM, err := (*service.ApiVersionConstraint).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		apiVersionConstraint := *apiVersionConstraint_ARM.(*ApiVersionConstraint_ARM)
+		apiVersionConstraint := *apiVersionConstraint_ARM.(*arm.ApiVersionConstraint)
 		result.Properties.ApiVersionConstraint = &apiVersionConstraint
 	}
 	for _, item := range service.Certificates {
@@ -519,7 +569,7 @@ func (service *Service_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.Certificates = append(result.Properties.Certificates, *item_ARM.(*CertificateConfiguration_ARM))
+		result.Properties.Certificates = append(result.Properties.Certificates, *item_ARM.(*arm.CertificateConfiguration))
 	}
 	if service.CustomProperties != nil {
 		result.Properties.CustomProperties = make(map[string]string, len(service.CustomProperties))
@@ -540,10 +590,12 @@ func (service *Service_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.HostnameConfigurations = append(result.Properties.HostnameConfigurations, *item_ARM.(*HostnameConfiguration_ARM))
+		result.Properties.HostnameConfigurations = append(result.Properties.HostnameConfigurations, *item_ARM.(*arm.HostnameConfiguration))
 	}
 	if service.NatGatewayState != nil {
-		natGatewayState := *service.NatGatewayState
+		var temp string
+		temp = string(*service.NatGatewayState)
+		natGatewayState := arm.ApiManagementServiceProperties_NatGatewayState(temp)
 		result.Properties.NatGatewayState = &natGatewayState
 	}
 	if service.NotificationSenderEmail != nil {
@@ -559,7 +611,9 @@ func (service *Service_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		result.Properties.PublicIpAddressId = &publicIpAddressId
 	}
 	if service.PublicNetworkAccess != nil {
-		publicNetworkAccess := *service.PublicNetworkAccess
+		var temp string
+		temp = string(*service.PublicNetworkAccess)
+		publicNetworkAccess := arm.ApiManagementServiceProperties_PublicNetworkAccess(temp)
 		result.Properties.PublicNetworkAccess = &publicNetworkAccess
 	}
 	if service.PublisherEmail != nil {
@@ -579,11 +633,13 @@ func (service *Service_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		if err != nil {
 			return nil, err
 		}
-		virtualNetworkConfiguration := *virtualNetworkConfiguration_ARM.(*VirtualNetworkConfiguration_ARM)
+		virtualNetworkConfiguration := *virtualNetworkConfiguration_ARM.(*arm.VirtualNetworkConfiguration)
 		result.Properties.VirtualNetworkConfiguration = &virtualNetworkConfiguration
 	}
 	if service.VirtualNetworkType != nil {
-		virtualNetworkType := *service.VirtualNetworkType
+		var temp string
+		temp = string(*service.VirtualNetworkType)
+		virtualNetworkType := arm.ApiManagementServiceProperties_VirtualNetworkType(temp)
 		result.Properties.VirtualNetworkType = &virtualNetworkType
 	}
 
@@ -593,7 +649,7 @@ func (service *Service_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 		if err != nil {
 			return nil, err
 		}
-		sku := *sku_ARM.(*ApiManagementServiceSkuProperties_ARM)
+		sku := *sku_ARM.(*arm.ApiManagementServiceSkuProperties)
 		result.Sku = &sku
 	}
 
@@ -614,14 +670,14 @@ func (service *Service_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (service *Service_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Service_Spec_ARM{}
+	return &arm.Service_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (service *Service_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Service_Spec_ARM)
+	typedInput, ok := armInput.(arm.Service_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Service_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Service_Spec, got %T", armInput)
 	}
 
 	// Set property "AdditionalLocations":
@@ -730,7 +786,9 @@ func (service *Service_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.NatGatewayState != nil {
-			natGatewayState := *typedInput.Properties.NatGatewayState
+			var temp string
+			temp = string(*typedInput.Properties.NatGatewayState)
+			natGatewayState := ApiManagementServiceProperties_NatGatewayState(temp)
 			service.NatGatewayState = &natGatewayState
 		}
 	}
@@ -744,6 +802,8 @@ func (service *Service_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	service.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
@@ -756,7 +816,9 @@ func (service *Service_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PublicNetworkAccess != nil {
-			publicNetworkAccess := *typedInput.Properties.PublicNetworkAccess
+			var temp string
+			temp = string(*typedInput.Properties.PublicNetworkAccess)
+			publicNetworkAccess := ApiManagementServiceProperties_PublicNetworkAccess(temp)
 			service.PublicNetworkAccess = &publicNetworkAccess
 		}
 	}
@@ -825,7 +887,9 @@ func (service *Service_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.VirtualNetworkType != nil {
-			virtualNetworkType := *typedInput.Properties.VirtualNetworkType
+			var temp string
+			temp = string(*typedInput.Properties.VirtualNetworkType)
+			virtualNetworkType := ApiManagementServiceProperties_VirtualNetworkType(temp)
 			service.VirtualNetworkType = &virtualNetworkType
 		}
 	}
@@ -843,14 +907,14 @@ var _ genruntime.ConvertibleSpec = &Service_Spec{}
 
 // ConvertSpecFrom populates our Service_Spec from the provided source
 func (service *Service_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20220801s.Service_Spec)
+	src, ok := source.(*storage.Service_Spec)
 	if ok {
 		// Populate our instance from source
 		return service.AssignProperties_From_Service_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220801s.Service_Spec{}
+	src = &storage.Service_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -867,14 +931,14 @@ func (service *Service_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 
 // ConvertSpecTo populates the provided destination from our Service_Spec
 func (service *Service_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20220801s.Service_Spec)
+	dst, ok := destination.(*storage.Service_Spec)
 	if ok {
 		// Populate destination from our instance
 		return service.AssignProperties_To_Service_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220801s.Service_Spec{}
+	dst = &storage.Service_Spec{}
 	err := service.AssignProperties_To_Service_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -890,7 +954,7 @@ func (service *Service_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpe
 }
 
 // AssignProperties_From_Service_Spec populates our Service_Spec from the provided source Service_Spec
-func (service *Service_Spec) AssignProperties_From_Service_Spec(source *v20220801s.Service_Spec) error {
+func (service *Service_Spec) AssignProperties_From_Service_Spec(source *storage.Service_Spec) error {
 
 	// AdditionalLocations
 	if source.AdditionalLocations != nil {
@@ -997,8 +1061,9 @@ func (service *Service_Spec) AssignProperties_From_Service_Spec(source *v2022080
 
 	// NatGatewayState
 	if source.NatGatewayState != nil {
-		natGatewayState := ApiManagementServiceProperties_NatGatewayState(*source.NatGatewayState)
-		service.NatGatewayState = &natGatewayState
+		natGatewayState := *source.NatGatewayState
+		natGatewayStateTemp := genruntime.ToEnum(natGatewayState, apiManagementServiceProperties_NatGatewayState_Values)
+		service.NatGatewayState = &natGatewayStateTemp
 	} else {
 		service.NatGatewayState = nil
 	}
@@ -1009,6 +1074,18 @@ func (service *Service_Spec) AssignProperties_From_Service_Spec(source *v2022080
 		service.NotificationSenderEmail = &notificationSenderEmail
 	} else {
 		service.NotificationSenderEmail = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ServiceOperatorSpec
+		err := operatorSpec.AssignProperties_From_ServiceOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ServiceOperatorSpec() to populate field OperatorSpec")
+		}
+		service.OperatorSpec = &operatorSpec
+	} else {
+		service.OperatorSpec = nil
 	}
 
 	// Owner
@@ -1029,8 +1106,9 @@ func (service *Service_Spec) AssignProperties_From_Service_Spec(source *v2022080
 
 	// PublicNetworkAccess
 	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := ApiManagementServiceProperties_PublicNetworkAccess(*source.PublicNetworkAccess)
-		service.PublicNetworkAccess = &publicNetworkAccess
+		publicNetworkAccess := *source.PublicNetworkAccess
+		publicNetworkAccessTemp := genruntime.ToEnum(publicNetworkAccess, apiManagementServiceProperties_PublicNetworkAccess_Values)
+		service.PublicNetworkAccess = &publicNetworkAccessTemp
 	} else {
 		service.PublicNetworkAccess = nil
 	}
@@ -1088,8 +1166,9 @@ func (service *Service_Spec) AssignProperties_From_Service_Spec(source *v2022080
 
 	// VirtualNetworkType
 	if source.VirtualNetworkType != nil {
-		virtualNetworkType := ApiManagementServiceProperties_VirtualNetworkType(*source.VirtualNetworkType)
-		service.VirtualNetworkType = &virtualNetworkType
+		virtualNetworkType := *source.VirtualNetworkType
+		virtualNetworkTypeTemp := genruntime.ToEnum(virtualNetworkType, apiManagementServiceProperties_VirtualNetworkType_Values)
+		service.VirtualNetworkType = &virtualNetworkTypeTemp
 	} else {
 		service.VirtualNetworkType = nil
 	}
@@ -1102,17 +1181,17 @@ func (service *Service_Spec) AssignProperties_From_Service_Spec(source *v2022080
 }
 
 // AssignProperties_To_Service_Spec populates the provided destination Service_Spec from our Service_Spec
-func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *v20220801s.Service_Spec) error {
+func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *storage.Service_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AdditionalLocations
 	if service.AdditionalLocations != nil {
-		additionalLocationList := make([]v20220801s.AdditionalLocation, len(service.AdditionalLocations))
+		additionalLocationList := make([]storage.AdditionalLocation, len(service.AdditionalLocations))
 		for additionalLocationIndex, additionalLocationItem := range service.AdditionalLocations {
 			// Shadow the loop variable to avoid aliasing
 			additionalLocationItem := additionalLocationItem
-			var additionalLocation v20220801s.AdditionalLocation
+			var additionalLocation storage.AdditionalLocation
 			err := additionalLocationItem.AssignProperties_To_AdditionalLocation(&additionalLocation)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AdditionalLocation() to populate field AdditionalLocations")
@@ -1126,7 +1205,7 @@ func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *v2022
 
 	// ApiVersionConstraint
 	if service.ApiVersionConstraint != nil {
-		var apiVersionConstraint v20220801s.ApiVersionConstraint
+		var apiVersionConstraint storage.ApiVersionConstraint
 		err := service.ApiVersionConstraint.AssignProperties_To_ApiVersionConstraint(&apiVersionConstraint)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiVersionConstraint() to populate field ApiVersionConstraint")
@@ -1141,11 +1220,11 @@ func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *v2022
 
 	// Certificates
 	if service.Certificates != nil {
-		certificateList := make([]v20220801s.CertificateConfiguration, len(service.Certificates))
+		certificateList := make([]storage.CertificateConfiguration, len(service.Certificates))
 		for certificateIndex, certificateItem := range service.Certificates {
 			// Shadow the loop variable to avoid aliasing
 			certificateItem := certificateItem
-			var certificate v20220801s.CertificateConfiguration
+			var certificate storage.CertificateConfiguration
 			err := certificateItem.AssignProperties_To_CertificateConfiguration(&certificate)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_CertificateConfiguration() to populate field Certificates")
@@ -1178,11 +1257,11 @@ func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *v2022
 
 	// HostnameConfigurations
 	if service.HostnameConfigurations != nil {
-		hostnameConfigurationList := make([]v20220801s.HostnameConfiguration, len(service.HostnameConfigurations))
+		hostnameConfigurationList := make([]storage.HostnameConfiguration, len(service.HostnameConfigurations))
 		for hostnameConfigurationIndex, hostnameConfigurationItem := range service.HostnameConfigurations {
 			// Shadow the loop variable to avoid aliasing
 			hostnameConfigurationItem := hostnameConfigurationItem
-			var hostnameConfiguration v20220801s.HostnameConfiguration
+			var hostnameConfiguration storage.HostnameConfiguration
 			err := hostnameConfigurationItem.AssignProperties_To_HostnameConfiguration(&hostnameConfiguration)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_HostnameConfiguration() to populate field HostnameConfigurations")
@@ -1196,7 +1275,7 @@ func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *v2022
 
 	// Identity
 	if service.Identity != nil {
-		var identity v20220801s.ApiManagementServiceIdentity
+		var identity storage.ApiManagementServiceIdentity
 		err := service.Identity.AssignProperties_To_ApiManagementServiceIdentity(&identity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiManagementServiceIdentity() to populate field Identity")
@@ -1223,6 +1302,18 @@ func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *v2022
 		destination.NotificationSenderEmail = &notificationSenderEmail
 	} else {
 		destination.NotificationSenderEmail = nil
+	}
+
+	// OperatorSpec
+	if service.OperatorSpec != nil {
+		var operatorSpec storage.ServiceOperatorSpec
+		err := service.OperatorSpec.AssignProperties_To_ServiceOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ServiceOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
 	}
 
 	// OriginalVersion
@@ -1278,7 +1369,7 @@ func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *v2022
 
 	// Sku
 	if service.Sku != nil {
-		var sku v20220801s.ApiManagementServiceSkuProperties
+		var sku storage.ApiManagementServiceSkuProperties
 		err := service.Sku.AssignProperties_To_ApiManagementServiceSkuProperties(&sku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiManagementServiceSkuProperties() to populate field Sku")
@@ -1293,7 +1384,7 @@ func (service *Service_Spec) AssignProperties_To_Service_Spec(destination *v2022
 
 	// VirtualNetworkConfiguration
 	if service.VirtualNetworkConfiguration != nil {
-		var virtualNetworkConfiguration v20220801s.VirtualNetworkConfiguration
+		var virtualNetworkConfiguration storage.VirtualNetworkConfiguration
 		err := service.VirtualNetworkConfiguration.AssignProperties_To_VirtualNetworkConfiguration(&virtualNetworkConfiguration)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkConfiguration() to populate field VirtualNetworkConfiguration")
@@ -1430,7 +1521,7 @@ func (service *Service_Spec) Initialize_From_Service_STATUS(source *Service_STAT
 
 	// NatGatewayState
 	if source.NatGatewayState != nil {
-		natGatewayState := ApiManagementServiceProperties_NatGatewayState(*source.NatGatewayState)
+		natGatewayState := genruntime.ToEnum(string(*source.NatGatewayState), apiManagementServiceProperties_NatGatewayState_Values)
 		service.NatGatewayState = &natGatewayState
 	} else {
 		service.NatGatewayState = nil
@@ -1454,7 +1545,7 @@ func (service *Service_Spec) Initialize_From_Service_STATUS(source *Service_STAT
 
 	// PublicNetworkAccess
 	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := ApiManagementServiceProperties_PublicNetworkAccess(*source.PublicNetworkAccess)
+		publicNetworkAccess := genruntime.ToEnum(string(*source.PublicNetworkAccess), apiManagementServiceProperties_PublicNetworkAccess_Values)
 		service.PublicNetworkAccess = &publicNetworkAccess
 	} else {
 		service.PublicNetworkAccess = nil
@@ -1513,7 +1604,7 @@ func (service *Service_Spec) Initialize_From_Service_STATUS(source *Service_STAT
 
 	// VirtualNetworkType
 	if source.VirtualNetworkType != nil {
-		virtualNetworkType := ApiManagementServiceProperties_VirtualNetworkType(*source.VirtualNetworkType)
+		virtualNetworkType := genruntime.ToEnum(string(*source.VirtualNetworkType), apiManagementServiceProperties_VirtualNetworkType_Values)
 		service.VirtualNetworkType = &virtualNetworkType
 	} else {
 		service.VirtualNetworkType = nil
@@ -1700,14 +1791,14 @@ var _ genruntime.ConvertibleStatus = &Service_STATUS{}
 
 // ConvertStatusFrom populates our Service_STATUS from the provided source
 func (service *Service_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20220801s.Service_STATUS)
+	src, ok := source.(*storage.Service_STATUS)
 	if ok {
 		// Populate our instance from source
 		return service.AssignProperties_From_Service_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220801s.Service_STATUS{}
+	src = &storage.Service_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -1724,14 +1815,14 @@ func (service *Service_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 
 // ConvertStatusTo populates the provided destination from our Service_STATUS
 func (service *Service_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20220801s.Service_STATUS)
+	dst, ok := destination.(*storage.Service_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return service.AssignProperties_To_Service_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220801s.Service_STATUS{}
+	dst = &storage.Service_STATUS{}
 	err := service.AssignProperties_To_Service_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -1750,14 +1841,14 @@ var _ genruntime.FromARMConverter = &Service_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (service *Service_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Service_STATUS_ARM{}
+	return &arm.Service_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (service *Service_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Service_STATUS_ARM)
+	typedInput, ok := armInput.(arm.Service_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Service_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Service_STATUS, got %T", armInput)
 	}
 
 	// Set property "AdditionalLocations":
@@ -1928,7 +2019,9 @@ func (service *Service_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.NatGatewayState != nil {
-			natGatewayState := *typedInput.Properties.NatGatewayState
+			var temp string
+			temp = string(*typedInput.Properties.NatGatewayState)
+			natGatewayState := ApiManagementServiceProperties_NatGatewayState_STATUS(temp)
 			service.NatGatewayState = &natGatewayState
 		}
 	}
@@ -1954,7 +2047,9 @@ func (service *Service_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PlatformVersion != nil {
-			platformVersion := *typedInput.Properties.PlatformVersion
+			var temp string
+			temp = string(*typedInput.Properties.PlatformVersion)
+			platformVersion := ApiManagementServiceProperties_PlatformVersion_STATUS(temp)
 			service.PlatformVersion = &platformVersion
 		}
 	}
@@ -2019,7 +2114,9 @@ func (service *Service_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PublicNetworkAccess != nil {
-			publicNetworkAccess := *typedInput.Properties.PublicNetworkAccess
+			var temp string
+			temp = string(*typedInput.Properties.PublicNetworkAccess)
+			publicNetworkAccess := ApiManagementServiceProperties_PublicNetworkAccess_STATUS(temp)
 			service.PublicNetworkAccess = &publicNetworkAccess
 		}
 	}
@@ -2123,7 +2220,9 @@ func (service *Service_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.VirtualNetworkType != nil {
-			virtualNetworkType := *typedInput.Properties.VirtualNetworkType
+			var temp string
+			temp = string(*typedInput.Properties.VirtualNetworkType)
+			virtualNetworkType := ApiManagementServiceProperties_VirtualNetworkType_STATUS(temp)
 			service.VirtualNetworkType = &virtualNetworkType
 		}
 	}
@@ -2138,7 +2237,7 @@ func (service *Service_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_Service_STATUS populates our Service_STATUS from the provided source Service_STATUS
-func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *v20220801s.Service_STATUS) error {
+func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *storage.Service_STATUS) error {
 
 	// AdditionalLocations
 	if source.AdditionalLocations != nil {
@@ -2269,8 +2368,9 @@ func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *v202
 
 	// NatGatewayState
 	if source.NatGatewayState != nil {
-		natGatewayState := ApiManagementServiceProperties_NatGatewayState_STATUS(*source.NatGatewayState)
-		service.NatGatewayState = &natGatewayState
+		natGatewayState := *source.NatGatewayState
+		natGatewayStateTemp := genruntime.ToEnum(natGatewayState, apiManagementServiceProperties_NatGatewayState_STATUS_Values)
+		service.NatGatewayState = &natGatewayStateTemp
 	} else {
 		service.NatGatewayState = nil
 	}
@@ -2283,8 +2383,9 @@ func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *v202
 
 	// PlatformVersion
 	if source.PlatformVersion != nil {
-		platformVersion := ApiManagementServiceProperties_PlatformVersion_STATUS(*source.PlatformVersion)
-		service.PlatformVersion = &platformVersion
+		platformVersion := *source.PlatformVersion
+		platformVersionTemp := genruntime.ToEnum(platformVersion, apiManagementServiceProperties_PlatformVersion_STATUS_Values)
+		service.PlatformVersion = &platformVersionTemp
 	} else {
 		service.PlatformVersion = nil
 	}
@@ -2324,8 +2425,9 @@ func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *v202
 
 	// PublicNetworkAccess
 	if source.PublicNetworkAccess != nil {
-		publicNetworkAccess := ApiManagementServiceProperties_PublicNetworkAccess_STATUS(*source.PublicNetworkAccess)
-		service.PublicNetworkAccess = &publicNetworkAccess
+		publicNetworkAccess := *source.PublicNetworkAccess
+		publicNetworkAccessTemp := genruntime.ToEnum(publicNetworkAccess, apiManagementServiceProperties_PublicNetworkAccess_STATUS_Values)
+		service.PublicNetworkAccess = &publicNetworkAccessTemp
 	} else {
 		service.PublicNetworkAccess = nil
 	}
@@ -2394,8 +2496,9 @@ func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *v202
 
 	// VirtualNetworkType
 	if source.VirtualNetworkType != nil {
-		virtualNetworkType := ApiManagementServiceProperties_VirtualNetworkType_STATUS(*source.VirtualNetworkType)
-		service.VirtualNetworkType = &virtualNetworkType
+		virtualNetworkType := *source.VirtualNetworkType
+		virtualNetworkTypeTemp := genruntime.ToEnum(virtualNetworkType, apiManagementServiceProperties_VirtualNetworkType_STATUS_Values)
+		service.VirtualNetworkType = &virtualNetworkTypeTemp
 	} else {
 		service.VirtualNetworkType = nil
 	}
@@ -2408,17 +2511,17 @@ func (service *Service_STATUS) AssignProperties_From_Service_STATUS(source *v202
 }
 
 // AssignProperties_To_Service_STATUS populates the provided destination Service_STATUS from our Service_STATUS
-func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *v20220801s.Service_STATUS) error {
+func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *storage.Service_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AdditionalLocations
 	if service.AdditionalLocations != nil {
-		additionalLocationList := make([]v20220801s.AdditionalLocation_STATUS, len(service.AdditionalLocations))
+		additionalLocationList := make([]storage.AdditionalLocation_STATUS, len(service.AdditionalLocations))
 		for additionalLocationIndex, additionalLocationItem := range service.AdditionalLocations {
 			// Shadow the loop variable to avoid aliasing
 			additionalLocationItem := additionalLocationItem
-			var additionalLocation v20220801s.AdditionalLocation_STATUS
+			var additionalLocation storage.AdditionalLocation_STATUS
 			err := additionalLocationItem.AssignProperties_To_AdditionalLocation_STATUS(&additionalLocation)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AdditionalLocation_STATUS() to populate field AdditionalLocations")
@@ -2432,7 +2535,7 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *v
 
 	// ApiVersionConstraint
 	if service.ApiVersionConstraint != nil {
-		var apiVersionConstraint v20220801s.ApiVersionConstraint_STATUS
+		var apiVersionConstraint storage.ApiVersionConstraint_STATUS
 		err := service.ApiVersionConstraint.AssignProperties_To_ApiVersionConstraint_STATUS(&apiVersionConstraint)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiVersionConstraint_STATUS() to populate field ApiVersionConstraint")
@@ -2444,11 +2547,11 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *v
 
 	// Certificates
 	if service.Certificates != nil {
-		certificateList := make([]v20220801s.CertificateConfiguration_STATUS, len(service.Certificates))
+		certificateList := make([]storage.CertificateConfiguration_STATUS, len(service.Certificates))
 		for certificateIndex, certificateItem := range service.Certificates {
 			// Shadow the loop variable to avoid aliasing
 			certificateItem := certificateItem
-			var certificate v20220801s.CertificateConfiguration_STATUS
+			var certificate storage.CertificateConfiguration_STATUS
 			err := certificateItem.AssignProperties_To_CertificateConfiguration_STATUS(&certificate)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_CertificateConfiguration_STATUS() to populate field Certificates")
@@ -2499,11 +2602,11 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *v
 
 	// HostnameConfigurations
 	if service.HostnameConfigurations != nil {
-		hostnameConfigurationList := make([]v20220801s.HostnameConfiguration_STATUS, len(service.HostnameConfigurations))
+		hostnameConfigurationList := make([]storage.HostnameConfiguration_STATUS, len(service.HostnameConfigurations))
 		for hostnameConfigurationIndex, hostnameConfigurationItem := range service.HostnameConfigurations {
 			// Shadow the loop variable to avoid aliasing
 			hostnameConfigurationItem := hostnameConfigurationItem
-			var hostnameConfiguration v20220801s.HostnameConfiguration_STATUS
+			var hostnameConfiguration storage.HostnameConfiguration_STATUS
 			err := hostnameConfigurationItem.AssignProperties_To_HostnameConfiguration_STATUS(&hostnameConfiguration)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_HostnameConfiguration_STATUS() to populate field HostnameConfigurations")
@@ -2520,7 +2623,7 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *v
 
 	// Identity
 	if service.Identity != nil {
-		var identity v20220801s.ApiManagementServiceIdentity_STATUS
+		var identity storage.ApiManagementServiceIdentity_STATUS
 		err := service.Identity.AssignProperties_To_ApiManagementServiceIdentity_STATUS(&identity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiManagementServiceIdentity_STATUS() to populate field Identity")
@@ -2566,11 +2669,11 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *v
 
 	// PrivateEndpointConnections
 	if service.PrivateEndpointConnections != nil {
-		privateEndpointConnectionList := make([]v20220801s.RemotePrivateEndpointConnectionWrapper_STATUS, len(service.PrivateEndpointConnections))
+		privateEndpointConnectionList := make([]storage.RemotePrivateEndpointConnectionWrapper_STATUS, len(service.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range service.PrivateEndpointConnections {
 			// Shadow the loop variable to avoid aliasing
 			privateEndpointConnectionItem := privateEndpointConnectionItem
-			var privateEndpointConnection v20220801s.RemotePrivateEndpointConnectionWrapper_STATUS
+			var privateEndpointConnection storage.RemotePrivateEndpointConnectionWrapper_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_RemotePrivateEndpointConnectionWrapper_STATUS(&privateEndpointConnection)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_RemotePrivateEndpointConnectionWrapper_STATUS() to populate field PrivateEndpointConnections")
@@ -2621,7 +2724,7 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *v
 
 	// Sku
 	if service.Sku != nil {
-		var sku v20220801s.ApiManagementServiceSkuProperties_STATUS
+		var sku storage.ApiManagementServiceSkuProperties_STATUS
 		err := service.Sku.AssignProperties_To_ApiManagementServiceSkuProperties_STATUS(&sku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiManagementServiceSkuProperties_STATUS() to populate field Sku")
@@ -2633,7 +2736,7 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *v
 
 	// SystemData
 	if service.SystemData != nil {
-		var systemDatum v20220801s.SystemData_STATUS
+		var systemDatum storage.SystemData_STATUS
 		err := service.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
@@ -2654,7 +2757,7 @@ func (service *Service_STATUS) AssignProperties_To_Service_STATUS(destination *v
 
 	// VirtualNetworkConfiguration
 	if service.VirtualNetworkConfiguration != nil {
-		var virtualNetworkConfiguration v20220801s.VirtualNetworkConfiguration_STATUS
+		var virtualNetworkConfiguration storage.VirtualNetworkConfiguration_STATUS
 		err := service.VirtualNetworkConfiguration.AssignProperties_To_VirtualNetworkConfiguration_STATUS(&virtualNetworkConfiguration)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkConfiguration_STATUS() to populate field VirtualNetworkConfiguration")
@@ -2721,7 +2824,7 @@ func (location *AdditionalLocation) ConvertToARM(resolved genruntime.ConvertToAR
 	if location == nil {
 		return nil, nil
 	}
-	result := &AdditionalLocation_ARM{}
+	result := &arm.AdditionalLocation{}
 
 	// Set property "DisableGateway":
 	if location.DisableGateway != nil {
@@ -2737,7 +2840,9 @@ func (location *AdditionalLocation) ConvertToARM(resolved genruntime.ConvertToAR
 
 	// Set property "NatGatewayState":
 	if location.NatGatewayState != nil {
-		natGatewayState := *location.NatGatewayState
+		var temp string
+		temp = string(*location.NatGatewayState)
+		natGatewayState := arm.AdditionalLocation_NatGatewayState(temp)
 		result.NatGatewayState = &natGatewayState
 	}
 
@@ -2757,7 +2862,7 @@ func (location *AdditionalLocation) ConvertToARM(resolved genruntime.ConvertToAR
 		if err != nil {
 			return nil, err
 		}
-		sku := *sku_ARM.(*ApiManagementServiceSkuProperties_ARM)
+		sku := *sku_ARM.(*arm.ApiManagementServiceSkuProperties)
 		result.Sku = &sku
 	}
 
@@ -2767,7 +2872,7 @@ func (location *AdditionalLocation) ConvertToARM(resolved genruntime.ConvertToAR
 		if err != nil {
 			return nil, err
 		}
-		virtualNetworkConfiguration := *virtualNetworkConfiguration_ARM.(*VirtualNetworkConfiguration_ARM)
+		virtualNetworkConfiguration := *virtualNetworkConfiguration_ARM.(*arm.VirtualNetworkConfiguration)
 		result.VirtualNetworkConfiguration = &virtualNetworkConfiguration
 	}
 
@@ -2780,14 +2885,14 @@ func (location *AdditionalLocation) ConvertToARM(resolved genruntime.ConvertToAR
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (location *AdditionalLocation) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AdditionalLocation_ARM{}
+	return &arm.AdditionalLocation{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (location *AdditionalLocation) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AdditionalLocation_ARM)
+	typedInput, ok := armInput.(arm.AdditionalLocation)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AdditionalLocation_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AdditionalLocation, got %T", armInput)
 	}
 
 	// Set property "DisableGateway":
@@ -2804,7 +2909,9 @@ func (location *AdditionalLocation) PopulateFromARM(owner genruntime.ArbitraryOw
 
 	// Set property "NatGatewayState":
 	if typedInput.NatGatewayState != nil {
-		natGatewayState := *typedInput.NatGatewayState
+		var temp string
+		temp = string(*typedInput.NatGatewayState)
+		natGatewayState := AdditionalLocation_NatGatewayState(temp)
 		location.NatGatewayState = &natGatewayState
 	}
 
@@ -2842,7 +2949,7 @@ func (location *AdditionalLocation) PopulateFromARM(owner genruntime.ArbitraryOw
 }
 
 // AssignProperties_From_AdditionalLocation populates our AdditionalLocation from the provided source AdditionalLocation
-func (location *AdditionalLocation) AssignProperties_From_AdditionalLocation(source *v20220801s.AdditionalLocation) error {
+func (location *AdditionalLocation) AssignProperties_From_AdditionalLocation(source *storage.AdditionalLocation) error {
 
 	// DisableGateway
 	if source.DisableGateway != nil {
@@ -2857,8 +2964,9 @@ func (location *AdditionalLocation) AssignProperties_From_AdditionalLocation(sou
 
 	// NatGatewayState
 	if source.NatGatewayState != nil {
-		natGatewayState := AdditionalLocation_NatGatewayState(*source.NatGatewayState)
-		location.NatGatewayState = &natGatewayState
+		natGatewayState := *source.NatGatewayState
+		natGatewayStateTemp := genruntime.ToEnum(natGatewayState, additionalLocation_NatGatewayState_Values)
+		location.NatGatewayState = &natGatewayStateTemp
 	} else {
 		location.NatGatewayState = nil
 	}
@@ -2903,7 +3011,7 @@ func (location *AdditionalLocation) AssignProperties_From_AdditionalLocation(sou
 }
 
 // AssignProperties_To_AdditionalLocation populates the provided destination AdditionalLocation from our AdditionalLocation
-func (location *AdditionalLocation) AssignProperties_To_AdditionalLocation(destination *v20220801s.AdditionalLocation) error {
+func (location *AdditionalLocation) AssignProperties_To_AdditionalLocation(destination *storage.AdditionalLocation) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2936,7 +3044,7 @@ func (location *AdditionalLocation) AssignProperties_To_AdditionalLocation(desti
 
 	// Sku
 	if location.Sku != nil {
-		var sku v20220801s.ApiManagementServiceSkuProperties
+		var sku storage.ApiManagementServiceSkuProperties
 		err := location.Sku.AssignProperties_To_ApiManagementServiceSkuProperties(&sku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiManagementServiceSkuProperties() to populate field Sku")
@@ -2948,7 +3056,7 @@ func (location *AdditionalLocation) AssignProperties_To_AdditionalLocation(desti
 
 	// VirtualNetworkConfiguration
 	if location.VirtualNetworkConfiguration != nil {
-		var virtualNetworkConfiguration v20220801s.VirtualNetworkConfiguration
+		var virtualNetworkConfiguration storage.VirtualNetworkConfiguration
 		err := location.VirtualNetworkConfiguration.AssignProperties_To_VirtualNetworkConfiguration(&virtualNetworkConfiguration)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkConfiguration() to populate field VirtualNetworkConfiguration")
@@ -2988,7 +3096,7 @@ func (location *AdditionalLocation) Initialize_From_AdditionalLocation_STATUS(so
 
 	// NatGatewayState
 	if source.NatGatewayState != nil {
-		natGatewayState := AdditionalLocation_NatGatewayState(*source.NatGatewayState)
+		natGatewayState := genruntime.ToEnum(string(*source.NatGatewayState), additionalLocation_NatGatewayState_Values)
 		location.NatGatewayState = &natGatewayState
 	} else {
 		location.NatGatewayState = nil
@@ -3082,14 +3190,14 @@ var _ genruntime.FromARMConverter = &AdditionalLocation_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (location *AdditionalLocation_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AdditionalLocation_STATUS_ARM{}
+	return &arm.AdditionalLocation_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (location *AdditionalLocation_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AdditionalLocation_STATUS_ARM)
+	typedInput, ok := armInput.(arm.AdditionalLocation_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AdditionalLocation_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AdditionalLocation_STATUS, got %T", armInput)
 	}
 
 	// Set property "DisableGateway":
@@ -3112,7 +3220,9 @@ func (location *AdditionalLocation_STATUS) PopulateFromARM(owner genruntime.Arbi
 
 	// Set property "NatGatewayState":
 	if typedInput.NatGatewayState != nil {
-		natGatewayState := *typedInput.NatGatewayState
+		var temp string
+		temp = string(*typedInput.NatGatewayState)
+		natGatewayState := AdditionalLocation_NatGatewayState_STATUS(temp)
 		location.NatGatewayState = &natGatewayState
 	}
 
@@ -3123,7 +3233,9 @@ func (location *AdditionalLocation_STATUS) PopulateFromARM(owner genruntime.Arbi
 
 	// Set property "PlatformVersion":
 	if typedInput.PlatformVersion != nil {
-		platformVersion := *typedInput.PlatformVersion
+		var temp string
+		temp = string(*typedInput.PlatformVersion)
+		platformVersion := AdditionalLocation_PlatformVersion_STATUS(temp)
 		location.PlatformVersion = &platformVersion
 	}
 
@@ -3175,7 +3287,7 @@ func (location *AdditionalLocation_STATUS) PopulateFromARM(owner genruntime.Arbi
 }
 
 // AssignProperties_From_AdditionalLocation_STATUS populates our AdditionalLocation_STATUS from the provided source AdditionalLocation_STATUS
-func (location *AdditionalLocation_STATUS) AssignProperties_From_AdditionalLocation_STATUS(source *v20220801s.AdditionalLocation_STATUS) error {
+func (location *AdditionalLocation_STATUS) AssignProperties_From_AdditionalLocation_STATUS(source *storage.AdditionalLocation_STATUS) error {
 
 	// DisableGateway
 	if source.DisableGateway != nil {
@@ -3193,8 +3305,9 @@ func (location *AdditionalLocation_STATUS) AssignProperties_From_AdditionalLocat
 
 	// NatGatewayState
 	if source.NatGatewayState != nil {
-		natGatewayState := AdditionalLocation_NatGatewayState_STATUS(*source.NatGatewayState)
-		location.NatGatewayState = &natGatewayState
+		natGatewayState := *source.NatGatewayState
+		natGatewayStateTemp := genruntime.ToEnum(natGatewayState, additionalLocation_NatGatewayState_STATUS_Values)
+		location.NatGatewayState = &natGatewayStateTemp
 	} else {
 		location.NatGatewayState = nil
 	}
@@ -3204,8 +3317,9 @@ func (location *AdditionalLocation_STATUS) AssignProperties_From_AdditionalLocat
 
 	// PlatformVersion
 	if source.PlatformVersion != nil {
-		platformVersion := AdditionalLocation_PlatformVersion_STATUS(*source.PlatformVersion)
-		location.PlatformVersion = &platformVersion
+		platformVersion := *source.PlatformVersion
+		platformVersionTemp := genruntime.ToEnum(platformVersion, additionalLocation_PlatformVersion_STATUS_Values)
+		location.PlatformVersion = &platformVersionTemp
 	} else {
 		location.PlatformVersion = nil
 	}
@@ -3251,7 +3365,7 @@ func (location *AdditionalLocation_STATUS) AssignProperties_From_AdditionalLocat
 }
 
 // AssignProperties_To_AdditionalLocation_STATUS populates the provided destination AdditionalLocation_STATUS from our AdditionalLocation_STATUS
-func (location *AdditionalLocation_STATUS) AssignProperties_To_AdditionalLocation_STATUS(destination *v20220801s.AdditionalLocation_STATUS) error {
+func (location *AdditionalLocation_STATUS) AssignProperties_To_AdditionalLocation_STATUS(destination *storage.AdditionalLocation_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3299,7 +3413,7 @@ func (location *AdditionalLocation_STATUS) AssignProperties_To_AdditionalLocatio
 
 	// Sku
 	if location.Sku != nil {
-		var sku v20220801s.ApiManagementServiceSkuProperties_STATUS
+		var sku storage.ApiManagementServiceSkuProperties_STATUS
 		err := location.Sku.AssignProperties_To_ApiManagementServiceSkuProperties_STATUS(&sku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ApiManagementServiceSkuProperties_STATUS() to populate field Sku")
@@ -3311,7 +3425,7 @@ func (location *AdditionalLocation_STATUS) AssignProperties_To_AdditionalLocatio
 
 	// VirtualNetworkConfiguration
 	if location.VirtualNetworkConfiguration != nil {
-		var virtualNetworkConfiguration v20220801s.VirtualNetworkConfiguration_STATUS
+		var virtualNetworkConfiguration storage.VirtualNetworkConfiguration_STATUS
 		err := location.VirtualNetworkConfiguration.AssignProperties_To_VirtualNetworkConfiguration_STATUS(&virtualNetworkConfiguration)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkConfiguration_STATUS() to populate field VirtualNetworkConfiguration")
@@ -3356,42 +3470,46 @@ func (identity *ApiManagementServiceIdentity) ConvertToARM(resolved genruntime.C
 	if identity == nil {
 		return nil, nil
 	}
-	result := &ApiManagementServiceIdentity_ARM{}
+	result := &arm.ApiManagementServiceIdentity{}
 
 	// Set property "Type":
 	if identity.Type != nil {
-		typeVar := *identity.Type
+		var temp string
+		temp = string(*identity.Type)
+		typeVar := arm.ApiManagementServiceIdentity_Type(temp)
 		result.Type = &typeVar
 	}
 
 	// Set property "UserAssignedIdentities":
-	result.UserAssignedIdentities = make(map[string]UserAssignedIdentityDetails_ARM, len(identity.UserAssignedIdentities))
+	result.UserAssignedIdentities = make(map[string]arm.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 	for _, ident := range identity.UserAssignedIdentities {
 		identARMID, err := resolved.ResolvedReferences.Lookup(ident.Reference)
 		if err != nil {
 			return nil, err
 		}
 		key := identARMID
-		result.UserAssignedIdentities[key] = UserAssignedIdentityDetails_ARM{}
+		result.UserAssignedIdentities[key] = arm.UserAssignedIdentityDetails{}
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (identity *ApiManagementServiceIdentity) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApiManagementServiceIdentity_ARM{}
+	return &arm.ApiManagementServiceIdentity{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (identity *ApiManagementServiceIdentity) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApiManagementServiceIdentity_ARM)
+	typedInput, ok := armInput.(arm.ApiManagementServiceIdentity)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApiManagementServiceIdentity_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiManagementServiceIdentity, got %T", armInput)
 	}
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := ApiManagementServiceIdentity_Type(temp)
 		identity.Type = &typeVar
 	}
 
@@ -3402,12 +3520,13 @@ func (identity *ApiManagementServiceIdentity) PopulateFromARM(owner genruntime.A
 }
 
 // AssignProperties_From_ApiManagementServiceIdentity populates our ApiManagementServiceIdentity from the provided source ApiManagementServiceIdentity
-func (identity *ApiManagementServiceIdentity) AssignProperties_From_ApiManagementServiceIdentity(source *v20220801s.ApiManagementServiceIdentity) error {
+func (identity *ApiManagementServiceIdentity) AssignProperties_From_ApiManagementServiceIdentity(source *storage.ApiManagementServiceIdentity) error {
 
 	// Type
 	if source.Type != nil {
-		typeVar := ApiManagementServiceIdentity_Type(*source.Type)
-		identity.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, apiManagementServiceIdentity_Type_Values)
+		identity.Type = &typeTemp
 	} else {
 		identity.Type = nil
 	}
@@ -3435,7 +3554,7 @@ func (identity *ApiManagementServiceIdentity) AssignProperties_From_ApiManagemen
 }
 
 // AssignProperties_To_ApiManagementServiceIdentity populates the provided destination ApiManagementServiceIdentity from our ApiManagementServiceIdentity
-func (identity *ApiManagementServiceIdentity) AssignProperties_To_ApiManagementServiceIdentity(destination *v20220801s.ApiManagementServiceIdentity) error {
+func (identity *ApiManagementServiceIdentity) AssignProperties_To_ApiManagementServiceIdentity(destination *storage.ApiManagementServiceIdentity) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3449,11 +3568,11 @@ func (identity *ApiManagementServiceIdentity) AssignProperties_To_ApiManagementS
 
 	// UserAssignedIdentities
 	if identity.UserAssignedIdentities != nil {
-		userAssignedIdentityList := make([]v20220801s.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
+		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
 			// Shadow the loop variable to avoid aliasing
 			userAssignedIdentityItem := userAssignedIdentityItem
-			var userAssignedIdentity v20220801s.UserAssignedIdentityDetails
+			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
@@ -3481,7 +3600,7 @@ func (identity *ApiManagementServiceIdentity) Initialize_From_ApiManagementServi
 
 	// Type
 	if source.Type != nil {
-		typeVar := ApiManagementServiceIdentity_Type(*source.Type)
+		typeVar := genruntime.ToEnum(string(*source.Type), apiManagementServiceIdentity_Type_Values)
 		identity.Type = &typeVar
 	} else {
 		identity.Type = nil
@@ -3526,14 +3645,14 @@ var _ genruntime.FromARMConverter = &ApiManagementServiceIdentity_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (identity *ApiManagementServiceIdentity_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApiManagementServiceIdentity_STATUS_ARM{}
+	return &arm.ApiManagementServiceIdentity_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (identity *ApiManagementServiceIdentity_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApiManagementServiceIdentity_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ApiManagementServiceIdentity_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApiManagementServiceIdentity_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiManagementServiceIdentity_STATUS, got %T", armInput)
 	}
 
 	// Set property "PrincipalId":
@@ -3550,7 +3669,9 @@ func (identity *ApiManagementServiceIdentity_STATUS) PopulateFromARM(owner genru
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := ApiManagementServiceIdentity_Type_STATUS(temp)
 		identity.Type = &typeVar
 	}
 
@@ -3572,7 +3693,7 @@ func (identity *ApiManagementServiceIdentity_STATUS) PopulateFromARM(owner genru
 }
 
 // AssignProperties_From_ApiManagementServiceIdentity_STATUS populates our ApiManagementServiceIdentity_STATUS from the provided source ApiManagementServiceIdentity_STATUS
-func (identity *ApiManagementServiceIdentity_STATUS) AssignProperties_From_ApiManagementServiceIdentity_STATUS(source *v20220801s.ApiManagementServiceIdentity_STATUS) error {
+func (identity *ApiManagementServiceIdentity_STATUS) AssignProperties_From_ApiManagementServiceIdentity_STATUS(source *storage.ApiManagementServiceIdentity_STATUS) error {
 
 	// PrincipalId
 	identity.PrincipalId = genruntime.ClonePointerToString(source.PrincipalId)
@@ -3582,8 +3703,9 @@ func (identity *ApiManagementServiceIdentity_STATUS) AssignProperties_From_ApiMa
 
 	// Type
 	if source.Type != nil {
-		typeVar := ApiManagementServiceIdentity_Type_STATUS(*source.Type)
-		identity.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, apiManagementServiceIdentity_Type_STATUS_Values)
+		identity.Type = &typeTemp
 	} else {
 		identity.Type = nil
 	}
@@ -3611,7 +3733,7 @@ func (identity *ApiManagementServiceIdentity_STATUS) AssignProperties_From_ApiMa
 }
 
 // AssignProperties_To_ApiManagementServiceIdentity_STATUS populates the provided destination ApiManagementServiceIdentity_STATUS from our ApiManagementServiceIdentity_STATUS
-func (identity *ApiManagementServiceIdentity_STATUS) AssignProperties_To_ApiManagementServiceIdentity_STATUS(destination *v20220801s.ApiManagementServiceIdentity_STATUS) error {
+func (identity *ApiManagementServiceIdentity_STATUS) AssignProperties_To_ApiManagementServiceIdentity_STATUS(destination *storage.ApiManagementServiceIdentity_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3631,11 +3753,11 @@ func (identity *ApiManagementServiceIdentity_STATUS) AssignProperties_To_ApiMana
 
 	// UserAssignedIdentities
 	if identity.UserAssignedIdentities != nil {
-		userAssignedIdentityMap := make(map[string]v20220801s.UserIdentityProperties_STATUS, len(identity.UserAssignedIdentities))
+		userAssignedIdentityMap := make(map[string]storage.UserIdentityProperties_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
 			// Shadow the loop variable to avoid aliasing
 			userAssignedIdentityValue := userAssignedIdentityValue
-			var userAssignedIdentity v20220801s.UserIdentityProperties_STATUS
+			var userAssignedIdentity storage.UserIdentityProperties_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_UserIdentityProperties_STATUS(&userAssignedIdentity)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_UserIdentityProperties_STATUS() to populate field UserAssignedIdentities")
@@ -3666,12 +3788,24 @@ const (
 	ApiManagementServiceProperties_NatGatewayState_Enabled  = ApiManagementServiceProperties_NatGatewayState("Enabled")
 )
 
+// Mapping from string to ApiManagementServiceProperties_NatGatewayState
+var apiManagementServiceProperties_NatGatewayState_Values = map[string]ApiManagementServiceProperties_NatGatewayState{
+	"disabled": ApiManagementServiceProperties_NatGatewayState_Disabled,
+	"enabled":  ApiManagementServiceProperties_NatGatewayState_Enabled,
+}
+
 type ApiManagementServiceProperties_NatGatewayState_STATUS string
 
 const (
 	ApiManagementServiceProperties_NatGatewayState_STATUS_Disabled = ApiManagementServiceProperties_NatGatewayState_STATUS("Disabled")
 	ApiManagementServiceProperties_NatGatewayState_STATUS_Enabled  = ApiManagementServiceProperties_NatGatewayState_STATUS("Enabled")
 )
+
+// Mapping from string to ApiManagementServiceProperties_NatGatewayState_STATUS
+var apiManagementServiceProperties_NatGatewayState_STATUS_Values = map[string]ApiManagementServiceProperties_NatGatewayState_STATUS{
+	"disabled": ApiManagementServiceProperties_NatGatewayState_STATUS_Disabled,
+	"enabled":  ApiManagementServiceProperties_NatGatewayState_STATUS_Enabled,
+}
 
 type ApiManagementServiceProperties_PlatformVersion_STATUS string
 
@@ -3682,6 +3816,14 @@ const (
 	ApiManagementServiceProperties_PlatformVersion_STATUS_Undetermined = ApiManagementServiceProperties_PlatformVersion_STATUS("undetermined")
 )
 
+// Mapping from string to ApiManagementServiceProperties_PlatformVersion_STATUS
+var apiManagementServiceProperties_PlatformVersion_STATUS_Values = map[string]ApiManagementServiceProperties_PlatformVersion_STATUS{
+	"mtv1":         ApiManagementServiceProperties_PlatformVersion_STATUS_Mtv1,
+	"stv1":         ApiManagementServiceProperties_PlatformVersion_STATUS_Stv1,
+	"stv2":         ApiManagementServiceProperties_PlatformVersion_STATUS_Stv2,
+	"undetermined": ApiManagementServiceProperties_PlatformVersion_STATUS_Undetermined,
+}
+
 // +kubebuilder:validation:Enum={"Disabled","Enabled"}
 type ApiManagementServiceProperties_PublicNetworkAccess string
 
@@ -3690,12 +3832,24 @@ const (
 	ApiManagementServiceProperties_PublicNetworkAccess_Enabled  = ApiManagementServiceProperties_PublicNetworkAccess("Enabled")
 )
 
+// Mapping from string to ApiManagementServiceProperties_PublicNetworkAccess
+var apiManagementServiceProperties_PublicNetworkAccess_Values = map[string]ApiManagementServiceProperties_PublicNetworkAccess{
+	"disabled": ApiManagementServiceProperties_PublicNetworkAccess_Disabled,
+	"enabled":  ApiManagementServiceProperties_PublicNetworkAccess_Enabled,
+}
+
 type ApiManagementServiceProperties_PublicNetworkAccess_STATUS string
 
 const (
 	ApiManagementServiceProperties_PublicNetworkAccess_STATUS_Disabled = ApiManagementServiceProperties_PublicNetworkAccess_STATUS("Disabled")
 	ApiManagementServiceProperties_PublicNetworkAccess_STATUS_Enabled  = ApiManagementServiceProperties_PublicNetworkAccess_STATUS("Enabled")
 )
+
+// Mapping from string to ApiManagementServiceProperties_PublicNetworkAccess_STATUS
+var apiManagementServiceProperties_PublicNetworkAccess_STATUS_Values = map[string]ApiManagementServiceProperties_PublicNetworkAccess_STATUS{
+	"disabled": ApiManagementServiceProperties_PublicNetworkAccess_STATUS_Disabled,
+	"enabled":  ApiManagementServiceProperties_PublicNetworkAccess_STATUS_Enabled,
+}
 
 // +kubebuilder:validation:Enum={"External","Internal","None"}
 type ApiManagementServiceProperties_VirtualNetworkType string
@@ -3706,6 +3860,13 @@ const (
 	ApiManagementServiceProperties_VirtualNetworkType_None     = ApiManagementServiceProperties_VirtualNetworkType("None")
 )
 
+// Mapping from string to ApiManagementServiceProperties_VirtualNetworkType
+var apiManagementServiceProperties_VirtualNetworkType_Values = map[string]ApiManagementServiceProperties_VirtualNetworkType{
+	"external": ApiManagementServiceProperties_VirtualNetworkType_External,
+	"internal": ApiManagementServiceProperties_VirtualNetworkType_Internal,
+	"none":     ApiManagementServiceProperties_VirtualNetworkType_None,
+}
+
 type ApiManagementServiceProperties_VirtualNetworkType_STATUS string
 
 const (
@@ -3713,6 +3874,13 @@ const (
 	ApiManagementServiceProperties_VirtualNetworkType_STATUS_Internal = ApiManagementServiceProperties_VirtualNetworkType_STATUS("Internal")
 	ApiManagementServiceProperties_VirtualNetworkType_STATUS_None     = ApiManagementServiceProperties_VirtualNetworkType_STATUS("None")
 )
+
+// Mapping from string to ApiManagementServiceProperties_VirtualNetworkType_STATUS
+var apiManagementServiceProperties_VirtualNetworkType_STATUS_Values = map[string]ApiManagementServiceProperties_VirtualNetworkType_STATUS{
+	"external": ApiManagementServiceProperties_VirtualNetworkType_STATUS_External,
+	"internal": ApiManagementServiceProperties_VirtualNetworkType_STATUS_Internal,
+	"none":     ApiManagementServiceProperties_VirtualNetworkType_STATUS_None,
+}
 
 // API Management service resource SKU properties.
 type ApiManagementServiceSkuProperties struct {
@@ -3732,7 +3900,7 @@ func (properties *ApiManagementServiceSkuProperties) ConvertToARM(resolved genru
 	if properties == nil {
 		return nil, nil
 	}
-	result := &ApiManagementServiceSkuProperties_ARM{}
+	result := &arm.ApiManagementServiceSkuProperties{}
 
 	// Set property "Capacity":
 	if properties.Capacity != nil {
@@ -3742,7 +3910,9 @@ func (properties *ApiManagementServiceSkuProperties) ConvertToARM(resolved genru
 
 	// Set property "Name":
 	if properties.Name != nil {
-		name := *properties.Name
+		var temp string
+		temp = string(*properties.Name)
+		name := arm.ApiManagementServiceSkuProperties_Name(temp)
 		result.Name = &name
 	}
 	return result, nil
@@ -3750,14 +3920,14 @@ func (properties *ApiManagementServiceSkuProperties) ConvertToARM(resolved genru
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *ApiManagementServiceSkuProperties) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApiManagementServiceSkuProperties_ARM{}
+	return &arm.ApiManagementServiceSkuProperties{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *ApiManagementServiceSkuProperties) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApiManagementServiceSkuProperties_ARM)
+	typedInput, ok := armInput.(arm.ApiManagementServiceSkuProperties)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApiManagementServiceSkuProperties_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiManagementServiceSkuProperties, got %T", armInput)
 	}
 
 	// Set property "Capacity":
@@ -3768,7 +3938,9 @@ func (properties *ApiManagementServiceSkuProperties) PopulateFromARM(owner genru
 
 	// Set property "Name":
 	if typedInput.Name != nil {
-		name := *typedInput.Name
+		var temp string
+		temp = string(*typedInput.Name)
+		name := ApiManagementServiceSkuProperties_Name(temp)
 		properties.Name = &name
 	}
 
@@ -3777,15 +3949,16 @@ func (properties *ApiManagementServiceSkuProperties) PopulateFromARM(owner genru
 }
 
 // AssignProperties_From_ApiManagementServiceSkuProperties populates our ApiManagementServiceSkuProperties from the provided source ApiManagementServiceSkuProperties
-func (properties *ApiManagementServiceSkuProperties) AssignProperties_From_ApiManagementServiceSkuProperties(source *v20220801s.ApiManagementServiceSkuProperties) error {
+func (properties *ApiManagementServiceSkuProperties) AssignProperties_From_ApiManagementServiceSkuProperties(source *storage.ApiManagementServiceSkuProperties) error {
 
 	// Capacity
 	properties.Capacity = genruntime.ClonePointerToInt(source.Capacity)
 
 	// Name
 	if source.Name != nil {
-		name := ApiManagementServiceSkuProperties_Name(*source.Name)
-		properties.Name = &name
+		name := *source.Name
+		nameTemp := genruntime.ToEnum(name, apiManagementServiceSkuProperties_Name_Values)
+		properties.Name = &nameTemp
 	} else {
 		properties.Name = nil
 	}
@@ -3795,7 +3968,7 @@ func (properties *ApiManagementServiceSkuProperties) AssignProperties_From_ApiMa
 }
 
 // AssignProperties_To_ApiManagementServiceSkuProperties populates the provided destination ApiManagementServiceSkuProperties from our ApiManagementServiceSkuProperties
-func (properties *ApiManagementServiceSkuProperties) AssignProperties_To_ApiManagementServiceSkuProperties(destination *v20220801s.ApiManagementServiceSkuProperties) error {
+func (properties *ApiManagementServiceSkuProperties) AssignProperties_To_ApiManagementServiceSkuProperties(destination *storage.ApiManagementServiceSkuProperties) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3829,7 +4002,7 @@ func (properties *ApiManagementServiceSkuProperties) Initialize_From_ApiManageme
 
 	// Name
 	if source.Name != nil {
-		name := ApiManagementServiceSkuProperties_Name(*source.Name)
+		name := genruntime.ToEnum(string(*source.Name), apiManagementServiceSkuProperties_Name_Values)
 		properties.Name = &name
 	} else {
 		properties.Name = nil
@@ -3852,14 +4025,14 @@ var _ genruntime.FromARMConverter = &ApiManagementServiceSkuProperties_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *ApiManagementServiceSkuProperties_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApiManagementServiceSkuProperties_STATUS_ARM{}
+	return &arm.ApiManagementServiceSkuProperties_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *ApiManagementServiceSkuProperties_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApiManagementServiceSkuProperties_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ApiManagementServiceSkuProperties_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApiManagementServiceSkuProperties_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiManagementServiceSkuProperties_STATUS, got %T", armInput)
 	}
 
 	// Set property "Capacity":
@@ -3870,7 +4043,9 @@ func (properties *ApiManagementServiceSkuProperties_STATUS) PopulateFromARM(owne
 
 	// Set property "Name":
 	if typedInput.Name != nil {
-		name := *typedInput.Name
+		var temp string
+		temp = string(*typedInput.Name)
+		name := ApiManagementServiceSkuProperties_Name_STATUS(temp)
 		properties.Name = &name
 	}
 
@@ -3879,15 +4054,16 @@ func (properties *ApiManagementServiceSkuProperties_STATUS) PopulateFromARM(owne
 }
 
 // AssignProperties_From_ApiManagementServiceSkuProperties_STATUS populates our ApiManagementServiceSkuProperties_STATUS from the provided source ApiManagementServiceSkuProperties_STATUS
-func (properties *ApiManagementServiceSkuProperties_STATUS) AssignProperties_From_ApiManagementServiceSkuProperties_STATUS(source *v20220801s.ApiManagementServiceSkuProperties_STATUS) error {
+func (properties *ApiManagementServiceSkuProperties_STATUS) AssignProperties_From_ApiManagementServiceSkuProperties_STATUS(source *storage.ApiManagementServiceSkuProperties_STATUS) error {
 
 	// Capacity
 	properties.Capacity = genruntime.ClonePointerToInt(source.Capacity)
 
 	// Name
 	if source.Name != nil {
-		name := ApiManagementServiceSkuProperties_Name_STATUS(*source.Name)
-		properties.Name = &name
+		name := *source.Name
+		nameTemp := genruntime.ToEnum(name, apiManagementServiceSkuProperties_Name_STATUS_Values)
+		properties.Name = &nameTemp
 	} else {
 		properties.Name = nil
 	}
@@ -3897,7 +4073,7 @@ func (properties *ApiManagementServiceSkuProperties_STATUS) AssignProperties_Fro
 }
 
 // AssignProperties_To_ApiManagementServiceSkuProperties_STATUS populates the provided destination ApiManagementServiceSkuProperties_STATUS from our ApiManagementServiceSkuProperties_STATUS
-func (properties *ApiManagementServiceSkuProperties_STATUS) AssignProperties_To_ApiManagementServiceSkuProperties_STATUS(destination *v20220801s.ApiManagementServiceSkuProperties_STATUS) error {
+func (properties *ApiManagementServiceSkuProperties_STATUS) AssignProperties_To_ApiManagementServiceSkuProperties_STATUS(destination *storage.ApiManagementServiceSkuProperties_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3936,7 +4112,7 @@ func (constraint *ApiVersionConstraint) ConvertToARM(resolved genruntime.Convert
 	if constraint == nil {
 		return nil, nil
 	}
-	result := &ApiVersionConstraint_ARM{}
+	result := &arm.ApiVersionConstraint{}
 
 	// Set property "MinApiVersion":
 	if constraint.MinApiVersion != nil {
@@ -3948,14 +4124,14 @@ func (constraint *ApiVersionConstraint) ConvertToARM(resolved genruntime.Convert
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (constraint *ApiVersionConstraint) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApiVersionConstraint_ARM{}
+	return &arm.ApiVersionConstraint{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (constraint *ApiVersionConstraint) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApiVersionConstraint_ARM)
+	typedInput, ok := armInput.(arm.ApiVersionConstraint)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApiVersionConstraint_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiVersionConstraint, got %T", armInput)
 	}
 
 	// Set property "MinApiVersion":
@@ -3969,7 +4145,7 @@ func (constraint *ApiVersionConstraint) PopulateFromARM(owner genruntime.Arbitra
 }
 
 // AssignProperties_From_ApiVersionConstraint populates our ApiVersionConstraint from the provided source ApiVersionConstraint
-func (constraint *ApiVersionConstraint) AssignProperties_From_ApiVersionConstraint(source *v20220801s.ApiVersionConstraint) error {
+func (constraint *ApiVersionConstraint) AssignProperties_From_ApiVersionConstraint(source *storage.ApiVersionConstraint) error {
 
 	// MinApiVersion
 	constraint.MinApiVersion = genruntime.ClonePointerToString(source.MinApiVersion)
@@ -3979,7 +4155,7 @@ func (constraint *ApiVersionConstraint) AssignProperties_From_ApiVersionConstrai
 }
 
 // AssignProperties_To_ApiVersionConstraint populates the provided destination ApiVersionConstraint from our ApiVersionConstraint
-func (constraint *ApiVersionConstraint) AssignProperties_To_ApiVersionConstraint(destination *v20220801s.ApiVersionConstraint) error {
+func (constraint *ApiVersionConstraint) AssignProperties_To_ApiVersionConstraint(destination *storage.ApiVersionConstraint) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4017,14 +4193,14 @@ var _ genruntime.FromARMConverter = &ApiVersionConstraint_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (constraint *ApiVersionConstraint_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ApiVersionConstraint_STATUS_ARM{}
+	return &arm.ApiVersionConstraint_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (constraint *ApiVersionConstraint_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ApiVersionConstraint_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ApiVersionConstraint_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ApiVersionConstraint_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ApiVersionConstraint_STATUS, got %T", armInput)
 	}
 
 	// Set property "MinApiVersion":
@@ -4038,7 +4214,7 @@ func (constraint *ApiVersionConstraint_STATUS) PopulateFromARM(owner genruntime.
 }
 
 // AssignProperties_From_ApiVersionConstraint_STATUS populates our ApiVersionConstraint_STATUS from the provided source ApiVersionConstraint_STATUS
-func (constraint *ApiVersionConstraint_STATUS) AssignProperties_From_ApiVersionConstraint_STATUS(source *v20220801s.ApiVersionConstraint_STATUS) error {
+func (constraint *ApiVersionConstraint_STATUS) AssignProperties_From_ApiVersionConstraint_STATUS(source *storage.ApiVersionConstraint_STATUS) error {
 
 	// MinApiVersion
 	constraint.MinApiVersion = genruntime.ClonePointerToString(source.MinApiVersion)
@@ -4048,7 +4224,7 @@ func (constraint *ApiVersionConstraint_STATUS) AssignProperties_From_ApiVersionC
 }
 
 // AssignProperties_To_ApiVersionConstraint_STATUS populates the provided destination ApiVersionConstraint_STATUS from our ApiVersionConstraint_STATUS
-func (constraint *ApiVersionConstraint_STATUS) AssignProperties_To_ApiVersionConstraint_STATUS(destination *v20220801s.ApiVersionConstraint_STATUS) error {
+func (constraint *ApiVersionConstraint_STATUS) AssignProperties_To_ApiVersionConstraint_STATUS(destination *storage.ApiVersionConstraint_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4090,7 +4266,7 @@ func (configuration *CertificateConfiguration) ConvertToARM(resolved genruntime.
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &CertificateConfiguration_ARM{}
+	result := &arm.CertificateConfiguration{}
 
 	// Set property "Certificate":
 	if configuration.Certificate != nil {
@@ -4098,7 +4274,7 @@ func (configuration *CertificateConfiguration) ConvertToARM(resolved genruntime.
 		if err != nil {
 			return nil, err
 		}
-		certificate := *certificate_ARM.(*CertificateInformation_ARM)
+		certificate := *certificate_ARM.(*arm.CertificateInformation)
 		result.Certificate = &certificate
 	}
 
@@ -4120,7 +4296,9 @@ func (configuration *CertificateConfiguration) ConvertToARM(resolved genruntime.
 
 	// Set property "StoreName":
 	if configuration.StoreName != nil {
-		storeName := *configuration.StoreName
+		var temp string
+		temp = string(*configuration.StoreName)
+		storeName := arm.CertificateConfiguration_StoreName(temp)
 		result.StoreName = &storeName
 	}
 	return result, nil
@@ -4128,14 +4306,14 @@ func (configuration *CertificateConfiguration) ConvertToARM(resolved genruntime.
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *CertificateConfiguration) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &CertificateConfiguration_ARM{}
+	return &arm.CertificateConfiguration{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *CertificateConfiguration) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(CertificateConfiguration_ARM)
+	typedInput, ok := armInput.(arm.CertificateConfiguration)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected CertificateConfiguration_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.CertificateConfiguration, got %T", armInput)
 	}
 
 	// Set property "Certificate":
@@ -4159,7 +4337,9 @@ func (configuration *CertificateConfiguration) PopulateFromARM(owner genruntime.
 
 	// Set property "StoreName":
 	if typedInput.StoreName != nil {
-		storeName := *typedInput.StoreName
+		var temp string
+		temp = string(*typedInput.StoreName)
+		storeName := CertificateConfiguration_StoreName(temp)
 		configuration.StoreName = &storeName
 	}
 
@@ -4168,7 +4348,7 @@ func (configuration *CertificateConfiguration) PopulateFromARM(owner genruntime.
 }
 
 // AssignProperties_From_CertificateConfiguration populates our CertificateConfiguration from the provided source CertificateConfiguration
-func (configuration *CertificateConfiguration) AssignProperties_From_CertificateConfiguration(source *v20220801s.CertificateConfiguration) error {
+func (configuration *CertificateConfiguration) AssignProperties_From_CertificateConfiguration(source *storage.CertificateConfiguration) error {
 
 	// Certificate
 	if source.Certificate != nil {
@@ -4195,8 +4375,9 @@ func (configuration *CertificateConfiguration) AssignProperties_From_Certificate
 
 	// StoreName
 	if source.StoreName != nil {
-		storeName := CertificateConfiguration_StoreName(*source.StoreName)
-		configuration.StoreName = &storeName
+		storeName := *source.StoreName
+		storeNameTemp := genruntime.ToEnum(storeName, certificateConfiguration_StoreName_Values)
+		configuration.StoreName = &storeNameTemp
 	} else {
 		configuration.StoreName = nil
 	}
@@ -4206,13 +4387,13 @@ func (configuration *CertificateConfiguration) AssignProperties_From_Certificate
 }
 
 // AssignProperties_To_CertificateConfiguration populates the provided destination CertificateConfiguration from our CertificateConfiguration
-func (configuration *CertificateConfiguration) AssignProperties_To_CertificateConfiguration(destination *v20220801s.CertificateConfiguration) error {
+func (configuration *CertificateConfiguration) AssignProperties_To_CertificateConfiguration(destination *storage.CertificateConfiguration) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Certificate
 	if configuration.Certificate != nil {
-		var certificate v20220801s.CertificateInformation
+		var certificate storage.CertificateInformation
 		err := configuration.Certificate.AssignProperties_To_CertificateInformation(&certificate)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_CertificateInformation() to populate field Certificate")
@@ -4272,7 +4453,7 @@ func (configuration *CertificateConfiguration) Initialize_From_CertificateConfig
 
 	// StoreName
 	if source.StoreName != nil {
-		storeName := CertificateConfiguration_StoreName(*source.StoreName)
+		storeName := genruntime.ToEnum(string(*source.StoreName), certificateConfiguration_StoreName_Values)
 		configuration.StoreName = &storeName
 	} else {
 		configuration.StoreName = nil
@@ -4299,14 +4480,14 @@ var _ genruntime.FromARMConverter = &CertificateConfiguration_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *CertificateConfiguration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &CertificateConfiguration_STATUS_ARM{}
+	return &arm.CertificateConfiguration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *CertificateConfiguration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(CertificateConfiguration_STATUS_ARM)
+	typedInput, ok := armInput.(arm.CertificateConfiguration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected CertificateConfiguration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.CertificateConfiguration_STATUS, got %T", armInput)
 	}
 
 	// Set property "Certificate":
@@ -4328,7 +4509,9 @@ func (configuration *CertificateConfiguration_STATUS) PopulateFromARM(owner genr
 
 	// Set property "StoreName":
 	if typedInput.StoreName != nil {
-		storeName := *typedInput.StoreName
+		var temp string
+		temp = string(*typedInput.StoreName)
+		storeName := CertificateConfiguration_StoreName_STATUS(temp)
 		configuration.StoreName = &storeName
 	}
 
@@ -4337,7 +4520,7 @@ func (configuration *CertificateConfiguration_STATUS) PopulateFromARM(owner genr
 }
 
 // AssignProperties_From_CertificateConfiguration_STATUS populates our CertificateConfiguration_STATUS from the provided source CertificateConfiguration_STATUS
-func (configuration *CertificateConfiguration_STATUS) AssignProperties_From_CertificateConfiguration_STATUS(source *v20220801s.CertificateConfiguration_STATUS) error {
+func (configuration *CertificateConfiguration_STATUS) AssignProperties_From_CertificateConfiguration_STATUS(source *storage.CertificateConfiguration_STATUS) error {
 
 	// Certificate
 	if source.Certificate != nil {
@@ -4356,8 +4539,9 @@ func (configuration *CertificateConfiguration_STATUS) AssignProperties_From_Cert
 
 	// StoreName
 	if source.StoreName != nil {
-		storeName := CertificateConfiguration_StoreName_STATUS(*source.StoreName)
-		configuration.StoreName = &storeName
+		storeName := *source.StoreName
+		storeNameTemp := genruntime.ToEnum(storeName, certificateConfiguration_StoreName_STATUS_Values)
+		configuration.StoreName = &storeNameTemp
 	} else {
 		configuration.StoreName = nil
 	}
@@ -4367,13 +4551,13 @@ func (configuration *CertificateConfiguration_STATUS) AssignProperties_From_Cert
 }
 
 // AssignProperties_To_CertificateConfiguration_STATUS populates the provided destination CertificateConfiguration_STATUS from our CertificateConfiguration_STATUS
-func (configuration *CertificateConfiguration_STATUS) AssignProperties_To_CertificateConfiguration_STATUS(destination *v20220801s.CertificateConfiguration_STATUS) error {
+func (configuration *CertificateConfiguration_STATUS) AssignProperties_To_CertificateConfiguration_STATUS(destination *storage.CertificateConfiguration_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Certificate
 	if configuration.Certificate != nil {
-		var certificate v20220801s.CertificateInformation_STATUS
+		var certificate storage.CertificateInformation_STATUS
 		err := configuration.Certificate.AssignProperties_To_CertificateInformation_STATUS(&certificate)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_CertificateInformation_STATUS() to populate field Certificate")
@@ -4460,7 +4644,7 @@ func (configuration *HostnameConfiguration) ConvertToARM(resolved genruntime.Con
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &HostnameConfiguration_ARM{}
+	result := &arm.HostnameConfiguration{}
 
 	// Set property "Certificate":
 	if configuration.Certificate != nil {
@@ -4468,7 +4652,7 @@ func (configuration *HostnameConfiguration) ConvertToARM(resolved genruntime.Con
 		if err != nil {
 			return nil, err
 		}
-		certificate := *certificate_ARM.(*CertificateInformation_ARM)
+		certificate := *certificate_ARM.(*arm.CertificateInformation)
 		result.Certificate = &certificate
 	}
 
@@ -4484,13 +4668,17 @@ func (configuration *HostnameConfiguration) ConvertToARM(resolved genruntime.Con
 
 	// Set property "CertificateSource":
 	if configuration.CertificateSource != nil {
-		certificateSource := *configuration.CertificateSource
+		var temp string
+		temp = string(*configuration.CertificateSource)
+		certificateSource := arm.HostnameConfiguration_CertificateSource(temp)
 		result.CertificateSource = &certificateSource
 	}
 
 	// Set property "CertificateStatus":
 	if configuration.CertificateStatus != nil {
-		certificateStatus := *configuration.CertificateStatus
+		var temp string
+		temp = string(*configuration.CertificateStatus)
+		certificateStatus := arm.HostnameConfiguration_CertificateStatus(temp)
 		result.CertificateStatus = &certificateStatus
 	}
 
@@ -4540,7 +4728,9 @@ func (configuration *HostnameConfiguration) ConvertToARM(resolved genruntime.Con
 
 	// Set property "Type":
 	if configuration.Type != nil {
-		typeVar := *configuration.Type
+		var temp string
+		temp = string(*configuration.Type)
+		typeVar := arm.HostnameConfiguration_Type(temp)
 		result.Type = &typeVar
 	}
 	return result, nil
@@ -4548,14 +4738,14 @@ func (configuration *HostnameConfiguration) ConvertToARM(resolved genruntime.Con
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *HostnameConfiguration) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &HostnameConfiguration_ARM{}
+	return &arm.HostnameConfiguration{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *HostnameConfiguration) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(HostnameConfiguration_ARM)
+	typedInput, ok := armInput.(arm.HostnameConfiguration)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected HostnameConfiguration_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.HostnameConfiguration, got %T", armInput)
 	}
 
 	// Set property "Certificate":
@@ -4573,13 +4763,17 @@ func (configuration *HostnameConfiguration) PopulateFromARM(owner genruntime.Arb
 
 	// Set property "CertificateSource":
 	if typedInput.CertificateSource != nil {
-		certificateSource := *typedInput.CertificateSource
+		var temp string
+		temp = string(*typedInput.CertificateSource)
+		certificateSource := HostnameConfiguration_CertificateSource(temp)
 		configuration.CertificateSource = &certificateSource
 	}
 
 	// Set property "CertificateStatus":
 	if typedInput.CertificateStatus != nil {
-		certificateStatus := *typedInput.CertificateStatus
+		var temp string
+		temp = string(*typedInput.CertificateStatus)
+		certificateStatus := HostnameConfiguration_CertificateStatus(temp)
 		configuration.CertificateStatus = &certificateStatus
 	}
 
@@ -4623,7 +4817,9 @@ func (configuration *HostnameConfiguration) PopulateFromARM(owner genruntime.Arb
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := HostnameConfiguration_Type(temp)
 		configuration.Type = &typeVar
 	}
 
@@ -4632,7 +4828,7 @@ func (configuration *HostnameConfiguration) PopulateFromARM(owner genruntime.Arb
 }
 
 // AssignProperties_From_HostnameConfiguration populates our HostnameConfiguration from the provided source HostnameConfiguration
-func (configuration *HostnameConfiguration) AssignProperties_From_HostnameConfiguration(source *v20220801s.HostnameConfiguration) error {
+func (configuration *HostnameConfiguration) AssignProperties_From_HostnameConfiguration(source *storage.HostnameConfiguration) error {
 
 	// Certificate
 	if source.Certificate != nil {
@@ -4656,16 +4852,18 @@ func (configuration *HostnameConfiguration) AssignProperties_From_HostnameConfig
 
 	// CertificateSource
 	if source.CertificateSource != nil {
-		certificateSource := HostnameConfiguration_CertificateSource(*source.CertificateSource)
-		configuration.CertificateSource = &certificateSource
+		certificateSource := *source.CertificateSource
+		certificateSourceTemp := genruntime.ToEnum(certificateSource, hostnameConfiguration_CertificateSource_Values)
+		configuration.CertificateSource = &certificateSourceTemp
 	} else {
 		configuration.CertificateSource = nil
 	}
 
 	// CertificateStatus
 	if source.CertificateStatus != nil {
-		certificateStatus := HostnameConfiguration_CertificateStatus(*source.CertificateStatus)
-		configuration.CertificateStatus = &certificateStatus
+		certificateStatus := *source.CertificateStatus
+		certificateStatusTemp := genruntime.ToEnum(certificateStatus, hostnameConfiguration_CertificateStatus_Values)
+		configuration.CertificateStatus = &certificateStatusTemp
 	} else {
 		configuration.CertificateStatus = nil
 	}
@@ -4708,8 +4906,9 @@ func (configuration *HostnameConfiguration) AssignProperties_From_HostnameConfig
 
 	// Type
 	if source.Type != nil {
-		typeVar := HostnameConfiguration_Type(*source.Type)
-		configuration.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, hostnameConfiguration_Type_Values)
+		configuration.Type = &typeTemp
 	} else {
 		configuration.Type = nil
 	}
@@ -4719,13 +4918,13 @@ func (configuration *HostnameConfiguration) AssignProperties_From_HostnameConfig
 }
 
 // AssignProperties_To_HostnameConfiguration populates the provided destination HostnameConfiguration from our HostnameConfiguration
-func (configuration *HostnameConfiguration) AssignProperties_To_HostnameConfiguration(destination *v20220801s.HostnameConfiguration) error {
+func (configuration *HostnameConfiguration) AssignProperties_To_HostnameConfiguration(destination *storage.HostnameConfiguration) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Certificate
 	if configuration.Certificate != nil {
-		var certificate v20220801s.CertificateInformation
+		var certificate storage.CertificateInformation
 		err := configuration.Certificate.AssignProperties_To_CertificateInformation(&certificate)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_CertificateInformation() to populate field Certificate")
@@ -4831,7 +5030,7 @@ func (configuration *HostnameConfiguration) Initialize_From_HostnameConfiguratio
 
 	// CertificateSource
 	if source.CertificateSource != nil {
-		certificateSource := HostnameConfiguration_CertificateSource(*source.CertificateSource)
+		certificateSource := genruntime.ToEnum(string(*source.CertificateSource), hostnameConfiguration_CertificateSource_Values)
 		configuration.CertificateSource = &certificateSource
 	} else {
 		configuration.CertificateSource = nil
@@ -4839,7 +5038,7 @@ func (configuration *HostnameConfiguration) Initialize_From_HostnameConfiguratio
 
 	// CertificateStatus
 	if source.CertificateStatus != nil {
-		certificateStatus := HostnameConfiguration_CertificateStatus(*source.CertificateStatus)
+		certificateStatus := genruntime.ToEnum(string(*source.CertificateStatus), hostnameConfiguration_CertificateStatus_Values)
 		configuration.CertificateStatus = &certificateStatus
 	} else {
 		configuration.CertificateStatus = nil
@@ -4875,7 +5074,7 @@ func (configuration *HostnameConfiguration) Initialize_From_HostnameConfiguratio
 
 	// Type
 	if source.Type != nil {
-		typeVar := HostnameConfiguration_Type(*source.Type)
+		typeVar := genruntime.ToEnum(string(*source.Type), hostnameConfiguration_Type_Values)
 		configuration.Type = &typeVar
 	} else {
 		configuration.Type = nil
@@ -4928,14 +5127,14 @@ var _ genruntime.FromARMConverter = &HostnameConfiguration_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *HostnameConfiguration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &HostnameConfiguration_STATUS_ARM{}
+	return &arm.HostnameConfiguration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *HostnameConfiguration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(HostnameConfiguration_STATUS_ARM)
+	typedInput, ok := armInput.(arm.HostnameConfiguration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected HostnameConfiguration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.HostnameConfiguration_STATUS, got %T", armInput)
 	}
 
 	// Set property "Certificate":
@@ -4951,13 +5150,17 @@ func (configuration *HostnameConfiguration_STATUS) PopulateFromARM(owner genrunt
 
 	// Set property "CertificateSource":
 	if typedInput.CertificateSource != nil {
-		certificateSource := *typedInput.CertificateSource
+		var temp string
+		temp = string(*typedInput.CertificateSource)
+		certificateSource := HostnameConfiguration_CertificateSource_STATUS(temp)
 		configuration.CertificateSource = &certificateSource
 	}
 
 	// Set property "CertificateStatus":
 	if typedInput.CertificateStatus != nil {
-		certificateStatus := *typedInput.CertificateStatus
+		var temp string
+		temp = string(*typedInput.CertificateStatus)
+		certificateStatus := HostnameConfiguration_CertificateStatus_STATUS(temp)
 		configuration.CertificateStatus = &certificateStatus
 	}
 
@@ -4999,7 +5202,9 @@ func (configuration *HostnameConfiguration_STATUS) PopulateFromARM(owner genrunt
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := HostnameConfiguration_Type_STATUS(temp)
 		configuration.Type = &typeVar
 	}
 
@@ -5008,7 +5213,7 @@ func (configuration *HostnameConfiguration_STATUS) PopulateFromARM(owner genrunt
 }
 
 // AssignProperties_From_HostnameConfiguration_STATUS populates our HostnameConfiguration_STATUS from the provided source HostnameConfiguration_STATUS
-func (configuration *HostnameConfiguration_STATUS) AssignProperties_From_HostnameConfiguration_STATUS(source *v20220801s.HostnameConfiguration_STATUS) error {
+func (configuration *HostnameConfiguration_STATUS) AssignProperties_From_HostnameConfiguration_STATUS(source *storage.HostnameConfiguration_STATUS) error {
 
 	// Certificate
 	if source.Certificate != nil {
@@ -5024,16 +5229,18 @@ func (configuration *HostnameConfiguration_STATUS) AssignProperties_From_Hostnam
 
 	// CertificateSource
 	if source.CertificateSource != nil {
-		certificateSource := HostnameConfiguration_CertificateSource_STATUS(*source.CertificateSource)
-		configuration.CertificateSource = &certificateSource
+		certificateSource := *source.CertificateSource
+		certificateSourceTemp := genruntime.ToEnum(certificateSource, hostnameConfiguration_CertificateSource_STATUS_Values)
+		configuration.CertificateSource = &certificateSourceTemp
 	} else {
 		configuration.CertificateSource = nil
 	}
 
 	// CertificateStatus
 	if source.CertificateStatus != nil {
-		certificateStatus := HostnameConfiguration_CertificateStatus_STATUS(*source.CertificateStatus)
-		configuration.CertificateStatus = &certificateStatus
+		certificateStatus := *source.CertificateStatus
+		certificateStatusTemp := genruntime.ToEnum(certificateStatus, hostnameConfiguration_CertificateStatus_STATUS_Values)
+		configuration.CertificateStatus = &certificateStatusTemp
 	} else {
 		configuration.CertificateStatus = nil
 	}
@@ -5068,8 +5275,9 @@ func (configuration *HostnameConfiguration_STATUS) AssignProperties_From_Hostnam
 
 	// Type
 	if source.Type != nil {
-		typeVar := HostnameConfiguration_Type_STATUS(*source.Type)
-		configuration.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, hostnameConfiguration_Type_STATUS_Values)
+		configuration.Type = &typeTemp
 	} else {
 		configuration.Type = nil
 	}
@@ -5079,13 +5287,13 @@ func (configuration *HostnameConfiguration_STATUS) AssignProperties_From_Hostnam
 }
 
 // AssignProperties_To_HostnameConfiguration_STATUS populates the provided destination HostnameConfiguration_STATUS from our HostnameConfiguration_STATUS
-func (configuration *HostnameConfiguration_STATUS) AssignProperties_To_HostnameConfiguration_STATUS(destination *v20220801s.HostnameConfiguration_STATUS) error {
+func (configuration *HostnameConfiguration_STATUS) AssignProperties_To_HostnameConfiguration_STATUS(destination *storage.HostnameConfiguration_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Certificate
 	if configuration.Certificate != nil {
-		var certificate v20220801s.CertificateInformation_STATUS
+		var certificate storage.CertificateInformation_STATUS
 		err := configuration.Certificate.AssignProperties_To_CertificateInformation_STATUS(&certificate)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_CertificateInformation_STATUS() to populate field Certificate")
@@ -5187,14 +5395,14 @@ var _ genruntime.FromARMConverter = &RemotePrivateEndpointConnectionWrapper_STAT
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (wrapper *RemotePrivateEndpointConnectionWrapper_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &RemotePrivateEndpointConnectionWrapper_STATUS_ARM{}
+	return &arm.RemotePrivateEndpointConnectionWrapper_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (wrapper *RemotePrivateEndpointConnectionWrapper_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(RemotePrivateEndpointConnectionWrapper_STATUS_ARM)
+	typedInput, ok := armInput.(arm.RemotePrivateEndpointConnectionWrapper_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected RemotePrivateEndpointConnectionWrapper_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.RemotePrivateEndpointConnectionWrapper_STATUS, got %T", armInput)
 	}
 
 	// Set property "GroupIds":
@@ -5265,7 +5473,7 @@ func (wrapper *RemotePrivateEndpointConnectionWrapper_STATUS) PopulateFromARM(ow
 }
 
 // AssignProperties_From_RemotePrivateEndpointConnectionWrapper_STATUS populates our RemotePrivateEndpointConnectionWrapper_STATUS from the provided source RemotePrivateEndpointConnectionWrapper_STATUS
-func (wrapper *RemotePrivateEndpointConnectionWrapper_STATUS) AssignProperties_From_RemotePrivateEndpointConnectionWrapper_STATUS(source *v20220801s.RemotePrivateEndpointConnectionWrapper_STATUS) error {
+func (wrapper *RemotePrivateEndpointConnectionWrapper_STATUS) AssignProperties_From_RemotePrivateEndpointConnectionWrapper_STATUS(source *storage.RemotePrivateEndpointConnectionWrapper_STATUS) error {
 
 	// GroupIds
 	wrapper.GroupIds = genruntime.CloneSliceOfString(source.GroupIds)
@@ -5311,7 +5519,7 @@ func (wrapper *RemotePrivateEndpointConnectionWrapper_STATUS) AssignProperties_F
 }
 
 // AssignProperties_To_RemotePrivateEndpointConnectionWrapper_STATUS populates the provided destination RemotePrivateEndpointConnectionWrapper_STATUS from our RemotePrivateEndpointConnectionWrapper_STATUS
-func (wrapper *RemotePrivateEndpointConnectionWrapper_STATUS) AssignProperties_To_RemotePrivateEndpointConnectionWrapper_STATUS(destination *v20220801s.RemotePrivateEndpointConnectionWrapper_STATUS) error {
+func (wrapper *RemotePrivateEndpointConnectionWrapper_STATUS) AssignProperties_To_RemotePrivateEndpointConnectionWrapper_STATUS(destination *storage.RemotePrivateEndpointConnectionWrapper_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5326,7 +5534,7 @@ func (wrapper *RemotePrivateEndpointConnectionWrapper_STATUS) AssignProperties_T
 
 	// PrivateEndpoint
 	if wrapper.PrivateEndpoint != nil {
-		var privateEndpoint v20220801s.ArmIdWrapper_STATUS
+		var privateEndpoint storage.ArmIdWrapper_STATUS
 		err := wrapper.PrivateEndpoint.AssignProperties_To_ArmIdWrapper_STATUS(&privateEndpoint)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ArmIdWrapper_STATUS() to populate field PrivateEndpoint")
@@ -5338,7 +5546,7 @@ func (wrapper *RemotePrivateEndpointConnectionWrapper_STATUS) AssignProperties_T
 
 	// PrivateLinkServiceConnectionState
 	if wrapper.PrivateLinkServiceConnectionState != nil {
-		var privateLinkServiceConnectionState v20220801s.PrivateLinkServiceConnectionState_STATUS
+		var privateLinkServiceConnectionState storage.PrivateLinkServiceConnectionState_STATUS
 		err := wrapper.PrivateLinkServiceConnectionState.AssignProperties_To_PrivateLinkServiceConnectionState_STATUS(&privateLinkServiceConnectionState)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_PrivateLinkServiceConnectionState_STATUS() to populate field PrivateLinkServiceConnectionState")
@@ -5353,6 +5561,110 @@ func (wrapper *RemotePrivateEndpointConnectionWrapper_STATUS) AssignProperties_T
 
 	// Type
 	destination.Type = genruntime.ClonePointerToString(wrapper.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ServiceOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ServiceOperatorSpec populates our ServiceOperatorSpec from the provided source ServiceOperatorSpec
+func (operator *ServiceOperatorSpec) AssignProperties_From_ServiceOperatorSpec(source *storage.ServiceOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ServiceOperatorSpec populates the provided destination ServiceOperatorSpec from our ServiceOperatorSpec
+func (operator *ServiceOperatorSpec) AssignProperties_To_ServiceOperatorSpec(destination *storage.ServiceOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -5390,14 +5702,14 @@ var _ genruntime.FromARMConverter = &SystemData_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (data *SystemData_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SystemData_STATUS_ARM{}
+	return &arm.SystemData_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SystemData_STATUS_ARM)
+	typedInput, ok := armInput.(arm.SystemData_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SystemData_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SystemData_STATUS, got %T", armInput)
 	}
 
 	// Set property "CreatedAt":
@@ -5414,7 +5726,9 @@ func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 
 	// Set property "CreatedByType":
 	if typedInput.CreatedByType != nil {
-		createdByType := *typedInput.CreatedByType
+		var temp string
+		temp = string(*typedInput.CreatedByType)
+		createdByType := SystemData_CreatedByType_STATUS(temp)
 		data.CreatedByType = &createdByType
 	}
 
@@ -5432,7 +5746,9 @@ func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 
 	// Set property "LastModifiedByType":
 	if typedInput.LastModifiedByType != nil {
-		lastModifiedByType := *typedInput.LastModifiedByType
+		var temp string
+		temp = string(*typedInput.LastModifiedByType)
+		lastModifiedByType := SystemData_LastModifiedByType_STATUS(temp)
 		data.LastModifiedByType = &lastModifiedByType
 	}
 
@@ -5441,7 +5757,7 @@ func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v20220801s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
 
 	// CreatedAt
 	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
@@ -5451,8 +5767,9 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 
 	// CreatedByType
 	if source.CreatedByType != nil {
-		createdByType := SystemData_CreatedByType_STATUS(*source.CreatedByType)
-		data.CreatedByType = &createdByType
+		createdByType := *source.CreatedByType
+		createdByTypeTemp := genruntime.ToEnum(createdByType, systemData_CreatedByType_STATUS_Values)
+		data.CreatedByType = &createdByTypeTemp
 	} else {
 		data.CreatedByType = nil
 	}
@@ -5465,8 +5782,9 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 
 	// LastModifiedByType
 	if source.LastModifiedByType != nil {
-		lastModifiedByType := SystemData_LastModifiedByType_STATUS(*source.LastModifiedByType)
-		data.LastModifiedByType = &lastModifiedByType
+		lastModifiedByType := *source.LastModifiedByType
+		lastModifiedByTypeTemp := genruntime.ToEnum(lastModifiedByType, systemData_LastModifiedByType_STATUS_Values)
+		data.LastModifiedByType = &lastModifiedByTypeTemp
 	} else {
 		data.LastModifiedByType = nil
 	}
@@ -5476,7 +5794,7 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 }
 
 // AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *v20220801s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5532,7 +5850,7 @@ func (configuration *VirtualNetworkConfiguration) ConvertToARM(resolved genrunti
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &VirtualNetworkConfiguration_ARM{}
+	result := &arm.VirtualNetworkConfiguration{}
 
 	// Set property "SubnetResourceId":
 	if configuration.SubnetResourceReference != nil {
@@ -5548,14 +5866,14 @@ func (configuration *VirtualNetworkConfiguration) ConvertToARM(resolved genrunti
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *VirtualNetworkConfiguration) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualNetworkConfiguration_ARM{}
+	return &arm.VirtualNetworkConfiguration{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *VirtualNetworkConfiguration) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(VirtualNetworkConfiguration_ARM)
+	_, ok := armInput.(arm.VirtualNetworkConfiguration)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualNetworkConfiguration_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualNetworkConfiguration, got %T", armInput)
 	}
 
 	// no assignment for property "SubnetResourceReference"
@@ -5565,7 +5883,7 @@ func (configuration *VirtualNetworkConfiguration) PopulateFromARM(owner genrunti
 }
 
 // AssignProperties_From_VirtualNetworkConfiguration populates our VirtualNetworkConfiguration from the provided source VirtualNetworkConfiguration
-func (configuration *VirtualNetworkConfiguration) AssignProperties_From_VirtualNetworkConfiguration(source *v20220801s.VirtualNetworkConfiguration) error {
+func (configuration *VirtualNetworkConfiguration) AssignProperties_From_VirtualNetworkConfiguration(source *storage.VirtualNetworkConfiguration) error {
 
 	// SubnetResourceReference
 	if source.SubnetResourceReference != nil {
@@ -5580,7 +5898,7 @@ func (configuration *VirtualNetworkConfiguration) AssignProperties_From_VirtualN
 }
 
 // AssignProperties_To_VirtualNetworkConfiguration populates the provided destination VirtualNetworkConfiguration from our VirtualNetworkConfiguration
-func (configuration *VirtualNetworkConfiguration) AssignProperties_To_VirtualNetworkConfiguration(destination *v20220801s.VirtualNetworkConfiguration) error {
+func (configuration *VirtualNetworkConfiguration) AssignProperties_To_VirtualNetworkConfiguration(destination *storage.VirtualNetworkConfiguration) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5634,14 +5952,14 @@ var _ genruntime.FromARMConverter = &VirtualNetworkConfiguration_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *VirtualNetworkConfiguration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualNetworkConfiguration_STATUS_ARM{}
+	return &arm.VirtualNetworkConfiguration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *VirtualNetworkConfiguration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualNetworkConfiguration_STATUS_ARM)
+	typedInput, ok := armInput.(arm.VirtualNetworkConfiguration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualNetworkConfiguration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualNetworkConfiguration_STATUS, got %T", armInput)
 	}
 
 	// Set property "SubnetResourceId":
@@ -5667,7 +5985,7 @@ func (configuration *VirtualNetworkConfiguration_STATUS) PopulateFromARM(owner g
 }
 
 // AssignProperties_From_VirtualNetworkConfiguration_STATUS populates our VirtualNetworkConfiguration_STATUS from the provided source VirtualNetworkConfiguration_STATUS
-func (configuration *VirtualNetworkConfiguration_STATUS) AssignProperties_From_VirtualNetworkConfiguration_STATUS(source *v20220801s.VirtualNetworkConfiguration_STATUS) error {
+func (configuration *VirtualNetworkConfiguration_STATUS) AssignProperties_From_VirtualNetworkConfiguration_STATUS(source *storage.VirtualNetworkConfiguration_STATUS) error {
 
 	// SubnetResourceId
 	configuration.SubnetResourceId = genruntime.ClonePointerToString(source.SubnetResourceId)
@@ -5683,7 +6001,7 @@ func (configuration *VirtualNetworkConfiguration_STATUS) AssignProperties_From_V
 }
 
 // AssignProperties_To_VirtualNetworkConfiguration_STATUS populates the provided destination VirtualNetworkConfiguration_STATUS from our VirtualNetworkConfiguration_STATUS
-func (configuration *VirtualNetworkConfiguration_STATUS) AssignProperties_To_VirtualNetworkConfiguration_STATUS(destination *v20220801s.VirtualNetworkConfiguration_STATUS) error {
+func (configuration *VirtualNetworkConfiguration_STATUS) AssignProperties_To_VirtualNetworkConfiguration_STATUS(destination *storage.VirtualNetworkConfiguration_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5715,12 +6033,24 @@ const (
 	AdditionalLocation_NatGatewayState_Enabled  = AdditionalLocation_NatGatewayState("Enabled")
 )
 
+// Mapping from string to AdditionalLocation_NatGatewayState
+var additionalLocation_NatGatewayState_Values = map[string]AdditionalLocation_NatGatewayState{
+	"disabled": AdditionalLocation_NatGatewayState_Disabled,
+	"enabled":  AdditionalLocation_NatGatewayState_Enabled,
+}
+
 type AdditionalLocation_NatGatewayState_STATUS string
 
 const (
 	AdditionalLocation_NatGatewayState_STATUS_Disabled = AdditionalLocation_NatGatewayState_STATUS("Disabled")
 	AdditionalLocation_NatGatewayState_STATUS_Enabled  = AdditionalLocation_NatGatewayState_STATUS("Enabled")
 )
+
+// Mapping from string to AdditionalLocation_NatGatewayState_STATUS
+var additionalLocation_NatGatewayState_STATUS_Values = map[string]AdditionalLocation_NatGatewayState_STATUS{
+	"disabled": AdditionalLocation_NatGatewayState_STATUS_Disabled,
+	"enabled":  AdditionalLocation_NatGatewayState_STATUS_Enabled,
+}
 
 type AdditionalLocation_PlatformVersion_STATUS string
 
@@ -5731,6 +6061,92 @@ const (
 	AdditionalLocation_PlatformVersion_STATUS_Undetermined = AdditionalLocation_PlatformVersion_STATUS("undetermined")
 )
 
+// Mapping from string to AdditionalLocation_PlatformVersion_STATUS
+var additionalLocation_PlatformVersion_STATUS_Values = map[string]AdditionalLocation_PlatformVersion_STATUS{
+	"mtv1":         AdditionalLocation_PlatformVersion_STATUS_Mtv1,
+	"stv1":         AdditionalLocation_PlatformVersion_STATUS_Stv1,
+	"stv2":         AdditionalLocation_PlatformVersion_STATUS_Stv2,
+	"undetermined": AdditionalLocation_PlatformVersion_STATUS_Undetermined,
+}
+
+// +kubebuilder:validation:Enum={"None","SystemAssigned","SystemAssigned, UserAssigned","UserAssigned"}
+type ApiManagementServiceIdentity_Type string
+
+const (
+	ApiManagementServiceIdentity_Type_None                       = ApiManagementServiceIdentity_Type("None")
+	ApiManagementServiceIdentity_Type_SystemAssigned             = ApiManagementServiceIdentity_Type("SystemAssigned")
+	ApiManagementServiceIdentity_Type_SystemAssignedUserAssigned = ApiManagementServiceIdentity_Type("SystemAssigned, UserAssigned")
+	ApiManagementServiceIdentity_Type_UserAssigned               = ApiManagementServiceIdentity_Type("UserAssigned")
+)
+
+// Mapping from string to ApiManagementServiceIdentity_Type
+var apiManagementServiceIdentity_Type_Values = map[string]ApiManagementServiceIdentity_Type{
+	"none":                         ApiManagementServiceIdentity_Type_None,
+	"systemassigned":               ApiManagementServiceIdentity_Type_SystemAssigned,
+	"systemassigned, userassigned": ApiManagementServiceIdentity_Type_SystemAssignedUserAssigned,
+	"userassigned":                 ApiManagementServiceIdentity_Type_UserAssigned,
+}
+
+type ApiManagementServiceIdentity_Type_STATUS string
+
+const (
+	ApiManagementServiceIdentity_Type_STATUS_None                       = ApiManagementServiceIdentity_Type_STATUS("None")
+	ApiManagementServiceIdentity_Type_STATUS_SystemAssigned             = ApiManagementServiceIdentity_Type_STATUS("SystemAssigned")
+	ApiManagementServiceIdentity_Type_STATUS_SystemAssignedUserAssigned = ApiManagementServiceIdentity_Type_STATUS("SystemAssigned, UserAssigned")
+	ApiManagementServiceIdentity_Type_STATUS_UserAssigned               = ApiManagementServiceIdentity_Type_STATUS("UserAssigned")
+)
+
+// Mapping from string to ApiManagementServiceIdentity_Type_STATUS
+var apiManagementServiceIdentity_Type_STATUS_Values = map[string]ApiManagementServiceIdentity_Type_STATUS{
+	"none":                         ApiManagementServiceIdentity_Type_STATUS_None,
+	"systemassigned":               ApiManagementServiceIdentity_Type_STATUS_SystemAssigned,
+	"systemassigned, userassigned": ApiManagementServiceIdentity_Type_STATUS_SystemAssignedUserAssigned,
+	"userassigned":                 ApiManagementServiceIdentity_Type_STATUS_UserAssigned,
+}
+
+// +kubebuilder:validation:Enum={"Basic","Consumption","Developer","Isolated","Premium","Standard"}
+type ApiManagementServiceSkuProperties_Name string
+
+const (
+	ApiManagementServiceSkuProperties_Name_Basic       = ApiManagementServiceSkuProperties_Name("Basic")
+	ApiManagementServiceSkuProperties_Name_Consumption = ApiManagementServiceSkuProperties_Name("Consumption")
+	ApiManagementServiceSkuProperties_Name_Developer   = ApiManagementServiceSkuProperties_Name("Developer")
+	ApiManagementServiceSkuProperties_Name_Isolated    = ApiManagementServiceSkuProperties_Name("Isolated")
+	ApiManagementServiceSkuProperties_Name_Premium     = ApiManagementServiceSkuProperties_Name("Premium")
+	ApiManagementServiceSkuProperties_Name_Standard    = ApiManagementServiceSkuProperties_Name("Standard")
+)
+
+// Mapping from string to ApiManagementServiceSkuProperties_Name
+var apiManagementServiceSkuProperties_Name_Values = map[string]ApiManagementServiceSkuProperties_Name{
+	"basic":       ApiManagementServiceSkuProperties_Name_Basic,
+	"consumption": ApiManagementServiceSkuProperties_Name_Consumption,
+	"developer":   ApiManagementServiceSkuProperties_Name_Developer,
+	"isolated":    ApiManagementServiceSkuProperties_Name_Isolated,
+	"premium":     ApiManagementServiceSkuProperties_Name_Premium,
+	"standard":    ApiManagementServiceSkuProperties_Name_Standard,
+}
+
+type ApiManagementServiceSkuProperties_Name_STATUS string
+
+const (
+	ApiManagementServiceSkuProperties_Name_STATUS_Basic       = ApiManagementServiceSkuProperties_Name_STATUS("Basic")
+	ApiManagementServiceSkuProperties_Name_STATUS_Consumption = ApiManagementServiceSkuProperties_Name_STATUS("Consumption")
+	ApiManagementServiceSkuProperties_Name_STATUS_Developer   = ApiManagementServiceSkuProperties_Name_STATUS("Developer")
+	ApiManagementServiceSkuProperties_Name_STATUS_Isolated    = ApiManagementServiceSkuProperties_Name_STATUS("Isolated")
+	ApiManagementServiceSkuProperties_Name_STATUS_Premium     = ApiManagementServiceSkuProperties_Name_STATUS("Premium")
+	ApiManagementServiceSkuProperties_Name_STATUS_Standard    = ApiManagementServiceSkuProperties_Name_STATUS("Standard")
+)
+
+// Mapping from string to ApiManagementServiceSkuProperties_Name_STATUS
+var apiManagementServiceSkuProperties_Name_STATUS_Values = map[string]ApiManagementServiceSkuProperties_Name_STATUS{
+	"basic":       ApiManagementServiceSkuProperties_Name_STATUS_Basic,
+	"consumption": ApiManagementServiceSkuProperties_Name_STATUS_Consumption,
+	"developer":   ApiManagementServiceSkuProperties_Name_STATUS_Developer,
+	"isolated":    ApiManagementServiceSkuProperties_Name_STATUS_Isolated,
+	"premium":     ApiManagementServiceSkuProperties_Name_STATUS_Premium,
+	"standard":    ApiManagementServiceSkuProperties_Name_STATUS_Standard,
+}
+
 // A wrapper for an ARM resource id
 type ArmIdWrapper_STATUS struct {
 	Id *string `json:"id,omitempty"`
@@ -5740,14 +6156,14 @@ var _ genruntime.FromARMConverter = &ArmIdWrapper_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (wrapper *ArmIdWrapper_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ArmIdWrapper_STATUS_ARM{}
+	return &arm.ArmIdWrapper_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (wrapper *ArmIdWrapper_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ArmIdWrapper_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ArmIdWrapper_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ArmIdWrapper_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ArmIdWrapper_STATUS, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -5761,7 +6177,7 @@ func (wrapper *ArmIdWrapper_STATUS) PopulateFromARM(owner genruntime.ArbitraryOw
 }
 
 // AssignProperties_From_ArmIdWrapper_STATUS populates our ArmIdWrapper_STATUS from the provided source ArmIdWrapper_STATUS
-func (wrapper *ArmIdWrapper_STATUS) AssignProperties_From_ArmIdWrapper_STATUS(source *v20220801s.ArmIdWrapper_STATUS) error {
+func (wrapper *ArmIdWrapper_STATUS) AssignProperties_From_ArmIdWrapper_STATUS(source *storage.ArmIdWrapper_STATUS) error {
 
 	// Id
 	wrapper.Id = genruntime.ClonePointerToString(source.Id)
@@ -5771,7 +6187,7 @@ func (wrapper *ArmIdWrapper_STATUS) AssignProperties_From_ArmIdWrapper_STATUS(so
 }
 
 // AssignProperties_To_ArmIdWrapper_STATUS populates the provided destination ArmIdWrapper_STATUS from our ArmIdWrapper_STATUS
-func (wrapper *ArmIdWrapper_STATUS) AssignProperties_To_ArmIdWrapper_STATUS(destination *v20220801s.ArmIdWrapper_STATUS) error {
+func (wrapper *ArmIdWrapper_STATUS) AssignProperties_To_ArmIdWrapper_STATUS(destination *storage.ArmIdWrapper_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5797,12 +6213,24 @@ const (
 	CertificateConfiguration_StoreName_Root                 = CertificateConfiguration_StoreName("Root")
 )
 
+// Mapping from string to CertificateConfiguration_StoreName
+var certificateConfiguration_StoreName_Values = map[string]CertificateConfiguration_StoreName{
+	"certificateauthority": CertificateConfiguration_StoreName_CertificateAuthority,
+	"root":                 CertificateConfiguration_StoreName_Root,
+}
+
 type CertificateConfiguration_StoreName_STATUS string
 
 const (
 	CertificateConfiguration_StoreName_STATUS_CertificateAuthority = CertificateConfiguration_StoreName_STATUS("CertificateAuthority")
 	CertificateConfiguration_StoreName_STATUS_Root                 = CertificateConfiguration_StoreName_STATUS("Root")
 )
+
+// Mapping from string to CertificateConfiguration_StoreName_STATUS
+var certificateConfiguration_StoreName_STATUS_Values = map[string]CertificateConfiguration_StoreName_STATUS{
+	"certificateauthority": CertificateConfiguration_StoreName_STATUS_CertificateAuthority,
+	"root":                 CertificateConfiguration_StoreName_STATUS_Root,
+}
 
 // SSL certificate information.
 type CertificateInformation struct {
@@ -5834,7 +6262,7 @@ func (information *CertificateInformation) ConvertToARM(resolved genruntime.Conv
 	if information == nil {
 		return nil, nil
 	}
-	result := &CertificateInformation_ARM{}
+	result := &arm.CertificateInformation{}
 
 	// Set property "Expiry":
 	if information.Expiry != nil {
@@ -5882,14 +6310,14 @@ func (information *CertificateInformation) ConvertToARM(resolved genruntime.Conv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (information *CertificateInformation) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &CertificateInformation_ARM{}
+	return &arm.CertificateInformation{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (information *CertificateInformation) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(CertificateInformation_ARM)
+	typedInput, ok := armInput.(arm.CertificateInformation)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected CertificateInformation_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.CertificateInformation, got %T", armInput)
 	}
 
 	// Set property "Expiry":
@@ -5921,7 +6349,7 @@ func (information *CertificateInformation) PopulateFromARM(owner genruntime.Arbi
 }
 
 // AssignProperties_From_CertificateInformation populates our CertificateInformation from the provided source CertificateInformation
-func (information *CertificateInformation) AssignProperties_From_CertificateInformation(source *v20220801s.CertificateInformation) error {
+func (information *CertificateInformation) AssignProperties_From_CertificateInformation(source *storage.CertificateInformation) error {
 
 	// Expiry
 	information.Expiry = genruntime.ClonePointerToString(source.Expiry)
@@ -5961,7 +6389,7 @@ func (information *CertificateInformation) AssignProperties_From_CertificateInfo
 }
 
 // AssignProperties_To_CertificateInformation populates the provided destination CertificateInformation from our CertificateInformation
-func (information *CertificateInformation) AssignProperties_To_CertificateInformation(destination *v20220801s.CertificateInformation) error {
+func (information *CertificateInformation) AssignProperties_To_CertificateInformation(destination *storage.CertificateInformation) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6042,14 +6470,14 @@ var _ genruntime.FromARMConverter = &CertificateInformation_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (information *CertificateInformation_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &CertificateInformation_STATUS_ARM{}
+	return &arm.CertificateInformation_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (information *CertificateInformation_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(CertificateInformation_STATUS_ARM)
+	typedInput, ok := armInput.(arm.CertificateInformation_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected CertificateInformation_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.CertificateInformation_STATUS, got %T", armInput)
 	}
 
 	// Set property "Expiry":
@@ -6075,7 +6503,7 @@ func (information *CertificateInformation_STATUS) PopulateFromARM(owner genrunti
 }
 
 // AssignProperties_From_CertificateInformation_STATUS populates our CertificateInformation_STATUS from the provided source CertificateInformation_STATUS
-func (information *CertificateInformation_STATUS) AssignProperties_From_CertificateInformation_STATUS(source *v20220801s.CertificateInformation_STATUS) error {
+func (information *CertificateInformation_STATUS) AssignProperties_From_CertificateInformation_STATUS(source *storage.CertificateInformation_STATUS) error {
 
 	// Expiry
 	information.Expiry = genruntime.ClonePointerToString(source.Expiry)
@@ -6091,7 +6519,7 @@ func (information *CertificateInformation_STATUS) AssignProperties_From_Certific
 }
 
 // AssignProperties_To_CertificateInformation_STATUS populates the provided destination CertificateInformation_STATUS from our CertificateInformation_STATUS
-func (information *CertificateInformation_STATUS) AssignProperties_To_CertificateInformation_STATUS(destination *v20220801s.CertificateInformation_STATUS) error {
+func (information *CertificateInformation_STATUS) AssignProperties_To_CertificateInformation_STATUS(destination *storage.CertificateInformation_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6125,6 +6553,14 @@ const (
 	HostnameConfiguration_CertificateSource_Managed  = HostnameConfiguration_CertificateSource("Managed")
 )
 
+// Mapping from string to HostnameConfiguration_CertificateSource
+var hostnameConfiguration_CertificateSource_Values = map[string]HostnameConfiguration_CertificateSource{
+	"builtin":  HostnameConfiguration_CertificateSource_BuiltIn,
+	"custom":   HostnameConfiguration_CertificateSource_Custom,
+	"keyvault": HostnameConfiguration_CertificateSource_KeyVault,
+	"managed":  HostnameConfiguration_CertificateSource_Managed,
+}
+
 type HostnameConfiguration_CertificateSource_STATUS string
 
 const (
@@ -6133,6 +6569,14 @@ const (
 	HostnameConfiguration_CertificateSource_STATUS_KeyVault = HostnameConfiguration_CertificateSource_STATUS("KeyVault")
 	HostnameConfiguration_CertificateSource_STATUS_Managed  = HostnameConfiguration_CertificateSource_STATUS("Managed")
 )
+
+// Mapping from string to HostnameConfiguration_CertificateSource_STATUS
+var hostnameConfiguration_CertificateSource_STATUS_Values = map[string]HostnameConfiguration_CertificateSource_STATUS{
+	"builtin":  HostnameConfiguration_CertificateSource_STATUS_BuiltIn,
+	"custom":   HostnameConfiguration_CertificateSource_STATUS_Custom,
+	"keyvault": HostnameConfiguration_CertificateSource_STATUS_KeyVault,
+	"managed":  HostnameConfiguration_CertificateSource_STATUS_Managed,
+}
 
 // +kubebuilder:validation:Enum={"Completed","Failed","InProgress"}
 type HostnameConfiguration_CertificateStatus string
@@ -6143,6 +6587,13 @@ const (
 	HostnameConfiguration_CertificateStatus_InProgress = HostnameConfiguration_CertificateStatus("InProgress")
 )
 
+// Mapping from string to HostnameConfiguration_CertificateStatus
+var hostnameConfiguration_CertificateStatus_Values = map[string]HostnameConfiguration_CertificateStatus{
+	"completed":  HostnameConfiguration_CertificateStatus_Completed,
+	"failed":     HostnameConfiguration_CertificateStatus_Failed,
+	"inprogress": HostnameConfiguration_CertificateStatus_InProgress,
+}
+
 type HostnameConfiguration_CertificateStatus_STATUS string
 
 const (
@@ -6150,6 +6601,13 @@ const (
 	HostnameConfiguration_CertificateStatus_STATUS_Failed     = HostnameConfiguration_CertificateStatus_STATUS("Failed")
 	HostnameConfiguration_CertificateStatus_STATUS_InProgress = HostnameConfiguration_CertificateStatus_STATUS("InProgress")
 )
+
+// Mapping from string to HostnameConfiguration_CertificateStatus_STATUS
+var hostnameConfiguration_CertificateStatus_STATUS_Values = map[string]HostnameConfiguration_CertificateStatus_STATUS{
+	"completed":  HostnameConfiguration_CertificateStatus_STATUS_Completed,
+	"failed":     HostnameConfiguration_CertificateStatus_STATUS_Failed,
+	"inprogress": HostnameConfiguration_CertificateStatus_STATUS_InProgress,
+}
 
 // +kubebuilder:validation:Enum={"DeveloperPortal","Management","Portal","Proxy","Scm"}
 type HostnameConfiguration_Type string
@@ -6162,6 +6620,15 @@ const (
 	HostnameConfiguration_Type_Scm             = HostnameConfiguration_Type("Scm")
 )
 
+// Mapping from string to HostnameConfiguration_Type
+var hostnameConfiguration_Type_Values = map[string]HostnameConfiguration_Type{
+	"developerportal": HostnameConfiguration_Type_DeveloperPortal,
+	"management":      HostnameConfiguration_Type_Management,
+	"portal":          HostnameConfiguration_Type_Portal,
+	"proxy":           HostnameConfiguration_Type_Proxy,
+	"scm":             HostnameConfiguration_Type_Scm,
+}
+
 type HostnameConfiguration_Type_STATUS string
 
 const (
@@ -6171,6 +6638,15 @@ const (
 	HostnameConfiguration_Type_STATUS_Proxy           = HostnameConfiguration_Type_STATUS("Proxy")
 	HostnameConfiguration_Type_STATUS_Scm             = HostnameConfiguration_Type_STATUS("Scm")
 )
+
+// Mapping from string to HostnameConfiguration_Type_STATUS
+var hostnameConfiguration_Type_STATUS_Values = map[string]HostnameConfiguration_Type_STATUS{
+	"developerportal": HostnameConfiguration_Type_STATUS_DeveloperPortal,
+	"management":      HostnameConfiguration_Type_STATUS_Management,
+	"portal":          HostnameConfiguration_Type_STATUS_Portal,
+	"proxy":           HostnameConfiguration_Type_STATUS_Proxy,
+	"scm":             HostnameConfiguration_Type_STATUS_Scm,
+}
 
 // A collection of information about the state of the connection between service consumer and provider.
 type PrivateLinkServiceConnectionState_STATUS struct {
@@ -6188,14 +6664,14 @@ var _ genruntime.FromARMConverter = &PrivateLinkServiceConnectionState_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (state *PrivateLinkServiceConnectionState_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateLinkServiceConnectionState_STATUS_ARM{}
+	return &arm.PrivateLinkServiceConnectionState_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (state *PrivateLinkServiceConnectionState_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateLinkServiceConnectionState_STATUS_ARM)
+	typedInput, ok := armInput.(arm.PrivateLinkServiceConnectionState_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateLinkServiceConnectionState_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateLinkServiceConnectionState_STATUS, got %T", armInput)
 	}
 
 	// Set property "ActionsRequired":
@@ -6212,7 +6688,9 @@ func (state *PrivateLinkServiceConnectionState_STATUS) PopulateFromARM(owner gen
 
 	// Set property "Status":
 	if typedInput.Status != nil {
-		status := *typedInput.Status
+		var temp string
+		temp = string(*typedInput.Status)
+		status := PrivateEndpointServiceConnectionStatus_STATUS(temp)
 		state.Status = &status
 	}
 
@@ -6221,7 +6699,7 @@ func (state *PrivateLinkServiceConnectionState_STATUS) PopulateFromARM(owner gen
 }
 
 // AssignProperties_From_PrivateLinkServiceConnectionState_STATUS populates our PrivateLinkServiceConnectionState_STATUS from the provided source PrivateLinkServiceConnectionState_STATUS
-func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_From_PrivateLinkServiceConnectionState_STATUS(source *v20220801s.PrivateLinkServiceConnectionState_STATUS) error {
+func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_From_PrivateLinkServiceConnectionState_STATUS(source *storage.PrivateLinkServiceConnectionState_STATUS) error {
 
 	// ActionsRequired
 	state.ActionsRequired = genruntime.ClonePointerToString(source.ActionsRequired)
@@ -6231,8 +6709,9 @@ func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_From_Pri
 
 	// Status
 	if source.Status != nil {
-		status := PrivateEndpointServiceConnectionStatus_STATUS(*source.Status)
-		state.Status = &status
+		status := *source.Status
+		statusTemp := genruntime.ToEnum(status, privateEndpointServiceConnectionStatus_STATUS_Values)
+		state.Status = &statusTemp
 	} else {
 		state.Status = nil
 	}
@@ -6242,7 +6721,7 @@ func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_From_Pri
 }
 
 // AssignProperties_To_PrivateLinkServiceConnectionState_STATUS populates the provided destination PrivateLinkServiceConnectionState_STATUS from our PrivateLinkServiceConnectionState_STATUS
-func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_To_PrivateLinkServiceConnectionState_STATUS(destination *v20220801s.PrivateLinkServiceConnectionState_STATUS) error {
+func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_To_PrivateLinkServiceConnectionState_STATUS(destination *storage.PrivateLinkServiceConnectionState_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6271,13 +6750,47 @@ func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_To_Priva
 	return nil
 }
 
+type SystemData_CreatedByType_STATUS string
+
+const (
+	SystemData_CreatedByType_STATUS_Application     = SystemData_CreatedByType_STATUS("Application")
+	SystemData_CreatedByType_STATUS_Key             = SystemData_CreatedByType_STATUS("Key")
+	SystemData_CreatedByType_STATUS_ManagedIdentity = SystemData_CreatedByType_STATUS("ManagedIdentity")
+	SystemData_CreatedByType_STATUS_User            = SystemData_CreatedByType_STATUS("User")
+)
+
+// Mapping from string to SystemData_CreatedByType_STATUS
+var systemData_CreatedByType_STATUS_Values = map[string]SystemData_CreatedByType_STATUS{
+	"application":     SystemData_CreatedByType_STATUS_Application,
+	"key":             SystemData_CreatedByType_STATUS_Key,
+	"managedidentity": SystemData_CreatedByType_STATUS_ManagedIdentity,
+	"user":            SystemData_CreatedByType_STATUS_User,
+}
+
+type SystemData_LastModifiedByType_STATUS string
+
+const (
+	SystemData_LastModifiedByType_STATUS_Application     = SystemData_LastModifiedByType_STATUS("Application")
+	SystemData_LastModifiedByType_STATUS_Key             = SystemData_LastModifiedByType_STATUS("Key")
+	SystemData_LastModifiedByType_STATUS_ManagedIdentity = SystemData_LastModifiedByType_STATUS("ManagedIdentity")
+	SystemData_LastModifiedByType_STATUS_User            = SystemData_LastModifiedByType_STATUS("User")
+)
+
+// Mapping from string to SystemData_LastModifiedByType_STATUS
+var systemData_LastModifiedByType_STATUS_Values = map[string]SystemData_LastModifiedByType_STATUS{
+	"application":     SystemData_LastModifiedByType_STATUS_Application,
+	"key":             SystemData_LastModifiedByType_STATUS_Key,
+	"managedidentity": SystemData_LastModifiedByType_STATUS_ManagedIdentity,
+	"user":            SystemData_LastModifiedByType_STATUS_User,
+}
+
 // Information about the user assigned identity for the resource
 type UserAssignedIdentityDetails struct {
 	Reference genruntime.ResourceReference `armReference:"Reference" json:"reference,omitempty"`
 }
 
 // AssignProperties_From_UserAssignedIdentityDetails populates our UserAssignedIdentityDetails from the provided source UserAssignedIdentityDetails
-func (details *UserAssignedIdentityDetails) AssignProperties_From_UserAssignedIdentityDetails(source *v20220801s.UserAssignedIdentityDetails) error {
+func (details *UserAssignedIdentityDetails) AssignProperties_From_UserAssignedIdentityDetails(source *storage.UserAssignedIdentityDetails) error {
 
 	// Reference
 	details.Reference = source.Reference.Copy()
@@ -6287,7 +6800,7 @@ func (details *UserAssignedIdentityDetails) AssignProperties_From_UserAssignedId
 }
 
 // AssignProperties_To_UserAssignedIdentityDetails populates the provided destination UserAssignedIdentityDetails from our UserAssignedIdentityDetails
-func (details *UserAssignedIdentityDetails) AssignProperties_To_UserAssignedIdentityDetails(destination *v20220801s.UserAssignedIdentityDetails) error {
+func (details *UserAssignedIdentityDetails) AssignProperties_To_UserAssignedIdentityDetails(destination *storage.UserAssignedIdentityDetails) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6317,14 +6830,14 @@ var _ genruntime.FromARMConverter = &UserIdentityProperties_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *UserIdentityProperties_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &UserIdentityProperties_STATUS_ARM{}
+	return &arm.UserIdentityProperties_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *UserIdentityProperties_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(UserIdentityProperties_STATUS_ARM)
+	typedInput, ok := armInput.(arm.UserIdentityProperties_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected UserIdentityProperties_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.UserIdentityProperties_STATUS, got %T", armInput)
 	}
 
 	// Set property "ClientId":
@@ -6344,7 +6857,7 @@ func (properties *UserIdentityProperties_STATUS) PopulateFromARM(owner genruntim
 }
 
 // AssignProperties_From_UserIdentityProperties_STATUS populates our UserIdentityProperties_STATUS from the provided source UserIdentityProperties_STATUS
-func (properties *UserIdentityProperties_STATUS) AssignProperties_From_UserIdentityProperties_STATUS(source *v20220801s.UserIdentityProperties_STATUS) error {
+func (properties *UserIdentityProperties_STATUS) AssignProperties_From_UserIdentityProperties_STATUS(source *storage.UserIdentityProperties_STATUS) error {
 
 	// ClientId
 	properties.ClientId = genruntime.ClonePointerToString(source.ClientId)
@@ -6357,7 +6870,7 @@ func (properties *UserIdentityProperties_STATUS) AssignProperties_From_UserIdent
 }
 
 // AssignProperties_To_UserIdentityProperties_STATUS populates the provided destination UserIdentityProperties_STATUS from our UserIdentityProperties_STATUS
-func (properties *UserIdentityProperties_STATUS) AssignProperties_To_UserIdentityProperties_STATUS(destination *v20220801s.UserIdentityProperties_STATUS) error {
+func (properties *UserIdentityProperties_STATUS) AssignProperties_To_UserIdentityProperties_STATUS(destination *storage.UserIdentityProperties_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -6386,6 +6899,13 @@ const (
 	PrivateEndpointServiceConnectionStatus_STATUS_Pending  = PrivateEndpointServiceConnectionStatus_STATUS("Pending")
 	PrivateEndpointServiceConnectionStatus_STATUS_Rejected = PrivateEndpointServiceConnectionStatus_STATUS("Rejected")
 )
+
+// Mapping from string to PrivateEndpointServiceConnectionStatus_STATUS
+var privateEndpointServiceConnectionStatus_STATUS_Values = map[string]PrivateEndpointServiceConnectionStatus_STATUS{
+	"approved": PrivateEndpointServiceConnectionStatus_STATUS_Approved,
+	"pending":  PrivateEndpointServiceConnectionStatus_STATUS_Pending,
+	"rejected": PrivateEndpointServiceConnectionStatus_STATUS_Rejected,
+}
 
 func init() {
 	SchemeBuilder.Register(&Service{}, &ServiceList{})

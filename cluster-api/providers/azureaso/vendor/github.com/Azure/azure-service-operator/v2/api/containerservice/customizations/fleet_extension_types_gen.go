@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20230315p "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview"
-	v20230315ps "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type FleetExtension struct {
 func (extension *FleetExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20230315p.Fleet{},
-		&v20230315ps.Fleet{}}
+		&storage.Fleet{}}
 }

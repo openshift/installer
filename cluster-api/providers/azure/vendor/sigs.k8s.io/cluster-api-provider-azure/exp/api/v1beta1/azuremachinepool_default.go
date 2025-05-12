@@ -24,10 +24,11 @@ import (
 	"golang.org/x/crypto/ssh"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/uuid"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 	utilSSH "sigs.k8s.io/cluster-api-provider-azure/util/ssh"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // SetDefaults sets the default values for an AzureMachinePool.

@@ -122,7 +122,6 @@ ELSE
 // username can be either the actual AAD username (for real AAD users), the group name for groups, or
 // the managed identity name (app) for managed identities.
 func CreateOrUpdateAADUser(ctx context.Context, db *sql.DB, username string) error {
-
 	//"CREATE USER [Azure_AD_user_name] FROM EXTERNAL PROVIDER;"
 	//"CREATE USER [bob@contoso.com] FROM EXTERNAL PROVIDER;"
 	//"CREATE USER [alice@fabrikam.onmicrosoft.com] FROM EXTERNAL PROVIDER;"

@@ -39,7 +39,7 @@ func ValidateWriteOnceProperties(oldObj ARMMetaObject, newObj ARMMetaObject) (ad
 	}
 
 	if oldObj.AzureName() != newObj.AzureName() {
-		errs = append(errs, errors.Errorf("updating 'AzureName' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
+		errs = append(errs, errors.Errorf("updating 'spec.azureName' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
 	}
 
 	// Ensure that owner has not been changed
@@ -50,10 +50,20 @@ func ValidateWriteOnceProperties(oldObj ARMMetaObject, newObj ARMMetaObject) (ad
 	ownerAdded := oldOwner == nil && newOwner != nil
 	ownerRemoved := oldOwner != nil && newOwner == nil
 
-	if (bothHaveOwner && oldOwner.Name != newOwner.Name) || ownerAdded {
-		errs = append(errs, errors.Errorf("updating 'Owner.Name' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
+	ownerNameChanged := bothHaveOwner && oldOwner.Name != newOwner.Name
+	ownerARMIDChanged := bothHaveOwner && oldOwner.ARMID != newOwner.ARMID
+
+	if ownerAdded {
+		// This error may not be possible to trigger in practice, as it requires an Azure resource that supports existing without an owner
+		// or with an owner. There aren't any resources that meet those criteria that we know of, so this check is primarily us being
+		// defensive.
+		errs = append(errs, errors.Errorf("adding an owner to an already created resource is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
+	} else if ownerNameChanged {
+		errs = append(errs, errors.Errorf("updating 'spec.owner.name' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
+	} else if ownerARMIDChanged {
+		errs = append(errs, errors.Errorf("updating 'spec.owner.armId' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
 	} else if ownerRemoved {
-		errs = append(errs, errors.Errorf("removing 'Owner' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
+		errs = append(errs, errors.Errorf("removing 'spec.owner' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
 	}
 
 	return nil, kerrors.NewAggregate(errs)

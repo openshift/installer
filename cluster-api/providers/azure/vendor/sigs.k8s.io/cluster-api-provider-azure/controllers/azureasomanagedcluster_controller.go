@@ -23,9 +23,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
-	"sigs.k8s.io/cluster-api-provider-azure/pkg/mutators"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/external"
 	"sigs.k8s.io/cluster-api/util"
@@ -41,6 +38,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/mutators"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 var errInvalidControlPlaneKind = errors.New("AzureASOManagedCluster cannot be used without AzureASOManagedControlPlane")
@@ -77,8 +78,8 @@ func (r *AzureASOManagedClusterReconciler) SetupWithManager(ctx context.Context,
 	c, err := ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		For(&infrav1alpha.AzureASOManagedCluster{}).
-		WithEventFilter(predicates.ResourceHasFilterLabel(log, r.WatchFilterValue)).
-		WithEventFilter(predicates.ResourceIsNotExternallyManaged(log)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceIsNotExternallyManaged(mgr.GetScheme(), log)).
 		// Watch clusters for pause/unpause notifications
 		Watches(
 			&clusterv1.Cluster{},
@@ -86,7 +87,7 @@ func (r *AzureASOManagedClusterReconciler) SetupWithManager(ctx context.Context,
 				util.ClusterToInfrastructureMapFunc(ctx, infrav1alpha.GroupVersion.WithKind(infrav1alpha.AzureASOManagedClusterKind), mgr.GetClient(), &infrav1alpha.AzureASOManagedCluster{}),
 			),
 			builder.WithPredicates(
-				predicates.ResourceHasFilterLabel(log, r.WatchFilterValue),
+				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue),
 				ClusterUpdatePauseChange(log),
 			),
 		).
@@ -94,7 +95,7 @@ func (r *AzureASOManagedClusterReconciler) SetupWithManager(ctx context.Context,
 			&infrav1alpha.AzureASOManagedControlPlane{},
 			handler.EnqueueRequestsFromMapFunc(asoManagedControlPlaneToManagedClusterMap(r.Client)),
 			builder.WithPredicates(
-				predicates.ResourceHasFilterLabel(log, r.WatchFilterValue),
+				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue),
 				predicate.Funcs{
 					CreateFunc: func(ev event.CreateEvent) bool {
 						controlPlane := ev.Object.(*infrav1alpha.AzureASOManagedControlPlane)
@@ -115,8 +116,10 @@ func (r *AzureASOManagedClusterReconciler) SetupWithManager(ctx context.Context,
 	}
 
 	externalTracker := &external.ObjectTracker{
-		Cache:      mgr.GetCache(),
-		Controller: c,
+		Cache:           mgr.GetCache(),
+		Controller:      c,
+		Scheme:          mgr.GetScheme(),
+		PredicateLogger: &log,
 	}
 
 	r.newResourceReconciler = func(asoManagedCluster *infrav1alpha.AzureASOManagedCluster, resources []*unstructured.Unstructured) resourceReconciler {
@@ -264,7 +267,6 @@ func (r *AzureASOManagedClusterReconciler) reconcileNormal(ctx context.Context, 
 	return ctrl.Result{}, nil
 }
 
-//nolint:unparam // an empty ctrl.Result is always returned here, leaving it as-is to avoid churn in refactoring later if that changes.
 func (r *AzureASOManagedClusterReconciler) reconcilePaused(ctx context.Context, asoManagedCluster *infrav1alpha.AzureASOManagedCluster) (ctrl.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "controllers.AzureASOManagedClusterReconciler.reconcilePaused")
 	defer done()
@@ -285,7 +287,6 @@ func (r *AzureASOManagedClusterReconciler) reconcilePaused(ctx context.Context, 
 	return ctrl.Result{}, nil
 }
 
-//nolint:unparam // an empty ctrl.Result is always returned here, leaving it as-is to avoid churn in refactoring later if that changes.
 func (r *AzureASOManagedClusterReconciler) reconcileDelete(ctx context.Context, asoManagedCluster *infrav1alpha.AzureASOManagedCluster) (ctrl.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx,
 		"controllers.AzureASOManagedClusterReconciler.reconcileDelete",

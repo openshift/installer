@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type AfdCustomDomain struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Profiles_CustomDomain_Spec   `json:"spec,omitempty"`
-	Status            Profiles_CustomDomain_STATUS `json:"status,omitempty"`
+	Spec              AfdCustomDomain_Spec   `json:"spec,omitempty"`
+	Status            AfdCustomDomain_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &AfdCustomDomain{}
@@ -44,6 +47,26 @@ func (domain *AfdCustomDomain) SetConditions(conditions conditions.Conditions) {
 	domain.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &AfdCustomDomain{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (domain *AfdCustomDomain) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if domain.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return domain.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &AfdCustomDomain{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (domain *AfdCustomDomain) SecretDestinationExpressions() []*core.DestinationExpression {
+	if domain.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return domain.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &AfdCustomDomain{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (domain *AfdCustomDomain) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-05-01"
 func (domain AfdCustomDomain) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-05-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -87,7 +110,7 @@ func (domain *AfdCustomDomain) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (domain *AfdCustomDomain) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Profiles_CustomDomain_STATUS{}
+	return &AfdCustomDomain_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -99,13 +122,13 @@ func (domain *AfdCustomDomain) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (domain *AfdCustomDomain) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Profiles_CustomDomain_STATUS); ok {
+	if st, ok := status.(*AfdCustomDomain_STATUS); ok {
 		domain.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Profiles_CustomDomain_STATUS
+	var st AfdCustomDomain_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -138,22 +161,17 @@ type AfdCustomDomainList struct {
 	Items           []AfdCustomDomain `json:"items"`
 }
 
-// Storage version of v1api20230501.APIVersion
-// +kubebuilder:validation:Enum={"2023-05-01"}
-type APIVersion string
-
-const APIVersion_Value = APIVersion("2023-05-01")
-
-// Storage version of v1api20230501.Profiles_CustomDomain_Spec
-type Profiles_CustomDomain_Spec struct {
+// Storage version of v1api20230501.AfdCustomDomain_Spec
+type AfdCustomDomain_Spec struct {
 	AzureDnsZone *ResourceReference `json:"azureDnsZone,omitempty"`
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName          string            `json:"azureName,omitempty"`
-	ExtendedProperties map[string]string `json:"extendedProperties,omitempty"`
-	HostName           *string           `json:"hostName,omitempty"`
-	OriginalVersion    string            `json:"originalVersion,omitempty"`
+	AzureName          string                       `json:"azureName,omitempty"`
+	ExtendedProperties map[string]string            `json:"extendedProperties,omitempty"`
+	HostName           *string                      `json:"hostName,omitempty"`
+	OperatorSpec       *AfdCustomDomainOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion    string                       `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -165,10 +183,10 @@ type Profiles_CustomDomain_Spec struct {
 	TlsSettings                        *AFDDomainHttpsParameters          `json:"tlsSettings,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Profiles_CustomDomain_Spec{}
+var _ genruntime.ConvertibleSpec = &AfdCustomDomain_Spec{}
 
-// ConvertSpecFrom populates our Profiles_CustomDomain_Spec from the provided source
-func (domain *Profiles_CustomDomain_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our AfdCustomDomain_Spec from the provided source
+func (domain *AfdCustomDomain_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == domain {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -176,8 +194,8 @@ func (domain *Profiles_CustomDomain_Spec) ConvertSpecFrom(source genruntime.Conv
 	return source.ConvertSpecTo(domain)
 }
 
-// ConvertSpecTo populates the provided destination from our Profiles_CustomDomain_Spec
-func (domain *Profiles_CustomDomain_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our AfdCustomDomain_Spec
+func (domain *AfdCustomDomain_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == domain {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -185,8 +203,8 @@ func (domain *Profiles_CustomDomain_Spec) ConvertSpecTo(destination genruntime.C
 	return destination.ConvertSpecFrom(domain)
 }
 
-// Storage version of v1api20230501.Profiles_CustomDomain_STATUS
-type Profiles_CustomDomain_STATUS struct {
+// Storage version of v1api20230501.AfdCustomDomain_STATUS
+type AfdCustomDomain_STATUS struct {
 	AzureDnsZone                       *ResourceReference_STATUS          `json:"azureDnsZone,omitempty"`
 	Conditions                         []conditions.Condition             `json:"conditions,omitempty"`
 	DeploymentStatus                   *string                            `json:"deploymentStatus,omitempty"`
@@ -205,10 +223,10 @@ type Profiles_CustomDomain_STATUS struct {
 	ValidationProperties               *DomainValidationProperties_STATUS `json:"validationProperties,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Profiles_CustomDomain_STATUS{}
+var _ genruntime.ConvertibleStatus = &AfdCustomDomain_STATUS{}
 
-// ConvertStatusFrom populates our Profiles_CustomDomain_STATUS from the provided source
-func (domain *Profiles_CustomDomain_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our AfdCustomDomain_STATUS from the provided source
+func (domain *AfdCustomDomain_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == domain {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -216,13 +234,27 @@ func (domain *Profiles_CustomDomain_STATUS) ConvertStatusFrom(source genruntime.
 	return source.ConvertStatusTo(domain)
 }
 
-// ConvertStatusTo populates the provided destination from our Profiles_CustomDomain_STATUS
-func (domain *Profiles_CustomDomain_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our AfdCustomDomain_STATUS
+func (domain *AfdCustomDomain_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == domain {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(domain)
+}
+
+// Storage version of v1api20230501.APIVersion
+// +kubebuilder:validation:Enum={"2023-05-01"}
+type APIVersion string
+
+const APIVersion_Value = APIVersion("2023-05-01")
+
+// Storage version of v1api20230501.AfdCustomDomainOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type AfdCustomDomainOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20230501.AFDDomainHttpsParameters

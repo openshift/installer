@@ -28,6 +28,9 @@ func (extension *RoleAssignmentExtension) Import(
 		return extensions.ImportResult{}, err
 	}
 
+	// If this cast doesn't compile, update the `api` import to reference the now latest
+	// stable version of the authorization group (this will happen when we import a new
+	// API version in the generator.)
 	if assignment, ok := rsrc.(*api.RoleAssignment); ok {
 		// Check to see whether this role assignment is inherited or not
 		// (we can tell by looking at the scope of the assignment)

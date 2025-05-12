@@ -13,13 +13,11 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	postgresql "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20221201/storage"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
-
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
@@ -28,14 +26,15 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 )
 
-var _ genruntime.KubernetesExporter = &FlexibleServerExtension{}
+var _ genruntime.KubernetesSecretExporter = &FlexibleServerExtension{}
 
-func (ext *FlexibleServerExtension) ExportKubernetesResources(
-	_ context.Context,
+func (ext *FlexibleServerExtension) ExportKubernetesSecrets(
+	ctx context.Context,
 	obj genruntime.MetaObject,
-	_ *genericarmclient.GenericClient,
-	log logr.Logger) ([]client.Object, error) {
-
+	additionalSecrets set.Set[string],
+	armClient *genericarmclient.GenericClient,
+	log logr.Logger,
+) (*genruntime.KubernetesSecretExportResult, error) {
 	// This has to be the current hub storage version. It will need to be updated
 	// if the hub storage version changes.
 	typedObj, ok := obj.(*postgresql.FlexibleServer)
@@ -58,7 +57,10 @@ func (ext *FlexibleServerExtension) ExportKubernetesResources(
 		return nil, err
 	}
 
-	return secrets.SliceToClientObjectSlice(secretSlice), nil
+	return &genruntime.KubernetesSecretExportResult{
+		Objs:       secrets.SliceToClientObjectSlice(secretSlice),
+		RawSecrets: nil, // No RawSecrets as all secret values are coming from status (not real secrets)
+	}, nil
 }
 
 func secretsSpecified(obj *postgresql.FlexibleServer) bool {
@@ -67,17 +69,13 @@ func secretsSpecified(obj *postgresql.FlexibleServer) bool {
 	}
 
 	operatorSecrets := obj.Spec.OperatorSpec.Secrets
-	if operatorSecrets.FullyQualifiedDomainName != nil {
-		return true
-	}
-
-	return false
+	return operatorSecrets.FullyQualifiedDomainName != nil
 }
 
 func secretsToWrite(obj *postgresql.FlexibleServer) ([]*v1.Secret, error) {
 	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
 	if operatorSpecSecrets == nil {
-		return nil, errors.Errorf("unexpected nil operatorspec")
+		return nil, nil
 	}
 
 	collector := secrets.NewCollector(obj.Namespace)

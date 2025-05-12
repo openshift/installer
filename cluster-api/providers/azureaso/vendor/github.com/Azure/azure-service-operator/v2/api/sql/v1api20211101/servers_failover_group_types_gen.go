@@ -5,10 +5,14 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type ServersFailoverGroup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Servers_FailoverGroup_Spec   `json:"spec,omitempty"`
-	Status            Servers_FailoverGroup_STATUS `json:"status,omitempty"`
+	Spec              ServersFailoverGroup_Spec   `json:"spec,omitempty"`
+	Status            ServersFailoverGroup_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &ServersFailoverGroup{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &ServersFailoverGroup{}
 
 // ConvertFrom populates our ServersFailoverGroup from the provided hub ServersFailoverGroup
 func (group *ServersFailoverGroup) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20211101s.ServersFailoverGroup)
+	source, ok := hub.(*storage.ServersFailoverGroup)
 	if !ok {
 		return fmt.Errorf("expected sql/v1api20211101/storage/ServersFailoverGroup but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (group *ServersFailoverGroup) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub ServersFailoverGroup from our ServersFailoverGroup
 func (group *ServersFailoverGroup) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20211101s.ServersFailoverGroup)
+	destination, ok := hub.(*storage.ServersFailoverGroup)
 	if !ok {
 		return fmt.Errorf("expected sql/v1api20211101/storage/ServersFailoverGroup but received %T instead", hub)
 	}
@@ -90,15 +94,35 @@ func (group *ServersFailoverGroup) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the ServersFailoverGroup resource
 func (group *ServersFailoverGroup) defaultImpl() { group.defaultAzureName() }
 
+var _ configmaps.Exporter = &ServersFailoverGroup{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (group *ServersFailoverGroup) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if group.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return group.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ServersFailoverGroup{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (group *ServersFailoverGroup) SecretDestinationExpressions() []*core.DestinationExpression {
+	if group.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return group.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &ServersFailoverGroup{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (group *ServersFailoverGroup) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Servers_FailoverGroup_STATUS); ok {
-		return group.Spec.Initialize_From_Servers_FailoverGroup_STATUS(s)
+	if s, ok := status.(*ServersFailoverGroup_STATUS); ok {
+		return group.Spec.Initialize_From_ServersFailoverGroup_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Servers_FailoverGroup_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type ServersFailoverGroup_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &ServersFailoverGroup{}
@@ -110,7 +134,7 @@ func (group *ServersFailoverGroup) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-11-01"
 func (group ServersFailoverGroup) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -144,7 +168,7 @@ func (group *ServersFailoverGroup) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (group *ServersFailoverGroup) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Servers_FailoverGroup_STATUS{}
+	return &ServersFailoverGroup_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -156,13 +180,13 @@ func (group *ServersFailoverGroup) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (group *ServersFailoverGroup) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Servers_FailoverGroup_STATUS); ok {
+	if st, ok := status.(*ServersFailoverGroup_STATUS); ok {
 		group.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Servers_FailoverGroup_STATUS
+	var st ServersFailoverGroup_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -208,7 +232,7 @@ func (group *ServersFailoverGroup) ValidateUpdate(old runtime.Object) (admission
 
 // createValidations validates the creation of the resource
 func (group *ServersFailoverGroup) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference}
+	return []func() (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference, group.validateSecretDestinations, group.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +250,21 @@ func (group *ServersFailoverGroup) updateValidations() []func(old runtime.Object
 		func(old runtime.Object) (admission.Warnings, error) {
 			return group.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return group.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return group.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (group *ServersFailoverGroup) validateConfigMapDestinations() (admission.Warnings, error) {
+	if group.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(group, nil, group.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -243,6 +281,14 @@ func (group *ServersFailoverGroup) validateResourceReferences() (admission.Warni
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (group *ServersFailoverGroup) validateSecretDestinations() (admission.Warnings, error) {
+	if group.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(group, nil, group.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (group *ServersFailoverGroup) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*ServersFailoverGroup)
@@ -254,24 +300,24 @@ func (group *ServersFailoverGroup) validateWriteOnceProperties(old runtime.Objec
 }
 
 // AssignProperties_From_ServersFailoverGroup populates our ServersFailoverGroup from the provided source ServersFailoverGroup
-func (group *ServersFailoverGroup) AssignProperties_From_ServersFailoverGroup(source *v20211101s.ServersFailoverGroup) error {
+func (group *ServersFailoverGroup) AssignProperties_From_ServersFailoverGroup(source *storage.ServersFailoverGroup) error {
 
 	// ObjectMeta
 	group.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Servers_FailoverGroup_Spec
-	err := spec.AssignProperties_From_Servers_FailoverGroup_Spec(&source.Spec)
+	var spec ServersFailoverGroup_Spec
+	err := spec.AssignProperties_From_ServersFailoverGroup_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Servers_FailoverGroup_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_ServersFailoverGroup_Spec() to populate field Spec")
 	}
 	group.Spec = spec
 
 	// Status
-	var status Servers_FailoverGroup_STATUS
-	err = status.AssignProperties_From_Servers_FailoverGroup_STATUS(&source.Status)
+	var status ServersFailoverGroup_STATUS
+	err = status.AssignProperties_From_ServersFailoverGroup_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Servers_FailoverGroup_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_ServersFailoverGroup_STATUS() to populate field Status")
 	}
 	group.Status = status
 
@@ -280,24 +326,24 @@ func (group *ServersFailoverGroup) AssignProperties_From_ServersFailoverGroup(so
 }
 
 // AssignProperties_To_ServersFailoverGroup populates the provided destination ServersFailoverGroup from our ServersFailoverGroup
-func (group *ServersFailoverGroup) AssignProperties_To_ServersFailoverGroup(destination *v20211101s.ServersFailoverGroup) error {
+func (group *ServersFailoverGroup) AssignProperties_To_ServersFailoverGroup(destination *storage.ServersFailoverGroup) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *group.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20211101s.Servers_FailoverGroup_Spec
-	err := group.Spec.AssignProperties_To_Servers_FailoverGroup_Spec(&spec)
+	var spec storage.ServersFailoverGroup_Spec
+	err := group.Spec.AssignProperties_To_ServersFailoverGroup_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Servers_FailoverGroup_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_ServersFailoverGroup_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20211101s.Servers_FailoverGroup_STATUS
-	err = group.Status.AssignProperties_To_Servers_FailoverGroup_STATUS(&status)
+	var status storage.ServersFailoverGroup_STATUS
+	err = group.Status.AssignProperties_To_ServersFailoverGroup_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Servers_FailoverGroup_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_ServersFailoverGroup_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -324,13 +370,17 @@ type ServersFailoverGroupList struct {
 	Items           []ServersFailoverGroup `json:"items"`
 }
 
-type Servers_FailoverGroup_Spec struct {
+type ServersFailoverGroup_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
 	AzureName string `json:"azureName,omitempty"`
 
 	// DatabasesReferences: List of databases in the failover group.
 	DatabasesReferences []genruntime.ResourceReference `armReference:"Databases" json:"databasesReferences,omitempty"`
+
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *ServersFailoverGroupOperatorSpec `json:"operatorSpec,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -353,14 +403,14 @@ type Servers_FailoverGroup_Spec struct {
 	Tags map[string]string `json:"tags,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Servers_FailoverGroup_Spec{}
+var _ genruntime.ARMTransformer = &ServersFailoverGroup_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (group *Servers_FailoverGroup_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (group *ServersFailoverGroup_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if group == nil {
 		return nil, nil
 	}
-	result := &Servers_FailoverGroup_Spec_ARM{}
+	result := &arm.ServersFailoverGroup_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
@@ -370,7 +420,7 @@ func (group *Servers_FailoverGroup_Spec) ConvertToARM(resolved genruntime.Conver
 		group.PartnerServers != nil ||
 		group.ReadOnlyEndpoint != nil ||
 		group.ReadWriteEndpoint != nil {
-		result.Properties = &FailoverGroupProperties_ARM{}
+		result.Properties = &arm.FailoverGroupProperties{}
 	}
 	for _, item := range group.DatabasesReferences {
 		itemARMID, err := resolved.ResolvedReferences.Lookup(item)
@@ -384,14 +434,14 @@ func (group *Servers_FailoverGroup_Spec) ConvertToARM(resolved genruntime.Conver
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.PartnerServers = append(result.Properties.PartnerServers, *item_ARM.(*PartnerInfo_ARM))
+		result.Properties.PartnerServers = append(result.Properties.PartnerServers, *item_ARM.(*arm.PartnerInfo))
 	}
 	if group.ReadOnlyEndpoint != nil {
 		readOnlyEndpoint_ARM, err := (*group.ReadOnlyEndpoint).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		readOnlyEndpoint := *readOnlyEndpoint_ARM.(*FailoverGroupReadOnlyEndpoint_ARM)
+		readOnlyEndpoint := *readOnlyEndpoint_ARM.(*arm.FailoverGroupReadOnlyEndpoint)
 		result.Properties.ReadOnlyEndpoint = &readOnlyEndpoint
 	}
 	if group.ReadWriteEndpoint != nil {
@@ -399,7 +449,7 @@ func (group *Servers_FailoverGroup_Spec) ConvertToARM(resolved genruntime.Conver
 		if err != nil {
 			return nil, err
 		}
-		readWriteEndpoint := *readWriteEndpoint_ARM.(*FailoverGroupReadWriteEndpoint_ARM)
+		readWriteEndpoint := *readWriteEndpoint_ARM.(*arm.FailoverGroupReadWriteEndpoint)
 		result.Properties.ReadWriteEndpoint = &readWriteEndpoint
 	}
 
@@ -414,21 +464,23 @@ func (group *Servers_FailoverGroup_Spec) ConvertToARM(resolved genruntime.Conver
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (group *Servers_FailoverGroup_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Servers_FailoverGroup_Spec_ARM{}
+func (group *ServersFailoverGroup_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ServersFailoverGroup_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (group *Servers_FailoverGroup_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Servers_FailoverGroup_Spec_ARM)
+func (group *ServersFailoverGroup_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ServersFailoverGroup_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Servers_FailoverGroup_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServersFailoverGroup_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
 	group.SetAzureName(genruntime.ExtractKubernetesResourceNameFromARMName(typedInput.Name))
 
 	// no assignment for property "DatabasesReferences"
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	group.Owner = &genruntime.KnownResourceReference{
@@ -489,25 +541,25 @@ func (group *Servers_FailoverGroup_Spec) PopulateFromARM(owner genruntime.Arbitr
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Servers_FailoverGroup_Spec{}
+var _ genruntime.ConvertibleSpec = &ServersFailoverGroup_Spec{}
 
-// ConvertSpecFrom populates our Servers_FailoverGroup_Spec from the provided source
-func (group *Servers_FailoverGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20211101s.Servers_FailoverGroup_Spec)
+// ConvertSpecFrom populates our ServersFailoverGroup_Spec from the provided source
+func (group *ServersFailoverGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.ServersFailoverGroup_Spec)
 	if ok {
 		// Populate our instance from source
-		return group.AssignProperties_From_Servers_FailoverGroup_Spec(src)
+		return group.AssignProperties_From_ServersFailoverGroup_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20211101s.Servers_FailoverGroup_Spec{}
+	src = &storage.ServersFailoverGroup_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = group.AssignProperties_From_Servers_FailoverGroup_Spec(src)
+	err = group.AssignProperties_From_ServersFailoverGroup_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -515,17 +567,17 @@ func (group *Servers_FailoverGroup_Spec) ConvertSpecFrom(source genruntime.Conve
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Servers_FailoverGroup_Spec
-func (group *Servers_FailoverGroup_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20211101s.Servers_FailoverGroup_Spec)
+// ConvertSpecTo populates the provided destination from our ServersFailoverGroup_Spec
+func (group *ServersFailoverGroup_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.ServersFailoverGroup_Spec)
 	if ok {
 		// Populate destination from our instance
-		return group.AssignProperties_To_Servers_FailoverGroup_Spec(dst)
+		return group.AssignProperties_To_ServersFailoverGroup_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20211101s.Servers_FailoverGroup_Spec{}
-	err := group.AssignProperties_To_Servers_FailoverGroup_Spec(dst)
+	dst = &storage.ServersFailoverGroup_Spec{}
+	err := group.AssignProperties_To_ServersFailoverGroup_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -539,8 +591,8 @@ func (group *Servers_FailoverGroup_Spec) ConvertSpecTo(destination genruntime.Co
 	return nil
 }
 
-// AssignProperties_From_Servers_FailoverGroup_Spec populates our Servers_FailoverGroup_Spec from the provided source Servers_FailoverGroup_Spec
-func (group *Servers_FailoverGroup_Spec) AssignProperties_From_Servers_FailoverGroup_Spec(source *v20211101s.Servers_FailoverGroup_Spec) error {
+// AssignProperties_From_ServersFailoverGroup_Spec populates our ServersFailoverGroup_Spec from the provided source ServersFailoverGroup_Spec
+func (group *ServersFailoverGroup_Spec) AssignProperties_From_ServersFailoverGroup_Spec(source *storage.ServersFailoverGroup_Spec) error {
 
 	// AzureName
 	group.AzureName = source.AzureName
@@ -556,6 +608,18 @@ func (group *Servers_FailoverGroup_Spec) AssignProperties_From_Servers_FailoverG
 		group.DatabasesReferences = databasesReferenceList
 	} else {
 		group.DatabasesReferences = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ServersFailoverGroupOperatorSpec
+		err := operatorSpec.AssignProperties_From_ServersFailoverGroupOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ServersFailoverGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		group.OperatorSpec = &operatorSpec
+	} else {
+		group.OperatorSpec = nil
 	}
 
 	// Owner
@@ -615,8 +679,8 @@ func (group *Servers_FailoverGroup_Spec) AssignProperties_From_Servers_FailoverG
 	return nil
 }
 
-// AssignProperties_To_Servers_FailoverGroup_Spec populates the provided destination Servers_FailoverGroup_Spec from our Servers_FailoverGroup_Spec
-func (group *Servers_FailoverGroup_Spec) AssignProperties_To_Servers_FailoverGroup_Spec(destination *v20211101s.Servers_FailoverGroup_Spec) error {
+// AssignProperties_To_ServersFailoverGroup_Spec populates the provided destination ServersFailoverGroup_Spec from our ServersFailoverGroup_Spec
+func (group *ServersFailoverGroup_Spec) AssignProperties_To_ServersFailoverGroup_Spec(destination *storage.ServersFailoverGroup_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -636,6 +700,18 @@ func (group *Servers_FailoverGroup_Spec) AssignProperties_To_Servers_FailoverGro
 		destination.DatabasesReferences = nil
 	}
 
+	// OperatorSpec
+	if group.OperatorSpec != nil {
+		var operatorSpec storage.ServersFailoverGroupOperatorSpec
+		err := group.OperatorSpec.AssignProperties_To_ServersFailoverGroupOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ServersFailoverGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
 	// OriginalVersion
 	destination.OriginalVersion = group.OriginalVersion()
 
@@ -649,11 +725,11 @@ func (group *Servers_FailoverGroup_Spec) AssignProperties_To_Servers_FailoverGro
 
 	// PartnerServers
 	if group.PartnerServers != nil {
-		partnerServerList := make([]v20211101s.PartnerInfo, len(group.PartnerServers))
+		partnerServerList := make([]storage.PartnerInfo, len(group.PartnerServers))
 		for partnerServerIndex, partnerServerItem := range group.PartnerServers {
 			// Shadow the loop variable to avoid aliasing
 			partnerServerItem := partnerServerItem
-			var partnerServer v20211101s.PartnerInfo
+			var partnerServer storage.PartnerInfo
 			err := partnerServerItem.AssignProperties_To_PartnerInfo(&partnerServer)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_PartnerInfo() to populate field PartnerServers")
@@ -667,7 +743,7 @@ func (group *Servers_FailoverGroup_Spec) AssignProperties_To_Servers_FailoverGro
 
 	// ReadOnlyEndpoint
 	if group.ReadOnlyEndpoint != nil {
-		var readOnlyEndpoint v20211101s.FailoverGroupReadOnlyEndpoint
+		var readOnlyEndpoint storage.FailoverGroupReadOnlyEndpoint
 		err := group.ReadOnlyEndpoint.AssignProperties_To_FailoverGroupReadOnlyEndpoint(&readOnlyEndpoint)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_FailoverGroupReadOnlyEndpoint() to populate field ReadOnlyEndpoint")
@@ -679,7 +755,7 @@ func (group *Servers_FailoverGroup_Spec) AssignProperties_To_Servers_FailoverGro
 
 	// ReadWriteEndpoint
 	if group.ReadWriteEndpoint != nil {
-		var readWriteEndpoint v20211101s.FailoverGroupReadWriteEndpoint
+		var readWriteEndpoint storage.FailoverGroupReadWriteEndpoint
 		err := group.ReadWriteEndpoint.AssignProperties_To_FailoverGroupReadWriteEndpoint(&readWriteEndpoint)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_FailoverGroupReadWriteEndpoint() to populate field ReadWriteEndpoint")
@@ -703,8 +779,8 @@ func (group *Servers_FailoverGroup_Spec) AssignProperties_To_Servers_FailoverGro
 	return nil
 }
 
-// Initialize_From_Servers_FailoverGroup_STATUS populates our Servers_FailoverGroup_Spec from the provided source Servers_FailoverGroup_STATUS
-func (group *Servers_FailoverGroup_Spec) Initialize_From_Servers_FailoverGroup_STATUS(source *Servers_FailoverGroup_STATUS) error {
+// Initialize_From_ServersFailoverGroup_STATUS populates our ServersFailoverGroup_Spec from the provided source ServersFailoverGroup_STATUS
+func (group *ServersFailoverGroup_Spec) Initialize_From_ServersFailoverGroup_STATUS(source *ServersFailoverGroup_STATUS) error {
 
 	// PartnerServers
 	if source.PartnerServers != nil {
@@ -756,14 +832,14 @@ func (group *Servers_FailoverGroup_Spec) Initialize_From_Servers_FailoverGroup_S
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (group *Servers_FailoverGroup_Spec) OriginalVersion() string {
+func (group *ServersFailoverGroup_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (group *Servers_FailoverGroup_Spec) SetAzureName(azureName string) { group.AzureName = azureName }
+func (group *ServersFailoverGroup_Spec) SetAzureName(azureName string) { group.AzureName = azureName }
 
-type Servers_FailoverGroup_STATUS struct {
+type ServersFailoverGroup_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
@@ -801,25 +877,25 @@ type Servers_FailoverGroup_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Servers_FailoverGroup_STATUS{}
+var _ genruntime.ConvertibleStatus = &ServersFailoverGroup_STATUS{}
 
-// ConvertStatusFrom populates our Servers_FailoverGroup_STATUS from the provided source
-func (group *Servers_FailoverGroup_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20211101s.Servers_FailoverGroup_STATUS)
+// ConvertStatusFrom populates our ServersFailoverGroup_STATUS from the provided source
+func (group *ServersFailoverGroup_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.ServersFailoverGroup_STATUS)
 	if ok {
 		// Populate our instance from source
-		return group.AssignProperties_From_Servers_FailoverGroup_STATUS(src)
+		return group.AssignProperties_From_ServersFailoverGroup_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20211101s.Servers_FailoverGroup_STATUS{}
+	src = &storage.ServersFailoverGroup_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = group.AssignProperties_From_Servers_FailoverGroup_STATUS(src)
+	err = group.AssignProperties_From_ServersFailoverGroup_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -827,17 +903,17 @@ func (group *Servers_FailoverGroup_STATUS) ConvertStatusFrom(source genruntime.C
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Servers_FailoverGroup_STATUS
-func (group *Servers_FailoverGroup_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20211101s.Servers_FailoverGroup_STATUS)
+// ConvertStatusTo populates the provided destination from our ServersFailoverGroup_STATUS
+func (group *ServersFailoverGroup_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.ServersFailoverGroup_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return group.AssignProperties_To_Servers_FailoverGroup_STATUS(dst)
+		return group.AssignProperties_To_ServersFailoverGroup_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20211101s.Servers_FailoverGroup_STATUS{}
-	err := group.AssignProperties_To_Servers_FailoverGroup_STATUS(dst)
+	dst = &storage.ServersFailoverGroup_STATUS{}
+	err := group.AssignProperties_To_ServersFailoverGroup_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -851,18 +927,18 @@ func (group *Servers_FailoverGroup_STATUS) ConvertStatusTo(destination genruntim
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Servers_FailoverGroup_STATUS{}
+var _ genruntime.FromARMConverter = &ServersFailoverGroup_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (group *Servers_FailoverGroup_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Servers_FailoverGroup_STATUS_ARM{}
+func (group *ServersFailoverGroup_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ServersFailoverGroup_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (group *Servers_FailoverGroup_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Servers_FailoverGroup_STATUS_ARM)
+func (group *ServersFailoverGroup_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ServersFailoverGroup_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Servers_FailoverGroup_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServersFailoverGroup_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -938,7 +1014,9 @@ func (group *Servers_FailoverGroup_STATUS) PopulateFromARM(owner genruntime.Arbi
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ReplicationRole != nil {
-			replicationRole := *typedInput.Properties.ReplicationRole
+			var temp string
+			temp = string(*typedInput.Properties.ReplicationRole)
+			replicationRole := FailoverGroupProperties_ReplicationRole_STATUS(temp)
 			group.ReplicationRole = &replicationRole
 		}
 	}
@@ -970,8 +1048,8 @@ func (group *Servers_FailoverGroup_STATUS) PopulateFromARM(owner genruntime.Arbi
 	return nil
 }
 
-// AssignProperties_From_Servers_FailoverGroup_STATUS populates our Servers_FailoverGroup_STATUS from the provided source Servers_FailoverGroup_STATUS
-func (group *Servers_FailoverGroup_STATUS) AssignProperties_From_Servers_FailoverGroup_STATUS(source *v20211101s.Servers_FailoverGroup_STATUS) error {
+// AssignProperties_From_ServersFailoverGroup_STATUS populates our ServersFailoverGroup_STATUS from the provided source ServersFailoverGroup_STATUS
+func (group *ServersFailoverGroup_STATUS) AssignProperties_From_ServersFailoverGroup_STATUS(source *storage.ServersFailoverGroup_STATUS) error {
 
 	// Conditions
 	group.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -1032,8 +1110,9 @@ func (group *Servers_FailoverGroup_STATUS) AssignProperties_From_Servers_Failove
 
 	// ReplicationRole
 	if source.ReplicationRole != nil {
-		replicationRole := FailoverGroupProperties_ReplicationRole_STATUS(*source.ReplicationRole)
-		group.ReplicationRole = &replicationRole
+		replicationRole := *source.ReplicationRole
+		replicationRoleTemp := genruntime.ToEnum(replicationRole, failoverGroupProperties_ReplicationRole_STATUS_Values)
+		group.ReplicationRole = &replicationRoleTemp
 	} else {
 		group.ReplicationRole = nil
 	}
@@ -1051,8 +1130,8 @@ func (group *Servers_FailoverGroup_STATUS) AssignProperties_From_Servers_Failove
 	return nil
 }
 
-// AssignProperties_To_Servers_FailoverGroup_STATUS populates the provided destination Servers_FailoverGroup_STATUS from our Servers_FailoverGroup_STATUS
-func (group *Servers_FailoverGroup_STATUS) AssignProperties_To_Servers_FailoverGroup_STATUS(destination *v20211101s.Servers_FailoverGroup_STATUS) error {
+// AssignProperties_To_ServersFailoverGroup_STATUS populates the provided destination ServersFailoverGroup_STATUS from our ServersFailoverGroup_STATUS
+func (group *ServersFailoverGroup_STATUS) AssignProperties_To_ServersFailoverGroup_STATUS(destination *storage.ServersFailoverGroup_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1073,11 +1152,11 @@ func (group *Servers_FailoverGroup_STATUS) AssignProperties_To_Servers_FailoverG
 
 	// PartnerServers
 	if group.PartnerServers != nil {
-		partnerServerList := make([]v20211101s.PartnerInfo_STATUS, len(group.PartnerServers))
+		partnerServerList := make([]storage.PartnerInfo_STATUS, len(group.PartnerServers))
 		for partnerServerIndex, partnerServerItem := range group.PartnerServers {
 			// Shadow the loop variable to avoid aliasing
 			partnerServerItem := partnerServerItem
-			var partnerServer v20211101s.PartnerInfo_STATUS
+			var partnerServer storage.PartnerInfo_STATUS
 			err := partnerServerItem.AssignProperties_To_PartnerInfo_STATUS(&partnerServer)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_PartnerInfo_STATUS() to populate field PartnerServers")
@@ -1091,7 +1170,7 @@ func (group *Servers_FailoverGroup_STATUS) AssignProperties_To_Servers_FailoverG
 
 	// ReadOnlyEndpoint
 	if group.ReadOnlyEndpoint != nil {
-		var readOnlyEndpoint v20211101s.FailoverGroupReadOnlyEndpoint_STATUS
+		var readOnlyEndpoint storage.FailoverGroupReadOnlyEndpoint_STATUS
 		err := group.ReadOnlyEndpoint.AssignProperties_To_FailoverGroupReadOnlyEndpoint_STATUS(&readOnlyEndpoint)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_FailoverGroupReadOnlyEndpoint_STATUS() to populate field ReadOnlyEndpoint")
@@ -1103,7 +1182,7 @@ func (group *Servers_FailoverGroup_STATUS) AssignProperties_To_Servers_FailoverG
 
 	// ReadWriteEndpoint
 	if group.ReadWriteEndpoint != nil {
-		var readWriteEndpoint v20211101s.FailoverGroupReadWriteEndpoint_STATUS
+		var readWriteEndpoint storage.FailoverGroupReadWriteEndpoint_STATUS
 		err := group.ReadWriteEndpoint.AssignProperties_To_FailoverGroupReadWriteEndpoint_STATUS(&readWriteEndpoint)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_FailoverGroupReadWriteEndpoint_STATUS() to populate field ReadWriteEndpoint")
@@ -1148,6 +1227,12 @@ const (
 	FailoverGroupProperties_ReplicationRole_STATUS_Secondary = FailoverGroupProperties_ReplicationRole_STATUS("Secondary")
 )
 
+// Mapping from string to FailoverGroupProperties_ReplicationRole_STATUS
+var failoverGroupProperties_ReplicationRole_STATUS_Values = map[string]FailoverGroupProperties_ReplicationRole_STATUS{
+	"primary":   FailoverGroupProperties_ReplicationRole_STATUS_Primary,
+	"secondary": FailoverGroupProperties_ReplicationRole_STATUS_Secondary,
+}
+
 // Read-only endpoint of the failover group instance.
 type FailoverGroupReadOnlyEndpoint struct {
 	// FailoverPolicy: Failover policy of the read-only endpoint for the failover group.
@@ -1161,11 +1246,13 @@ func (endpoint *FailoverGroupReadOnlyEndpoint) ConvertToARM(resolved genruntime.
 	if endpoint == nil {
 		return nil, nil
 	}
-	result := &FailoverGroupReadOnlyEndpoint_ARM{}
+	result := &arm.FailoverGroupReadOnlyEndpoint{}
 
 	// Set property "FailoverPolicy":
 	if endpoint.FailoverPolicy != nil {
-		failoverPolicy := *endpoint.FailoverPolicy
+		var temp string
+		temp = string(*endpoint.FailoverPolicy)
+		failoverPolicy := arm.FailoverGroupReadOnlyEndpoint_FailoverPolicy(temp)
 		result.FailoverPolicy = &failoverPolicy
 	}
 	return result, nil
@@ -1173,19 +1260,21 @@ func (endpoint *FailoverGroupReadOnlyEndpoint) ConvertToARM(resolved genruntime.
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (endpoint *FailoverGroupReadOnlyEndpoint) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FailoverGroupReadOnlyEndpoint_ARM{}
+	return &arm.FailoverGroupReadOnlyEndpoint{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (endpoint *FailoverGroupReadOnlyEndpoint) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(FailoverGroupReadOnlyEndpoint_ARM)
+	typedInput, ok := armInput.(arm.FailoverGroupReadOnlyEndpoint)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FailoverGroupReadOnlyEndpoint_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FailoverGroupReadOnlyEndpoint, got %T", armInput)
 	}
 
 	// Set property "FailoverPolicy":
 	if typedInput.FailoverPolicy != nil {
-		failoverPolicy := *typedInput.FailoverPolicy
+		var temp string
+		temp = string(*typedInput.FailoverPolicy)
+		failoverPolicy := FailoverGroupReadOnlyEndpoint_FailoverPolicy(temp)
 		endpoint.FailoverPolicy = &failoverPolicy
 	}
 
@@ -1194,12 +1283,13 @@ func (endpoint *FailoverGroupReadOnlyEndpoint) PopulateFromARM(owner genruntime.
 }
 
 // AssignProperties_From_FailoverGroupReadOnlyEndpoint populates our FailoverGroupReadOnlyEndpoint from the provided source FailoverGroupReadOnlyEndpoint
-func (endpoint *FailoverGroupReadOnlyEndpoint) AssignProperties_From_FailoverGroupReadOnlyEndpoint(source *v20211101s.FailoverGroupReadOnlyEndpoint) error {
+func (endpoint *FailoverGroupReadOnlyEndpoint) AssignProperties_From_FailoverGroupReadOnlyEndpoint(source *storage.FailoverGroupReadOnlyEndpoint) error {
 
 	// FailoverPolicy
 	if source.FailoverPolicy != nil {
-		failoverPolicy := FailoverGroupReadOnlyEndpoint_FailoverPolicy(*source.FailoverPolicy)
-		endpoint.FailoverPolicy = &failoverPolicy
+		failoverPolicy := *source.FailoverPolicy
+		failoverPolicyTemp := genruntime.ToEnum(failoverPolicy, failoverGroupReadOnlyEndpoint_FailoverPolicy_Values)
+		endpoint.FailoverPolicy = &failoverPolicyTemp
 	} else {
 		endpoint.FailoverPolicy = nil
 	}
@@ -1209,7 +1299,7 @@ func (endpoint *FailoverGroupReadOnlyEndpoint) AssignProperties_From_FailoverGro
 }
 
 // AssignProperties_To_FailoverGroupReadOnlyEndpoint populates the provided destination FailoverGroupReadOnlyEndpoint from our FailoverGroupReadOnlyEndpoint
-func (endpoint *FailoverGroupReadOnlyEndpoint) AssignProperties_To_FailoverGroupReadOnlyEndpoint(destination *v20211101s.FailoverGroupReadOnlyEndpoint) error {
+func (endpoint *FailoverGroupReadOnlyEndpoint) AssignProperties_To_FailoverGroupReadOnlyEndpoint(destination *storage.FailoverGroupReadOnlyEndpoint) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1237,7 +1327,7 @@ func (endpoint *FailoverGroupReadOnlyEndpoint) Initialize_From_FailoverGroupRead
 
 	// FailoverPolicy
 	if source.FailoverPolicy != nil {
-		failoverPolicy := FailoverGroupReadOnlyEndpoint_FailoverPolicy(*source.FailoverPolicy)
+		failoverPolicy := genruntime.ToEnum(string(*source.FailoverPolicy), failoverGroupReadOnlyEndpoint_FailoverPolicy_Values)
 		endpoint.FailoverPolicy = &failoverPolicy
 	} else {
 		endpoint.FailoverPolicy = nil
@@ -1257,19 +1347,21 @@ var _ genruntime.FromARMConverter = &FailoverGroupReadOnlyEndpoint_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (endpoint *FailoverGroupReadOnlyEndpoint_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FailoverGroupReadOnlyEndpoint_STATUS_ARM{}
+	return &arm.FailoverGroupReadOnlyEndpoint_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (endpoint *FailoverGroupReadOnlyEndpoint_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(FailoverGroupReadOnlyEndpoint_STATUS_ARM)
+	typedInput, ok := armInput.(arm.FailoverGroupReadOnlyEndpoint_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FailoverGroupReadOnlyEndpoint_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FailoverGroupReadOnlyEndpoint_STATUS, got %T", armInput)
 	}
 
 	// Set property "FailoverPolicy":
 	if typedInput.FailoverPolicy != nil {
-		failoverPolicy := *typedInput.FailoverPolicy
+		var temp string
+		temp = string(*typedInput.FailoverPolicy)
+		failoverPolicy := FailoverGroupReadOnlyEndpoint_FailoverPolicy_STATUS(temp)
 		endpoint.FailoverPolicy = &failoverPolicy
 	}
 
@@ -1278,12 +1370,13 @@ func (endpoint *FailoverGroupReadOnlyEndpoint_STATUS) PopulateFromARM(owner genr
 }
 
 // AssignProperties_From_FailoverGroupReadOnlyEndpoint_STATUS populates our FailoverGroupReadOnlyEndpoint_STATUS from the provided source FailoverGroupReadOnlyEndpoint_STATUS
-func (endpoint *FailoverGroupReadOnlyEndpoint_STATUS) AssignProperties_From_FailoverGroupReadOnlyEndpoint_STATUS(source *v20211101s.FailoverGroupReadOnlyEndpoint_STATUS) error {
+func (endpoint *FailoverGroupReadOnlyEndpoint_STATUS) AssignProperties_From_FailoverGroupReadOnlyEndpoint_STATUS(source *storage.FailoverGroupReadOnlyEndpoint_STATUS) error {
 
 	// FailoverPolicy
 	if source.FailoverPolicy != nil {
-		failoverPolicy := FailoverGroupReadOnlyEndpoint_FailoverPolicy_STATUS(*source.FailoverPolicy)
-		endpoint.FailoverPolicy = &failoverPolicy
+		failoverPolicy := *source.FailoverPolicy
+		failoverPolicyTemp := genruntime.ToEnum(failoverPolicy, failoverGroupReadOnlyEndpoint_FailoverPolicy_STATUS_Values)
+		endpoint.FailoverPolicy = &failoverPolicyTemp
 	} else {
 		endpoint.FailoverPolicy = nil
 	}
@@ -1293,7 +1386,7 @@ func (endpoint *FailoverGroupReadOnlyEndpoint_STATUS) AssignProperties_From_Fail
 }
 
 // AssignProperties_To_FailoverGroupReadOnlyEndpoint_STATUS populates the provided destination FailoverGroupReadOnlyEndpoint_STATUS from our FailoverGroupReadOnlyEndpoint_STATUS
-func (endpoint *FailoverGroupReadOnlyEndpoint_STATUS) AssignProperties_To_FailoverGroupReadOnlyEndpoint_STATUS(destination *v20211101s.FailoverGroupReadOnlyEndpoint_STATUS) error {
+func (endpoint *FailoverGroupReadOnlyEndpoint_STATUS) AssignProperties_To_FailoverGroupReadOnlyEndpoint_STATUS(destination *storage.FailoverGroupReadOnlyEndpoint_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1335,11 +1428,13 @@ func (endpoint *FailoverGroupReadWriteEndpoint) ConvertToARM(resolved genruntime
 	if endpoint == nil {
 		return nil, nil
 	}
-	result := &FailoverGroupReadWriteEndpoint_ARM{}
+	result := &arm.FailoverGroupReadWriteEndpoint{}
 
 	// Set property "FailoverPolicy":
 	if endpoint.FailoverPolicy != nil {
-		failoverPolicy := *endpoint.FailoverPolicy
+		var temp string
+		temp = string(*endpoint.FailoverPolicy)
+		failoverPolicy := arm.FailoverGroupReadWriteEndpoint_FailoverPolicy(temp)
 		result.FailoverPolicy = &failoverPolicy
 	}
 
@@ -1353,19 +1448,21 @@ func (endpoint *FailoverGroupReadWriteEndpoint) ConvertToARM(resolved genruntime
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (endpoint *FailoverGroupReadWriteEndpoint) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FailoverGroupReadWriteEndpoint_ARM{}
+	return &arm.FailoverGroupReadWriteEndpoint{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (endpoint *FailoverGroupReadWriteEndpoint) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(FailoverGroupReadWriteEndpoint_ARM)
+	typedInput, ok := armInput.(arm.FailoverGroupReadWriteEndpoint)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FailoverGroupReadWriteEndpoint_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FailoverGroupReadWriteEndpoint, got %T", armInput)
 	}
 
 	// Set property "FailoverPolicy":
 	if typedInput.FailoverPolicy != nil {
-		failoverPolicy := *typedInput.FailoverPolicy
+		var temp string
+		temp = string(*typedInput.FailoverPolicy)
+		failoverPolicy := FailoverGroupReadWriteEndpoint_FailoverPolicy(temp)
 		endpoint.FailoverPolicy = &failoverPolicy
 	}
 
@@ -1380,12 +1477,13 @@ func (endpoint *FailoverGroupReadWriteEndpoint) PopulateFromARM(owner genruntime
 }
 
 // AssignProperties_From_FailoverGroupReadWriteEndpoint populates our FailoverGroupReadWriteEndpoint from the provided source FailoverGroupReadWriteEndpoint
-func (endpoint *FailoverGroupReadWriteEndpoint) AssignProperties_From_FailoverGroupReadWriteEndpoint(source *v20211101s.FailoverGroupReadWriteEndpoint) error {
+func (endpoint *FailoverGroupReadWriteEndpoint) AssignProperties_From_FailoverGroupReadWriteEndpoint(source *storage.FailoverGroupReadWriteEndpoint) error {
 
 	// FailoverPolicy
 	if source.FailoverPolicy != nil {
-		failoverPolicy := FailoverGroupReadWriteEndpoint_FailoverPolicy(*source.FailoverPolicy)
-		endpoint.FailoverPolicy = &failoverPolicy
+		failoverPolicy := *source.FailoverPolicy
+		failoverPolicyTemp := genruntime.ToEnum(failoverPolicy, failoverGroupReadWriteEndpoint_FailoverPolicy_Values)
+		endpoint.FailoverPolicy = &failoverPolicyTemp
 	} else {
 		endpoint.FailoverPolicy = nil
 	}
@@ -1398,7 +1496,7 @@ func (endpoint *FailoverGroupReadWriteEndpoint) AssignProperties_From_FailoverGr
 }
 
 // AssignProperties_To_FailoverGroupReadWriteEndpoint populates the provided destination FailoverGroupReadWriteEndpoint from our FailoverGroupReadWriteEndpoint
-func (endpoint *FailoverGroupReadWriteEndpoint) AssignProperties_To_FailoverGroupReadWriteEndpoint(destination *v20211101s.FailoverGroupReadWriteEndpoint) error {
+func (endpoint *FailoverGroupReadWriteEndpoint) AssignProperties_To_FailoverGroupReadWriteEndpoint(destination *storage.FailoverGroupReadWriteEndpoint) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1429,7 +1527,7 @@ func (endpoint *FailoverGroupReadWriteEndpoint) Initialize_From_FailoverGroupRea
 
 	// FailoverPolicy
 	if source.FailoverPolicy != nil {
-		failoverPolicy := FailoverGroupReadWriteEndpoint_FailoverPolicy(*source.FailoverPolicy)
+		failoverPolicy := genruntime.ToEnum(string(*source.FailoverPolicy), failoverGroupReadWriteEndpoint_FailoverPolicy_Values)
 		endpoint.FailoverPolicy = &failoverPolicy
 	} else {
 		endpoint.FailoverPolicy = nil
@@ -1457,19 +1555,21 @@ var _ genruntime.FromARMConverter = &FailoverGroupReadWriteEndpoint_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (endpoint *FailoverGroupReadWriteEndpoint_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &FailoverGroupReadWriteEndpoint_STATUS_ARM{}
+	return &arm.FailoverGroupReadWriteEndpoint_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (endpoint *FailoverGroupReadWriteEndpoint_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(FailoverGroupReadWriteEndpoint_STATUS_ARM)
+	typedInput, ok := armInput.(arm.FailoverGroupReadWriteEndpoint_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected FailoverGroupReadWriteEndpoint_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FailoverGroupReadWriteEndpoint_STATUS, got %T", armInput)
 	}
 
 	// Set property "FailoverPolicy":
 	if typedInput.FailoverPolicy != nil {
-		failoverPolicy := *typedInput.FailoverPolicy
+		var temp string
+		temp = string(*typedInput.FailoverPolicy)
+		failoverPolicy := FailoverGroupReadWriteEndpoint_FailoverPolicy_STATUS(temp)
 		endpoint.FailoverPolicy = &failoverPolicy
 	}
 
@@ -1484,12 +1584,13 @@ func (endpoint *FailoverGroupReadWriteEndpoint_STATUS) PopulateFromARM(owner gen
 }
 
 // AssignProperties_From_FailoverGroupReadWriteEndpoint_STATUS populates our FailoverGroupReadWriteEndpoint_STATUS from the provided source FailoverGroupReadWriteEndpoint_STATUS
-func (endpoint *FailoverGroupReadWriteEndpoint_STATUS) AssignProperties_From_FailoverGroupReadWriteEndpoint_STATUS(source *v20211101s.FailoverGroupReadWriteEndpoint_STATUS) error {
+func (endpoint *FailoverGroupReadWriteEndpoint_STATUS) AssignProperties_From_FailoverGroupReadWriteEndpoint_STATUS(source *storage.FailoverGroupReadWriteEndpoint_STATUS) error {
 
 	// FailoverPolicy
 	if source.FailoverPolicy != nil {
-		failoverPolicy := FailoverGroupReadWriteEndpoint_FailoverPolicy_STATUS(*source.FailoverPolicy)
-		endpoint.FailoverPolicy = &failoverPolicy
+		failoverPolicy := *source.FailoverPolicy
+		failoverPolicyTemp := genruntime.ToEnum(failoverPolicy, failoverGroupReadWriteEndpoint_FailoverPolicy_STATUS_Values)
+		endpoint.FailoverPolicy = &failoverPolicyTemp
 	} else {
 		endpoint.FailoverPolicy = nil
 	}
@@ -1502,7 +1603,7 @@ func (endpoint *FailoverGroupReadWriteEndpoint_STATUS) AssignProperties_From_Fai
 }
 
 // AssignProperties_To_FailoverGroupReadWriteEndpoint_STATUS populates the provided destination FailoverGroupReadWriteEndpoint_STATUS from our FailoverGroupReadWriteEndpoint_STATUS
-func (endpoint *FailoverGroupReadWriteEndpoint_STATUS) AssignProperties_To_FailoverGroupReadWriteEndpoint_STATUS(destination *v20211101s.FailoverGroupReadWriteEndpoint_STATUS) error {
+func (endpoint *FailoverGroupReadWriteEndpoint_STATUS) AssignProperties_To_FailoverGroupReadWriteEndpoint_STATUS(destination *storage.FailoverGroupReadWriteEndpoint_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1542,7 +1643,7 @@ func (info *PartnerInfo) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 	if info == nil {
 		return nil, nil
 	}
-	result := &PartnerInfo_ARM{}
+	result := &arm.PartnerInfo{}
 
 	// Set property "Id":
 	if info.Reference != nil {
@@ -1558,14 +1659,14 @@ func (info *PartnerInfo) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (info *PartnerInfo) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PartnerInfo_ARM{}
+	return &arm.PartnerInfo{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (info *PartnerInfo) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(PartnerInfo_ARM)
+	_, ok := armInput.(arm.PartnerInfo)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PartnerInfo_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PartnerInfo, got %T", armInput)
 	}
 
 	// no assignment for property "Reference"
@@ -1575,7 +1676,7 @@ func (info *PartnerInfo) PopulateFromARM(owner genruntime.ArbitraryOwnerReferenc
 }
 
 // AssignProperties_From_PartnerInfo populates our PartnerInfo from the provided source PartnerInfo
-func (info *PartnerInfo) AssignProperties_From_PartnerInfo(source *v20211101s.PartnerInfo) error {
+func (info *PartnerInfo) AssignProperties_From_PartnerInfo(source *storage.PartnerInfo) error {
 
 	// Reference
 	if source.Reference != nil {
@@ -1590,7 +1691,7 @@ func (info *PartnerInfo) AssignProperties_From_PartnerInfo(source *v20211101s.Pa
 }
 
 // AssignProperties_To_PartnerInfo populates the provided destination PartnerInfo from our PartnerInfo
-func (info *PartnerInfo) AssignProperties_To_PartnerInfo(destination *v20211101s.PartnerInfo) error {
+func (info *PartnerInfo) AssignProperties_To_PartnerInfo(destination *storage.PartnerInfo) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1644,14 +1745,14 @@ var _ genruntime.FromARMConverter = &PartnerInfo_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (info *PartnerInfo_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PartnerInfo_STATUS_ARM{}
+	return &arm.PartnerInfo_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (info *PartnerInfo_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PartnerInfo_STATUS_ARM)
+	typedInput, ok := armInput.(arm.PartnerInfo_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PartnerInfo_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PartnerInfo_STATUS, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -1668,7 +1769,9 @@ func (info *PartnerInfo_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerR
 
 	// Set property "ReplicationRole":
 	if typedInput.ReplicationRole != nil {
-		replicationRole := *typedInput.ReplicationRole
+		var temp string
+		temp = string(*typedInput.ReplicationRole)
+		replicationRole := PartnerInfo_ReplicationRole_STATUS(temp)
 		info.ReplicationRole = &replicationRole
 	}
 
@@ -1677,7 +1780,7 @@ func (info *PartnerInfo_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerR
 }
 
 // AssignProperties_From_PartnerInfo_STATUS populates our PartnerInfo_STATUS from the provided source PartnerInfo_STATUS
-func (info *PartnerInfo_STATUS) AssignProperties_From_PartnerInfo_STATUS(source *v20211101s.PartnerInfo_STATUS) error {
+func (info *PartnerInfo_STATUS) AssignProperties_From_PartnerInfo_STATUS(source *storage.PartnerInfo_STATUS) error {
 
 	// Id
 	info.Id = genruntime.ClonePointerToString(source.Id)
@@ -1687,8 +1790,9 @@ func (info *PartnerInfo_STATUS) AssignProperties_From_PartnerInfo_STATUS(source 
 
 	// ReplicationRole
 	if source.ReplicationRole != nil {
-		replicationRole := PartnerInfo_ReplicationRole_STATUS(*source.ReplicationRole)
-		info.ReplicationRole = &replicationRole
+		replicationRole := *source.ReplicationRole
+		replicationRoleTemp := genruntime.ToEnum(replicationRole, partnerInfo_ReplicationRole_STATUS_Values)
+		info.ReplicationRole = &replicationRoleTemp
 	} else {
 		info.ReplicationRole = nil
 	}
@@ -1698,7 +1802,7 @@ func (info *PartnerInfo_STATUS) AssignProperties_From_PartnerInfo_STATUS(source 
 }
 
 // AssignProperties_To_PartnerInfo_STATUS populates the provided destination PartnerInfo_STATUS from our PartnerInfo_STATUS
-func (info *PartnerInfo_STATUS) AssignProperties_To_PartnerInfo_STATUS(destination *v20211101s.PartnerInfo_STATUS) error {
+func (info *PartnerInfo_STATUS) AssignProperties_To_PartnerInfo_STATUS(destination *storage.PartnerInfo_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1727,6 +1831,110 @@ func (info *PartnerInfo_STATUS) AssignProperties_To_PartnerInfo_STATUS(destinati
 	return nil
 }
 
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ServersFailoverGroupOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ServersFailoverGroupOperatorSpec populates our ServersFailoverGroupOperatorSpec from the provided source ServersFailoverGroupOperatorSpec
+func (operator *ServersFailoverGroupOperatorSpec) AssignProperties_From_ServersFailoverGroupOperatorSpec(source *storage.ServersFailoverGroupOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ServersFailoverGroupOperatorSpec populates the provided destination ServersFailoverGroupOperatorSpec from our ServersFailoverGroupOperatorSpec
+func (operator *ServersFailoverGroupOperatorSpec) AssignProperties_To_ServersFailoverGroupOperatorSpec(destination *storage.ServersFailoverGroupOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 // +kubebuilder:validation:Enum={"Disabled","Enabled"}
 type FailoverGroupReadOnlyEndpoint_FailoverPolicy string
 
@@ -1735,12 +1943,24 @@ const (
 	FailoverGroupReadOnlyEndpoint_FailoverPolicy_Enabled  = FailoverGroupReadOnlyEndpoint_FailoverPolicy("Enabled")
 )
 
+// Mapping from string to FailoverGroupReadOnlyEndpoint_FailoverPolicy
+var failoverGroupReadOnlyEndpoint_FailoverPolicy_Values = map[string]FailoverGroupReadOnlyEndpoint_FailoverPolicy{
+	"disabled": FailoverGroupReadOnlyEndpoint_FailoverPolicy_Disabled,
+	"enabled":  FailoverGroupReadOnlyEndpoint_FailoverPolicy_Enabled,
+}
+
 type FailoverGroupReadOnlyEndpoint_FailoverPolicy_STATUS string
 
 const (
 	FailoverGroupReadOnlyEndpoint_FailoverPolicy_STATUS_Disabled = FailoverGroupReadOnlyEndpoint_FailoverPolicy_STATUS("Disabled")
 	FailoverGroupReadOnlyEndpoint_FailoverPolicy_STATUS_Enabled  = FailoverGroupReadOnlyEndpoint_FailoverPolicy_STATUS("Enabled")
 )
+
+// Mapping from string to FailoverGroupReadOnlyEndpoint_FailoverPolicy_STATUS
+var failoverGroupReadOnlyEndpoint_FailoverPolicy_STATUS_Values = map[string]FailoverGroupReadOnlyEndpoint_FailoverPolicy_STATUS{
+	"disabled": FailoverGroupReadOnlyEndpoint_FailoverPolicy_STATUS_Disabled,
+	"enabled":  FailoverGroupReadOnlyEndpoint_FailoverPolicy_STATUS_Enabled,
+}
 
 // +kubebuilder:validation:Enum={"Automatic","Manual"}
 type FailoverGroupReadWriteEndpoint_FailoverPolicy string
@@ -1750,6 +1970,12 @@ const (
 	FailoverGroupReadWriteEndpoint_FailoverPolicy_Manual    = FailoverGroupReadWriteEndpoint_FailoverPolicy("Manual")
 )
 
+// Mapping from string to FailoverGroupReadWriteEndpoint_FailoverPolicy
+var failoverGroupReadWriteEndpoint_FailoverPolicy_Values = map[string]FailoverGroupReadWriteEndpoint_FailoverPolicy{
+	"automatic": FailoverGroupReadWriteEndpoint_FailoverPolicy_Automatic,
+	"manual":    FailoverGroupReadWriteEndpoint_FailoverPolicy_Manual,
+}
+
 type FailoverGroupReadWriteEndpoint_FailoverPolicy_STATUS string
 
 const (
@@ -1757,12 +1983,24 @@ const (
 	FailoverGroupReadWriteEndpoint_FailoverPolicy_STATUS_Manual    = FailoverGroupReadWriteEndpoint_FailoverPolicy_STATUS("Manual")
 )
 
+// Mapping from string to FailoverGroupReadWriteEndpoint_FailoverPolicy_STATUS
+var failoverGroupReadWriteEndpoint_FailoverPolicy_STATUS_Values = map[string]FailoverGroupReadWriteEndpoint_FailoverPolicy_STATUS{
+	"automatic": FailoverGroupReadWriteEndpoint_FailoverPolicy_STATUS_Automatic,
+	"manual":    FailoverGroupReadWriteEndpoint_FailoverPolicy_STATUS_Manual,
+}
+
 type PartnerInfo_ReplicationRole_STATUS string
 
 const (
 	PartnerInfo_ReplicationRole_STATUS_Primary   = PartnerInfo_ReplicationRole_STATUS("Primary")
 	PartnerInfo_ReplicationRole_STATUS_Secondary = PartnerInfo_ReplicationRole_STATUS("Secondary")
 )
+
+// Mapping from string to PartnerInfo_ReplicationRole_STATUS
+var partnerInfo_ReplicationRole_STATUS_Values = map[string]PartnerInfo_ReplicationRole_STATUS{
+	"primary":   PartnerInfo_ReplicationRole_STATUS_Primary,
+	"secondary": PartnerInfo_ReplicationRole_STATUS_Secondary,
+}
 
 func init() {
 	SchemeBuilder.Register(&ServersFailoverGroup{}, &ServersFailoverGroupList{})

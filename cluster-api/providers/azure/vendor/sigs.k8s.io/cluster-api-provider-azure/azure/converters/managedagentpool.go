@@ -17,7 +17,13 @@ limitations under the License.
 package converters
 
 import (
-	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	// NOTE: when the hub API version is updated, verify the
+	// ManagedClusterAgentPoolProfile below has every field defined. If a field
+	// isn't defined, the agent pool will be created with a zero/null value, and
+	// then updated to the user-defined value. If the field is immutable, this
+	// update will fail. The linter should catch if there are missing fields,
+	// but verify that check is actually working.
+	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
 	"k8s.io/utils/ptr"
 )
 
@@ -25,37 +31,50 @@ import (
 func AgentPoolToManagedClusterAgentPoolProfile(pool *asocontainerservicev1hub.ManagedClustersAgentPool) asocontainerservicev1hub.ManagedClusterAgentPoolProfile {
 	properties := pool.Spec
 	agentPool := asocontainerservicev1hub.ManagedClusterAgentPoolProfile{
-		Name:                        ptr.To(pool.AzureName()),
-		VmSize:                      properties.VmSize,
-		OsType:                      properties.OsType,
-		OsDiskSizeGB:                properties.OsDiskSizeGB,
-		Count:                       properties.Count,
-		Type:                        properties.Type,
-		OrchestratorVersion:         properties.OrchestratorVersion,
-		VnetSubnetReference:         properties.VnetSubnetReference,
-		Mode:                        properties.Mode,
-		EnableAutoScaling:           properties.EnableAutoScaling,
-		MaxCount:                    properties.MaxCount,
-		MinCount:                    properties.MinCount,
-		NodeTaints:                  properties.NodeTaints,
-		AvailabilityZones:           properties.AvailabilityZones,
-		MaxPods:                     properties.MaxPods,
-		OsDiskType:                  properties.OsDiskType,
-		NodeLabels:                  properties.NodeLabels,
-		EnableUltraSSD:              properties.EnableUltraSSD,
-		EnableNodePublicIP:          properties.EnableNodePublicIP,
-		NodePublicIPPrefixReference: properties.NodePublicIPPrefixReference,
-		ScaleSetPriority:            properties.ScaleSetPriority,
-		ScaleDownMode:               properties.ScaleDownMode,
-		SpotMaxPrice:                properties.SpotMaxPrice,
-		Tags:                        properties.Tags,
-		KubeletDiskType:             properties.KubeletDiskType,
-		LinuxOSConfig:               properties.LinuxOSConfig,
-		EnableFIPS:                  properties.EnableFIPS,
-		EnableEncryptionAtHost:      properties.EnableEncryptionAtHost,
-	}
-	if properties.KubeletConfig != nil {
-		agentPool.KubeletConfig = properties.KubeletConfig
+		AvailabilityZones:                 properties.AvailabilityZones,
+		CapacityReservationGroupReference: properties.CapacityReservationGroupReference,
+		Count:                             properties.Count,
+		CreationData:                      properties.CreationData,
+		EnableAutoScaling:                 properties.EnableAutoScaling,
+		EnableEncryptionAtHost:            properties.EnableEncryptionAtHost,
+		EnableFIPS:                        properties.EnableFIPS,
+		EnableNodePublicIP:                properties.EnableNodePublicIP,
+		EnableUltraSSD:                    properties.EnableUltraSSD,
+		GpuInstanceProfile:                properties.GpuInstanceProfile,
+		HostGroupReference:                properties.HostGroupReference,
+		KubeletConfig:                     properties.KubeletConfig,
+		KubeletDiskType:                   properties.KubeletDiskType,
+		LinuxOSConfig:                     properties.LinuxOSConfig,
+		MaxCount:                          properties.MaxCount,
+		MaxPods:                           properties.MaxPods,
+		MinCount:                          properties.MinCount,
+		Mode:                              properties.Mode,
+		Name:                              ptr.To(pool.AzureName()),
+		NetworkProfile:                    properties.NetworkProfile,
+		NodeLabels:                        properties.NodeLabels,
+		NodePublicIPPrefixReference:       properties.NodePublicIPPrefixReference,
+		NodeTaints:                        properties.NodeTaints,
+		OrchestratorVersion:               properties.OrchestratorVersion,
+		OsDiskSizeGB:                      properties.OsDiskSizeGB,
+		OsDiskType:                        properties.OsDiskType,
+		OsSKU:                             properties.OsSKU,
+		OsType:                            properties.OsType,
+		PodSubnetReference:                properties.PodSubnetReference,
+		PowerState:                        properties.PowerState,
+		PropertyBag:                       properties.PropertyBag,
+		ProximityPlacementGroupReference:  properties.ProximityPlacementGroupReference,
+		ScaleDownMode:                     properties.ScaleDownMode,
+		ScaleSetEvictionPolicy:            properties.ScaleSetEvictionPolicy,
+		ScaleSetPriority:                  properties.ScaleSetPriority,
+		SecurityProfile:                   properties.SecurityProfile,
+		SpotMaxPrice:                      properties.SpotMaxPrice,
+		Tags:                              properties.Tags,
+		Type:                              properties.Type,
+		UpgradeSettings:                   properties.UpgradeSettings,
+		VmSize:                            properties.VmSize,
+		VnetSubnetReference:               properties.VnetSubnetReference,
+		WindowsProfile:                    properties.WindowsProfile,
+		WorkloadRuntime:                   properties.WorkloadRuntime,
 	}
 	return agentPool
 }

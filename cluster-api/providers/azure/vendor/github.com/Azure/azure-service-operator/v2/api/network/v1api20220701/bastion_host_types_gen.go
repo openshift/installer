@@ -5,10 +5,14 @@ package v1api20220701
 
 import (
 	"fmt"
+	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,22 +53,36 @@ var _ conversion.Convertible = &BastionHost{}
 
 // ConvertFrom populates our BastionHost from the provided hub BastionHost
 func (host *BastionHost) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.BastionHost)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20220701/storage/BastionHost but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.BastionHost
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return host.AssignProperties_From_BastionHost(source)
+	err = host.AssignProperties_From_BastionHost(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to host")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub BastionHost from our BastionHost
 func (host *BastionHost) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.BastionHost)
-	if !ok {
-		return fmt.Errorf("expected network/v1api20220701/storage/BastionHost but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.BastionHost
+	err := host.AssignProperties_To_BastionHost(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from host")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return host.AssignProperties_To_BastionHost(destination)
+	return nil
 }
 
 // +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20220701-bastionhost,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=bastionhosts,verbs=create;update,versions=v1api20220701,name=default.v1api20220701.bastionhosts.network.azure.com,admissionReviewVersions=v1
@@ -90,15 +108,24 @@ func (host *BastionHost) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the BastionHost resource
 func (host *BastionHost) defaultImpl() { host.defaultAzureName() }
 
-var _ genruntime.ImportableResource = &BastionHost{}
+var _ configmaps.Exporter = &BastionHost{}
 
-// InitializeSpec initializes the spec for this resource from the given status
-func (host *BastionHost) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*BastionHost_STATUS); ok {
-		return host.Spec.Initialize_From_BastionHost_STATUS(s)
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (host *BastionHost) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if host.Spec.OperatorSpec == nil {
+		return nil
 	}
+	return host.Spec.OperatorSpec.ConfigMapExpressions
+}
 
-	return fmt.Errorf("expected Status of type BastionHost_STATUS but received %T instead", status)
+var _ secrets.Exporter = &BastionHost{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (host *BastionHost) SecretDestinationExpressions() []*core.DestinationExpression {
+	if host.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return host.Spec.OperatorSpec.SecretExpressions
 }
 
 var _ genruntime.KubernetesResource = &BastionHost{}
@@ -110,7 +137,7 @@ func (host *BastionHost) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-07-01"
 func (host BastionHost) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-07-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -208,7 +235,7 @@ func (host *BastionHost) ValidateUpdate(old runtime.Object) (admission.Warnings,
 
 // createValidations validates the creation of the resource
 func (host *BastionHost) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){host.validateResourceReferences, host.validateOwnerReference}
+	return []func() (admission.Warnings, error){host.validateResourceReferences, host.validateOwnerReference, host.validateSecretDestinations, host.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +253,21 @@ func (host *BastionHost) updateValidations() []func(old runtime.Object) (admissi
 		func(old runtime.Object) (admission.Warnings, error) {
 			return host.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return host.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return host.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (host *BastionHost) validateConfigMapDestinations() (admission.Warnings, error) {
+	if host.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(host, nil, host.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -241,6 +282,14 @@ func (host *BastionHost) validateResourceReferences() (admission.Warnings, error
 		return nil, err
 	}
 	return genruntime.ValidateResourceReferences(refs)
+}
+
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (host *BastionHost) validateSecretDestinations() (admission.Warnings, error) {
+	if host.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(host, nil, host.Spec.OperatorSpec.SecretExpressions)
 }
 
 // validateWriteOnceProperties validates all WriteOnce properties
@@ -353,6 +402,10 @@ type BastionHost_Spec struct {
 	// Location: Resource location.
 	Location *string `json:"location,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *BastionHostOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -378,7 +431,7 @@ func (host *BastionHost_Spec) ConvertToARM(resolved genruntime.ConvertToARMResol
 	if host == nil {
 		return nil, nil
 	}
-	result := &BastionHost_Spec_ARM{}
+	result := &arm.BastionHost_Spec{}
 
 	// Set property "Location":
 	if host.Location != nil {
@@ -398,7 +451,7 @@ func (host *BastionHost_Spec) ConvertToARM(resolved genruntime.ConvertToARMResol
 		host.EnableTunneling != nil ||
 		host.IpConfigurations != nil ||
 		host.ScaleUnits != nil {
-		result.Properties = &BastionHostPropertiesFormat_ARM{}
+		result.Properties = &arm.BastionHostPropertiesFormat{}
 	}
 	if host.DisableCopyPaste != nil {
 		disableCopyPaste := *host.DisableCopyPaste
@@ -429,7 +482,7 @@ func (host *BastionHost_Spec) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.IpConfigurations = append(result.Properties.IpConfigurations, *item_ARM.(*BastionHostIPConfiguration_ARM))
+		result.Properties.IpConfigurations = append(result.Properties.IpConfigurations, *item_ARM.(*arm.BastionHostIPConfiguration))
 	}
 	if host.ScaleUnits != nil {
 		scaleUnits := *host.ScaleUnits
@@ -442,7 +495,7 @@ func (host *BastionHost_Spec) ConvertToARM(resolved genruntime.ConvertToARMResol
 		if err != nil {
 			return nil, err
 		}
-		sku := *sku_ARM.(*Sku_ARM)
+		sku := *sku_ARM.(*arm.Sku)
 		result.Sku = &sku
 	}
 
@@ -458,14 +511,14 @@ func (host *BastionHost_Spec) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (host *BastionHost_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &BastionHost_Spec_ARM{}
+	return &arm.BastionHost_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (host *BastionHost_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(BastionHost_Spec_ARM)
+	typedInput, ok := armInput.(arm.BastionHost_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected BastionHost_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.BastionHost_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
@@ -543,6 +596,8 @@ func (host *BastionHost_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRef
 		location := *typedInput.Location
 		host.Location = &location
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	host.Owner = &genruntime.KnownResourceReference{
@@ -702,6 +757,18 @@ func (host *BastionHost_Spec) AssignProperties_From_BastionHost_Spec(source *sto
 	// Location
 	host.Location = genruntime.ClonePointerToString(source.Location)
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec BastionHostOperatorSpec
+		err := operatorSpec.AssignProperties_From_BastionHostOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BastionHostOperatorSpec() to populate field OperatorSpec")
+		}
+		host.OperatorSpec = &operatorSpec
+	} else {
+		host.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -809,6 +876,18 @@ func (host *BastionHost_Spec) AssignProperties_To_BastionHost_Spec(destination *
 	// Location
 	destination.Location = genruntime.ClonePointerToString(host.Location)
 
+	// OperatorSpec
+	if host.OperatorSpec != nil {
+		var operatorSpec storage.BastionHostOperatorSpec
+		err := host.OperatorSpec.AssignProperties_To_BastionHostOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BastionHostOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
 	// OriginalVersion
 	destination.OriginalVersion = host.OriginalVersion()
 
@@ -849,100 +928,6 @@ func (host *BastionHost_Spec) AssignProperties_To_BastionHost_Spec(destination *
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_BastionHost_STATUS populates our BastionHost_Spec from the provided source BastionHost_STATUS
-func (host *BastionHost_Spec) Initialize_From_BastionHost_STATUS(source *BastionHost_STATUS) error {
-
-	// DisableCopyPaste
-	if source.DisableCopyPaste != nil {
-		disableCopyPaste := *source.DisableCopyPaste
-		host.DisableCopyPaste = &disableCopyPaste
-	} else {
-		host.DisableCopyPaste = nil
-	}
-
-	// DnsName
-	host.DnsName = genruntime.ClonePointerToString(source.DnsName)
-
-	// EnableFileCopy
-	if source.EnableFileCopy != nil {
-		enableFileCopy := *source.EnableFileCopy
-		host.EnableFileCopy = &enableFileCopy
-	} else {
-		host.EnableFileCopy = nil
-	}
-
-	// EnableIpConnect
-	if source.EnableIpConnect != nil {
-		enableIpConnect := *source.EnableIpConnect
-		host.EnableIpConnect = &enableIpConnect
-	} else {
-		host.EnableIpConnect = nil
-	}
-
-	// EnableShareableLink
-	if source.EnableShareableLink != nil {
-		enableShareableLink := *source.EnableShareableLink
-		host.EnableShareableLink = &enableShareableLink
-	} else {
-		host.EnableShareableLink = nil
-	}
-
-	// EnableTunneling
-	if source.EnableTunneling != nil {
-		enableTunneling := *source.EnableTunneling
-		host.EnableTunneling = &enableTunneling
-	} else {
-		host.EnableTunneling = nil
-	}
-
-	// IpConfigurations
-	if source.IpConfigurations != nil {
-		ipConfigurationList := make([]BastionHostIPConfiguration, len(source.IpConfigurations))
-		for ipConfigurationIndex, ipConfigurationItem := range source.IpConfigurations {
-			// Shadow the loop variable to avoid aliasing
-			ipConfigurationItem := ipConfigurationItem
-			var ipConfiguration BastionHostIPConfiguration
-			err := ipConfiguration.Initialize_From_BastionHostIPConfiguration_STATUS(&ipConfigurationItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_BastionHostIPConfiguration_STATUS() to populate field IpConfigurations")
-			}
-			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
-		}
-		host.IpConfigurations = ipConfigurationList
-	} else {
-		host.IpConfigurations = nil
-	}
-
-	// Location
-	host.Location = genruntime.ClonePointerToString(source.Location)
-
-	// ScaleUnits
-	if source.ScaleUnits != nil {
-		scaleUnit := *source.ScaleUnits
-		host.ScaleUnits = &scaleUnit
-	} else {
-		host.ScaleUnits = nil
-	}
-
-	// Sku
-	if source.Sku != nil {
-		var sku Sku
-		err := sku.Initialize_From_Sku_STATUS(source.Sku)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
-		}
-		host.Sku = &sku
-	} else {
-		host.Sku = nil
-	}
-
-	// Tags
-	host.Tags = genruntime.CloneMapOfStringToString(source.Tags)
 
 	// No error
 	return nil
@@ -1064,14 +1049,14 @@ var _ genruntime.FromARMConverter = &BastionHost_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (host *BastionHost_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &BastionHost_STATUS_ARM{}
+	return &arm.BastionHost_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (host *BastionHost_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(BastionHost_STATUS_ARM)
+	typedInput, ok := armInput.(arm.BastionHost_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected BastionHost_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.BastionHost_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -1171,7 +1156,9 @@ func (host *BastionHost_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerR
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := BastionHostProvisioningState_STATUS(temp)
 			host.ProvisioningState = &provisioningState
 		}
 	}
@@ -1458,11 +1445,11 @@ type BastionHostIPConfiguration struct {
 
 	// +kubebuilder:validation:Required
 	// PublicIPAddress: Reference of the PublicIP resource.
-	PublicIPAddress *BastionHostSubResource `json:"publicIPAddress,omitempty"`
+	PublicIPAddress *SubResource `json:"publicIPAddress,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Subnet: Reference of the subnet resource.
-	Subnet *BastionHostSubResource `json:"subnet,omitempty"`
+	Subnet *SubResource `json:"subnet,omitempty"`
 }
 
 var _ genruntime.ARMTransformer = &BastionHostIPConfiguration{}
@@ -1472,7 +1459,7 @@ func (configuration *BastionHostIPConfiguration) ConvertToARM(resolved genruntim
 	if configuration == nil {
 		return nil, nil
 	}
-	result := &BastionHostIPConfiguration_ARM{}
+	result := &arm.BastionHostIPConfiguration{}
 
 	// Set property "Name":
 	if configuration.Name != nil {
@@ -1484,10 +1471,12 @@ func (configuration *BastionHostIPConfiguration) ConvertToARM(resolved genruntim
 	if configuration.PrivateIPAllocationMethod != nil ||
 		configuration.PublicIPAddress != nil ||
 		configuration.Subnet != nil {
-		result.Properties = &BastionHostIPConfigurationPropertiesFormat_ARM{}
+		result.Properties = &arm.BastionHostIPConfigurationPropertiesFormat{}
 	}
 	if configuration.PrivateIPAllocationMethod != nil {
-		privateIPAllocationMethod := *configuration.PrivateIPAllocationMethod
+		var temp string
+		temp = string(*configuration.PrivateIPAllocationMethod)
+		privateIPAllocationMethod := arm.IPAllocationMethod(temp)
 		result.Properties.PrivateIPAllocationMethod = &privateIPAllocationMethod
 	}
 	if configuration.PublicIPAddress != nil {
@@ -1495,7 +1484,7 @@ func (configuration *BastionHostIPConfiguration) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		publicIPAddress := *publicIPAddress_ARM.(*BastionHostSubResource_ARM)
+		publicIPAddress := *publicIPAddress_ARM.(*arm.SubResource)
 		result.Properties.PublicIPAddress = &publicIPAddress
 	}
 	if configuration.Subnet != nil {
@@ -1503,7 +1492,7 @@ func (configuration *BastionHostIPConfiguration) ConvertToARM(resolved genruntim
 		if err != nil {
 			return nil, err
 		}
-		subnet := *subnet_ARM.(*BastionHostSubResource_ARM)
+		subnet := *subnet_ARM.(*arm.SubResource)
 		result.Properties.Subnet = &subnet
 	}
 	return result, nil
@@ -1511,14 +1500,14 @@ func (configuration *BastionHostIPConfiguration) ConvertToARM(resolved genruntim
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *BastionHostIPConfiguration) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &BastionHostIPConfiguration_ARM{}
+	return &arm.BastionHostIPConfiguration{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *BastionHostIPConfiguration) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(BastionHostIPConfiguration_ARM)
+	typedInput, ok := armInput.(arm.BastionHostIPConfiguration)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected BastionHostIPConfiguration_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.BastionHostIPConfiguration, got %T", armInput)
 	}
 
 	// Set property "Name":
@@ -1531,7 +1520,9 @@ func (configuration *BastionHostIPConfiguration) PopulateFromARM(owner genruntim
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PrivateIPAllocationMethod != nil {
-			privateIPAllocationMethod := *typedInput.Properties.PrivateIPAllocationMethod
+			var temp string
+			temp = string(*typedInput.Properties.PrivateIPAllocationMethod)
+			privateIPAllocationMethod := IPAllocationMethod(temp)
 			configuration.PrivateIPAllocationMethod = &privateIPAllocationMethod
 		}
 	}
@@ -1540,7 +1531,7 @@ func (configuration *BastionHostIPConfiguration) PopulateFromARM(owner genruntim
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PublicIPAddress != nil {
-			var publicIPAddress1 BastionHostSubResource
+			var publicIPAddress1 SubResource
 			err := publicIPAddress1.PopulateFromARM(owner, *typedInput.Properties.PublicIPAddress)
 			if err != nil {
 				return err
@@ -1554,7 +1545,7 @@ func (configuration *BastionHostIPConfiguration) PopulateFromARM(owner genruntim
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Subnet != nil {
-			var subnet1 BastionHostSubResource
+			var subnet1 SubResource
 			err := subnet1.PopulateFromARM(owner, *typedInput.Properties.Subnet)
 			if err != nil {
 				return err
@@ -1585,10 +1576,10 @@ func (configuration *BastionHostIPConfiguration) AssignProperties_From_BastionHo
 
 	// PublicIPAddress
 	if source.PublicIPAddress != nil {
-		var publicIPAddress BastionHostSubResource
-		err := publicIPAddress.AssignProperties_From_BastionHostSubResource(source.PublicIPAddress)
+		var publicIPAddress SubResource
+		err := publicIPAddress.AssignProperties_From_SubResource(source.PublicIPAddress)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_BastionHostSubResource() to populate field PublicIPAddress")
+			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIPAddress")
 		}
 		configuration.PublicIPAddress = &publicIPAddress
 	} else {
@@ -1597,10 +1588,10 @@ func (configuration *BastionHostIPConfiguration) AssignProperties_From_BastionHo
 
 	// Subnet
 	if source.Subnet != nil {
-		var subnet BastionHostSubResource
-		err := subnet.AssignProperties_From_BastionHostSubResource(source.Subnet)
+		var subnet SubResource
+		err := subnet.AssignProperties_From_SubResource(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_BastionHostSubResource() to populate field Subnet")
+			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Subnet")
 		}
 		configuration.Subnet = &subnet
 	} else {
@@ -1629,10 +1620,10 @@ func (configuration *BastionHostIPConfiguration) AssignProperties_To_BastionHost
 
 	// PublicIPAddress
 	if configuration.PublicIPAddress != nil {
-		var publicIPAddress storage.BastionHostSubResource
-		err := configuration.PublicIPAddress.AssignProperties_To_BastionHostSubResource(&publicIPAddress)
+		var publicIPAddress storage.SubResource
+		err := configuration.PublicIPAddress.AssignProperties_To_SubResource(&publicIPAddress)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_BastionHostSubResource() to populate field PublicIPAddress")
+			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIPAddress")
 		}
 		destination.PublicIPAddress = &publicIPAddress
 	} else {
@@ -1641,10 +1632,10 @@ func (configuration *BastionHostIPConfiguration) AssignProperties_To_BastionHost
 
 	// Subnet
 	if configuration.Subnet != nil {
-		var subnet storage.BastionHostSubResource
-		err := configuration.Subnet.AssignProperties_To_BastionHostSubResource(&subnet)
+		var subnet storage.SubResource
+		err := configuration.Subnet.AssignProperties_To_SubResource(&subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_BastionHostSubResource() to populate field Subnet")
+			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Subnet")
 		}
 		destination.Subnet = &subnet
 	} else {
@@ -1662,13 +1653,6 @@ func (configuration *BastionHostIPConfiguration) AssignProperties_To_BastionHost
 	return nil
 }
 
-// Initialize_From_BastionHostIPConfiguration_STATUS populates our BastionHostIPConfiguration from the provided source BastionHostIPConfiguration_STATUS
-func (configuration *BastionHostIPConfiguration) Initialize_From_BastionHostIPConfiguration_STATUS(source *BastionHostIPConfiguration_STATUS) error {
-
-	// No error
-	return nil
-}
-
 // IP configuration of an Bastion Host.
 type BastionHostIPConfiguration_STATUS struct {
 	// Id: Resource ID.
@@ -1679,14 +1663,14 @@ var _ genruntime.FromARMConverter = &BastionHostIPConfiguration_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (configuration *BastionHostIPConfiguration_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &BastionHostIPConfiguration_STATUS_ARM{}
+	return &arm.BastionHostIPConfiguration_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (configuration *BastionHostIPConfiguration_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(BastionHostIPConfiguration_STATUS_ARM)
+	typedInput, ok := armInput.(arm.BastionHostIPConfiguration_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected BastionHostIPConfiguration_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.BastionHostIPConfiguration_STATUS, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -1716,6 +1700,110 @@ func (configuration *BastionHostIPConfiguration_STATUS) AssignProperties_To_Bast
 
 	// Id
 	destination.Id = genruntime.ClonePointerToString(configuration.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type BastionHostOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_BastionHostOperatorSpec populates our BastionHostOperatorSpec from the provided source BastionHostOperatorSpec
+func (operator *BastionHostOperatorSpec) AssignProperties_From_BastionHostOperatorSpec(source *storage.BastionHostOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BastionHostOperatorSpec populates the provided destination BastionHostOperatorSpec from our BastionHostOperatorSpec
+func (operator *BastionHostOperatorSpec) AssignProperties_To_BastionHostOperatorSpec(destination *storage.BastionHostOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -1759,11 +1847,13 @@ func (sku *Sku) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (i
 	if sku == nil {
 		return nil, nil
 	}
-	result := &Sku_ARM{}
+	result := &arm.Sku{}
 
 	// Set property "Name":
 	if sku.Name != nil {
-		name := *sku.Name
+		var temp string
+		temp = string(*sku.Name)
+		name := arm.Sku_Name(temp)
 		result.Name = &name
 	}
 	return result, nil
@@ -1771,19 +1861,21 @@ func (sku *Sku) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (i
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (sku *Sku) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Sku_ARM{}
+	return &arm.Sku{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (sku *Sku) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Sku_ARM)
+	typedInput, ok := armInput.(arm.Sku)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Sku_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Sku, got %T", armInput)
 	}
 
 	// Set property "Name":
 	if typedInput.Name != nil {
-		name := *typedInput.Name
+		var temp string
+		temp = string(*typedInput.Name)
+		name := Sku_Name(temp)
 		sku.Name = &name
 	}
 
@@ -1831,21 +1923,6 @@ func (sku *Sku) AssignProperties_To_Sku(destination *storage.Sku) error {
 	return nil
 }
 
-// Initialize_From_Sku_STATUS populates our Sku from the provided source Sku_STATUS
-func (sku *Sku) Initialize_From_Sku_STATUS(source *Sku_STATUS) error {
-
-	// Name
-	if source.Name != nil {
-		name := genruntime.ToEnum(string(*source.Name), sku_Name_Values)
-		sku.Name = &name
-	} else {
-		sku.Name = nil
-	}
-
-	// No error
-	return nil
-}
-
 // The sku of this Bastion Host.
 type Sku_STATUS struct {
 	// Name: The name of this Bastion Host.
@@ -1856,19 +1933,21 @@ var _ genruntime.FromARMConverter = &Sku_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (sku *Sku_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Sku_STATUS_ARM{}
+	return &arm.Sku_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (sku *Sku_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Sku_STATUS_ARM)
+	typedInput, ok := armInput.(arm.Sku_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Sku_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Sku_STATUS, got %T", armInput)
 	}
 
 	// Set property "Name":
 	if typedInput.Name != nil {
-		name := *typedInput.Name
+		var temp string
+		temp = string(*typedInput.Name)
+		name := Sku_Name_STATUS(temp)
 		sku.Name = &name
 	}
 
@@ -1916,88 +1995,31 @@ func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *storage.Sku_S
 	return nil
 }
 
-// Reference to another subresource.
-type BastionHostSubResource struct {
-	// Reference: Resource ID.
-	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
+// +kubebuilder:validation:Enum={"Basic","Standard"}
+type Sku_Name string
+
+const (
+	Sku_Name_Basic    = Sku_Name("Basic")
+	Sku_Name_Standard = Sku_Name("Standard")
+)
+
+// Mapping from string to Sku_Name
+var sku_Name_Values = map[string]Sku_Name{
+	"basic":    Sku_Name_Basic,
+	"standard": Sku_Name_Standard,
 }
 
-var _ genruntime.ARMTransformer = &BastionHostSubResource{}
+type Sku_Name_STATUS string
 
-// ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (resource *BastionHostSubResource) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
-	if resource == nil {
-		return nil, nil
-	}
-	result := &BastionHostSubResource_ARM{}
+const (
+	Sku_Name_STATUS_Basic    = Sku_Name_STATUS("Basic")
+	Sku_Name_STATUS_Standard = Sku_Name_STATUS("Standard")
+)
 
-	// Set property "Id":
-	if resource.Reference != nil {
-		referenceARMID, err := resolved.ResolvedReferences.Lookup(*resource.Reference)
-		if err != nil {
-			return nil, err
-		}
-		reference := referenceARMID
-		result.Id = &reference
-	}
-	return result, nil
-}
-
-// NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (resource *BastionHostSubResource) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &BastionHostSubResource_ARM{}
-}
-
-// PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (resource *BastionHostSubResource) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	_, ok := armInput.(BastionHostSubResource_ARM)
-	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected BastionHostSubResource_ARM, got %T", armInput)
-	}
-
-	// no assignment for property "Reference"
-
-	// No error
-	return nil
-}
-
-// AssignProperties_From_BastionHostSubResource populates our BastionHostSubResource from the provided source BastionHostSubResource
-func (resource *BastionHostSubResource) AssignProperties_From_BastionHostSubResource(source *storage.BastionHostSubResource) error {
-
-	// Reference
-	if source.Reference != nil {
-		reference := source.Reference.Copy()
-		resource.Reference = &reference
-	} else {
-		resource.Reference = nil
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_BastionHostSubResource populates the provided destination BastionHostSubResource from our BastionHostSubResource
-func (resource *BastionHostSubResource) AssignProperties_To_BastionHostSubResource(destination *storage.BastionHostSubResource) error {
-	// Create a new property bag
-	propertyBag := genruntime.NewPropertyBag()
-
-	// Reference
-	if resource.Reference != nil {
-		reference := resource.Reference.Copy()
-		destination.Reference = &reference
-	} else {
-		destination.Reference = nil
-	}
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
+// Mapping from string to Sku_Name_STATUS
+var sku_Name_STATUS_Values = map[string]Sku_Name_STATUS{
+	"basic":    Sku_Name_STATUS_Basic,
+	"standard": Sku_Name_STATUS_Standard,
 }
 
 func init() {

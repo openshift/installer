@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"k8s.io/utils/ptr"
 	azprovider "sigs.k8s.io/cloud-provider-azure/pkg/provider"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 )
@@ -182,7 +183,7 @@ func GetOrchestrationMode(modeType infrav1.OrchestrationModeType) armcompute.Orc
 	return armcompute.OrchestrationModeUniform
 }
 
-// IDImageRefToImage converts an ID to a infrav1.Image with ComputerGallery set or ID, depending on the structure of the ID.
+// IDImageRefToImage converts an ID to a infrav1.Image with ComputeGallery set or ID, depending on the structure of the ID.
 func IDImageRefToImage(id string) infrav1.Image {
 	// compute gallery image
 	if ok, params := getParams(RegExpStrComputeGalleryID, id); ok {

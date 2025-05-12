@@ -23,6 +23,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
@@ -49,7 +50,7 @@ func (s *VNetSpec) ResourceRef() *asonetworkv1.VirtualNetwork {
 }
 
 // Parameters implements azure.ASOResourceSpecGetter.
-func (s *VNetSpec) Parameters(ctx context.Context, existing *asonetworkv1.VirtualNetwork) (*asonetworkv1.VirtualNetwork, error) {
+func (s *VNetSpec) Parameters(_ context.Context, existing *asonetworkv1.VirtualNetwork) (*asonetworkv1.VirtualNetwork, error) {
 	vnet := existing
 	if existing == nil {
 		vnet = &asonetworkv1.VirtualNetwork{

@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type WorkspacesBigDataPool struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Workspaces_BigDataPool_Spec   `json:"spec,omitempty"`
-	Status            Workspaces_BigDataPool_STATUS `json:"status,omitempty"`
+	Spec              WorkspacesBigDataPool_Spec   `json:"spec,omitempty"`
+	Status            WorkspacesBigDataPool_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &WorkspacesBigDataPool{}
@@ -44,6 +47,26 @@ func (pool *WorkspacesBigDataPool) SetConditions(conditions conditions.Condition
 	pool.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &WorkspacesBigDataPool{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (pool *WorkspacesBigDataPool) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if pool.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return pool.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &WorkspacesBigDataPool{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (pool *WorkspacesBigDataPool) SecretDestinationExpressions() []*core.DestinationExpression {
+	if pool.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return pool.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &WorkspacesBigDataPool{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (pool *WorkspacesBigDataPool) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-06-01"
 func (pool WorkspacesBigDataPool) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-06-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -87,7 +110,7 @@ func (pool *WorkspacesBigDataPool) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (pool *WorkspacesBigDataPool) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Workspaces_BigDataPool_STATUS{}
+	return &WorkspacesBigDataPool_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -99,13 +122,13 @@ func (pool *WorkspacesBigDataPool) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (pool *WorkspacesBigDataPool) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Workspaces_BigDataPool_STATUS); ok {
+	if st, ok := status.(*WorkspacesBigDataPool_STATUS); ok {
 		pool.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Workspaces_BigDataPool_STATUS
+	var st WorkspacesBigDataPool_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -138,26 +161,27 @@ type WorkspacesBigDataPoolList struct {
 	Items           []WorkspacesBigDataPool `json:"items"`
 }
 
-// Storage version of v1api20210601.Workspaces_BigDataPool_Spec
-type Workspaces_BigDataPool_Spec struct {
+// Storage version of v1api20210601.WorkspacesBigDataPool_Spec
+type WorkspacesBigDataPool_Spec struct {
 	AutoPause *AutoPauseProperties `json:"autoPause,omitempty"`
 	AutoScale *AutoScaleProperties `json:"autoScale,omitempty"`
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName                 string                     `json:"azureName,omitempty"`
-	CacheSize                 *int                       `json:"cacheSize,omitempty"`
-	CustomLibraries           []LibraryInfo              `json:"customLibraries,omitempty"`
-	DefaultSparkLogFolder     *string                    `json:"defaultSparkLogFolder,omitempty"`
-	DynamicExecutorAllocation *DynamicExecutorAllocation `json:"dynamicExecutorAllocation,omitempty"`
-	IsAutotuneEnabled         *bool                      `json:"isAutotuneEnabled,omitempty"`
-	IsComputeIsolationEnabled *bool                      `json:"isComputeIsolationEnabled,omitempty"`
-	LibraryRequirements       *LibraryRequirements       `json:"libraryRequirements,omitempty"`
-	Location                  *string                    `json:"location,omitempty"`
-	NodeCount                 *int                       `json:"nodeCount,omitempty"`
-	NodeSize                  *string                    `json:"nodeSize,omitempty"`
-	NodeSizeFamily            *string                    `json:"nodeSizeFamily,omitempty"`
-	OriginalVersion           string                     `json:"originalVersion,omitempty"`
+	AzureName                 string                             `json:"azureName,omitempty"`
+	CacheSize                 *int                               `json:"cacheSize,omitempty"`
+	CustomLibraries           []LibraryInfo                      `json:"customLibraries,omitempty"`
+	DefaultSparkLogFolder     *string                            `json:"defaultSparkLogFolder,omitempty"`
+	DynamicExecutorAllocation *DynamicExecutorAllocation         `json:"dynamicExecutorAllocation,omitempty"`
+	IsAutotuneEnabled         *bool                              `json:"isAutotuneEnabled,omitempty"`
+	IsComputeIsolationEnabled *bool                              `json:"isComputeIsolationEnabled,omitempty"`
+	LibraryRequirements       *LibraryRequirements               `json:"libraryRequirements,omitempty"`
+	Location                  *string                            `json:"location,omitempty"`
+	NodeCount                 *int                               `json:"nodeCount,omitempty"`
+	NodeSize                  *string                            `json:"nodeSize,omitempty"`
+	NodeSizeFamily            *string                            `json:"nodeSizeFamily,omitempty"`
+	OperatorSpec              *WorkspacesBigDataPoolOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion           string                             `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -173,10 +197,10 @@ type Workspaces_BigDataPool_Spec struct {
 	Tags                        map[string]string                  `json:"tags,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Workspaces_BigDataPool_Spec{}
+var _ genruntime.ConvertibleSpec = &WorkspacesBigDataPool_Spec{}
 
-// ConvertSpecFrom populates our Workspaces_BigDataPool_Spec from the provided source
-func (pool *Workspaces_BigDataPool_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our WorkspacesBigDataPool_Spec from the provided source
+func (pool *WorkspacesBigDataPool_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == pool {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -184,8 +208,8 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertSpecFrom(source genruntime.Conve
 	return source.ConvertSpecTo(pool)
 }
 
-// ConvertSpecTo populates the provided destination from our Workspaces_BigDataPool_Spec
-func (pool *Workspaces_BigDataPool_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our WorkspacesBigDataPool_Spec
+func (pool *WorkspacesBigDataPool_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == pool {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -193,8 +217,8 @@ func (pool *Workspaces_BigDataPool_Spec) ConvertSpecTo(destination genruntime.Co
 	return destination.ConvertSpecFrom(pool)
 }
 
-// Storage version of v1api20210601.Workspaces_BigDataPool_STATUS
-type Workspaces_BigDataPool_STATUS struct {
+// Storage version of v1api20210601.WorkspacesBigDataPool_STATUS
+type WorkspacesBigDataPool_STATUS struct {
 	AutoPause                   *AutoPauseProperties_STATUS       `json:"autoPause,omitempty"`
 	AutoScale                   *AutoScaleProperties_STATUS       `json:"autoScale,omitempty"`
 	CacheSize                   *int                              `json:"cacheSize,omitempty"`
@@ -223,10 +247,10 @@ type Workspaces_BigDataPool_STATUS struct {
 	Type                        *string                           `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Workspaces_BigDataPool_STATUS{}
+var _ genruntime.ConvertibleStatus = &WorkspacesBigDataPool_STATUS{}
 
-// ConvertStatusFrom populates our Workspaces_BigDataPool_STATUS from the provided source
-func (pool *Workspaces_BigDataPool_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our WorkspacesBigDataPool_STATUS from the provided source
+func (pool *WorkspacesBigDataPool_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == pool {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -234,8 +258,8 @@ func (pool *Workspaces_BigDataPool_STATUS) ConvertStatusFrom(source genruntime.C
 	return source.ConvertStatusTo(pool)
 }
 
-// ConvertStatusTo populates the provided destination from our Workspaces_BigDataPool_STATUS
-func (pool *Workspaces_BigDataPool_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our WorkspacesBigDataPool_STATUS
+func (pool *WorkspacesBigDataPool_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == pool {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -352,6 +376,14 @@ type SparkConfigProperties_STATUS struct {
 	Filename          *string                `json:"filename,omitempty"`
 	PropertyBag       genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Time              *string                `json:"time,omitempty"`
+}
+
+// Storage version of v1api20210601.WorkspacesBigDataPoolOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type WorkspacesBigDataPoolOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {

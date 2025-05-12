@@ -119,6 +119,10 @@ const (
 	// APIServerRole describes the value for the apiserver role.
 	APIServerRole = "apiserver"
 
+	// APIServerRoleInternal describes the value for the apiserver-internal role,
+	// an identifier for an internal load balancer serving apiserver traffic for cluster nodes.
+	APIServerRoleInternal = "apiserver-internal"
+
 	// NodeOutboundRole describes the value for the node outbound LB role.
 	NodeOutboundRole = "nodeOutbound"
 

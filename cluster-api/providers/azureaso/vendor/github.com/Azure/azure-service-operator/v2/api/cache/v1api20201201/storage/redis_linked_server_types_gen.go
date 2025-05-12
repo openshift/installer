@@ -4,10 +4,12 @@
 package storage
 
 import (
-	"fmt"
-	v20230401s "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230401/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -27,7 +29,7 @@ import (
 type RedisLinkedServer struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Redis_LinkedServer_Spec   `json:"spec,omitempty"`
+	Spec              RedisLinkedServer_Spec    `json:"spec,omitempty"`
 	Status            Redis_LinkedServer_STATUS `json:"status,omitempty"`
 }
 
@@ -47,22 +49,56 @@ var _ conversion.Convertible = &RedisLinkedServer{}
 
 // ConvertFrom populates our RedisLinkedServer from the provided hub RedisLinkedServer
 func (server *RedisLinkedServer) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20230401s.RedisLinkedServer)
-	if !ok {
-		return fmt.Errorf("expected cache/v1api20230401/storage/RedisLinkedServer but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.RedisLinkedServer
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from hub to source")
 	}
 
-	return server.AssignProperties_From_RedisLinkedServer(source)
+	err = server.AssignProperties_From_RedisLinkedServer(&source)
+	if err != nil {
+		return errors.Wrap(err, "converting from source to server")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub RedisLinkedServer from our RedisLinkedServer
 func (server *RedisLinkedServer) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20230401s.RedisLinkedServer)
-	if !ok {
-		return fmt.Errorf("expected cache/v1api20230401/storage/RedisLinkedServer but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.RedisLinkedServer
+	err := server.AssignProperties_To_RedisLinkedServer(&destination)
+	if err != nil {
+		return errors.Wrap(err, "converting to destination from server")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return errors.Wrap(err, "converting from destination to hub")
 	}
 
-	return server.AssignProperties_To_RedisLinkedServer(destination)
+	return nil
+}
+
+var _ configmaps.Exporter = &RedisLinkedServer{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (server *RedisLinkedServer) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if server.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return server.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &RedisLinkedServer{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (server *RedisLinkedServer) SecretDestinationExpressions() []*core.DestinationExpression {
+	if server.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return server.Spec.OperatorSpec.SecretExpressions
 }
 
 var _ genruntime.KubernetesResource = &RedisLinkedServer{}
@@ -74,7 +110,7 @@ func (server *RedisLinkedServer) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2020-12-01"
 func (server RedisLinkedServer) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2020-12-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -137,16 +173,16 @@ func (server *RedisLinkedServer) SetStatus(status genruntime.ConvertibleStatus) 
 }
 
 // AssignProperties_From_RedisLinkedServer populates our RedisLinkedServer from the provided source RedisLinkedServer
-func (server *RedisLinkedServer) AssignProperties_From_RedisLinkedServer(source *v20230401s.RedisLinkedServer) error {
+func (server *RedisLinkedServer) AssignProperties_From_RedisLinkedServer(source *storage.RedisLinkedServer) error {
 
 	// ObjectMeta
 	server.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Redis_LinkedServer_Spec
-	err := spec.AssignProperties_From_Redis_LinkedServer_Spec(&source.Spec)
+	var spec RedisLinkedServer_Spec
+	err := spec.AssignProperties_From_RedisLinkedServer_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Redis_LinkedServer_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_RedisLinkedServer_Spec() to populate field Spec")
 	}
 	server.Spec = spec
 
@@ -172,21 +208,21 @@ func (server *RedisLinkedServer) AssignProperties_From_RedisLinkedServer(source 
 }
 
 // AssignProperties_To_RedisLinkedServer populates the provided destination RedisLinkedServer from our RedisLinkedServer
-func (server *RedisLinkedServer) AssignProperties_To_RedisLinkedServer(destination *v20230401s.RedisLinkedServer) error {
+func (server *RedisLinkedServer) AssignProperties_To_RedisLinkedServer(destination *storage.RedisLinkedServer) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *server.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20230401s.Redis_LinkedServer_Spec
-	err := server.Spec.AssignProperties_To_Redis_LinkedServer_Spec(&spec)
+	var spec storage.RedisLinkedServer_Spec
+	err := server.Spec.AssignProperties_To_RedisLinkedServer_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Redis_LinkedServer_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_RedisLinkedServer_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20230401s.Redis_LinkedServer_STATUS
+	var status storage.Redis_LinkedServer_STATUS
 	err = server.Status.AssignProperties_To_Redis_LinkedServer_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Redis_LinkedServer_STATUS() to populate field Status")
@@ -227,185 +263,8 @@ type RedisLinkedServerList struct {
 }
 
 type augmentConversionForRedisLinkedServer interface {
-	AssignPropertiesFrom(src *v20230401s.RedisLinkedServer) error
-	AssignPropertiesTo(dst *v20230401s.RedisLinkedServer) error
-}
-
-// Storage version of v1api20201201.Redis_LinkedServer_Spec
-type Redis_LinkedServer_Spec struct {
-	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
-	// doesn't have to be.
-	AzureName                string  `json:"azureName,omitempty"`
-	LinkedRedisCacheLocation *string `json:"linkedRedisCacheLocation,omitempty"`
-
-	// +kubebuilder:validation:Required
-	// LinkedRedisCacheReference: Fully qualified resourceId of the linked redis cache.
-	LinkedRedisCacheReference *genruntime.ResourceReference `armReference:"LinkedRedisCacheId" json:"linkedRedisCacheReference,omitempty"`
-	OriginalVersion           string                        `json:"originalVersion,omitempty"`
-
-	// +kubebuilder:validation:Required
-	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
-	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
-	// reference to a cache.azure.com/Redis resource
-	Owner       *genruntime.KnownResourceReference `group:"cache.azure.com" json:"owner,omitempty" kind:"Redis"`
-	PropertyBag genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
-	ServerRole  *string                            `json:"serverRole,omitempty"`
-}
-
-var _ genruntime.ConvertibleSpec = &Redis_LinkedServer_Spec{}
-
-// ConvertSpecFrom populates our Redis_LinkedServer_Spec from the provided source
-func (server *Redis_LinkedServer_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20230401s.Redis_LinkedServer_Spec)
-	if ok {
-		// Populate our instance from source
-		return server.AssignProperties_From_Redis_LinkedServer_Spec(src)
-	}
-
-	// Convert to an intermediate form
-	src = &v20230401s.Redis_LinkedServer_Spec{}
-	err := src.ConvertSpecFrom(source)
-	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
-	}
-
-	// Update our instance from src
-	err = server.AssignProperties_From_Redis_LinkedServer_Spec(src)
-	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
-	}
-
-	return nil
-}
-
-// ConvertSpecTo populates the provided destination from our Redis_LinkedServer_Spec
-func (server *Redis_LinkedServer_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20230401s.Redis_LinkedServer_Spec)
-	if ok {
-		// Populate destination from our instance
-		return server.AssignProperties_To_Redis_LinkedServer_Spec(dst)
-	}
-
-	// Convert to an intermediate form
-	dst = &v20230401s.Redis_LinkedServer_Spec{}
-	err := server.AssignProperties_To_Redis_LinkedServer_Spec(dst)
-	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
-	}
-
-	// Update dst from our instance
-	err = dst.ConvertSpecTo(destination)
-	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
-	}
-
-	return nil
-}
-
-// AssignProperties_From_Redis_LinkedServer_Spec populates our Redis_LinkedServer_Spec from the provided source Redis_LinkedServer_Spec
-func (server *Redis_LinkedServer_Spec) AssignProperties_From_Redis_LinkedServer_Spec(source *v20230401s.Redis_LinkedServer_Spec) error {
-	// Clone the existing property bag
-	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
-
-	// AzureName
-	server.AzureName = source.AzureName
-
-	// LinkedRedisCacheLocation
-	server.LinkedRedisCacheLocation = genruntime.ClonePointerToString(source.LinkedRedisCacheLocation)
-
-	// LinkedRedisCacheReference
-	if source.LinkedRedisCacheReference != nil {
-		linkedRedisCacheReference := source.LinkedRedisCacheReference.Copy()
-		server.LinkedRedisCacheReference = &linkedRedisCacheReference
-	} else {
-		server.LinkedRedisCacheReference = nil
-	}
-
-	// OriginalVersion
-	server.OriginalVersion = source.OriginalVersion
-
-	// Owner
-	if source.Owner != nil {
-		owner := source.Owner.Copy()
-		server.Owner = &owner
-	} else {
-		server.Owner = nil
-	}
-
-	// ServerRole
-	server.ServerRole = genruntime.ClonePointerToString(source.ServerRole)
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		server.PropertyBag = propertyBag
-	} else {
-		server.PropertyBag = nil
-	}
-
-	// Invoke the augmentConversionForRedis_LinkedServer_Spec interface (if implemented) to customize the conversion
-	var serverAsAny any = server
-	if augmentedServer, ok := serverAsAny.(augmentConversionForRedis_LinkedServer_Spec); ok {
-		err := augmentedServer.AssignPropertiesFrom(source)
-		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
-		}
-	}
-
-	// No error
-	return nil
-}
-
-// AssignProperties_To_Redis_LinkedServer_Spec populates the provided destination Redis_LinkedServer_Spec from our Redis_LinkedServer_Spec
-func (server *Redis_LinkedServer_Spec) AssignProperties_To_Redis_LinkedServer_Spec(destination *v20230401s.Redis_LinkedServer_Spec) error {
-	// Clone the existing property bag
-	propertyBag := genruntime.NewPropertyBag(server.PropertyBag)
-
-	// AzureName
-	destination.AzureName = server.AzureName
-
-	// LinkedRedisCacheLocation
-	destination.LinkedRedisCacheLocation = genruntime.ClonePointerToString(server.LinkedRedisCacheLocation)
-
-	// LinkedRedisCacheReference
-	if server.LinkedRedisCacheReference != nil {
-		linkedRedisCacheReference := server.LinkedRedisCacheReference.Copy()
-		destination.LinkedRedisCacheReference = &linkedRedisCacheReference
-	} else {
-		destination.LinkedRedisCacheReference = nil
-	}
-
-	// OriginalVersion
-	destination.OriginalVersion = server.OriginalVersion
-
-	// Owner
-	if server.Owner != nil {
-		owner := server.Owner.Copy()
-		destination.Owner = &owner
-	} else {
-		destination.Owner = nil
-	}
-
-	// ServerRole
-	destination.ServerRole = genruntime.ClonePointerToString(server.ServerRole)
-
-	// Update the property bag
-	if len(propertyBag) > 0 {
-		destination.PropertyBag = propertyBag
-	} else {
-		destination.PropertyBag = nil
-	}
-
-	// Invoke the augmentConversionForRedis_LinkedServer_Spec interface (if implemented) to customize the conversion
-	var serverAsAny any = server
-	if augmentedServer, ok := serverAsAny.(augmentConversionForRedis_LinkedServer_Spec); ok {
-		err := augmentedServer.AssignPropertiesTo(destination)
-		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
-		}
-	}
-
-	// No error
-	return nil
+	AssignPropertiesFrom(src *storage.RedisLinkedServer) error
+	AssignPropertiesTo(dst *storage.RedisLinkedServer) error
 }
 
 // Storage version of v1api20201201.Redis_LinkedServer_STATUS
@@ -425,14 +284,14 @@ var _ genruntime.ConvertibleStatus = &Redis_LinkedServer_STATUS{}
 
 // ConvertStatusFrom populates our Redis_LinkedServer_STATUS from the provided source
 func (server *Redis_LinkedServer_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20230401s.Redis_LinkedServer_STATUS)
+	src, ok := source.(*storage.Redis_LinkedServer_STATUS)
 	if ok {
 		// Populate our instance from source
 		return server.AssignProperties_From_Redis_LinkedServer_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230401s.Redis_LinkedServer_STATUS{}
+	src = &storage.Redis_LinkedServer_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -449,14 +308,14 @@ func (server *Redis_LinkedServer_STATUS) ConvertStatusFrom(source genruntime.Con
 
 // ConvertStatusTo populates the provided destination from our Redis_LinkedServer_STATUS
 func (server *Redis_LinkedServer_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20230401s.Redis_LinkedServer_STATUS)
+	dst, ok := destination.(*storage.Redis_LinkedServer_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return server.AssignProperties_To_Redis_LinkedServer_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230401s.Redis_LinkedServer_STATUS{}
+	dst = &storage.Redis_LinkedServer_STATUS{}
 	err := server.AssignProperties_To_Redis_LinkedServer_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -472,7 +331,7 @@ func (server *Redis_LinkedServer_STATUS) ConvertStatusTo(destination genruntime.
 }
 
 // AssignProperties_From_Redis_LinkedServer_STATUS populates our Redis_LinkedServer_STATUS from the provided source Redis_LinkedServer_STATUS
-func (server *Redis_LinkedServer_STATUS) AssignProperties_From_Redis_LinkedServer_STATUS(source *v20230401s.Redis_LinkedServer_STATUS) error {
+func (server *Redis_LinkedServer_STATUS) AssignProperties_From_Redis_LinkedServer_STATUS(source *storage.Redis_LinkedServer_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -535,7 +394,7 @@ func (server *Redis_LinkedServer_STATUS) AssignProperties_From_Redis_LinkedServe
 }
 
 // AssignProperties_To_Redis_LinkedServer_STATUS populates the provided destination Redis_LinkedServer_STATUS from our Redis_LinkedServer_STATUS
-func (server *Redis_LinkedServer_STATUS) AssignProperties_To_Redis_LinkedServer_STATUS(destination *v20230401s.Redis_LinkedServer_STATUS) error {
+func (server *Redis_LinkedServer_STATUS) AssignProperties_To_Redis_LinkedServer_STATUS(destination *storage.Redis_LinkedServer_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(server.PropertyBag)
 
@@ -609,14 +468,351 @@ func (server *Redis_LinkedServer_STATUS) AssignProperties_To_Redis_LinkedServer_
 	return nil
 }
 
-type augmentConversionForRedis_LinkedServer_Spec interface {
-	AssignPropertiesFrom(src *v20230401s.Redis_LinkedServer_Spec) error
-	AssignPropertiesTo(dst *v20230401s.Redis_LinkedServer_Spec) error
+// Storage version of v1api20201201.RedisLinkedServer_Spec
+type RedisLinkedServer_Spec struct {
+	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
+	// doesn't have to be.
+	AzureName                string  `json:"azureName,omitempty"`
+	LinkedRedisCacheLocation *string `json:"linkedRedisCacheLocation,omitempty"`
+
+	// +kubebuilder:validation:Required
+	// LinkedRedisCacheReference: Fully qualified resourceId of the linked redis cache.
+	LinkedRedisCacheReference *genruntime.ResourceReference  `armReference:"LinkedRedisCacheId" json:"linkedRedisCacheReference,omitempty"`
+	OperatorSpec              *RedisLinkedServerOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion           string                         `json:"originalVersion,omitempty"`
+
+	// +kubebuilder:validation:Required
+	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
+	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
+	// reference to a cache.azure.com/Redis resource
+	Owner       *genruntime.KnownResourceReference `group:"cache.azure.com" json:"owner,omitempty" kind:"Redis"`
+	PropertyBag genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
+	ServerRole  *string                            `json:"serverRole,omitempty"`
+}
+
+var _ genruntime.ConvertibleSpec = &RedisLinkedServer_Spec{}
+
+// ConvertSpecFrom populates our RedisLinkedServer_Spec from the provided source
+func (server *RedisLinkedServer_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.RedisLinkedServer_Spec)
+	if ok {
+		// Populate our instance from source
+		return server.AssignProperties_From_RedisLinkedServer_Spec(src)
+	}
+
+	// Convert to an intermediate form
+	src = &storage.RedisLinkedServer_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = server.AssignProperties_From_RedisLinkedServer_Spec(src)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
+}
+
+// ConvertSpecTo populates the provided destination from our RedisLinkedServer_Spec
+func (server *RedisLinkedServer_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.RedisLinkedServer_Spec)
+	if ok {
+		// Populate destination from our instance
+		return server.AssignProperties_To_RedisLinkedServer_Spec(dst)
+	}
+
+	// Convert to an intermediate form
+	dst = &storage.RedisLinkedServer_Spec{}
+	err := server.AssignProperties_To_RedisLinkedServer_Spec(dst)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_RedisLinkedServer_Spec populates our RedisLinkedServer_Spec from the provided source RedisLinkedServer_Spec
+func (server *RedisLinkedServer_Spec) AssignProperties_From_RedisLinkedServer_Spec(source *storage.RedisLinkedServer_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	server.AzureName = source.AzureName
+
+	// LinkedRedisCacheLocation
+	server.LinkedRedisCacheLocation = genruntime.ClonePointerToString(source.LinkedRedisCacheLocation)
+
+	// LinkedRedisCacheReference
+	if source.LinkedRedisCacheReference != nil {
+		linkedRedisCacheReference := source.LinkedRedisCacheReference.Copy()
+		server.LinkedRedisCacheReference = &linkedRedisCacheReference
+	} else {
+		server.LinkedRedisCacheReference = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec RedisLinkedServerOperatorSpec
+		err := operatorSpec.AssignProperties_From_RedisLinkedServerOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_RedisLinkedServerOperatorSpec() to populate field OperatorSpec")
+		}
+		server.OperatorSpec = &operatorSpec
+	} else {
+		server.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	server.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		server.Owner = &owner
+	} else {
+		server.Owner = nil
+	}
+
+	// ServerRole
+	server.ServerRole = genruntime.ClonePointerToString(source.ServerRole)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		server.PropertyBag = propertyBag
+	} else {
+		server.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisLinkedServer_Spec interface (if implemented) to customize the conversion
+	var serverAsAny any = server
+	if augmentedServer, ok := serverAsAny.(augmentConversionForRedisLinkedServer_Spec); ok {
+		err := augmentedServer.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RedisLinkedServer_Spec populates the provided destination RedisLinkedServer_Spec from our RedisLinkedServer_Spec
+func (server *RedisLinkedServer_Spec) AssignProperties_To_RedisLinkedServer_Spec(destination *storage.RedisLinkedServer_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(server.PropertyBag)
+
+	// AzureName
+	destination.AzureName = server.AzureName
+
+	// LinkedRedisCacheLocation
+	destination.LinkedRedisCacheLocation = genruntime.ClonePointerToString(server.LinkedRedisCacheLocation)
+
+	// LinkedRedisCacheReference
+	if server.LinkedRedisCacheReference != nil {
+		linkedRedisCacheReference := server.LinkedRedisCacheReference.Copy()
+		destination.LinkedRedisCacheReference = &linkedRedisCacheReference
+	} else {
+		destination.LinkedRedisCacheReference = nil
+	}
+
+	// OperatorSpec
+	if server.OperatorSpec != nil {
+		var operatorSpec storage.RedisLinkedServerOperatorSpec
+		err := server.OperatorSpec.AssignProperties_To_RedisLinkedServerOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_RedisLinkedServerOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = server.OriginalVersion
+
+	// Owner
+	if server.Owner != nil {
+		owner := server.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// ServerRole
+	destination.ServerRole = genruntime.ClonePointerToString(server.ServerRole)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisLinkedServer_Spec interface (if implemented) to customize the conversion
+	var serverAsAny any = server
+	if augmentedServer, ok := serverAsAny.(augmentConversionForRedisLinkedServer_Spec); ok {
+		err := augmentedServer.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 type augmentConversionForRedis_LinkedServer_STATUS interface {
-	AssignPropertiesFrom(src *v20230401s.Redis_LinkedServer_STATUS) error
-	AssignPropertiesTo(dst *v20230401s.Redis_LinkedServer_STATUS) error
+	AssignPropertiesFrom(src *storage.Redis_LinkedServer_STATUS) error
+	AssignPropertiesTo(dst *storage.Redis_LinkedServer_STATUS) error
+}
+
+type augmentConversionForRedisLinkedServer_Spec interface {
+	AssignPropertiesFrom(src *storage.RedisLinkedServer_Spec) error
+	AssignPropertiesTo(dst *storage.RedisLinkedServer_Spec) error
+}
+
+// Storage version of v1api20201201.RedisLinkedServerOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type RedisLinkedServerOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_RedisLinkedServerOperatorSpec populates our RedisLinkedServerOperatorSpec from the provided source RedisLinkedServerOperatorSpec
+func (operator *RedisLinkedServerOperatorSpec) AssignProperties_From_RedisLinkedServerOperatorSpec(source *storage.RedisLinkedServerOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisLinkedServerOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForRedisLinkedServerOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RedisLinkedServerOperatorSpec populates the provided destination RedisLinkedServerOperatorSpec from our RedisLinkedServerOperatorSpec
+func (operator *RedisLinkedServerOperatorSpec) AssignProperties_To_RedisLinkedServerOperatorSpec(destination *storage.RedisLinkedServerOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRedisLinkedServerOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForRedisLinkedServerOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForRedisLinkedServerOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.RedisLinkedServerOperatorSpec) error
+	AssignPropertiesTo(dst *storage.RedisLinkedServerOperatorSpec) error
 }
 
 func init() {

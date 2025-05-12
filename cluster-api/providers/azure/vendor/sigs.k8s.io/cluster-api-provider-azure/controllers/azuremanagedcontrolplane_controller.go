@@ -24,12 +24,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
-	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	capiexputil "sigs.k8s.io/cluster-api/exp/util"
@@ -42,6 +36,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
+	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // AzureManagedControlPlaneReconciler reconciles an AzureManagedControlPlane object.
@@ -50,6 +51,7 @@ type AzureManagedControlPlaneReconciler struct {
 	Recorder                                 record.EventRecorder
 	Timeouts                                 reconciler.Timeouts
 	WatchFilterValue                         string
+	CredentialCache                          azure.CredentialCache
 	getNewAzureManagedControlPlaneReconciler func(scope *scope.ManagedControlPlaneScope) (*azureManagedControlPlaneService, error)
 }
 
@@ -80,7 +82,7 @@ func (amcpr *AzureManagedControlPlaneReconciler) SetupWithManager(ctx context.Co
 	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options.Options).
 		For(azManagedControlPlane).
-		WithEventFilter(predicates.ResourceHasFilterLabel(log, amcpr.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, amcpr.WatchFilterValue)).
 		// watch AzureManagedCluster resources
 		Watches(
 			&infrav1.AzureManagedCluster{},
@@ -96,8 +98,8 @@ func (amcpr *AzureManagedControlPlaneReconciler) SetupWithManager(ctx context.Co
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(amcpr.ClusterToAzureManagedControlPlane),
 			builder.WithPredicates(
-				ClusterPauseChangeAndInfrastructureReady(log),
-				predicates.ResourceHasFilterLabel(log, amcpr.WatchFilterValue),
+				ClusterPauseChangeAndInfrastructureReady(mgr.GetScheme(), log),
+				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, amcpr.WatchFilterValue),
 			),
 		).
 		Complete(r)
@@ -183,6 +185,7 @@ func (amcpr *AzureManagedControlPlaneReconciler) Reconcile(ctx context.Context, 
 		ControlPlane:        azureControlPlane,
 		ManagedMachinePools: pools,
 		Timeouts:            amcpr.Timeouts,
+		CredentialCache:     amcpr.CredentialCache,
 	})
 	if err != nil {
 		return reconcile.Result{}, errors.Wrap(err, "failed to create scope")
@@ -277,7 +280,6 @@ func (amcpr *AzureManagedControlPlaneReconciler) reconcileNormal(ctx context.Con
 	return reconcile.Result{}, nil
 }
 
-//nolint:unparam // Always returns an empty struct for reconcile.Result
 func (amcpr *AzureManagedControlPlaneReconciler) reconcilePause(ctx context.Context, scope *scope.ManagedControlPlaneScope) (reconcile.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx, "controllers.AzureManagedControlPlane.reconcilePause")
 	defer done()

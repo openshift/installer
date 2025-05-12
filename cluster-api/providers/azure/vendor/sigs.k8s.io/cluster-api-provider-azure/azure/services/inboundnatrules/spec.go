@@ -49,7 +49,7 @@ func (s *InboundNatSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the inbound NAT rule.
-func (s *InboundNatSpec) Parameters(ctx context.Context, existing interface{}) (parameters interface{}, err error) {
+func (s *InboundNatSpec) Parameters(_ context.Context, existing interface{}) (parameters interface{}, err error) {
 	if existing != nil {
 		if _, ok := existing.(armnetwork.InboundNatRule); !ok {
 			return nil, errors.Errorf("%T is not an armnetwork.InboundNatRule", existing)

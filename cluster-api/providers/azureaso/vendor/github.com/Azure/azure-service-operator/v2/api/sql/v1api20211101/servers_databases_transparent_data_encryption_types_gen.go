@@ -5,10 +5,14 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type ServersDatabasesTransparentDataEncryption struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Servers_Databases_TransparentDataEncryption_Spec   `json:"spec,omitempty"`
-	Status            Servers_Databases_TransparentDataEncryption_STATUS `json:"status,omitempty"`
+	Spec              ServersDatabasesTransparentDataEncryption_Spec   `json:"spec,omitempty"`
+	Status            ServersDatabasesTransparentDataEncryption_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &ServersDatabasesTransparentDataEncryption{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &ServersDatabasesTransparentDataEncryption{}
 
 // ConvertFrom populates our ServersDatabasesTransparentDataEncryption from the provided hub ServersDatabasesTransparentDataEncryption
 func (encryption *ServersDatabasesTransparentDataEncryption) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20211101s.ServersDatabasesTransparentDataEncryption)
+	source, ok := hub.(*storage.ServersDatabasesTransparentDataEncryption)
 	if !ok {
 		return fmt.Errorf("expected sql/v1api20211101/storage/ServersDatabasesTransparentDataEncryption but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (encryption *ServersDatabasesTransparentDataEncryption) ConvertFrom(hub con
 
 // ConvertTo populates the provided hub ServersDatabasesTransparentDataEncryption from our ServersDatabasesTransparentDataEncryption
 func (encryption *ServersDatabasesTransparentDataEncryption) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20211101s.ServersDatabasesTransparentDataEncryption)
+	destination, ok := hub.(*storage.ServersDatabasesTransparentDataEncryption)
 	if !ok {
 		return fmt.Errorf("expected sql/v1api20211101/storage/ServersDatabasesTransparentDataEncryption but received %T instead", hub)
 	}
@@ -83,15 +87,35 @@ func (encryption *ServersDatabasesTransparentDataEncryption) Default() {
 // defaultImpl applies the code generated defaults to the ServersDatabasesTransparentDataEncryption resource
 func (encryption *ServersDatabasesTransparentDataEncryption) defaultImpl() {}
 
+var _ configmaps.Exporter = &ServersDatabasesTransparentDataEncryption{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (encryption *ServersDatabasesTransparentDataEncryption) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if encryption.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return encryption.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ServersDatabasesTransparentDataEncryption{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (encryption *ServersDatabasesTransparentDataEncryption) SecretDestinationExpressions() []*core.DestinationExpression {
+	if encryption.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return encryption.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &ServersDatabasesTransparentDataEncryption{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (encryption *ServersDatabasesTransparentDataEncryption) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Servers_Databases_TransparentDataEncryption_STATUS); ok {
-		return encryption.Spec.Initialize_From_Servers_Databases_TransparentDataEncryption_STATUS(s)
+	if s, ok := status.(*ServersDatabasesTransparentDataEncryption_STATUS); ok {
+		return encryption.Spec.Initialize_From_ServersDatabasesTransparentDataEncryption_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Servers_Databases_TransparentDataEncryption_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type ServersDatabasesTransparentDataEncryption_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &ServersDatabasesTransparentDataEncryption{}
@@ -103,7 +127,7 @@ func (encryption *ServersDatabasesTransparentDataEncryption) AzureName() string 
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-11-01"
 func (encryption ServersDatabasesTransparentDataEncryption) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -136,7 +160,7 @@ func (encryption *ServersDatabasesTransparentDataEncryption) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (encryption *ServersDatabasesTransparentDataEncryption) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Servers_Databases_TransparentDataEncryption_STATUS{}
+	return &ServersDatabasesTransparentDataEncryption_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -148,13 +172,13 @@ func (encryption *ServersDatabasesTransparentDataEncryption) Owner() *genruntime
 // SetStatus sets the status of this resource
 func (encryption *ServersDatabasesTransparentDataEncryption) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Servers_Databases_TransparentDataEncryption_STATUS); ok {
+	if st, ok := status.(*ServersDatabasesTransparentDataEncryption_STATUS); ok {
 		encryption.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Servers_Databases_TransparentDataEncryption_STATUS
+	var st ServersDatabasesTransparentDataEncryption_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -200,7 +224,7 @@ func (encryption *ServersDatabasesTransparentDataEncryption) ValidateUpdate(old 
 
 // createValidations validates the creation of the resource
 func (encryption *ServersDatabasesTransparentDataEncryption) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){encryption.validateResourceReferences, encryption.validateOwnerReference}
+	return []func() (admission.Warnings, error){encryption.validateResourceReferences, encryption.validateOwnerReference, encryption.validateSecretDestinations, encryption.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -218,7 +242,21 @@ func (encryption *ServersDatabasesTransparentDataEncryption) updateValidations()
 		func(old runtime.Object) (admission.Warnings, error) {
 			return encryption.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return encryption.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return encryption.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (encryption *ServersDatabasesTransparentDataEncryption) validateConfigMapDestinations() (admission.Warnings, error) {
+	if encryption.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(encryption, nil, encryption.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -235,6 +273,14 @@ func (encryption *ServersDatabasesTransparentDataEncryption) validateResourceRef
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (encryption *ServersDatabasesTransparentDataEncryption) validateSecretDestinations() (admission.Warnings, error) {
+	if encryption.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(encryption, nil, encryption.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (encryption *ServersDatabasesTransparentDataEncryption) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*ServersDatabasesTransparentDataEncryption)
@@ -246,24 +292,24 @@ func (encryption *ServersDatabasesTransparentDataEncryption) validateWriteOncePr
 }
 
 // AssignProperties_From_ServersDatabasesTransparentDataEncryption populates our ServersDatabasesTransparentDataEncryption from the provided source ServersDatabasesTransparentDataEncryption
-func (encryption *ServersDatabasesTransparentDataEncryption) AssignProperties_From_ServersDatabasesTransparentDataEncryption(source *v20211101s.ServersDatabasesTransparentDataEncryption) error {
+func (encryption *ServersDatabasesTransparentDataEncryption) AssignProperties_From_ServersDatabasesTransparentDataEncryption(source *storage.ServersDatabasesTransparentDataEncryption) error {
 
 	// ObjectMeta
 	encryption.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Servers_Databases_TransparentDataEncryption_Spec
-	err := spec.AssignProperties_From_Servers_Databases_TransparentDataEncryption_Spec(&source.Spec)
+	var spec ServersDatabasesTransparentDataEncryption_Spec
+	err := spec.AssignProperties_From_ServersDatabasesTransparentDataEncryption_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Servers_Databases_TransparentDataEncryption_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_ServersDatabasesTransparentDataEncryption_Spec() to populate field Spec")
 	}
 	encryption.Spec = spec
 
 	// Status
-	var status Servers_Databases_TransparentDataEncryption_STATUS
-	err = status.AssignProperties_From_Servers_Databases_TransparentDataEncryption_STATUS(&source.Status)
+	var status ServersDatabasesTransparentDataEncryption_STATUS
+	err = status.AssignProperties_From_ServersDatabasesTransparentDataEncryption_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Servers_Databases_TransparentDataEncryption_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_ServersDatabasesTransparentDataEncryption_STATUS() to populate field Status")
 	}
 	encryption.Status = status
 
@@ -272,24 +318,24 @@ func (encryption *ServersDatabasesTransparentDataEncryption) AssignProperties_Fr
 }
 
 // AssignProperties_To_ServersDatabasesTransparentDataEncryption populates the provided destination ServersDatabasesTransparentDataEncryption from our ServersDatabasesTransparentDataEncryption
-func (encryption *ServersDatabasesTransparentDataEncryption) AssignProperties_To_ServersDatabasesTransparentDataEncryption(destination *v20211101s.ServersDatabasesTransparentDataEncryption) error {
+func (encryption *ServersDatabasesTransparentDataEncryption) AssignProperties_To_ServersDatabasesTransparentDataEncryption(destination *storage.ServersDatabasesTransparentDataEncryption) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *encryption.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20211101s.Servers_Databases_TransparentDataEncryption_Spec
-	err := encryption.Spec.AssignProperties_To_Servers_Databases_TransparentDataEncryption_Spec(&spec)
+	var spec storage.ServersDatabasesTransparentDataEncryption_Spec
+	err := encryption.Spec.AssignProperties_To_ServersDatabasesTransparentDataEncryption_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Servers_Databases_TransparentDataEncryption_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_ServersDatabasesTransparentDataEncryption_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20211101s.Servers_Databases_TransparentDataEncryption_STATUS
-	err = encryption.Status.AssignProperties_To_Servers_Databases_TransparentDataEncryption_STATUS(&status)
+	var status storage.ServersDatabasesTransparentDataEncryption_STATUS
+	err = encryption.Status.AssignProperties_To_ServersDatabasesTransparentDataEncryption_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Servers_Databases_TransparentDataEncryption_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_ServersDatabasesTransparentDataEncryption_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -316,7 +362,11 @@ type ServersDatabasesTransparentDataEncryptionList struct {
 	Items           []ServersDatabasesTransparentDataEncryption `json:"items"`
 }
 
-type Servers_Databases_TransparentDataEncryption_Spec struct {
+type ServersDatabasesTransparentDataEncryption_Spec struct {
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *ServersDatabasesTransparentDataEncryptionOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -328,40 +378,44 @@ type Servers_Databases_TransparentDataEncryption_Spec struct {
 	State *TransparentDataEncryptionProperties_State `json:"state,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Servers_Databases_TransparentDataEncryption_Spec{}
+var _ genruntime.ARMTransformer = &ServersDatabasesTransparentDataEncryption_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (encryption *Servers_Databases_TransparentDataEncryption_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (encryption *ServersDatabasesTransparentDataEncryption_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if encryption == nil {
 		return nil, nil
 	}
-	result := &Servers_Databases_TransparentDataEncryption_Spec_ARM{}
+	result := &arm.ServersDatabasesTransparentDataEncryption_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
 
 	// Set property "Properties":
 	if encryption.State != nil {
-		result.Properties = &TransparentDataEncryptionProperties_ARM{}
+		result.Properties = &arm.TransparentDataEncryptionProperties{}
 	}
 	if encryption.State != nil {
-		state := *encryption.State
+		var temp string
+		temp = string(*encryption.State)
+		state := arm.TransparentDataEncryptionProperties_State(temp)
 		result.Properties.State = &state
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (encryption *Servers_Databases_TransparentDataEncryption_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Servers_Databases_TransparentDataEncryption_Spec_ARM{}
+func (encryption *ServersDatabasesTransparentDataEncryption_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ServersDatabasesTransparentDataEncryption_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (encryption *Servers_Databases_TransparentDataEncryption_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Servers_Databases_TransparentDataEncryption_Spec_ARM)
+func (encryption *ServersDatabasesTransparentDataEncryption_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ServersDatabasesTransparentDataEncryption_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Servers_Databases_TransparentDataEncryption_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServersDatabasesTransparentDataEncryption_Spec, got %T", armInput)
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	encryption.Owner = &genruntime.KnownResourceReference{
@@ -373,7 +427,9 @@ func (encryption *Servers_Databases_TransparentDataEncryption_Spec) PopulateFrom
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.State != nil {
-			state := *typedInput.Properties.State
+			var temp string
+			temp = string(*typedInput.Properties.State)
+			state := TransparentDataEncryptionProperties_State(temp)
 			encryption.State = &state
 		}
 	}
@@ -382,25 +438,25 @@ func (encryption *Servers_Databases_TransparentDataEncryption_Spec) PopulateFrom
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Servers_Databases_TransparentDataEncryption_Spec{}
+var _ genruntime.ConvertibleSpec = &ServersDatabasesTransparentDataEncryption_Spec{}
 
-// ConvertSpecFrom populates our Servers_Databases_TransparentDataEncryption_Spec from the provided source
-func (encryption *Servers_Databases_TransparentDataEncryption_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20211101s.Servers_Databases_TransparentDataEncryption_Spec)
+// ConvertSpecFrom populates our ServersDatabasesTransparentDataEncryption_Spec from the provided source
+func (encryption *ServersDatabasesTransparentDataEncryption_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.ServersDatabasesTransparentDataEncryption_Spec)
 	if ok {
 		// Populate our instance from source
-		return encryption.AssignProperties_From_Servers_Databases_TransparentDataEncryption_Spec(src)
+		return encryption.AssignProperties_From_ServersDatabasesTransparentDataEncryption_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20211101s.Servers_Databases_TransparentDataEncryption_Spec{}
+	src = &storage.ServersDatabasesTransparentDataEncryption_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = encryption.AssignProperties_From_Servers_Databases_TransparentDataEncryption_Spec(src)
+	err = encryption.AssignProperties_From_ServersDatabasesTransparentDataEncryption_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -408,17 +464,17 @@ func (encryption *Servers_Databases_TransparentDataEncryption_Spec) ConvertSpecF
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Servers_Databases_TransparentDataEncryption_Spec
-func (encryption *Servers_Databases_TransparentDataEncryption_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20211101s.Servers_Databases_TransparentDataEncryption_Spec)
+// ConvertSpecTo populates the provided destination from our ServersDatabasesTransparentDataEncryption_Spec
+func (encryption *ServersDatabasesTransparentDataEncryption_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.ServersDatabasesTransparentDataEncryption_Spec)
 	if ok {
 		// Populate destination from our instance
-		return encryption.AssignProperties_To_Servers_Databases_TransparentDataEncryption_Spec(dst)
+		return encryption.AssignProperties_To_ServersDatabasesTransparentDataEncryption_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20211101s.Servers_Databases_TransparentDataEncryption_Spec{}
-	err := encryption.AssignProperties_To_Servers_Databases_TransparentDataEncryption_Spec(dst)
+	dst = &storage.ServersDatabasesTransparentDataEncryption_Spec{}
+	err := encryption.AssignProperties_To_ServersDatabasesTransparentDataEncryption_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -432,8 +488,20 @@ func (encryption *Servers_Databases_TransparentDataEncryption_Spec) ConvertSpecT
 	return nil
 }
 
-// AssignProperties_From_Servers_Databases_TransparentDataEncryption_Spec populates our Servers_Databases_TransparentDataEncryption_Spec from the provided source Servers_Databases_TransparentDataEncryption_Spec
-func (encryption *Servers_Databases_TransparentDataEncryption_Spec) AssignProperties_From_Servers_Databases_TransparentDataEncryption_Spec(source *v20211101s.Servers_Databases_TransparentDataEncryption_Spec) error {
+// AssignProperties_From_ServersDatabasesTransparentDataEncryption_Spec populates our ServersDatabasesTransparentDataEncryption_Spec from the provided source ServersDatabasesTransparentDataEncryption_Spec
+func (encryption *ServersDatabasesTransparentDataEncryption_Spec) AssignProperties_From_ServersDatabasesTransparentDataEncryption_Spec(source *storage.ServersDatabasesTransparentDataEncryption_Spec) error {
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ServersDatabasesTransparentDataEncryptionOperatorSpec
+		err := operatorSpec.AssignProperties_From_ServersDatabasesTransparentDataEncryptionOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ServersDatabasesTransparentDataEncryptionOperatorSpec() to populate field OperatorSpec")
+		}
+		encryption.OperatorSpec = &operatorSpec
+	} else {
+		encryption.OperatorSpec = nil
+	}
 
 	// Owner
 	if source.Owner != nil {
@@ -445,8 +513,9 @@ func (encryption *Servers_Databases_TransparentDataEncryption_Spec) AssignProper
 
 	// State
 	if source.State != nil {
-		state := TransparentDataEncryptionProperties_State(*source.State)
-		encryption.State = &state
+		state := *source.State
+		stateTemp := genruntime.ToEnum(state, transparentDataEncryptionProperties_State_Values)
+		encryption.State = &stateTemp
 	} else {
 		encryption.State = nil
 	}
@@ -455,10 +524,22 @@ func (encryption *Servers_Databases_TransparentDataEncryption_Spec) AssignProper
 	return nil
 }
 
-// AssignProperties_To_Servers_Databases_TransparentDataEncryption_Spec populates the provided destination Servers_Databases_TransparentDataEncryption_Spec from our Servers_Databases_TransparentDataEncryption_Spec
-func (encryption *Servers_Databases_TransparentDataEncryption_Spec) AssignProperties_To_Servers_Databases_TransparentDataEncryption_Spec(destination *v20211101s.Servers_Databases_TransparentDataEncryption_Spec) error {
+// AssignProperties_To_ServersDatabasesTransparentDataEncryption_Spec populates the provided destination ServersDatabasesTransparentDataEncryption_Spec from our ServersDatabasesTransparentDataEncryption_Spec
+func (encryption *ServersDatabasesTransparentDataEncryption_Spec) AssignProperties_To_ServersDatabasesTransparentDataEncryption_Spec(destination *storage.ServersDatabasesTransparentDataEncryption_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
+
+	// OperatorSpec
+	if encryption.OperatorSpec != nil {
+		var operatorSpec storage.ServersDatabasesTransparentDataEncryptionOperatorSpec
+		err := encryption.OperatorSpec.AssignProperties_To_ServersDatabasesTransparentDataEncryptionOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ServersDatabasesTransparentDataEncryptionOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OriginalVersion
 	destination.OriginalVersion = encryption.OriginalVersion()
@@ -490,12 +571,12 @@ func (encryption *Servers_Databases_TransparentDataEncryption_Spec) AssignProper
 	return nil
 }
 
-// Initialize_From_Servers_Databases_TransparentDataEncryption_STATUS populates our Servers_Databases_TransparentDataEncryption_Spec from the provided source Servers_Databases_TransparentDataEncryption_STATUS
-func (encryption *Servers_Databases_TransparentDataEncryption_Spec) Initialize_From_Servers_Databases_TransparentDataEncryption_STATUS(source *Servers_Databases_TransparentDataEncryption_STATUS) error {
+// Initialize_From_ServersDatabasesTransparentDataEncryption_STATUS populates our ServersDatabasesTransparentDataEncryption_Spec from the provided source ServersDatabasesTransparentDataEncryption_STATUS
+func (encryption *ServersDatabasesTransparentDataEncryption_Spec) Initialize_From_ServersDatabasesTransparentDataEncryption_STATUS(source *ServersDatabasesTransparentDataEncryption_STATUS) error {
 
 	// State
 	if source.State != nil {
-		state := TransparentDataEncryptionProperties_State(*source.State)
+		state := genruntime.ToEnum(string(*source.State), transparentDataEncryptionProperties_State_Values)
 		encryption.State = &state
 	} else {
 		encryption.State = nil
@@ -506,11 +587,11 @@ func (encryption *Servers_Databases_TransparentDataEncryption_Spec) Initialize_F
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (encryption *Servers_Databases_TransparentDataEncryption_Spec) OriginalVersion() string {
+func (encryption *ServersDatabasesTransparentDataEncryption_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
-type Servers_Databases_TransparentDataEncryption_STATUS struct {
+type ServersDatabasesTransparentDataEncryption_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
@@ -527,25 +608,25 @@ type Servers_Databases_TransparentDataEncryption_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Servers_Databases_TransparentDataEncryption_STATUS{}
+var _ genruntime.ConvertibleStatus = &ServersDatabasesTransparentDataEncryption_STATUS{}
 
-// ConvertStatusFrom populates our Servers_Databases_TransparentDataEncryption_STATUS from the provided source
-func (encryption *Servers_Databases_TransparentDataEncryption_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20211101s.Servers_Databases_TransparentDataEncryption_STATUS)
+// ConvertStatusFrom populates our ServersDatabasesTransparentDataEncryption_STATUS from the provided source
+func (encryption *ServersDatabasesTransparentDataEncryption_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.ServersDatabasesTransparentDataEncryption_STATUS)
 	if ok {
 		// Populate our instance from source
-		return encryption.AssignProperties_From_Servers_Databases_TransparentDataEncryption_STATUS(src)
+		return encryption.AssignProperties_From_ServersDatabasesTransparentDataEncryption_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20211101s.Servers_Databases_TransparentDataEncryption_STATUS{}
+	src = &storage.ServersDatabasesTransparentDataEncryption_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = encryption.AssignProperties_From_Servers_Databases_TransparentDataEncryption_STATUS(src)
+	err = encryption.AssignProperties_From_ServersDatabasesTransparentDataEncryption_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -553,17 +634,17 @@ func (encryption *Servers_Databases_TransparentDataEncryption_STATUS) ConvertSta
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Servers_Databases_TransparentDataEncryption_STATUS
-func (encryption *Servers_Databases_TransparentDataEncryption_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20211101s.Servers_Databases_TransparentDataEncryption_STATUS)
+// ConvertStatusTo populates the provided destination from our ServersDatabasesTransparentDataEncryption_STATUS
+func (encryption *ServersDatabasesTransparentDataEncryption_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.ServersDatabasesTransparentDataEncryption_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return encryption.AssignProperties_To_Servers_Databases_TransparentDataEncryption_STATUS(dst)
+		return encryption.AssignProperties_To_ServersDatabasesTransparentDataEncryption_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20211101s.Servers_Databases_TransparentDataEncryption_STATUS{}
-	err := encryption.AssignProperties_To_Servers_Databases_TransparentDataEncryption_STATUS(dst)
+	dst = &storage.ServersDatabasesTransparentDataEncryption_STATUS{}
+	err := encryption.AssignProperties_To_ServersDatabasesTransparentDataEncryption_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -577,18 +658,18 @@ func (encryption *Servers_Databases_TransparentDataEncryption_STATUS) ConvertSta
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Servers_Databases_TransparentDataEncryption_STATUS{}
+var _ genruntime.FromARMConverter = &ServersDatabasesTransparentDataEncryption_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (encryption *Servers_Databases_TransparentDataEncryption_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Servers_Databases_TransparentDataEncryption_STATUS_ARM{}
+func (encryption *ServersDatabasesTransparentDataEncryption_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ServersDatabasesTransparentDataEncryption_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (encryption *Servers_Databases_TransparentDataEncryption_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Servers_Databases_TransparentDataEncryption_STATUS_ARM)
+func (encryption *ServersDatabasesTransparentDataEncryption_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ServersDatabasesTransparentDataEncryption_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Servers_Databases_TransparentDataEncryption_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServersDatabasesTransparentDataEncryption_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -609,7 +690,9 @@ func (encryption *Servers_Databases_TransparentDataEncryption_STATUS) PopulateFr
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.State != nil {
-			state := *typedInput.Properties.State
+			var temp string
+			temp = string(*typedInput.Properties.State)
+			state := TransparentDataEncryptionProperties_State_STATUS(temp)
 			encryption.State = &state
 		}
 	}
@@ -624,8 +707,8 @@ func (encryption *Servers_Databases_TransparentDataEncryption_STATUS) PopulateFr
 	return nil
 }
 
-// AssignProperties_From_Servers_Databases_TransparentDataEncryption_STATUS populates our Servers_Databases_TransparentDataEncryption_STATUS from the provided source Servers_Databases_TransparentDataEncryption_STATUS
-func (encryption *Servers_Databases_TransparentDataEncryption_STATUS) AssignProperties_From_Servers_Databases_TransparentDataEncryption_STATUS(source *v20211101s.Servers_Databases_TransparentDataEncryption_STATUS) error {
+// AssignProperties_From_ServersDatabasesTransparentDataEncryption_STATUS populates our ServersDatabasesTransparentDataEncryption_STATUS from the provided source ServersDatabasesTransparentDataEncryption_STATUS
+func (encryption *ServersDatabasesTransparentDataEncryption_STATUS) AssignProperties_From_ServersDatabasesTransparentDataEncryption_STATUS(source *storage.ServersDatabasesTransparentDataEncryption_STATUS) error {
 
 	// Conditions
 	encryption.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -638,8 +721,9 @@ func (encryption *Servers_Databases_TransparentDataEncryption_STATUS) AssignProp
 
 	// State
 	if source.State != nil {
-		state := TransparentDataEncryptionProperties_State_STATUS(*source.State)
-		encryption.State = &state
+		state := *source.State
+		stateTemp := genruntime.ToEnum(state, transparentDataEncryptionProperties_State_STATUS_Values)
+		encryption.State = &stateTemp
 	} else {
 		encryption.State = nil
 	}
@@ -651,8 +735,8 @@ func (encryption *Servers_Databases_TransparentDataEncryption_STATUS) AssignProp
 	return nil
 }
 
-// AssignProperties_To_Servers_Databases_TransparentDataEncryption_STATUS populates the provided destination Servers_Databases_TransparentDataEncryption_STATUS from our Servers_Databases_TransparentDataEncryption_STATUS
-func (encryption *Servers_Databases_TransparentDataEncryption_STATUS) AssignProperties_To_Servers_Databases_TransparentDataEncryption_STATUS(destination *v20211101s.Servers_Databases_TransparentDataEncryption_STATUS) error {
+// AssignProperties_To_ServersDatabasesTransparentDataEncryption_STATUS populates the provided destination ServersDatabasesTransparentDataEncryption_STATUS from our ServersDatabasesTransparentDataEncryption_STATUS
+func (encryption *ServersDatabasesTransparentDataEncryption_STATUS) AssignProperties_To_ServersDatabasesTransparentDataEncryption_STATUS(destination *storage.ServersDatabasesTransparentDataEncryption_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -687,6 +771,110 @@ func (encryption *Servers_Databases_TransparentDataEncryption_STATUS) AssignProp
 	return nil
 }
 
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ServersDatabasesTransparentDataEncryptionOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ServersDatabasesTransparentDataEncryptionOperatorSpec populates our ServersDatabasesTransparentDataEncryptionOperatorSpec from the provided source ServersDatabasesTransparentDataEncryptionOperatorSpec
+func (operator *ServersDatabasesTransparentDataEncryptionOperatorSpec) AssignProperties_From_ServersDatabasesTransparentDataEncryptionOperatorSpec(source *storage.ServersDatabasesTransparentDataEncryptionOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ServersDatabasesTransparentDataEncryptionOperatorSpec populates the provided destination ServersDatabasesTransparentDataEncryptionOperatorSpec from our ServersDatabasesTransparentDataEncryptionOperatorSpec
+func (operator *ServersDatabasesTransparentDataEncryptionOperatorSpec) AssignProperties_To_ServersDatabasesTransparentDataEncryptionOperatorSpec(destination *storage.ServersDatabasesTransparentDataEncryptionOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 // +kubebuilder:validation:Enum={"Disabled","Enabled"}
 type TransparentDataEncryptionProperties_State string
 
@@ -695,12 +883,24 @@ const (
 	TransparentDataEncryptionProperties_State_Enabled  = TransparentDataEncryptionProperties_State("Enabled")
 )
 
+// Mapping from string to TransparentDataEncryptionProperties_State
+var transparentDataEncryptionProperties_State_Values = map[string]TransparentDataEncryptionProperties_State{
+	"disabled": TransparentDataEncryptionProperties_State_Disabled,
+	"enabled":  TransparentDataEncryptionProperties_State_Enabled,
+}
+
 type TransparentDataEncryptionProperties_State_STATUS string
 
 const (
 	TransparentDataEncryptionProperties_State_STATUS_Disabled = TransparentDataEncryptionProperties_State_STATUS("Disabled")
 	TransparentDataEncryptionProperties_State_STATUS_Enabled  = TransparentDataEncryptionProperties_State_STATUS("Enabled")
 )
+
+// Mapping from string to TransparentDataEncryptionProperties_State_STATUS
+var transparentDataEncryptionProperties_State_STATUS_Values = map[string]TransparentDataEncryptionProperties_State_STATUS{
+	"disabled": TransparentDataEncryptionProperties_State_STATUS_Disabled,
+	"enabled":  TransparentDataEncryptionProperties_State_STATUS_Enabled,
+}
 
 func init() {
 	SchemeBuilder.Register(&ServersDatabasesTransparentDataEncryption{}, &ServersDatabasesTransparentDataEncryptionList{})

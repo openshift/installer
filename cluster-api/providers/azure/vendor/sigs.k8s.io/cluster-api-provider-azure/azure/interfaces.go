@@ -21,11 +21,14 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
+	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 
 // Reconciler is a generic interface for a controller reconciler which has Reconcile and Delete methods.
@@ -162,4 +165,13 @@ type ASOResourceSpecGetter[T genruntime.MetaObject] interface {
 	// WasManaged returns whether or not the given resource was managed by a
 	// non-ASO-backed CAPZ and should be considered eligible for adoption.
 	WasManaged(T) bool
+}
+
+// CredentialCache caches azcore.TokenCredentials.
+type CredentialCache interface {
+	GetOrStoreClientSecret(tenantID, clientID, clientSecret string, opts *azidentity.ClientSecretCredentialOptions) (azcore.TokenCredential, error)
+	GetOrStoreClientCert(tenantID, clientID string, cert, certPassword []byte, opts *azidentity.ClientCertificateCredentialOptions) (azcore.TokenCredential, error)
+	GetOrStoreManagedIdentity(opts *azidentity.ManagedIdentityCredentialOptions) (azcore.TokenCredential, error)
+	GetOrStoreWorkloadIdentity(opts *azidentity.WorkloadIdentityCredentialOptions) (azcore.TokenCredential, error)
+	GetOrStoreUserAssignedManagedIdentityCredentials(ctx context.Context, credsPath string, opts azcore.ClientOptions, logger *logr.Logger) (azcore.TokenCredential, error)
 }

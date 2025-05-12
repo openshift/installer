@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 )
@@ -51,7 +52,7 @@ func (s *RouteTableSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the route table.
-func (s *RouteTableSpec) Parameters(ctx context.Context, existing interface{}) (params interface{}, err error) {
+func (s *RouteTableSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
 	if existing != nil {
 		if _, ok := existing.(armnetwork.RouteTable); !ok {
 			return nil, errors.Errorf("%T is not an armnetwork.RouteTable", existing)
