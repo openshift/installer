@@ -17,5 +17,50 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			Condition:       c.ControlPlane != nil && c.ControlPlane.Fencing != nil,
 			Field:           field.NewPath("platform", "none", "fencingCredentials"),
 		},
+		{
+			FeatureGateName: features.FeatureGateMultiDiskSetup,
+			Condition:       c.ControlPlane != nil && len(c.ControlPlane.DiskSetup) != 0,
+			Field:           field.NewPath("controlPlane", "diskSetup"),
+		},
+		{
+			FeatureGateName: features.FeatureGateMultiDiskSetup,
+			Condition: func() bool {
+				computeMachinePool := c.Compute
+				for _, compute := range computeMachinePool {
+					if len(compute.DiskSetup) != 0 {
+						return true
+					}
+				}
+				return false
+			}(),
+			Field: field.NewPath("compute", "diskSetup"),
+		},
+		{
+			FeatureGateName: features.FeatureGateNodeSwap,
+			Condition: func() bool {
+				computeMachinePool := c.Compute
+				for _, compute := range computeMachinePool {
+					for _, ds := range compute.DiskSetup {
+						if ds.Type == types.Swap {
+							return true
+						}
+					}
+				}
+				return false
+			}(),
+			Field: field.NewPath("compute", "diskSetup"),
+		},
+		{
+			FeatureGateName: features.FeatureGateNodeSwap,
+			Condition: func() bool {
+				for _, ds := range c.ControlPlane.DiskSetup {
+					if ds.Type == types.Swap {
+						return true
+					}
+				}
+				return false
+			}(),
+			Field: field.NewPath("controlPlane", "diskSetup"),
+		},
 	}
 }
