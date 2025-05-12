@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/IBM-Cloud/bluemix-go/crn"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -153,6 +154,32 @@ func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 	}
 	if a.Config.PowerVS != nil {
 		a.PowerVS = icpowervs.NewMetadata(a.Config)
+		if a.Config.Publish == types.InternalPublishingStrategy && a.Config.PowerVS.VPCName == "" {
+			var err error
+			client, err := icpowervs.NewClient()
+			if err != nil {
+				return err
+			}
+			var zoneID string
+			zoneID, err = client.GetDNSZoneIDByName(context.TODO(), a.Config.BaseDomain, types.InternalPublishingStrategy)
+			if err != nil {
+				return fmt.Errorf("failed to get DNS zone ID: %w", err)
+			}
+			var dnsInstanceCRN string
+			dnsInstanceCRN, err = a.PowerVS.DNSInstanceCRN(context.TODO())
+			if err != nil {
+				return err
+			}
+			var dnsCRN crn.CRN
+			dnsCRN, err = crn.Parse(dnsInstanceCRN)
+			if err != nil {
+				return fmt.Errorf("failed to parse DNSInstanceCRN: %w", err)
+			}
+			a.Config.PowerVS.VPCName, err = icpowervs.GetUserSelectedPermittedNetwork(zoneID, dnsCRN, a.Config.Platform.PowerVS.Region)
+			if err != nil {
+				return fmt.Errorf("failed to get the DNS zone's permitted network to be used for the cluster: %w", err)
+			}
+		}
 	}
 	if a.Config.VSphere != nil {
 		a.VSphere = icvsphere.NewMetadata()
