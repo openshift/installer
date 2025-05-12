@@ -13,14 +13,18 @@
 * `standardDDCSv3Family`
 * `standardDDSv4Family`
 * `standardDDSv5Family`
+* `StandardDdsv6Family`
 * `standardDLDSv5Family`
+* `StandardDldsv6Family`
 * `standardDLSv5Family`
+* `StandardDlsv6Family`
 * `standardDSFamily`
 * `standardDSv2Family`
 * `standardDSv2PromoFamily`
 * `standardDSv3Family`
 * `standardDSv4Family`
 * `standardDSv5Family`
+* `StandardDsv6Family`
 * `standardEADSv5Family`
 * `standardEASv4Family`
 * `standardEASv5Family`
@@ -74,5 +78,7 @@
 * `StandardNGADSV620v1Family`
 * `standardNPSFamily`
 * `StandardNVADSA10v5Family`
+* `StandardNVadsV710v5Family`
+* `Standard NDASv4_A100 Family`
 * `standardNVSv3Family`
 * `standardXEISv4Family`
