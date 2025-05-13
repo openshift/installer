@@ -2,6 +2,7 @@ package image
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"net"
@@ -55,38 +56,11 @@ func (*ImageBasedInstallationConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{}
 }
 
+//go:embed config_template.yaml
+var configTemplate string
+
 // Generate generates the Image-based Installation Config YAML manifest.
 func (i *ImageBasedInstallationConfig) Generate(_ context.Context, dependencies asset.Parents) error {
-	configTemplate := `#
-# Note: This is a sample ImageBasedInstallationConfig file showing
-# which fields are available to aid you in creating your
-# own image-based-installation-config.yaml file.
-#
-apiVersion: v1beta1
-kind: ImageBasedInstallationConfig
-metadata:
-  name: example-image-based-installation-config
-# The following fields are required
-seedImage: quay.io/openshift-kni/seed-image:4.16.0
-seedVersion: 4.16.0
-installationDisk: /dev/vda
-pullSecret: '<your-pull-secret>'
-# networkConfig is optional and contains the network configuration for the host in NMState format.
-# See https://nmstate.io/examples.html for examples.
-# networkConfig:
-#   interfaces:
-#     - name: eth0
-#       type: ethernet
-#       state: up
-#       mac-address: 00:00:00:00:00:00
-#       ipv4:
-#         enabled: true
-#         address:
-#           - ip: 192.168.122.2
-#             prefix-length: 23
-#         dhcp: false
-`
-
 	i.Template = configTemplate
 
 	// Set the File field correctly with the generated image-based installation config YAML content.
