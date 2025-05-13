@@ -31,7 +31,7 @@ platform:
     loadBalancer:
       type: UserManaged
     apiVIPs:
-      - 10.0.128.10
+    - 10.0.128.10
     ingressVIPs:
-      - 10.0.128.20
+    - 10.0.128.20
 pullSecret: ${PULL_SECRET}
