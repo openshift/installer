@@ -13,6 +13,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
@@ -101,7 +103,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		rootCA,
 	)
 
-	var clusterIDs []string
+	var capiClusters []*clusterv1.Cluster
 
 	// Collect cluster and non-machine-related infra manifests
 	// to be applied during the initial stage.
@@ -109,7 +111,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	for _, m := range capiManifestsAsset.RuntimeFiles() {
 		// Check for cluster definition so that we can collect the names.
 		if cluster, ok := m.Object.(*clusterv1.Cluster); ok {
-			clusterIDs = append(clusterIDs, cluster.GetName())
+			capiClusters = append(capiClusters, cluster)
 		}
 
 		infraManifests = append(infraManifests, m.Object)
@@ -188,10 +190,10 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	logrus.Info("Done creating infra manifests")
 
 	// Pass cluster kubeconfig and store it in; this is usually the role of a bootstrap provider.
-	for _, capiClusterID := range clusterIDs {
-		logrus.Infof("Creating kubeconfig entry for capi cluster %v", capiClusterID)
+	for _, capiCluster := range capiClusters {
+		logrus.Infof("Creating kubeconfig entry for capi cluster %v", capiCluster.GetName())
 		key := client.ObjectKey{
-			Name:      capiClusterID,
+			Name:      capiCluster.GetName(),
 			Namespace: capiutils.Namespace,
 		}
 		cluster := &clusterv1.Cluster{}
@@ -217,43 +219,41 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	untilTime := time.Now().Add(networkTimeout)
 	timezone, _ := untilTime.Zone()
 	logrus.Infof("Waiting up to %v (until %v %s) for network infrastructure to become ready...", networkTimeout, untilTime.Format(time.Kitchen), timezone)
-	var cluster *clusterv1.Cluster
 	{
 		if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, networkTimeout, true,
 			func(ctx context.Context) (bool, error) {
-				c := &clusterv1.Cluster{}
-				var clusters []*clusterv1.Cluster
-				for _, curClusterID := range clusterIDs {
+				for _, capiCluster := range capiClusters {
 					if err := cl.Get(ctx, client.ObjectKey{
-						Name:      curClusterID,
+						Name:      capiCluster.GetName(),
 						Namespace: capiutils.Namespace,
-					}, c); err != nil {
+					}, capiCluster); err != nil {
 						if apierrors.IsNotFound(err) {
 							return false, nil
 						}
 						return false, err
 					}
-					clusters = append(clusters, c)
 				}
-
-				for _, curCluster := range clusters {
-					if !curCluster.Status.InfrastructureReady {
+				for _, capiCluster := range capiClusters {
+					if !capiCluster.Status.InfrastructureReady {
 						return false, nil
 					}
 				}
-
-				cluster = clusters[0]
 				return true, nil
 			}); err != nil {
+			// Attempt to find and report falsy conditions in infra cluster if any.
+			if len(capiClusters) > 0 {
+				warnIfFalsyInfraConditions(ctx, capiClusters[0].Spec.InfrastructureRef, cl)
+			}
 			if wait.Interrupted(err) {
-				return fileList, fmt.Errorf("infrastructure was not ready within %v: %w", networkTimeout, err)
+				return fileList, fmt.Errorf("infrastructure was not ready within %v", networkTimeout)
 			}
 			return fileList, fmt.Errorf("infrastructure is not ready: %w", err)
 		}
-		if cluster == nil {
+
+		if len(capiClusters) == 0 {
 			return fileList, fmt.Errorf("error occurred during load balancer ready check")
 		}
-		if cluster.Spec.ControlPlaneEndpoint.Host == "" {
+		if capiClusters[0].Spec.ControlPlaneEndpoint.Host == "" {
 			return fileList, fmt.Errorf("control plane endpoint is not set")
 		}
 	}
@@ -317,6 +317,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	// Create the machine manifests.
 	timer.StartTimer(machineStage)
 	machineNames := []string{}
+	capiMachines := []*clusterv1.Machine{}
 
 	for _, m := range machineManifests {
 		m.SetNamespace(capiutils.Namespace)
@@ -327,6 +328,7 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 
 		if machine, ok := m.(*clusterv1.Machine); ok {
 			machineNames = append(machineNames, machine.Name)
+			capiMachines = append(capiMachines, machine)
 		}
 		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
 	}
@@ -345,10 +347,9 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 		if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, provisionTimeout, true,
 			func(ctx context.Context) (bool, error) {
 				allReady := true
-				for _, machineName := range machineNames {
-					machine := &clusterv1.Machine{}
+				for _, machine := range capiMachines {
 					if err := cl.Get(ctx, client.ObjectKey{
-						Name:      machineName,
+						Name:      machine.Name,
 						Namespace: capiutils.Namespace,
 					}, machine); err != nil {
 						if apierrors.IsNotFound(err) {
@@ -357,7 +358,8 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 						}
 						return false, err
 					}
-					reqPubIP := reqBootstrapPubIP && machineName == capiutils.GenerateBoostrapMachineName(clusterID.InfraID)
+
+					reqPubIP := reqBootstrapPubIP && machine.Name == capiutils.GenerateBoostrapMachineName(clusterID.InfraID)
 					ready, err := checkMachineReady(machine, reqPubIP)
 					if err != nil {
 						return false, fmt.Errorf("failed waiting for machines: %w", err)
@@ -370,8 +372,14 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 				}
 				return allReady, nil
 			}); err != nil {
+			// Attempt to find and report falsy conditions in infra machines if any.
+			for _, machine := range capiMachines {
+				if machine != nil {
+					warnIfFalsyInfraConditions(ctx, &machine.Spec.InfrastructureRef, cl)
+				}
+			}
 			if wait.Interrupted(err) {
-				return fileList, fmt.Errorf("%s within %v: %w", asset.ControlPlaneCreationError, provisionTimeout, err)
+				return fileList, fmt.Errorf("%s within %v", asset.ControlPlaneCreationError, provisionTimeout)
 			}
 			return fileList, fmt.Errorf("%s: machines are not ready: %w", asset.ControlPlaneCreationError, err)
 		}
@@ -659,4 +667,67 @@ func hasRequiredIP(machine *clusterv1.Machine, requirePublicIP bool) bool {
 	}
 	logrus.Debugf("Still waiting for machine %s to get required IPs", machine.Name)
 	return false
+}
+
+// gatherInfraConditions gather conditions from CAPI infra cluster or machine
+// in a provider-agnostic way from the "status.condition" field, which should be present in all providers.
+// https://cluster-api.sigs.k8s.io/developer/providers/contracts/infra-cluster#infracluster-conditions
+// https://cluster-api.sigs.k8s.io/developer/providers/contracts/infra-machine#inframachine-conditions
+func gatherInfraConditions(ctx context.Context, objRef *corev1.ObjectReference, cl client.Client) (clusterv1.Conditions, error) {
+	unstructuredObj := &unstructured.Unstructured{}
+	unstructuredObj.SetGroupVersionKind(objRef.GroupVersionKind())
+
+	if err := cl.Get(ctx, client.ObjectKey{
+		Namespace: objRef.Namespace,
+		Name:      objRef.Name,
+	}, unstructuredObj); err != nil {
+		return nil, err
+	}
+
+	// Field .status.conditions should be implemented by all providers
+	// and has type clusterv1.Conditions
+	infraObj := &struct {
+		Status struct {
+			Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+		} `json:"status,omitempty"`
+	}{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.UnstructuredContent(), infraObj); err != nil {
+		return nil, err
+	}
+
+	return infraObj.Status.Conditions, nil
+}
+
+// warnIfFalsyInfraConditions logs warning messages for any conditions that are not "True"
+// in the infra cluster or machine status.
+func warnIfFalsyInfraConditions(ctx context.Context, objRef *corev1.ObjectReference, cl client.Client) {
+	apiVersion, kind := objRef.GroupVersionKind().ToAPIVersionAndKind()
+	objInfo := fmt.Sprintf("apiVersion=%s, kind=%s, namespace=%s, name=%s", apiVersion, kind, objRef.Namespace, objRef.Name)
+
+	logrus.Debugf("Gathering conditions for %s", objInfo)
+	conditions, err := gatherInfraConditions(ctx, objRef, cl)
+	if err != nil {
+		logrus.Warnf("Failed to gather conditions: %s", err.Error())
+		return
+	}
+
+	logrus.Debugf("Checking conditions for %s", objInfo)
+	if len(conditions) > 0 {
+		var falsyConditions clusterv1.Conditions
+		for _, condition := range conditions {
+			if condition.Status != corev1.ConditionTrue {
+				falsyConditions = append(falsyConditions, condition)
+			}
+		}
+
+		if len(falsyConditions) == 0 {
+			logrus.Debugf("All conditions are satisfied")
+		}
+		for _, condition := range falsyConditions {
+			logrus.Warnf("Condition %s has status: %q, reason: %q, message: %q", condition.Type, condition.Status, condition.Reason, condition.Message)
+		}
+	} else {
+		logrus.Debugf("No conditions found")
+	}
+	logrus.Debugf("Done checking conditions for %s", objInfo)
 }
