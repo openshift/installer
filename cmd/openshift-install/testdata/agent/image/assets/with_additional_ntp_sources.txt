@@ -74,6 +74,7 @@ spec:
 status:
   agentLabelSelector: {}
   bootArtifacts:
+    discoveryIgnitionURL: ""
     initrd: ""
     ipxeScript: ""
     kernel: ""

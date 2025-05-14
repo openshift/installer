@@ -62,6 +62,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 			ProvisionRequirements: hiveext.ProvisionRequirements{
 				ControlPlaneAgents: 3,
 				WorkerAgents:       5,
+				ArbiterAgents:      1,
 			},
 		},
 	}
@@ -96,11 +97,12 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	agentAuthToken := "agentAuthToken"
 	userAuthToken := "userAuthToken"
 	watcherAuthToken := "watcherAuthToken"
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, agentAuthToken, userAuthToken, watcherAuthToken, "", "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries, "minimal-iso", infraEnvID, publicKey, gencrypto.AuthType, agentAuthToken, userAuthToken, watcherAuthToken, "", "", haveMirrorConfig, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.ArbiterAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, osImage, proxy)
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, templateData.ControlPlaneAgents)
+	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.ArbiterAgents, templateData.ArbiterAgents)
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, templateData.WorkerAgents)
 	assert.Equal(t, releaseImageList, templateData.ReleaseImages)
 	assert.Equal(t, releaseImage, templateData.ReleaseImage)
@@ -649,6 +651,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
 						WorkerAgents:       5,
+						ArbiterAgents:      1,
 					},
 				},
 			},

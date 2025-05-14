@@ -22,13 +22,11 @@ const (
 	ClusterInstallationStoppedReason string = "ClusterInstallationStopped"
 	ClusterInstallationStoppedMsg    string = "The cluster installation stopped"
 	ClusterInsufficientAgentsReason  string = "InsufficientAgents"
-	ClusterInsufficientAgentsMsg     string = "The cluster currently requires %d agents but only %d have registered"
+	ClusterInsufficientAgentsMsg     string = "The cluster currently requires exactly %d master agents, %d arbiter agents and %d worker agents, but currently registered %d master agents, %d arbiter agents and %d worker agents"
 	ClusterUnapprovedAgentsReason    string = "UnapprovedAgents"
 	ClusterUnapprovedAgentsMsg       string = "The installation is pending on the approval of %d agents"
 	ClusterUnsyncedAgentsReason      string = "UnsyncedAgents"
 	ClusterUnsyncedAgentsMsg         string = "The cluster currently has %d agents with spec error"
-	ClusterAdditionalAgentsReason    string = "AdditionalAgents"
-	ClusterAdditionalAgentsMsg       string = "The cluster currently requires exactly %d agents but have %d registered"
 
 	ClusterValidatedCondition        hivev1.ClusterInstallConditionType = "Validated"
 	ClusterValidationsOKMsg          string                             = "The cluster's validations are passing"
@@ -84,6 +82,8 @@ const (
 	ClusterLastInstallationPreparationFailedErrorReason string                             = "The last installation preparation failed"
 	ClusterLastInstallationPreparationPending           string                             = "Cluster preparation has never been performed for this cluster"
 	ClusterLastInstallationPreparationFailedCondition   hivev1.ClusterInstallConditionType = "LastInstallationPreparationFailed"
+
+	ClusterConsumerLabel string = "agentclusterinstalls.agent-install.openshift.io/consumer"
 )
 
 // +genclient
@@ -205,6 +205,16 @@ type AgentClusterInstallSpec struct {
 	// Set to true to allow control plane nodes to be schedulable
 	// +optional
 	MastersSchedulable bool `json:"mastersSchedulable,omitempty"`
+
+	// MirrorRegistryRef is a reference to ClusterMirrorRegistry ConfigMap that holds the registries toml
+	// data
+	// Set per cluster mirror registry
+	// +optional
+	MirrorRegistryRef *MirrorRegistryConfigMapReference `json:"mirrorRegistryRef,omitempty"`
+
+	// LoadBalancer defines the load balancer used by the cluster for ingress traffic.
+	// +optional
+	LoadBalancer *LoadBalancer `json:"loadBalancer,omitempty"`
 }
 
 // IgnitionEndpoint stores the data to of the custom ignition endpoint.
@@ -355,7 +365,7 @@ type ClusterNetworkEntry struct {
 type ProvisionRequirements struct {
 
 	// ControlPlaneAgents is the number of matching approved and ready Agents with the control plane role
-	// required to launch the install. Must be either 1 or 3.
+	// required to launch the install. Must be either 1 or 3-5.
 	ControlPlaneAgents int `json:"controlPlaneAgents"`
 
 	// WorkerAgents is the minimum number of matching approved and ready Agents with the worker role
@@ -363,6 +373,12 @@ type ProvisionRequirements struct {
 	// +kubebuilder:validation:Minimum=0
 	// +optional
 	WorkerAgents int `json:"workerAgents,omitempty"`
+
+	// ArbiterAgents is the minimum number of matching approved and ready Agents with the arbiter role
+	// required to launch the install.
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	ArbiterAgents int `json:"arbiterAgents,omitempty"`
 }
 
 // HyperthreadingMode is the mode of hyperthreading for a machine.
@@ -502,6 +518,41 @@ type ManifestsConfigMapReference struct {
 	Name string `json:"name"`
 }
 
+// LoadBalancer defines the load balancer used by the cluster.
+// +union
+type LoadBalancer struct {
+	// Type defines the type of load balancer used by the cluster, which can be managed by the user or by the
+	// cluster. The default value is ClusterManaged.
+	// +default="ClusterManaged"
+	// +kubebuilder:default:="ClusterManaged"
+	// +kubebuilder:validation:Enum:="ClusterManaged";"UserManaged"
+	// +optional
+	// +unionDiscriminator
+	Type LoadBalancerType `json:"type,omitempty"`
+}
+
+// LoadBalancerType defines the type of load balancer used by the cluster.
+type LoadBalancerType string
+
+const (
+	// LoadBalancerTypeClusterManaged is a load balancer with virtual IP addresses managed internally by the
+	// cluster.
+	LoadBalancerTypeClusterManaged LoadBalancerType = "ClusterManaged"
+
+	// LoadBalancerTypeUserManaged is a load balancer managed outside of the cluster by the customer. When this is
+	// used no virtual IP addresses should be specified. Note that this is only allowed for the bare metal and
+	// vSphere platforms.
+	LoadBalancerTypeUserManaged LoadBalancerType = "UserManaged"
+)
+
 func init() {
 	SchemeBuilder.Register(&AgentClusterInstall{}, &AgentClusterInstallList{})
+}
+
+// MirrorRegistryConfigMapReference contains reference to a ConfigMap for mirror registry
+type MirrorRegistryConfigMapReference struct {
+	// Name is the name of the ConfigMap that this refers to
+	Name string `json:"name"`
+	// Namespace of the ConfigMap
+	Namespace string `json:"namespace"`
 }

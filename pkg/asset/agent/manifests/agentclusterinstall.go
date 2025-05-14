@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
+	configv1 "github.com/openshift/api/config/v1"
 	operv1 "github.com/openshift/api/operator/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
@@ -122,6 +123,10 @@ type agentClusterInstallInstallConfigOverrides struct {
 	CPUPartitioning types.CPUPartitioningMode `json:"cpuPartitioningMode,omitempty"`
 	// Allow override of AdditionalTrustBundlePolicy
 	AdditionalTrustBundlePolicy types.PolicyType `json:"additionalTrustBundlePolicy,omitempty"`
+	// Allow override of FeatureSet
+	FeatureSet configv1.FeatureSet `json:"featureSet,omitempty"`
+	// Allow override of FeatureGates
+	FeatureGates []string `json:"featureGates,omitempty"`
 }
 
 var _ asset.WritableAsset = (*AgentClusterInstall)(nil)
@@ -165,6 +170,11 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 		var numberOfWorkers int = 0
 		for _, compute := range installConfig.Config.Compute {
 			numberOfWorkers = numberOfWorkers + int(*compute.Replicas)
+		}
+
+		numberOfArbiters := 0
+		if installConfig.Config.IsArbiterEnabled() {
+			numberOfArbiters = int(*installConfig.Config.Arbiter.Replicas)
 		}
 
 		clusterNetwork := []hiveext.ClusterNetworkEntry{}
@@ -213,6 +223,7 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 				SSHPublicKey: strings.Trim(installConfig.Config.SSHKey, "|\n\t"),
 				ProvisionRequirements: hiveext.ProvisionRequirements{
 					ControlPlaneAgents: int(*installConfig.Config.ControlPlane.Replicas),
+					ArbiterAgents:      numberOfArbiters,
 					WorkerAgents:       numberOfWorkers,
 				},
 				PlatformType: agent.HivePlatformType(installConfig.Config.Platform),
@@ -235,6 +246,16 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 		if installConfig.Config.FIPS {
 			icOverridden = true
 			icOverrides.FIPS = installConfig.Config.FIPS
+		}
+
+		if len(installConfig.Config.FeatureSet) > 0 {
+			icOverridden = true
+			icOverrides.FeatureSet = installConfig.Config.FeatureSet
+		}
+
+		if len(installConfig.Config.FeatureGates) > 0 {
+			icOverridden = true
+			icOverrides.FeatureGates = installConfig.Config.FeatureGates
 		}
 
 		if installConfig.Config.Proxy != nil {
