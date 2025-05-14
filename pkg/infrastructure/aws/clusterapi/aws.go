@@ -104,21 +104,163 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	return ignSecrets, nil
 }
 
-// InfraReady creates private hosted zone and DNS records.
-func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
-	awsCluster := &capa.AWSCluster{}
-	key := k8sClient.ObjectKey{
-		Name:      in.InfraID,
-		Namespace: capiutils.Namespace,
+// infraReadyHookCIOSecurityGroups
+func (*Provider) infraReadyHookCIOSecurityGroups(
+	ctx context.Context,
+	in clusterapi.InfraReadyInput,
+	awsSession *session.Session,
+	awsCluster *capa.AWSCluster,
+) (err error) {
+	// TODO add feature gate IngressNLBSecurityGroup checks
+	// Check if the CIO requires a security group
+	confAWS := in.InstallConfig.Config.Platform.AWS
+	if confAWS.IngressController == nil {
+		return nil
 	}
-	if err := in.Client.Get(ctx, key, awsCluster); err != nil {
-		return fmt.Errorf("failed to get AWSCluster: %w", err)
+	// Skip non NLB
+	if confAWS.LBType != "NLB" {
+		return nil
+	}
+	// only create ingress lb SG if the flag is enabled
+	if confAWS.IngressController.SecurityGroupEnabled {
+		return nil
 	}
 
-	awsSession, err := in.InstallConfig.AWS.Session(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get aws session: %w", err)
+	client := ec2.New(awsSession, aws.NewConfig().WithRegion(awsCluster.Spec.Region))
+
+	// Generate the security group name when not retrieving from IC.
+	// Option 1) receipt SG from install-config
+	sgNames := make(map[string]bool)
+	// TODO check if we can hide tehe SecurityGroups from install-config and keep only the boolean for SecurityGroupEnabled
+	for _, sgConfig := range confAWS.IngressController.SecurityGroups {
+		// Skip checking sg-
+		if strings.HasPrefix(sgConfig, "sg-") {
+			continue
+		}
+		sgs, err := client.DescribeSecurityGroupsWithContext(ctx, &ec2.DescribeSecurityGroupsInput{
+			Filters: []*ec2.Filter{{
+				Name:   aws.String("vpc-id"),
+				Values: []*string{aws.String(awsCluster.Spec.NetworkSpec.VPC.ID)},
+			}},
+		})
+		if err != nil {
+			return fmt.Errorf("error finding security group in vpc %q: %w", awsCluster.Spec.NetworkSpec.VPC.ID, err)
+		}
+		for _, sg := range sgs.SecurityGroups {
+			if aws.StringValue(sg.GroupId) == sgConfig {
+				sgNames[sgConfig]=true
+				break
+			}
+		}
 	}
+
+	for sgName, _ := range sgNames {
+		logrus.Debugf("Creating the security group %s in VPC %s", sgName, awsCluster.Spec.NetworkSpec.VPC.ID)
+
+		tags := []*ec2.Tag{{
+			Key:   aws.String("Name"),
+			Value: aws.String(sgName),
+		}}
+		for k, v := range awsCluster.Spec.AdditionalTags {
+			tags = append(tags, &ec2.Tag{
+				Key:   aws.String(k),
+				Value: aws.String(v),
+			})
+		}
+
+		out, err := client.CreateSecurityGroupWithContext(ctx, &ec2.CreateSecurityGroupInput{
+			VpcId:       aws.String(awsCluster.Spec.NetworkSpec.VPC.ID),
+			GroupName:   aws.String(sgName),
+			Description: aws.String("OpenShift Cluster Ingress Operator SG for default router"),
+			TagSpecifications: []*ec2.TagSpecification{
+				{
+					ResourceType: aws.String("security-group"),
+					Tags:         tags,
+				},
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("unable to create security group: %w", err)
+		}
+		logrus.Debugf("Created managed SecurityGroup %q", aws.StringValue(out.GroupId))
+
+		// Create Ingress rules
+		_, err = client.AuthorizeSecurityGroupIngressWithContext(ctx, &ec2.AuthorizeSecurityGroupIngressInput{
+			GroupId: out.GroupId,
+			IpPermissions: []*ec2.IpPermission{
+				{
+					IpProtocol: aws.String("tcp"),
+					FromPort:   aws.Int64(80),
+					ToPort:     aws.Int64(80),
+					IpRanges: []*ec2.IpRange{
+						{
+							CidrIp:      aws.String("0.0.0.0/0"),
+							Description: aws.String("Allow HTTP traffic"),
+						},
+					},
+				},
+				{
+					IpProtocol: aws.String("tcp"),
+					FromPort:   aws.Int64(443),
+					ToPort:     aws.Int64(443),
+					IpRanges: []*ec2.IpRange{
+						{
+							CidrIp:      aws.String("0.0.0.0/0"),
+							Description: aws.String("Allow HTTPS traffic"),
+						},
+					},
+				},
+			},
+		})
+		if err != nil {
+			var awsErr awserr.Error
+			if errors.As(err, &awsErr) && awsErr.Code() == "InvalidPermission.Duplicate" {
+				logrus.Warnf("Ingress rule already exists for SecurityGroup %q: %v", aws.StringValue(out.GroupId), err)
+			} else {
+				return fmt.Errorf("failed to create ingress rules for security group %q: %w", aws.StringValue(out.GroupId), err)
+			}
+		} else {
+			logrus.Debugf("Ingress rules created for SecurityGroup %q", aws.StringValue(out.GroupId))
+		}
+
+		// Create Egress rules
+		// Allow ALL egress rule is created by default
+		_, err = client.AuthorizeSecurityGroupEgressWithContext(ctx, &ec2.AuthorizeSecurityGroupEgressInput{
+			GroupId: out.GroupId,
+			IpPermissions: []*ec2.IpPermission{
+				{
+					IpProtocol: aws.String("-1"), // Allow all protocols
+					IpRanges: []*ec2.IpRange{
+						{
+							CidrIp:      aws.String("0.0.0.0/0"),
+							Description: aws.String("Allow all outbound traffic"),
+						},
+					},
+				},
+			},
+		})
+		if err != nil {
+			var awsErr awserr.Error
+			if errors.As(err, &awsErr) && awsErr.Code() == "InvalidPermission.Duplicate" {
+				logrus.Warnf("Egress rule already exists for SecurityGroup %q: %v", aws.StringValue(out.GroupId), err)
+			} else {
+				return fmt.Errorf("failed to create egress rules for security group %q: %w", aws.StringValue(out.GroupId), err)
+			}
+		} else {
+			logrus.Debugf("Egress rules created for SecurityGroup %q", aws.StringValue(out.GroupId))
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) infraReadyHookDNS(
+	ctx context.Context,
+	in clusterapi.InfraReadyInput,
+	awsSession *session.Session,
+	awsCluster *capa.AWSCluster,
+) (err error) {
+	client := awsconfig.NewClient(awsSession)
 
 	subnetIDs := make([]string, 0, len(awsCluster.Spec.NetworkSpec.Subnets))
 	for _, s := range awsCluster.Spec.NetworkSpec.Subnets {
@@ -134,8 +276,6 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		}
 	}
 
-	client := awsconfig.NewClient(awsSession)
-
 	// The user has selected to provision their own DNS solution. Skip the creation of the
 	// Hosted Zone(s) and the records for those zones.
 	if in.InstallConfig.Config.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
@@ -147,8 +287,10 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 
 	phzID := in.InstallConfig.Config.AWS.HostedZone
 	if len(phzID) == 0 {
+		// TODO(mtulio): file a bug when REENTRANT=true: need to check if PHZ has been already created before creating
+		// or handle error/exception ConflictingDomainExists. Full error:
+		//  ERROR failed to fetch Cluster: failed to generate asset "Cluster": failed to create cluster: failed provisioning resources after infrastructure ready: failed to create private hosted zone: error creating private hosted zone: ConflictingDomainExists: The VPC vpc-006ef9b0ada34e881 in region us-east-1 has already been associated with the hosted zone Z04314343JJ3BIPAD8WRA with the same domain name.
 		logrus.Debugln("Creating private Hosted Zone")
-
 		res, err := client.CreateHostedZone(ctx, &awsconfig.HostedZoneInput{
 			InfraID:  in.InfraID,
 			VpcID:    vpcID,
@@ -158,7 +300,12 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 			UserTags: awsCluster.Spec.AdditionalTags,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create private hosted zone: %w", err)
+			var awsErr awserr.Error
+			if errors.As(err, &awsErr) && awsErr.Code() == "ConflictingDomainExists" {
+				logrus.Warnf("Private hosted zone already exists: %v", err)
+			} else {
+				return fmt.Errorf("failed to create private hosted zone: %w", err)
+			}
 		}
 		phzID = aws.StringValue(res.Id)
 		logrus.Infoln("Created private Hosted Zone")
@@ -223,6 +370,39 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		return fmt.Errorf("failed to create records for api-int in private zone: %w", err)
 	}
 	logrus.Debugln("Created private API record in private zone")
+	return nil
+}
+
+// InfraReady creates additional infrastructure resources not covered by Cluster API,
+// such as private hosted zone and DNS records, extra ingress security groups, etc.
+func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
+	awsCluster := &capa.AWSCluster{}
+	key := k8sClient.ObjectKey{
+		Name:      in.InfraID,
+		Namespace: capiutils.Namespace,
+	}
+	if err := in.Client.Get(ctx, key, awsCluster); err != nil {
+		return fmt.Errorf("failed to get AWSCluster: %w", err)
+	}
+
+	awsSession, err := in.InstallConfig.AWS.Session(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get aws session: %w", err)
+	}
+
+	// InfraReady for feature-specific
+
+	// Provision DNS
+	if err := p.infraReadyHookDNS(ctx, in, awsSession, awsCluster); err != nil {
+		return err
+	}
+
+	// Create Cluster Ingress Operator security groups, when the configuration is added.
+	// Ingress NGLB with SG feature: option 1) installer provisioned SG (uncomment the next statement)
+	// Currently we are validating Option 2) CCM provisioned SG
+	if err := p.infraReadyHookCIOSecurityGroups(ctx, in, awsSession, awsCluster); err != nil {
+		return err
+	}
 
 	return nil
 }
