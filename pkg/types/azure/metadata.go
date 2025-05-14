@@ -7,7 +7,6 @@ type Metadata struct {
 	Region                      string           `json:"region"`
 	ResourceGroupName           string           `json:"resourceGroupName"`
 	BaseDomainResourceGroupName string           `json:"baseDomainResourceGroupName"`
-	BaseDomainName              string           `json:"baseDomainName"`
 }
 
 // Keys used to save Metadata information as tags.
