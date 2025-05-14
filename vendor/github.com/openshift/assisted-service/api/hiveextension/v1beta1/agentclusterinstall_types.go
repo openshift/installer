@@ -363,6 +363,12 @@ type ProvisionRequirements struct {
 	// +kubebuilder:validation:Minimum=0
 	// +optional
 	WorkerAgents int `json:"workerAgents,omitempty"`
+
+	// ArbiterAgents is the minimum number of matching approved and ready Agents with the arbiter role
+	// required to launch the install.
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	ArbiterAgents int `json:"arbiterAgents,omitempty"`
 }
 
 // HyperthreadingMode is the mode of hyperthreading for a machine.
