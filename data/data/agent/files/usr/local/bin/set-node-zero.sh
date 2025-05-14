@@ -48,7 +48,8 @@ if [ "${IS_NODE_ZERO}" = "true" ]; then
     # Create tls certs, if they don't exist, via the installer command.
     # This allows the certs to be created at run-time, e.g. when installed via the UI
     AGENT_TLS_DIR=/opt/agent/tls
-    if [ -z $(ls -A "$AGENT_TLS_DIR") ]; then
+    if [ -z "$(ls -A "$AGENT_TLS_DIR")" ]; then
+       # shellcheck disable=SC1091
        . /usr/local/bin/release-image.sh
        IMAGE=$(image_for installer)
        /usr/bin/podman run --privileged -v /tmp:/assets --rm "${IMAGE}" agent create certificates --dir=/assets
