@@ -88,14 +88,15 @@ func (a *OptionalInstallConfig) validateInstallConfig(ctx context.Context, insta
 		allErrs = append(allErrs, err...)
 	}
 
-	if installConfig.FeatureSet != configv1.Default {
+	// TODO: Remove arbiter check once arbiter hits GA.
+	if installConfig.FeatureSet != configv1.Default && !installConfig.IsArbiterEnabled() {
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("featureSet"), installConfig.FeatureSet, []string{string(configv1.Default)}))
 	}
 
 	warnUnusedConfig(installConfig)
 
-	numMasters, numWorkers := GetReplicaCount(installConfig)
-	logrus.Infof(fmt.Sprintf("Configuration has %d master replicas and %d worker replicas", numMasters, numWorkers))
+	numMasters, numArbiters, numWorkers := GetReplicaCount(installConfig)
+	logrus.Infof("Configuration has %d master replicas, %d arbiter replicas, and %d worker replicas", numMasters, numArbiters, numWorkers)
 
 	if err := a.validateControlPlaneConfiguration(installConfig); err != nil {
 		allErrs = append(allErrs, err...)
@@ -518,11 +519,15 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 	}
 }
 
-// GetReplicaCount gets the configured master and worker replicas.
-func GetReplicaCount(installConfig *types.InstallConfig) (numMasters, numWorkers int64) {
+// GetReplicaCount gets the configured master, arbiter and worker replicas.
+func GetReplicaCount(installConfig *types.InstallConfig) (numMasters, numArbiters, numWorkers int64) {
 	numRequiredMasters := int64(0)
 	if installConfig.ControlPlane != nil && installConfig.ControlPlane.Replicas != nil {
 		numRequiredMasters += *installConfig.ControlPlane.Replicas
+	}
+	numRequiredArbiters := int64(0)
+	if installConfig.Arbiter != nil && installConfig.Arbiter.Replicas != nil {
+		numRequiredArbiters += *installConfig.Arbiter.Replicas
 	}
 
 	numRequiredWorkers := int64(0)
@@ -532,5 +537,5 @@ func GetReplicaCount(installConfig *types.InstallConfig) (numMasters, numWorkers
 		}
 	}
 
-	return numRequiredMasters, numRequiredWorkers
+	return numRequiredMasters, numRequiredArbiters, numRequiredWorkers
 }

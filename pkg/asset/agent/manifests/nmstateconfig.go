@@ -259,7 +259,7 @@ func GetNodeZeroIP(hosts []agenttype.Host, nmStateConfigs []*aiv1beta1.NMStateCo
 	// Select first the configs from the hosts, if defined
 	// Skip worker hosts (or without an explicit role assigned)
 	for _, host := range hosts {
-		if host.Role != "master" {
+		if host.Role != "master" && host.Role != "arbiter" {
 			continue
 		}
 		rawConfigs = append(rawConfigs, host.NetworkConfig.Raw)
@@ -361,10 +361,11 @@ func buildMacInterfaceMap(nmStateConfig aiv1beta1.NMStateConfig) models.MacInter
 }
 
 func validateHostCount(installConfig *types.InstallConfig, agentHosts *agentconfig.AgentHosts) error {
-	numRequiredMasters, numRequiredWorkers := agent.GetReplicaCount(installConfig)
+	numRequiredMasters, numRequiredArbiters, numRequiredWorkers := agent.GetReplicaCount(installConfig)
 
 	numMasters := int64(0)
 	numWorkers := int64(0)
+	numArbiters := int64(0)
 	// Check for hosts explicitly defined
 	for _, host := range agentHosts.Hosts {
 		switch host.Role {
@@ -372,6 +373,8 @@ func validateHostCount(installConfig *types.InstallConfig, agentHosts *agentconf
 			numMasters++
 		case "worker":
 			numWorkers++
+		case "arbiter":
+			numArbiters++
 		}
 	}
 
@@ -380,6 +383,8 @@ func validateHostCount(installConfig *types.InstallConfig, agentHosts *agentconf
 		if host.Role == "" {
 			if numMasters < numRequiredMasters {
 				numMasters++
+			} else if numArbiters < numRequiredArbiters {
+				numArbiters++
 			} else {
 				numWorkers++
 			}
@@ -391,6 +396,13 @@ func validateHostCount(installConfig *types.InstallConfig, agentHosts *agentconf
 	}
 	if numMasters > numRequiredMasters {
 		return fmt.Errorf("the number of master hosts defined (%v) exceeds the configured ControlPlane replicas (%v)", numMasters, numRequiredMasters)
+	}
+
+	if numArbiters != 0 && numArbiters < numRequiredArbiters {
+		logrus.Warnf("not enough arbiter hosts defined (%v) to support all the configured Arbiter replicas (%v)", numArbiters, numRequiredArbiters)
+	}
+	if numArbiters > numRequiredArbiters {
+		return fmt.Errorf("the number of arbiter hosts defined (%v) exceeds the configured Arbiter replicas (%v)", numArbiters, numRequiredArbiters)
 	}
 
 	if numWorkers != 0 && numWorkers < numRequiredWorkers {
