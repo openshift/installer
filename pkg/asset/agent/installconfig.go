@@ -88,10 +88,6 @@ func (a *OptionalInstallConfig) validateInstallConfig(ctx context.Context, insta
 		allErrs = append(allErrs, err...)
 	}
 
-	if installConfig.FeatureSet != configv1.Default {
-		allErrs = append(allErrs, field.NotSupported(field.NewPath("featureSet"), installConfig.FeatureSet, []string{string(configv1.Default)}))
-	}
-
 	warnUnusedConfig(installConfig)
 
 	numMasters, numWorkers := GetReplicaCount(installConfig)
