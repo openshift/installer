@@ -40,6 +40,22 @@ num_known_hosts() {
         done
         echo "Hosts known and ready for cluster installation (${known_hosts}/${total_required_nodes})" 1>&2
     fi
+    if (( known_hosts > total_required_nodes )) && [[ "${TNA_CLUSTERS_SUPPORT}" == "true" ]]; then
+        hosts_suggested_role=$(curl_assisted_service "/infra-envs/${INFRA_ENV_ID}/hosts" GET | jq -r .[].suggested_role)
+        if [[ -n ${hosts_suggested_role} ]]; then
+            local arbiter_count=0
+            for role in ${hosts_suggested_role}; do
+                if [[ "${role}" == "arbiter" ]]; then
+                    ((arbiter_count+=1))
+                fi
+            done
+            if (( known_hosts == $(( total_required_nodes + arbiter_count )) )); then
+                echo "Number of known hosts is greater than total required nodes due to arbiter node, installation can continue" 1>&2
+                echo "${total_required_nodes}"
+                return
+            fi
+        fi
+    fi
     if (( known_hosts != total_required_nodes )); then
         printf '\\e{yellow}Waiting for all hosts to be ready:\\e{reset}\n%d hosts expected\n%d hosts ready, %d hosts not validated' "${total_required_nodes}" "${known_hosts}" "${insufficient_hosts}" | set_issue "${status_issue}"
     fi

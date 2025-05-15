@@ -171,7 +171,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				&joiner.AddNodesConfig{},
 				getInstallConfigSingleHost(),
-				getAgentConfigMultiHost(),
+				getAgentConfigMultiHost("worker"),
 			},
 			expectedConfig: agentHosts().hosts(
 				agentHost().name("test").role("master").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigOne),
@@ -240,7 +240,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigSingleHost(),
 				getAgentConfigInvalidHostRole(),
 			},
-			expectedError:  "invalid Hosts configuration: hosts[0].role: Unsupported value: \"invalid-role\": supported values: \"master\", \"worker\"",
+			expectedError:  "invalid Hosts configuration: hosts[0].role: Unsupported value: \"invalid-role\": supported values: \"master\", \"worker\", \"arbiter\"",
 			expectedConfig: nil,
 		},
 		{
@@ -331,6 +331,18 @@ func TestAgentHosts_Generate(t *testing.T) {
 			expectedConfig: agentHosts().hosts(
 				agentHost().name("test").role("master").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigEmbeddedRendezvousIPOne),
 				agentHost().name("test-2").role("worker").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1b")).networkConfig(agentNetworkConfigEmbeddedRendezvousIPTwo)),
+		},
+		{
+			name: "multi-host-from-agent-config-with-arbiter",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.AddNodesConfig{},
+				getInstallConfigSingleHost(),
+				getAgentConfigMultiHost("arbiter"),
+			},
+			expectedConfig: agentHosts().hosts(
+				agentHost().name("test").role("master").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigOne),
+				agentHost().name("test-2").role("arbiter").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1b")).networkConfig(agentNetworkConfigTwo)),
 		},
 	}
 	for _, tc := range cases {
@@ -439,12 +451,12 @@ func getAgentConfigSingleHost() *AgentConfig {
 	return a
 }
 
-func getAgentConfigMultiHost() *AgentConfig {
+func getAgentConfigMultiHost(role string) *AgentConfig {
 	a := getAgentConfigSingleHost()
 	a.Config.Hosts[0].NetworkConfig.Raw = []byte(agentNetworkConfigOne)
 	host := agent.Host{
 		Hostname: "test-2",
-		Role:     "worker",
+		Role:     role,
 		Interfaces: []*aiv1beta1.Interface{
 			{
 				Name:       "enp3s1",
@@ -460,7 +472,7 @@ func getAgentConfigMultiHost() *AgentConfig {
 }
 
 func getAgentConfigMultiHostEmbeddedRendezvousIP() *AgentConfig {
-	a := getAgentConfigMultiHost()
+	a := getAgentConfigMultiHost("worker")
 	a.Config.RendezvousIP = "192.168.111.1"
 	a.Config.Hosts[0].NetworkConfig.Raw = []byte(agentNetworkConfigEmbeddedRendezvousIPOne)
 	a.Config.Hosts[1].NetworkConfig.Raw = []byte(agentNetworkConfigEmbeddedRendezvousIPTwo)
@@ -536,7 +548,7 @@ func getAgentConfigMissingInterfaces() *AgentConfig {
 }
 
 func getAgentConfigInvalidRendezvousIP() *AgentConfig {
-	a := getAgentConfigMultiHost()
+	a := getAgentConfigMultiHost("worker")
 	a.Config.RendezvousIP = "192.168.111.81"
 	return a
 }
