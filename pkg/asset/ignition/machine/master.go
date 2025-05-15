@@ -60,9 +60,10 @@ func (a *Master) Generate(_ context.Context, dependencies asset.Parents) error {
 				// platform specific...
 				if installConfig.Config.ControlPlane.Platform.Azure != nil {
 					azurePlatform := installConfig.Config.ControlPlane.Platform.Azure
-					device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", azurePlatform.DataDisks[i].Lun)
-
-					AddEtcdDisk(a.Config, device)
+					if d.Etcd.PlatformDiskID == azurePlatform.DataDisks[i].NameSuffix {
+						device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", *azurePlatform.DataDisks[i].Lun)
+						AddEtcdDisk(a.Config, device)
+					}
 				}
 			}
 		}
