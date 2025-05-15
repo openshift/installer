@@ -4,10 +4,14 @@ github.com/Azure/azure-service-operator/v2/api/resources/v1api20200601/storage
 APIVersion: Enum (1 value)
 └── "2020-06-01"
 ResourceGroup: Resource
-├── Spec: Object (6 properties)
+├── Spec: Object (7 properties)
 │   ├── AzureName: string
 │   ├── Location: *string
 │   ├── ManagedBy: *string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
 │   ├── OriginalVersion: string
 │   ├── PropertyBag: genruntime.PropertyBag
 │   └── Tags: map[string]string

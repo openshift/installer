@@ -11,25 +11,31 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	"github.com/Azure/azure-service-operator/v2/api/eventgrid/v1api20200601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 )
 
-var _ genruntime.KubernetesExporter = &TopicExtension{}
+const (
+	key1 = "key1"
+	key2 = "key2"
+)
 
-func (ext *TopicExtension) ExportKubernetesResources(
+var _ genruntime.KubernetesSecretExporter = &TopicExtension{}
+
+func (ext *TopicExtension) ExportKubernetesSecrets(
 	ctx context.Context,
 	obj genruntime.MetaObject,
+	additionalSecrets set.Set[string],
 	armClient *genericarmclient.GenericClient,
-	log logr.Logger) ([]client.Object, error) {
-
+	log logr.Logger,
+) (*genruntime.KubernetesSecretExportResult, error) {
 	// This has to be the current hub storage version. It will need to be updated
 	// if the hub storage version changes.
 	typedObj, ok := obj.(*storage.Topic)
@@ -41,8 +47,10 @@ func (ext *TopicExtension) ExportKubernetesResources(
 	// the hub type has been changed but this extension has not
 	var _ conversion.Hub = typedObj
 
-	hasSecrets := secretsSpecified(typedObj)
-	if !hasSecrets {
+	primarySecrets := secretsSpecified(typedObj)
+	requestedSecrets := set.Union(primarySecrets, additionalSecrets)
+
+	if len(requestedSecrets) == 0 {
 		log.V(Debug).Info("No secrets retrieval to perform as operatorSpec is empty")
 		return nil, nil
 	}
@@ -72,28 +80,41 @@ func (ext *TopicExtension) ExportKubernetesResources(
 		return nil, err
 	}
 
-	return secrets.SliceToClientObjectSlice(secretSlice), nil
+	resolvedSecrets := map[string]string{}
+	if to.Value(resp.Key1) != "" {
+		resolvedSecrets[key1] = to.Value(resp.Key1)
+	}
+	if to.Value(resp.Key2) != "" {
+		resolvedSecrets[key2] = to.Value(resp.Key2)
+	}
+
+	return &genruntime.KubernetesSecretExportResult{
+		Objs:       secrets.SliceToClientObjectSlice(secretSlice),
+		RawSecrets: secrets.SelectSecrets(additionalSecrets, resolvedSecrets),
+	}, nil
 }
 
-func secretsSpecified(obj *storage.Topic) bool {
+func secretsSpecified(obj *storage.Topic) set.Set[string] {
 	if obj.Spec.OperatorSpec == nil || obj.Spec.OperatorSpec.Secrets == nil {
-		return false
+		return nil
 	}
 
 	secrets := obj.Spec.OperatorSpec.Secrets
-
-	if secrets.Key1 != nil ||
-		secrets.Key2 != nil {
-		return true
+	result := make(set.Set[string])
+	if secrets.Key1 != nil {
+		result.Add(key1)
+	}
+	if secrets.Key2 != nil {
+		result.Add(key2)
 	}
 
-	return false
+	return result
 }
 
 func secretsToWrite(obj *storage.Topic, keys armeventgrid.TopicsClientListSharedAccessKeysResponse) ([]*v1.Secret, error) {
 	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
 	if operatorSpecSecrets == nil {
-		return nil, errors.Errorf("unexpected nil operatorspec")
+		return nil, nil
 	}
 
 	collector := secrets.NewCollector(obj.Namespace)

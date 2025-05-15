@@ -6,7 +6,6 @@ package testscript
 
 import (
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -56,7 +55,7 @@ func RunMain(m TestingM, commands map[string]func() int) (exitCode int) {
 		// test binary by "go test".
 
 		// Set up all commands in a directory, added in $PATH.
-		tmpdir, err := ioutil.TempDir("", "testscript-main")
+		tmpdir, err := os.MkdirTemp("", "testscript-main")
 		if err != nil {
 			log.Printf("could not set up temporary directory: %v", err)
 			return 2
@@ -76,7 +75,6 @@ func RunMain(m TestingM, commands map[string]func() int) (exitCode int) {
 
 		// We're not in a subcommand.
 		for name := range commands {
-			name := name
 			// Set up this command in the directory we added to $PATH.
 			binfile := filepath.Join(bindir, name)
 			if runtime.GOOS == "windows" {

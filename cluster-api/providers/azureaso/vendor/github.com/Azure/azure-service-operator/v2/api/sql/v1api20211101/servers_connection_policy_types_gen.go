@@ -5,10 +5,14 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type ServersConnectionPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Servers_ConnectionPolicy_Spec   `json:"spec,omitempty"`
-	Status            Servers_ConnectionPolicy_STATUS `json:"status,omitempty"`
+	Spec              ServersConnectionPolicy_Spec   `json:"spec,omitempty"`
+	Status            ServersConnectionPolicy_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &ServersConnectionPolicy{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &ServersConnectionPolicy{}
 
 // ConvertFrom populates our ServersConnectionPolicy from the provided hub ServersConnectionPolicy
 func (policy *ServersConnectionPolicy) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20211101s.ServersConnectionPolicy)
+	source, ok := hub.(*storage.ServersConnectionPolicy)
 	if !ok {
 		return fmt.Errorf("expected sql/v1api20211101/storage/ServersConnectionPolicy but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (policy *ServersConnectionPolicy) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub ServersConnectionPolicy from our ServersConnectionPolicy
 func (policy *ServersConnectionPolicy) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20211101s.ServersConnectionPolicy)
+	destination, ok := hub.(*storage.ServersConnectionPolicy)
 	if !ok {
 		return fmt.Errorf("expected sql/v1api20211101/storage/ServersConnectionPolicy but received %T instead", hub)
 	}
@@ -83,15 +87,35 @@ func (policy *ServersConnectionPolicy) Default() {
 // defaultImpl applies the code generated defaults to the ServersConnectionPolicy resource
 func (policy *ServersConnectionPolicy) defaultImpl() {}
 
+var _ configmaps.Exporter = &ServersConnectionPolicy{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (policy *ServersConnectionPolicy) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ServersConnectionPolicy{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (policy *ServersConnectionPolicy) SecretDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &ServersConnectionPolicy{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (policy *ServersConnectionPolicy) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Servers_ConnectionPolicy_STATUS); ok {
-		return policy.Spec.Initialize_From_Servers_ConnectionPolicy_STATUS(s)
+	if s, ok := status.(*ServersConnectionPolicy_STATUS); ok {
+		return policy.Spec.Initialize_From_ServersConnectionPolicy_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Servers_ConnectionPolicy_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type ServersConnectionPolicy_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &ServersConnectionPolicy{}
@@ -103,7 +127,7 @@ func (policy *ServersConnectionPolicy) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-11-01"
 func (policy ServersConnectionPolicy) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -136,7 +160,7 @@ func (policy *ServersConnectionPolicy) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (policy *ServersConnectionPolicy) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Servers_ConnectionPolicy_STATUS{}
+	return &ServersConnectionPolicy_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -148,13 +172,13 @@ func (policy *ServersConnectionPolicy) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (policy *ServersConnectionPolicy) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Servers_ConnectionPolicy_STATUS); ok {
+	if st, ok := status.(*ServersConnectionPolicy_STATUS); ok {
 		policy.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Servers_ConnectionPolicy_STATUS
+	var st ServersConnectionPolicy_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -200,7 +224,7 @@ func (policy *ServersConnectionPolicy) ValidateUpdate(old runtime.Object) (admis
 
 // createValidations validates the creation of the resource
 func (policy *ServersConnectionPolicy) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference}
+	return []func() (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference, policy.validateSecretDestinations, policy.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -218,7 +242,21 @@ func (policy *ServersConnectionPolicy) updateValidations() []func(old runtime.Ob
 		func(old runtime.Object) (admission.Warnings, error) {
 			return policy.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return policy.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return policy.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (policy *ServersConnectionPolicy) validateConfigMapDestinations() (admission.Warnings, error) {
+	if policy.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(policy, nil, policy.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -235,6 +273,14 @@ func (policy *ServersConnectionPolicy) validateResourceReferences() (admission.W
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (policy *ServersConnectionPolicy) validateSecretDestinations() (admission.Warnings, error) {
+	if policy.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(policy, nil, policy.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (policy *ServersConnectionPolicy) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*ServersConnectionPolicy)
@@ -246,24 +292,24 @@ func (policy *ServersConnectionPolicy) validateWriteOnceProperties(old runtime.O
 }
 
 // AssignProperties_From_ServersConnectionPolicy populates our ServersConnectionPolicy from the provided source ServersConnectionPolicy
-func (policy *ServersConnectionPolicy) AssignProperties_From_ServersConnectionPolicy(source *v20211101s.ServersConnectionPolicy) error {
+func (policy *ServersConnectionPolicy) AssignProperties_From_ServersConnectionPolicy(source *storage.ServersConnectionPolicy) error {
 
 	// ObjectMeta
 	policy.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Servers_ConnectionPolicy_Spec
-	err := spec.AssignProperties_From_Servers_ConnectionPolicy_Spec(&source.Spec)
+	var spec ServersConnectionPolicy_Spec
+	err := spec.AssignProperties_From_ServersConnectionPolicy_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Servers_ConnectionPolicy_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_ServersConnectionPolicy_Spec() to populate field Spec")
 	}
 	policy.Spec = spec
 
 	// Status
-	var status Servers_ConnectionPolicy_STATUS
-	err = status.AssignProperties_From_Servers_ConnectionPolicy_STATUS(&source.Status)
+	var status ServersConnectionPolicy_STATUS
+	err = status.AssignProperties_From_ServersConnectionPolicy_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Servers_ConnectionPolicy_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_ServersConnectionPolicy_STATUS() to populate field Status")
 	}
 	policy.Status = status
 
@@ -272,24 +318,24 @@ func (policy *ServersConnectionPolicy) AssignProperties_From_ServersConnectionPo
 }
 
 // AssignProperties_To_ServersConnectionPolicy populates the provided destination ServersConnectionPolicy from our ServersConnectionPolicy
-func (policy *ServersConnectionPolicy) AssignProperties_To_ServersConnectionPolicy(destination *v20211101s.ServersConnectionPolicy) error {
+func (policy *ServersConnectionPolicy) AssignProperties_To_ServersConnectionPolicy(destination *storage.ServersConnectionPolicy) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *policy.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20211101s.Servers_ConnectionPolicy_Spec
-	err := policy.Spec.AssignProperties_To_Servers_ConnectionPolicy_Spec(&spec)
+	var spec storage.ServersConnectionPolicy_Spec
+	err := policy.Spec.AssignProperties_To_ServersConnectionPolicy_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Servers_ConnectionPolicy_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_ServersConnectionPolicy_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20211101s.Servers_ConnectionPolicy_STATUS
-	err = policy.Status.AssignProperties_To_Servers_ConnectionPolicy_STATUS(&status)
+	var status storage.ServersConnectionPolicy_STATUS
+	err = policy.Status.AssignProperties_To_ServersConnectionPolicy_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Servers_ConnectionPolicy_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_ServersConnectionPolicy_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -316,10 +362,14 @@ type ServersConnectionPolicyList struct {
 	Items           []ServersConnectionPolicy `json:"items"`
 }
 
-type Servers_ConnectionPolicy_Spec struct {
+type ServersConnectionPolicy_Spec struct {
 	// +kubebuilder:validation:Required
 	// ConnectionType: The server connection type.
 	ConnectionType *ServerConnectionPolicyProperties_ConnectionType `json:"connectionType,omitempty"`
+
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *ServersConnectionPolicyOperatorSpec `json:"operatorSpec,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -328,49 +378,55 @@ type Servers_ConnectionPolicy_Spec struct {
 	Owner *genruntime.KnownResourceReference `group:"sql.azure.com" json:"owner,omitempty" kind:"Server"`
 }
 
-var _ genruntime.ARMTransformer = &Servers_ConnectionPolicy_Spec{}
+var _ genruntime.ARMTransformer = &ServersConnectionPolicy_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (policy *Servers_ConnectionPolicy_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (policy *ServersConnectionPolicy_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if policy == nil {
 		return nil, nil
 	}
-	result := &Servers_ConnectionPolicy_Spec_ARM{}
+	result := &arm.ServersConnectionPolicy_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
 
 	// Set property "Properties":
 	if policy.ConnectionType != nil {
-		result.Properties = &ServerConnectionPolicyProperties_ARM{}
+		result.Properties = &arm.ServerConnectionPolicyProperties{}
 	}
 	if policy.ConnectionType != nil {
-		connectionType := *policy.ConnectionType
+		var temp string
+		temp = string(*policy.ConnectionType)
+		connectionType := arm.ServerConnectionPolicyProperties_ConnectionType(temp)
 		result.Properties.ConnectionType = &connectionType
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (policy *Servers_ConnectionPolicy_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Servers_ConnectionPolicy_Spec_ARM{}
+func (policy *ServersConnectionPolicy_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ServersConnectionPolicy_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (policy *Servers_ConnectionPolicy_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Servers_ConnectionPolicy_Spec_ARM)
+func (policy *ServersConnectionPolicy_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ServersConnectionPolicy_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Servers_ConnectionPolicy_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServersConnectionPolicy_Spec, got %T", armInput)
 	}
 
 	// Set property "ConnectionType":
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ConnectionType != nil {
-			connectionType := *typedInput.Properties.ConnectionType
+			var temp string
+			temp = string(*typedInput.Properties.ConnectionType)
+			connectionType := ServerConnectionPolicyProperties_ConnectionType(temp)
 			policy.ConnectionType = &connectionType
 		}
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	policy.Owner = &genruntime.KnownResourceReference{
@@ -382,25 +438,25 @@ func (policy *Servers_ConnectionPolicy_Spec) PopulateFromARM(owner genruntime.Ar
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Servers_ConnectionPolicy_Spec{}
+var _ genruntime.ConvertibleSpec = &ServersConnectionPolicy_Spec{}
 
-// ConvertSpecFrom populates our Servers_ConnectionPolicy_Spec from the provided source
-func (policy *Servers_ConnectionPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20211101s.Servers_ConnectionPolicy_Spec)
+// ConvertSpecFrom populates our ServersConnectionPolicy_Spec from the provided source
+func (policy *ServersConnectionPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.ServersConnectionPolicy_Spec)
 	if ok {
 		// Populate our instance from source
-		return policy.AssignProperties_From_Servers_ConnectionPolicy_Spec(src)
+		return policy.AssignProperties_From_ServersConnectionPolicy_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20211101s.Servers_ConnectionPolicy_Spec{}
+	src = &storage.ServersConnectionPolicy_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = policy.AssignProperties_From_Servers_ConnectionPolicy_Spec(src)
+	err = policy.AssignProperties_From_ServersConnectionPolicy_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -408,17 +464,17 @@ func (policy *Servers_ConnectionPolicy_Spec) ConvertSpecFrom(source genruntime.C
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Servers_ConnectionPolicy_Spec
-func (policy *Servers_ConnectionPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20211101s.Servers_ConnectionPolicy_Spec)
+// ConvertSpecTo populates the provided destination from our ServersConnectionPolicy_Spec
+func (policy *ServersConnectionPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.ServersConnectionPolicy_Spec)
 	if ok {
 		// Populate destination from our instance
-		return policy.AssignProperties_To_Servers_ConnectionPolicy_Spec(dst)
+		return policy.AssignProperties_To_ServersConnectionPolicy_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20211101s.Servers_ConnectionPolicy_Spec{}
-	err := policy.AssignProperties_To_Servers_ConnectionPolicy_Spec(dst)
+	dst = &storage.ServersConnectionPolicy_Spec{}
+	err := policy.AssignProperties_To_ServersConnectionPolicy_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -432,15 +488,28 @@ func (policy *Servers_ConnectionPolicy_Spec) ConvertSpecTo(destination genruntim
 	return nil
 }
 
-// AssignProperties_From_Servers_ConnectionPolicy_Spec populates our Servers_ConnectionPolicy_Spec from the provided source Servers_ConnectionPolicy_Spec
-func (policy *Servers_ConnectionPolicy_Spec) AssignProperties_From_Servers_ConnectionPolicy_Spec(source *v20211101s.Servers_ConnectionPolicy_Spec) error {
+// AssignProperties_From_ServersConnectionPolicy_Spec populates our ServersConnectionPolicy_Spec from the provided source ServersConnectionPolicy_Spec
+func (policy *ServersConnectionPolicy_Spec) AssignProperties_From_ServersConnectionPolicy_Spec(source *storage.ServersConnectionPolicy_Spec) error {
 
 	// ConnectionType
 	if source.ConnectionType != nil {
-		connectionType := ServerConnectionPolicyProperties_ConnectionType(*source.ConnectionType)
-		policy.ConnectionType = &connectionType
+		connectionType := *source.ConnectionType
+		connectionTypeTemp := genruntime.ToEnum(connectionType, serverConnectionPolicyProperties_ConnectionType_Values)
+		policy.ConnectionType = &connectionTypeTemp
 	} else {
 		policy.ConnectionType = nil
+	}
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ServersConnectionPolicyOperatorSpec
+		err := operatorSpec.AssignProperties_From_ServersConnectionPolicyOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ServersConnectionPolicyOperatorSpec() to populate field OperatorSpec")
+		}
+		policy.OperatorSpec = &operatorSpec
+	} else {
+		policy.OperatorSpec = nil
 	}
 
 	// Owner
@@ -455,8 +524,8 @@ func (policy *Servers_ConnectionPolicy_Spec) AssignProperties_From_Servers_Conne
 	return nil
 }
 
-// AssignProperties_To_Servers_ConnectionPolicy_Spec populates the provided destination Servers_ConnectionPolicy_Spec from our Servers_ConnectionPolicy_Spec
-func (policy *Servers_ConnectionPolicy_Spec) AssignProperties_To_Servers_ConnectionPolicy_Spec(destination *v20211101s.Servers_ConnectionPolicy_Spec) error {
+// AssignProperties_To_ServersConnectionPolicy_Spec populates the provided destination ServersConnectionPolicy_Spec from our ServersConnectionPolicy_Spec
+func (policy *ServersConnectionPolicy_Spec) AssignProperties_To_ServersConnectionPolicy_Spec(destination *storage.ServersConnectionPolicy_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -466,6 +535,18 @@ func (policy *Servers_ConnectionPolicy_Spec) AssignProperties_To_Servers_Connect
 		destination.ConnectionType = &connectionType
 	} else {
 		destination.ConnectionType = nil
+	}
+
+	// OperatorSpec
+	if policy.OperatorSpec != nil {
+		var operatorSpec storage.ServersConnectionPolicyOperatorSpec
+		err := policy.OperatorSpec.AssignProperties_To_ServersConnectionPolicyOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ServersConnectionPolicyOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
 	}
 
 	// OriginalVersion
@@ -490,12 +571,12 @@ func (policy *Servers_ConnectionPolicy_Spec) AssignProperties_To_Servers_Connect
 	return nil
 }
 
-// Initialize_From_Servers_ConnectionPolicy_STATUS populates our Servers_ConnectionPolicy_Spec from the provided source Servers_ConnectionPolicy_STATUS
-func (policy *Servers_ConnectionPolicy_Spec) Initialize_From_Servers_ConnectionPolicy_STATUS(source *Servers_ConnectionPolicy_STATUS) error {
+// Initialize_From_ServersConnectionPolicy_STATUS populates our ServersConnectionPolicy_Spec from the provided source ServersConnectionPolicy_STATUS
+func (policy *ServersConnectionPolicy_Spec) Initialize_From_ServersConnectionPolicy_STATUS(source *ServersConnectionPolicy_STATUS) error {
 
 	// ConnectionType
 	if source.ConnectionType != nil {
-		connectionType := ServerConnectionPolicyProperties_ConnectionType(*source.ConnectionType)
+		connectionType := genruntime.ToEnum(string(*source.ConnectionType), serverConnectionPolicyProperties_ConnectionType_Values)
 		policy.ConnectionType = &connectionType
 	} else {
 		policy.ConnectionType = nil
@@ -506,11 +587,11 @@ func (policy *Servers_ConnectionPolicy_Spec) Initialize_From_Servers_ConnectionP
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (policy *Servers_ConnectionPolicy_Spec) OriginalVersion() string {
+func (policy *ServersConnectionPolicy_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
-type Servers_ConnectionPolicy_STATUS struct {
+type ServersConnectionPolicy_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 
@@ -533,25 +614,25 @@ type Servers_ConnectionPolicy_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Servers_ConnectionPolicy_STATUS{}
+var _ genruntime.ConvertibleStatus = &ServersConnectionPolicy_STATUS{}
 
-// ConvertStatusFrom populates our Servers_ConnectionPolicy_STATUS from the provided source
-func (policy *Servers_ConnectionPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20211101s.Servers_ConnectionPolicy_STATUS)
+// ConvertStatusFrom populates our ServersConnectionPolicy_STATUS from the provided source
+func (policy *ServersConnectionPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.ServersConnectionPolicy_STATUS)
 	if ok {
 		// Populate our instance from source
-		return policy.AssignProperties_From_Servers_ConnectionPolicy_STATUS(src)
+		return policy.AssignProperties_From_ServersConnectionPolicy_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20211101s.Servers_ConnectionPolicy_STATUS{}
+	src = &storage.ServersConnectionPolicy_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = policy.AssignProperties_From_Servers_ConnectionPolicy_STATUS(src)
+	err = policy.AssignProperties_From_ServersConnectionPolicy_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -559,17 +640,17 @@ func (policy *Servers_ConnectionPolicy_STATUS) ConvertStatusFrom(source genrunti
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Servers_ConnectionPolicy_STATUS
-func (policy *Servers_ConnectionPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20211101s.Servers_ConnectionPolicy_STATUS)
+// ConvertStatusTo populates the provided destination from our ServersConnectionPolicy_STATUS
+func (policy *ServersConnectionPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.ServersConnectionPolicy_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return policy.AssignProperties_To_Servers_ConnectionPolicy_STATUS(dst)
+		return policy.AssignProperties_To_ServersConnectionPolicy_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20211101s.Servers_ConnectionPolicy_STATUS{}
-	err := policy.AssignProperties_To_Servers_ConnectionPolicy_STATUS(dst)
+	dst = &storage.ServersConnectionPolicy_STATUS{}
+	err := policy.AssignProperties_To_ServersConnectionPolicy_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -583,18 +664,18 @@ func (policy *Servers_ConnectionPolicy_STATUS) ConvertStatusTo(destination genru
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Servers_ConnectionPolicy_STATUS{}
+var _ genruntime.FromARMConverter = &ServersConnectionPolicy_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (policy *Servers_ConnectionPolicy_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Servers_ConnectionPolicy_STATUS_ARM{}
+func (policy *ServersConnectionPolicy_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ServersConnectionPolicy_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (policy *Servers_ConnectionPolicy_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Servers_ConnectionPolicy_STATUS_ARM)
+func (policy *ServersConnectionPolicy_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ServersConnectionPolicy_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Servers_ConnectionPolicy_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServersConnectionPolicy_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -603,7 +684,9 @@ func (policy *Servers_ConnectionPolicy_STATUS) PopulateFromARM(owner genruntime.
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ConnectionType != nil {
-			connectionType := *typedInput.Properties.ConnectionType
+			var temp string
+			temp = string(*typedInput.Properties.ConnectionType)
+			connectionType := ServerConnectionPolicyProperties_ConnectionType_STATUS(temp)
 			policy.ConnectionType = &connectionType
 		}
 	}
@@ -642,16 +725,17 @@ func (policy *Servers_ConnectionPolicy_STATUS) PopulateFromARM(owner genruntime.
 	return nil
 }
 
-// AssignProperties_From_Servers_ConnectionPolicy_STATUS populates our Servers_ConnectionPolicy_STATUS from the provided source Servers_ConnectionPolicy_STATUS
-func (policy *Servers_ConnectionPolicy_STATUS) AssignProperties_From_Servers_ConnectionPolicy_STATUS(source *v20211101s.Servers_ConnectionPolicy_STATUS) error {
+// AssignProperties_From_ServersConnectionPolicy_STATUS populates our ServersConnectionPolicy_STATUS from the provided source ServersConnectionPolicy_STATUS
+func (policy *ServersConnectionPolicy_STATUS) AssignProperties_From_ServersConnectionPolicy_STATUS(source *storage.ServersConnectionPolicy_STATUS) error {
 
 	// Conditions
 	policy.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
 
 	// ConnectionType
 	if source.ConnectionType != nil {
-		connectionType := ServerConnectionPolicyProperties_ConnectionType_STATUS(*source.ConnectionType)
-		policy.ConnectionType = &connectionType
+		connectionType := *source.ConnectionType
+		connectionTypeTemp := genruntime.ToEnum(connectionType, serverConnectionPolicyProperties_ConnectionType_STATUS_Values)
+		policy.ConnectionType = &connectionTypeTemp
 	} else {
 		policy.ConnectionType = nil
 	}
@@ -675,8 +759,8 @@ func (policy *Servers_ConnectionPolicy_STATUS) AssignProperties_From_Servers_Con
 	return nil
 }
 
-// AssignProperties_To_Servers_ConnectionPolicy_STATUS populates the provided destination Servers_ConnectionPolicy_STATUS from our Servers_ConnectionPolicy_STATUS
-func (policy *Servers_ConnectionPolicy_STATUS) AssignProperties_To_Servers_ConnectionPolicy_STATUS(destination *v20211101s.Servers_ConnectionPolicy_STATUS) error {
+// AssignProperties_To_ServersConnectionPolicy_STATUS populates the provided destination ServersConnectionPolicy_STATUS from our ServersConnectionPolicy_STATUS
+func (policy *ServersConnectionPolicy_STATUS) AssignProperties_To_ServersConnectionPolicy_STATUS(destination *storage.ServersConnectionPolicy_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -726,6 +810,13 @@ const (
 	ServerConnectionPolicyProperties_ConnectionType_Redirect = ServerConnectionPolicyProperties_ConnectionType("Redirect")
 )
 
+// Mapping from string to ServerConnectionPolicyProperties_ConnectionType
+var serverConnectionPolicyProperties_ConnectionType_Values = map[string]ServerConnectionPolicyProperties_ConnectionType{
+	"default":  ServerConnectionPolicyProperties_ConnectionType_Default,
+	"proxy":    ServerConnectionPolicyProperties_ConnectionType_Proxy,
+	"redirect": ServerConnectionPolicyProperties_ConnectionType_Redirect,
+}
+
 type ServerConnectionPolicyProperties_ConnectionType_STATUS string
 
 const (
@@ -733,6 +824,117 @@ const (
 	ServerConnectionPolicyProperties_ConnectionType_STATUS_Proxy    = ServerConnectionPolicyProperties_ConnectionType_STATUS("Proxy")
 	ServerConnectionPolicyProperties_ConnectionType_STATUS_Redirect = ServerConnectionPolicyProperties_ConnectionType_STATUS("Redirect")
 )
+
+// Mapping from string to ServerConnectionPolicyProperties_ConnectionType_STATUS
+var serverConnectionPolicyProperties_ConnectionType_STATUS_Values = map[string]ServerConnectionPolicyProperties_ConnectionType_STATUS{
+	"default":  ServerConnectionPolicyProperties_ConnectionType_STATUS_Default,
+	"proxy":    ServerConnectionPolicyProperties_ConnectionType_STATUS_Proxy,
+	"redirect": ServerConnectionPolicyProperties_ConnectionType_STATUS_Redirect,
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ServersConnectionPolicyOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ServersConnectionPolicyOperatorSpec populates our ServersConnectionPolicyOperatorSpec from the provided source ServersConnectionPolicyOperatorSpec
+func (operator *ServersConnectionPolicyOperatorSpec) AssignProperties_From_ServersConnectionPolicyOperatorSpec(source *storage.ServersConnectionPolicyOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ServersConnectionPolicyOperatorSpec populates the provided destination ServersConnectionPolicyOperatorSpec from our ServersConnectionPolicyOperatorSpec
+func (operator *ServersConnectionPolicyOperatorSpec) AssignProperties_To_ServersConnectionPolicyOperatorSpec(destination *storage.ServersConnectionPolicyOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
 
 func init() {
 	SchemeBuilder.Register(&ServersConnectionPolicy{}, &ServersConnectionPolicyList{})

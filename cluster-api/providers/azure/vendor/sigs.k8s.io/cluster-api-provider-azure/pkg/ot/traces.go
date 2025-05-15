@@ -29,12 +29,13 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+
 	"sigs.k8s.io/cluster-api-provider-azure/version"
 )
 
 // RegisterTracing enables code tracing via OpenTelemetry.
 func RegisterTracing(ctx context.Context, log logr.Logger) error {
-	tp, err := otlpTracerProvider(ctx, "opentelemetry-collector:4317")
+	tp, err := otlpTracerProvider(ctx)
 	if err != nil {
 		return err
 	}
@@ -54,7 +55,7 @@ func RegisterTracing(ctx context.Context, log logr.Logger) error {
 }
 
 // otlpTracerProvider initializes an OTLP exporter and configures the corresponding tracer provider.
-func otlpTracerProvider(ctx context.Context, url string) (*sdktrace.TracerProvider, error) {
+func otlpTracerProvider(ctx context.Context) (*sdktrace.TracerProvider, error) {
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
 			semconv.ServiceNameKey.String("capz"),
@@ -69,7 +70,7 @@ func otlpTracerProvider(ctx context.Context, url string) (*sdktrace.TracerProvid
 
 	traceExporter, err := otlptracegrpc.New(ctx,
 		otlptracegrpc.WithInsecure(),
-		otlptracegrpc.WithEndpoint(url),
+		otlptracegrpc.WithEndpoint("opentelemetry-collector:4317"),
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create otlp trace exporter")

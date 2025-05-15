@@ -5,10 +5,14 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type ServersAuditingSetting struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Servers_AuditingSetting_Spec   `json:"spec,omitempty"`
-	Status            Servers_AuditingSetting_STATUS `json:"status,omitempty"`
+	Spec              ServersAuditingSetting_Spec   `json:"spec,omitempty"`
+	Status            ServersAuditingSetting_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &ServersAuditingSetting{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &ServersAuditingSetting{}
 
 // ConvertFrom populates our ServersAuditingSetting from the provided hub ServersAuditingSetting
 func (setting *ServersAuditingSetting) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20211101s.ServersAuditingSetting)
+	source, ok := hub.(*storage.ServersAuditingSetting)
 	if !ok {
 		return fmt.Errorf("expected sql/v1api20211101/storage/ServersAuditingSetting but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (setting *ServersAuditingSetting) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub ServersAuditingSetting from our ServersAuditingSetting
 func (setting *ServersAuditingSetting) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20211101s.ServersAuditingSetting)
+	destination, ok := hub.(*storage.ServersAuditingSetting)
 	if !ok {
 		return fmt.Errorf("expected sql/v1api20211101/storage/ServersAuditingSetting but received %T instead", hub)
 	}
@@ -83,15 +87,35 @@ func (setting *ServersAuditingSetting) Default() {
 // defaultImpl applies the code generated defaults to the ServersAuditingSetting resource
 func (setting *ServersAuditingSetting) defaultImpl() {}
 
+var _ configmaps.Exporter = &ServersAuditingSetting{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (setting *ServersAuditingSetting) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if setting.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return setting.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ServersAuditingSetting{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (setting *ServersAuditingSetting) SecretDestinationExpressions() []*core.DestinationExpression {
+	if setting.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return setting.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &ServersAuditingSetting{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (setting *ServersAuditingSetting) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Servers_AuditingSetting_STATUS); ok {
-		return setting.Spec.Initialize_From_Servers_AuditingSetting_STATUS(s)
+	if s, ok := status.(*ServersAuditingSetting_STATUS); ok {
+		return setting.Spec.Initialize_From_ServersAuditingSetting_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Servers_AuditingSetting_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type ServersAuditingSetting_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &ServersAuditingSetting{}
@@ -103,7 +127,7 @@ func (setting *ServersAuditingSetting) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-11-01"
 func (setting ServersAuditingSetting) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -136,7 +160,7 @@ func (setting *ServersAuditingSetting) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (setting *ServersAuditingSetting) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Servers_AuditingSetting_STATUS{}
+	return &ServersAuditingSetting_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -148,13 +172,13 @@ func (setting *ServersAuditingSetting) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (setting *ServersAuditingSetting) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Servers_AuditingSetting_STATUS); ok {
+	if st, ok := status.(*ServersAuditingSetting_STATUS); ok {
 		setting.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Servers_AuditingSetting_STATUS
+	var st ServersAuditingSetting_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -200,7 +224,7 @@ func (setting *ServersAuditingSetting) ValidateUpdate(old runtime.Object) (admis
 
 // createValidations validates the creation of the resource
 func (setting *ServersAuditingSetting) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){setting.validateResourceReferences, setting.validateOwnerReference}
+	return []func() (admission.Warnings, error){setting.validateResourceReferences, setting.validateOwnerReference, setting.validateSecretDestinations, setting.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -218,7 +242,21 @@ func (setting *ServersAuditingSetting) updateValidations() []func(old runtime.Ob
 		func(old runtime.Object) (admission.Warnings, error) {
 			return setting.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return setting.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return setting.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (setting *ServersAuditingSetting) validateConfigMapDestinations() (admission.Warnings, error) {
+	if setting.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(setting, nil, setting.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -235,6 +273,14 @@ func (setting *ServersAuditingSetting) validateResourceReferences() (admission.W
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (setting *ServersAuditingSetting) validateSecretDestinations() (admission.Warnings, error) {
+	if setting.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(setting, nil, setting.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (setting *ServersAuditingSetting) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*ServersAuditingSetting)
@@ -246,24 +292,24 @@ func (setting *ServersAuditingSetting) validateWriteOnceProperties(old runtime.O
 }
 
 // AssignProperties_From_ServersAuditingSetting populates our ServersAuditingSetting from the provided source ServersAuditingSetting
-func (setting *ServersAuditingSetting) AssignProperties_From_ServersAuditingSetting(source *v20211101s.ServersAuditingSetting) error {
+func (setting *ServersAuditingSetting) AssignProperties_From_ServersAuditingSetting(source *storage.ServersAuditingSetting) error {
 
 	// ObjectMeta
 	setting.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Servers_AuditingSetting_Spec
-	err := spec.AssignProperties_From_Servers_AuditingSetting_Spec(&source.Spec)
+	var spec ServersAuditingSetting_Spec
+	err := spec.AssignProperties_From_ServersAuditingSetting_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Servers_AuditingSetting_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_ServersAuditingSetting_Spec() to populate field Spec")
 	}
 	setting.Spec = spec
 
 	// Status
-	var status Servers_AuditingSetting_STATUS
-	err = status.AssignProperties_From_Servers_AuditingSetting_STATUS(&source.Status)
+	var status ServersAuditingSetting_STATUS
+	err = status.AssignProperties_From_ServersAuditingSetting_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Servers_AuditingSetting_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_ServersAuditingSetting_STATUS() to populate field Status")
 	}
 	setting.Status = status
 
@@ -272,24 +318,24 @@ func (setting *ServersAuditingSetting) AssignProperties_From_ServersAuditingSett
 }
 
 // AssignProperties_To_ServersAuditingSetting populates the provided destination ServersAuditingSetting from our ServersAuditingSetting
-func (setting *ServersAuditingSetting) AssignProperties_To_ServersAuditingSetting(destination *v20211101s.ServersAuditingSetting) error {
+func (setting *ServersAuditingSetting) AssignProperties_To_ServersAuditingSetting(destination *storage.ServersAuditingSetting) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *setting.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20211101s.Servers_AuditingSetting_Spec
-	err := setting.Spec.AssignProperties_To_Servers_AuditingSetting_Spec(&spec)
+	var spec storage.ServersAuditingSetting_Spec
+	err := setting.Spec.AssignProperties_To_ServersAuditingSetting_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Servers_AuditingSetting_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_ServersAuditingSetting_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20211101s.Servers_AuditingSetting_STATUS
-	err = setting.Status.AssignProperties_To_Servers_AuditingSetting_STATUS(&status)
+	var status storage.ServersAuditingSetting_STATUS
+	err = setting.Status.AssignProperties_To_ServersAuditingSetting_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Servers_AuditingSetting_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_ServersAuditingSetting_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -316,7 +362,7 @@ type ServersAuditingSettingList struct {
 	Items           []ServersAuditingSetting `json:"items"`
 }
 
-type Servers_AuditingSetting_Spec struct {
+type ServersAuditingSetting_Spec struct {
 	// AuditActionsAndGroups: Specifies the Actions-Groups and Actions to audit.
 	// The recommended set of action groups to use is the following combination - this will audit all the queries and stored
 	// procedures executed against the database, as well as successful and failed logins:
@@ -406,6 +452,10 @@ type Servers_AuditingSetting_Spec struct {
 	// IsStorageSecondaryKeyInUse: Specifies whether storageAccountAccessKey value is the storage's secondary key.
 	IsStorageSecondaryKeyInUse *bool `json:"isStorageSecondaryKeyInUse,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *ServersAuditingSettingOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -445,14 +495,14 @@ type Servers_AuditingSetting_Spec struct {
 	StorageEndpoint *string `json:"storageEndpoint,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Servers_AuditingSetting_Spec{}
+var _ genruntime.ARMTransformer = &ServersAuditingSetting_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (setting *Servers_AuditingSetting_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (setting *ServersAuditingSetting_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if setting == nil {
 		return nil, nil
 	}
-	result := &Servers_AuditingSetting_Spec_ARM{}
+	result := &arm.ServersAuditingSetting_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
@@ -469,7 +519,7 @@ func (setting *Servers_AuditingSetting_Spec) ConvertToARM(resolved genruntime.Co
 		setting.StorageAccountAccessKey != nil ||
 		setting.StorageAccountSubscriptionId != nil ||
 		setting.StorageEndpoint != nil {
-		result.Properties = &ServerBlobAuditingPolicyProperties_ARM{}
+		result.Properties = &arm.ServerBlobAuditingPolicyProperties{}
 	}
 	for _, item := range setting.AuditActionsAndGroups {
 		result.Properties.AuditActionsAndGroups = append(result.Properties.AuditActionsAndGroups, item)
@@ -499,7 +549,9 @@ func (setting *Servers_AuditingSetting_Spec) ConvertToARM(resolved genruntime.Co
 		result.Properties.RetentionDays = &retentionDays
 	}
 	if setting.State != nil {
-		state := *setting.State
+		var temp string
+		temp = string(*setting.State)
+		state := arm.ServerBlobAuditingPolicyProperties_State(temp)
 		result.Properties.State = &state
 	}
 	if setting.StorageAccountAccessKey != nil {
@@ -522,15 +574,15 @@ func (setting *Servers_AuditingSetting_Spec) ConvertToARM(resolved genruntime.Co
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (setting *Servers_AuditingSetting_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Servers_AuditingSetting_Spec_ARM{}
+func (setting *ServersAuditingSetting_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ServersAuditingSetting_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (setting *Servers_AuditingSetting_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Servers_AuditingSetting_Spec_ARM)
+func (setting *ServersAuditingSetting_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ServersAuditingSetting_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Servers_AuditingSetting_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServersAuditingSetting_Spec, got %T", armInput)
 	}
 
 	// Set property "AuditActionsAndGroups":
@@ -577,6 +629,8 @@ func (setting *Servers_AuditingSetting_Spec) PopulateFromARM(owner genruntime.Ar
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	setting.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
@@ -605,7 +659,9 @@ func (setting *Servers_AuditingSetting_Spec) PopulateFromARM(owner genruntime.Ar
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.State != nil {
-			state := *typedInput.Properties.State
+			var temp string
+			temp = string(*typedInput.Properties.State)
+			state := ServerBlobAuditingPolicyProperties_State(temp)
 			setting.State = &state
 		}
 	}
@@ -634,25 +690,25 @@ func (setting *Servers_AuditingSetting_Spec) PopulateFromARM(owner genruntime.Ar
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Servers_AuditingSetting_Spec{}
+var _ genruntime.ConvertibleSpec = &ServersAuditingSetting_Spec{}
 
-// ConvertSpecFrom populates our Servers_AuditingSetting_Spec from the provided source
-func (setting *Servers_AuditingSetting_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20211101s.Servers_AuditingSetting_Spec)
+// ConvertSpecFrom populates our ServersAuditingSetting_Spec from the provided source
+func (setting *ServersAuditingSetting_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.ServersAuditingSetting_Spec)
 	if ok {
 		// Populate our instance from source
-		return setting.AssignProperties_From_Servers_AuditingSetting_Spec(src)
+		return setting.AssignProperties_From_ServersAuditingSetting_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20211101s.Servers_AuditingSetting_Spec{}
+	src = &storage.ServersAuditingSetting_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = setting.AssignProperties_From_Servers_AuditingSetting_Spec(src)
+	err = setting.AssignProperties_From_ServersAuditingSetting_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -660,17 +716,17 @@ func (setting *Servers_AuditingSetting_Spec) ConvertSpecFrom(source genruntime.C
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Servers_AuditingSetting_Spec
-func (setting *Servers_AuditingSetting_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20211101s.Servers_AuditingSetting_Spec)
+// ConvertSpecTo populates the provided destination from our ServersAuditingSetting_Spec
+func (setting *ServersAuditingSetting_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.ServersAuditingSetting_Spec)
 	if ok {
 		// Populate destination from our instance
-		return setting.AssignProperties_To_Servers_AuditingSetting_Spec(dst)
+		return setting.AssignProperties_To_ServersAuditingSetting_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20211101s.Servers_AuditingSetting_Spec{}
-	err := setting.AssignProperties_To_Servers_AuditingSetting_Spec(dst)
+	dst = &storage.ServersAuditingSetting_Spec{}
+	err := setting.AssignProperties_To_ServersAuditingSetting_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -684,8 +740,8 @@ func (setting *Servers_AuditingSetting_Spec) ConvertSpecTo(destination genruntim
 	return nil
 }
 
-// AssignProperties_From_Servers_AuditingSetting_Spec populates our Servers_AuditingSetting_Spec from the provided source Servers_AuditingSetting_Spec
-func (setting *Servers_AuditingSetting_Spec) AssignProperties_From_Servers_AuditingSetting_Spec(source *v20211101s.Servers_AuditingSetting_Spec) error {
+// AssignProperties_From_ServersAuditingSetting_Spec populates our ServersAuditingSetting_Spec from the provided source ServersAuditingSetting_Spec
+func (setting *ServersAuditingSetting_Spec) AssignProperties_From_ServersAuditingSetting_Spec(source *storage.ServersAuditingSetting_Spec) error {
 
 	// AuditActionsAndGroups
 	setting.AuditActionsAndGroups = genruntime.CloneSliceOfString(source.AuditActionsAndGroups)
@@ -722,6 +778,18 @@ func (setting *Servers_AuditingSetting_Spec) AssignProperties_From_Servers_Audit
 		setting.IsStorageSecondaryKeyInUse = nil
 	}
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ServersAuditingSettingOperatorSpec
+		err := operatorSpec.AssignProperties_From_ServersAuditingSettingOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ServersAuditingSettingOperatorSpec() to populate field OperatorSpec")
+		}
+		setting.OperatorSpec = &operatorSpec
+	} else {
+		setting.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -738,8 +806,9 @@ func (setting *Servers_AuditingSetting_Spec) AssignProperties_From_Servers_Audit
 
 	// State
 	if source.State != nil {
-		state := ServerBlobAuditingPolicyProperties_State(*source.State)
-		setting.State = &state
+		state := *source.State
+		stateTemp := genruntime.ToEnum(state, serverBlobAuditingPolicyProperties_State_Values)
+		setting.State = &stateTemp
 	} else {
 		setting.State = nil
 	}
@@ -767,8 +836,8 @@ func (setting *Servers_AuditingSetting_Spec) AssignProperties_From_Servers_Audit
 	return nil
 }
 
-// AssignProperties_To_Servers_AuditingSetting_Spec populates the provided destination Servers_AuditingSetting_Spec from our Servers_AuditingSetting_Spec
-func (setting *Servers_AuditingSetting_Spec) AssignProperties_To_Servers_AuditingSetting_Spec(destination *v20211101s.Servers_AuditingSetting_Spec) error {
+// AssignProperties_To_ServersAuditingSetting_Spec populates the provided destination ServersAuditingSetting_Spec from our ServersAuditingSetting_Spec
+func (setting *ServersAuditingSetting_Spec) AssignProperties_To_ServersAuditingSetting_Spec(destination *storage.ServersAuditingSetting_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -805,6 +874,18 @@ func (setting *Servers_AuditingSetting_Spec) AssignProperties_To_Servers_Auditin
 		destination.IsStorageSecondaryKeyInUse = &isStorageSecondaryKeyInUse
 	} else {
 		destination.IsStorageSecondaryKeyInUse = nil
+	}
+
+	// OperatorSpec
+	if setting.OperatorSpec != nil {
+		var operatorSpec storage.ServersAuditingSettingOperatorSpec
+		err := setting.OperatorSpec.AssignProperties_To_ServersAuditingSettingOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ServersAuditingSettingOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
 	}
 
 	// OriginalVersion
@@ -862,8 +943,8 @@ func (setting *Servers_AuditingSetting_Spec) AssignProperties_To_Servers_Auditin
 	return nil
 }
 
-// Initialize_From_Servers_AuditingSetting_STATUS populates our Servers_AuditingSetting_Spec from the provided source Servers_AuditingSetting_STATUS
-func (setting *Servers_AuditingSetting_Spec) Initialize_From_Servers_AuditingSetting_STATUS(source *Servers_AuditingSetting_STATUS) error {
+// Initialize_From_ServersAuditingSetting_STATUS populates our ServersAuditingSetting_Spec from the provided source ServersAuditingSetting_STATUS
+func (setting *ServersAuditingSetting_Spec) Initialize_From_ServersAuditingSetting_STATUS(source *ServersAuditingSetting_STATUS) error {
 
 	// AuditActionsAndGroups
 	setting.AuditActionsAndGroups = genruntime.CloneSliceOfString(source.AuditActionsAndGroups)
@@ -908,7 +989,7 @@ func (setting *Servers_AuditingSetting_Spec) Initialize_From_Servers_AuditingSet
 
 	// State
 	if source.State != nil {
-		state := ServerBlobAuditingPolicyProperties_State(*source.State)
+		state := genruntime.ToEnum(string(*source.State), serverBlobAuditingPolicyProperties_State_Values)
 		setting.State = &state
 	} else {
 		setting.State = nil
@@ -930,11 +1011,11 @@ func (setting *Servers_AuditingSetting_Spec) Initialize_From_Servers_AuditingSet
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (setting *Servers_AuditingSetting_Spec) OriginalVersion() string {
+func (setting *ServersAuditingSetting_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
-type Servers_AuditingSetting_STATUS struct {
+type ServersAuditingSetting_STATUS struct {
 	// AuditActionsAndGroups: Specifies the Actions-Groups and Actions to audit.
 	// The recommended set of action groups to use is the following combination - this will audit all the queries and stored
 	// procedures executed against the database, as well as successful and failed logins:
@@ -1056,25 +1137,25 @@ type Servers_AuditingSetting_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Servers_AuditingSetting_STATUS{}
+var _ genruntime.ConvertibleStatus = &ServersAuditingSetting_STATUS{}
 
-// ConvertStatusFrom populates our Servers_AuditingSetting_STATUS from the provided source
-func (setting *Servers_AuditingSetting_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20211101s.Servers_AuditingSetting_STATUS)
+// ConvertStatusFrom populates our ServersAuditingSetting_STATUS from the provided source
+func (setting *ServersAuditingSetting_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.ServersAuditingSetting_STATUS)
 	if ok {
 		// Populate our instance from source
-		return setting.AssignProperties_From_Servers_AuditingSetting_STATUS(src)
+		return setting.AssignProperties_From_ServersAuditingSetting_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20211101s.Servers_AuditingSetting_STATUS{}
+	src = &storage.ServersAuditingSetting_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = setting.AssignProperties_From_Servers_AuditingSetting_STATUS(src)
+	err = setting.AssignProperties_From_ServersAuditingSetting_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -1082,17 +1163,17 @@ func (setting *Servers_AuditingSetting_STATUS) ConvertStatusFrom(source genrunti
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Servers_AuditingSetting_STATUS
-func (setting *Servers_AuditingSetting_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20211101s.Servers_AuditingSetting_STATUS)
+// ConvertStatusTo populates the provided destination from our ServersAuditingSetting_STATUS
+func (setting *ServersAuditingSetting_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.ServersAuditingSetting_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return setting.AssignProperties_To_Servers_AuditingSetting_STATUS(dst)
+		return setting.AssignProperties_To_ServersAuditingSetting_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20211101s.Servers_AuditingSetting_STATUS{}
-	err := setting.AssignProperties_To_Servers_AuditingSetting_STATUS(dst)
+	dst = &storage.ServersAuditingSetting_STATUS{}
+	err := setting.AssignProperties_To_ServersAuditingSetting_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -1106,18 +1187,18 @@ func (setting *Servers_AuditingSetting_STATUS) ConvertStatusTo(destination genru
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Servers_AuditingSetting_STATUS{}
+var _ genruntime.FromARMConverter = &ServersAuditingSetting_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (setting *Servers_AuditingSetting_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Servers_AuditingSetting_STATUS_ARM{}
+func (setting *ServersAuditingSetting_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ServersAuditingSetting_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (setting *Servers_AuditingSetting_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Servers_AuditingSetting_STATUS_ARM)
+func (setting *ServersAuditingSetting_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ServersAuditingSetting_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Servers_AuditingSetting_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServersAuditingSetting_STATUS, got %T", armInput)
 	}
 
 	// Set property "AuditActionsAndGroups":
@@ -1200,7 +1281,9 @@ func (setting *Servers_AuditingSetting_STATUS) PopulateFromARM(owner genruntime.
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.State != nil {
-			state := *typedInput.Properties.State
+			var temp string
+			temp = string(*typedInput.Properties.State)
+			state := ServerBlobAuditingPolicyProperties_State_STATUS(temp)
 			setting.State = &state
 		}
 	}
@@ -1233,8 +1316,8 @@ func (setting *Servers_AuditingSetting_STATUS) PopulateFromARM(owner genruntime.
 	return nil
 }
 
-// AssignProperties_From_Servers_AuditingSetting_STATUS populates our Servers_AuditingSetting_STATUS from the provided source Servers_AuditingSetting_STATUS
-func (setting *Servers_AuditingSetting_STATUS) AssignProperties_From_Servers_AuditingSetting_STATUS(source *v20211101s.Servers_AuditingSetting_STATUS) error {
+// AssignProperties_From_ServersAuditingSetting_STATUS populates our ServersAuditingSetting_STATUS from the provided source ServersAuditingSetting_STATUS
+func (setting *ServersAuditingSetting_STATUS) AssignProperties_From_ServersAuditingSetting_STATUS(source *storage.ServersAuditingSetting_STATUS) error {
 
 	// AuditActionsAndGroups
 	setting.AuditActionsAndGroups = genruntime.CloneSliceOfString(source.AuditActionsAndGroups)
@@ -1288,8 +1371,9 @@ func (setting *Servers_AuditingSetting_STATUS) AssignProperties_From_Servers_Aud
 
 	// State
 	if source.State != nil {
-		state := ServerBlobAuditingPolicyProperties_State_STATUS(*source.State)
-		setting.State = &state
+		state := *source.State
+		stateTemp := genruntime.ToEnum(state, serverBlobAuditingPolicyProperties_State_STATUS_Values)
+		setting.State = &stateTemp
 	} else {
 		setting.State = nil
 	}
@@ -1307,8 +1391,8 @@ func (setting *Servers_AuditingSetting_STATUS) AssignProperties_From_Servers_Aud
 	return nil
 }
 
-// AssignProperties_To_Servers_AuditingSetting_STATUS populates the provided destination Servers_AuditingSetting_STATUS from our Servers_AuditingSetting_STATUS
-func (setting *Servers_AuditingSetting_STATUS) AssignProperties_To_Servers_AuditingSetting_STATUS(destination *v20211101s.Servers_AuditingSetting_STATUS) error {
+// AssignProperties_To_ServersAuditingSetting_STATUS populates the provided destination ServersAuditingSetting_STATUS from our ServersAuditingSetting_STATUS
+func (setting *ServersAuditingSetting_STATUS) AssignProperties_To_ServersAuditingSetting_STATUS(destination *storage.ServersAuditingSetting_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1398,12 +1482,128 @@ const (
 	ServerBlobAuditingPolicyProperties_State_Enabled  = ServerBlobAuditingPolicyProperties_State("Enabled")
 )
 
+// Mapping from string to ServerBlobAuditingPolicyProperties_State
+var serverBlobAuditingPolicyProperties_State_Values = map[string]ServerBlobAuditingPolicyProperties_State{
+	"disabled": ServerBlobAuditingPolicyProperties_State_Disabled,
+	"enabled":  ServerBlobAuditingPolicyProperties_State_Enabled,
+}
+
 type ServerBlobAuditingPolicyProperties_State_STATUS string
 
 const (
 	ServerBlobAuditingPolicyProperties_State_STATUS_Disabled = ServerBlobAuditingPolicyProperties_State_STATUS("Disabled")
 	ServerBlobAuditingPolicyProperties_State_STATUS_Enabled  = ServerBlobAuditingPolicyProperties_State_STATUS("Enabled")
 )
+
+// Mapping from string to ServerBlobAuditingPolicyProperties_State_STATUS
+var serverBlobAuditingPolicyProperties_State_STATUS_Values = map[string]ServerBlobAuditingPolicyProperties_State_STATUS{
+	"disabled": ServerBlobAuditingPolicyProperties_State_STATUS_Disabled,
+	"enabled":  ServerBlobAuditingPolicyProperties_State_STATUS_Enabled,
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ServersAuditingSettingOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ServersAuditingSettingOperatorSpec populates our ServersAuditingSettingOperatorSpec from the provided source ServersAuditingSettingOperatorSpec
+func (operator *ServersAuditingSettingOperatorSpec) AssignProperties_From_ServersAuditingSettingOperatorSpec(source *storage.ServersAuditingSettingOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ServersAuditingSettingOperatorSpec populates the provided destination ServersAuditingSettingOperatorSpec from our ServersAuditingSettingOperatorSpec
+func (operator *ServersAuditingSettingOperatorSpec) AssignProperties_To_ServersAuditingSettingOperatorSpec(destination *storage.ServersAuditingSettingOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
 
 func init() {
 	SchemeBuilder.Register(&ServersAuditingSetting{}, &ServersAuditingSettingList{})

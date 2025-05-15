@@ -20,9 +20,10 @@ import (
 	"context"
 
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Reconciler is a generic interface used to perform reconciliation of Azure resources backed by ASO.

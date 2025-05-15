@@ -47,7 +47,6 @@ func DiffCurrentAndExpectedSQLRoles(currentRoles set.Set[string], expectedRoles 
 
 // GetUserServerRoles gets the server-level roles the user has as a set.
 func GetUserServerRoles(ctx context.Context, db *sql.DB, user SQLUser) (set.Set[string], error) {
-
 	rows, err := db.QueryContext(
 		ctx,
 		"SELECT c.rolname as role_name FROM pg_roles a INNER JOIN pg_auth_members b on a.oid = b.member INNER JOIN pg_roles c ON b.roleid = c.oid WHERE a.rolname = $1",
@@ -127,7 +126,7 @@ func addRoles(ctx context.Context, db *sql.DB, user SQLUser, roles set.Set[strin
 		errorStrings = append(errorStrings, err.Error())
 	}
 	if len(errorStrings) != 0 {
-		return fmt.Errorf(strings.Join(errorStrings, "\n"))
+		return errors.New(strings.Join(errorStrings, "\n"))
 	}
 	return err
 }

@@ -982,7 +982,50 @@ func (s *Stmt) makeParam(val driver.Value) (res param, err error) {
 		res.ti.Size = 0
 		return
 	}
+	switch valuer := val.(type) {
+	// sql.Nullxxx integer types return an int64. We want the original type, to match the SQL type size.
+	case sql.NullByte:
+		if valuer.Valid {
+			return s.makeParam(valuer.Byte)
+		}
+	case sql.NullInt16:
+		if valuer.Valid {
+			return s.makeParam(valuer.Int16)
+		}
+	case sql.NullInt32:
+		if valuer.Valid {
+			return s.makeParam(valuer.Int32)
+		}
+	case UniqueIdentifier:
+	case NullUniqueIdentifier:
+	default:
+		break
+	case driver.Valuer:
+		// If the value has a non-nil value, call MakeParam on its Value
+		val, e := driver.DefaultParameterConverter.ConvertValue(valuer)
+		if e != nil {
+			err = e
+			return
+		}
+		if val != nil {
+			return s.makeParam(val)
+		}
+	}
 	switch val := val.(type) {
+	case UniqueIdentifier:
+		res.ti.TypeId = typeGuid
+		res.ti.Size = 16
+		guid, _ := val.Value()
+		res.buffer = guid.([]byte)
+	case NullUniqueIdentifier:
+		res.ti.TypeId = typeGuid
+		res.ti.Size = 16
+		if val.Valid {
+			guid, _ := val.Value()
+			res.buffer = guid.([]byte)
+		} else {
+			res.buffer = []byte{}
+		}
 	case int:
 		res.ti.TypeId = typeIntN
 		// Rather than guess if the caller intends to pass a 32bit int from a 64bit app based on the
@@ -1021,6 +1064,21 @@ func (s *Stmt) makeParam(val driver.Value) (res param, err error) {
 		res.ti.TypeId = typeIntN
 		res.ti.Size = 8
 		res.buffer = []byte{}
+	case sql.NullInt32:
+		// only null values should be getting here
+		res.ti.TypeId = typeIntN
+		res.ti.Size = 4
+		res.buffer = []byte{}
+	case sql.NullInt16:
+		// only null values should be getting here
+		res.buffer = []byte{}
+		res.ti.Size = 2
+		res.ti.TypeId = typeIntN
+	case sql.NullByte:
+		// only null values should be getting here
+		res.buffer = []byte{}
+		res.ti.Size = 1
+		res.ti.TypeId = typeIntN
 	case byte:
 		res.ti.TypeId = typeIntN
 		res.buffer = []byte{val}
@@ -1076,6 +1134,18 @@ func (s *Stmt) makeParam(val driver.Value) (res param, err error) {
 			res.buffer = encodeDateTime(val)
 			res.ti.Size = len(res.buffer)
 		}
+	case sql.NullTime: // only null values reach here
+		res.buffer = []byte{}
+		res.ti.Size = 8
+		if s.c.sess.loginAck.TDSVersion >= verTDS73 {
+			res.ti.TypeId = typeDateTimeOffsetN
+			res.ti.Scale = 7
+		} else {
+			res.ti.TypeId = typeDateTimeN
+		}
+	case driver.Valuer:
+		// We have a custom Valuer implementation with a nil value
+		return s.makeParam(nil)
 	default:
 		return s.makeParamExtra(val)
 	}

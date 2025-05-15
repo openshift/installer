@@ -25,6 +25,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
+
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 )
 
@@ -491,7 +492,7 @@ func ValidateCapacityReservationGroupID(capacityReservationGroupID *string, fldP
 }
 
 // ValidateVMExtensions validates the VMExtensions spec.
-func ValidateVMExtensions(disableExtensionOperations *bool, vmExtensions []VMExtension, fldPath *field.Path) field.ErrorList {
+func ValidateVMExtensions(disableExtensionOperations *bool, vmExtensions []VMExtension, _ *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if ptr.Deref(disableExtensionOperations, false) && len(vmExtensions) > 0 {

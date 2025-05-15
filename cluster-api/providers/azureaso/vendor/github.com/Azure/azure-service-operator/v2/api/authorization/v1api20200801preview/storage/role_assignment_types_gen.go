@@ -5,9 +5,12 @@ package storage
 
 import (
 	"fmt"
-	v20220401s "github.com/Azure/azure-service-operator/v2/api/authorization/v1api20220401/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/authorization/v1api20220401/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -47,7 +50,7 @@ var _ conversion.Convertible = &RoleAssignment{}
 
 // ConvertFrom populates our RoleAssignment from the provided hub RoleAssignment
 func (assignment *RoleAssignment) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20220401s.RoleAssignment)
+	source, ok := hub.(*storage.RoleAssignment)
 	if !ok {
 		return fmt.Errorf("expected authorization/v1api20220401/storage/RoleAssignment but received %T instead", hub)
 	}
@@ -57,12 +60,32 @@ func (assignment *RoleAssignment) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub RoleAssignment from our RoleAssignment
 func (assignment *RoleAssignment) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20220401s.RoleAssignment)
+	destination, ok := hub.(*storage.RoleAssignment)
 	if !ok {
 		return fmt.Errorf("expected authorization/v1api20220401/storage/RoleAssignment but received %T instead", hub)
 	}
 
 	return assignment.AssignProperties_To_RoleAssignment(destination)
+}
+
+var _ configmaps.Exporter = &RoleAssignment{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (assignment *RoleAssignment) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if assignment.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return assignment.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &RoleAssignment{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (assignment *RoleAssignment) SecretDestinationExpressions() []*core.DestinationExpression {
+	if assignment.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return assignment.Spec.OperatorSpec.SecretExpressions
 }
 
 var _ genruntime.KubernetesResource = &RoleAssignment{}
@@ -74,7 +97,7 @@ func (assignment *RoleAssignment) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2020-08-01-preview"
 func (assignment RoleAssignment) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2020-08-01-preview"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -136,7 +159,7 @@ func (assignment *RoleAssignment) SetStatus(status genruntime.ConvertibleStatus)
 }
 
 // AssignProperties_From_RoleAssignment populates our RoleAssignment from the provided source RoleAssignment
-func (assignment *RoleAssignment) AssignProperties_From_RoleAssignment(source *v20220401s.RoleAssignment) error {
+func (assignment *RoleAssignment) AssignProperties_From_RoleAssignment(source *storage.RoleAssignment) error {
 
 	// ObjectMeta
 	assignment.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -171,13 +194,13 @@ func (assignment *RoleAssignment) AssignProperties_From_RoleAssignment(source *v
 }
 
 // AssignProperties_To_RoleAssignment populates the provided destination RoleAssignment from our RoleAssignment
-func (assignment *RoleAssignment) AssignProperties_To_RoleAssignment(destination *v20220401s.RoleAssignment) error {
+func (assignment *RoleAssignment) AssignProperties_To_RoleAssignment(destination *storage.RoleAssignment) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *assignment.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20220401s.RoleAssignment_Spec
+	var spec storage.RoleAssignment_Spec
 	err := assignment.Spec.AssignProperties_To_RoleAssignment_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_RoleAssignment_Spec() to populate field Spec")
@@ -185,7 +208,7 @@ func (assignment *RoleAssignment) AssignProperties_To_RoleAssignment(destination
 	destination.Spec = spec
 
 	// Status
-	var status v20220401s.RoleAssignment_STATUS
+	var status storage.RoleAssignment_STATUS
 	err = assignment.Status.AssignProperties_To_RoleAssignment_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_RoleAssignment_STATUS() to populate field Status")
@@ -232,20 +255,23 @@ type APIVersion string
 const APIVersion_Value = APIVersion("2020-08-01-preview")
 
 type augmentConversionForRoleAssignment interface {
-	AssignPropertiesFrom(src *v20220401s.RoleAssignment) error
-	AssignPropertiesTo(dst *v20220401s.RoleAssignment) error
+	AssignPropertiesFrom(src *storage.RoleAssignment) error
+	AssignPropertiesTo(dst *storage.RoleAssignment) error
 }
 
 // Storage version of v1api20200801preview.RoleAssignment_Spec
 type RoleAssignment_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName                          string  `json:"azureName,omitempty"`
-	Condition                          *string `json:"condition,omitempty"`
-	ConditionVersion                   *string `json:"conditionVersion,omitempty"`
-	DelegatedManagedIdentityResourceId *string `json:"delegatedManagedIdentityResourceId,omitempty"`
-	Description                        *string `json:"description,omitempty"`
-	OriginalVersion                    string  `json:"originalVersion,omitempty"`
+	AzureName        string  `json:"azureName,omitempty"`
+	Condition        *string `json:"condition,omitempty"`
+	ConditionVersion *string `json:"conditionVersion,omitempty"`
+
+	// DelegatedManagedIdentityResourceReference: Id of the delegated managed identity resource
+	DelegatedManagedIdentityResourceReference *genruntime.ResourceReference `armReference:"DelegatedManagedIdentityResourceId" json:"delegatedManagedIdentityResourceReference,omitempty"`
+	Description                               *string                       `json:"description,omitempty"`
+	OperatorSpec                              *RoleAssignmentOperatorSpec   `json:"operatorSpec,omitempty"`
+	OriginalVersion                           string                        `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -266,14 +292,14 @@ var _ genruntime.ConvertibleSpec = &RoleAssignment_Spec{}
 
 // ConvertSpecFrom populates our RoleAssignment_Spec from the provided source
 func (assignment *RoleAssignment_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20220401s.RoleAssignment_Spec)
+	src, ok := source.(*storage.RoleAssignment_Spec)
 	if ok {
 		// Populate our instance from source
 		return assignment.AssignProperties_From_RoleAssignment_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220401s.RoleAssignment_Spec{}
+	src = &storage.RoleAssignment_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -290,14 +316,14 @@ func (assignment *RoleAssignment_Spec) ConvertSpecFrom(source genruntime.Convert
 
 // ConvertSpecTo populates the provided destination from our RoleAssignment_Spec
 func (assignment *RoleAssignment_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20220401s.RoleAssignment_Spec)
+	dst, ok := destination.(*storage.RoleAssignment_Spec)
 	if ok {
 		// Populate destination from our instance
 		return assignment.AssignProperties_To_RoleAssignment_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220401s.RoleAssignment_Spec{}
+	dst = &storage.RoleAssignment_Spec{}
 	err := assignment.AssignProperties_To_RoleAssignment_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -313,7 +339,7 @@ func (assignment *RoleAssignment_Spec) ConvertSpecTo(destination genruntime.Conv
 }
 
 // AssignProperties_From_RoleAssignment_Spec populates our RoleAssignment_Spec from the provided source RoleAssignment_Spec
-func (assignment *RoleAssignment_Spec) AssignProperties_From_RoleAssignment_Spec(source *v20220401s.RoleAssignment_Spec) error {
+func (assignment *RoleAssignment_Spec) AssignProperties_From_RoleAssignment_Spec(source *storage.RoleAssignment_Spec) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -326,11 +352,28 @@ func (assignment *RoleAssignment_Spec) AssignProperties_From_RoleAssignment_Spec
 	// ConditionVersion
 	assignment.ConditionVersion = genruntime.ClonePointerToString(source.ConditionVersion)
 
-	// DelegatedManagedIdentityResourceId
-	assignment.DelegatedManagedIdentityResourceId = genruntime.ClonePointerToString(source.DelegatedManagedIdentityResourceId)
+	// DelegatedManagedIdentityResourceReference
+	if source.DelegatedManagedIdentityResourceReference != nil {
+		delegatedManagedIdentityResourceReference := source.DelegatedManagedIdentityResourceReference.Copy()
+		assignment.DelegatedManagedIdentityResourceReference = &delegatedManagedIdentityResourceReference
+	} else {
+		assignment.DelegatedManagedIdentityResourceReference = nil
+	}
 
 	// Description
 	assignment.Description = genruntime.ClonePointerToString(source.Description)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec RoleAssignmentOperatorSpec
+		err := operatorSpec.AssignProperties_From_RoleAssignmentOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_RoleAssignmentOperatorSpec() to populate field OperatorSpec")
+		}
+		assignment.OperatorSpec = &operatorSpec
+	} else {
+		assignment.OperatorSpec = nil
+	}
 
 	// OriginalVersion
 	assignment.OriginalVersion = source.OriginalVersion
@@ -386,7 +429,7 @@ func (assignment *RoleAssignment_Spec) AssignProperties_From_RoleAssignment_Spec
 }
 
 // AssignProperties_To_RoleAssignment_Spec populates the provided destination RoleAssignment_Spec from our RoleAssignment_Spec
-func (assignment *RoleAssignment_Spec) AssignProperties_To_RoleAssignment_Spec(destination *v20220401s.RoleAssignment_Spec) error {
+func (assignment *RoleAssignment_Spec) AssignProperties_To_RoleAssignment_Spec(destination *storage.RoleAssignment_Spec) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(assignment.PropertyBag)
 
@@ -399,11 +442,28 @@ func (assignment *RoleAssignment_Spec) AssignProperties_To_RoleAssignment_Spec(d
 	// ConditionVersion
 	destination.ConditionVersion = genruntime.ClonePointerToString(assignment.ConditionVersion)
 
-	// DelegatedManagedIdentityResourceId
-	destination.DelegatedManagedIdentityResourceId = genruntime.ClonePointerToString(assignment.DelegatedManagedIdentityResourceId)
+	// DelegatedManagedIdentityResourceReference
+	if assignment.DelegatedManagedIdentityResourceReference != nil {
+		delegatedManagedIdentityResourceReference := assignment.DelegatedManagedIdentityResourceReference.Copy()
+		destination.DelegatedManagedIdentityResourceReference = &delegatedManagedIdentityResourceReference
+	} else {
+		destination.DelegatedManagedIdentityResourceReference = nil
+	}
 
 	// Description
 	destination.Description = genruntime.ClonePointerToString(assignment.Description)
+
+	// OperatorSpec
+	if assignment.OperatorSpec != nil {
+		var operatorSpec storage.RoleAssignmentOperatorSpec
+		err := assignment.OperatorSpec.AssignProperties_To_RoleAssignmentOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_RoleAssignmentOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OriginalVersion
 	destination.OriginalVersion = assignment.OriginalVersion
@@ -484,14 +544,14 @@ var _ genruntime.ConvertibleStatus = &RoleAssignment_STATUS{}
 
 // ConvertStatusFrom populates our RoleAssignment_STATUS from the provided source
 func (assignment *RoleAssignment_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20220401s.RoleAssignment_STATUS)
+	src, ok := source.(*storage.RoleAssignment_STATUS)
 	if ok {
 		// Populate our instance from source
 		return assignment.AssignProperties_From_RoleAssignment_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20220401s.RoleAssignment_STATUS{}
+	src = &storage.RoleAssignment_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -508,14 +568,14 @@ func (assignment *RoleAssignment_STATUS) ConvertStatusFrom(source genruntime.Con
 
 // ConvertStatusTo populates the provided destination from our RoleAssignment_STATUS
 func (assignment *RoleAssignment_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20220401s.RoleAssignment_STATUS)
+	dst, ok := destination.(*storage.RoleAssignment_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return assignment.AssignProperties_To_RoleAssignment_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20220401s.RoleAssignment_STATUS{}
+	dst = &storage.RoleAssignment_STATUS{}
 	err := assignment.AssignProperties_To_RoleAssignment_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -531,7 +591,7 @@ func (assignment *RoleAssignment_STATUS) ConvertStatusTo(destination genruntime.
 }
 
 // AssignProperties_From_RoleAssignment_STATUS populates our RoleAssignment_STATUS from the provided source RoleAssignment_STATUS
-func (assignment *RoleAssignment_STATUS) AssignProperties_From_RoleAssignment_STATUS(source *v20220401s.RoleAssignment_STATUS) error {
+func (assignment *RoleAssignment_STATUS) AssignProperties_From_RoleAssignment_STATUS(source *storage.RoleAssignment_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -604,7 +664,7 @@ func (assignment *RoleAssignment_STATUS) AssignProperties_From_RoleAssignment_ST
 }
 
 // AssignProperties_To_RoleAssignment_STATUS populates the provided destination RoleAssignment_STATUS from our RoleAssignment_STATUS
-func (assignment *RoleAssignment_STATUS) AssignProperties_To_RoleAssignment_STATUS(destination *v20220401s.RoleAssignment_STATUS) error {
+func (assignment *RoleAssignment_STATUS) AssignProperties_To_RoleAssignment_STATUS(destination *storage.RoleAssignment_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(assignment.PropertyBag)
 
@@ -677,13 +737,155 @@ func (assignment *RoleAssignment_STATUS) AssignProperties_To_RoleAssignment_STAT
 }
 
 type augmentConversionForRoleAssignment_Spec interface {
-	AssignPropertiesFrom(src *v20220401s.RoleAssignment_Spec) error
-	AssignPropertiesTo(dst *v20220401s.RoleAssignment_Spec) error
+	AssignPropertiesFrom(src *storage.RoleAssignment_Spec) error
+	AssignPropertiesTo(dst *storage.RoleAssignment_Spec) error
 }
 
 type augmentConversionForRoleAssignment_STATUS interface {
-	AssignPropertiesFrom(src *v20220401s.RoleAssignment_STATUS) error
-	AssignPropertiesTo(dst *v20220401s.RoleAssignment_STATUS) error
+	AssignPropertiesFrom(src *storage.RoleAssignment_STATUS) error
+	AssignPropertiesTo(dst *storage.RoleAssignment_STATUS) error
+}
+
+// Storage version of v1api20200801preview.RoleAssignmentOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type RoleAssignmentOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	NamingConvention     *string                       `json:"namingConvention,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_RoleAssignmentOperatorSpec populates our RoleAssignmentOperatorSpec from the provided source RoleAssignmentOperatorSpec
+func (operator *RoleAssignmentOperatorSpec) AssignProperties_From_RoleAssignmentOperatorSpec(source *storage.RoleAssignmentOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// NamingConvention
+	operator.NamingConvention = genruntime.ClonePointerToString(source.NamingConvention)
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRoleAssignmentOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForRoleAssignmentOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RoleAssignmentOperatorSpec populates the provided destination RoleAssignmentOperatorSpec from our RoleAssignmentOperatorSpec
+func (operator *RoleAssignmentOperatorSpec) AssignProperties_To_RoleAssignmentOperatorSpec(destination *storage.RoleAssignmentOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// NamingConvention
+	destination.NamingConvention = genruntime.ClonePointerToString(operator.NamingConvention)
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRoleAssignmentOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForRoleAssignmentOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForRoleAssignmentOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.RoleAssignmentOperatorSpec) error
+	AssignPropertiesTo(dst *storage.RoleAssignmentOperatorSpec) error
 }
 
 func init() {

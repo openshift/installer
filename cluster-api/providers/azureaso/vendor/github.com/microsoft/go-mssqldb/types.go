@@ -148,7 +148,7 @@ func readTypeInfo(r *tdsBuffer, typeId byte, c *cryptoMetadata) (res typeInfo) {
 }
 
 // https://msdn.microsoft.com/en-us/library/dd358284.aspx
-func writeTypeInfo(w io.Writer, ti *typeInfo) (err error) {
+func writeTypeInfo(w io.Writer, ti *typeInfo, out bool) (err error) {
 	err = binary.Write(w, binary.LittleEndian, ti.TypeId)
 	if err != nil {
 		return
@@ -162,7 +162,7 @@ func writeTypeInfo(w io.Writer, ti *typeInfo) (err error) {
 	case typeTvp:
 		ti.Writer = writeFixedType
 	default: // all others are VARLENTYPE
-		err = writeVarLen(w, ti)
+		err = writeVarLen(w, ti, out)
 		if err != nil {
 			return
 		}
@@ -176,7 +176,7 @@ func writeFixedType(w io.Writer, ti typeInfo, buf []byte) (err error) {
 }
 
 // https://msdn.microsoft.com/en-us/library/dd358341.aspx
-func writeVarLen(w io.Writer, ti *typeInfo) (err error) {
+func writeVarLen(w io.Writer, ti *typeInfo, out bool) (err error) {
 	switch ti.TypeId {
 
 	case typeDateN:
@@ -222,7 +222,7 @@ func writeVarLen(w io.Writer, ti *typeInfo) (err error) {
 		typeNVarChar, typeNChar, typeXml, typeUdt:
 
 		// short len types
-		if ti.Size > 8000 || ti.Size == 0 {
+		if ti.Size > 8000 || ti.Size == 0 || out {
 			if err = binary.Write(w, binary.LittleEndian, uint16(0xffff)); err != nil {
 				return
 			}

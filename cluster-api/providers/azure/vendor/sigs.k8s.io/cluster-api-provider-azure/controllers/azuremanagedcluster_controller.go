@@ -23,10 +23,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
@@ -37,6 +33,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
+	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 // AzureManagedClusterReconciler reconciles an AzureManagedCluster object.
@@ -70,7 +71,7 @@ func (amcr *AzureManagedClusterReconciler) SetupWithManager(ctx context.Context,
 	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options.Options).
 		For(azManagedCluster).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, amcr.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, amcr.WatchFilterValue)).
 		// watch AzureManagedControlPlane resources
 		Watches(
 			&infrav1.AzureManagedControlPlane{},
@@ -81,8 +82,8 @@ func (amcr *AzureManagedClusterReconciler) SetupWithManager(ctx context.Context,
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(ctx, infrav1.GroupVersion.WithKind(infrav1.AzureManagedClusterKind), mgr.GetClient(), &infrav1.AzureManagedCluster{})),
 			builder.WithPredicates(
-				predicates.ClusterUnpaused(log),
-				predicates.ResourceNotPausedAndHasFilterLabel(log, amcr.WatchFilterValue),
+				predicates.ClusterUnpaused(mgr.GetScheme(), log),
+				predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, amcr.WatchFilterValue),
 			),
 		).
 		Complete(r)

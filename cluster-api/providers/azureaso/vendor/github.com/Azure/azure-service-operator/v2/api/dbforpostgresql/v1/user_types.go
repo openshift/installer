@@ -22,7 +22,7 @@ import (
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].message"
 // +kubebuilder:storageversion
-// User is a postgresql user
+// User is a postgresql user.
 type User struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -140,28 +140,28 @@ type UserList struct {
 }
 
 type UserSpec struct {
-	//AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
-	//doesn't have to be.
+	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
+	// doesn't have to be.
 	AzureName string `json:"azureName,omitempty"`
 
 	// +kubebuilder:validation:Required
-	//Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
-	//controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
-	//reference to a dbforpostgresql.azure.com/FlexibleServer resource
+	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
+	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
+	// reference to a dbforpostgresql.azure.com/FlexibleServer resource
 	Owner *genruntime.KubernetesOwnerReference `group:"dbforpostgresql.azure.com" json:"owner,omitempty" kind:"FlexibleServer"`
 
-	// The Azure Database for PostgreSQL server is created with the 3 default roles defined.
-	// azure_pg_admin
-	// azure_superuser
-	// your server admin user
+	// Roles is the set of roles granted to the user upon creation.
+	// The Azure Database for PostgreSQL server is created with 3 default roles defined: azure_pg_admin, azure_superuser,
+	// and your server admin user (this last is a role w/ login permission, commonly called a User).
 	Roles []string `json:"roles,omitempty"`
 
 	// +kubebuilder:default={login: true}
-	// The with options of the user role.
+	// RoleOptions defines additional attributes of the user role. You can read more about these attributes
+	// at https://www.postgresql.org/docs/current/role-attributes.html.
 	RoleOptions *RoleOptionsSpec `json:"roleOptions,omitempty"`
 
 	// +kubebuilder:validation:Required
-	// LocalUser contains details for creating a standard (non-aad) postgresql User
+	// LocalUser contains details for creating a standard (non-aad) postgresql User.
 	LocalUser *LocalUserSpec `json:"localUser,omitempty"`
 }
 
@@ -210,7 +210,7 @@ type RoleOptionsSpec struct {
 }
 
 type UserStatus struct {
-	//Conditions: The observed state of the resource
+	// Conditions: The observed state of the resource
 	Conditions []conditions.Condition `json:"conditions,omitempty"`
 }
 

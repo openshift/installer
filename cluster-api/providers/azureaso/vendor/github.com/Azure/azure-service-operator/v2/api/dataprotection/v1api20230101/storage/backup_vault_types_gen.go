@@ -4,19 +4,25 @@
 package storage
 
 import (
+	"context"
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/dataprotection/v1api20231101/storage"
+	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
-
-// +kubebuilder:rbac:groups=dataprotection.azure.com,resources=backupvaults,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=dataprotection.azure.com,resources={backupvaults/status,backupvaults/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -44,6 +50,67 @@ func (vault *BackupVault) SetConditions(conditions conditions.Conditions) {
 	vault.Status.Conditions = conditions
 }
 
+var _ conversion.Convertible = &BackupVault{}
+
+// ConvertFrom populates our BackupVault from the provided hub BackupVault
+func (vault *BackupVault) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.BackupVault)
+	if !ok {
+		return fmt.Errorf("expected dataprotection/v1api20231101/storage/BackupVault but received %T instead", hub)
+	}
+
+	return vault.AssignProperties_From_BackupVault(source)
+}
+
+// ConvertTo populates the provided hub BackupVault from our BackupVault
+func (vault *BackupVault) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.BackupVault)
+	if !ok {
+		return fmt.Errorf("expected dataprotection/v1api20231101/storage/BackupVault but received %T instead", hub)
+	}
+
+	return vault.AssignProperties_To_BackupVault(destination)
+}
+
+var _ configmaps.Exporter = &BackupVault{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (vault *BackupVault) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if vault.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return vault.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &BackupVault{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (vault *BackupVault) SecretDestinationExpressions() []*core.DestinationExpression {
+	if vault.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return vault.Spec.OperatorSpec.SecretExpressions
+}
+
+var _ genruntime.KubernetesConfigExporter = &BackupVault{}
+
+// ExportKubernetesConfigMaps defines a resource which can create ConfigMaps in Kubernetes.
+func (vault *BackupVault) ExportKubernetesConfigMaps(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
+	collector := configmaps.NewCollector(vault.Namespace)
+	if vault.Spec.OperatorSpec != nil && vault.Spec.OperatorSpec.ConfigMaps != nil {
+		if vault.Status.Identity != nil {
+			if vault.Status.Identity.PrincipalId != nil {
+				collector.AddValue(vault.Spec.OperatorSpec.ConfigMaps.PrincipalId, *vault.Status.Identity.PrincipalId)
+			}
+		}
+	}
+	result, err := collector.Values()
+	if err != nil {
+		return nil, err
+	}
+	return configmaps.SliceToClientObjectSlice(result), nil
+}
+
 var _ genruntime.KubernetesResource = &BackupVault{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +120,7 @@ func (vault *BackupVault) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-01-01"
 func (vault BackupVault) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-01-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -115,8 +182,75 @@ func (vault *BackupVault) SetStatus(status genruntime.ConvertibleStatus) error {
 	return nil
 }
 
-// Hub marks that this BackupVault is the hub type for conversion
-func (vault *BackupVault) Hub() {}
+// AssignProperties_From_BackupVault populates our BackupVault from the provided source BackupVault
+func (vault *BackupVault) AssignProperties_From_BackupVault(source *storage.BackupVault) error {
+
+	// ObjectMeta
+	vault.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec BackupVault_Spec
+	err := spec.AssignProperties_From_BackupVault_Spec(&source.Spec)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_From_BackupVault_Spec() to populate field Spec")
+	}
+	vault.Spec = spec
+
+	// Status
+	var status BackupVaultResource_STATUS
+	err = status.AssignProperties_From_BackupVaultResource_STATUS(&source.Status)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_From_BackupVaultResource_STATUS() to populate field Status")
+	}
+	vault.Status = status
+
+	// Invoke the augmentConversionForBackupVault interface (if implemented) to customize the conversion
+	var vaultAsAny any = vault
+	if augmentedVault, ok := vaultAsAny.(augmentConversionForBackupVault); ok {
+		err := augmentedVault.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupVault populates the provided destination BackupVault from our BackupVault
+func (vault *BackupVault) AssignProperties_To_BackupVault(destination *storage.BackupVault) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *vault.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.BackupVault_Spec
+	err := vault.Spec.AssignProperties_To_BackupVault_Spec(&spec)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_To_BackupVault_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.BackupVaultResource_STATUS
+	err = vault.Status.AssignProperties_To_BackupVaultResource_STATUS(&status)
+	if err != nil {
+		return errors.Wrap(err, "calling AssignProperties_To_BackupVaultResource_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForBackupVault interface (if implemented) to customize the conversion
+	var vaultAsAny any = vault
+	if augmentedVault, ok := vaultAsAny.(augmentConversionForBackupVault); ok {
+		err := augmentedVault.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (vault *BackupVault) OriginalGVK() *schema.GroupVersionKind {
@@ -144,14 +278,20 @@ type APIVersion string
 
 const APIVersion_Value = APIVersion("2023-01-01")
 
+type augmentConversionForBackupVault interface {
+	AssignPropertiesFrom(src *storage.BackupVault) error
+	AssignPropertiesTo(dst *storage.BackupVault) error
+}
+
 // Storage version of v1api20230101.BackupVault_Spec
 type BackupVault_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string              `json:"azureName,omitempty"`
-	Identity        *DppIdentityDetails `json:"identity,omitempty"`
-	Location        *string             `json:"location,omitempty"`
-	OriginalVersion string              `json:"originalVersion,omitempty"`
+	AzureName       string                   `json:"azureName,omitempty"`
+	Identity        *DppIdentityDetails      `json:"identity,omitempty"`
+	Location        *string                  `json:"location,omitempty"`
+	OperatorSpec    *BackupVaultOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string                   `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -167,20 +307,212 @@ var _ genruntime.ConvertibleSpec = &BackupVault_Spec{}
 
 // ConvertSpecFrom populates our BackupVault_Spec from the provided source
 func (vault *BackupVault_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == vault {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.BackupVault_Spec)
+	if ok {
+		// Populate our instance from source
+		return vault.AssignProperties_From_BackupVault_Spec(src)
 	}
 
-	return source.ConvertSpecTo(vault)
+	// Convert to an intermediate form
+	src = &storage.BackupVault_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = vault.AssignProperties_From_BackupVault_Spec(src)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our BackupVault_Spec
 func (vault *BackupVault_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == vault {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.BackupVault_Spec)
+	if ok {
+		// Populate destination from our instance
+		return vault.AssignProperties_To_BackupVault_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(vault)
+	// Convert to an intermediate form
+	dst = &storage.BackupVault_Spec{}
+	err := vault.AssignProperties_To_BackupVault_Spec(dst)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_BackupVault_Spec populates our BackupVault_Spec from the provided source BackupVault_Spec
+func (vault *BackupVault_Spec) AssignProperties_From_BackupVault_Spec(source *storage.BackupVault_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	vault.AzureName = source.AzureName
+
+	// Identity
+	if source.Identity != nil {
+		var identity DppIdentityDetails
+		err := identity.AssignProperties_From_DppIdentityDetails(source.Identity)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_DppIdentityDetails() to populate field Identity")
+		}
+		vault.Identity = &identity
+	} else {
+		vault.Identity = nil
+	}
+
+	// Location
+	vault.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec BackupVaultOperatorSpec
+		err := operatorSpec.AssignProperties_From_BackupVaultOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BackupVaultOperatorSpec() to populate field OperatorSpec")
+		}
+		vault.OperatorSpec = &operatorSpec
+	} else {
+		vault.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	vault.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		vault.Owner = &owner
+	} else {
+		vault.Owner = nil
+	}
+
+	// Properties
+	if source.Properties != nil {
+		var property BackupVaultSpec
+		err := property.AssignProperties_From_BackupVaultSpec(source.Properties)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BackupVaultSpec() to populate field Properties")
+		}
+		vault.Properties = &property
+	} else {
+		vault.Properties = nil
+	}
+
+	// Tags
+	vault.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		vault.PropertyBag = propertyBag
+	} else {
+		vault.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVault_Spec interface (if implemented) to customize the conversion
+	var vaultAsAny any = vault
+	if augmentedVault, ok := vaultAsAny.(augmentConversionForBackupVault_Spec); ok {
+		err := augmentedVault.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupVault_Spec populates the provided destination BackupVault_Spec from our BackupVault_Spec
+func (vault *BackupVault_Spec) AssignProperties_To_BackupVault_Spec(destination *storage.BackupVault_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(vault.PropertyBag)
+
+	// AzureName
+	destination.AzureName = vault.AzureName
+
+	// Identity
+	if vault.Identity != nil {
+		var identity storage.DppIdentityDetails
+		err := vault.Identity.AssignProperties_To_DppIdentityDetails(&identity)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_DppIdentityDetails() to populate field Identity")
+		}
+		destination.Identity = &identity
+	} else {
+		destination.Identity = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(vault.Location)
+
+	// OperatorSpec
+	if vault.OperatorSpec != nil {
+		var operatorSpec storage.BackupVaultOperatorSpec
+		err := vault.OperatorSpec.AssignProperties_To_BackupVaultOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BackupVaultOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = vault.OriginalVersion
+
+	// Owner
+	if vault.Owner != nil {
+		owner := vault.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Properties
+	if vault.Properties != nil {
+		var property storage.BackupVaultSpec
+		err := vault.Properties.AssignProperties_To_BackupVaultSpec(&property)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BackupVaultSpec() to populate field Properties")
+		}
+		destination.Properties = &property
+	} else {
+		destination.Properties = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(vault.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVault_Spec interface (if implemented) to customize the conversion
+	var vaultAsAny any = vault
+	if augmentedVault, ok := vaultAsAny.(augmentConversionForBackupVault_Spec); ok {
+		err := augmentedVault.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.BackupVaultResource_STATUS
@@ -203,20 +535,224 @@ var _ genruntime.ConvertibleStatus = &BackupVaultResource_STATUS{}
 
 // ConvertStatusFrom populates our BackupVaultResource_STATUS from the provided source
 func (resource *BackupVaultResource_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == resource {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.BackupVaultResource_STATUS)
+	if ok {
+		// Populate our instance from source
+		return resource.AssignProperties_From_BackupVaultResource_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(resource)
+	// Convert to an intermediate form
+	src = &storage.BackupVaultResource_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = resource.AssignProperties_From_BackupVaultResource_STATUS(src)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our BackupVaultResource_STATUS
 func (resource *BackupVaultResource_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == resource {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.BackupVaultResource_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return resource.AssignProperties_To_BackupVaultResource_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(resource)
+	// Convert to an intermediate form
+	dst = &storage.BackupVaultResource_STATUS{}
+	err := resource.AssignProperties_To_BackupVaultResource_STATUS(dst)
+	if err != nil {
+		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_BackupVaultResource_STATUS populates our BackupVaultResource_STATUS from the provided source BackupVaultResource_STATUS
+func (resource *BackupVaultResource_STATUS) AssignProperties_From_BackupVaultResource_STATUS(source *storage.BackupVaultResource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	resource.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// ETag
+	resource.ETag = genruntime.ClonePointerToString(source.ETag)
+
+	// Id
+	resource.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Identity
+	if source.Identity != nil {
+		var identity DppIdentityDetails_STATUS
+		err := identity.AssignProperties_From_DppIdentityDetails_STATUS(source.Identity)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_DppIdentityDetails_STATUS() to populate field Identity")
+		}
+		resource.Identity = &identity
+	} else {
+		resource.Identity = nil
+	}
+
+	// Location
+	resource.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	resource.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Properties
+	if source.Properties != nil {
+		var property BackupVault_STATUS
+		err := property.AssignProperties_From_BackupVault_STATUS(source.Properties)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BackupVault_STATUS() to populate field Properties")
+		}
+		resource.Properties = &property
+	} else {
+		resource.Properties = nil
+	}
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		resource.SystemData = &systemDatum
+	} else {
+		resource.SystemData = nil
+	}
+
+	// Tags
+	resource.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	resource.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resource.PropertyBag = propertyBag
+	} else {
+		resource.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultResource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForBackupVaultResource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupVaultResource_STATUS populates the provided destination BackupVaultResource_STATUS from our BackupVaultResource_STATUS
+func (resource *BackupVaultResource_STATUS) AssignProperties_To_BackupVaultResource_STATUS(destination *storage.BackupVaultResource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(resource.Conditions)
+
+	// ETag
+	destination.ETag = genruntime.ClonePointerToString(resource.ETag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(resource.Id)
+
+	// Identity
+	if resource.Identity != nil {
+		var identity storage.DppIdentityDetails_STATUS
+		err := resource.Identity.AssignProperties_To_DppIdentityDetails_STATUS(&identity)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_DppIdentityDetails_STATUS() to populate field Identity")
+		}
+		destination.Identity = &identity
+	} else {
+		destination.Identity = nil
+	}
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(resource.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(resource.Name)
+
+	// Properties
+	if resource.Properties != nil {
+		var property storage.BackupVault_STATUS
+		err := resource.Properties.AssignProperties_To_BackupVault_STATUS(&property)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BackupVault_STATUS() to populate field Properties")
+		}
+		destination.Properties = &property
+	} else {
+		destination.Properties = nil
+	}
+
+	// SystemData
+	if resource.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := resource.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(resource.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(resource.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultResource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForBackupVaultResource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForBackupVault_Spec interface {
+	AssignPropertiesFrom(src *storage.BackupVault_Spec) error
+	AssignPropertiesTo(dst *storage.BackupVault_Spec) error
+}
+
+type augmentConversionForBackupVaultResource_STATUS interface {
+	AssignPropertiesFrom(src *storage.BackupVaultResource_STATUS) error
+	AssignPropertiesTo(dst *storage.BackupVaultResource_STATUS) error
 }
 
 // Storage version of v1api20230101.BackupVault_STATUS
@@ -233,6 +769,411 @@ type BackupVault_STATUS struct {
 	StorageSettings                 []StorageSetting_STATUS     `json:"storageSettings,omitempty"`
 }
 
+// AssignProperties_From_BackupVault_STATUS populates our BackupVault_STATUS from the provided source BackupVault_STATUS
+func (vault *BackupVault_STATUS) AssignProperties_From_BackupVault_STATUS(source *storage.BackupVault_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// FeatureSettings
+	if source.FeatureSettings != nil {
+		var featureSetting FeatureSettings_STATUS
+		err := featureSetting.AssignProperties_From_FeatureSettings_STATUS(source.FeatureSettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_FeatureSettings_STATUS() to populate field FeatureSettings")
+		}
+		vault.FeatureSettings = &featureSetting
+	} else {
+		vault.FeatureSettings = nil
+	}
+
+	// IsVaultProtectedByResourceGuard
+	if source.IsVaultProtectedByResourceGuard != nil {
+		isVaultProtectedByResourceGuard := *source.IsVaultProtectedByResourceGuard
+		vault.IsVaultProtectedByResourceGuard = &isVaultProtectedByResourceGuard
+	} else {
+		vault.IsVaultProtectedByResourceGuard = nil
+	}
+
+	// MonitoringSettings
+	if source.MonitoringSettings != nil {
+		var monitoringSetting MonitoringSettings_STATUS
+		err := monitoringSetting.AssignProperties_From_MonitoringSettings_STATUS(source.MonitoringSettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_MonitoringSettings_STATUS() to populate field MonitoringSettings")
+		}
+		vault.MonitoringSettings = &monitoringSetting
+	} else {
+		vault.MonitoringSettings = nil
+	}
+
+	// ProvisioningState
+	vault.ProvisioningState = genruntime.ClonePointerToString(source.ProvisioningState)
+
+	// ReplicatedRegions
+	if len(source.ReplicatedRegions) > 0 {
+		propertyBag.Add("ReplicatedRegions", source.ReplicatedRegions)
+	} else {
+		propertyBag.Remove("ReplicatedRegions")
+	}
+
+	// ResourceMoveDetails
+	if source.ResourceMoveDetails != nil {
+		var resourceMoveDetail ResourceMoveDetails_STATUS
+		err := resourceMoveDetail.AssignProperties_From_ResourceMoveDetails_STATUS(source.ResourceMoveDetails)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ResourceMoveDetails_STATUS() to populate field ResourceMoveDetails")
+		}
+		vault.ResourceMoveDetails = &resourceMoveDetail
+	} else {
+		vault.ResourceMoveDetails = nil
+	}
+
+	// ResourceMoveState
+	vault.ResourceMoveState = genruntime.ClonePointerToString(source.ResourceMoveState)
+
+	// SecureScore
+	if source.SecureScore != nil {
+		propertyBag.Add("SecureScore", *source.SecureScore)
+	} else {
+		propertyBag.Remove("SecureScore")
+	}
+
+	// SecuritySettings
+	if source.SecuritySettings != nil {
+		var securitySetting SecuritySettings_STATUS
+		err := securitySetting.AssignProperties_From_SecuritySettings_STATUS(source.SecuritySettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SecuritySettings_STATUS() to populate field SecuritySettings")
+		}
+		vault.SecuritySettings = &securitySetting
+	} else {
+		vault.SecuritySettings = nil
+	}
+
+	// StorageSettings
+	if source.StorageSettings != nil {
+		storageSettingList := make([]StorageSetting_STATUS, len(source.StorageSettings))
+		for storageSettingIndex, storageSettingItem := range source.StorageSettings {
+			// Shadow the loop variable to avoid aliasing
+			storageSettingItem := storageSettingItem
+			var storageSetting StorageSetting_STATUS
+			err := storageSetting.AssignProperties_From_StorageSetting_STATUS(&storageSettingItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_StorageSetting_STATUS() to populate field StorageSettings")
+			}
+			storageSettingList[storageSettingIndex] = storageSetting
+		}
+		vault.StorageSettings = storageSettingList
+	} else {
+		vault.StorageSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		vault.PropertyBag = propertyBag
+	} else {
+		vault.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVault_STATUS interface (if implemented) to customize the conversion
+	var vaultAsAny any = vault
+	if augmentedVault, ok := vaultAsAny.(augmentConversionForBackupVault_STATUS); ok {
+		err := augmentedVault.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupVault_STATUS populates the provided destination BackupVault_STATUS from our BackupVault_STATUS
+func (vault *BackupVault_STATUS) AssignProperties_To_BackupVault_STATUS(destination *storage.BackupVault_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(vault.PropertyBag)
+
+	// FeatureSettings
+	if vault.FeatureSettings != nil {
+		var featureSetting storage.FeatureSettings_STATUS
+		err := vault.FeatureSettings.AssignProperties_To_FeatureSettings_STATUS(&featureSetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_FeatureSettings_STATUS() to populate field FeatureSettings")
+		}
+		destination.FeatureSettings = &featureSetting
+	} else {
+		destination.FeatureSettings = nil
+	}
+
+	// IsVaultProtectedByResourceGuard
+	if vault.IsVaultProtectedByResourceGuard != nil {
+		isVaultProtectedByResourceGuard := *vault.IsVaultProtectedByResourceGuard
+		destination.IsVaultProtectedByResourceGuard = &isVaultProtectedByResourceGuard
+	} else {
+		destination.IsVaultProtectedByResourceGuard = nil
+	}
+
+	// MonitoringSettings
+	if vault.MonitoringSettings != nil {
+		var monitoringSetting storage.MonitoringSettings_STATUS
+		err := vault.MonitoringSettings.AssignProperties_To_MonitoringSettings_STATUS(&monitoringSetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_MonitoringSettings_STATUS() to populate field MonitoringSettings")
+		}
+		destination.MonitoringSettings = &monitoringSetting
+	} else {
+		destination.MonitoringSettings = nil
+	}
+
+	// ProvisioningState
+	destination.ProvisioningState = genruntime.ClonePointerToString(vault.ProvisioningState)
+
+	// ReplicatedRegions
+	if propertyBag.Contains("ReplicatedRegions") {
+		var replicatedRegion []string
+		err := propertyBag.Pull("ReplicatedRegions", &replicatedRegion)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'ReplicatedRegions' from propertyBag")
+		}
+
+		destination.ReplicatedRegions = replicatedRegion
+	} else {
+		destination.ReplicatedRegions = nil
+	}
+
+	// ResourceMoveDetails
+	if vault.ResourceMoveDetails != nil {
+		var resourceMoveDetail storage.ResourceMoveDetails_STATUS
+		err := vault.ResourceMoveDetails.AssignProperties_To_ResourceMoveDetails_STATUS(&resourceMoveDetail)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ResourceMoveDetails_STATUS() to populate field ResourceMoveDetails")
+		}
+		destination.ResourceMoveDetails = &resourceMoveDetail
+	} else {
+		destination.ResourceMoveDetails = nil
+	}
+
+	// ResourceMoveState
+	destination.ResourceMoveState = genruntime.ClonePointerToString(vault.ResourceMoveState)
+
+	// SecureScore
+	if propertyBag.Contains("SecureScore") {
+		var secureScore string
+		err := propertyBag.Pull("SecureScore", &secureScore)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'SecureScore' from propertyBag")
+		}
+
+		destination.SecureScore = &secureScore
+	} else {
+		destination.SecureScore = nil
+	}
+
+	// SecuritySettings
+	if vault.SecuritySettings != nil {
+		var securitySetting storage.SecuritySettings_STATUS
+		err := vault.SecuritySettings.AssignProperties_To_SecuritySettings_STATUS(&securitySetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SecuritySettings_STATUS() to populate field SecuritySettings")
+		}
+		destination.SecuritySettings = &securitySetting
+	} else {
+		destination.SecuritySettings = nil
+	}
+
+	// StorageSettings
+	if vault.StorageSettings != nil {
+		storageSettingList := make([]storage.StorageSetting_STATUS, len(vault.StorageSettings))
+		for storageSettingIndex, storageSettingItem := range vault.StorageSettings {
+			// Shadow the loop variable to avoid aliasing
+			storageSettingItem := storageSettingItem
+			var storageSetting storage.StorageSetting_STATUS
+			err := storageSettingItem.AssignProperties_To_StorageSetting_STATUS(&storageSetting)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_StorageSetting_STATUS() to populate field StorageSettings")
+			}
+			storageSettingList[storageSettingIndex] = storageSetting
+		}
+		destination.StorageSettings = storageSettingList
+	} else {
+		destination.StorageSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVault_STATUS interface (if implemented) to customize the conversion
+	var vaultAsAny any = vault
+	if augmentedVault, ok := vaultAsAny.(augmentConversionForBackupVault_STATUS); ok {
+		err := augmentedVault.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// Storage version of v1api20230101.BackupVaultOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type BackupVaultOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression  `json:"configMapExpressions,omitempty"`
+	ConfigMaps           *BackupVaultOperatorConfigMaps `json:"configMaps,omitempty"`
+	PropertyBag          genruntime.PropertyBag         `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression  `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_BackupVaultOperatorSpec populates our BackupVaultOperatorSpec from the provided source BackupVaultOperatorSpec
+func (operator *BackupVaultOperatorSpec) AssignProperties_From_BackupVaultOperatorSpec(source *storage.BackupVaultOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// ConfigMaps
+	if source.ConfigMaps != nil {
+		var configMap BackupVaultOperatorConfigMaps
+		err := configMap.AssignProperties_From_BackupVaultOperatorConfigMaps(source.ConfigMaps)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_BackupVaultOperatorConfigMaps() to populate field ConfigMaps")
+		}
+		operator.ConfigMaps = &configMap
+	} else {
+		operator.ConfigMaps = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForBackupVaultOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupVaultOperatorSpec populates the provided destination BackupVaultOperatorSpec from our BackupVaultOperatorSpec
+func (operator *BackupVaultOperatorSpec) AssignProperties_To_BackupVaultOperatorSpec(destination *storage.BackupVaultOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// ConfigMaps
+	if operator.ConfigMaps != nil {
+		var configMap storage.BackupVaultOperatorConfigMaps
+		err := operator.ConfigMaps.AssignProperties_To_BackupVaultOperatorConfigMaps(&configMap)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_BackupVaultOperatorConfigMaps() to populate field ConfigMaps")
+		}
+		destination.ConfigMaps = &configMap
+	} else {
+		destination.ConfigMaps = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForBackupVaultOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.BackupVaultSpec
 // Backup Vault
 type BackupVaultSpec struct {
@@ -243,11 +1184,265 @@ type BackupVaultSpec struct {
 	StorageSettings    []StorageSetting       `json:"storageSettings,omitempty"`
 }
 
+// AssignProperties_From_BackupVaultSpec populates our BackupVaultSpec from the provided source BackupVaultSpec
+func (vault *BackupVaultSpec) AssignProperties_From_BackupVaultSpec(source *storage.BackupVaultSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// FeatureSettings
+	if source.FeatureSettings != nil {
+		var featureSetting FeatureSettings
+		err := featureSetting.AssignProperties_From_FeatureSettings(source.FeatureSettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_FeatureSettings() to populate field FeatureSettings")
+		}
+		vault.FeatureSettings = &featureSetting
+	} else {
+		vault.FeatureSettings = nil
+	}
+
+	// MonitoringSettings
+	if source.MonitoringSettings != nil {
+		var monitoringSetting MonitoringSettings
+		err := monitoringSetting.AssignProperties_From_MonitoringSettings(source.MonitoringSettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_MonitoringSettings() to populate field MonitoringSettings")
+		}
+		vault.MonitoringSettings = &monitoringSetting
+	} else {
+		vault.MonitoringSettings = nil
+	}
+
+	// ReplicatedRegions
+	if len(source.ReplicatedRegions) > 0 {
+		propertyBag.Add("ReplicatedRegions", source.ReplicatedRegions)
+	} else {
+		propertyBag.Remove("ReplicatedRegions")
+	}
+
+	// SecuritySettings
+	if source.SecuritySettings != nil {
+		var securitySetting SecuritySettings
+		err := securitySetting.AssignProperties_From_SecuritySettings(source.SecuritySettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SecuritySettings() to populate field SecuritySettings")
+		}
+		vault.SecuritySettings = &securitySetting
+	} else {
+		vault.SecuritySettings = nil
+	}
+
+	// StorageSettings
+	if source.StorageSettings != nil {
+		storageSettingList := make([]StorageSetting, len(source.StorageSettings))
+		for storageSettingIndex, storageSettingItem := range source.StorageSettings {
+			// Shadow the loop variable to avoid aliasing
+			storageSettingItem := storageSettingItem
+			var storageSetting StorageSetting
+			err := storageSetting.AssignProperties_From_StorageSetting(&storageSettingItem)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_From_StorageSetting() to populate field StorageSettings")
+			}
+			storageSettingList[storageSettingIndex] = storageSetting
+		}
+		vault.StorageSettings = storageSettingList
+	} else {
+		vault.StorageSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		vault.PropertyBag = propertyBag
+	} else {
+		vault.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultSpec interface (if implemented) to customize the conversion
+	var vaultAsAny any = vault
+	if augmentedVault, ok := vaultAsAny.(augmentConversionForBackupVaultSpec); ok {
+		err := augmentedVault.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupVaultSpec populates the provided destination BackupVaultSpec from our BackupVaultSpec
+func (vault *BackupVaultSpec) AssignProperties_To_BackupVaultSpec(destination *storage.BackupVaultSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(vault.PropertyBag)
+
+	// FeatureSettings
+	if vault.FeatureSettings != nil {
+		var featureSetting storage.FeatureSettings
+		err := vault.FeatureSettings.AssignProperties_To_FeatureSettings(&featureSetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_FeatureSettings() to populate field FeatureSettings")
+		}
+		destination.FeatureSettings = &featureSetting
+	} else {
+		destination.FeatureSettings = nil
+	}
+
+	// MonitoringSettings
+	if vault.MonitoringSettings != nil {
+		var monitoringSetting storage.MonitoringSettings
+		err := vault.MonitoringSettings.AssignProperties_To_MonitoringSettings(&monitoringSetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_MonitoringSettings() to populate field MonitoringSettings")
+		}
+		destination.MonitoringSettings = &monitoringSetting
+	} else {
+		destination.MonitoringSettings = nil
+	}
+
+	// ReplicatedRegions
+	if propertyBag.Contains("ReplicatedRegions") {
+		var replicatedRegion []string
+		err := propertyBag.Pull("ReplicatedRegions", &replicatedRegion)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'ReplicatedRegions' from propertyBag")
+		}
+
+		destination.ReplicatedRegions = replicatedRegion
+	} else {
+		destination.ReplicatedRegions = nil
+	}
+
+	// SecuritySettings
+	if vault.SecuritySettings != nil {
+		var securitySetting storage.SecuritySettings
+		err := vault.SecuritySettings.AssignProperties_To_SecuritySettings(&securitySetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SecuritySettings() to populate field SecuritySettings")
+		}
+		destination.SecuritySettings = &securitySetting
+	} else {
+		destination.SecuritySettings = nil
+	}
+
+	// StorageSettings
+	if vault.StorageSettings != nil {
+		storageSettingList := make([]storage.StorageSetting, len(vault.StorageSettings))
+		for storageSettingIndex, storageSettingItem := range vault.StorageSettings {
+			// Shadow the loop variable to avoid aliasing
+			storageSettingItem := storageSettingItem
+			var storageSetting storage.StorageSetting
+			err := storageSettingItem.AssignProperties_To_StorageSetting(&storageSetting)
+			if err != nil {
+				return errors.Wrap(err, "calling AssignProperties_To_StorageSetting() to populate field StorageSettings")
+			}
+			storageSettingList[storageSettingIndex] = storageSetting
+		}
+		destination.StorageSettings = storageSettingList
+	} else {
+		destination.StorageSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultSpec interface (if implemented) to customize the conversion
+	var vaultAsAny any = vault
+	if augmentedVault, ok := vaultAsAny.(augmentConversionForBackupVaultSpec); ok {
+		err := augmentedVault.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.DppIdentityDetails
 // Identity details
 type DppIdentityDetails struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Type        *string                `json:"type,omitempty"`
+}
+
+// AssignProperties_From_DppIdentityDetails populates our DppIdentityDetails from the provided source DppIdentityDetails
+func (details *DppIdentityDetails) AssignProperties_From_DppIdentityDetails(source *storage.DppIdentityDetails) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Type
+	details.Type = genruntime.ClonePointerToString(source.Type)
+
+	// UserAssignedIdentities
+	if len(source.UserAssignedIdentities) > 0 {
+		propertyBag.Add("UserAssignedIdentities", source.UserAssignedIdentities)
+	} else {
+		propertyBag.Remove("UserAssignedIdentities")
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		details.PropertyBag = propertyBag
+	} else {
+		details.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDppIdentityDetails interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForDppIdentityDetails); ok {
+		err := augmentedDetails.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DppIdentityDetails populates the provided destination DppIdentityDetails from our DppIdentityDetails
+func (details *DppIdentityDetails) AssignProperties_To_DppIdentityDetails(destination *storage.DppIdentityDetails) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(details.PropertyBag)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(details.Type)
+
+	// UserAssignedIdentities
+	if propertyBag.Contains("UserAssignedIdentities") {
+		var userAssignedIdentity []storage.UserAssignedIdentityDetails
+		err := propertyBag.Pull("UserAssignedIdentities", &userAssignedIdentity)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'UserAssignedIdentities' from propertyBag")
+		}
+
+		destination.UserAssignedIdentities = userAssignedIdentity
+	} else {
+		destination.UserAssignedIdentities = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDppIdentityDetails interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForDppIdentityDetails); ok {
+		err := augmentedDetails.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.DppIdentityDetails_STATUS
@@ -257,6 +1452,94 @@ type DppIdentityDetails_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	TenantId    *string                `json:"tenantId,omitempty"`
 	Type        *string                `json:"type,omitempty"`
+}
+
+// AssignProperties_From_DppIdentityDetails_STATUS populates our DppIdentityDetails_STATUS from the provided source DppIdentityDetails_STATUS
+func (details *DppIdentityDetails_STATUS) AssignProperties_From_DppIdentityDetails_STATUS(source *storage.DppIdentityDetails_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// PrincipalId
+	details.PrincipalId = genruntime.ClonePointerToString(source.PrincipalId)
+
+	// TenantId
+	details.TenantId = genruntime.ClonePointerToString(source.TenantId)
+
+	// Type
+	details.Type = genruntime.ClonePointerToString(source.Type)
+
+	// UserAssignedIdentities
+	if len(source.UserAssignedIdentities) > 0 {
+		propertyBag.Add("UserAssignedIdentities", source.UserAssignedIdentities)
+	} else {
+		propertyBag.Remove("UserAssignedIdentities")
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		details.PropertyBag = propertyBag
+	} else {
+		details.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDppIdentityDetails_STATUS interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForDppIdentityDetails_STATUS); ok {
+		err := augmentedDetails.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_DppIdentityDetails_STATUS populates the provided destination DppIdentityDetails_STATUS from our DppIdentityDetails_STATUS
+func (details *DppIdentityDetails_STATUS) AssignProperties_To_DppIdentityDetails_STATUS(destination *storage.DppIdentityDetails_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(details.PropertyBag)
+
+	// PrincipalId
+	destination.PrincipalId = genruntime.ClonePointerToString(details.PrincipalId)
+
+	// TenantId
+	destination.TenantId = genruntime.ClonePointerToString(details.TenantId)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(details.Type)
+
+	// UserAssignedIdentities
+	if propertyBag.Contains("UserAssignedIdentities") {
+		var userAssignedIdentity map[string]storage.UserAssignedIdentity_STATUS
+		err := propertyBag.Pull("UserAssignedIdentities", &userAssignedIdentity)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'UserAssignedIdentities' from propertyBag")
+		}
+
+		destination.UserAssignedIdentities = userAssignedIdentity
+	} else {
+		destination.UserAssignedIdentities = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForDppIdentityDetails_STATUS interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForDppIdentityDetails_STATUS); ok {
+		err := augmentedDetails.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.SystemData_STATUS
@@ -271,11 +1554,293 @@ type SystemData_STATUS struct {
 	PropertyBag        genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CreatedAt
+	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
+
+	// CreatedBy
+	data.CreatedBy = genruntime.ClonePointerToString(source.CreatedBy)
+
+	// CreatedByType
+	data.CreatedByType = genruntime.ClonePointerToString(source.CreatedByType)
+
+	// LastModifiedAt
+	data.LastModifiedAt = genruntime.ClonePointerToString(source.LastModifiedAt)
+
+	// LastModifiedBy
+	data.LastModifiedBy = genruntime.ClonePointerToString(source.LastModifiedBy)
+
+	// LastModifiedByType
+	data.LastModifiedByType = genruntime.ClonePointerToString(source.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		data.PropertyBag = propertyBag
+	} else {
+		data.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(data.PropertyBag)
+
+	// CreatedAt
+	destination.CreatedAt = genruntime.ClonePointerToString(data.CreatedAt)
+
+	// CreatedBy
+	destination.CreatedBy = genruntime.ClonePointerToString(data.CreatedBy)
+
+	// CreatedByType
+	destination.CreatedByType = genruntime.ClonePointerToString(data.CreatedByType)
+
+	// LastModifiedAt
+	destination.LastModifiedAt = genruntime.ClonePointerToString(data.LastModifiedAt)
+
+	// LastModifiedBy
+	destination.LastModifiedBy = genruntime.ClonePointerToString(data.LastModifiedBy)
+
+	// LastModifiedByType
+	destination.LastModifiedByType = genruntime.ClonePointerToString(data.LastModifiedByType)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSystemData_STATUS interface (if implemented) to customize the conversion
+	var dataAsAny any = data
+	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
+		err := augmentedData.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForBackupVault_STATUS interface {
+	AssignPropertiesFrom(src *storage.BackupVault_STATUS) error
+	AssignPropertiesTo(dst *storage.BackupVault_STATUS) error
+}
+
+type augmentConversionForBackupVaultOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.BackupVaultOperatorSpec) error
+	AssignPropertiesTo(dst *storage.BackupVaultOperatorSpec) error
+}
+
+type augmentConversionForBackupVaultSpec interface {
+	AssignPropertiesFrom(src *storage.BackupVaultSpec) error
+	AssignPropertiesTo(dst *storage.BackupVaultSpec) error
+}
+
+type augmentConversionForDppIdentityDetails interface {
+	AssignPropertiesFrom(src *storage.DppIdentityDetails) error
+	AssignPropertiesTo(dst *storage.DppIdentityDetails) error
+}
+
+type augmentConversionForDppIdentityDetails_STATUS interface {
+	AssignPropertiesFrom(src *storage.DppIdentityDetails_STATUS) error
+	AssignPropertiesTo(dst *storage.DppIdentityDetails_STATUS) error
+}
+
+type augmentConversionForSystemData_STATUS interface {
+	AssignPropertiesFrom(src *storage.SystemData_STATUS) error
+	AssignPropertiesTo(dst *storage.SystemData_STATUS) error
+}
+
+// Storage version of v1api20230101.BackupVaultOperatorConfigMaps
+type BackupVaultOperatorConfigMaps struct {
+	PrincipalId *genruntime.ConfigMapDestination `json:"principalId,omitempty"`
+	PropertyBag genruntime.PropertyBag           `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_BackupVaultOperatorConfigMaps populates our BackupVaultOperatorConfigMaps from the provided source BackupVaultOperatorConfigMaps
+func (maps *BackupVaultOperatorConfigMaps) AssignProperties_From_BackupVaultOperatorConfigMaps(source *storage.BackupVaultOperatorConfigMaps) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// PrincipalId
+	if source.PrincipalId != nil {
+		principalId := source.PrincipalId.Copy()
+		maps.PrincipalId = &principalId
+	} else {
+		maps.PrincipalId = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		maps.PropertyBag = propertyBag
+	} else {
+		maps.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultOperatorConfigMaps interface (if implemented) to customize the conversion
+	var mapsAsAny any = maps
+	if augmentedMaps, ok := mapsAsAny.(augmentConversionForBackupVaultOperatorConfigMaps); ok {
+		err := augmentedMaps.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_BackupVaultOperatorConfigMaps populates the provided destination BackupVaultOperatorConfigMaps from our BackupVaultOperatorConfigMaps
+func (maps *BackupVaultOperatorConfigMaps) AssignProperties_To_BackupVaultOperatorConfigMaps(destination *storage.BackupVaultOperatorConfigMaps) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(maps.PropertyBag)
+
+	// PrincipalId
+	if maps.PrincipalId != nil {
+		principalId := maps.PrincipalId.Copy()
+		destination.PrincipalId = &principalId
+	} else {
+		destination.PrincipalId = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForBackupVaultOperatorConfigMaps interface (if implemented) to customize the conversion
+	var mapsAsAny any = maps
+	if augmentedMaps, ok := mapsAsAny.(augmentConversionForBackupVaultOperatorConfigMaps); ok {
+		err := augmentedMaps.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.FeatureSettings
 // Class containing feature settings of vault
 type FeatureSettings struct {
 	CrossSubscriptionRestoreSettings *CrossSubscriptionRestoreSettings `json:"crossSubscriptionRestoreSettings,omitempty"`
 	PropertyBag                      genruntime.PropertyBag            `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_FeatureSettings populates our FeatureSettings from the provided source FeatureSettings
+func (settings *FeatureSettings) AssignProperties_From_FeatureSettings(source *storage.FeatureSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CrossRegionRestoreSettings
+	if source.CrossRegionRestoreSettings != nil {
+		propertyBag.Add("CrossRegionRestoreSettings", *source.CrossRegionRestoreSettings)
+	} else {
+		propertyBag.Remove("CrossRegionRestoreSettings")
+	}
+
+	// CrossSubscriptionRestoreSettings
+	if source.CrossSubscriptionRestoreSettings != nil {
+		var crossSubscriptionRestoreSetting CrossSubscriptionRestoreSettings
+		err := crossSubscriptionRestoreSetting.AssignProperties_From_CrossSubscriptionRestoreSettings(source.CrossSubscriptionRestoreSettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_CrossSubscriptionRestoreSettings() to populate field CrossSubscriptionRestoreSettings")
+		}
+		settings.CrossSubscriptionRestoreSettings = &crossSubscriptionRestoreSetting
+	} else {
+		settings.CrossSubscriptionRestoreSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFeatureSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForFeatureSettings); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FeatureSettings populates the provided destination FeatureSettings from our FeatureSettings
+func (settings *FeatureSettings) AssignProperties_To_FeatureSettings(destination *storage.FeatureSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// CrossRegionRestoreSettings
+	if propertyBag.Contains("CrossRegionRestoreSettings") {
+		var crossRegionRestoreSetting storage.CrossRegionRestoreSettings
+		err := propertyBag.Pull("CrossRegionRestoreSettings", &crossRegionRestoreSetting)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'CrossRegionRestoreSettings' from propertyBag")
+		}
+
+		destination.CrossRegionRestoreSettings = &crossRegionRestoreSetting
+	} else {
+		destination.CrossRegionRestoreSettings = nil
+	}
+
+	// CrossSubscriptionRestoreSettings
+	if settings.CrossSubscriptionRestoreSettings != nil {
+		var crossSubscriptionRestoreSetting storage.CrossSubscriptionRestoreSettings
+		err := settings.CrossSubscriptionRestoreSettings.AssignProperties_To_CrossSubscriptionRestoreSettings(&crossSubscriptionRestoreSetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_CrossSubscriptionRestoreSettings() to populate field CrossSubscriptionRestoreSettings")
+		}
+		destination.CrossSubscriptionRestoreSettings = &crossSubscriptionRestoreSetting
+	} else {
+		destination.CrossSubscriptionRestoreSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFeatureSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForFeatureSettings); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.FeatureSettings_STATUS
@@ -285,6 +1850,100 @@ type FeatureSettings_STATUS struct {
 	PropertyBag                      genruntime.PropertyBag                   `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_FeatureSettings_STATUS populates our FeatureSettings_STATUS from the provided source FeatureSettings_STATUS
+func (settings *FeatureSettings_STATUS) AssignProperties_From_FeatureSettings_STATUS(source *storage.FeatureSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CrossRegionRestoreSettings
+	if source.CrossRegionRestoreSettings != nil {
+		propertyBag.Add("CrossRegionRestoreSettings", *source.CrossRegionRestoreSettings)
+	} else {
+		propertyBag.Remove("CrossRegionRestoreSettings")
+	}
+
+	// CrossSubscriptionRestoreSettings
+	if source.CrossSubscriptionRestoreSettings != nil {
+		var crossSubscriptionRestoreSetting CrossSubscriptionRestoreSettings_STATUS
+		err := crossSubscriptionRestoreSetting.AssignProperties_From_CrossSubscriptionRestoreSettings_STATUS(source.CrossSubscriptionRestoreSettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_CrossSubscriptionRestoreSettings_STATUS() to populate field CrossSubscriptionRestoreSettings")
+		}
+		settings.CrossSubscriptionRestoreSettings = &crossSubscriptionRestoreSetting
+	} else {
+		settings.CrossSubscriptionRestoreSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFeatureSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForFeatureSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FeatureSettings_STATUS populates the provided destination FeatureSettings_STATUS from our FeatureSettings_STATUS
+func (settings *FeatureSettings_STATUS) AssignProperties_To_FeatureSettings_STATUS(destination *storage.FeatureSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// CrossRegionRestoreSettings
+	if propertyBag.Contains("CrossRegionRestoreSettings") {
+		var crossRegionRestoreSetting storage.CrossRegionRestoreSettings_STATUS
+		err := propertyBag.Pull("CrossRegionRestoreSettings", &crossRegionRestoreSetting)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'CrossRegionRestoreSettings' from propertyBag")
+		}
+
+		destination.CrossRegionRestoreSettings = &crossRegionRestoreSetting
+	} else {
+		destination.CrossRegionRestoreSettings = nil
+	}
+
+	// CrossSubscriptionRestoreSettings
+	if settings.CrossSubscriptionRestoreSettings != nil {
+		var crossSubscriptionRestoreSetting storage.CrossSubscriptionRestoreSettings_STATUS
+		err := settings.CrossSubscriptionRestoreSettings.AssignProperties_To_CrossSubscriptionRestoreSettings_STATUS(&crossSubscriptionRestoreSetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_CrossSubscriptionRestoreSettings_STATUS() to populate field CrossSubscriptionRestoreSettings")
+		}
+		destination.CrossSubscriptionRestoreSettings = &crossSubscriptionRestoreSetting
+	} else {
+		destination.CrossSubscriptionRestoreSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForFeatureSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForFeatureSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.MonitoringSettings
 // Monitoring Settings
 type MonitoringSettings struct {
@@ -292,11 +1951,159 @@ type MonitoringSettings struct {
 	PropertyBag               genruntime.PropertyBag     `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_MonitoringSettings populates our MonitoringSettings from the provided source MonitoringSettings
+func (settings *MonitoringSettings) AssignProperties_From_MonitoringSettings(source *storage.MonitoringSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureMonitorAlertSettings
+	if source.AzureMonitorAlertSettings != nil {
+		var azureMonitorAlertSetting AzureMonitorAlertSettings
+		err := azureMonitorAlertSetting.AssignProperties_From_AzureMonitorAlertSettings(source.AzureMonitorAlertSettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AzureMonitorAlertSettings() to populate field AzureMonitorAlertSettings")
+		}
+		settings.AzureMonitorAlertSettings = &azureMonitorAlertSetting
+	} else {
+		settings.AzureMonitorAlertSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMonitoringSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForMonitoringSettings); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MonitoringSettings populates the provided destination MonitoringSettings from our MonitoringSettings
+func (settings *MonitoringSettings) AssignProperties_To_MonitoringSettings(destination *storage.MonitoringSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// AzureMonitorAlertSettings
+	if settings.AzureMonitorAlertSettings != nil {
+		var azureMonitorAlertSetting storage.AzureMonitorAlertSettings
+		err := settings.AzureMonitorAlertSettings.AssignProperties_To_AzureMonitorAlertSettings(&azureMonitorAlertSetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AzureMonitorAlertSettings() to populate field AzureMonitorAlertSettings")
+		}
+		destination.AzureMonitorAlertSettings = &azureMonitorAlertSetting
+	} else {
+		destination.AzureMonitorAlertSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMonitoringSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForMonitoringSettings); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.MonitoringSettings_STATUS
 // Monitoring Settings
 type MonitoringSettings_STATUS struct {
 	AzureMonitorAlertSettings *AzureMonitorAlertSettings_STATUS `json:"azureMonitorAlertSettings,omitempty"`
 	PropertyBag               genruntime.PropertyBag            `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_MonitoringSettings_STATUS populates our MonitoringSettings_STATUS from the provided source MonitoringSettings_STATUS
+func (settings *MonitoringSettings_STATUS) AssignProperties_From_MonitoringSettings_STATUS(source *storage.MonitoringSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureMonitorAlertSettings
+	if source.AzureMonitorAlertSettings != nil {
+		var azureMonitorAlertSetting AzureMonitorAlertSettings_STATUS
+		err := azureMonitorAlertSetting.AssignProperties_From_AzureMonitorAlertSettings_STATUS(source.AzureMonitorAlertSettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AzureMonitorAlertSettings_STATUS() to populate field AzureMonitorAlertSettings")
+		}
+		settings.AzureMonitorAlertSettings = &azureMonitorAlertSetting
+	} else {
+		settings.AzureMonitorAlertSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMonitoringSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForMonitoringSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MonitoringSettings_STATUS populates the provided destination MonitoringSettings_STATUS from our MonitoringSettings_STATUS
+func (settings *MonitoringSettings_STATUS) AssignProperties_To_MonitoringSettings_STATUS(destination *storage.MonitoringSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// AzureMonitorAlertSettings
+	if settings.AzureMonitorAlertSettings != nil {
+		var azureMonitorAlertSetting storage.AzureMonitorAlertSettings_STATUS
+		err := settings.AzureMonitorAlertSettings.AssignProperties_To_AzureMonitorAlertSettings_STATUS(&azureMonitorAlertSetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AzureMonitorAlertSettings_STATUS() to populate field AzureMonitorAlertSettings")
+		}
+		destination.AzureMonitorAlertSettings = &azureMonitorAlertSetting
+	} else {
+		destination.AzureMonitorAlertSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMonitoringSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForMonitoringSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.ResourceMoveDetails_STATUS
@@ -310,12 +2117,190 @@ type ResourceMoveDetails_STATUS struct {
 	TargetResourcePath *string                `json:"targetResourcePath,omitempty"`
 }
 
+// AssignProperties_From_ResourceMoveDetails_STATUS populates our ResourceMoveDetails_STATUS from the provided source ResourceMoveDetails_STATUS
+func (details *ResourceMoveDetails_STATUS) AssignProperties_From_ResourceMoveDetails_STATUS(source *storage.ResourceMoveDetails_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CompletionTimeUtc
+	details.CompletionTimeUtc = genruntime.ClonePointerToString(source.CompletionTimeUtc)
+
+	// OperationId
+	details.OperationId = genruntime.ClonePointerToString(source.OperationId)
+
+	// SourceResourcePath
+	details.SourceResourcePath = genruntime.ClonePointerToString(source.SourceResourcePath)
+
+	// StartTimeUtc
+	details.StartTimeUtc = genruntime.ClonePointerToString(source.StartTimeUtc)
+
+	// TargetResourcePath
+	details.TargetResourcePath = genruntime.ClonePointerToString(source.TargetResourcePath)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		details.PropertyBag = propertyBag
+	} else {
+		details.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForResourceMoveDetails_STATUS interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForResourceMoveDetails_STATUS); ok {
+		err := augmentedDetails.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ResourceMoveDetails_STATUS populates the provided destination ResourceMoveDetails_STATUS from our ResourceMoveDetails_STATUS
+func (details *ResourceMoveDetails_STATUS) AssignProperties_To_ResourceMoveDetails_STATUS(destination *storage.ResourceMoveDetails_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(details.PropertyBag)
+
+	// CompletionTimeUtc
+	destination.CompletionTimeUtc = genruntime.ClonePointerToString(details.CompletionTimeUtc)
+
+	// OperationId
+	destination.OperationId = genruntime.ClonePointerToString(details.OperationId)
+
+	// SourceResourcePath
+	destination.SourceResourcePath = genruntime.ClonePointerToString(details.SourceResourcePath)
+
+	// StartTimeUtc
+	destination.StartTimeUtc = genruntime.ClonePointerToString(details.StartTimeUtc)
+
+	// TargetResourcePath
+	destination.TargetResourcePath = genruntime.ClonePointerToString(details.TargetResourcePath)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForResourceMoveDetails_STATUS interface (if implemented) to customize the conversion
+	var detailsAsAny any = details
+	if augmentedDetails, ok := detailsAsAny.(augmentConversionForResourceMoveDetails_STATUS); ok {
+		err := augmentedDetails.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.SecuritySettings
 // Class containing security settings of vault
 type SecuritySettings struct {
 	ImmutabilitySettings *ImmutabilitySettings  `json:"immutabilitySettings,omitempty"`
 	PropertyBag          genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	SoftDeleteSettings   *SoftDeleteSettings    `json:"softDeleteSettings,omitempty"`
+}
+
+// AssignProperties_From_SecuritySettings populates our SecuritySettings from the provided source SecuritySettings
+func (settings *SecuritySettings) AssignProperties_From_SecuritySettings(source *storage.SecuritySettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ImmutabilitySettings
+	if source.ImmutabilitySettings != nil {
+		var immutabilitySetting ImmutabilitySettings
+		err := immutabilitySetting.AssignProperties_From_ImmutabilitySettings(source.ImmutabilitySettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ImmutabilitySettings() to populate field ImmutabilitySettings")
+		}
+		settings.ImmutabilitySettings = &immutabilitySetting
+	} else {
+		settings.ImmutabilitySettings = nil
+	}
+
+	// SoftDeleteSettings
+	if source.SoftDeleteSettings != nil {
+		var softDeleteSetting SoftDeleteSettings
+		err := softDeleteSetting.AssignProperties_From_SoftDeleteSettings(source.SoftDeleteSettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SoftDeleteSettings() to populate field SoftDeleteSettings")
+		}
+		settings.SoftDeleteSettings = &softDeleteSetting
+	} else {
+		settings.SoftDeleteSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSecuritySettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForSecuritySettings); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SecuritySettings populates the provided destination SecuritySettings from our SecuritySettings
+func (settings *SecuritySettings) AssignProperties_To_SecuritySettings(destination *storage.SecuritySettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// ImmutabilitySettings
+	if settings.ImmutabilitySettings != nil {
+		var immutabilitySetting storage.ImmutabilitySettings
+		err := settings.ImmutabilitySettings.AssignProperties_To_ImmutabilitySettings(&immutabilitySetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ImmutabilitySettings() to populate field ImmutabilitySettings")
+		}
+		destination.ImmutabilitySettings = &immutabilitySetting
+	} else {
+		destination.ImmutabilitySettings = nil
+	}
+
+	// SoftDeleteSettings
+	if settings.SoftDeleteSettings != nil {
+		var softDeleteSetting storage.SoftDeleteSettings
+		err := settings.SoftDeleteSettings.AssignProperties_To_SoftDeleteSettings(&softDeleteSetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SoftDeleteSettings() to populate field SoftDeleteSettings")
+		}
+		destination.SoftDeleteSettings = &softDeleteSetting
+	} else {
+		destination.SoftDeleteSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSecuritySettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForSecuritySettings); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.SecuritySettings_STATUS
@@ -326,12 +2311,172 @@ type SecuritySettings_STATUS struct {
 	SoftDeleteSettings   *SoftDeleteSettings_STATUS   `json:"softDeleteSettings,omitempty"`
 }
 
+// AssignProperties_From_SecuritySettings_STATUS populates our SecuritySettings_STATUS from the provided source SecuritySettings_STATUS
+func (settings *SecuritySettings_STATUS) AssignProperties_From_SecuritySettings_STATUS(source *storage.SecuritySettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ImmutabilitySettings
+	if source.ImmutabilitySettings != nil {
+		var immutabilitySetting ImmutabilitySettings_STATUS
+		err := immutabilitySetting.AssignProperties_From_ImmutabilitySettings_STATUS(source.ImmutabilitySettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ImmutabilitySettings_STATUS() to populate field ImmutabilitySettings")
+		}
+		settings.ImmutabilitySettings = &immutabilitySetting
+	} else {
+		settings.ImmutabilitySettings = nil
+	}
+
+	// SoftDeleteSettings
+	if source.SoftDeleteSettings != nil {
+		var softDeleteSetting SoftDeleteSettings_STATUS
+		err := softDeleteSetting.AssignProperties_From_SoftDeleteSettings_STATUS(source.SoftDeleteSettings)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_SoftDeleteSettings_STATUS() to populate field SoftDeleteSettings")
+		}
+		settings.SoftDeleteSettings = &softDeleteSetting
+	} else {
+		settings.SoftDeleteSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSecuritySettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForSecuritySettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SecuritySettings_STATUS populates the provided destination SecuritySettings_STATUS from our SecuritySettings_STATUS
+func (settings *SecuritySettings_STATUS) AssignProperties_To_SecuritySettings_STATUS(destination *storage.SecuritySettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// ImmutabilitySettings
+	if settings.ImmutabilitySettings != nil {
+		var immutabilitySetting storage.ImmutabilitySettings_STATUS
+		err := settings.ImmutabilitySettings.AssignProperties_To_ImmutabilitySettings_STATUS(&immutabilitySetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ImmutabilitySettings_STATUS() to populate field ImmutabilitySettings")
+		}
+		destination.ImmutabilitySettings = &immutabilitySetting
+	} else {
+		destination.ImmutabilitySettings = nil
+	}
+
+	// SoftDeleteSettings
+	if settings.SoftDeleteSettings != nil {
+		var softDeleteSetting storage.SoftDeleteSettings_STATUS
+		err := settings.SoftDeleteSettings.AssignProperties_To_SoftDeleteSettings_STATUS(&softDeleteSetting)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_SoftDeleteSettings_STATUS() to populate field SoftDeleteSettings")
+		}
+		destination.SoftDeleteSettings = &softDeleteSetting
+	} else {
+		destination.SoftDeleteSettings = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSecuritySettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForSecuritySettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.StorageSetting
 // Storage setting
 type StorageSetting struct {
 	DatastoreType *string                `json:"datastoreType,omitempty"`
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Type          *string                `json:"type,omitempty"`
+}
+
+// AssignProperties_From_StorageSetting populates our StorageSetting from the provided source StorageSetting
+func (setting *StorageSetting) AssignProperties_From_StorageSetting(source *storage.StorageSetting) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DatastoreType
+	setting.DatastoreType = genruntime.ClonePointerToString(source.DatastoreType)
+
+	// Type
+	setting.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		setting.PropertyBag = propertyBag
+	} else {
+		setting.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorageSetting interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForStorageSetting); ok {
+		err := augmentedSetting.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_StorageSetting populates the provided destination StorageSetting from our StorageSetting
+func (setting *StorageSetting) AssignProperties_To_StorageSetting(destination *storage.StorageSetting) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(setting.PropertyBag)
+
+	// DatastoreType
+	destination.DatastoreType = genruntime.ClonePointerToString(setting.DatastoreType)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(setting.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorageSetting interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForStorageSetting); ok {
+		err := augmentedSetting.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.StorageSetting_STATUS
@@ -342,11 +2487,179 @@ type StorageSetting_STATUS struct {
 	Type          *string                `json:"type,omitempty"`
 }
 
+// AssignProperties_From_StorageSetting_STATUS populates our StorageSetting_STATUS from the provided source StorageSetting_STATUS
+func (setting *StorageSetting_STATUS) AssignProperties_From_StorageSetting_STATUS(source *storage.StorageSetting_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// DatastoreType
+	setting.DatastoreType = genruntime.ClonePointerToString(source.DatastoreType)
+
+	// Type
+	setting.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		setting.PropertyBag = propertyBag
+	} else {
+		setting.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorageSetting_STATUS interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForStorageSetting_STATUS); ok {
+		err := augmentedSetting.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_StorageSetting_STATUS populates the provided destination StorageSetting_STATUS from our StorageSetting_STATUS
+func (setting *StorageSetting_STATUS) AssignProperties_To_StorageSetting_STATUS(destination *storage.StorageSetting_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(setting.PropertyBag)
+
+	// DatastoreType
+	destination.DatastoreType = genruntime.ClonePointerToString(setting.DatastoreType)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(setting.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForStorageSetting_STATUS interface (if implemented) to customize the conversion
+	var settingAsAny any = setting
+	if augmentedSetting, ok := settingAsAny.(augmentConversionForStorageSetting_STATUS); ok {
+		err := augmentedSetting.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForBackupVaultOperatorConfigMaps interface {
+	AssignPropertiesFrom(src *storage.BackupVaultOperatorConfigMaps) error
+	AssignPropertiesTo(dst *storage.BackupVaultOperatorConfigMaps) error
+}
+
+type augmentConversionForFeatureSettings interface {
+	AssignPropertiesFrom(src *storage.FeatureSettings) error
+	AssignPropertiesTo(dst *storage.FeatureSettings) error
+}
+
+type augmentConversionForFeatureSettings_STATUS interface {
+	AssignPropertiesFrom(src *storage.FeatureSettings_STATUS) error
+	AssignPropertiesTo(dst *storage.FeatureSettings_STATUS) error
+}
+
+type augmentConversionForMonitoringSettings interface {
+	AssignPropertiesFrom(src *storage.MonitoringSettings) error
+	AssignPropertiesTo(dst *storage.MonitoringSettings) error
+}
+
+type augmentConversionForMonitoringSettings_STATUS interface {
+	AssignPropertiesFrom(src *storage.MonitoringSettings_STATUS) error
+	AssignPropertiesTo(dst *storage.MonitoringSettings_STATUS) error
+}
+
+type augmentConversionForResourceMoveDetails_STATUS interface {
+	AssignPropertiesFrom(src *storage.ResourceMoveDetails_STATUS) error
+	AssignPropertiesTo(dst *storage.ResourceMoveDetails_STATUS) error
+}
+
+type augmentConversionForSecuritySettings interface {
+	AssignPropertiesFrom(src *storage.SecuritySettings) error
+	AssignPropertiesTo(dst *storage.SecuritySettings) error
+}
+
+type augmentConversionForSecuritySettings_STATUS interface {
+	AssignPropertiesFrom(src *storage.SecuritySettings_STATUS) error
+	AssignPropertiesTo(dst *storage.SecuritySettings_STATUS) error
+}
+
+type augmentConversionForStorageSetting interface {
+	AssignPropertiesFrom(src *storage.StorageSetting) error
+	AssignPropertiesTo(dst *storage.StorageSetting) error
+}
+
+type augmentConversionForStorageSetting_STATUS interface {
+	AssignPropertiesFrom(src *storage.StorageSetting_STATUS) error
+	AssignPropertiesTo(dst *storage.StorageSetting_STATUS) error
+}
+
 // Storage version of v1api20230101.AzureMonitorAlertSettings
 // Settings for Azure Monitor based alerts
 type AzureMonitorAlertSettings struct {
 	AlertsForAllJobFailures *string                `json:"alertsForAllJobFailures,omitempty"`
 	PropertyBag             genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_AzureMonitorAlertSettings populates our AzureMonitorAlertSettings from the provided source AzureMonitorAlertSettings
+func (settings *AzureMonitorAlertSettings) AssignProperties_From_AzureMonitorAlertSettings(source *storage.AzureMonitorAlertSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AlertsForAllJobFailures
+	settings.AlertsForAllJobFailures = genruntime.ClonePointerToString(source.AlertsForAllJobFailures)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureMonitorAlertSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForAzureMonitorAlertSettings); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AzureMonitorAlertSettings populates the provided destination AzureMonitorAlertSettings from our AzureMonitorAlertSettings
+func (settings *AzureMonitorAlertSettings) AssignProperties_To_AzureMonitorAlertSettings(destination *storage.AzureMonitorAlertSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// AlertsForAllJobFailures
+	destination.AlertsForAllJobFailures = genruntime.ClonePointerToString(settings.AlertsForAllJobFailures)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureMonitorAlertSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForAzureMonitorAlertSettings); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.AzureMonitorAlertSettings_STATUS
@@ -356,11 +2669,123 @@ type AzureMonitorAlertSettings_STATUS struct {
 	PropertyBag             genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AzureMonitorAlertSettings_STATUS populates our AzureMonitorAlertSettings_STATUS from the provided source AzureMonitorAlertSettings_STATUS
+func (settings *AzureMonitorAlertSettings_STATUS) AssignProperties_From_AzureMonitorAlertSettings_STATUS(source *storage.AzureMonitorAlertSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AlertsForAllJobFailures
+	settings.AlertsForAllJobFailures = genruntime.ClonePointerToString(source.AlertsForAllJobFailures)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureMonitorAlertSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForAzureMonitorAlertSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AzureMonitorAlertSettings_STATUS populates the provided destination AzureMonitorAlertSettings_STATUS from our AzureMonitorAlertSettings_STATUS
+func (settings *AzureMonitorAlertSettings_STATUS) AssignProperties_To_AzureMonitorAlertSettings_STATUS(destination *storage.AzureMonitorAlertSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// AlertsForAllJobFailures
+	destination.AlertsForAllJobFailures = genruntime.ClonePointerToString(settings.AlertsForAllJobFailures)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAzureMonitorAlertSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForAzureMonitorAlertSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.CrossSubscriptionRestoreSettings
 // CrossSubscriptionRestore Settings
 type CrossSubscriptionRestoreSettings struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	State       *string                `json:"state,omitempty"`
+}
+
+// AssignProperties_From_CrossSubscriptionRestoreSettings populates our CrossSubscriptionRestoreSettings from the provided source CrossSubscriptionRestoreSettings
+func (settings *CrossSubscriptionRestoreSettings) AssignProperties_From_CrossSubscriptionRestoreSettings(source *storage.CrossSubscriptionRestoreSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// State
+	settings.State = genruntime.ClonePointerToString(source.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCrossSubscriptionRestoreSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForCrossSubscriptionRestoreSettings); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CrossSubscriptionRestoreSettings populates the provided destination CrossSubscriptionRestoreSettings from our CrossSubscriptionRestoreSettings
+func (settings *CrossSubscriptionRestoreSettings) AssignProperties_To_CrossSubscriptionRestoreSettings(destination *storage.CrossSubscriptionRestoreSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// State
+	destination.State = genruntime.ClonePointerToString(settings.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCrossSubscriptionRestoreSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForCrossSubscriptionRestoreSettings); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.CrossSubscriptionRestoreSettings_STATUS
@@ -370,6 +2795,62 @@ type CrossSubscriptionRestoreSettings_STATUS struct {
 	State       *string                `json:"state,omitempty"`
 }
 
+// AssignProperties_From_CrossSubscriptionRestoreSettings_STATUS populates our CrossSubscriptionRestoreSettings_STATUS from the provided source CrossSubscriptionRestoreSettings_STATUS
+func (settings *CrossSubscriptionRestoreSettings_STATUS) AssignProperties_From_CrossSubscriptionRestoreSettings_STATUS(source *storage.CrossSubscriptionRestoreSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// State
+	settings.State = genruntime.ClonePointerToString(source.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCrossSubscriptionRestoreSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForCrossSubscriptionRestoreSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CrossSubscriptionRestoreSettings_STATUS populates the provided destination CrossSubscriptionRestoreSettings_STATUS from our CrossSubscriptionRestoreSettings_STATUS
+func (settings *CrossSubscriptionRestoreSettings_STATUS) AssignProperties_To_CrossSubscriptionRestoreSettings_STATUS(destination *storage.CrossSubscriptionRestoreSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// State
+	destination.State = genruntime.ClonePointerToString(settings.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCrossSubscriptionRestoreSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForCrossSubscriptionRestoreSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.ImmutabilitySettings
 // Immutability Settings at vault level
 type ImmutabilitySettings struct {
@@ -377,11 +2858,123 @@ type ImmutabilitySettings struct {
 	State       *string                `json:"state,omitempty"`
 }
 
+// AssignProperties_From_ImmutabilitySettings populates our ImmutabilitySettings from the provided source ImmutabilitySettings
+func (settings *ImmutabilitySettings) AssignProperties_From_ImmutabilitySettings(source *storage.ImmutabilitySettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// State
+	settings.State = genruntime.ClonePointerToString(source.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForImmutabilitySettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForImmutabilitySettings); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ImmutabilitySettings populates the provided destination ImmutabilitySettings from our ImmutabilitySettings
+func (settings *ImmutabilitySettings) AssignProperties_To_ImmutabilitySettings(destination *storage.ImmutabilitySettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// State
+	destination.State = genruntime.ClonePointerToString(settings.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForImmutabilitySettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForImmutabilitySettings); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.ImmutabilitySettings_STATUS
 // Immutability Settings at vault level
 type ImmutabilitySettings_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	State       *string                `json:"state,omitempty"`
+}
+
+// AssignProperties_From_ImmutabilitySettings_STATUS populates our ImmutabilitySettings_STATUS from the provided source ImmutabilitySettings_STATUS
+func (settings *ImmutabilitySettings_STATUS) AssignProperties_From_ImmutabilitySettings_STATUS(source *storage.ImmutabilitySettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// State
+	settings.State = genruntime.ClonePointerToString(source.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForImmutabilitySettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForImmutabilitySettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ImmutabilitySettings_STATUS populates the provided destination ImmutabilitySettings_STATUS from our ImmutabilitySettings_STATUS
+func (settings *ImmutabilitySettings_STATUS) AssignProperties_To_ImmutabilitySettings_STATUS(destination *storage.ImmutabilitySettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// State
+	destination.State = genruntime.ClonePointerToString(settings.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForImmutabilitySettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForImmutabilitySettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20230101.SoftDeleteSettings
@@ -392,12 +2985,196 @@ type SoftDeleteSettings struct {
 	State                   *string                `json:"state,omitempty"`
 }
 
+// AssignProperties_From_SoftDeleteSettings populates our SoftDeleteSettings from the provided source SoftDeleteSettings
+func (settings *SoftDeleteSettings) AssignProperties_From_SoftDeleteSettings(source *storage.SoftDeleteSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// RetentionDurationInDays
+	if source.RetentionDurationInDays != nil {
+		retentionDurationInDay := *source.RetentionDurationInDays
+		settings.RetentionDurationInDays = &retentionDurationInDay
+	} else {
+		settings.RetentionDurationInDays = nil
+	}
+
+	// State
+	settings.State = genruntime.ClonePointerToString(source.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSoftDeleteSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForSoftDeleteSettings); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SoftDeleteSettings populates the provided destination SoftDeleteSettings from our SoftDeleteSettings
+func (settings *SoftDeleteSettings) AssignProperties_To_SoftDeleteSettings(destination *storage.SoftDeleteSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// RetentionDurationInDays
+	if settings.RetentionDurationInDays != nil {
+		retentionDurationInDay := *settings.RetentionDurationInDays
+		destination.RetentionDurationInDays = &retentionDurationInDay
+	} else {
+		destination.RetentionDurationInDays = nil
+	}
+
+	// State
+	destination.State = genruntime.ClonePointerToString(settings.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSoftDeleteSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForSoftDeleteSettings); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230101.SoftDeleteSettings_STATUS
 // Soft delete related settings
 type SoftDeleteSettings_STATUS struct {
 	PropertyBag             genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	RetentionDurationInDays *float64               `json:"retentionDurationInDays,omitempty"`
 	State                   *string                `json:"state,omitempty"`
+}
+
+// AssignProperties_From_SoftDeleteSettings_STATUS populates our SoftDeleteSettings_STATUS from the provided source SoftDeleteSettings_STATUS
+func (settings *SoftDeleteSettings_STATUS) AssignProperties_From_SoftDeleteSettings_STATUS(source *storage.SoftDeleteSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// RetentionDurationInDays
+	if source.RetentionDurationInDays != nil {
+		retentionDurationInDay := *source.RetentionDurationInDays
+		settings.RetentionDurationInDays = &retentionDurationInDay
+	} else {
+		settings.RetentionDurationInDays = nil
+	}
+
+	// State
+	settings.State = genruntime.ClonePointerToString(source.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSoftDeleteSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForSoftDeleteSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SoftDeleteSettings_STATUS populates the provided destination SoftDeleteSettings_STATUS from our SoftDeleteSettings_STATUS
+func (settings *SoftDeleteSettings_STATUS) AssignProperties_To_SoftDeleteSettings_STATUS(destination *storage.SoftDeleteSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// RetentionDurationInDays
+	if settings.RetentionDurationInDays != nil {
+		retentionDurationInDay := *settings.RetentionDurationInDays
+		destination.RetentionDurationInDays = &retentionDurationInDay
+	} else {
+		destination.RetentionDurationInDays = nil
+	}
+
+	// State
+	destination.State = genruntime.ClonePointerToString(settings.State)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSoftDeleteSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForSoftDeleteSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAzureMonitorAlertSettings interface {
+	AssignPropertiesFrom(src *storage.AzureMonitorAlertSettings) error
+	AssignPropertiesTo(dst *storage.AzureMonitorAlertSettings) error
+}
+
+type augmentConversionForAzureMonitorAlertSettings_STATUS interface {
+	AssignPropertiesFrom(src *storage.AzureMonitorAlertSettings_STATUS) error
+	AssignPropertiesTo(dst *storage.AzureMonitorAlertSettings_STATUS) error
+}
+
+type augmentConversionForCrossSubscriptionRestoreSettings interface {
+	AssignPropertiesFrom(src *storage.CrossSubscriptionRestoreSettings) error
+	AssignPropertiesTo(dst *storage.CrossSubscriptionRestoreSettings) error
+}
+
+type augmentConversionForCrossSubscriptionRestoreSettings_STATUS interface {
+	AssignPropertiesFrom(src *storage.CrossSubscriptionRestoreSettings_STATUS) error
+	AssignPropertiesTo(dst *storage.CrossSubscriptionRestoreSettings_STATUS) error
+}
+
+type augmentConversionForImmutabilitySettings interface {
+	AssignPropertiesFrom(src *storage.ImmutabilitySettings) error
+	AssignPropertiesTo(dst *storage.ImmutabilitySettings) error
+}
+
+type augmentConversionForImmutabilitySettings_STATUS interface {
+	AssignPropertiesFrom(src *storage.ImmutabilitySettings_STATUS) error
+	AssignPropertiesTo(dst *storage.ImmutabilitySettings_STATUS) error
+}
+
+type augmentConversionForSoftDeleteSettings interface {
+	AssignPropertiesFrom(src *storage.SoftDeleteSettings) error
+	AssignPropertiesTo(dst *storage.SoftDeleteSettings) error
+}
+
+type augmentConversionForSoftDeleteSettings_STATUS interface {
+	AssignPropertiesFrom(src *storage.SoftDeleteSettings_STATUS) error
+	AssignPropertiesTo(dst *storage.SoftDeleteSettings_STATUS) error
 }
 
 func init() {

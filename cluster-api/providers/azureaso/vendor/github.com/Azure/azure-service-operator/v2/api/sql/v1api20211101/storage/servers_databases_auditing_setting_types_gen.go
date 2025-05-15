@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type ServersDatabasesAuditingSetting struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Servers_Databases_AuditingSetting_Spec   `json:"spec,omitempty"`
-	Status            Servers_Databases_AuditingSetting_STATUS `json:"status,omitempty"`
+	Spec              ServersDatabasesAuditingSetting_Spec   `json:"spec,omitempty"`
+	Status            ServersDatabasesAuditingSetting_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &ServersDatabasesAuditingSetting{}
@@ -44,6 +47,26 @@ func (setting *ServersDatabasesAuditingSetting) SetConditions(conditions conditi
 	setting.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &ServersDatabasesAuditingSetting{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (setting *ServersDatabasesAuditingSetting) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if setting.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return setting.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ServersDatabasesAuditingSetting{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (setting *ServersDatabasesAuditingSetting) SecretDestinationExpressions() []*core.DestinationExpression {
+	if setting.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return setting.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &ServersDatabasesAuditingSetting{}
 
 // AzureName returns the Azure name of the resource (always "default")
@@ -53,7 +76,7 @@ func (setting *ServersDatabasesAuditingSetting) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-11-01"
 func (setting ServersDatabasesAuditingSetting) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -86,7 +109,7 @@ func (setting *ServersDatabasesAuditingSetting) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (setting *ServersDatabasesAuditingSetting) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Servers_Databases_AuditingSetting_STATUS{}
+	return &ServersDatabasesAuditingSetting_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -98,13 +121,13 @@ func (setting *ServersDatabasesAuditingSetting) Owner() *genruntime.ResourceRefe
 // SetStatus sets the status of this resource
 func (setting *ServersDatabasesAuditingSetting) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Servers_Databases_AuditingSetting_STATUS); ok {
+	if st, ok := status.(*ServersDatabasesAuditingSetting_STATUS); ok {
 		setting.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Servers_Databases_AuditingSetting_STATUS
+	var st ServersDatabasesAuditingSetting_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -137,13 +160,14 @@ type ServersDatabasesAuditingSettingList struct {
 	Items           []ServersDatabasesAuditingSetting `json:"items"`
 }
 
-// Storage version of v1api20211101.Servers_Databases_AuditingSetting_Spec
-type Servers_Databases_AuditingSetting_Spec struct {
-	AuditActionsAndGroups       []string `json:"auditActionsAndGroups,omitempty"`
-	IsAzureMonitorTargetEnabled *bool    `json:"isAzureMonitorTargetEnabled,omitempty"`
-	IsManagedIdentityInUse      *bool    `json:"isManagedIdentityInUse,omitempty"`
-	IsStorageSecondaryKeyInUse  *bool    `json:"isStorageSecondaryKeyInUse,omitempty"`
-	OriginalVersion             string   `json:"originalVersion,omitempty"`
+// Storage version of v1api20211101.ServersDatabasesAuditingSetting_Spec
+type ServersDatabasesAuditingSetting_Spec struct {
+	AuditActionsAndGroups       []string                                     `json:"auditActionsAndGroups,omitempty"`
+	IsAzureMonitorTargetEnabled *bool                                        `json:"isAzureMonitorTargetEnabled,omitempty"`
+	IsManagedIdentityInUse      *bool                                        `json:"isManagedIdentityInUse,omitempty"`
+	IsStorageSecondaryKeyInUse  *bool                                        `json:"isStorageSecondaryKeyInUse,omitempty"`
+	OperatorSpec                *ServersDatabasesAuditingSettingOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion             string                                       `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -159,10 +183,10 @@ type Servers_Databases_AuditingSetting_Spec struct {
 	StorageEndpoint              *string                            `json:"storageEndpoint,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Servers_Databases_AuditingSetting_Spec{}
+var _ genruntime.ConvertibleSpec = &ServersDatabasesAuditingSetting_Spec{}
 
-// ConvertSpecFrom populates our Servers_Databases_AuditingSetting_Spec from the provided source
-func (setting *Servers_Databases_AuditingSetting_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our ServersDatabasesAuditingSetting_Spec from the provided source
+func (setting *ServersDatabasesAuditingSetting_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == setting {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -170,8 +194,8 @@ func (setting *Servers_Databases_AuditingSetting_Spec) ConvertSpecFrom(source ge
 	return source.ConvertSpecTo(setting)
 }
 
-// ConvertSpecTo populates the provided destination from our Servers_Databases_AuditingSetting_Spec
-func (setting *Servers_Databases_AuditingSetting_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our ServersDatabasesAuditingSetting_Spec
+func (setting *ServersDatabasesAuditingSetting_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == setting {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -179,8 +203,8 @@ func (setting *Servers_Databases_AuditingSetting_Spec) ConvertSpecTo(destination
 	return destination.ConvertSpecFrom(setting)
 }
 
-// Storage version of v1api20211101.Servers_Databases_AuditingSetting_STATUS
-type Servers_Databases_AuditingSetting_STATUS struct {
+// Storage version of v1api20211101.ServersDatabasesAuditingSetting_STATUS
+type ServersDatabasesAuditingSetting_STATUS struct {
 	AuditActionsAndGroups        []string               `json:"auditActionsAndGroups,omitempty"`
 	Conditions                   []conditions.Condition `json:"conditions,omitempty"`
 	Id                           *string                `json:"id,omitempty"`
@@ -198,10 +222,10 @@ type Servers_Databases_AuditingSetting_STATUS struct {
 	Type                         *string                `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Servers_Databases_AuditingSetting_STATUS{}
+var _ genruntime.ConvertibleStatus = &ServersDatabasesAuditingSetting_STATUS{}
 
-// ConvertStatusFrom populates our Servers_Databases_AuditingSetting_STATUS from the provided source
-func (setting *Servers_Databases_AuditingSetting_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our ServersDatabasesAuditingSetting_STATUS from the provided source
+func (setting *ServersDatabasesAuditingSetting_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == setting {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -209,13 +233,21 @@ func (setting *Servers_Databases_AuditingSetting_STATUS) ConvertStatusFrom(sourc
 	return source.ConvertStatusTo(setting)
 }
 
-// ConvertStatusTo populates the provided destination from our Servers_Databases_AuditingSetting_STATUS
-func (setting *Servers_Databases_AuditingSetting_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our ServersDatabasesAuditingSetting_STATUS
+func (setting *ServersDatabasesAuditingSetting_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == setting {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(setting)
+}
+
+// Storage version of v1api20211101.ServersDatabasesAuditingSettingOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ServersDatabasesAuditingSettingOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {

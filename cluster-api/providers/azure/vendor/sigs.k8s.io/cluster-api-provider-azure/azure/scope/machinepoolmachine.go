@@ -25,6 +25,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/controllers/noderefutil"
+	"sigs.k8s.io/cluster-api/controllers/remote"
+	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api/util/patch"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
@@ -33,14 +41,6 @@ import (
 	azureutil "sigs.k8s.io/cluster-api-provider-azure/util/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/futures"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/controllers/noderefutil"
-	"sigs.k8s.io/cluster-api/controllers/remote"
-	capierrors "sigs.k8s.io/cluster-api/errors"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
-	"sigs.k8s.io/cluster-api/util/patch"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -276,7 +276,7 @@ func (s *MachinePoolMachineScope) SetFailureMessage(v error) {
 }
 
 // SetFailureReason sets the AzureMachinePoolMachine status failure reason.
-func (s *MachinePoolMachineScope) SetFailureReason(v capierrors.MachineStatusError) {
+func (s *MachinePoolMachineScope) SetFailureReason(v string) {
 	s.AzureMachinePoolMachine.Status.FailureReason = &v
 }
 

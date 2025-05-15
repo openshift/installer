@@ -224,10 +224,7 @@ func (e *SubscriptionMismatch) Error() string {
 
 func (e *SubscriptionMismatch) Is(err error) bool {
 	var typedErr *SubscriptionMismatch
-	if errors.As(err, &typedErr) {
-		return true
-	}
-	return false
+	return errors.As(err, &typedErr)
 }
 
 func (e *SubscriptionMismatch) Cause() error {

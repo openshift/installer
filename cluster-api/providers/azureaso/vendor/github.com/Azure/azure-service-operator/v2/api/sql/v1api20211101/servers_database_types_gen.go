@@ -5,10 +5,14 @@ package v1api20211101
 
 import (
 	"fmt"
-	v20211101s "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type ServersDatabase struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Servers_Database_Spec   `json:"spec,omitempty"`
-	Status            Servers_Database_STATUS `json:"status,omitempty"`
+	Spec              ServersDatabase_Spec   `json:"spec,omitempty"`
+	Status            ServersDatabase_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &ServersDatabase{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &ServersDatabase{}
 
 // ConvertFrom populates our ServersDatabase from the provided hub ServersDatabase
 func (database *ServersDatabase) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20211101s.ServersDatabase)
+	source, ok := hub.(*storage.ServersDatabase)
 	if !ok {
 		return fmt.Errorf("expected sql/v1api20211101/storage/ServersDatabase but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (database *ServersDatabase) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub ServersDatabase from our ServersDatabase
 func (database *ServersDatabase) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20211101s.ServersDatabase)
+	destination, ok := hub.(*storage.ServersDatabase)
 	if !ok {
 		return fmt.Errorf("expected sql/v1api20211101/storage/ServersDatabase but received %T instead", hub)
 	}
@@ -90,15 +94,35 @@ func (database *ServersDatabase) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the ServersDatabase resource
 func (database *ServersDatabase) defaultImpl() { database.defaultAzureName() }
 
+var _ configmaps.Exporter = &ServersDatabase{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (database *ServersDatabase) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if database.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return database.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ServersDatabase{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (database *ServersDatabase) SecretDestinationExpressions() []*core.DestinationExpression {
+	if database.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return database.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &ServersDatabase{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (database *ServersDatabase) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Servers_Database_STATUS); ok {
-		return database.Spec.Initialize_From_Servers_Database_STATUS(s)
+	if s, ok := status.(*ServersDatabase_STATUS); ok {
+		return database.Spec.Initialize_From_ServersDatabase_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Servers_Database_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type ServersDatabase_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &ServersDatabase{}
@@ -110,7 +134,7 @@ func (database *ServersDatabase) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-11-01"
 func (database ServersDatabase) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -144,7 +168,7 @@ func (database *ServersDatabase) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (database *ServersDatabase) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Servers_Database_STATUS{}
+	return &ServersDatabase_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -156,13 +180,13 @@ func (database *ServersDatabase) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (database *ServersDatabase) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Servers_Database_STATUS); ok {
+	if st, ok := status.(*ServersDatabase_STATUS); ok {
 		database.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Servers_Database_STATUS
+	var st ServersDatabase_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -208,7 +232,7 @@ func (database *ServersDatabase) ValidateUpdate(old runtime.Object) (admission.W
 
 // createValidations validates the creation of the resource
 func (database *ServersDatabase) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){database.validateResourceReferences, database.validateOwnerReference}
+	return []func() (admission.Warnings, error){database.validateResourceReferences, database.validateOwnerReference, database.validateSecretDestinations, database.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +250,21 @@ func (database *ServersDatabase) updateValidations() []func(old runtime.Object) 
 		func(old runtime.Object) (admission.Warnings, error) {
 			return database.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return database.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return database.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (database *ServersDatabase) validateConfigMapDestinations() (admission.Warnings, error) {
+	if database.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(database, nil, database.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -243,6 +281,14 @@ func (database *ServersDatabase) validateResourceReferences() (admission.Warning
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (database *ServersDatabase) validateSecretDestinations() (admission.Warnings, error) {
+	if database.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(database, nil, database.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (database *ServersDatabase) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*ServersDatabase)
@@ -254,24 +300,24 @@ func (database *ServersDatabase) validateWriteOnceProperties(old runtime.Object)
 }
 
 // AssignProperties_From_ServersDatabase populates our ServersDatabase from the provided source ServersDatabase
-func (database *ServersDatabase) AssignProperties_From_ServersDatabase(source *v20211101s.ServersDatabase) error {
+func (database *ServersDatabase) AssignProperties_From_ServersDatabase(source *storage.ServersDatabase) error {
 
 	// ObjectMeta
 	database.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Servers_Database_Spec
-	err := spec.AssignProperties_From_Servers_Database_Spec(&source.Spec)
+	var spec ServersDatabase_Spec
+	err := spec.AssignProperties_From_ServersDatabase_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Servers_Database_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_ServersDatabase_Spec() to populate field Spec")
 	}
 	database.Spec = spec
 
 	// Status
-	var status Servers_Database_STATUS
-	err = status.AssignProperties_From_Servers_Database_STATUS(&source.Status)
+	var status ServersDatabase_STATUS
+	err = status.AssignProperties_From_ServersDatabase_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Servers_Database_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_ServersDatabase_STATUS() to populate field Status")
 	}
 	database.Status = status
 
@@ -280,24 +326,24 @@ func (database *ServersDatabase) AssignProperties_From_ServersDatabase(source *v
 }
 
 // AssignProperties_To_ServersDatabase populates the provided destination ServersDatabase from our ServersDatabase
-func (database *ServersDatabase) AssignProperties_To_ServersDatabase(destination *v20211101s.ServersDatabase) error {
+func (database *ServersDatabase) AssignProperties_To_ServersDatabase(destination *storage.ServersDatabase) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *database.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20211101s.Servers_Database_Spec
-	err := database.Spec.AssignProperties_To_Servers_Database_Spec(&spec)
+	var spec storage.ServersDatabase_Spec
+	err := database.Spec.AssignProperties_To_ServersDatabase_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Servers_Database_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_ServersDatabase_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20211101s.Servers_Database_STATUS
-	err = database.Status.AssignProperties_To_Servers_Database_STATUS(&status)
+	var status storage.ServersDatabase_STATUS
+	err = database.Status.AssignProperties_To_ServersDatabase_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Servers_Database_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_ServersDatabase_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -324,7 +370,7 @@ type ServersDatabaseList struct {
 	Items           []ServersDatabase `json:"items"`
 }
 
-type Servers_Database_Spec struct {
+type ServersDatabase_Spec struct {
 	// AutoPauseDelay: Time in minutes after which database is automatically paused. A value of -1 means that automatic pause
 	// is disabled
 	AutoPauseDelay *int `json:"autoPauseDelay,omitempty"`
@@ -397,6 +443,10 @@ type Servers_Database_Spec struct {
 
 	// MinCapacity: Minimal capacity that database will always have allocated, if not paused
 	MinCapacity *float64 `json:"minCapacity,omitempty"`
+
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *ServersDatabaseOperatorSpec `json:"operatorSpec,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -476,14 +526,14 @@ type Servers_Database_Spec struct {
 	ZoneRedundant *bool `json:"zoneRedundant,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Servers_Database_Spec{}
+var _ genruntime.ARMTransformer = &ServersDatabase_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (database *Servers_Database_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (database *ServersDatabase_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if database == nil {
 		return nil, nil
 	}
-	result := &Servers_Database_Spec_ARM{}
+	result := &arm.ServersDatabase_Spec{}
 
 	// Set property "Identity":
 	if database.Identity != nil {
@@ -491,7 +541,7 @@ func (database *Servers_Database_Spec) ConvertToARM(resolved genruntime.ConvertT
 		if err != nil {
 			return nil, err
 		}
-		identity := *identity_ARM.(*DatabaseIdentity_ARM)
+		identity := *identity_ARM.(*arm.DatabaseIdentity)
 		result.Identity = &identity
 	}
 
@@ -530,14 +580,16 @@ func (database *Servers_Database_Spec) ConvertToARM(resolved genruntime.ConvertT
 		database.SourceDatabaseReference != nil ||
 		database.SourceResourceReference != nil ||
 		database.ZoneRedundant != nil {
-		result.Properties = &DatabaseProperties_ARM{}
+		result.Properties = &arm.DatabaseProperties{}
 	}
 	if database.AutoPauseDelay != nil {
 		autoPauseDelay := *database.AutoPauseDelay
 		result.Properties.AutoPauseDelay = &autoPauseDelay
 	}
 	if database.CatalogCollation != nil {
-		catalogCollation := *database.CatalogCollation
+		var temp string
+		temp = string(*database.CatalogCollation)
+		catalogCollation := arm.DatabaseProperties_CatalogCollation(temp)
 		result.Properties.CatalogCollation = &catalogCollation
 	}
 	if database.Collation != nil {
@@ -545,7 +597,9 @@ func (database *Servers_Database_Spec) ConvertToARM(resolved genruntime.ConvertT
 		result.Properties.Collation = &collation
 	}
 	if database.CreateMode != nil {
-		createMode := *database.CreateMode
+		var temp string
+		temp = string(*database.CreateMode)
+		createMode := arm.DatabaseProperties_CreateMode(temp)
 		result.Properties.CreateMode = &createMode
 	}
 	if database.ElasticPoolReference != nil {
@@ -569,7 +623,9 @@ func (database *Servers_Database_Spec) ConvertToARM(resolved genruntime.ConvertT
 		result.Properties.IsLedgerOn = &isLedgerOn
 	}
 	if database.LicenseType != nil {
-		licenseType := *database.LicenseType
+		var temp string
+		temp = string(*database.LicenseType)
+		licenseType := arm.DatabaseProperties_LicenseType(temp)
 		result.Properties.LicenseType = &licenseType
 	}
 	if database.LongTermRetentionBackupResourceReference != nil {
@@ -593,7 +649,9 @@ func (database *Servers_Database_Spec) ConvertToARM(resolved genruntime.ConvertT
 		result.Properties.MinCapacity = &minCapacity
 	}
 	if database.ReadScale != nil {
-		readScale := *database.ReadScale
+		var temp string
+		temp = string(*database.ReadScale)
+		readScale := arm.DatabaseProperties_ReadScale(temp)
 		result.Properties.ReadScale = &readScale
 	}
 	if database.RecoverableDatabaseReference != nil {
@@ -613,7 +671,9 @@ func (database *Servers_Database_Spec) ConvertToARM(resolved genruntime.ConvertT
 		result.Properties.RecoveryServicesRecoveryPointId = &recoveryServicesRecoveryPointId
 	}
 	if database.RequestedBackupStorageRedundancy != nil {
-		requestedBackupStorageRedundancy := *database.RequestedBackupStorageRedundancy
+		var temp string
+		temp = string(*database.RequestedBackupStorageRedundancy)
+		requestedBackupStorageRedundancy := arm.DatabaseProperties_RequestedBackupStorageRedundancy(temp)
 		result.Properties.RequestedBackupStorageRedundancy = &requestedBackupStorageRedundancy
 	}
 	if database.RestorableDroppedDatabaseReference != nil {
@@ -629,11 +689,15 @@ func (database *Servers_Database_Spec) ConvertToARM(resolved genruntime.ConvertT
 		result.Properties.RestorePointInTime = &restorePointInTime
 	}
 	if database.SampleName != nil {
-		sampleName := *database.SampleName
+		var temp string
+		temp = string(*database.SampleName)
+		sampleName := arm.DatabaseProperties_SampleName(temp)
 		result.Properties.SampleName = &sampleName
 	}
 	if database.SecondaryType != nil {
-		secondaryType := *database.SecondaryType
+		var temp string
+		temp = string(*database.SecondaryType)
+		secondaryType := arm.DatabaseProperties_SecondaryType(temp)
 		result.Properties.SecondaryType = &secondaryType
 	}
 	if database.SourceDatabaseDeletionDate != nil {
@@ -667,7 +731,7 @@ func (database *Servers_Database_Spec) ConvertToARM(resolved genruntime.ConvertT
 		if err != nil {
 			return nil, err
 		}
-		sku := *sku_ARM.(*Sku_ARM)
+		sku := *sku_ARM.(*arm.Sku)
 		result.Sku = &sku
 	}
 
@@ -682,15 +746,15 @@ func (database *Servers_Database_Spec) ConvertToARM(resolved genruntime.ConvertT
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (database *Servers_Database_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Servers_Database_Spec_ARM{}
+func (database *ServersDatabase_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ServersDatabase_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (database *Servers_Database_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Servers_Database_Spec_ARM)
+func (database *ServersDatabase_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ServersDatabase_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Servers_Database_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServersDatabase_Spec, got %T", armInput)
 	}
 
 	// Set property "AutoPauseDelay":
@@ -709,7 +773,9 @@ func (database *Servers_Database_Spec) PopulateFromARM(owner genruntime.Arbitrar
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.CatalogCollation != nil {
-			catalogCollation := *typedInput.Properties.CatalogCollation
+			var temp string
+			temp = string(*typedInput.Properties.CatalogCollation)
+			catalogCollation := DatabaseProperties_CatalogCollation(temp)
 			database.CatalogCollation = &catalogCollation
 		}
 	}
@@ -727,7 +793,9 @@ func (database *Servers_Database_Spec) PopulateFromARM(owner genruntime.Arbitrar
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.CreateMode != nil {
-			createMode := *typedInput.Properties.CreateMode
+			var temp string
+			temp = string(*typedInput.Properties.CreateMode)
+			createMode := DatabaseProperties_CreateMode(temp)
 			database.CreateMode = &createMode
 		}
 	}
@@ -776,7 +844,9 @@ func (database *Servers_Database_Spec) PopulateFromARM(owner genruntime.Arbitrar
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.LicenseType != nil {
-			licenseType := *typedInput.Properties.LicenseType
+			var temp string
+			temp = string(*typedInput.Properties.LicenseType)
+			licenseType := DatabaseProperties_LicenseType(temp)
 			database.LicenseType = &licenseType
 		}
 	}
@@ -816,6 +886,8 @@ func (database *Servers_Database_Spec) PopulateFromARM(owner genruntime.Arbitrar
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	database.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
@@ -826,7 +898,9 @@ func (database *Servers_Database_Spec) PopulateFromARM(owner genruntime.Arbitrar
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ReadScale != nil {
-			readScale := *typedInput.Properties.ReadScale
+			var temp string
+			temp = string(*typedInput.Properties.ReadScale)
+			readScale := DatabaseProperties_ReadScale(temp)
 			database.ReadScale = &readScale
 		}
 	}
@@ -839,7 +913,9 @@ func (database *Servers_Database_Spec) PopulateFromARM(owner genruntime.Arbitrar
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.RequestedBackupStorageRedundancy != nil {
-			requestedBackupStorageRedundancy := *typedInput.Properties.RequestedBackupStorageRedundancy
+			var temp string
+			temp = string(*typedInput.Properties.RequestedBackupStorageRedundancy)
+			requestedBackupStorageRedundancy := DatabaseProperties_RequestedBackupStorageRedundancy(temp)
 			database.RequestedBackupStorageRedundancy = &requestedBackupStorageRedundancy
 		}
 	}
@@ -859,7 +935,9 @@ func (database *Servers_Database_Spec) PopulateFromARM(owner genruntime.Arbitrar
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.SampleName != nil {
-			sampleName := *typedInput.Properties.SampleName
+			var temp string
+			temp = string(*typedInput.Properties.SampleName)
+			sampleName := DatabaseProperties_SampleName(temp)
 			database.SampleName = &sampleName
 		}
 	}
@@ -868,7 +946,9 @@ func (database *Servers_Database_Spec) PopulateFromARM(owner genruntime.Arbitrar
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.SecondaryType != nil {
-			secondaryType := *typedInput.Properties.SecondaryType
+			var temp string
+			temp = string(*typedInput.Properties.SecondaryType)
+			secondaryType := DatabaseProperties_SecondaryType(temp)
 			database.SecondaryType = &secondaryType
 		}
 	}
@@ -918,25 +998,25 @@ func (database *Servers_Database_Spec) PopulateFromARM(owner genruntime.Arbitrar
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Servers_Database_Spec{}
+var _ genruntime.ConvertibleSpec = &ServersDatabase_Spec{}
 
-// ConvertSpecFrom populates our Servers_Database_Spec from the provided source
-func (database *Servers_Database_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20211101s.Servers_Database_Spec)
+// ConvertSpecFrom populates our ServersDatabase_Spec from the provided source
+func (database *ServersDatabase_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.ServersDatabase_Spec)
 	if ok {
 		// Populate our instance from source
-		return database.AssignProperties_From_Servers_Database_Spec(src)
+		return database.AssignProperties_From_ServersDatabase_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20211101s.Servers_Database_Spec{}
+	src = &storage.ServersDatabase_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = database.AssignProperties_From_Servers_Database_Spec(src)
+	err = database.AssignProperties_From_ServersDatabase_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -944,17 +1024,17 @@ func (database *Servers_Database_Spec) ConvertSpecFrom(source genruntime.Convert
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Servers_Database_Spec
-func (database *Servers_Database_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20211101s.Servers_Database_Spec)
+// ConvertSpecTo populates the provided destination from our ServersDatabase_Spec
+func (database *ServersDatabase_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.ServersDatabase_Spec)
 	if ok {
 		// Populate destination from our instance
-		return database.AssignProperties_To_Servers_Database_Spec(dst)
+		return database.AssignProperties_To_ServersDatabase_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20211101s.Servers_Database_Spec{}
-	err := database.AssignProperties_To_Servers_Database_Spec(dst)
+	dst = &storage.ServersDatabase_Spec{}
+	err := database.AssignProperties_To_ServersDatabase_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -968,8 +1048,8 @@ func (database *Servers_Database_Spec) ConvertSpecTo(destination genruntime.Conv
 	return nil
 }
 
-// AssignProperties_From_Servers_Database_Spec populates our Servers_Database_Spec from the provided source Servers_Database_Spec
-func (database *Servers_Database_Spec) AssignProperties_From_Servers_Database_Spec(source *v20211101s.Servers_Database_Spec) error {
+// AssignProperties_From_ServersDatabase_Spec populates our ServersDatabase_Spec from the provided source ServersDatabase_Spec
+func (database *ServersDatabase_Spec) AssignProperties_From_ServersDatabase_Spec(source *storage.ServersDatabase_Spec) error {
 
 	// AutoPauseDelay
 	database.AutoPauseDelay = genruntime.ClonePointerToInt(source.AutoPauseDelay)
@@ -979,8 +1059,9 @@ func (database *Servers_Database_Spec) AssignProperties_From_Servers_Database_Sp
 
 	// CatalogCollation
 	if source.CatalogCollation != nil {
-		catalogCollation := DatabaseProperties_CatalogCollation(*source.CatalogCollation)
-		database.CatalogCollation = &catalogCollation
+		catalogCollation := *source.CatalogCollation
+		catalogCollationTemp := genruntime.ToEnum(catalogCollation, databaseProperties_CatalogCollation_Values)
+		database.CatalogCollation = &catalogCollationTemp
 	} else {
 		database.CatalogCollation = nil
 	}
@@ -990,8 +1071,9 @@ func (database *Servers_Database_Spec) AssignProperties_From_Servers_Database_Sp
 
 	// CreateMode
 	if source.CreateMode != nil {
-		createMode := DatabaseProperties_CreateMode(*source.CreateMode)
-		database.CreateMode = &createMode
+		createMode := *source.CreateMode
+		createModeTemp := genruntime.ToEnum(createMode, databaseProperties_CreateMode_Values)
+		database.CreateMode = &createModeTemp
 	} else {
 		database.CreateMode = nil
 	}
@@ -1037,8 +1119,9 @@ func (database *Servers_Database_Spec) AssignProperties_From_Servers_Database_Sp
 
 	// LicenseType
 	if source.LicenseType != nil {
-		licenseType := DatabaseProperties_LicenseType(*source.LicenseType)
-		database.LicenseType = &licenseType
+		licenseType := *source.LicenseType
+		licenseTypeTemp := genruntime.ToEnum(licenseType, databaseProperties_LicenseType_Values)
+		database.LicenseType = &licenseTypeTemp
 	} else {
 		database.LicenseType = nil
 	}
@@ -1068,6 +1151,18 @@ func (database *Servers_Database_Spec) AssignProperties_From_Servers_Database_Sp
 		database.MinCapacity = nil
 	}
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ServersDatabaseOperatorSpec
+		err := operatorSpec.AssignProperties_From_ServersDatabaseOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ServersDatabaseOperatorSpec() to populate field OperatorSpec")
+		}
+		database.OperatorSpec = &operatorSpec
+	} else {
+		database.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -1078,8 +1173,9 @@ func (database *Servers_Database_Spec) AssignProperties_From_Servers_Database_Sp
 
 	// ReadScale
 	if source.ReadScale != nil {
-		readScale := DatabaseProperties_ReadScale(*source.ReadScale)
-		database.ReadScale = &readScale
+		readScale := *source.ReadScale
+		readScaleTemp := genruntime.ToEnum(readScale, databaseProperties_ReadScale_Values)
+		database.ReadScale = &readScaleTemp
 	} else {
 		database.ReadScale = nil
 	}
@@ -1102,8 +1198,9 @@ func (database *Servers_Database_Spec) AssignProperties_From_Servers_Database_Sp
 
 	// RequestedBackupStorageRedundancy
 	if source.RequestedBackupStorageRedundancy != nil {
-		requestedBackupStorageRedundancy := DatabaseProperties_RequestedBackupStorageRedundancy(*source.RequestedBackupStorageRedundancy)
-		database.RequestedBackupStorageRedundancy = &requestedBackupStorageRedundancy
+		requestedBackupStorageRedundancy := *source.RequestedBackupStorageRedundancy
+		requestedBackupStorageRedundancyTemp := genruntime.ToEnum(requestedBackupStorageRedundancy, databaseProperties_RequestedBackupStorageRedundancy_Values)
+		database.RequestedBackupStorageRedundancy = &requestedBackupStorageRedundancyTemp
 	} else {
 		database.RequestedBackupStorageRedundancy = nil
 	}
@@ -1121,16 +1218,18 @@ func (database *Servers_Database_Spec) AssignProperties_From_Servers_Database_Sp
 
 	// SampleName
 	if source.SampleName != nil {
-		sampleName := DatabaseProperties_SampleName(*source.SampleName)
-		database.SampleName = &sampleName
+		sampleName := *source.SampleName
+		sampleNameTemp := genruntime.ToEnum(sampleName, databaseProperties_SampleName_Values)
+		database.SampleName = &sampleNameTemp
 	} else {
 		database.SampleName = nil
 	}
 
 	// SecondaryType
 	if source.SecondaryType != nil {
-		secondaryType := DatabaseProperties_SecondaryType(*source.SecondaryType)
-		database.SecondaryType = &secondaryType
+		secondaryType := *source.SecondaryType
+		secondaryTypeTemp := genruntime.ToEnum(secondaryType, databaseProperties_SecondaryType_Values)
+		database.SecondaryType = &secondaryTypeTemp
 	} else {
 		database.SecondaryType = nil
 	}
@@ -1181,8 +1280,8 @@ func (database *Servers_Database_Spec) AssignProperties_From_Servers_Database_Sp
 	return nil
 }
 
-// AssignProperties_To_Servers_Database_Spec populates the provided destination Servers_Database_Spec from our Servers_Database_Spec
-func (database *Servers_Database_Spec) AssignProperties_To_Servers_Database_Spec(destination *v20211101s.Servers_Database_Spec) error {
+// AssignProperties_To_ServersDatabase_Spec populates the provided destination ServersDatabase_Spec from our ServersDatabase_Spec
+func (database *ServersDatabase_Spec) AssignProperties_To_ServersDatabase_Spec(destination *storage.ServersDatabase_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1232,7 +1331,7 @@ func (database *Servers_Database_Spec) AssignProperties_To_Servers_Database_Spec
 
 	// Identity
 	if database.Identity != nil {
-		var identity v20211101s.DatabaseIdentity
+		var identity storage.DatabaseIdentity
 		err := database.Identity.AssignProperties_To_DatabaseIdentity(&identity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DatabaseIdentity() to populate field Identity")
@@ -1281,6 +1380,18 @@ func (database *Servers_Database_Spec) AssignProperties_To_Servers_Database_Spec
 		destination.MinCapacity = &minCapacity
 	} else {
 		destination.MinCapacity = nil
+	}
+
+	// OperatorSpec
+	if database.OperatorSpec != nil {
+		var operatorSpec storage.ServersDatabaseOperatorSpec
+		err := database.OperatorSpec.AssignProperties_To_ServersDatabaseOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ServersDatabaseOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
 	}
 
 	// OriginalVersion
@@ -1355,7 +1466,7 @@ func (database *Servers_Database_Spec) AssignProperties_To_Servers_Database_Spec
 
 	// Sku
 	if database.Sku != nil {
-		var sku v20211101s.Sku
+		var sku storage.Sku
 		err := database.Sku.AssignProperties_To_Sku(&sku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
@@ -1406,15 +1517,15 @@ func (database *Servers_Database_Spec) AssignProperties_To_Servers_Database_Spec
 	return nil
 }
 
-// Initialize_From_Servers_Database_STATUS populates our Servers_Database_Spec from the provided source Servers_Database_STATUS
-func (database *Servers_Database_Spec) Initialize_From_Servers_Database_STATUS(source *Servers_Database_STATUS) error {
+// Initialize_From_ServersDatabase_STATUS populates our ServersDatabase_Spec from the provided source ServersDatabase_STATUS
+func (database *ServersDatabase_Spec) Initialize_From_ServersDatabase_STATUS(source *ServersDatabase_STATUS) error {
 
 	// AutoPauseDelay
 	database.AutoPauseDelay = genruntime.ClonePointerToInt(source.AutoPauseDelay)
 
 	// CatalogCollation
 	if source.CatalogCollation != nil {
-		catalogCollation := DatabaseProperties_CatalogCollation(*source.CatalogCollation)
+		catalogCollation := genruntime.ToEnum(string(*source.CatalogCollation), databaseProperties_CatalogCollation_Values)
 		database.CatalogCollation = &catalogCollation
 	} else {
 		database.CatalogCollation = nil
@@ -1425,7 +1536,7 @@ func (database *Servers_Database_Spec) Initialize_From_Servers_Database_STATUS(s
 
 	// CreateMode
 	if source.CreateMode != nil {
-		createMode := DatabaseProperties_CreateMode(*source.CreateMode)
+		createMode := genruntime.ToEnum(string(*source.CreateMode), databaseProperties_CreateMode_Values)
 		database.CreateMode = &createMode
 	} else {
 		database.CreateMode = nil
@@ -1472,7 +1583,7 @@ func (database *Servers_Database_Spec) Initialize_From_Servers_Database_STATUS(s
 
 	// LicenseType
 	if source.LicenseType != nil {
-		licenseType := DatabaseProperties_LicenseType(*source.LicenseType)
+		licenseType := genruntime.ToEnum(string(*source.LicenseType), databaseProperties_LicenseType_Values)
 		database.LicenseType = &licenseType
 	} else {
 		database.LicenseType = nil
@@ -1505,7 +1616,7 @@ func (database *Servers_Database_Spec) Initialize_From_Servers_Database_STATUS(s
 
 	// ReadScale
 	if source.ReadScale != nil {
-		readScale := DatabaseProperties_ReadScale(*source.ReadScale)
+		readScale := genruntime.ToEnum(string(*source.ReadScale), databaseProperties_ReadScale_Values)
 		database.ReadScale = &readScale
 	} else {
 		database.ReadScale = nil
@@ -1529,7 +1640,7 @@ func (database *Servers_Database_Spec) Initialize_From_Servers_Database_STATUS(s
 
 	// RequestedBackupStorageRedundancy
 	if source.RequestedBackupStorageRedundancy != nil {
-		requestedBackupStorageRedundancy := DatabaseProperties_RequestedBackupStorageRedundancy(*source.RequestedBackupStorageRedundancy)
+		requestedBackupStorageRedundancy := genruntime.ToEnum(string(*source.RequestedBackupStorageRedundancy), databaseProperties_RequestedBackupStorageRedundancy_Values)
 		database.RequestedBackupStorageRedundancy = &requestedBackupStorageRedundancy
 	} else {
 		database.RequestedBackupStorageRedundancy = nil
@@ -1548,7 +1659,7 @@ func (database *Servers_Database_Spec) Initialize_From_Servers_Database_STATUS(s
 
 	// SampleName
 	if source.SampleName != nil {
-		sampleName := DatabaseProperties_SampleName(*source.SampleName)
+		sampleName := genruntime.ToEnum(string(*source.SampleName), databaseProperties_SampleName_Values)
 		database.SampleName = &sampleName
 	} else {
 		database.SampleName = nil
@@ -1556,7 +1667,7 @@ func (database *Servers_Database_Spec) Initialize_From_Servers_Database_STATUS(s
 
 	// SecondaryType
 	if source.SecondaryType != nil {
-		secondaryType := DatabaseProperties_SecondaryType(*source.SecondaryType)
+		secondaryType := genruntime.ToEnum(string(*source.SecondaryType), databaseProperties_SecondaryType_Values)
 		database.SecondaryType = &secondaryType
 	} else {
 		database.SecondaryType = nil
@@ -1609,14 +1720,14 @@ func (database *Servers_Database_Spec) Initialize_From_Servers_Database_STATUS(s
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (database *Servers_Database_Spec) OriginalVersion() string {
+func (database *ServersDatabase_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (database *Servers_Database_Spec) SetAzureName(azureName string) { database.AzureName = azureName }
+func (database *ServersDatabase_Spec) SetAzureName(azureName string) { database.AzureName = azureName }
 
-type Servers_Database_STATUS struct {
+type ServersDatabase_STATUS struct {
 	// AutoPauseDelay: Time in minutes after which database is automatically paused. A value of -1 means that automatic pause
 	// is disabled
 	AutoPauseDelay *int `json:"autoPauseDelay,omitempty"`
@@ -1818,25 +1929,25 @@ type Servers_Database_STATUS struct {
 	ZoneRedundant *bool `json:"zoneRedundant,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Servers_Database_STATUS{}
+var _ genruntime.ConvertibleStatus = &ServersDatabase_STATUS{}
 
-// ConvertStatusFrom populates our Servers_Database_STATUS from the provided source
-func (database *Servers_Database_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20211101s.Servers_Database_STATUS)
+// ConvertStatusFrom populates our ServersDatabase_STATUS from the provided source
+func (database *ServersDatabase_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.ServersDatabase_STATUS)
 	if ok {
 		// Populate our instance from source
-		return database.AssignProperties_From_Servers_Database_STATUS(src)
+		return database.AssignProperties_From_ServersDatabase_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20211101s.Servers_Database_STATUS{}
+	src = &storage.ServersDatabase_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = database.AssignProperties_From_Servers_Database_STATUS(src)
+	err = database.AssignProperties_From_ServersDatabase_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -1844,17 +1955,17 @@ func (database *Servers_Database_STATUS) ConvertStatusFrom(source genruntime.Con
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Servers_Database_STATUS
-func (database *Servers_Database_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20211101s.Servers_Database_STATUS)
+// ConvertStatusTo populates the provided destination from our ServersDatabase_STATUS
+func (database *ServersDatabase_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.ServersDatabase_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return database.AssignProperties_To_Servers_Database_STATUS(dst)
+		return database.AssignProperties_To_ServersDatabase_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20211101s.Servers_Database_STATUS{}
-	err := database.AssignProperties_To_Servers_Database_STATUS(dst)
+	dst = &storage.ServersDatabase_STATUS{}
+	err := database.AssignProperties_To_ServersDatabase_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -1868,18 +1979,18 @@ func (database *Servers_Database_STATUS) ConvertStatusTo(destination genruntime.
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Servers_Database_STATUS{}
+var _ genruntime.FromARMConverter = &ServersDatabase_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (database *Servers_Database_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Servers_Database_STATUS_ARM{}
+func (database *ServersDatabase_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.ServersDatabase_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (database *Servers_Database_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Servers_Database_STATUS_ARM)
+func (database *ServersDatabase_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.ServersDatabase_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Servers_Database_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ServersDatabase_STATUS, got %T", armInput)
 	}
 
 	// Set property "AutoPauseDelay":
@@ -1895,7 +2006,9 @@ func (database *Servers_Database_STATUS) PopulateFromARM(owner genruntime.Arbitr
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.CatalogCollation != nil {
-			catalogCollation := *typedInput.Properties.CatalogCollation
+			var temp string
+			temp = string(*typedInput.Properties.CatalogCollation)
+			catalogCollation := DatabaseProperties_CatalogCollation_STATUS(temp)
 			database.CatalogCollation = &catalogCollation
 		}
 	}
@@ -1915,7 +2028,9 @@ func (database *Servers_Database_STATUS) PopulateFromARM(owner genruntime.Arbitr
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.CreateMode != nil {
-			createMode := *typedInput.Properties.CreateMode
+			var temp string
+			temp = string(*typedInput.Properties.CreateMode)
+			createMode := DatabaseProperties_CreateMode_STATUS(temp)
 			database.CreateMode = &createMode
 		}
 	}
@@ -1933,7 +2048,9 @@ func (database *Servers_Database_STATUS) PopulateFromARM(owner genruntime.Arbitr
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.CurrentBackupStorageRedundancy != nil {
-			currentBackupStorageRedundancy := *typedInput.Properties.CurrentBackupStorageRedundancy
+			var temp string
+			temp = string(*typedInput.Properties.CurrentBackupStorageRedundancy)
+			currentBackupStorageRedundancy := DatabaseProperties_CurrentBackupStorageRedundancy_STATUS(temp)
 			database.CurrentBackupStorageRedundancy = &currentBackupStorageRedundancy
 		}
 	}
@@ -2069,7 +2186,9 @@ func (database *Servers_Database_STATUS) PopulateFromARM(owner genruntime.Arbitr
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.LicenseType != nil {
-			licenseType := *typedInput.Properties.LicenseType
+			var temp string
+			temp = string(*typedInput.Properties.LicenseType)
+			licenseType := DatabaseProperties_LicenseType_STATUS(temp)
 			database.LicenseType = &licenseType
 		}
 	}
@@ -2150,7 +2269,9 @@ func (database *Servers_Database_STATUS) PopulateFromARM(owner genruntime.Arbitr
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ReadScale != nil {
-			readScale := *typedInput.Properties.ReadScale
+			var temp string
+			temp = string(*typedInput.Properties.ReadScale)
+			readScale := DatabaseProperties_ReadScale_STATUS(temp)
 			database.ReadScale = &readScale
 		}
 	}
@@ -2177,7 +2298,9 @@ func (database *Servers_Database_STATUS) PopulateFromARM(owner genruntime.Arbitr
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.RequestedBackupStorageRedundancy != nil {
-			requestedBackupStorageRedundancy := *typedInput.Properties.RequestedBackupStorageRedundancy
+			var temp string
+			temp = string(*typedInput.Properties.RequestedBackupStorageRedundancy)
+			requestedBackupStorageRedundancy := DatabaseProperties_RequestedBackupStorageRedundancy_STATUS(temp)
 			database.RequestedBackupStorageRedundancy = &requestedBackupStorageRedundancy
 		}
 	}
@@ -2222,7 +2345,9 @@ func (database *Servers_Database_STATUS) PopulateFromARM(owner genruntime.Arbitr
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.SampleName != nil {
-			sampleName := *typedInput.Properties.SampleName
+			var temp string
+			temp = string(*typedInput.Properties.SampleName)
+			sampleName := DatabaseProperties_SampleName_STATUS(temp)
 			database.SampleName = &sampleName
 		}
 	}
@@ -2231,7 +2356,9 @@ func (database *Servers_Database_STATUS) PopulateFromARM(owner genruntime.Arbitr
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.SecondaryType != nil {
-			secondaryType := *typedInput.Properties.SecondaryType
+			var temp string
+			temp = string(*typedInput.Properties.SecondaryType)
+			secondaryType := DatabaseProperties_SecondaryType_STATUS(temp)
 			database.SecondaryType = &secondaryType
 		}
 	}
@@ -2278,7 +2405,9 @@ func (database *Servers_Database_STATUS) PopulateFromARM(owner genruntime.Arbitr
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Status != nil {
-			status := *typedInput.Properties.Status
+			var temp string
+			temp = string(*typedInput.Properties.Status)
+			status := DatabaseProperties_Status_STATUS(temp)
 			database.Status = &status
 		}
 	}
@@ -2310,16 +2439,17 @@ func (database *Servers_Database_STATUS) PopulateFromARM(owner genruntime.Arbitr
 	return nil
 }
 
-// AssignProperties_From_Servers_Database_STATUS populates our Servers_Database_STATUS from the provided source Servers_Database_STATUS
-func (database *Servers_Database_STATUS) AssignProperties_From_Servers_Database_STATUS(source *v20211101s.Servers_Database_STATUS) error {
+// AssignProperties_From_ServersDatabase_STATUS populates our ServersDatabase_STATUS from the provided source ServersDatabase_STATUS
+func (database *ServersDatabase_STATUS) AssignProperties_From_ServersDatabase_STATUS(source *storage.ServersDatabase_STATUS) error {
 
 	// AutoPauseDelay
 	database.AutoPauseDelay = genruntime.ClonePointerToInt(source.AutoPauseDelay)
 
 	// CatalogCollation
 	if source.CatalogCollation != nil {
-		catalogCollation := DatabaseProperties_CatalogCollation_STATUS(*source.CatalogCollation)
-		database.CatalogCollation = &catalogCollation
+		catalogCollation := *source.CatalogCollation
+		catalogCollationTemp := genruntime.ToEnum(catalogCollation, databaseProperties_CatalogCollation_STATUS_Values)
+		database.CatalogCollation = &catalogCollationTemp
 	} else {
 		database.CatalogCollation = nil
 	}
@@ -2332,8 +2462,9 @@ func (database *Servers_Database_STATUS) AssignProperties_From_Servers_Database_
 
 	// CreateMode
 	if source.CreateMode != nil {
-		createMode := DatabaseProperties_CreateMode_STATUS(*source.CreateMode)
-		database.CreateMode = &createMode
+		createMode := *source.CreateMode
+		createModeTemp := genruntime.ToEnum(createMode, databaseProperties_CreateMode_STATUS_Values)
+		database.CreateMode = &createModeTemp
 	} else {
 		database.CreateMode = nil
 	}
@@ -2343,8 +2474,9 @@ func (database *Servers_Database_STATUS) AssignProperties_From_Servers_Database_
 
 	// CurrentBackupStorageRedundancy
 	if source.CurrentBackupStorageRedundancy != nil {
-		currentBackupStorageRedundancy := DatabaseProperties_CurrentBackupStorageRedundancy_STATUS(*source.CurrentBackupStorageRedundancy)
-		database.CurrentBackupStorageRedundancy = &currentBackupStorageRedundancy
+		currentBackupStorageRedundancy := *source.CurrentBackupStorageRedundancy
+		currentBackupStorageRedundancyTemp := genruntime.ToEnum(currentBackupStorageRedundancy, databaseProperties_CurrentBackupStorageRedundancy_STATUS_Values)
+		database.CurrentBackupStorageRedundancy = &currentBackupStorageRedundancyTemp
 	} else {
 		database.CurrentBackupStorageRedundancy = nil
 	}
@@ -2421,8 +2553,9 @@ func (database *Servers_Database_STATUS) AssignProperties_From_Servers_Database_
 
 	// LicenseType
 	if source.LicenseType != nil {
-		licenseType := DatabaseProperties_LicenseType_STATUS(*source.LicenseType)
-		database.LicenseType = &licenseType
+		licenseType := *source.LicenseType
+		licenseTypeTemp := genruntime.ToEnum(licenseType, databaseProperties_LicenseType_STATUS_Values)
+		database.LicenseType = &licenseTypeTemp
 	} else {
 		database.LicenseType = nil
 	}
@@ -2461,8 +2594,9 @@ func (database *Servers_Database_STATUS) AssignProperties_From_Servers_Database_
 
 	// ReadScale
 	if source.ReadScale != nil {
-		readScale := DatabaseProperties_ReadScale_STATUS(*source.ReadScale)
-		database.ReadScale = &readScale
+		readScale := *source.ReadScale
+		readScaleTemp := genruntime.ToEnum(readScale, databaseProperties_ReadScale_STATUS_Values)
+		database.ReadScale = &readScaleTemp
 	} else {
 		database.ReadScale = nil
 	}
@@ -2475,8 +2609,9 @@ func (database *Servers_Database_STATUS) AssignProperties_From_Servers_Database_
 
 	// RequestedBackupStorageRedundancy
 	if source.RequestedBackupStorageRedundancy != nil {
-		requestedBackupStorageRedundancy := DatabaseProperties_RequestedBackupStorageRedundancy_STATUS(*source.RequestedBackupStorageRedundancy)
-		database.RequestedBackupStorageRedundancy = &requestedBackupStorageRedundancy
+		requestedBackupStorageRedundancy := *source.RequestedBackupStorageRedundancy
+		requestedBackupStorageRedundancyTemp := genruntime.ToEnum(requestedBackupStorageRedundancy, databaseProperties_RequestedBackupStorageRedundancy_STATUS_Values)
+		database.RequestedBackupStorageRedundancy = &requestedBackupStorageRedundancyTemp
 	} else {
 		database.RequestedBackupStorageRedundancy = nil
 	}
@@ -2495,16 +2630,18 @@ func (database *Servers_Database_STATUS) AssignProperties_From_Servers_Database_
 
 	// SampleName
 	if source.SampleName != nil {
-		sampleName := DatabaseProperties_SampleName_STATUS(*source.SampleName)
-		database.SampleName = &sampleName
+		sampleName := *source.SampleName
+		sampleNameTemp := genruntime.ToEnum(sampleName, databaseProperties_SampleName_STATUS_Values)
+		database.SampleName = &sampleNameTemp
 	} else {
 		database.SampleName = nil
 	}
 
 	// SecondaryType
 	if source.SecondaryType != nil {
-		secondaryType := DatabaseProperties_SecondaryType_STATUS(*source.SecondaryType)
-		database.SecondaryType = &secondaryType
+		secondaryType := *source.SecondaryType
+		secondaryTypeTemp := genruntime.ToEnum(secondaryType, databaseProperties_SecondaryType_STATUS_Values)
+		database.SecondaryType = &secondaryTypeTemp
 	} else {
 		database.SecondaryType = nil
 	}
@@ -2532,8 +2669,9 @@ func (database *Servers_Database_STATUS) AssignProperties_From_Servers_Database_
 
 	// Status
 	if source.Status != nil {
-		status := DatabaseProperties_Status_STATUS(*source.Status)
-		database.Status = &status
+		status := *source.Status
+		statusTemp := genruntime.ToEnum(status, databaseProperties_Status_STATUS_Values)
+		database.Status = &statusTemp
 	} else {
 		database.Status = nil
 	}
@@ -2556,8 +2694,8 @@ func (database *Servers_Database_STATUS) AssignProperties_From_Servers_Database_
 	return nil
 }
 
-// AssignProperties_To_Servers_Database_STATUS populates the provided destination Servers_Database_STATUS from our Servers_Database_STATUS
-func (database *Servers_Database_STATUS) AssignProperties_To_Servers_Database_STATUS(destination *v20211101s.Servers_Database_STATUS) error {
+// AssignProperties_To_ServersDatabase_STATUS populates the provided destination ServersDatabase_STATUS from our ServersDatabase_STATUS
+func (database *ServersDatabase_STATUS) AssignProperties_To_ServersDatabase_STATUS(destination *storage.ServersDatabase_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2602,7 +2740,7 @@ func (database *Servers_Database_STATUS) AssignProperties_To_Servers_Database_ST
 
 	// CurrentSku
 	if database.CurrentSku != nil {
-		var currentSku v20211101s.Sku_STATUS
+		var currentSku storage.Sku_STATUS
 		err := database.CurrentSku.AssignProperties_To_Sku_STATUS(&currentSku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field CurrentSku")
@@ -2638,7 +2776,7 @@ func (database *Servers_Database_STATUS) AssignProperties_To_Servers_Database_ST
 
 	// Identity
 	if database.Identity != nil {
-		var identity v20211101s.DatabaseIdentity_STATUS
+		var identity storage.DatabaseIdentity_STATUS
 		err := database.Identity.AssignProperties_To_DatabaseIdentity_STATUS(&identity)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_DatabaseIdentity_STATUS() to populate field Identity")
@@ -2759,7 +2897,7 @@ func (database *Servers_Database_STATUS) AssignProperties_To_Servers_Database_ST
 
 	// Sku
 	if database.Sku != nil {
-		var sku v20211101s.Sku_STATUS
+		var sku storage.Sku_STATUS
 		err := database.Sku.AssignProperties_To_Sku_STATUS(&sku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
@@ -2827,42 +2965,46 @@ func (identity *DatabaseIdentity) ConvertToARM(resolved genruntime.ConvertToARMR
 	if identity == nil {
 		return nil, nil
 	}
-	result := &DatabaseIdentity_ARM{}
+	result := &arm.DatabaseIdentity{}
 
 	// Set property "Type":
 	if identity.Type != nil {
-		typeVar := *identity.Type
+		var temp string
+		temp = string(*identity.Type)
+		typeVar := arm.DatabaseIdentity_Type(temp)
 		result.Type = &typeVar
 	}
 
 	// Set property "UserAssignedIdentities":
-	result.UserAssignedIdentities = make(map[string]UserAssignedIdentityDetails_ARM, len(identity.UserAssignedIdentities))
+	result.UserAssignedIdentities = make(map[string]arm.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 	for _, ident := range identity.UserAssignedIdentities {
 		identARMID, err := resolved.ResolvedReferences.Lookup(ident.Reference)
 		if err != nil {
 			return nil, err
 		}
 		key := identARMID
-		result.UserAssignedIdentities[key] = UserAssignedIdentityDetails_ARM{}
+		result.UserAssignedIdentities[key] = arm.UserAssignedIdentityDetails{}
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (identity *DatabaseIdentity) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DatabaseIdentity_ARM{}
+	return &arm.DatabaseIdentity{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (identity *DatabaseIdentity) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DatabaseIdentity_ARM)
+	typedInput, ok := armInput.(arm.DatabaseIdentity)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DatabaseIdentity_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DatabaseIdentity, got %T", armInput)
 	}
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := DatabaseIdentity_Type(temp)
 		identity.Type = &typeVar
 	}
 
@@ -2873,12 +3015,13 @@ func (identity *DatabaseIdentity) PopulateFromARM(owner genruntime.ArbitraryOwne
 }
 
 // AssignProperties_From_DatabaseIdentity populates our DatabaseIdentity from the provided source DatabaseIdentity
-func (identity *DatabaseIdentity) AssignProperties_From_DatabaseIdentity(source *v20211101s.DatabaseIdentity) error {
+func (identity *DatabaseIdentity) AssignProperties_From_DatabaseIdentity(source *storage.DatabaseIdentity) error {
 
 	// Type
 	if source.Type != nil {
-		typeVar := DatabaseIdentity_Type(*source.Type)
-		identity.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, databaseIdentity_Type_Values)
+		identity.Type = &typeTemp
 	} else {
 		identity.Type = nil
 	}
@@ -2906,7 +3049,7 @@ func (identity *DatabaseIdentity) AssignProperties_From_DatabaseIdentity(source 
 }
 
 // AssignProperties_To_DatabaseIdentity populates the provided destination DatabaseIdentity from our DatabaseIdentity
-func (identity *DatabaseIdentity) AssignProperties_To_DatabaseIdentity(destination *v20211101s.DatabaseIdentity) error {
+func (identity *DatabaseIdentity) AssignProperties_To_DatabaseIdentity(destination *storage.DatabaseIdentity) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2920,11 +3063,11 @@ func (identity *DatabaseIdentity) AssignProperties_To_DatabaseIdentity(destinati
 
 	// UserAssignedIdentities
 	if identity.UserAssignedIdentities != nil {
-		userAssignedIdentityList := make([]v20211101s.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
+		userAssignedIdentityList := make([]storage.UserAssignedIdentityDetails, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityIndex, userAssignedIdentityItem := range identity.UserAssignedIdentities {
 			// Shadow the loop variable to avoid aliasing
 			userAssignedIdentityItem := userAssignedIdentityItem
-			var userAssignedIdentity v20211101s.UserAssignedIdentityDetails
+			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
@@ -2952,7 +3095,7 @@ func (identity *DatabaseIdentity) Initialize_From_DatabaseIdentity_STATUS(source
 
 	// Type
 	if source.Type != nil {
-		typeVar := DatabaseIdentity_Type(*source.Type)
+		typeVar := genruntime.ToEnum(string(*source.Type), databaseIdentity_Type_Values)
 		identity.Type = &typeVar
 	} else {
 		identity.Type = nil
@@ -2990,14 +3133,14 @@ var _ genruntime.FromARMConverter = &DatabaseIdentity_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (identity *DatabaseIdentity_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DatabaseIdentity_STATUS_ARM{}
+	return &arm.DatabaseIdentity_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (identity *DatabaseIdentity_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DatabaseIdentity_STATUS_ARM)
+	typedInput, ok := armInput.(arm.DatabaseIdentity_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DatabaseIdentity_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DatabaseIdentity_STATUS, got %T", armInput)
 	}
 
 	// Set property "TenantId":
@@ -3008,7 +3151,9 @@ func (identity *DatabaseIdentity_STATUS) PopulateFromARM(owner genruntime.Arbitr
 
 	// Set property "Type":
 	if typedInput.Type != nil {
-		typeVar := *typedInput.Type
+		var temp string
+		temp = string(*typedInput.Type)
+		typeVar := DatabaseIdentity_Type_STATUS(temp)
 		identity.Type = &typeVar
 	}
 
@@ -3030,15 +3175,16 @@ func (identity *DatabaseIdentity_STATUS) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_DatabaseIdentity_STATUS populates our DatabaseIdentity_STATUS from the provided source DatabaseIdentity_STATUS
-func (identity *DatabaseIdentity_STATUS) AssignProperties_From_DatabaseIdentity_STATUS(source *v20211101s.DatabaseIdentity_STATUS) error {
+func (identity *DatabaseIdentity_STATUS) AssignProperties_From_DatabaseIdentity_STATUS(source *storage.DatabaseIdentity_STATUS) error {
 
 	// TenantId
 	identity.TenantId = genruntime.ClonePointerToString(source.TenantId)
 
 	// Type
 	if source.Type != nil {
-		typeVar := DatabaseIdentity_Type_STATUS(*source.Type)
-		identity.Type = &typeVar
+		typeVar := *source.Type
+		typeTemp := genruntime.ToEnum(typeVar, databaseIdentity_Type_STATUS_Values)
+		identity.Type = &typeTemp
 	} else {
 		identity.Type = nil
 	}
@@ -3066,7 +3212,7 @@ func (identity *DatabaseIdentity_STATUS) AssignProperties_From_DatabaseIdentity_
 }
 
 // AssignProperties_To_DatabaseIdentity_STATUS populates the provided destination DatabaseIdentity_STATUS from our DatabaseIdentity_STATUS
-func (identity *DatabaseIdentity_STATUS) AssignProperties_To_DatabaseIdentity_STATUS(destination *v20211101s.DatabaseIdentity_STATUS) error {
+func (identity *DatabaseIdentity_STATUS) AssignProperties_To_DatabaseIdentity_STATUS(destination *storage.DatabaseIdentity_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3083,11 +3229,11 @@ func (identity *DatabaseIdentity_STATUS) AssignProperties_To_DatabaseIdentity_ST
 
 	// UserAssignedIdentities
 	if identity.UserAssignedIdentities != nil {
-		userAssignedIdentityMap := make(map[string]v20211101s.DatabaseUserIdentity_STATUS, len(identity.UserAssignedIdentities))
+		userAssignedIdentityMap := make(map[string]storage.DatabaseUserIdentity_STATUS, len(identity.UserAssignedIdentities))
 		for userAssignedIdentityKey, userAssignedIdentityValue := range identity.UserAssignedIdentities {
 			// Shadow the loop variable to avoid aliasing
 			userAssignedIdentityValue := userAssignedIdentityValue
-			var userAssignedIdentity v20211101s.DatabaseUserIdentity_STATUS
+			var userAssignedIdentity storage.DatabaseUserIdentity_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_DatabaseUserIdentity_STATUS(&userAssignedIdentity)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_DatabaseUserIdentity_STATUS() to populate field UserAssignedIdentities")
@@ -3118,12 +3264,24 @@ const (
 	DatabaseProperties_CatalogCollation_SQL_Latin1_General_CP1_CI_AS = DatabaseProperties_CatalogCollation("SQL_Latin1_General_CP1_CI_AS")
 )
 
+// Mapping from string to DatabaseProperties_CatalogCollation
+var databaseProperties_CatalogCollation_Values = map[string]DatabaseProperties_CatalogCollation{
+	"database_default":             DatabaseProperties_CatalogCollation_DATABASE_DEFAULT,
+	"sql_latin1_general_cp1_ci_as": DatabaseProperties_CatalogCollation_SQL_Latin1_General_CP1_CI_AS,
+}
+
 type DatabaseProperties_CatalogCollation_STATUS string
 
 const (
 	DatabaseProperties_CatalogCollation_STATUS_DATABASE_DEFAULT             = DatabaseProperties_CatalogCollation_STATUS("DATABASE_DEFAULT")
 	DatabaseProperties_CatalogCollation_STATUS_SQL_Latin1_General_CP1_CI_AS = DatabaseProperties_CatalogCollation_STATUS("SQL_Latin1_General_CP1_CI_AS")
 )
+
+// Mapping from string to DatabaseProperties_CatalogCollation_STATUS
+var databaseProperties_CatalogCollation_STATUS_Values = map[string]DatabaseProperties_CatalogCollation_STATUS{
+	"database_default":             DatabaseProperties_CatalogCollation_STATUS_DATABASE_DEFAULT,
+	"sql_latin1_general_cp1_ci_as": DatabaseProperties_CatalogCollation_STATUS_SQL_Latin1_General_CP1_CI_AS,
+}
 
 // +kubebuilder:validation:Enum={"Copy","Default","OnlineSecondary","PointInTimeRestore","Recovery","Restore","RestoreExternalBackup","RestoreExternalBackupSecondary","RestoreLongTermRetentionBackup","Secondary"}
 type DatabaseProperties_CreateMode string
@@ -3141,6 +3299,20 @@ const (
 	DatabaseProperties_CreateMode_Secondary                      = DatabaseProperties_CreateMode("Secondary")
 )
 
+// Mapping from string to DatabaseProperties_CreateMode
+var databaseProperties_CreateMode_Values = map[string]DatabaseProperties_CreateMode{
+	"copy":                           DatabaseProperties_CreateMode_Copy,
+	"default":                        DatabaseProperties_CreateMode_Default,
+	"onlinesecondary":                DatabaseProperties_CreateMode_OnlineSecondary,
+	"pointintimerestore":             DatabaseProperties_CreateMode_PointInTimeRestore,
+	"recovery":                       DatabaseProperties_CreateMode_Recovery,
+	"restore":                        DatabaseProperties_CreateMode_Restore,
+	"restoreexternalbackup":          DatabaseProperties_CreateMode_RestoreExternalBackup,
+	"restoreexternalbackupsecondary": DatabaseProperties_CreateMode_RestoreExternalBackupSecondary,
+	"restorelongtermretentionbackup": DatabaseProperties_CreateMode_RestoreLongTermRetentionBackup,
+	"secondary":                      DatabaseProperties_CreateMode_Secondary,
+}
+
 type DatabaseProperties_CreateMode_STATUS string
 
 const (
@@ -3156,6 +3328,20 @@ const (
 	DatabaseProperties_CreateMode_STATUS_Secondary                      = DatabaseProperties_CreateMode_STATUS("Secondary")
 )
 
+// Mapping from string to DatabaseProperties_CreateMode_STATUS
+var databaseProperties_CreateMode_STATUS_Values = map[string]DatabaseProperties_CreateMode_STATUS{
+	"copy":                           DatabaseProperties_CreateMode_STATUS_Copy,
+	"default":                        DatabaseProperties_CreateMode_STATUS_Default,
+	"onlinesecondary":                DatabaseProperties_CreateMode_STATUS_OnlineSecondary,
+	"pointintimerestore":             DatabaseProperties_CreateMode_STATUS_PointInTimeRestore,
+	"recovery":                       DatabaseProperties_CreateMode_STATUS_Recovery,
+	"restore":                        DatabaseProperties_CreateMode_STATUS_Restore,
+	"restoreexternalbackup":          DatabaseProperties_CreateMode_STATUS_RestoreExternalBackup,
+	"restoreexternalbackupsecondary": DatabaseProperties_CreateMode_STATUS_RestoreExternalBackupSecondary,
+	"restorelongtermretentionbackup": DatabaseProperties_CreateMode_STATUS_RestoreLongTermRetentionBackup,
+	"secondary":                      DatabaseProperties_CreateMode_STATUS_Secondary,
+}
+
 type DatabaseProperties_CurrentBackupStorageRedundancy_STATUS string
 
 const (
@@ -3165,6 +3351,14 @@ const (
 	DatabaseProperties_CurrentBackupStorageRedundancy_STATUS_Zone    = DatabaseProperties_CurrentBackupStorageRedundancy_STATUS("Zone")
 )
 
+// Mapping from string to DatabaseProperties_CurrentBackupStorageRedundancy_STATUS
+var databaseProperties_CurrentBackupStorageRedundancy_STATUS_Values = map[string]DatabaseProperties_CurrentBackupStorageRedundancy_STATUS{
+	"geo":     DatabaseProperties_CurrentBackupStorageRedundancy_STATUS_Geo,
+	"geozone": DatabaseProperties_CurrentBackupStorageRedundancy_STATUS_GeoZone,
+	"local":   DatabaseProperties_CurrentBackupStorageRedundancy_STATUS_Local,
+	"zone":    DatabaseProperties_CurrentBackupStorageRedundancy_STATUS_Zone,
+}
+
 // +kubebuilder:validation:Enum={"BasePrice","LicenseIncluded"}
 type DatabaseProperties_LicenseType string
 
@@ -3173,12 +3367,24 @@ const (
 	DatabaseProperties_LicenseType_LicenseIncluded = DatabaseProperties_LicenseType("LicenseIncluded")
 )
 
+// Mapping from string to DatabaseProperties_LicenseType
+var databaseProperties_LicenseType_Values = map[string]DatabaseProperties_LicenseType{
+	"baseprice":       DatabaseProperties_LicenseType_BasePrice,
+	"licenseincluded": DatabaseProperties_LicenseType_LicenseIncluded,
+}
+
 type DatabaseProperties_LicenseType_STATUS string
 
 const (
 	DatabaseProperties_LicenseType_STATUS_BasePrice       = DatabaseProperties_LicenseType_STATUS("BasePrice")
 	DatabaseProperties_LicenseType_STATUS_LicenseIncluded = DatabaseProperties_LicenseType_STATUS("LicenseIncluded")
 )
+
+// Mapping from string to DatabaseProperties_LicenseType_STATUS
+var databaseProperties_LicenseType_STATUS_Values = map[string]DatabaseProperties_LicenseType_STATUS{
+	"baseprice":       DatabaseProperties_LicenseType_STATUS_BasePrice,
+	"licenseincluded": DatabaseProperties_LicenseType_STATUS_LicenseIncluded,
+}
 
 // +kubebuilder:validation:Enum={"Disabled","Enabled"}
 type DatabaseProperties_ReadScale string
@@ -3188,12 +3394,24 @@ const (
 	DatabaseProperties_ReadScale_Enabled  = DatabaseProperties_ReadScale("Enabled")
 )
 
+// Mapping from string to DatabaseProperties_ReadScale
+var databaseProperties_ReadScale_Values = map[string]DatabaseProperties_ReadScale{
+	"disabled": DatabaseProperties_ReadScale_Disabled,
+	"enabled":  DatabaseProperties_ReadScale_Enabled,
+}
+
 type DatabaseProperties_ReadScale_STATUS string
 
 const (
 	DatabaseProperties_ReadScale_STATUS_Disabled = DatabaseProperties_ReadScale_STATUS("Disabled")
 	DatabaseProperties_ReadScale_STATUS_Enabled  = DatabaseProperties_ReadScale_STATUS("Enabled")
 )
+
+// Mapping from string to DatabaseProperties_ReadScale_STATUS
+var databaseProperties_ReadScale_STATUS_Values = map[string]DatabaseProperties_ReadScale_STATUS{
+	"disabled": DatabaseProperties_ReadScale_STATUS_Disabled,
+	"enabled":  DatabaseProperties_ReadScale_STATUS_Enabled,
+}
 
 // +kubebuilder:validation:Enum={"Geo","GeoZone","Local","Zone"}
 type DatabaseProperties_RequestedBackupStorageRedundancy string
@@ -3205,6 +3423,14 @@ const (
 	DatabaseProperties_RequestedBackupStorageRedundancy_Zone    = DatabaseProperties_RequestedBackupStorageRedundancy("Zone")
 )
 
+// Mapping from string to DatabaseProperties_RequestedBackupStorageRedundancy
+var databaseProperties_RequestedBackupStorageRedundancy_Values = map[string]DatabaseProperties_RequestedBackupStorageRedundancy{
+	"geo":     DatabaseProperties_RequestedBackupStorageRedundancy_Geo,
+	"geozone": DatabaseProperties_RequestedBackupStorageRedundancy_GeoZone,
+	"local":   DatabaseProperties_RequestedBackupStorageRedundancy_Local,
+	"zone":    DatabaseProperties_RequestedBackupStorageRedundancy_Zone,
+}
+
 type DatabaseProperties_RequestedBackupStorageRedundancy_STATUS string
 
 const (
@@ -3213,6 +3439,14 @@ const (
 	DatabaseProperties_RequestedBackupStorageRedundancy_STATUS_Local   = DatabaseProperties_RequestedBackupStorageRedundancy_STATUS("Local")
 	DatabaseProperties_RequestedBackupStorageRedundancy_STATUS_Zone    = DatabaseProperties_RequestedBackupStorageRedundancy_STATUS("Zone")
 )
+
+// Mapping from string to DatabaseProperties_RequestedBackupStorageRedundancy_STATUS
+var databaseProperties_RequestedBackupStorageRedundancy_STATUS_Values = map[string]DatabaseProperties_RequestedBackupStorageRedundancy_STATUS{
+	"geo":     DatabaseProperties_RequestedBackupStorageRedundancy_STATUS_Geo,
+	"geozone": DatabaseProperties_RequestedBackupStorageRedundancy_STATUS_GeoZone,
+	"local":   DatabaseProperties_RequestedBackupStorageRedundancy_STATUS_Local,
+	"zone":    DatabaseProperties_RequestedBackupStorageRedundancy_STATUS_Zone,
+}
 
 // +kubebuilder:validation:Enum={"AdventureWorksLT","WideWorldImportersFull","WideWorldImportersStd"}
 type DatabaseProperties_SampleName string
@@ -3223,6 +3457,13 @@ const (
 	DatabaseProperties_SampleName_WideWorldImportersStd  = DatabaseProperties_SampleName("WideWorldImportersStd")
 )
 
+// Mapping from string to DatabaseProperties_SampleName
+var databaseProperties_SampleName_Values = map[string]DatabaseProperties_SampleName{
+	"adventureworkslt":       DatabaseProperties_SampleName_AdventureWorksLT,
+	"wideworldimportersfull": DatabaseProperties_SampleName_WideWorldImportersFull,
+	"wideworldimportersstd":  DatabaseProperties_SampleName_WideWorldImportersStd,
+}
+
 type DatabaseProperties_SampleName_STATUS string
 
 const (
@@ -3230,6 +3471,13 @@ const (
 	DatabaseProperties_SampleName_STATUS_WideWorldImportersFull = DatabaseProperties_SampleName_STATUS("WideWorldImportersFull")
 	DatabaseProperties_SampleName_STATUS_WideWorldImportersStd  = DatabaseProperties_SampleName_STATUS("WideWorldImportersStd")
 )
+
+// Mapping from string to DatabaseProperties_SampleName_STATUS
+var databaseProperties_SampleName_STATUS_Values = map[string]DatabaseProperties_SampleName_STATUS{
+	"adventureworkslt":       DatabaseProperties_SampleName_STATUS_AdventureWorksLT,
+	"wideworldimportersfull": DatabaseProperties_SampleName_STATUS_WideWorldImportersFull,
+	"wideworldimportersstd":  DatabaseProperties_SampleName_STATUS_WideWorldImportersStd,
+}
 
 // +kubebuilder:validation:Enum={"Geo","Named"}
 type DatabaseProperties_SecondaryType string
@@ -3239,12 +3487,24 @@ const (
 	DatabaseProperties_SecondaryType_Named = DatabaseProperties_SecondaryType("Named")
 )
 
+// Mapping from string to DatabaseProperties_SecondaryType
+var databaseProperties_SecondaryType_Values = map[string]DatabaseProperties_SecondaryType{
+	"geo":   DatabaseProperties_SecondaryType_Geo,
+	"named": DatabaseProperties_SecondaryType_Named,
+}
+
 type DatabaseProperties_SecondaryType_STATUS string
 
 const (
 	DatabaseProperties_SecondaryType_STATUS_Geo   = DatabaseProperties_SecondaryType_STATUS("Geo")
 	DatabaseProperties_SecondaryType_STATUS_Named = DatabaseProperties_SecondaryType_STATUS("Named")
 )
+
+// Mapping from string to DatabaseProperties_SecondaryType_STATUS
+var databaseProperties_SecondaryType_STATUS_Values = map[string]DatabaseProperties_SecondaryType_STATUS{
+	"geo":   DatabaseProperties_SecondaryType_STATUS_Geo,
+	"named": DatabaseProperties_SecondaryType_STATUS_Named,
+}
 
 type DatabaseProperties_Status_STATUS string
 
@@ -3275,6 +3535,138 @@ const (
 	DatabaseProperties_Status_STATUS_Suspect                           = DatabaseProperties_Status_STATUS("Suspect")
 )
 
+// Mapping from string to DatabaseProperties_Status_STATUS
+var databaseProperties_Status_STATUS_Values = map[string]DatabaseProperties_Status_STATUS{
+	"autoclosed":                        DatabaseProperties_Status_STATUS_AutoClosed,
+	"copying":                           DatabaseProperties_Status_STATUS_Copying,
+	"creating":                          DatabaseProperties_Status_STATUS_Creating,
+	"disabled":                          DatabaseProperties_Status_STATUS_Disabled,
+	"emergencymode":                     DatabaseProperties_Status_STATUS_EmergencyMode,
+	"inaccessible":                      DatabaseProperties_Status_STATUS_Inaccessible,
+	"offline":                           DatabaseProperties_Status_STATUS_Offline,
+	"offlinechangingdwperformancetiers": DatabaseProperties_Status_STATUS_OfflineChangingDwPerformanceTiers,
+	"offlinesecondary":                  DatabaseProperties_Status_STATUS_OfflineSecondary,
+	"online":                            DatabaseProperties_Status_STATUS_Online,
+	"onlinechangingdwperformancetiers":  DatabaseProperties_Status_STATUS_OnlineChangingDwPerformanceTiers,
+	"paused":                            DatabaseProperties_Status_STATUS_Paused,
+	"pausing":                           DatabaseProperties_Status_STATUS_Pausing,
+	"recovering":                        DatabaseProperties_Status_STATUS_Recovering,
+	"recoverypending":                   DatabaseProperties_Status_STATUS_RecoveryPending,
+	"restoring":                         DatabaseProperties_Status_STATUS_Restoring,
+	"resuming":                          DatabaseProperties_Status_STATUS_Resuming,
+	"scaling":                           DatabaseProperties_Status_STATUS_Scaling,
+	"shutdown":                          DatabaseProperties_Status_STATUS_Shutdown,
+	"standby":                           DatabaseProperties_Status_STATUS_Standby,
+	"starting":                          DatabaseProperties_Status_STATUS_Starting,
+	"stopped":                           DatabaseProperties_Status_STATUS_Stopped,
+	"stopping":                          DatabaseProperties_Status_STATUS_Stopping,
+	"suspect":                           DatabaseProperties_Status_STATUS_Suspect,
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ServersDatabaseOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ServersDatabaseOperatorSpec populates our ServersDatabaseOperatorSpec from the provided source ServersDatabaseOperatorSpec
+func (operator *ServersDatabaseOperatorSpec) AssignProperties_From_ServersDatabaseOperatorSpec(source *storage.ServersDatabaseOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ServersDatabaseOperatorSpec populates the provided destination ServersDatabaseOperatorSpec from our ServersDatabaseOperatorSpec
+func (operator *ServersDatabaseOperatorSpec) AssignProperties_To_ServersDatabaseOperatorSpec(destination *storage.ServersDatabaseOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 // An ARM Resource SKU.
 type Sku struct {
 	// Capacity: Capacity of the particular SKU.
@@ -3301,7 +3693,7 @@ func (sku *Sku) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (i
 	if sku == nil {
 		return nil, nil
 	}
-	result := &Sku_ARM{}
+	result := &arm.Sku{}
 
 	// Set property "Capacity":
 	if sku.Capacity != nil {
@@ -3337,14 +3729,14 @@ func (sku *Sku) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (i
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (sku *Sku) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Sku_ARM{}
+	return &arm.Sku{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (sku *Sku) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Sku_ARM)
+	typedInput, ok := armInput.(arm.Sku)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Sku_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Sku, got %T", armInput)
 	}
 
 	// Set property "Capacity":
@@ -3382,7 +3774,7 @@ func (sku *Sku) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInp
 }
 
 // AssignProperties_From_Sku populates our Sku from the provided source Sku
-func (sku *Sku) AssignProperties_From_Sku(source *v20211101s.Sku) error {
+func (sku *Sku) AssignProperties_From_Sku(source *storage.Sku) error {
 
 	// Capacity
 	sku.Capacity = genruntime.ClonePointerToInt(source.Capacity)
@@ -3404,7 +3796,7 @@ func (sku *Sku) AssignProperties_From_Sku(source *v20211101s.Sku) error {
 }
 
 // AssignProperties_To_Sku populates the provided destination Sku from our Sku
-func (sku *Sku) AssignProperties_To_Sku(destination *v20211101s.Sku) error {
+func (sku *Sku) AssignProperties_To_Sku(destination *storage.Sku) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3478,14 +3870,14 @@ var _ genruntime.FromARMConverter = &Sku_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (sku *Sku_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Sku_STATUS_ARM{}
+	return &arm.Sku_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (sku *Sku_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Sku_STATUS_ARM)
+	typedInput, ok := armInput.(arm.Sku_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Sku_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Sku_STATUS, got %T", armInput)
 	}
 
 	// Set property "Capacity":
@@ -3523,7 +3915,7 @@ func (sku *Sku_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference,
 }
 
 // AssignProperties_From_Sku_STATUS populates our Sku_STATUS from the provided source Sku_STATUS
-func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *v20211101s.Sku_STATUS) error {
+func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *storage.Sku_STATUS) error {
 
 	// Capacity
 	sku.Capacity = genruntime.ClonePointerToInt(source.Capacity)
@@ -3545,7 +3937,7 @@ func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *v20211101s.Sku_S
 }
 
 // AssignProperties_To_Sku_STATUS populates the provided destination Sku_STATUS from our Sku_STATUS
-func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *v20211101s.Sku_STATUS) error {
+func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *storage.Sku_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3575,6 +3967,33 @@ func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *v20211101s.Sk
 	return nil
 }
 
+// +kubebuilder:validation:Enum={"None","UserAssigned"}
+type DatabaseIdentity_Type string
+
+const (
+	DatabaseIdentity_Type_None         = DatabaseIdentity_Type("None")
+	DatabaseIdentity_Type_UserAssigned = DatabaseIdentity_Type("UserAssigned")
+)
+
+// Mapping from string to DatabaseIdentity_Type
+var databaseIdentity_Type_Values = map[string]DatabaseIdentity_Type{
+	"none":         DatabaseIdentity_Type_None,
+	"userassigned": DatabaseIdentity_Type_UserAssigned,
+}
+
+type DatabaseIdentity_Type_STATUS string
+
+const (
+	DatabaseIdentity_Type_STATUS_None         = DatabaseIdentity_Type_STATUS("None")
+	DatabaseIdentity_Type_STATUS_UserAssigned = DatabaseIdentity_Type_STATUS("UserAssigned")
+)
+
+// Mapping from string to DatabaseIdentity_Type_STATUS
+var databaseIdentity_Type_STATUS_Values = map[string]DatabaseIdentity_Type_STATUS{
+	"none":         DatabaseIdentity_Type_STATUS_None,
+	"userassigned": DatabaseIdentity_Type_STATUS_UserAssigned,
+}
+
 // Azure Active Directory identity configuration for a resource.
 type DatabaseUserIdentity_STATUS struct {
 	// ClientId: The Azure Active Directory client id.
@@ -3588,14 +4007,14 @@ var _ genruntime.FromARMConverter = &DatabaseUserIdentity_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (identity *DatabaseUserIdentity_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &DatabaseUserIdentity_STATUS_ARM{}
+	return &arm.DatabaseUserIdentity_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (identity *DatabaseUserIdentity_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(DatabaseUserIdentity_STATUS_ARM)
+	typedInput, ok := armInput.(arm.DatabaseUserIdentity_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected DatabaseUserIdentity_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.DatabaseUserIdentity_STATUS, got %T", armInput)
 	}
 
 	// Set property "ClientId":
@@ -3615,7 +4034,7 @@ func (identity *DatabaseUserIdentity_STATUS) PopulateFromARM(owner genruntime.Ar
 }
 
 // AssignProperties_From_DatabaseUserIdentity_STATUS populates our DatabaseUserIdentity_STATUS from the provided source DatabaseUserIdentity_STATUS
-func (identity *DatabaseUserIdentity_STATUS) AssignProperties_From_DatabaseUserIdentity_STATUS(source *v20211101s.DatabaseUserIdentity_STATUS) error {
+func (identity *DatabaseUserIdentity_STATUS) AssignProperties_From_DatabaseUserIdentity_STATUS(source *storage.DatabaseUserIdentity_STATUS) error {
 
 	// ClientId
 	identity.ClientId = genruntime.ClonePointerToString(source.ClientId)
@@ -3628,7 +4047,7 @@ func (identity *DatabaseUserIdentity_STATUS) AssignProperties_From_DatabaseUserI
 }
 
 // AssignProperties_To_DatabaseUserIdentity_STATUS populates the provided destination DatabaseUserIdentity_STATUS from our DatabaseUserIdentity_STATUS
-func (identity *DatabaseUserIdentity_STATUS) AssignProperties_To_DatabaseUserIdentity_STATUS(destination *v20211101s.DatabaseUserIdentity_STATUS) error {
+func (identity *DatabaseUserIdentity_STATUS) AssignProperties_To_DatabaseUserIdentity_STATUS(destination *storage.DatabaseUserIdentity_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 

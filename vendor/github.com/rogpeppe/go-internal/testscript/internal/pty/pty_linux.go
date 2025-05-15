@@ -8,7 +8,7 @@ import (
 )
 
 func ptyName(f *os.File) (string, error) {
-	var out uint
+	var out uint32
 	err := ioctl(f, "TIOCGPTN", syscall.TIOCGPTN, uintptr(unsafe.Pointer(&out)))
 	if err != nil {
 		return "", err

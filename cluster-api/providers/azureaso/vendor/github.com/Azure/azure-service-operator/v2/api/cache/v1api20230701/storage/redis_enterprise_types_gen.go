@@ -4,8 +4,12 @@
 package storage
 
 import (
+	storage "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,6 +48,26 @@ func (enterprise *RedisEnterprise) SetConditions(conditions conditions.Condition
 	enterprise.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &RedisEnterprise{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (enterprise *RedisEnterprise) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if enterprise.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return enterprise.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &RedisEnterprise{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (enterprise *RedisEnterprise) SecretDestinationExpressions() []*core.DestinationExpression {
+	if enterprise.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return enterprise.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &RedisEnterprise{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +77,7 @@ func (enterprise *RedisEnterprise) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-07-01"
 func (enterprise RedisEnterprise) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-07-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -148,10 +172,11 @@ const APIVersion_Value = APIVersion("2023-07-01")
 type RedisEnterprise_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName         string  `json:"azureName,omitempty"`
-	Location          *string `json:"location,omitempty"`
-	MinimumTlsVersion *string `json:"minimumTlsVersion,omitempty"`
-	OriginalVersion   string  `json:"originalVersion,omitempty"`
+	AzureName         string                       `json:"azureName,omitempty"`
+	Location          *string                      `json:"location,omitempty"`
+	MinimumTlsVersion *string                      `json:"minimumTlsVersion,omitempty"`
+	OperatorSpec      *RedisEnterpriseOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion   string                       `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -230,6 +255,70 @@ type PrivateEndpointConnection_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_PrivateEndpointConnection_STATUS populates our PrivateEndpointConnection_STATUS from the provided source PrivateEndpointConnection_STATUS
+func (connection *PrivateEndpointConnection_STATUS) AssignProperties_From_PrivateEndpointConnection_STATUS(source *storage.PrivateEndpointConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Id
+	connection.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		connection.PropertyBag = propertyBag
+	} else {
+		connection.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForPrivateEndpointConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_PrivateEndpointConnection_STATUS populates the provided destination PrivateEndpointConnection_STATUS from our PrivateEndpointConnection_STATUS
+func (connection *PrivateEndpointConnection_STATUS) AssignProperties_To_PrivateEndpointConnection_STATUS(destination *storage.PrivateEndpointConnection_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(connection.PropertyBag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(connection.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForPrivateEndpointConnection_STATUS interface (if implemented) to customize the conversion
+	var connectionAsAny any = connection
+	if augmentedConnection, ok := connectionAsAny.(augmentConversionForPrivateEndpointConnection_STATUS); ok {
+		err := augmentedConnection.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// Storage version of v1api20230701.RedisEnterpriseOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type RedisEnterpriseOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
 // Storage version of v1api20230701.Sku
 // SKU parameters supplied to the create RedisEnterprise operation.
 type Sku struct {
@@ -238,12 +327,191 @@ type Sku struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_Sku populates our Sku from the provided source Sku
+func (sku *Sku) AssignProperties_From_Sku(source *storage.Sku) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Capacity
+	sku.Capacity = genruntime.ClonePointerToInt(source.Capacity)
+
+	// Family
+	if source.Family != nil {
+		propertyBag.Add("Family", *source.Family)
+	} else {
+		propertyBag.Remove("Family")
+	}
+
+	// Name
+	sku.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		sku.PropertyBag = propertyBag
+	} else {
+		sku.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSku interface (if implemented) to customize the conversion
+	var skuAsAny any = sku
+	if augmentedSku, ok := skuAsAny.(augmentConversionForSku); ok {
+		err := augmentedSku.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Sku populates the provided destination Sku from our Sku
+func (sku *Sku) AssignProperties_To_Sku(destination *storage.Sku) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(sku.PropertyBag)
+
+	// Capacity
+	destination.Capacity = genruntime.ClonePointerToInt(sku.Capacity)
+
+	// Family
+	if propertyBag.Contains("Family") {
+		var family string
+		err := propertyBag.Pull("Family", &family)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'Family' from propertyBag")
+		}
+
+		destination.Family = &family
+	} else {
+		destination.Family = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(sku.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSku interface (if implemented) to customize the conversion
+	var skuAsAny any = sku
+	if augmentedSku, ok := skuAsAny.(augmentConversionForSku); ok {
+		err := augmentedSku.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20230701.Sku_STATUS
 // SKU parameters supplied to the create RedisEnterprise operation.
 type Sku_STATUS struct {
 	Capacity    *int                   `json:"capacity,omitempty"`
 	Name        *string                `json:"name,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_Sku_STATUS populates our Sku_STATUS from the provided source Sku_STATUS
+func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *storage.Sku_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Capacity
+	sku.Capacity = genruntime.ClonePointerToInt(source.Capacity)
+
+	// Family
+	if source.Family != nil {
+		propertyBag.Add("Family", *source.Family)
+	} else {
+		propertyBag.Remove("Family")
+	}
+
+	// Name
+	sku.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		sku.PropertyBag = propertyBag
+	} else {
+		sku.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSku_STATUS interface (if implemented) to customize the conversion
+	var skuAsAny any = sku
+	if augmentedSku, ok := skuAsAny.(augmentConversionForSku_STATUS); ok {
+		err := augmentedSku.AssignPropertiesFrom(source)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Sku_STATUS populates the provided destination Sku_STATUS from our Sku_STATUS
+func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *storage.Sku_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(sku.PropertyBag)
+
+	// Capacity
+	destination.Capacity = genruntime.ClonePointerToInt(sku.Capacity)
+
+	// Family
+	if propertyBag.Contains("Family") {
+		var family string
+		err := propertyBag.Pull("Family", &family)
+		if err != nil {
+			return errors.Wrap(err, "pulling 'Family' from propertyBag")
+		}
+
+		destination.Family = &family
+	} else {
+		destination.Family = nil
+	}
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(sku.Name)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSku_STATUS interface (if implemented) to customize the conversion
+	var skuAsAny any = sku
+	if augmentedSku, ok := skuAsAny.(augmentConversionForSku_STATUS); ok {
+		err := augmentedSku.AssignPropertiesTo(destination)
+		if err != nil {
+			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForPrivateEndpointConnection_STATUS interface {
+	AssignPropertiesFrom(src *storage.PrivateEndpointConnection_STATUS) error
+	AssignPropertiesTo(dst *storage.PrivateEndpointConnection_STATUS) error
+}
+
+type augmentConversionForSku interface {
+	AssignPropertiesFrom(src *storage.Sku) error
+	AssignPropertiesTo(dst *storage.Sku) error
+}
+
+type augmentConversionForSku_STATUS interface {
+	AssignPropertiesFrom(src *storage.Sku_STATUS) error
+	AssignPropertiesTo(dst *storage.Sku_STATUS) error
 }
 
 func init() {

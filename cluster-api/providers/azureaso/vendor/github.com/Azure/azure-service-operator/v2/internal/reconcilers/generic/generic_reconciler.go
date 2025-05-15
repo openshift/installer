@@ -13,7 +13,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"golang.org/x/time/rate"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -52,6 +51,8 @@ type GenericReconciler struct {
 	GVK                       schema.GroupVersionKind
 	PositiveConditions        *conditions.PositiveConditionBuilder
 	RequeueIntervalCalculator interval.Calculator
+
+	PanicHandler func()
 }
 
 var _ reconcile.Reconciler = &GenericReconciler{} // GenericReconciler is a reconcile.Reconciler
@@ -73,6 +74,8 @@ func (gr *GenericReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	metaObj = metaObj.DeepCopyObject().(genruntime.MetaObject)
 
 	log := gr.LoggerFactory(metaObj).WithValues("name", req.Name, "namespace", req.Namespace)
+
+	defer gr.PanicHandler()
 	reconcilers.LogObj(log, Verbose, "Reconcile invoked", metaObj)
 
 	// Ensure the resource is tagged with the operator's namespace.
@@ -275,24 +278,13 @@ func (gr *GenericReconciler) delete(ctx context.Context, log logr.Logger, metaOb
 
 // NewRateLimiter creates a new workqueue.Ratelimiter for use controlling the speed of reconciliation.
 // It throttles individual requests exponentially and also controls for multiple requests.
-func NewRateLimiter(minBackoff time.Duration, maxBackoff time.Duration, limitBurst bool) workqueue.RateLimiter {
-	limiters := []workqueue.RateLimiter{
-		workqueue.NewItemExponentialFailureRateLimiter(minBackoff, maxBackoff),
+func NewRateLimiter(minBackoff time.Duration, maxBackoff time.Duration, additionalLimiters ...workqueue.TypedRateLimiter[reconcile.Request]) workqueue.TypedRateLimiter[reconcile.Request] {
+	limiters := []workqueue.TypedRateLimiter[reconcile.Request]{
+		workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](minBackoff, maxBackoff),
 	}
 
-	if limitBurst {
-		limiters = append(
-			limiters,
-			// TODO: We could have an azure global (or per subscription) bucket rate limiter to prevent running into subscription
-			// TODO: level throttling. For now though just stay with the default that client-go uses.
-			// Setting the limiter to 1 every 3 seconds & a burst of 40
-			// Based on ARM limits of 1200 puts per hour (20 per minute),
-			&workqueue.BucketRateLimiter{
-				Limiter: rate.NewLimiter(rate.Limit(0.2), 20),
-			})
-	}
-
-	return workqueue.NewMaxOfRateLimiter(limiters...)
+	limiters = append(limiters, additionalLimiters...)
+	return workqueue.NewTypedMaxOfRateLimiter(limiters...)
 }
 
 func (gr *GenericReconciler) WriteReadyConditionError(ctx context.Context, log logr.Logger, obj genruntime.MetaObject, err *conditions.ReadyConditionImpactingError) error {

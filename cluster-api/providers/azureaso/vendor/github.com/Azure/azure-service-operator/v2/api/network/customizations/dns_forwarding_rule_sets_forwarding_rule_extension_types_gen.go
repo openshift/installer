@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20220701 "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701"
-	v20220701s "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type DnsForwardingRuleSetsForwardingRuleExtension struct {
 func (extension *DnsForwardingRuleSetsForwardingRuleExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20220701.DnsForwardingRuleSetsForwardingRule{},
-		&v20220701s.DnsForwardingRuleSetsForwardingRule{}}
+		&storage.DnsForwardingRuleSetsForwardingRule{}}
 }

@@ -30,12 +30,12 @@ func MergeObjects(objs []client.Object) ([]client.Object, error) {
 		switch typedObj := obj.(type) {
 		case *v1.Secret:
 			if namespace != obj.GetNamespace() {
-				return nil, errors.Errorf("cannot merge objects from different namespaces: %s : %s", namespace, obj.GetNamespace())
+				return nil, errors.Errorf("cannot merge objects from different namespaces: '%s' : '%s'", namespace, obj.GetNamespace())
 			}
 			secretSlice = append(secretSlice, typedObj)
 		case *v1.ConfigMap:
 			if namespace != obj.GetNamespace() {
-				return nil, errors.Errorf("cannot merge objects from different namespaces: %s : %s", namespace, obj.GetNamespace())
+				return nil, errors.Errorf("cannot merge objects from different namespaces: '%s' : '%s'", namespace, obj.GetNamespace())
 			}
 			configMapSlice = append(configMapSlice, typedObj)
 		default:

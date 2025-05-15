@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,7 +31,7 @@ import (
 type AutoscaleSetting struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Autoscalesetting_Spec   `json:"spec,omitempty"`
+	Spec              AutoscaleSetting_Spec   `json:"spec,omitempty"`
 	Status            Autoscalesetting_STATUS `json:"status,omitempty"`
 }
 
@@ -44,6 +47,26 @@ func (setting *AutoscaleSetting) SetConditions(conditions conditions.Conditions)
 	setting.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &AutoscaleSetting{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (setting *AutoscaleSetting) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if setting.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return setting.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &AutoscaleSetting{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (setting *AutoscaleSetting) SecretDestinationExpressions() []*core.DestinationExpression {
+	if setting.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return setting.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &AutoscaleSetting{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (setting *AutoscaleSetting) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-10-01"
 func (setting AutoscaleSetting) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-10-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -144,16 +167,17 @@ type APIVersion string
 
 const APIVersion_Value = APIVersion("2022-10-01")
 
-// Storage version of v1api20221001.Autoscalesetting_Spec
-type Autoscalesetting_Spec struct {
+// Storage version of v1api20221001.AutoscaleSetting_Spec
+type AutoscaleSetting_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string                  `json:"azureName,omitempty"`
-	Enabled         *bool                   `json:"enabled,omitempty"`
-	Location        *string                 `json:"location,omitempty"`
-	Name            *string                 `json:"name,omitempty"`
-	Notifications   []AutoscaleNotification `json:"notifications,omitempty"`
-	OriginalVersion string                  `json:"originalVersion,omitempty"`
+	AzureName       string                        `json:"azureName,omitempty"`
+	Enabled         *bool                         `json:"enabled,omitempty"`
+	Location        *string                       `json:"location,omitempty"`
+	Name            *string                       `json:"name,omitempty"`
+	Notifications   []AutoscaleNotification       `json:"notifications,omitempty"`
+	OperatorSpec    *AutoscaleSettingOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string                        `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -170,24 +194,24 @@ type Autoscalesetting_Spec struct {
 	TargetResourceUriReference *genruntime.ResourceReference `armReference:"TargetResourceUri" json:"targetResourceUriReference,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Autoscalesetting_Spec{}
+var _ genruntime.ConvertibleSpec = &AutoscaleSetting_Spec{}
 
-// ConvertSpecFrom populates our Autoscalesetting_Spec from the provided source
-func (autoscalesetting *Autoscalesetting_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == autoscalesetting {
+// ConvertSpecFrom populates our AutoscaleSetting_Spec from the provided source
+func (setting *AutoscaleSetting_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	if source == setting {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
-	return source.ConvertSpecTo(autoscalesetting)
+	return source.ConvertSpecTo(setting)
 }
 
-// ConvertSpecTo populates the provided destination from our Autoscalesetting_Spec
-func (autoscalesetting *Autoscalesetting_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == autoscalesetting {
+// ConvertSpecTo populates the provided destination from our AutoscaleSetting_Spec
+func (setting *AutoscaleSetting_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	if destination == setting {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
-	return destination.ConvertSpecFrom(autoscalesetting)
+	return destination.ConvertSpecFrom(setting)
 }
 
 // Storage version of v1api20221001.Autoscalesetting_STATUS
@@ -267,6 +291,14 @@ type AutoscaleProfile_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Recurrence  *Recurrence_STATUS     `json:"recurrence,omitempty"`
 	Rules       []ScaleRule_STATUS     `json:"rules,omitempty"`
+}
+
+// Storage version of v1api20221001.AutoscaleSettingOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type AutoscaleSettingOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20221001.PredictiveAutoscalePolicy

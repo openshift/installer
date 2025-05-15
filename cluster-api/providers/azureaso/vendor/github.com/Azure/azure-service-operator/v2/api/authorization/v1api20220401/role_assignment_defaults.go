@@ -6,6 +6,8 @@ Licensed under the MIT license.
 package v1api20220401
 
 import (
+	"strings"
+
 	"github.com/Azure/azure-service-operator/v2/internal/util/randextensions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
@@ -18,6 +20,9 @@ func (assignment *RoleAssignment) CustomDefault() {
 
 // defaultAzureName performs special AzureName defaulting for RoleAssignment by generating a stable GUID
 // based on the assignment name.
+// The GUID generation technique is picked by the user using OperatorSpec.NamingConvention property if they want
+// the GUID to be a stable or random string. Stable being the default.
+// Stable GUID algorithm:
 // We generate the UUID using UUIDv5 with a seed string based on the group, kind, namespace and name.
 // We include the namespace and name to ensure no two RoleAssignments in the same cluster can end up
 // with the same UUID.
@@ -43,13 +48,19 @@ func (assignment *RoleAssignment) defaultAzureName() {
 	}
 
 	if assignment.AzureName() == "" {
-		ownerGK := assignment.Owner().GroupKind()
-		gk := assignment.GroupVersionKind().GroupKind()
-		assignment.Spec.AzureName = randextensions.MakeUUIDName(
-			ownerGK,
-			assignment.Spec.Owner.Name,
-			gk,
-			assignment.Namespace,
-			assignment.Name)
+		if assignment.Spec.OperatorSpec != nil &&
+			strings.EqualFold(*assignment.Spec.OperatorSpec.NamingConvention, "random") {
+			assignment.Spec.AzureName = randextensions.MakeRandomUUID()
+		} else if assignment.Spec.OperatorSpec == nil ||
+			assignment.Spec.OperatorSpec != nil && strings.EqualFold(*assignment.Spec.OperatorSpec.NamingConvention, "stable") {
+			gk := assignment.GroupVersionKind().GroupKind()
+			assignment.Spec.AzureName = randextensions.MakeUUIDName(
+				assignment.Name,
+				randextensions.MakeUniqueOwnerScopedStringLegacy(
+					assignment.Owner(),
+					gk,
+					assignment.Namespace,
+					assignment.Name))
+		}
 	}
 }

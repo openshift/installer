@@ -40,8 +40,8 @@ func NewPostgreSQLUserReconciler(
 	kubeClient kubeclient.Client,
 	resourceResolver *resolver.Resolver,
 	positiveConditions *conditions.PositiveConditionBuilder,
-	cfg config.Values) *PostgreSQLUserReconciler {
-
+	cfg config.Values,
+) *PostgreSQLUserReconciler {
 	return &PostgreSQLUserReconciler{
 		ResourceResolver: resourceResolver,
 		Config:           cfg,

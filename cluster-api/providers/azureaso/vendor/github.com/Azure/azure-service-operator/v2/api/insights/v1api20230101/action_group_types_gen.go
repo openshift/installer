@@ -5,10 +5,14 @@ package v1api20230101
 
 import (
 	"fmt"
-	v20230101s "github.com/Azure/azure-service-operator/v2/api/insights/v1api20230101/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/insights/v1api20230101/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/insights/v1api20230101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &ActionGroup{}
 
 // ConvertFrom populates our ActionGroup from the provided hub ActionGroup
 func (group *ActionGroup) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20230101s.ActionGroup)
+	source, ok := hub.(*storage.ActionGroup)
 	if !ok {
 		return fmt.Errorf("expected insights/v1api20230101/storage/ActionGroup but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (group *ActionGroup) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub ActionGroup from our ActionGroup
 func (group *ActionGroup) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20230101s.ActionGroup)
+	destination, ok := hub.(*storage.ActionGroup)
 	if !ok {
 		return fmt.Errorf("expected insights/v1api20230101/storage/ActionGroup but received %T instead", hub)
 	}
@@ -90,6 +94,26 @@ func (group *ActionGroup) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the ActionGroup resource
 func (group *ActionGroup) defaultImpl() { group.defaultAzureName() }
 
+var _ configmaps.Exporter = &ActionGroup{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (group *ActionGroup) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if group.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return group.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ActionGroup{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (group *ActionGroup) SecretDestinationExpressions() []*core.DestinationExpression {
+	if group.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return group.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &ActionGroup{}
 
 // InitializeSpec initializes the spec for this resource from the given status
@@ -110,7 +134,7 @@ func (group *ActionGroup) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-01-01"
 func (group ActionGroup) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-01-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -208,7 +232,7 @@ func (group *ActionGroup) ValidateUpdate(old runtime.Object) (admission.Warnings
 
 // createValidations validates the creation of the resource
 func (group *ActionGroup) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference}
+	return []func() (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference, group.validateSecretDestinations, group.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +250,21 @@ func (group *ActionGroup) updateValidations() []func(old runtime.Object) (admiss
 		func(old runtime.Object) (admission.Warnings, error) {
 			return group.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return group.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return group.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (group *ActionGroup) validateConfigMapDestinations() (admission.Warnings, error) {
+	if group.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(group, nil, group.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -243,6 +281,14 @@ func (group *ActionGroup) validateResourceReferences() (admission.Warnings, erro
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (group *ActionGroup) validateSecretDestinations() (admission.Warnings, error) {
+	if group.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(group, nil, group.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (group *ActionGroup) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*ActionGroup)
@@ -254,7 +300,7 @@ func (group *ActionGroup) validateWriteOnceProperties(old runtime.Object) (admis
 }
 
 // AssignProperties_From_ActionGroup populates our ActionGroup from the provided source ActionGroup
-func (group *ActionGroup) AssignProperties_From_ActionGroup(source *v20230101s.ActionGroup) error {
+func (group *ActionGroup) AssignProperties_From_ActionGroup(source *storage.ActionGroup) error {
 
 	// ObjectMeta
 	group.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -280,13 +326,13 @@ func (group *ActionGroup) AssignProperties_From_ActionGroup(source *v20230101s.A
 }
 
 // AssignProperties_To_ActionGroup populates the provided destination ActionGroup from our ActionGroup
-func (group *ActionGroup) AssignProperties_To_ActionGroup(destination *v20230101s.ActionGroup) error {
+func (group *ActionGroup) AssignProperties_To_ActionGroup(destination *storage.ActionGroup) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *group.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20230101s.ActionGroup_Spec
+	var spec storage.ActionGroup_Spec
 	err := group.Spec.AssignProperties_To_ActionGroup_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_ActionGroup_Spec() to populate field Spec")
@@ -294,7 +340,7 @@ func (group *ActionGroup) AssignProperties_To_ActionGroup(destination *v20230101
 	destination.Spec = spec
 
 	// Status
-	var status v20230101s.ActionGroupResource_STATUS
+	var status storage.ActionGroupResource_STATUS
 	err = group.Status.AssignProperties_To_ActionGroupResource_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_ActionGroupResource_STATUS() to populate field Status")
@@ -368,6 +414,10 @@ type ActionGroup_Spec struct {
 	// LogicAppReceivers: The list of logic app receivers that are part of this action group.
 	LogicAppReceivers []LogicAppReceiver `json:"logicAppReceivers,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *ActionGroupOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -394,7 +444,7 @@ func (group *ActionGroup_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 	if group == nil {
 		return nil, nil
 	}
-	result := &ActionGroup_Spec_ARM{}
+	result := &arm.ActionGroup_Spec{}
 
 	// Set property "Location":
 	if group.Location != nil {
@@ -419,42 +469,42 @@ func (group *ActionGroup_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		group.SmsReceivers != nil ||
 		group.VoiceReceivers != nil ||
 		group.WebhookReceivers != nil {
-		result.Properties = &ActionGroupSpec_ARM{}
+		result.Properties = &arm.ActionGroupSpec{}
 	}
 	for _, item := range group.ArmRoleReceivers {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.ArmRoleReceivers = append(result.Properties.ArmRoleReceivers, *item_ARM.(*ArmRoleReceiver_ARM))
+		result.Properties.ArmRoleReceivers = append(result.Properties.ArmRoleReceivers, *item_ARM.(*arm.ArmRoleReceiver))
 	}
 	for _, item := range group.AutomationRunbookReceivers {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.AutomationRunbookReceivers = append(result.Properties.AutomationRunbookReceivers, *item_ARM.(*AutomationRunbookReceiver_ARM))
+		result.Properties.AutomationRunbookReceivers = append(result.Properties.AutomationRunbookReceivers, *item_ARM.(*arm.AutomationRunbookReceiver))
 	}
 	for _, item := range group.AzureAppPushReceivers {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.AzureAppPushReceivers = append(result.Properties.AzureAppPushReceivers, *item_ARM.(*AzureAppPushReceiver_ARM))
+		result.Properties.AzureAppPushReceivers = append(result.Properties.AzureAppPushReceivers, *item_ARM.(*arm.AzureAppPushReceiver))
 	}
 	for _, item := range group.AzureFunctionReceivers {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.AzureFunctionReceivers = append(result.Properties.AzureFunctionReceivers, *item_ARM.(*AzureFunctionReceiver_ARM))
+		result.Properties.AzureFunctionReceivers = append(result.Properties.AzureFunctionReceivers, *item_ARM.(*arm.AzureFunctionReceiver))
 	}
 	for _, item := range group.EmailReceivers {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.EmailReceivers = append(result.Properties.EmailReceivers, *item_ARM.(*EmailReceiver_ARM))
+		result.Properties.EmailReceivers = append(result.Properties.EmailReceivers, *item_ARM.(*arm.EmailReceiver))
 	}
 	if group.Enabled != nil {
 		enabled := *group.Enabled
@@ -465,7 +515,7 @@ func (group *ActionGroup_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.EventHubReceivers = append(result.Properties.EventHubReceivers, *item_ARM.(*EventHubReceiver_ARM))
+		result.Properties.EventHubReceivers = append(result.Properties.EventHubReceivers, *item_ARM.(*arm.EventHubReceiver))
 	}
 	if group.GroupShortName != nil {
 		groupShortName := *group.GroupShortName
@@ -476,35 +526,35 @@ func (group *ActionGroup_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.ItsmReceivers = append(result.Properties.ItsmReceivers, *item_ARM.(*ItsmReceiver_ARM))
+		result.Properties.ItsmReceivers = append(result.Properties.ItsmReceivers, *item_ARM.(*arm.ItsmReceiver))
 	}
 	for _, item := range group.LogicAppReceivers {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.LogicAppReceivers = append(result.Properties.LogicAppReceivers, *item_ARM.(*LogicAppReceiver_ARM))
+		result.Properties.LogicAppReceivers = append(result.Properties.LogicAppReceivers, *item_ARM.(*arm.LogicAppReceiver))
 	}
 	for _, item := range group.SmsReceivers {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.SmsReceivers = append(result.Properties.SmsReceivers, *item_ARM.(*SmsReceiver_ARM))
+		result.Properties.SmsReceivers = append(result.Properties.SmsReceivers, *item_ARM.(*arm.SmsReceiver))
 	}
 	for _, item := range group.VoiceReceivers {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.VoiceReceivers = append(result.Properties.VoiceReceivers, *item_ARM.(*VoiceReceiver_ARM))
+		result.Properties.VoiceReceivers = append(result.Properties.VoiceReceivers, *item_ARM.(*arm.VoiceReceiver))
 	}
 	for _, item := range group.WebhookReceivers {
 		item_ARM, err := item.ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		result.Properties.WebhookReceivers = append(result.Properties.WebhookReceivers, *item_ARM.(*WebhookReceiver_ARM))
+		result.Properties.WebhookReceivers = append(result.Properties.WebhookReceivers, *item_ARM.(*arm.WebhookReceiver))
 	}
 
 	// Set property "Tags":
@@ -519,14 +569,14 @@ func (group *ActionGroup_Spec) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (group *ActionGroup_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ActionGroup_Spec_ARM{}
+	return &arm.ActionGroup_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (group *ActionGroup_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ActionGroup_Spec_ARM)
+	typedInput, ok := armInput.(arm.ActionGroup_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ActionGroup_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ActionGroup_Spec, got %T", armInput)
 	}
 
 	// Set property "ArmRoleReceivers":
@@ -660,6 +710,8 @@ func (group *ActionGroup_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	group.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
@@ -721,14 +773,14 @@ var _ genruntime.ConvertibleSpec = &ActionGroup_Spec{}
 
 // ConvertSpecFrom populates our ActionGroup_Spec from the provided source
 func (group *ActionGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20230101s.ActionGroup_Spec)
+	src, ok := source.(*storage.ActionGroup_Spec)
 	if ok {
 		// Populate our instance from source
 		return group.AssignProperties_From_ActionGroup_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230101s.ActionGroup_Spec{}
+	src = &storage.ActionGroup_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -745,14 +797,14 @@ func (group *ActionGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec
 
 // ConvertSpecTo populates the provided destination from our ActionGroup_Spec
 func (group *ActionGroup_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20230101s.ActionGroup_Spec)
+	dst, ok := destination.(*storage.ActionGroup_Spec)
 	if ok {
 		// Populate destination from our instance
 		return group.AssignProperties_To_ActionGroup_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230101s.ActionGroup_Spec{}
+	dst = &storage.ActionGroup_Spec{}
 	err := group.AssignProperties_To_ActionGroup_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -768,7 +820,7 @@ func (group *ActionGroup_Spec) ConvertSpecTo(destination genruntime.ConvertibleS
 }
 
 // AssignProperties_From_ActionGroup_Spec populates our ActionGroup_Spec from the provided source ActionGroup_Spec
-func (group *ActionGroup_Spec) AssignProperties_From_ActionGroup_Spec(source *v20230101s.ActionGroup_Spec) error {
+func (group *ActionGroup_Spec) AssignProperties_From_ActionGroup_Spec(source *storage.ActionGroup_Spec) error {
 
 	// ArmRoleReceivers
 	if source.ArmRoleReceivers != nil {
@@ -936,6 +988,18 @@ func (group *ActionGroup_Spec) AssignProperties_From_ActionGroup_Spec(source *v2
 		group.LogicAppReceivers = nil
 	}
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec ActionGroupOperatorSpec
+		err := operatorSpec.AssignProperties_From_ActionGroupOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_ActionGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		group.OperatorSpec = &operatorSpec
+	} else {
+		group.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -1006,17 +1070,17 @@ func (group *ActionGroup_Spec) AssignProperties_From_ActionGroup_Spec(source *v2
 }
 
 // AssignProperties_To_ActionGroup_Spec populates the provided destination ActionGroup_Spec from our ActionGroup_Spec
-func (group *ActionGroup_Spec) AssignProperties_To_ActionGroup_Spec(destination *v20230101s.ActionGroup_Spec) error {
+func (group *ActionGroup_Spec) AssignProperties_To_ActionGroup_Spec(destination *storage.ActionGroup_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// ArmRoleReceivers
 	if group.ArmRoleReceivers != nil {
-		armRoleReceiverList := make([]v20230101s.ArmRoleReceiver, len(group.ArmRoleReceivers))
+		armRoleReceiverList := make([]storage.ArmRoleReceiver, len(group.ArmRoleReceivers))
 		for armRoleReceiverIndex, armRoleReceiverItem := range group.ArmRoleReceivers {
 			// Shadow the loop variable to avoid aliasing
 			armRoleReceiverItem := armRoleReceiverItem
-			var armRoleReceiver v20230101s.ArmRoleReceiver
+			var armRoleReceiver storage.ArmRoleReceiver
 			err := armRoleReceiverItem.AssignProperties_To_ArmRoleReceiver(&armRoleReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ArmRoleReceiver() to populate field ArmRoleReceivers")
@@ -1030,11 +1094,11 @@ func (group *ActionGroup_Spec) AssignProperties_To_ActionGroup_Spec(destination 
 
 	// AutomationRunbookReceivers
 	if group.AutomationRunbookReceivers != nil {
-		automationRunbookReceiverList := make([]v20230101s.AutomationRunbookReceiver, len(group.AutomationRunbookReceivers))
+		automationRunbookReceiverList := make([]storage.AutomationRunbookReceiver, len(group.AutomationRunbookReceivers))
 		for automationRunbookReceiverIndex, automationRunbookReceiverItem := range group.AutomationRunbookReceivers {
 			// Shadow the loop variable to avoid aliasing
 			automationRunbookReceiverItem := automationRunbookReceiverItem
-			var automationRunbookReceiver v20230101s.AutomationRunbookReceiver
+			var automationRunbookReceiver storage.AutomationRunbookReceiver
 			err := automationRunbookReceiverItem.AssignProperties_To_AutomationRunbookReceiver(&automationRunbookReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AutomationRunbookReceiver() to populate field AutomationRunbookReceivers")
@@ -1048,11 +1112,11 @@ func (group *ActionGroup_Spec) AssignProperties_To_ActionGroup_Spec(destination 
 
 	// AzureAppPushReceivers
 	if group.AzureAppPushReceivers != nil {
-		azureAppPushReceiverList := make([]v20230101s.AzureAppPushReceiver, len(group.AzureAppPushReceivers))
+		azureAppPushReceiverList := make([]storage.AzureAppPushReceiver, len(group.AzureAppPushReceivers))
 		for azureAppPushReceiverIndex, azureAppPushReceiverItem := range group.AzureAppPushReceivers {
 			// Shadow the loop variable to avoid aliasing
 			azureAppPushReceiverItem := azureAppPushReceiverItem
-			var azureAppPushReceiver v20230101s.AzureAppPushReceiver
+			var azureAppPushReceiver storage.AzureAppPushReceiver
 			err := azureAppPushReceiverItem.AssignProperties_To_AzureAppPushReceiver(&azureAppPushReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AzureAppPushReceiver() to populate field AzureAppPushReceivers")
@@ -1066,11 +1130,11 @@ func (group *ActionGroup_Spec) AssignProperties_To_ActionGroup_Spec(destination 
 
 	// AzureFunctionReceivers
 	if group.AzureFunctionReceivers != nil {
-		azureFunctionReceiverList := make([]v20230101s.AzureFunctionReceiver, len(group.AzureFunctionReceivers))
+		azureFunctionReceiverList := make([]storage.AzureFunctionReceiver, len(group.AzureFunctionReceivers))
 		for azureFunctionReceiverIndex, azureFunctionReceiverItem := range group.AzureFunctionReceivers {
 			// Shadow the loop variable to avoid aliasing
 			azureFunctionReceiverItem := azureFunctionReceiverItem
-			var azureFunctionReceiver v20230101s.AzureFunctionReceiver
+			var azureFunctionReceiver storage.AzureFunctionReceiver
 			err := azureFunctionReceiverItem.AssignProperties_To_AzureFunctionReceiver(&azureFunctionReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AzureFunctionReceiver() to populate field AzureFunctionReceivers")
@@ -1087,11 +1151,11 @@ func (group *ActionGroup_Spec) AssignProperties_To_ActionGroup_Spec(destination 
 
 	// EmailReceivers
 	if group.EmailReceivers != nil {
-		emailReceiverList := make([]v20230101s.EmailReceiver, len(group.EmailReceivers))
+		emailReceiverList := make([]storage.EmailReceiver, len(group.EmailReceivers))
 		for emailReceiverIndex, emailReceiverItem := range group.EmailReceivers {
 			// Shadow the loop variable to avoid aliasing
 			emailReceiverItem := emailReceiverItem
-			var emailReceiver v20230101s.EmailReceiver
+			var emailReceiver storage.EmailReceiver
 			err := emailReceiverItem.AssignProperties_To_EmailReceiver(&emailReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_EmailReceiver() to populate field EmailReceivers")
@@ -1113,11 +1177,11 @@ func (group *ActionGroup_Spec) AssignProperties_To_ActionGroup_Spec(destination 
 
 	// EventHubReceivers
 	if group.EventHubReceivers != nil {
-		eventHubReceiverList := make([]v20230101s.EventHubReceiver, len(group.EventHubReceivers))
+		eventHubReceiverList := make([]storage.EventHubReceiver, len(group.EventHubReceivers))
 		for eventHubReceiverIndex, eventHubReceiverItem := range group.EventHubReceivers {
 			// Shadow the loop variable to avoid aliasing
 			eventHubReceiverItem := eventHubReceiverItem
-			var eventHubReceiver v20230101s.EventHubReceiver
+			var eventHubReceiver storage.EventHubReceiver
 			err := eventHubReceiverItem.AssignProperties_To_EventHubReceiver(&eventHubReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_EventHubReceiver() to populate field EventHubReceivers")
@@ -1139,11 +1203,11 @@ func (group *ActionGroup_Spec) AssignProperties_To_ActionGroup_Spec(destination 
 
 	// ItsmReceivers
 	if group.ItsmReceivers != nil {
-		itsmReceiverList := make([]v20230101s.ItsmReceiver, len(group.ItsmReceivers))
+		itsmReceiverList := make([]storage.ItsmReceiver, len(group.ItsmReceivers))
 		for itsmReceiverIndex, itsmReceiverItem := range group.ItsmReceivers {
 			// Shadow the loop variable to avoid aliasing
 			itsmReceiverItem := itsmReceiverItem
-			var itsmReceiver v20230101s.ItsmReceiver
+			var itsmReceiver storage.ItsmReceiver
 			err := itsmReceiverItem.AssignProperties_To_ItsmReceiver(&itsmReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ItsmReceiver() to populate field ItsmReceivers")
@@ -1160,11 +1224,11 @@ func (group *ActionGroup_Spec) AssignProperties_To_ActionGroup_Spec(destination 
 
 	// LogicAppReceivers
 	if group.LogicAppReceivers != nil {
-		logicAppReceiverList := make([]v20230101s.LogicAppReceiver, len(group.LogicAppReceivers))
+		logicAppReceiverList := make([]storage.LogicAppReceiver, len(group.LogicAppReceivers))
 		for logicAppReceiverIndex, logicAppReceiverItem := range group.LogicAppReceivers {
 			// Shadow the loop variable to avoid aliasing
 			logicAppReceiverItem := logicAppReceiverItem
-			var logicAppReceiver v20230101s.LogicAppReceiver
+			var logicAppReceiver storage.LogicAppReceiver
 			err := logicAppReceiverItem.AssignProperties_To_LogicAppReceiver(&logicAppReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_LogicAppReceiver() to populate field LogicAppReceivers")
@@ -1174,6 +1238,18 @@ func (group *ActionGroup_Spec) AssignProperties_To_ActionGroup_Spec(destination 
 		destination.LogicAppReceivers = logicAppReceiverList
 	} else {
 		destination.LogicAppReceivers = nil
+	}
+
+	// OperatorSpec
+	if group.OperatorSpec != nil {
+		var operatorSpec storage.ActionGroupOperatorSpec
+		err := group.OperatorSpec.AssignProperties_To_ActionGroupOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_ActionGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
 	}
 
 	// OriginalVersion
@@ -1189,11 +1265,11 @@ func (group *ActionGroup_Spec) AssignProperties_To_ActionGroup_Spec(destination 
 
 	// SmsReceivers
 	if group.SmsReceivers != nil {
-		smsReceiverList := make([]v20230101s.SmsReceiver, len(group.SmsReceivers))
+		smsReceiverList := make([]storage.SmsReceiver, len(group.SmsReceivers))
 		for smsReceiverIndex, smsReceiverItem := range group.SmsReceivers {
 			// Shadow the loop variable to avoid aliasing
 			smsReceiverItem := smsReceiverItem
-			var smsReceiver v20230101s.SmsReceiver
+			var smsReceiver storage.SmsReceiver
 			err := smsReceiverItem.AssignProperties_To_SmsReceiver(&smsReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_SmsReceiver() to populate field SmsReceivers")
@@ -1210,11 +1286,11 @@ func (group *ActionGroup_Spec) AssignProperties_To_ActionGroup_Spec(destination 
 
 	// VoiceReceivers
 	if group.VoiceReceivers != nil {
-		voiceReceiverList := make([]v20230101s.VoiceReceiver, len(group.VoiceReceivers))
+		voiceReceiverList := make([]storage.VoiceReceiver, len(group.VoiceReceivers))
 		for voiceReceiverIndex, voiceReceiverItem := range group.VoiceReceivers {
 			// Shadow the loop variable to avoid aliasing
 			voiceReceiverItem := voiceReceiverItem
-			var voiceReceiver v20230101s.VoiceReceiver
+			var voiceReceiver storage.VoiceReceiver
 			err := voiceReceiverItem.AssignProperties_To_VoiceReceiver(&voiceReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_VoiceReceiver() to populate field VoiceReceivers")
@@ -1228,11 +1304,11 @@ func (group *ActionGroup_Spec) AssignProperties_To_ActionGroup_Spec(destination 
 
 	// WebhookReceivers
 	if group.WebhookReceivers != nil {
-		webhookReceiverList := make([]v20230101s.WebhookReceiver, len(group.WebhookReceivers))
+		webhookReceiverList := make([]storage.WebhookReceiver, len(group.WebhookReceivers))
 		for webhookReceiverIndex, webhookReceiverItem := range group.WebhookReceivers {
 			// Shadow the loop variable to avoid aliasing
 			webhookReceiverItem := webhookReceiverItem
-			var webhookReceiver v20230101s.WebhookReceiver
+			var webhookReceiver storage.WebhookReceiver
 			err := webhookReceiverItem.AssignProperties_To_WebhookReceiver(&webhookReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_WebhookReceiver() to populate field WebhookReceivers")
@@ -1556,14 +1632,14 @@ var _ genruntime.ConvertibleStatus = &ActionGroupResource_STATUS{}
 
 // ConvertStatusFrom populates our ActionGroupResource_STATUS from the provided source
 func (resource *ActionGroupResource_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20230101s.ActionGroupResource_STATUS)
+	src, ok := source.(*storage.ActionGroupResource_STATUS)
 	if ok {
 		// Populate our instance from source
 		return resource.AssignProperties_From_ActionGroupResource_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230101s.ActionGroupResource_STATUS{}
+	src = &storage.ActionGroupResource_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -1580,14 +1656,14 @@ func (resource *ActionGroupResource_STATUS) ConvertStatusFrom(source genruntime.
 
 // ConvertStatusTo populates the provided destination from our ActionGroupResource_STATUS
 func (resource *ActionGroupResource_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20230101s.ActionGroupResource_STATUS)
+	dst, ok := destination.(*storage.ActionGroupResource_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return resource.AssignProperties_To_ActionGroupResource_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230101s.ActionGroupResource_STATUS{}
+	dst = &storage.ActionGroupResource_STATUS{}
 	err := resource.AssignProperties_To_ActionGroupResource_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -1606,14 +1682,14 @@ var _ genruntime.FromARMConverter = &ActionGroupResource_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (resource *ActionGroupResource_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ActionGroupResource_STATUS_ARM{}
+	return &arm.ActionGroupResource_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (resource *ActionGroupResource_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ActionGroupResource_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ActionGroupResource_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ActionGroupResource_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ActionGroupResource_STATUS, got %T", armInput)
 	}
 
 	// Set property "ArmRoleReceivers":
@@ -1816,7 +1892,7 @@ func (resource *ActionGroupResource_STATUS) PopulateFromARM(owner genruntime.Arb
 }
 
 // AssignProperties_From_ActionGroupResource_STATUS populates our ActionGroupResource_STATUS from the provided source ActionGroupResource_STATUS
-func (resource *ActionGroupResource_STATUS) AssignProperties_From_ActionGroupResource_STATUS(source *v20230101s.ActionGroupResource_STATUS) error {
+func (resource *ActionGroupResource_STATUS) AssignProperties_From_ActionGroupResource_STATUS(source *storage.ActionGroupResource_STATUS) error {
 
 	// ArmRoleReceivers
 	if source.ArmRoleReceivers != nil {
@@ -2050,17 +2126,17 @@ func (resource *ActionGroupResource_STATUS) AssignProperties_From_ActionGroupRes
 }
 
 // AssignProperties_To_ActionGroupResource_STATUS populates the provided destination ActionGroupResource_STATUS from our ActionGroupResource_STATUS
-func (resource *ActionGroupResource_STATUS) AssignProperties_To_ActionGroupResource_STATUS(destination *v20230101s.ActionGroupResource_STATUS) error {
+func (resource *ActionGroupResource_STATUS) AssignProperties_To_ActionGroupResource_STATUS(destination *storage.ActionGroupResource_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// ArmRoleReceivers
 	if resource.ArmRoleReceivers != nil {
-		armRoleReceiverList := make([]v20230101s.ArmRoleReceiver_STATUS, len(resource.ArmRoleReceivers))
+		armRoleReceiverList := make([]storage.ArmRoleReceiver_STATUS, len(resource.ArmRoleReceivers))
 		for armRoleReceiverIndex, armRoleReceiverItem := range resource.ArmRoleReceivers {
 			// Shadow the loop variable to avoid aliasing
 			armRoleReceiverItem := armRoleReceiverItem
-			var armRoleReceiver v20230101s.ArmRoleReceiver_STATUS
+			var armRoleReceiver storage.ArmRoleReceiver_STATUS
 			err := armRoleReceiverItem.AssignProperties_To_ArmRoleReceiver_STATUS(&armRoleReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ArmRoleReceiver_STATUS() to populate field ArmRoleReceivers")
@@ -2074,11 +2150,11 @@ func (resource *ActionGroupResource_STATUS) AssignProperties_To_ActionGroupResou
 
 	// AutomationRunbookReceivers
 	if resource.AutomationRunbookReceivers != nil {
-		automationRunbookReceiverList := make([]v20230101s.AutomationRunbookReceiver_STATUS, len(resource.AutomationRunbookReceivers))
+		automationRunbookReceiverList := make([]storage.AutomationRunbookReceiver_STATUS, len(resource.AutomationRunbookReceivers))
 		for automationRunbookReceiverIndex, automationRunbookReceiverItem := range resource.AutomationRunbookReceivers {
 			// Shadow the loop variable to avoid aliasing
 			automationRunbookReceiverItem := automationRunbookReceiverItem
-			var automationRunbookReceiver v20230101s.AutomationRunbookReceiver_STATUS
+			var automationRunbookReceiver storage.AutomationRunbookReceiver_STATUS
 			err := automationRunbookReceiverItem.AssignProperties_To_AutomationRunbookReceiver_STATUS(&automationRunbookReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AutomationRunbookReceiver_STATUS() to populate field AutomationRunbookReceivers")
@@ -2092,11 +2168,11 @@ func (resource *ActionGroupResource_STATUS) AssignProperties_To_ActionGroupResou
 
 	// AzureAppPushReceivers
 	if resource.AzureAppPushReceivers != nil {
-		azureAppPushReceiverList := make([]v20230101s.AzureAppPushReceiver_STATUS, len(resource.AzureAppPushReceivers))
+		azureAppPushReceiverList := make([]storage.AzureAppPushReceiver_STATUS, len(resource.AzureAppPushReceivers))
 		for azureAppPushReceiverIndex, azureAppPushReceiverItem := range resource.AzureAppPushReceivers {
 			// Shadow the loop variable to avoid aliasing
 			azureAppPushReceiverItem := azureAppPushReceiverItem
-			var azureAppPushReceiver v20230101s.AzureAppPushReceiver_STATUS
+			var azureAppPushReceiver storage.AzureAppPushReceiver_STATUS
 			err := azureAppPushReceiverItem.AssignProperties_To_AzureAppPushReceiver_STATUS(&azureAppPushReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AzureAppPushReceiver_STATUS() to populate field AzureAppPushReceivers")
@@ -2110,11 +2186,11 @@ func (resource *ActionGroupResource_STATUS) AssignProperties_To_ActionGroupResou
 
 	// AzureFunctionReceivers
 	if resource.AzureFunctionReceivers != nil {
-		azureFunctionReceiverList := make([]v20230101s.AzureFunctionReceiver_STATUS, len(resource.AzureFunctionReceivers))
+		azureFunctionReceiverList := make([]storage.AzureFunctionReceiver_STATUS, len(resource.AzureFunctionReceivers))
 		for azureFunctionReceiverIndex, azureFunctionReceiverItem := range resource.AzureFunctionReceivers {
 			// Shadow the loop variable to avoid aliasing
 			azureFunctionReceiverItem := azureFunctionReceiverItem
-			var azureFunctionReceiver v20230101s.AzureFunctionReceiver_STATUS
+			var azureFunctionReceiver storage.AzureFunctionReceiver_STATUS
 			err := azureFunctionReceiverItem.AssignProperties_To_AzureFunctionReceiver_STATUS(&azureFunctionReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AzureFunctionReceiver_STATUS() to populate field AzureFunctionReceivers")
@@ -2131,11 +2207,11 @@ func (resource *ActionGroupResource_STATUS) AssignProperties_To_ActionGroupResou
 
 	// EmailReceivers
 	if resource.EmailReceivers != nil {
-		emailReceiverList := make([]v20230101s.EmailReceiver_STATUS, len(resource.EmailReceivers))
+		emailReceiverList := make([]storage.EmailReceiver_STATUS, len(resource.EmailReceivers))
 		for emailReceiverIndex, emailReceiverItem := range resource.EmailReceivers {
 			// Shadow the loop variable to avoid aliasing
 			emailReceiverItem := emailReceiverItem
-			var emailReceiver v20230101s.EmailReceiver_STATUS
+			var emailReceiver storage.EmailReceiver_STATUS
 			err := emailReceiverItem.AssignProperties_To_EmailReceiver_STATUS(&emailReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_EmailReceiver_STATUS() to populate field EmailReceivers")
@@ -2157,11 +2233,11 @@ func (resource *ActionGroupResource_STATUS) AssignProperties_To_ActionGroupResou
 
 	// EventHubReceivers
 	if resource.EventHubReceivers != nil {
-		eventHubReceiverList := make([]v20230101s.EventHubReceiver_STATUS, len(resource.EventHubReceivers))
+		eventHubReceiverList := make([]storage.EventHubReceiver_STATUS, len(resource.EventHubReceivers))
 		for eventHubReceiverIndex, eventHubReceiverItem := range resource.EventHubReceivers {
 			// Shadow the loop variable to avoid aliasing
 			eventHubReceiverItem := eventHubReceiverItem
-			var eventHubReceiver v20230101s.EventHubReceiver_STATUS
+			var eventHubReceiver storage.EventHubReceiver_STATUS
 			err := eventHubReceiverItem.AssignProperties_To_EventHubReceiver_STATUS(&eventHubReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_EventHubReceiver_STATUS() to populate field EventHubReceivers")
@@ -2181,11 +2257,11 @@ func (resource *ActionGroupResource_STATUS) AssignProperties_To_ActionGroupResou
 
 	// ItsmReceivers
 	if resource.ItsmReceivers != nil {
-		itsmReceiverList := make([]v20230101s.ItsmReceiver_STATUS, len(resource.ItsmReceivers))
+		itsmReceiverList := make([]storage.ItsmReceiver_STATUS, len(resource.ItsmReceivers))
 		for itsmReceiverIndex, itsmReceiverItem := range resource.ItsmReceivers {
 			// Shadow the loop variable to avoid aliasing
 			itsmReceiverItem := itsmReceiverItem
-			var itsmReceiver v20230101s.ItsmReceiver_STATUS
+			var itsmReceiver storage.ItsmReceiver_STATUS
 			err := itsmReceiverItem.AssignProperties_To_ItsmReceiver_STATUS(&itsmReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_ItsmReceiver_STATUS() to populate field ItsmReceivers")
@@ -2202,11 +2278,11 @@ func (resource *ActionGroupResource_STATUS) AssignProperties_To_ActionGroupResou
 
 	// LogicAppReceivers
 	if resource.LogicAppReceivers != nil {
-		logicAppReceiverList := make([]v20230101s.LogicAppReceiver_STATUS, len(resource.LogicAppReceivers))
+		logicAppReceiverList := make([]storage.LogicAppReceiver_STATUS, len(resource.LogicAppReceivers))
 		for logicAppReceiverIndex, logicAppReceiverItem := range resource.LogicAppReceivers {
 			// Shadow the loop variable to avoid aliasing
 			logicAppReceiverItem := logicAppReceiverItem
-			var logicAppReceiver v20230101s.LogicAppReceiver_STATUS
+			var logicAppReceiver storage.LogicAppReceiver_STATUS
 			err := logicAppReceiverItem.AssignProperties_To_LogicAppReceiver_STATUS(&logicAppReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_LogicAppReceiver_STATUS() to populate field LogicAppReceivers")
@@ -2223,11 +2299,11 @@ func (resource *ActionGroupResource_STATUS) AssignProperties_To_ActionGroupResou
 
 	// SmsReceivers
 	if resource.SmsReceivers != nil {
-		smsReceiverList := make([]v20230101s.SmsReceiver_STATUS, len(resource.SmsReceivers))
+		smsReceiverList := make([]storage.SmsReceiver_STATUS, len(resource.SmsReceivers))
 		for smsReceiverIndex, smsReceiverItem := range resource.SmsReceivers {
 			// Shadow the loop variable to avoid aliasing
 			smsReceiverItem := smsReceiverItem
-			var smsReceiver v20230101s.SmsReceiver_STATUS
+			var smsReceiver storage.SmsReceiver_STATUS
 			err := smsReceiverItem.AssignProperties_To_SmsReceiver_STATUS(&smsReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_SmsReceiver_STATUS() to populate field SmsReceivers")
@@ -2247,11 +2323,11 @@ func (resource *ActionGroupResource_STATUS) AssignProperties_To_ActionGroupResou
 
 	// VoiceReceivers
 	if resource.VoiceReceivers != nil {
-		voiceReceiverList := make([]v20230101s.VoiceReceiver_STATUS, len(resource.VoiceReceivers))
+		voiceReceiverList := make([]storage.VoiceReceiver_STATUS, len(resource.VoiceReceivers))
 		for voiceReceiverIndex, voiceReceiverItem := range resource.VoiceReceivers {
 			// Shadow the loop variable to avoid aliasing
 			voiceReceiverItem := voiceReceiverItem
-			var voiceReceiver v20230101s.VoiceReceiver_STATUS
+			var voiceReceiver storage.VoiceReceiver_STATUS
 			err := voiceReceiverItem.AssignProperties_To_VoiceReceiver_STATUS(&voiceReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_VoiceReceiver_STATUS() to populate field VoiceReceivers")
@@ -2265,11 +2341,11 @@ func (resource *ActionGroupResource_STATUS) AssignProperties_To_ActionGroupResou
 
 	// WebhookReceivers
 	if resource.WebhookReceivers != nil {
-		webhookReceiverList := make([]v20230101s.WebhookReceiver_STATUS, len(resource.WebhookReceivers))
+		webhookReceiverList := make([]storage.WebhookReceiver_STATUS, len(resource.WebhookReceivers))
 		for webhookReceiverIndex, webhookReceiverItem := range resource.WebhookReceivers {
 			// Shadow the loop variable to avoid aliasing
 			webhookReceiverItem := webhookReceiverItem
-			var webhookReceiver v20230101s.WebhookReceiver_STATUS
+			var webhookReceiver storage.WebhookReceiver_STATUS
 			err := webhookReceiverItem.AssignProperties_To_WebhookReceiver_STATUS(&webhookReceiver)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_WebhookReceiver_STATUS() to populate field WebhookReceivers")
@@ -2297,6 +2373,110 @@ type APIVersion string
 
 const APIVersion_Value = APIVersion("2023-01-01")
 
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ActionGroupOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_ActionGroupOperatorSpec populates our ActionGroupOperatorSpec from the provided source ActionGroupOperatorSpec
+func (operator *ActionGroupOperatorSpec) AssignProperties_From_ActionGroupOperatorSpec(source *storage.ActionGroupOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_ActionGroupOperatorSpec populates the provided destination ActionGroupOperatorSpec from our ActionGroupOperatorSpec
+func (operator *ActionGroupOperatorSpec) AssignProperties_To_ActionGroupOperatorSpec(destination *storage.ActionGroupOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 // An arm role receiver.
 type ArmRoleReceiver struct {
 	// +kubebuilder:validation:Required
@@ -2318,7 +2498,7 @@ func (receiver *ArmRoleReceiver) ConvertToARM(resolved genruntime.ConvertToARMRe
 	if receiver == nil {
 		return nil, nil
 	}
-	result := &ArmRoleReceiver_ARM{}
+	result := &arm.ArmRoleReceiver{}
 
 	// Set property "Name":
 	if receiver.Name != nil {
@@ -2342,14 +2522,14 @@ func (receiver *ArmRoleReceiver) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *ArmRoleReceiver) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ArmRoleReceiver_ARM{}
+	return &arm.ArmRoleReceiver{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *ArmRoleReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ArmRoleReceiver_ARM)
+	typedInput, ok := armInput.(arm.ArmRoleReceiver)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ArmRoleReceiver_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ArmRoleReceiver, got %T", armInput)
 	}
 
 	// Set property "Name":
@@ -2375,7 +2555,7 @@ func (receiver *ArmRoleReceiver) PopulateFromARM(owner genruntime.ArbitraryOwner
 }
 
 // AssignProperties_From_ArmRoleReceiver populates our ArmRoleReceiver from the provided source ArmRoleReceiver
-func (receiver *ArmRoleReceiver) AssignProperties_From_ArmRoleReceiver(source *v20230101s.ArmRoleReceiver) error {
+func (receiver *ArmRoleReceiver) AssignProperties_From_ArmRoleReceiver(source *storage.ArmRoleReceiver) error {
 
 	// Name
 	receiver.Name = genruntime.ClonePointerToString(source.Name)
@@ -2396,7 +2576,7 @@ func (receiver *ArmRoleReceiver) AssignProperties_From_ArmRoleReceiver(source *v
 }
 
 // AssignProperties_To_ArmRoleReceiver populates the provided destination ArmRoleReceiver from our ArmRoleReceiver
-func (receiver *ArmRoleReceiver) AssignProperties_To_ArmRoleReceiver(destination *v20230101s.ArmRoleReceiver) error {
+func (receiver *ArmRoleReceiver) AssignProperties_To_ArmRoleReceiver(destination *storage.ArmRoleReceiver) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2462,14 +2642,14 @@ var _ genruntime.FromARMConverter = &ArmRoleReceiver_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *ArmRoleReceiver_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ArmRoleReceiver_STATUS_ARM{}
+	return &arm.ArmRoleReceiver_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *ArmRoleReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ArmRoleReceiver_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ArmRoleReceiver_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ArmRoleReceiver_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ArmRoleReceiver_STATUS, got %T", armInput)
 	}
 
 	// Set property "Name":
@@ -2495,7 +2675,7 @@ func (receiver *ArmRoleReceiver_STATUS) PopulateFromARM(owner genruntime.Arbitra
 }
 
 // AssignProperties_From_ArmRoleReceiver_STATUS populates our ArmRoleReceiver_STATUS from the provided source ArmRoleReceiver_STATUS
-func (receiver *ArmRoleReceiver_STATUS) AssignProperties_From_ArmRoleReceiver_STATUS(source *v20230101s.ArmRoleReceiver_STATUS) error {
+func (receiver *ArmRoleReceiver_STATUS) AssignProperties_From_ArmRoleReceiver_STATUS(source *storage.ArmRoleReceiver_STATUS) error {
 
 	// Name
 	receiver.Name = genruntime.ClonePointerToString(source.Name)
@@ -2516,7 +2696,7 @@ func (receiver *ArmRoleReceiver_STATUS) AssignProperties_From_ArmRoleReceiver_ST
 }
 
 // AssignProperties_To_ArmRoleReceiver_STATUS populates the provided destination ArmRoleReceiver_STATUS from our ArmRoleReceiver_STATUS
-func (receiver *ArmRoleReceiver_STATUS) AssignProperties_To_ArmRoleReceiver_STATUS(destination *v20230101s.ArmRoleReceiver_STATUS) error {
+func (receiver *ArmRoleReceiver_STATUS) AssignProperties_To_ArmRoleReceiver_STATUS(destination *storage.ArmRoleReceiver_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2580,7 +2760,7 @@ func (receiver *AutomationRunbookReceiver) ConvertToARM(resolved genruntime.Conv
 	if receiver == nil {
 		return nil, nil
 	}
-	result := &AutomationRunbookReceiver_ARM{}
+	result := &arm.AutomationRunbookReceiver{}
 
 	// Set property "AutomationAccountId":
 	if receiver.AutomationAccountId != nil {
@@ -2632,14 +2812,14 @@ func (receiver *AutomationRunbookReceiver) ConvertToARM(resolved genruntime.Conv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *AutomationRunbookReceiver) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AutomationRunbookReceiver_ARM{}
+	return &arm.AutomationRunbookReceiver{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *AutomationRunbookReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AutomationRunbookReceiver_ARM)
+	typedInput, ok := armInput.(arm.AutomationRunbookReceiver)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AutomationRunbookReceiver_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AutomationRunbookReceiver, got %T", armInput)
 	}
 
 	// Set property "AutomationAccountId":
@@ -2685,7 +2865,7 @@ func (receiver *AutomationRunbookReceiver) PopulateFromARM(owner genruntime.Arbi
 }
 
 // AssignProperties_From_AutomationRunbookReceiver populates our AutomationRunbookReceiver from the provided source AutomationRunbookReceiver
-func (receiver *AutomationRunbookReceiver) AssignProperties_From_AutomationRunbookReceiver(source *v20230101s.AutomationRunbookReceiver) error {
+func (receiver *AutomationRunbookReceiver) AssignProperties_From_AutomationRunbookReceiver(source *storage.AutomationRunbookReceiver) error {
 
 	// AutomationAccountId
 	receiver.AutomationAccountId = genruntime.ClonePointerToString(source.AutomationAccountId)
@@ -2728,7 +2908,7 @@ func (receiver *AutomationRunbookReceiver) AssignProperties_From_AutomationRunbo
 }
 
 // AssignProperties_To_AutomationRunbookReceiver populates the provided destination AutomationRunbookReceiver from our AutomationRunbookReceiver
-func (receiver *AutomationRunbookReceiver) AssignProperties_To_AutomationRunbookReceiver(destination *v20230101s.AutomationRunbookReceiver) error {
+func (receiver *AutomationRunbookReceiver) AssignProperties_To_AutomationRunbookReceiver(destination *storage.AutomationRunbookReceiver) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2850,14 +3030,14 @@ var _ genruntime.FromARMConverter = &AutomationRunbookReceiver_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *AutomationRunbookReceiver_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AutomationRunbookReceiver_STATUS_ARM{}
+	return &arm.AutomationRunbookReceiver_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *AutomationRunbookReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AutomationRunbookReceiver_STATUS_ARM)
+	typedInput, ok := armInput.(arm.AutomationRunbookReceiver_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AutomationRunbookReceiver_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AutomationRunbookReceiver_STATUS, got %T", armInput)
 	}
 
 	// Set property "AutomationAccountId":
@@ -2907,7 +3087,7 @@ func (receiver *AutomationRunbookReceiver_STATUS) PopulateFromARM(owner genrunti
 }
 
 // AssignProperties_From_AutomationRunbookReceiver_STATUS populates our AutomationRunbookReceiver_STATUS from the provided source AutomationRunbookReceiver_STATUS
-func (receiver *AutomationRunbookReceiver_STATUS) AssignProperties_From_AutomationRunbookReceiver_STATUS(source *v20230101s.AutomationRunbookReceiver_STATUS) error {
+func (receiver *AutomationRunbookReceiver_STATUS) AssignProperties_From_AutomationRunbookReceiver_STATUS(source *storage.AutomationRunbookReceiver_STATUS) error {
 
 	// AutomationAccountId
 	receiver.AutomationAccountId = genruntime.ClonePointerToString(source.AutomationAccountId)
@@ -2945,7 +3125,7 @@ func (receiver *AutomationRunbookReceiver_STATUS) AssignProperties_From_Automati
 }
 
 // AssignProperties_To_AutomationRunbookReceiver_STATUS populates the provided destination AutomationRunbookReceiver_STATUS from our AutomationRunbookReceiver_STATUS
-func (receiver *AutomationRunbookReceiver_STATUS) AssignProperties_To_AutomationRunbookReceiver_STATUS(destination *v20230101s.AutomationRunbookReceiver_STATUS) error {
+func (receiver *AutomationRunbookReceiver_STATUS) AssignProperties_To_AutomationRunbookReceiver_STATUS(destination *storage.AutomationRunbookReceiver_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3009,7 +3189,7 @@ func (receiver *AzureAppPushReceiver) ConvertToARM(resolved genruntime.ConvertTo
 	if receiver == nil {
 		return nil, nil
 	}
-	result := &AzureAppPushReceiver_ARM{}
+	result := &arm.AzureAppPushReceiver{}
 
 	// Set property "EmailAddress":
 	if receiver.EmailAddress != nil {
@@ -3027,14 +3207,14 @@ func (receiver *AzureAppPushReceiver) ConvertToARM(resolved genruntime.ConvertTo
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *AzureAppPushReceiver) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AzureAppPushReceiver_ARM{}
+	return &arm.AzureAppPushReceiver{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *AzureAppPushReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AzureAppPushReceiver_ARM)
+	typedInput, ok := armInput.(arm.AzureAppPushReceiver)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AzureAppPushReceiver_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AzureAppPushReceiver, got %T", armInput)
 	}
 
 	// Set property "EmailAddress":
@@ -3054,7 +3234,7 @@ func (receiver *AzureAppPushReceiver) PopulateFromARM(owner genruntime.Arbitrary
 }
 
 // AssignProperties_From_AzureAppPushReceiver populates our AzureAppPushReceiver from the provided source AzureAppPushReceiver
-func (receiver *AzureAppPushReceiver) AssignProperties_From_AzureAppPushReceiver(source *v20230101s.AzureAppPushReceiver) error {
+func (receiver *AzureAppPushReceiver) AssignProperties_From_AzureAppPushReceiver(source *storage.AzureAppPushReceiver) error {
 
 	// EmailAddress
 	receiver.EmailAddress = genruntime.ClonePointerToString(source.EmailAddress)
@@ -3067,7 +3247,7 @@ func (receiver *AzureAppPushReceiver) AssignProperties_From_AzureAppPushReceiver
 }
 
 // AssignProperties_To_AzureAppPushReceiver populates the provided destination AzureAppPushReceiver from our AzureAppPushReceiver
-func (receiver *AzureAppPushReceiver) AssignProperties_To_AzureAppPushReceiver(destination *v20230101s.AzureAppPushReceiver) error {
+func (receiver *AzureAppPushReceiver) AssignProperties_To_AzureAppPushReceiver(destination *storage.AzureAppPushReceiver) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3114,14 +3294,14 @@ var _ genruntime.FromARMConverter = &AzureAppPushReceiver_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *AzureAppPushReceiver_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AzureAppPushReceiver_STATUS_ARM{}
+	return &arm.AzureAppPushReceiver_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *AzureAppPushReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AzureAppPushReceiver_STATUS_ARM)
+	typedInput, ok := armInput.(arm.AzureAppPushReceiver_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AzureAppPushReceiver_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AzureAppPushReceiver_STATUS, got %T", armInput)
 	}
 
 	// Set property "EmailAddress":
@@ -3141,7 +3321,7 @@ func (receiver *AzureAppPushReceiver_STATUS) PopulateFromARM(owner genruntime.Ar
 }
 
 // AssignProperties_From_AzureAppPushReceiver_STATUS populates our AzureAppPushReceiver_STATUS from the provided source AzureAppPushReceiver_STATUS
-func (receiver *AzureAppPushReceiver_STATUS) AssignProperties_From_AzureAppPushReceiver_STATUS(source *v20230101s.AzureAppPushReceiver_STATUS) error {
+func (receiver *AzureAppPushReceiver_STATUS) AssignProperties_From_AzureAppPushReceiver_STATUS(source *storage.AzureAppPushReceiver_STATUS) error {
 
 	// EmailAddress
 	receiver.EmailAddress = genruntime.ClonePointerToString(source.EmailAddress)
@@ -3154,7 +3334,7 @@ func (receiver *AzureAppPushReceiver_STATUS) AssignProperties_From_AzureAppPushR
 }
 
 // AssignProperties_To_AzureAppPushReceiver_STATUS populates the provided destination AzureAppPushReceiver_STATUS from our AzureAppPushReceiver_STATUS
-func (receiver *AzureAppPushReceiver_STATUS) AssignProperties_To_AzureAppPushReceiver_STATUS(destination *v20230101s.AzureAppPushReceiver_STATUS) error {
+func (receiver *AzureAppPushReceiver_STATUS) AssignProperties_To_AzureAppPushReceiver_STATUS(destination *storage.AzureAppPushReceiver_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3204,7 +3384,7 @@ func (receiver *AzureFunctionReceiver) ConvertToARM(resolved genruntime.ConvertT
 	if receiver == nil {
 		return nil, nil
 	}
-	result := &AzureFunctionReceiver_ARM{}
+	result := &arm.AzureFunctionReceiver{}
 
 	// Set property "FunctionAppResourceId":
 	if receiver.FunctionAppResourceReference != nil {
@@ -3244,14 +3424,14 @@ func (receiver *AzureFunctionReceiver) ConvertToARM(resolved genruntime.ConvertT
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *AzureFunctionReceiver) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AzureFunctionReceiver_ARM{}
+	return &arm.AzureFunctionReceiver{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *AzureFunctionReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AzureFunctionReceiver_ARM)
+	typedInput, ok := armInput.(arm.AzureFunctionReceiver)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AzureFunctionReceiver_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AzureFunctionReceiver, got %T", armInput)
 	}
 
 	// no assignment for property "FunctionAppResourceReference"
@@ -3285,7 +3465,7 @@ func (receiver *AzureFunctionReceiver) PopulateFromARM(owner genruntime.Arbitrar
 }
 
 // AssignProperties_From_AzureFunctionReceiver populates our AzureFunctionReceiver from the provided source AzureFunctionReceiver
-func (receiver *AzureFunctionReceiver) AssignProperties_From_AzureFunctionReceiver(source *v20230101s.AzureFunctionReceiver) error {
+func (receiver *AzureFunctionReceiver) AssignProperties_From_AzureFunctionReceiver(source *storage.AzureFunctionReceiver) error {
 
 	// FunctionAppResourceReference
 	if source.FunctionAppResourceReference != nil {
@@ -3317,7 +3497,7 @@ func (receiver *AzureFunctionReceiver) AssignProperties_From_AzureFunctionReceiv
 }
 
 // AssignProperties_To_AzureFunctionReceiver populates the provided destination AzureFunctionReceiver from our AzureFunctionReceiver
-func (receiver *AzureFunctionReceiver) AssignProperties_To_AzureFunctionReceiver(destination *v20230101s.AzureFunctionReceiver) error {
+func (receiver *AzureFunctionReceiver) AssignProperties_To_AzureFunctionReceiver(destination *storage.AzureFunctionReceiver) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3411,14 +3591,14 @@ var _ genruntime.FromARMConverter = &AzureFunctionReceiver_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *AzureFunctionReceiver_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AzureFunctionReceiver_STATUS_ARM{}
+	return &arm.AzureFunctionReceiver_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *AzureFunctionReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AzureFunctionReceiver_STATUS_ARM)
+	typedInput, ok := armInput.(arm.AzureFunctionReceiver_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AzureFunctionReceiver_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AzureFunctionReceiver_STATUS, got %T", armInput)
 	}
 
 	// Set property "FunctionAppResourceId":
@@ -3456,7 +3636,7 @@ func (receiver *AzureFunctionReceiver_STATUS) PopulateFromARM(owner genruntime.A
 }
 
 // AssignProperties_From_AzureFunctionReceiver_STATUS populates our AzureFunctionReceiver_STATUS from the provided source AzureFunctionReceiver_STATUS
-func (receiver *AzureFunctionReceiver_STATUS) AssignProperties_From_AzureFunctionReceiver_STATUS(source *v20230101s.AzureFunctionReceiver_STATUS) error {
+func (receiver *AzureFunctionReceiver_STATUS) AssignProperties_From_AzureFunctionReceiver_STATUS(source *storage.AzureFunctionReceiver_STATUS) error {
 
 	// FunctionAppResourceId
 	receiver.FunctionAppResourceId = genruntime.ClonePointerToString(source.FunctionAppResourceId)
@@ -3483,7 +3663,7 @@ func (receiver *AzureFunctionReceiver_STATUS) AssignProperties_From_AzureFunctio
 }
 
 // AssignProperties_To_AzureFunctionReceiver_STATUS populates the provided destination AzureFunctionReceiver_STATUS from our AzureFunctionReceiver_STATUS
-func (receiver *AzureFunctionReceiver_STATUS) AssignProperties_To_AzureFunctionReceiver_STATUS(destination *v20230101s.AzureFunctionReceiver_STATUS) error {
+func (receiver *AzureFunctionReceiver_STATUS) AssignProperties_To_AzureFunctionReceiver_STATUS(destination *storage.AzureFunctionReceiver_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3539,7 +3719,7 @@ func (receiver *EmailReceiver) ConvertToARM(resolved genruntime.ConvertToARMReso
 	if receiver == nil {
 		return nil, nil
 	}
-	result := &EmailReceiver_ARM{}
+	result := &arm.EmailReceiver{}
 
 	// Set property "EmailAddress":
 	if receiver.EmailAddress != nil {
@@ -3563,14 +3743,14 @@ func (receiver *EmailReceiver) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *EmailReceiver) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EmailReceiver_ARM{}
+	return &arm.EmailReceiver{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *EmailReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EmailReceiver_ARM)
+	typedInput, ok := armInput.(arm.EmailReceiver)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EmailReceiver_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EmailReceiver, got %T", armInput)
 	}
 
 	// Set property "EmailAddress":
@@ -3596,7 +3776,7 @@ func (receiver *EmailReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_EmailReceiver populates our EmailReceiver from the provided source EmailReceiver
-func (receiver *EmailReceiver) AssignProperties_From_EmailReceiver(source *v20230101s.EmailReceiver) error {
+func (receiver *EmailReceiver) AssignProperties_From_EmailReceiver(source *storage.EmailReceiver) error {
 
 	// EmailAddress
 	receiver.EmailAddress = genruntime.ClonePointerToString(source.EmailAddress)
@@ -3617,7 +3797,7 @@ func (receiver *EmailReceiver) AssignProperties_From_EmailReceiver(source *v2023
 }
 
 // AssignProperties_To_EmailReceiver populates the provided destination EmailReceiver from our EmailReceiver
-func (receiver *EmailReceiver) AssignProperties_To_EmailReceiver(destination *v20230101s.EmailReceiver) error {
+func (receiver *EmailReceiver) AssignProperties_To_EmailReceiver(destination *storage.EmailReceiver) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3686,14 +3866,14 @@ var _ genruntime.FromARMConverter = &EmailReceiver_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *EmailReceiver_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EmailReceiver_STATUS_ARM{}
+	return &arm.EmailReceiver_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *EmailReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EmailReceiver_STATUS_ARM)
+	typedInput, ok := armInput.(arm.EmailReceiver_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EmailReceiver_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EmailReceiver_STATUS, got %T", armInput)
 	}
 
 	// Set property "EmailAddress":
@@ -3710,7 +3890,9 @@ func (receiver *EmailReceiver_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 
 	// Set property "Status":
 	if typedInput.Status != nil {
-		status := *typedInput.Status
+		var temp string
+		temp = string(*typedInput.Status)
+		status := ReceiverStatus_STATUS(temp)
 		receiver.Status = &status
 	}
 
@@ -3725,7 +3907,7 @@ func (receiver *EmailReceiver_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 }
 
 // AssignProperties_From_EmailReceiver_STATUS populates our EmailReceiver_STATUS from the provided source EmailReceiver_STATUS
-func (receiver *EmailReceiver_STATUS) AssignProperties_From_EmailReceiver_STATUS(source *v20230101s.EmailReceiver_STATUS) error {
+func (receiver *EmailReceiver_STATUS) AssignProperties_From_EmailReceiver_STATUS(source *storage.EmailReceiver_STATUS) error {
 
 	// EmailAddress
 	receiver.EmailAddress = genruntime.ClonePointerToString(source.EmailAddress)
@@ -3735,8 +3917,9 @@ func (receiver *EmailReceiver_STATUS) AssignProperties_From_EmailReceiver_STATUS
 
 	// Status
 	if source.Status != nil {
-		status := ReceiverStatus_STATUS(*source.Status)
-		receiver.Status = &status
+		status := *source.Status
+		statusTemp := genruntime.ToEnum(status, receiverStatus_STATUS_Values)
+		receiver.Status = &statusTemp
 	} else {
 		receiver.Status = nil
 	}
@@ -3754,7 +3937,7 @@ func (receiver *EmailReceiver_STATUS) AssignProperties_From_EmailReceiver_STATUS
 }
 
 // AssignProperties_To_EmailReceiver_STATUS populates the provided destination EmailReceiver_STATUS from our EmailReceiver_STATUS
-func (receiver *EmailReceiver_STATUS) AssignProperties_To_EmailReceiver_STATUS(destination *v20230101s.EmailReceiver_STATUS) error {
+func (receiver *EmailReceiver_STATUS) AssignProperties_To_EmailReceiver_STATUS(destination *storage.EmailReceiver_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3823,7 +4006,7 @@ func (receiver *EventHubReceiver) ConvertToARM(resolved genruntime.ConvertToARMR
 	if receiver == nil {
 		return nil, nil
 	}
-	result := &EventHubReceiver_ARM{}
+	result := &arm.EventHubReceiver{}
 
 	// Set property "EventHubName":
 	if receiver.EventHubName != nil {
@@ -3865,14 +4048,14 @@ func (receiver *EventHubReceiver) ConvertToARM(resolved genruntime.ConvertToARMR
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *EventHubReceiver) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EventHubReceiver_ARM{}
+	return &arm.EventHubReceiver{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *EventHubReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EventHubReceiver_ARM)
+	typedInput, ok := armInput.(arm.EventHubReceiver)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EventHubReceiver_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EventHubReceiver, got %T", armInput)
 	}
 
 	// Set property "EventHubName":
@@ -3916,7 +4099,7 @@ func (receiver *EventHubReceiver) PopulateFromARM(owner genruntime.ArbitraryOwne
 }
 
 // AssignProperties_From_EventHubReceiver populates our EventHubReceiver from the provided source EventHubReceiver
-func (receiver *EventHubReceiver) AssignProperties_From_EventHubReceiver(source *v20230101s.EventHubReceiver) error {
+func (receiver *EventHubReceiver) AssignProperties_From_EventHubReceiver(source *storage.EventHubReceiver) error {
 
 	// EventHubName
 	receiver.EventHubName = genruntime.ClonePointerToString(source.EventHubName)
@@ -3946,7 +4129,7 @@ func (receiver *EventHubReceiver) AssignProperties_From_EventHubReceiver(source 
 }
 
 // AssignProperties_To_EventHubReceiver populates the provided destination EventHubReceiver from our EventHubReceiver
-func (receiver *EventHubReceiver) AssignProperties_To_EventHubReceiver(destination *v20230101s.EventHubReceiver) error {
+func (receiver *EventHubReceiver) AssignProperties_To_EventHubReceiver(destination *storage.EventHubReceiver) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4039,14 +4222,14 @@ var _ genruntime.FromARMConverter = &EventHubReceiver_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *EventHubReceiver_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &EventHubReceiver_STATUS_ARM{}
+	return &arm.EventHubReceiver_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *EventHubReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(EventHubReceiver_STATUS_ARM)
+	typedInput, ok := armInput.(arm.EventHubReceiver_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected EventHubReceiver_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.EventHubReceiver_STATUS, got %T", armInput)
 	}
 
 	// Set property "EventHubName":
@@ -4090,7 +4273,7 @@ func (receiver *EventHubReceiver_STATUS) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_EventHubReceiver_STATUS populates our EventHubReceiver_STATUS from the provided source EventHubReceiver_STATUS
-func (receiver *EventHubReceiver_STATUS) AssignProperties_From_EventHubReceiver_STATUS(source *v20230101s.EventHubReceiver_STATUS) error {
+func (receiver *EventHubReceiver_STATUS) AssignProperties_From_EventHubReceiver_STATUS(source *storage.EventHubReceiver_STATUS) error {
 
 	// EventHubName
 	receiver.EventHubName = genruntime.ClonePointerToString(source.EventHubName)
@@ -4120,7 +4303,7 @@ func (receiver *EventHubReceiver_STATUS) AssignProperties_From_EventHubReceiver_
 }
 
 // AssignProperties_To_EventHubReceiver_STATUS populates the provided destination EventHubReceiver_STATUS from our EventHubReceiver_STATUS
-func (receiver *EventHubReceiver_STATUS) AssignProperties_To_EventHubReceiver_STATUS(destination *v20230101s.EventHubReceiver_STATUS) error {
+func (receiver *EventHubReceiver_STATUS) AssignProperties_To_EventHubReceiver_STATUS(destination *storage.EventHubReceiver_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4190,7 +4373,7 @@ func (receiver *ItsmReceiver) ConvertToARM(resolved genruntime.ConvertToARMResol
 	if receiver == nil {
 		return nil, nil
 	}
-	result := &ItsmReceiver_ARM{}
+	result := &arm.ItsmReceiver{}
 
 	// Set property "ConnectionId":
 	if receiver.ConnectionId != nil {
@@ -4226,14 +4409,14 @@ func (receiver *ItsmReceiver) ConvertToARM(resolved genruntime.ConvertToARMResol
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *ItsmReceiver) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ItsmReceiver_ARM{}
+	return &arm.ItsmReceiver{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *ItsmReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ItsmReceiver_ARM)
+	typedInput, ok := armInput.(arm.ItsmReceiver)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ItsmReceiver_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ItsmReceiver, got %T", armInput)
 	}
 
 	// Set property "ConnectionId":
@@ -4271,7 +4454,7 @@ func (receiver *ItsmReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerRef
 }
 
 // AssignProperties_From_ItsmReceiver populates our ItsmReceiver from the provided source ItsmReceiver
-func (receiver *ItsmReceiver) AssignProperties_From_ItsmReceiver(source *v20230101s.ItsmReceiver) error {
+func (receiver *ItsmReceiver) AssignProperties_From_ItsmReceiver(source *storage.ItsmReceiver) error {
 
 	// ConnectionId
 	receiver.ConnectionId = genruntime.ClonePointerToString(source.ConnectionId)
@@ -4293,7 +4476,7 @@ func (receiver *ItsmReceiver) AssignProperties_From_ItsmReceiver(source *v202301
 }
 
 // AssignProperties_To_ItsmReceiver populates the provided destination ItsmReceiver from our ItsmReceiver
-func (receiver *ItsmReceiver) AssignProperties_To_ItsmReceiver(destination *v20230101s.ItsmReceiver) error {
+func (receiver *ItsmReceiver) AssignProperties_To_ItsmReceiver(destination *storage.ItsmReceiver) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4369,14 +4552,14 @@ var _ genruntime.FromARMConverter = &ItsmReceiver_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *ItsmReceiver_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &ItsmReceiver_STATUS_ARM{}
+	return &arm.ItsmReceiver_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *ItsmReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(ItsmReceiver_STATUS_ARM)
+	typedInput, ok := armInput.(arm.ItsmReceiver_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected ItsmReceiver_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.ItsmReceiver_STATUS, got %T", armInput)
 	}
 
 	// Set property "ConnectionId":
@@ -4414,7 +4597,7 @@ func (receiver *ItsmReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryO
 }
 
 // AssignProperties_From_ItsmReceiver_STATUS populates our ItsmReceiver_STATUS from the provided source ItsmReceiver_STATUS
-func (receiver *ItsmReceiver_STATUS) AssignProperties_From_ItsmReceiver_STATUS(source *v20230101s.ItsmReceiver_STATUS) error {
+func (receiver *ItsmReceiver_STATUS) AssignProperties_From_ItsmReceiver_STATUS(source *storage.ItsmReceiver_STATUS) error {
 
 	// ConnectionId
 	receiver.ConnectionId = genruntime.ClonePointerToString(source.ConnectionId)
@@ -4436,7 +4619,7 @@ func (receiver *ItsmReceiver_STATUS) AssignProperties_From_ItsmReceiver_STATUS(s
 }
 
 // AssignProperties_To_ItsmReceiver_STATUS populates the provided destination ItsmReceiver_STATUS from our ItsmReceiver_STATUS
-func (receiver *ItsmReceiver_STATUS) AssignProperties_To_ItsmReceiver_STATUS(destination *v20230101s.ItsmReceiver_STATUS) error {
+func (receiver *ItsmReceiver_STATUS) AssignProperties_To_ItsmReceiver_STATUS(destination *storage.ItsmReceiver_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4491,7 +4674,7 @@ func (receiver *LogicAppReceiver) ConvertToARM(resolved genruntime.ConvertToARMR
 	if receiver == nil {
 		return nil, nil
 	}
-	result := &LogicAppReceiver_ARM{}
+	result := &arm.LogicAppReceiver{}
 
 	// Set property "CallbackUrl":
 	if receiver.CallbackUrl != nil {
@@ -4525,14 +4708,14 @@ func (receiver *LogicAppReceiver) ConvertToARM(resolved genruntime.ConvertToARMR
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *LogicAppReceiver) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LogicAppReceiver_ARM{}
+	return &arm.LogicAppReceiver{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *LogicAppReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LogicAppReceiver_ARM)
+	typedInput, ok := armInput.(arm.LogicAppReceiver)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LogicAppReceiver_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LogicAppReceiver, got %T", armInput)
 	}
 
 	// Set property "CallbackUrl":
@@ -4560,7 +4743,7 @@ func (receiver *LogicAppReceiver) PopulateFromARM(owner genruntime.ArbitraryOwne
 }
 
 // AssignProperties_From_LogicAppReceiver populates our LogicAppReceiver from the provided source LogicAppReceiver
-func (receiver *LogicAppReceiver) AssignProperties_From_LogicAppReceiver(source *v20230101s.LogicAppReceiver) error {
+func (receiver *LogicAppReceiver) AssignProperties_From_LogicAppReceiver(source *storage.LogicAppReceiver) error {
 
 	// CallbackUrl
 	receiver.CallbackUrl = genruntime.ClonePointerToString(source.CallbackUrl)
@@ -4589,7 +4772,7 @@ func (receiver *LogicAppReceiver) AssignProperties_From_LogicAppReceiver(source 
 }
 
 // AssignProperties_To_LogicAppReceiver populates the provided destination LogicAppReceiver from our LogicAppReceiver
-func (receiver *LogicAppReceiver) AssignProperties_To_LogicAppReceiver(destination *v20230101s.LogicAppReceiver) error {
+func (receiver *LogicAppReceiver) AssignProperties_To_LogicAppReceiver(destination *storage.LogicAppReceiver) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4674,14 +4857,14 @@ var _ genruntime.FromARMConverter = &LogicAppReceiver_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *LogicAppReceiver_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LogicAppReceiver_STATUS_ARM{}
+	return &arm.LogicAppReceiver_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *LogicAppReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LogicAppReceiver_STATUS_ARM)
+	typedInput, ok := armInput.(arm.LogicAppReceiver_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LogicAppReceiver_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LogicAppReceiver_STATUS, got %T", armInput)
 	}
 
 	// Set property "CallbackUrl":
@@ -4713,7 +4896,7 @@ func (receiver *LogicAppReceiver_STATUS) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_LogicAppReceiver_STATUS populates our LogicAppReceiver_STATUS from the provided source LogicAppReceiver_STATUS
-func (receiver *LogicAppReceiver_STATUS) AssignProperties_From_LogicAppReceiver_STATUS(source *v20230101s.LogicAppReceiver_STATUS) error {
+func (receiver *LogicAppReceiver_STATUS) AssignProperties_From_LogicAppReceiver_STATUS(source *storage.LogicAppReceiver_STATUS) error {
 
 	// CallbackUrl
 	receiver.CallbackUrl = genruntime.ClonePointerToString(source.CallbackUrl)
@@ -4737,7 +4920,7 @@ func (receiver *LogicAppReceiver_STATUS) AssignProperties_From_LogicAppReceiver_
 }
 
 // AssignProperties_To_LogicAppReceiver_STATUS populates the provided destination LogicAppReceiver_STATUS from our LogicAppReceiver_STATUS
-func (receiver *LogicAppReceiver_STATUS) AssignProperties_To_LogicAppReceiver_STATUS(destination *v20230101s.LogicAppReceiver_STATUS) error {
+func (receiver *LogicAppReceiver_STATUS) AssignProperties_To_LogicAppReceiver_STATUS(destination *storage.LogicAppReceiver_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4791,7 +4974,7 @@ func (receiver *SmsReceiver) ConvertToARM(resolved genruntime.ConvertToARMResolv
 	if receiver == nil {
 		return nil, nil
 	}
-	result := &SmsReceiver_ARM{}
+	result := &arm.SmsReceiver{}
 
 	// Set property "CountryCode":
 	if receiver.CountryCode != nil {
@@ -4815,14 +4998,14 @@ func (receiver *SmsReceiver) ConvertToARM(resolved genruntime.ConvertToARMResolv
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *SmsReceiver) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SmsReceiver_ARM{}
+	return &arm.SmsReceiver{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *SmsReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SmsReceiver_ARM)
+	typedInput, ok := armInput.(arm.SmsReceiver)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SmsReceiver_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SmsReceiver, got %T", armInput)
 	}
 
 	// Set property "CountryCode":
@@ -4848,7 +5031,7 @@ func (receiver *SmsReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerRefe
 }
 
 // AssignProperties_From_SmsReceiver populates our SmsReceiver from the provided source SmsReceiver
-func (receiver *SmsReceiver) AssignProperties_From_SmsReceiver(source *v20230101s.SmsReceiver) error {
+func (receiver *SmsReceiver) AssignProperties_From_SmsReceiver(source *storage.SmsReceiver) error {
 
 	// CountryCode
 	receiver.CountryCode = genruntime.ClonePointerToString(source.CountryCode)
@@ -4864,7 +5047,7 @@ func (receiver *SmsReceiver) AssignProperties_From_SmsReceiver(source *v20230101
 }
 
 // AssignProperties_To_SmsReceiver populates the provided destination SmsReceiver from our SmsReceiver
-func (receiver *SmsReceiver) AssignProperties_To_SmsReceiver(destination *v20230101s.SmsReceiver) error {
+func (receiver *SmsReceiver) AssignProperties_To_SmsReceiver(destination *storage.SmsReceiver) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4923,14 +5106,14 @@ var _ genruntime.FromARMConverter = &SmsReceiver_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *SmsReceiver_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SmsReceiver_STATUS_ARM{}
+	return &arm.SmsReceiver_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *SmsReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SmsReceiver_STATUS_ARM)
+	typedInput, ok := armInput.(arm.SmsReceiver_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SmsReceiver_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SmsReceiver_STATUS, got %T", armInput)
 	}
 
 	// Set property "CountryCode":
@@ -4953,7 +5136,9 @@ func (receiver *SmsReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryOw
 
 	// Set property "Status":
 	if typedInput.Status != nil {
-		status := *typedInput.Status
+		var temp string
+		temp = string(*typedInput.Status)
+		status := ReceiverStatus_STATUS(temp)
 		receiver.Status = &status
 	}
 
@@ -4962,7 +5147,7 @@ func (receiver *SmsReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryOw
 }
 
 // AssignProperties_From_SmsReceiver_STATUS populates our SmsReceiver_STATUS from the provided source SmsReceiver_STATUS
-func (receiver *SmsReceiver_STATUS) AssignProperties_From_SmsReceiver_STATUS(source *v20230101s.SmsReceiver_STATUS) error {
+func (receiver *SmsReceiver_STATUS) AssignProperties_From_SmsReceiver_STATUS(source *storage.SmsReceiver_STATUS) error {
 
 	// CountryCode
 	receiver.CountryCode = genruntime.ClonePointerToString(source.CountryCode)
@@ -4975,8 +5160,9 @@ func (receiver *SmsReceiver_STATUS) AssignProperties_From_SmsReceiver_STATUS(sou
 
 	// Status
 	if source.Status != nil {
-		status := ReceiverStatus_STATUS(*source.Status)
-		receiver.Status = &status
+		status := *source.Status
+		statusTemp := genruntime.ToEnum(status, receiverStatus_STATUS_Values)
+		receiver.Status = &statusTemp
 	} else {
 		receiver.Status = nil
 	}
@@ -4986,7 +5172,7 @@ func (receiver *SmsReceiver_STATUS) AssignProperties_From_SmsReceiver_STATUS(sou
 }
 
 // AssignProperties_To_SmsReceiver_STATUS populates the provided destination SmsReceiver_STATUS from our SmsReceiver_STATUS
-func (receiver *SmsReceiver_STATUS) AssignProperties_To_SmsReceiver_STATUS(destination *v20230101s.SmsReceiver_STATUS) error {
+func (receiver *SmsReceiver_STATUS) AssignProperties_To_SmsReceiver_STATUS(destination *storage.SmsReceiver_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5040,7 +5226,7 @@ func (receiver *VoiceReceiver) ConvertToARM(resolved genruntime.ConvertToARMReso
 	if receiver == nil {
 		return nil, nil
 	}
-	result := &VoiceReceiver_ARM{}
+	result := &arm.VoiceReceiver{}
 
 	// Set property "CountryCode":
 	if receiver.CountryCode != nil {
@@ -5064,14 +5250,14 @@ func (receiver *VoiceReceiver) ConvertToARM(resolved genruntime.ConvertToARMReso
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *VoiceReceiver) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VoiceReceiver_ARM{}
+	return &arm.VoiceReceiver{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *VoiceReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VoiceReceiver_ARM)
+	typedInput, ok := armInput.(arm.VoiceReceiver)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VoiceReceiver_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VoiceReceiver, got %T", armInput)
 	}
 
 	// Set property "CountryCode":
@@ -5097,7 +5283,7 @@ func (receiver *VoiceReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_VoiceReceiver populates our VoiceReceiver from the provided source VoiceReceiver
-func (receiver *VoiceReceiver) AssignProperties_From_VoiceReceiver(source *v20230101s.VoiceReceiver) error {
+func (receiver *VoiceReceiver) AssignProperties_From_VoiceReceiver(source *storage.VoiceReceiver) error {
 
 	// CountryCode
 	receiver.CountryCode = genruntime.ClonePointerToString(source.CountryCode)
@@ -5113,7 +5299,7 @@ func (receiver *VoiceReceiver) AssignProperties_From_VoiceReceiver(source *v2023
 }
 
 // AssignProperties_To_VoiceReceiver populates the provided destination VoiceReceiver from our VoiceReceiver
-func (receiver *VoiceReceiver) AssignProperties_To_VoiceReceiver(destination *v20230101s.VoiceReceiver) error {
+func (receiver *VoiceReceiver) AssignProperties_To_VoiceReceiver(destination *storage.VoiceReceiver) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5169,14 +5355,14 @@ var _ genruntime.FromARMConverter = &VoiceReceiver_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *VoiceReceiver_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VoiceReceiver_STATUS_ARM{}
+	return &arm.VoiceReceiver_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *VoiceReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VoiceReceiver_STATUS_ARM)
+	typedInput, ok := armInput.(arm.VoiceReceiver_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VoiceReceiver_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VoiceReceiver_STATUS, got %T", armInput)
 	}
 
 	// Set property "CountryCode":
@@ -5202,7 +5388,7 @@ func (receiver *VoiceReceiver_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 }
 
 // AssignProperties_From_VoiceReceiver_STATUS populates our VoiceReceiver_STATUS from the provided source VoiceReceiver_STATUS
-func (receiver *VoiceReceiver_STATUS) AssignProperties_From_VoiceReceiver_STATUS(source *v20230101s.VoiceReceiver_STATUS) error {
+func (receiver *VoiceReceiver_STATUS) AssignProperties_From_VoiceReceiver_STATUS(source *storage.VoiceReceiver_STATUS) error {
 
 	// CountryCode
 	receiver.CountryCode = genruntime.ClonePointerToString(source.CountryCode)
@@ -5218,7 +5404,7 @@ func (receiver *VoiceReceiver_STATUS) AssignProperties_From_VoiceReceiver_STATUS
 }
 
 // AssignProperties_To_VoiceReceiver_STATUS populates the provided destination VoiceReceiver_STATUS from our VoiceReceiver_STATUS
-func (receiver *VoiceReceiver_STATUS) AssignProperties_To_VoiceReceiver_STATUS(destination *v20230101s.VoiceReceiver_STATUS) error {
+func (receiver *VoiceReceiver_STATUS) AssignProperties_To_VoiceReceiver_STATUS(destination *storage.VoiceReceiver_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5275,7 +5461,7 @@ func (receiver *WebhookReceiver) ConvertToARM(resolved genruntime.ConvertToARMRe
 	if receiver == nil {
 		return nil, nil
 	}
-	result := &WebhookReceiver_ARM{}
+	result := &arm.WebhookReceiver{}
 
 	// Set property "IdentifierUri":
 	if receiver.IdentifierUri != nil {
@@ -5323,14 +5509,14 @@ func (receiver *WebhookReceiver) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *WebhookReceiver) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &WebhookReceiver_ARM{}
+	return &arm.WebhookReceiver{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *WebhookReceiver) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(WebhookReceiver_ARM)
+	typedInput, ok := armInput.(arm.WebhookReceiver)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected WebhookReceiver_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.WebhookReceiver, got %T", armInput)
 	}
 
 	// Set property "IdentifierUri":
@@ -5380,7 +5566,7 @@ func (receiver *WebhookReceiver) PopulateFromARM(owner genruntime.ArbitraryOwner
 }
 
 // AssignProperties_From_WebhookReceiver populates our WebhookReceiver from the provided source WebhookReceiver
-func (receiver *WebhookReceiver) AssignProperties_From_WebhookReceiver(source *v20230101s.WebhookReceiver) error {
+func (receiver *WebhookReceiver) AssignProperties_From_WebhookReceiver(source *storage.WebhookReceiver) error {
 
 	// IdentifierUri
 	receiver.IdentifierUri = genruntime.ClonePointerToString(source.IdentifierUri)
@@ -5418,7 +5604,7 @@ func (receiver *WebhookReceiver) AssignProperties_From_WebhookReceiver(source *v
 }
 
 // AssignProperties_To_WebhookReceiver populates the provided destination WebhookReceiver from our WebhookReceiver
-func (receiver *WebhookReceiver) AssignProperties_To_WebhookReceiver(destination *v20230101s.WebhookReceiver) error {
+func (receiver *WebhookReceiver) AssignProperties_To_WebhookReceiver(destination *storage.WebhookReceiver) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5530,14 +5716,14 @@ var _ genruntime.FromARMConverter = &WebhookReceiver_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (receiver *WebhookReceiver_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &WebhookReceiver_STATUS_ARM{}
+	return &arm.WebhookReceiver_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (receiver *WebhookReceiver_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(WebhookReceiver_STATUS_ARM)
+	typedInput, ok := armInput.(arm.WebhookReceiver_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected WebhookReceiver_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.WebhookReceiver_STATUS, got %T", armInput)
 	}
 
 	// Set property "IdentifierUri":
@@ -5587,7 +5773,7 @@ func (receiver *WebhookReceiver_STATUS) PopulateFromARM(owner genruntime.Arbitra
 }
 
 // AssignProperties_From_WebhookReceiver_STATUS populates our WebhookReceiver_STATUS from the provided source WebhookReceiver_STATUS
-func (receiver *WebhookReceiver_STATUS) AssignProperties_From_WebhookReceiver_STATUS(source *v20230101s.WebhookReceiver_STATUS) error {
+func (receiver *WebhookReceiver_STATUS) AssignProperties_From_WebhookReceiver_STATUS(source *storage.WebhookReceiver_STATUS) error {
 
 	// IdentifierUri
 	receiver.IdentifierUri = genruntime.ClonePointerToString(source.IdentifierUri)
@@ -5625,7 +5811,7 @@ func (receiver *WebhookReceiver_STATUS) AssignProperties_From_WebhookReceiver_ST
 }
 
 // AssignProperties_To_WebhookReceiver_STATUS populates the provided destination WebhookReceiver_STATUS from our WebhookReceiver_STATUS
-func (receiver *WebhookReceiver_STATUS) AssignProperties_To_WebhookReceiver_STATUS(destination *v20230101s.WebhookReceiver_STATUS) error {
+func (receiver *WebhookReceiver_STATUS) AssignProperties_To_WebhookReceiver_STATUS(destination *storage.WebhookReceiver_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -5679,6 +5865,13 @@ const (
 	ReceiverStatus_STATUS_Enabled      = ReceiverStatus_STATUS("Enabled")
 	ReceiverStatus_STATUS_NotSpecified = ReceiverStatus_STATUS("NotSpecified")
 )
+
+// Mapping from string to ReceiverStatus_STATUS
+var receiverStatus_STATUS_Values = map[string]ReceiverStatus_STATUS{
+	"disabled":     ReceiverStatus_STATUS_Disabled,
+	"enabled":      ReceiverStatus_STATUS_Enabled,
+	"notspecified": ReceiverStatus_STATUS_NotSpecified,
+}
 
 func init() {
 	SchemeBuilder.Register(&ActionGroup{}, &ActionGroupList{})

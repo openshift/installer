@@ -1,7 +1,7 @@
 {
     "ignorePatterns": [
         { "pattern": "^https://calendar.google.com/calendar" },
-        { "pattern": "^../reference/" }
+        { "pattern": "^\.\.?/" }
     ],
     "httpHeaders": [{
         "comment": "Workaround as suggested here: https://github.com/tcort/markdown-link-check/issues/201",

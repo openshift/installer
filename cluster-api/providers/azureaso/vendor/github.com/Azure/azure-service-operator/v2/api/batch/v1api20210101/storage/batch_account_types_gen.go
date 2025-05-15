@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,6 +47,26 @@ func (account *BatchAccount) SetConditions(conditions conditions.Conditions) {
 	account.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &BatchAccount{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (account *BatchAccount) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if account.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return account.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &BatchAccount{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (account *BatchAccount) SecretDestinationExpressions() []*core.DestinationExpression {
+	if account.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return account.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &BatchAccount{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (account *BatchAccount) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-01-01"
 func (account BatchAccount) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-01-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -150,12 +173,13 @@ type BatchAccount_Spec struct {
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName         string                `json:"azureName,omitempty"`
-	Encryption        *EncryptionProperties `json:"encryption,omitempty"`
-	Identity          *BatchAccountIdentity `json:"identity,omitempty"`
-	KeyVaultReference *KeyVaultReference    `json:"keyVaultReference,omitempty"`
-	Location          *string               `json:"location,omitempty"`
-	OriginalVersion   string                `json:"originalVersion,omitempty"`
+	AzureName         string                    `json:"azureName,omitempty"`
+	Encryption        *EncryptionProperties     `json:"encryption,omitempty"`
+	Identity          *BatchAccountIdentity     `json:"identity,omitempty"`
+	KeyVaultReference *KeyVaultReference        `json:"keyVaultReference,omitempty"`
+	Location          *string                   `json:"location,omitempty"`
+	OperatorSpec      *BatchAccountOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion   string                    `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -271,6 +295,14 @@ type BatchAccountIdentity_STATUS struct {
 	TenantId               *string                                                       `json:"tenantId,omitempty"`
 	Type                   *string                                                       `json:"type,omitempty"`
 	UserAssignedIdentities map[string]BatchAccountIdentity_UserAssignedIdentities_STATUS `json:"userAssignedIdentities,omitempty"`
+}
+
+// Storage version of v1api20210101.BatchAccountOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type BatchAccountOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20210101.EncryptionProperties

@@ -4,9 +4,12 @@
 package storage
 
 import (
-	v20221001s "github.com/Azure/azure-service-operator/v2/api/insights/v1api20221001/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/insights/v1api20221001/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -45,6 +48,26 @@ func (rule *ScheduledQueryRule) SetConditions(conditions conditions.Conditions) 
 	rule.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &ScheduledQueryRule{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (rule *ScheduledQueryRule) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if rule.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return rule.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ScheduledQueryRule{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (rule *ScheduledQueryRule) SecretDestinationExpressions() []*core.DestinationExpression {
+	if rule.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return rule.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &ScheduledQueryRule{}
 
 // AzureName returns the Azure name of the resource
@@ -54,7 +77,7 @@ func (rule *ScheduledQueryRule) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-06-15"
 func (rule ScheduledQueryRule) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-06-15"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -152,18 +175,19 @@ type ScheduledQueryRule_Spec struct {
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName                             string                      `json:"azureName,omitempty"`
-	CheckWorkspaceAlertsStorageConfigured *bool                       `json:"checkWorkspaceAlertsStorageConfigured,omitempty"`
-	Criteria                              *ScheduledQueryRuleCriteria `json:"criteria,omitempty"`
-	Description                           *string                     `json:"description,omitempty"`
-	DisplayName                           *string                     `json:"displayName,omitempty"`
-	Enabled                               *bool                       `json:"enabled,omitempty"`
-	EvaluationFrequency                   *string                     `json:"evaluationFrequency,omitempty"`
-	Kind                                  *string                     `json:"kind,omitempty"`
-	Location                              *string                     `json:"location,omitempty"`
-	MuteActionsDuration                   *string                     `json:"muteActionsDuration,omitempty"`
-	OriginalVersion                       string                      `json:"originalVersion,omitempty"`
-	OverrideQueryTimeRange                *string                     `json:"overrideQueryTimeRange,omitempty"`
+	AzureName                             string                          `json:"azureName,omitempty"`
+	CheckWorkspaceAlertsStorageConfigured *bool                           `json:"checkWorkspaceAlertsStorageConfigured,omitempty"`
+	Criteria                              *ScheduledQueryRuleCriteria     `json:"criteria,omitempty"`
+	Description                           *string                         `json:"description,omitempty"`
+	DisplayName                           *string                         `json:"displayName,omitempty"`
+	Enabled                               *bool                           `json:"enabled,omitempty"`
+	EvaluationFrequency                   *string                         `json:"evaluationFrequency,omitempty"`
+	Kind                                  *string                         `json:"kind,omitempty"`
+	Location                              *string                         `json:"location,omitempty"`
+	MuteActionsDuration                   *string                         `json:"muteActionsDuration,omitempty"`
+	OperatorSpec                          *ScheduledQueryRuleOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion                       string                          `json:"originalVersion,omitempty"`
+	OverrideQueryTimeRange                *string                         `json:"overrideQueryTimeRange,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -281,6 +305,14 @@ type ScheduledQueryRuleCriteria_STATUS struct {
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// Storage version of v1api20220615.ScheduledQueryRuleOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ScheduledQueryRuleOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
 // Storage version of v1api20220615.SystemData_STATUS
 // Metadata pertaining to creation and last modification of the resource.
 type SystemData_STATUS struct {
@@ -294,7 +326,7 @@ type SystemData_STATUS struct {
 }
 
 // AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v20221001s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -337,7 +369,7 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 }
 
 // AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *v20221001s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(data.PropertyBag)
 
@@ -380,8 +412,8 @@ func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination
 }
 
 type augmentConversionForSystemData_STATUS interface {
-	AssignPropertiesFrom(src *v20221001s.SystemData_STATUS) error
-	AssignPropertiesTo(dst *v20221001s.SystemData_STATUS) error
+	AssignPropertiesFrom(src *storage.SystemData_STATUS) error
+	AssignPropertiesTo(dst *storage.SystemData_STATUS) error
 }
 
 // Storage version of v1api20220615.Condition

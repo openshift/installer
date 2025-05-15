@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20210101 "github.com/Azure/azure-service-operator/v2/api/batch/v1api20210101"
-	v20210101s "github.com/Azure/azure-service-operator/v2/api/batch/v1api20210101/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/batch/v1api20210101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type BatchAccountExtension struct {
 func (extension *BatchAccountExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20210101.BatchAccount{},
-		&v20210101s.BatchAccount{}}
+		&storage.BatchAccount{}}
 }

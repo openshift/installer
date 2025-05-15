@@ -57,8 +57,8 @@ Each script runs in a fresh temporary work directory tree, available to scripts 
 Scripts also have access to these other environment variables:
 
 	PATH=<actual PATH>
-	HOME=/no-home
-	TMPDIR=$WORK/.tmp
+	HOME=/no-home (USERPROFILE on windows, home on plan9)
+	TMPDIR=$WORK/.tmp (TMP on windows)
 	devnull=<value of os.DevNull>
 	/=<value of os.PathSeparator>
 	:=<value of os.PathListSeparator>
@@ -166,7 +166,8 @@ The predefined commands are:
 
     If the last token is '&word&` (where "word" is alphanumeric), the
     command runs in the background but has a name, and can be waited
-    for specifically by passing the word to 'wait'.
+    for specifically by passing the word to 'wait', or used to terminate
+    the process by invoking 'kill' with the word passed to it.
 
     Standard input can be provided using the stdin command; this will be
     cleared after exec has been called.
@@ -178,6 +179,15 @@ The predefined commands are:
   - [!] grep [-count=N] pattern file
     The file's content must (or must not) match the regular expression pattern.
     For positive matches, -count=N specifies an exact number of matches to require.
+
+  - kill [-SIGNAL] [command]
+    Terminate all 'exec' and 'go' commands started in the background (with the '&'
+    token) by sending an termination signal. Recognized signals are KILL and INT.
+    If no signal is specified, KILL is sent.
+
+    If a command argument is specified, it terminates only that command, which
+    must have been started with the final token '&command&` as described for the
+    exec command.
 
   - mkdir path...
     Create the listed directories, if they do not already exists.
@@ -234,7 +244,9 @@ The predefined commands are:
     concatenation of the corresponding streams of the background commands,
     in the order in which those commands were started.
 
-    If an argument is specified, it waits for just that command.
+    If an argument is specified, it waits for just that command, which
+    must have been started with the final token '&command&` as described for the
+    exec command.
 
 When TestScript runs a script and the script fails, by default TestScript shows
 the execution of the most recent phase of the script (since the last # comment)
@@ -351,5 +363,7 @@ for manual debugging of failing tests:
 	import "p2"
 	func F() { p2.F() }
 	$
+
+See also: https://pkg.go.dev/github.com/rogpeppe/go-internal/gotooltest
 */
 package testscript

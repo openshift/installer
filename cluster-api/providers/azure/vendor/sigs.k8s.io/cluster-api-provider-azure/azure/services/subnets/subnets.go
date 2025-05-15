@@ -21,12 +21,13 @@ import (
 
 	asonetworkv1 "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aso"
 	"sigs.k8s.io/cluster-api-provider-azure/util/slice"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const serviceName = "subnets"
@@ -55,8 +56,11 @@ func postCreateOrUpdateResourceHook(_ context.Context, scope SubnetScope, subnet
 	}
 
 	name := subnet.AzureName()
-	scope.UpdateSubnetID(name, ptr.Deref(subnet.Status.Id, ""))
-	scope.UpdateSubnetCIDRs(name, converters.GetSubnetAddresses(*subnet))
+	statusASOCIDRs := converters.GetSubnetAddresses(*subnet)
+	if len(statusASOCIDRs) != 0 {
+		scope.UpdateSubnetID(name, ptr.Deref(subnet.Status.Id, ""))
+		scope.UpdateSubnetCIDRs(name, statusASOCIDRs)
+	}
 
 	return nil
 }

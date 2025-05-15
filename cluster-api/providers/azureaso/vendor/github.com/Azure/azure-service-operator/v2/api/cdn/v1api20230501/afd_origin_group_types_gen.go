@@ -5,10 +5,14 @@ package v1api20230501
 
 import (
 	"fmt"
-	v20230501s "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type AfdOriginGroup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Profiles_OriginGroup_Spec   `json:"spec,omitempty"`
-	Status            Profiles_OriginGroup_STATUS `json:"status,omitempty"`
+	Spec              AfdOriginGroup_Spec   `json:"spec,omitempty"`
+	Status            AfdOriginGroup_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &AfdOriginGroup{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &AfdOriginGroup{}
 
 // ConvertFrom populates our AfdOriginGroup from the provided hub AfdOriginGroup
 func (group *AfdOriginGroup) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20230501s.AfdOriginGroup)
+	source, ok := hub.(*storage.AfdOriginGroup)
 	if !ok {
 		return fmt.Errorf("expected cdn/v1api20230501/storage/AfdOriginGroup but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (group *AfdOriginGroup) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub AfdOriginGroup from our AfdOriginGroup
 func (group *AfdOriginGroup) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20230501s.AfdOriginGroup)
+	destination, ok := hub.(*storage.AfdOriginGroup)
 	if !ok {
 		return fmt.Errorf("expected cdn/v1api20230501/storage/AfdOriginGroup but received %T instead", hub)
 	}
@@ -90,15 +94,35 @@ func (group *AfdOriginGroup) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the AfdOriginGroup resource
 func (group *AfdOriginGroup) defaultImpl() { group.defaultAzureName() }
 
+var _ configmaps.Exporter = &AfdOriginGroup{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (group *AfdOriginGroup) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if group.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return group.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &AfdOriginGroup{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (group *AfdOriginGroup) SecretDestinationExpressions() []*core.DestinationExpression {
+	if group.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return group.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &AfdOriginGroup{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (group *AfdOriginGroup) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Profiles_OriginGroup_STATUS); ok {
-		return group.Spec.Initialize_From_Profiles_OriginGroup_STATUS(s)
+	if s, ok := status.(*AfdOriginGroup_STATUS); ok {
+		return group.Spec.Initialize_From_AfdOriginGroup_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Profiles_OriginGroup_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type AfdOriginGroup_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &AfdOriginGroup{}
@@ -110,7 +134,7 @@ func (group *AfdOriginGroup) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-05-01"
 func (group AfdOriginGroup) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-05-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -144,7 +168,7 @@ func (group *AfdOriginGroup) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (group *AfdOriginGroup) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Profiles_OriginGroup_STATUS{}
+	return &AfdOriginGroup_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -156,13 +180,13 @@ func (group *AfdOriginGroup) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (group *AfdOriginGroup) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Profiles_OriginGroup_STATUS); ok {
+	if st, ok := status.(*AfdOriginGroup_STATUS); ok {
 		group.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Profiles_OriginGroup_STATUS
+	var st AfdOriginGroup_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -208,7 +232,7 @@ func (group *AfdOriginGroup) ValidateUpdate(old runtime.Object) (admission.Warni
 
 // createValidations validates the creation of the resource
 func (group *AfdOriginGroup) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference}
+	return []func() (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference, group.validateSecretDestinations, group.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +250,21 @@ func (group *AfdOriginGroup) updateValidations() []func(old runtime.Object) (adm
 		func(old runtime.Object) (admission.Warnings, error) {
 			return group.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return group.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return group.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (group *AfdOriginGroup) validateConfigMapDestinations() (admission.Warnings, error) {
+	if group.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(group, nil, group.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -243,6 +281,14 @@ func (group *AfdOriginGroup) validateResourceReferences() (admission.Warnings, e
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (group *AfdOriginGroup) validateSecretDestinations() (admission.Warnings, error) {
+	if group.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(group, nil, group.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (group *AfdOriginGroup) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*AfdOriginGroup)
@@ -254,24 +300,24 @@ func (group *AfdOriginGroup) validateWriteOnceProperties(old runtime.Object) (ad
 }
 
 // AssignProperties_From_AfdOriginGroup populates our AfdOriginGroup from the provided source AfdOriginGroup
-func (group *AfdOriginGroup) AssignProperties_From_AfdOriginGroup(source *v20230501s.AfdOriginGroup) error {
+func (group *AfdOriginGroup) AssignProperties_From_AfdOriginGroup(source *storage.AfdOriginGroup) error {
 
 	// ObjectMeta
 	group.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Profiles_OriginGroup_Spec
-	err := spec.AssignProperties_From_Profiles_OriginGroup_Spec(&source.Spec)
+	var spec AfdOriginGroup_Spec
+	err := spec.AssignProperties_From_AfdOriginGroup_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Profiles_OriginGroup_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_AfdOriginGroup_Spec() to populate field Spec")
 	}
 	group.Spec = spec
 
 	// Status
-	var status Profiles_OriginGroup_STATUS
-	err = status.AssignProperties_From_Profiles_OriginGroup_STATUS(&source.Status)
+	var status AfdOriginGroup_STATUS
+	err = status.AssignProperties_From_AfdOriginGroup_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Profiles_OriginGroup_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_AfdOriginGroup_STATUS() to populate field Status")
 	}
 	group.Status = status
 
@@ -280,24 +326,24 @@ func (group *AfdOriginGroup) AssignProperties_From_AfdOriginGroup(source *v20230
 }
 
 // AssignProperties_To_AfdOriginGroup populates the provided destination AfdOriginGroup from our AfdOriginGroup
-func (group *AfdOriginGroup) AssignProperties_To_AfdOriginGroup(destination *v20230501s.AfdOriginGroup) error {
+func (group *AfdOriginGroup) AssignProperties_To_AfdOriginGroup(destination *storage.AfdOriginGroup) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *group.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20230501s.Profiles_OriginGroup_Spec
-	err := group.Spec.AssignProperties_To_Profiles_OriginGroup_Spec(&spec)
+	var spec storage.AfdOriginGroup_Spec
+	err := group.Spec.AssignProperties_To_AfdOriginGroup_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Profiles_OriginGroup_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_AfdOriginGroup_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20230501s.Profiles_OriginGroup_STATUS
-	err = group.Status.AssignProperties_To_Profiles_OriginGroup_STATUS(&status)
+	var status storage.AfdOriginGroup_STATUS
+	err = group.Status.AssignProperties_To_AfdOriginGroup_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Profiles_OriginGroup_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_AfdOriginGroup_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -324,7 +370,7 @@ type AfdOriginGroupList struct {
 	Items           []AfdOriginGroup `json:"items"`
 }
 
-type Profiles_OriginGroup_Spec struct {
+type AfdOriginGroup_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
 	AzureName string `json:"azureName,omitempty"`
@@ -334,6 +380,10 @@ type Profiles_OriginGroup_Spec struct {
 
 	// LoadBalancingSettings: Load balancing settings for a backend pool
 	LoadBalancingSettings *LoadBalancingSettingsParameters `json:"loadBalancingSettings,omitempty"`
+
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *AfdOriginGroupOperatorSpec `json:"operatorSpec,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -352,14 +402,14 @@ type Profiles_OriginGroup_Spec struct {
 	TrafficRestorationTimeToHealedOrNewEndpointsInMinutes *int `json:"trafficRestorationTimeToHealedOrNewEndpointsInMinutes,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Profiles_OriginGroup_Spec{}
+var _ genruntime.ARMTransformer = &AfdOriginGroup_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (group *Profiles_OriginGroup_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (group *AfdOriginGroup_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if group == nil {
 		return nil, nil
 	}
-	result := &Profiles_OriginGroup_Spec_ARM{}
+	result := &arm.AfdOriginGroup_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
@@ -369,14 +419,14 @@ func (group *Profiles_OriginGroup_Spec) ConvertToARM(resolved genruntime.Convert
 		group.LoadBalancingSettings != nil ||
 		group.SessionAffinityState != nil ||
 		group.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes != nil {
-		result.Properties = &AFDOriginGroupProperties_ARM{}
+		result.Properties = &arm.AFDOriginGroupProperties{}
 	}
 	if group.HealthProbeSettings != nil {
 		healthProbeSettings_ARM, err := (*group.HealthProbeSettings).ConvertToARM(resolved)
 		if err != nil {
 			return nil, err
 		}
-		healthProbeSettings := *healthProbeSettings_ARM.(*HealthProbeParameters_ARM)
+		healthProbeSettings := *healthProbeSettings_ARM.(*arm.HealthProbeParameters)
 		result.Properties.HealthProbeSettings = &healthProbeSettings
 	}
 	if group.LoadBalancingSettings != nil {
@@ -384,11 +434,13 @@ func (group *Profiles_OriginGroup_Spec) ConvertToARM(resolved genruntime.Convert
 		if err != nil {
 			return nil, err
 		}
-		loadBalancingSettings := *loadBalancingSettings_ARM.(*LoadBalancingSettingsParameters_ARM)
+		loadBalancingSettings := *loadBalancingSettings_ARM.(*arm.LoadBalancingSettingsParameters)
 		result.Properties.LoadBalancingSettings = &loadBalancingSettings
 	}
 	if group.SessionAffinityState != nil {
-		sessionAffinityState := *group.SessionAffinityState
+		var temp string
+		temp = string(*group.SessionAffinityState)
+		sessionAffinityState := arm.AFDOriginGroupProperties_SessionAffinityState(temp)
 		result.Properties.SessionAffinityState = &sessionAffinityState
 	}
 	if group.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes != nil {
@@ -399,15 +451,15 @@ func (group *Profiles_OriginGroup_Spec) ConvertToARM(resolved genruntime.Convert
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (group *Profiles_OriginGroup_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Profiles_OriginGroup_Spec_ARM{}
+func (group *AfdOriginGroup_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.AfdOriginGroup_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (group *Profiles_OriginGroup_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Profiles_OriginGroup_Spec_ARM)
+func (group *AfdOriginGroup_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.AfdOriginGroup_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Profiles_OriginGroup_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AfdOriginGroup_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
@@ -441,6 +493,8 @@ func (group *Profiles_OriginGroup_Spec) PopulateFromARM(owner genruntime.Arbitra
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	group.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
@@ -451,7 +505,9 @@ func (group *Profiles_OriginGroup_Spec) PopulateFromARM(owner genruntime.Arbitra
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.SessionAffinityState != nil {
-			sessionAffinityState := *typedInput.Properties.SessionAffinityState
+			var temp string
+			temp = string(*typedInput.Properties.SessionAffinityState)
+			sessionAffinityState := AFDOriginGroupProperties_SessionAffinityState(temp)
 			group.SessionAffinityState = &sessionAffinityState
 		}
 	}
@@ -469,25 +525,25 @@ func (group *Profiles_OriginGroup_Spec) PopulateFromARM(owner genruntime.Arbitra
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Profiles_OriginGroup_Spec{}
+var _ genruntime.ConvertibleSpec = &AfdOriginGroup_Spec{}
 
-// ConvertSpecFrom populates our Profiles_OriginGroup_Spec from the provided source
-func (group *Profiles_OriginGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20230501s.Profiles_OriginGroup_Spec)
+// ConvertSpecFrom populates our AfdOriginGroup_Spec from the provided source
+func (group *AfdOriginGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.AfdOriginGroup_Spec)
 	if ok {
 		// Populate our instance from source
-		return group.AssignProperties_From_Profiles_OriginGroup_Spec(src)
+		return group.AssignProperties_From_AfdOriginGroup_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230501s.Profiles_OriginGroup_Spec{}
+	src = &storage.AfdOriginGroup_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = group.AssignProperties_From_Profiles_OriginGroup_Spec(src)
+	err = group.AssignProperties_From_AfdOriginGroup_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -495,17 +551,17 @@ func (group *Profiles_OriginGroup_Spec) ConvertSpecFrom(source genruntime.Conver
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Profiles_OriginGroup_Spec
-func (group *Profiles_OriginGroup_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20230501s.Profiles_OriginGroup_Spec)
+// ConvertSpecTo populates the provided destination from our AfdOriginGroup_Spec
+func (group *AfdOriginGroup_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.AfdOriginGroup_Spec)
 	if ok {
 		// Populate destination from our instance
-		return group.AssignProperties_To_Profiles_OriginGroup_Spec(dst)
+		return group.AssignProperties_To_AfdOriginGroup_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230501s.Profiles_OriginGroup_Spec{}
-	err := group.AssignProperties_To_Profiles_OriginGroup_Spec(dst)
+	dst = &storage.AfdOriginGroup_Spec{}
+	err := group.AssignProperties_To_AfdOriginGroup_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -519,8 +575,8 @@ func (group *Profiles_OriginGroup_Spec) ConvertSpecTo(destination genruntime.Con
 	return nil
 }
 
-// AssignProperties_From_Profiles_OriginGroup_Spec populates our Profiles_OriginGroup_Spec from the provided source Profiles_OriginGroup_Spec
-func (group *Profiles_OriginGroup_Spec) AssignProperties_From_Profiles_OriginGroup_Spec(source *v20230501s.Profiles_OriginGroup_Spec) error {
+// AssignProperties_From_AfdOriginGroup_Spec populates our AfdOriginGroup_Spec from the provided source AfdOriginGroup_Spec
+func (group *AfdOriginGroup_Spec) AssignProperties_From_AfdOriginGroup_Spec(source *storage.AfdOriginGroup_Spec) error {
 
 	// AzureName
 	group.AzureName = source.AzureName
@@ -549,6 +605,18 @@ func (group *Profiles_OriginGroup_Spec) AssignProperties_From_Profiles_OriginGro
 		group.LoadBalancingSettings = nil
 	}
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec AfdOriginGroupOperatorSpec
+		err := operatorSpec.AssignProperties_From_AfdOriginGroupOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_AfdOriginGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		group.OperatorSpec = &operatorSpec
+	} else {
+		group.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -559,8 +627,9 @@ func (group *Profiles_OriginGroup_Spec) AssignProperties_From_Profiles_OriginGro
 
 	// SessionAffinityState
 	if source.SessionAffinityState != nil {
-		sessionAffinityState := AFDOriginGroupProperties_SessionAffinityState(*source.SessionAffinityState)
-		group.SessionAffinityState = &sessionAffinityState
+		sessionAffinityState := *source.SessionAffinityState
+		sessionAffinityStateTemp := genruntime.ToEnum(sessionAffinityState, aFDOriginGroupProperties_SessionAffinityState_Values)
+		group.SessionAffinityState = &sessionAffinityStateTemp
 	} else {
 		group.SessionAffinityState = nil
 	}
@@ -577,8 +646,8 @@ func (group *Profiles_OriginGroup_Spec) AssignProperties_From_Profiles_OriginGro
 	return nil
 }
 
-// AssignProperties_To_Profiles_OriginGroup_Spec populates the provided destination Profiles_OriginGroup_Spec from our Profiles_OriginGroup_Spec
-func (group *Profiles_OriginGroup_Spec) AssignProperties_To_Profiles_OriginGroup_Spec(destination *v20230501s.Profiles_OriginGroup_Spec) error {
+// AssignProperties_To_AfdOriginGroup_Spec populates the provided destination AfdOriginGroup_Spec from our AfdOriginGroup_Spec
+func (group *AfdOriginGroup_Spec) AssignProperties_To_AfdOriginGroup_Spec(destination *storage.AfdOriginGroup_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -587,7 +656,7 @@ func (group *Profiles_OriginGroup_Spec) AssignProperties_To_Profiles_OriginGroup
 
 	// HealthProbeSettings
 	if group.HealthProbeSettings != nil {
-		var healthProbeSetting v20230501s.HealthProbeParameters
+		var healthProbeSetting storage.HealthProbeParameters
 		err := group.HealthProbeSettings.AssignProperties_To_HealthProbeParameters(&healthProbeSetting)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_HealthProbeParameters() to populate field HealthProbeSettings")
@@ -599,7 +668,7 @@ func (group *Profiles_OriginGroup_Spec) AssignProperties_To_Profiles_OriginGroup
 
 	// LoadBalancingSettings
 	if group.LoadBalancingSettings != nil {
-		var loadBalancingSetting v20230501s.LoadBalancingSettingsParameters
+		var loadBalancingSetting storage.LoadBalancingSettingsParameters
 		err := group.LoadBalancingSettings.AssignProperties_To_LoadBalancingSettingsParameters(&loadBalancingSetting)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_LoadBalancingSettingsParameters() to populate field LoadBalancingSettings")
@@ -607,6 +676,18 @@ func (group *Profiles_OriginGroup_Spec) AssignProperties_To_Profiles_OriginGroup
 		destination.LoadBalancingSettings = &loadBalancingSetting
 	} else {
 		destination.LoadBalancingSettings = nil
+	}
+
+	// OperatorSpec
+	if group.OperatorSpec != nil {
+		var operatorSpec storage.AfdOriginGroupOperatorSpec
+		err := group.OperatorSpec.AssignProperties_To_AfdOriginGroupOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_AfdOriginGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
 	}
 
 	// OriginalVersion
@@ -647,8 +728,8 @@ func (group *Profiles_OriginGroup_Spec) AssignProperties_To_Profiles_OriginGroup
 	return nil
 }
 
-// Initialize_From_Profiles_OriginGroup_STATUS populates our Profiles_OriginGroup_Spec from the provided source Profiles_OriginGroup_STATUS
-func (group *Profiles_OriginGroup_Spec) Initialize_From_Profiles_OriginGroup_STATUS(source *Profiles_OriginGroup_STATUS) error {
+// Initialize_From_AfdOriginGroup_STATUS populates our AfdOriginGroup_Spec from the provided source AfdOriginGroup_STATUS
+func (group *AfdOriginGroup_Spec) Initialize_From_AfdOriginGroup_STATUS(source *AfdOriginGroup_STATUS) error {
 
 	// HealthProbeSettings
 	if source.HealthProbeSettings != nil {
@@ -676,7 +757,7 @@ func (group *Profiles_OriginGroup_Spec) Initialize_From_Profiles_OriginGroup_STA
 
 	// SessionAffinityState
 	if source.SessionAffinityState != nil {
-		sessionAffinityState := AFDOriginGroupProperties_SessionAffinityState(*source.SessionAffinityState)
+		sessionAffinityState := genruntime.ToEnum(string(*source.SessionAffinityState), aFDOriginGroupProperties_SessionAffinityState_Values)
 		group.SessionAffinityState = &sessionAffinityState
 	} else {
 		group.SessionAffinityState = nil
@@ -695,14 +776,14 @@ func (group *Profiles_OriginGroup_Spec) Initialize_From_Profiles_OriginGroup_STA
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (group *Profiles_OriginGroup_Spec) OriginalVersion() string {
+func (group *AfdOriginGroup_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (group *Profiles_OriginGroup_Spec) SetAzureName(azureName string) { group.AzureName = azureName }
+func (group *AfdOriginGroup_Spec) SetAzureName(azureName string) { group.AzureName = azureName }
 
-type Profiles_OriginGroup_STATUS struct {
+type AfdOriginGroup_STATUS struct {
 	// Conditions: The observed state of the resource
 	Conditions       []conditions.Condition                            `json:"conditions,omitempty"`
 	DeploymentStatus *AFDOriginGroupProperties_DeploymentStatus_STATUS `json:"deploymentStatus,omitempty"`
@@ -740,25 +821,25 @@ type Profiles_OriginGroup_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Profiles_OriginGroup_STATUS{}
+var _ genruntime.ConvertibleStatus = &AfdOriginGroup_STATUS{}
 
-// ConvertStatusFrom populates our Profiles_OriginGroup_STATUS from the provided source
-func (group *Profiles_OriginGroup_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20230501s.Profiles_OriginGroup_STATUS)
+// ConvertStatusFrom populates our AfdOriginGroup_STATUS from the provided source
+func (group *AfdOriginGroup_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.AfdOriginGroup_STATUS)
 	if ok {
 		// Populate our instance from source
-		return group.AssignProperties_From_Profiles_OriginGroup_STATUS(src)
+		return group.AssignProperties_From_AfdOriginGroup_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230501s.Profiles_OriginGroup_STATUS{}
+	src = &storage.AfdOriginGroup_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = group.AssignProperties_From_Profiles_OriginGroup_STATUS(src)
+	err = group.AssignProperties_From_AfdOriginGroup_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -766,17 +847,17 @@ func (group *Profiles_OriginGroup_STATUS) ConvertStatusFrom(source genruntime.Co
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Profiles_OriginGroup_STATUS
-func (group *Profiles_OriginGroup_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20230501s.Profiles_OriginGroup_STATUS)
+// ConvertStatusTo populates the provided destination from our AfdOriginGroup_STATUS
+func (group *AfdOriginGroup_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.AfdOriginGroup_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return group.AssignProperties_To_Profiles_OriginGroup_STATUS(dst)
+		return group.AssignProperties_To_AfdOriginGroup_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230501s.Profiles_OriginGroup_STATUS{}
-	err := group.AssignProperties_To_Profiles_OriginGroup_STATUS(dst)
+	dst = &storage.AfdOriginGroup_STATUS{}
+	err := group.AssignProperties_To_AfdOriginGroup_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -790,18 +871,18 @@ func (group *Profiles_OriginGroup_STATUS) ConvertStatusTo(destination genruntime
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Profiles_OriginGroup_STATUS{}
+var _ genruntime.FromARMConverter = &AfdOriginGroup_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (group *Profiles_OriginGroup_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Profiles_OriginGroup_STATUS_ARM{}
+func (group *AfdOriginGroup_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.AfdOriginGroup_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (group *Profiles_OriginGroup_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Profiles_OriginGroup_STATUS_ARM)
+func (group *AfdOriginGroup_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.AfdOriginGroup_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Profiles_OriginGroup_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AfdOriginGroup_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -810,7 +891,9 @@ func (group *Profiles_OriginGroup_STATUS) PopulateFromARM(owner genruntime.Arbit
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.DeploymentStatus != nil {
-			deploymentStatus := *typedInput.Properties.DeploymentStatus
+			var temp string
+			temp = string(*typedInput.Properties.DeploymentStatus)
+			deploymentStatus := AFDOriginGroupProperties_DeploymentStatus_STATUS(temp)
 			group.DeploymentStatus = &deploymentStatus
 		}
 	}
@@ -868,7 +951,9 @@ func (group *Profiles_OriginGroup_STATUS) PopulateFromARM(owner genruntime.Arbit
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := AFDOriginGroupProperties_ProvisioningState_STATUS(temp)
 			group.ProvisioningState = &provisioningState
 		}
 	}
@@ -877,7 +962,9 @@ func (group *Profiles_OriginGroup_STATUS) PopulateFromARM(owner genruntime.Arbit
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.SessionAffinityState != nil {
-			sessionAffinityState := *typedInput.Properties.SessionAffinityState
+			var temp string
+			temp = string(*typedInput.Properties.SessionAffinityState)
+			sessionAffinityState := AFDOriginGroupProperties_SessionAffinityState_STATUS(temp)
 			group.SessionAffinityState = &sessionAffinityState
 		}
 	}
@@ -912,16 +999,17 @@ func (group *Profiles_OriginGroup_STATUS) PopulateFromARM(owner genruntime.Arbit
 	return nil
 }
 
-// AssignProperties_From_Profiles_OriginGroup_STATUS populates our Profiles_OriginGroup_STATUS from the provided source Profiles_OriginGroup_STATUS
-func (group *Profiles_OriginGroup_STATUS) AssignProperties_From_Profiles_OriginGroup_STATUS(source *v20230501s.Profiles_OriginGroup_STATUS) error {
+// AssignProperties_From_AfdOriginGroup_STATUS populates our AfdOriginGroup_STATUS from the provided source AfdOriginGroup_STATUS
+func (group *AfdOriginGroup_STATUS) AssignProperties_From_AfdOriginGroup_STATUS(source *storage.AfdOriginGroup_STATUS) error {
 
 	// Conditions
 	group.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
 
 	// DeploymentStatus
 	if source.DeploymentStatus != nil {
-		deploymentStatus := AFDOriginGroupProperties_DeploymentStatus_STATUS(*source.DeploymentStatus)
-		group.DeploymentStatus = &deploymentStatus
+		deploymentStatus := *source.DeploymentStatus
+		deploymentStatusTemp := genruntime.ToEnum(deploymentStatus, aFDOriginGroupProperties_DeploymentStatus_STATUS_Values)
+		group.DeploymentStatus = &deploymentStatusTemp
 	} else {
 		group.DeploymentStatus = nil
 	}
@@ -961,16 +1049,18 @@ func (group *Profiles_OriginGroup_STATUS) AssignProperties_From_Profiles_OriginG
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := AFDOriginGroupProperties_ProvisioningState_STATUS(*source.ProvisioningState)
-		group.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, aFDOriginGroupProperties_ProvisioningState_STATUS_Values)
+		group.ProvisioningState = &provisioningStateTemp
 	} else {
 		group.ProvisioningState = nil
 	}
 
 	// SessionAffinityState
 	if source.SessionAffinityState != nil {
-		sessionAffinityState := AFDOriginGroupProperties_SessionAffinityState_STATUS(*source.SessionAffinityState)
-		group.SessionAffinityState = &sessionAffinityState
+		sessionAffinityState := *source.SessionAffinityState
+		sessionAffinityStateTemp := genruntime.ToEnum(sessionAffinityState, aFDOriginGroupProperties_SessionAffinityState_STATUS_Values)
+		group.SessionAffinityState = &sessionAffinityStateTemp
 	} else {
 		group.SessionAffinityState = nil
 	}
@@ -997,8 +1087,8 @@ func (group *Profiles_OriginGroup_STATUS) AssignProperties_From_Profiles_OriginG
 	return nil
 }
 
-// AssignProperties_To_Profiles_OriginGroup_STATUS populates the provided destination Profiles_OriginGroup_STATUS from our Profiles_OriginGroup_STATUS
-func (group *Profiles_OriginGroup_STATUS) AssignProperties_To_Profiles_OriginGroup_STATUS(destination *v20230501s.Profiles_OriginGroup_STATUS) error {
+// AssignProperties_To_AfdOriginGroup_STATUS populates the provided destination AfdOriginGroup_STATUS from our AfdOriginGroup_STATUS
+func (group *AfdOriginGroup_STATUS) AssignProperties_To_AfdOriginGroup_STATUS(destination *storage.AfdOriginGroup_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1015,7 +1105,7 @@ func (group *Profiles_OriginGroup_STATUS) AssignProperties_To_Profiles_OriginGro
 
 	// HealthProbeSettings
 	if group.HealthProbeSettings != nil {
-		var healthProbeSetting v20230501s.HealthProbeParameters_STATUS
+		var healthProbeSetting storage.HealthProbeParameters_STATUS
 		err := group.HealthProbeSettings.AssignProperties_To_HealthProbeParameters_STATUS(&healthProbeSetting)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_HealthProbeParameters_STATUS() to populate field HealthProbeSettings")
@@ -1030,7 +1120,7 @@ func (group *Profiles_OriginGroup_STATUS) AssignProperties_To_Profiles_OriginGro
 
 	// LoadBalancingSettings
 	if group.LoadBalancingSettings != nil {
-		var loadBalancingSetting v20230501s.LoadBalancingSettingsParameters_STATUS
+		var loadBalancingSetting storage.LoadBalancingSettingsParameters_STATUS
 		err := group.LoadBalancingSettings.AssignProperties_To_LoadBalancingSettingsParameters_STATUS(&loadBalancingSetting)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_LoadBalancingSettingsParameters_STATUS() to populate field LoadBalancingSettings")
@@ -1064,7 +1154,7 @@ func (group *Profiles_OriginGroup_STATUS) AssignProperties_To_Profiles_OriginGro
 
 	// SystemData
 	if group.SystemData != nil {
-		var systemDatum v20230501s.SystemData_STATUS
+		var systemDatum storage.SystemData_STATUS
 		err := group.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
@@ -1091,6 +1181,110 @@ func (group *Profiles_OriginGroup_STATUS) AssignProperties_To_Profiles_OriginGro
 	return nil
 }
 
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type AfdOriginGroupOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_AfdOriginGroupOperatorSpec populates our AfdOriginGroupOperatorSpec from the provided source AfdOriginGroupOperatorSpec
+func (operator *AfdOriginGroupOperatorSpec) AssignProperties_From_AfdOriginGroupOperatorSpec(source *storage.AfdOriginGroupOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AfdOriginGroupOperatorSpec populates the provided destination AfdOriginGroupOperatorSpec from our AfdOriginGroupOperatorSpec
+func (operator *AfdOriginGroupOperatorSpec) AssignProperties_To_AfdOriginGroupOperatorSpec(destination *storage.AfdOriginGroupOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
 type AFDOriginGroupProperties_DeploymentStatus_STATUS string
 
 const (
@@ -1099,6 +1293,14 @@ const (
 	AFDOriginGroupProperties_DeploymentStatus_STATUS_NotStarted = AFDOriginGroupProperties_DeploymentStatus_STATUS("NotStarted")
 	AFDOriginGroupProperties_DeploymentStatus_STATUS_Succeeded  = AFDOriginGroupProperties_DeploymentStatus_STATUS("Succeeded")
 )
+
+// Mapping from string to AFDOriginGroupProperties_DeploymentStatus_STATUS
+var aFDOriginGroupProperties_DeploymentStatus_STATUS_Values = map[string]AFDOriginGroupProperties_DeploymentStatus_STATUS{
+	"failed":     AFDOriginGroupProperties_DeploymentStatus_STATUS_Failed,
+	"inprogress": AFDOriginGroupProperties_DeploymentStatus_STATUS_InProgress,
+	"notstarted": AFDOriginGroupProperties_DeploymentStatus_STATUS_NotStarted,
+	"succeeded":  AFDOriginGroupProperties_DeploymentStatus_STATUS_Succeeded,
+}
 
 type AFDOriginGroupProperties_ProvisioningState_STATUS string
 
@@ -1110,6 +1312,15 @@ const (
 	AFDOriginGroupProperties_ProvisioningState_STATUS_Updating  = AFDOriginGroupProperties_ProvisioningState_STATUS("Updating")
 )
 
+// Mapping from string to AFDOriginGroupProperties_ProvisioningState_STATUS
+var aFDOriginGroupProperties_ProvisioningState_STATUS_Values = map[string]AFDOriginGroupProperties_ProvisioningState_STATUS{
+	"creating":  AFDOriginGroupProperties_ProvisioningState_STATUS_Creating,
+	"deleting":  AFDOriginGroupProperties_ProvisioningState_STATUS_Deleting,
+	"failed":    AFDOriginGroupProperties_ProvisioningState_STATUS_Failed,
+	"succeeded": AFDOriginGroupProperties_ProvisioningState_STATUS_Succeeded,
+	"updating":  AFDOriginGroupProperties_ProvisioningState_STATUS_Updating,
+}
+
 // +kubebuilder:validation:Enum={"Disabled","Enabled"}
 type AFDOriginGroupProperties_SessionAffinityState string
 
@@ -1118,12 +1329,24 @@ const (
 	AFDOriginGroupProperties_SessionAffinityState_Enabled  = AFDOriginGroupProperties_SessionAffinityState("Enabled")
 )
 
+// Mapping from string to AFDOriginGroupProperties_SessionAffinityState
+var aFDOriginGroupProperties_SessionAffinityState_Values = map[string]AFDOriginGroupProperties_SessionAffinityState{
+	"disabled": AFDOriginGroupProperties_SessionAffinityState_Disabled,
+	"enabled":  AFDOriginGroupProperties_SessionAffinityState_Enabled,
+}
+
 type AFDOriginGroupProperties_SessionAffinityState_STATUS string
 
 const (
 	AFDOriginGroupProperties_SessionAffinityState_STATUS_Disabled = AFDOriginGroupProperties_SessionAffinityState_STATUS("Disabled")
 	AFDOriginGroupProperties_SessionAffinityState_STATUS_Enabled  = AFDOriginGroupProperties_SessionAffinityState_STATUS("Enabled")
 )
+
+// Mapping from string to AFDOriginGroupProperties_SessionAffinityState_STATUS
+var aFDOriginGroupProperties_SessionAffinityState_STATUS_Values = map[string]AFDOriginGroupProperties_SessionAffinityState_STATUS{
+	"disabled": AFDOriginGroupProperties_SessionAffinityState_STATUS_Disabled,
+	"enabled":  AFDOriginGroupProperties_SessionAffinityState_STATUS_Enabled,
+}
 
 // The JSON object that contains the properties to send health probes to origin.
 type HealthProbeParameters struct {
@@ -1149,7 +1372,7 @@ func (parameters *HealthProbeParameters) ConvertToARM(resolved genruntime.Conver
 	if parameters == nil {
 		return nil, nil
 	}
-	result := &HealthProbeParameters_ARM{}
+	result := &arm.HealthProbeParameters{}
 
 	// Set property "ProbeIntervalInSeconds":
 	if parameters.ProbeIntervalInSeconds != nil {
@@ -1165,13 +1388,17 @@ func (parameters *HealthProbeParameters) ConvertToARM(resolved genruntime.Conver
 
 	// Set property "ProbeProtocol":
 	if parameters.ProbeProtocol != nil {
-		probeProtocol := *parameters.ProbeProtocol
+		var temp string
+		temp = string(*parameters.ProbeProtocol)
+		probeProtocol := arm.HealthProbeParameters_ProbeProtocol(temp)
 		result.ProbeProtocol = &probeProtocol
 	}
 
 	// Set property "ProbeRequestType":
 	if parameters.ProbeRequestType != nil {
-		probeRequestType := *parameters.ProbeRequestType
+		var temp string
+		temp = string(*parameters.ProbeRequestType)
+		probeRequestType := arm.HealthProbeParameters_ProbeRequestType(temp)
 		result.ProbeRequestType = &probeRequestType
 	}
 	return result, nil
@@ -1179,14 +1406,14 @@ func (parameters *HealthProbeParameters) ConvertToARM(resolved genruntime.Conver
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (parameters *HealthProbeParameters) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &HealthProbeParameters_ARM{}
+	return &arm.HealthProbeParameters{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (parameters *HealthProbeParameters) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(HealthProbeParameters_ARM)
+	typedInput, ok := armInput.(arm.HealthProbeParameters)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected HealthProbeParameters_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.HealthProbeParameters, got %T", armInput)
 	}
 
 	// Set property "ProbeIntervalInSeconds":
@@ -1203,13 +1430,17 @@ func (parameters *HealthProbeParameters) PopulateFromARM(owner genruntime.Arbitr
 
 	// Set property "ProbeProtocol":
 	if typedInput.ProbeProtocol != nil {
-		probeProtocol := *typedInput.ProbeProtocol
+		var temp string
+		temp = string(*typedInput.ProbeProtocol)
+		probeProtocol := HealthProbeParameters_ProbeProtocol(temp)
 		parameters.ProbeProtocol = &probeProtocol
 	}
 
 	// Set property "ProbeRequestType":
 	if typedInput.ProbeRequestType != nil {
-		probeRequestType := *typedInput.ProbeRequestType
+		var temp string
+		temp = string(*typedInput.ProbeRequestType)
+		probeRequestType := HealthProbeParameters_ProbeRequestType(temp)
 		parameters.ProbeRequestType = &probeRequestType
 	}
 
@@ -1218,7 +1449,7 @@ func (parameters *HealthProbeParameters) PopulateFromARM(owner genruntime.Arbitr
 }
 
 // AssignProperties_From_HealthProbeParameters populates our HealthProbeParameters from the provided source HealthProbeParameters
-func (parameters *HealthProbeParameters) AssignProperties_From_HealthProbeParameters(source *v20230501s.HealthProbeParameters) error {
+func (parameters *HealthProbeParameters) AssignProperties_From_HealthProbeParameters(source *storage.HealthProbeParameters) error {
 
 	// ProbeIntervalInSeconds
 	if source.ProbeIntervalInSeconds != nil {
@@ -1233,16 +1464,18 @@ func (parameters *HealthProbeParameters) AssignProperties_From_HealthProbeParame
 
 	// ProbeProtocol
 	if source.ProbeProtocol != nil {
-		probeProtocol := HealthProbeParameters_ProbeProtocol(*source.ProbeProtocol)
-		parameters.ProbeProtocol = &probeProtocol
+		probeProtocol := *source.ProbeProtocol
+		probeProtocolTemp := genruntime.ToEnum(probeProtocol, healthProbeParameters_ProbeProtocol_Values)
+		parameters.ProbeProtocol = &probeProtocolTemp
 	} else {
 		parameters.ProbeProtocol = nil
 	}
 
 	// ProbeRequestType
 	if source.ProbeRequestType != nil {
-		probeRequestType := HealthProbeParameters_ProbeRequestType(*source.ProbeRequestType)
-		parameters.ProbeRequestType = &probeRequestType
+		probeRequestType := *source.ProbeRequestType
+		probeRequestTypeTemp := genruntime.ToEnum(probeRequestType, healthProbeParameters_ProbeRequestType_Values)
+		parameters.ProbeRequestType = &probeRequestTypeTemp
 	} else {
 		parameters.ProbeRequestType = nil
 	}
@@ -1252,7 +1485,7 @@ func (parameters *HealthProbeParameters) AssignProperties_From_HealthProbeParame
 }
 
 // AssignProperties_To_HealthProbeParameters populates the provided destination HealthProbeParameters from our HealthProbeParameters
-func (parameters *HealthProbeParameters) AssignProperties_To_HealthProbeParameters(destination *v20230501s.HealthProbeParameters) error {
+func (parameters *HealthProbeParameters) AssignProperties_To_HealthProbeParameters(destination *storage.HealthProbeParameters) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1310,7 +1543,7 @@ func (parameters *HealthProbeParameters) Initialize_From_HealthProbeParameters_S
 
 	// ProbeProtocol
 	if source.ProbeProtocol != nil {
-		probeProtocol := HealthProbeParameters_ProbeProtocol(*source.ProbeProtocol)
+		probeProtocol := genruntime.ToEnum(string(*source.ProbeProtocol), healthProbeParameters_ProbeProtocol_Values)
 		parameters.ProbeProtocol = &probeProtocol
 	} else {
 		parameters.ProbeProtocol = nil
@@ -1318,7 +1551,7 @@ func (parameters *HealthProbeParameters) Initialize_From_HealthProbeParameters_S
 
 	// ProbeRequestType
 	if source.ProbeRequestType != nil {
-		probeRequestType := HealthProbeParameters_ProbeRequestType(*source.ProbeRequestType)
+		probeRequestType := genruntime.ToEnum(string(*source.ProbeRequestType), healthProbeParameters_ProbeRequestType_Values)
 		parameters.ProbeRequestType = &probeRequestType
 	} else {
 		parameters.ProbeRequestType = nil
@@ -1347,14 +1580,14 @@ var _ genruntime.FromARMConverter = &HealthProbeParameters_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (parameters *HealthProbeParameters_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &HealthProbeParameters_STATUS_ARM{}
+	return &arm.HealthProbeParameters_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (parameters *HealthProbeParameters_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(HealthProbeParameters_STATUS_ARM)
+	typedInput, ok := armInput.(arm.HealthProbeParameters_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected HealthProbeParameters_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.HealthProbeParameters_STATUS, got %T", armInput)
 	}
 
 	// Set property "ProbeIntervalInSeconds":
@@ -1371,13 +1604,17 @@ func (parameters *HealthProbeParameters_STATUS) PopulateFromARM(owner genruntime
 
 	// Set property "ProbeProtocol":
 	if typedInput.ProbeProtocol != nil {
-		probeProtocol := *typedInput.ProbeProtocol
+		var temp string
+		temp = string(*typedInput.ProbeProtocol)
+		probeProtocol := HealthProbeParameters_ProbeProtocol_STATUS(temp)
 		parameters.ProbeProtocol = &probeProtocol
 	}
 
 	// Set property "ProbeRequestType":
 	if typedInput.ProbeRequestType != nil {
-		probeRequestType := *typedInput.ProbeRequestType
+		var temp string
+		temp = string(*typedInput.ProbeRequestType)
+		probeRequestType := HealthProbeParameters_ProbeRequestType_STATUS(temp)
 		parameters.ProbeRequestType = &probeRequestType
 	}
 
@@ -1386,7 +1623,7 @@ func (parameters *HealthProbeParameters_STATUS) PopulateFromARM(owner genruntime
 }
 
 // AssignProperties_From_HealthProbeParameters_STATUS populates our HealthProbeParameters_STATUS from the provided source HealthProbeParameters_STATUS
-func (parameters *HealthProbeParameters_STATUS) AssignProperties_From_HealthProbeParameters_STATUS(source *v20230501s.HealthProbeParameters_STATUS) error {
+func (parameters *HealthProbeParameters_STATUS) AssignProperties_From_HealthProbeParameters_STATUS(source *storage.HealthProbeParameters_STATUS) error {
 
 	// ProbeIntervalInSeconds
 	parameters.ProbeIntervalInSeconds = genruntime.ClonePointerToInt(source.ProbeIntervalInSeconds)
@@ -1396,16 +1633,18 @@ func (parameters *HealthProbeParameters_STATUS) AssignProperties_From_HealthProb
 
 	// ProbeProtocol
 	if source.ProbeProtocol != nil {
-		probeProtocol := HealthProbeParameters_ProbeProtocol_STATUS(*source.ProbeProtocol)
-		parameters.ProbeProtocol = &probeProtocol
+		probeProtocol := *source.ProbeProtocol
+		probeProtocolTemp := genruntime.ToEnum(probeProtocol, healthProbeParameters_ProbeProtocol_STATUS_Values)
+		parameters.ProbeProtocol = &probeProtocolTemp
 	} else {
 		parameters.ProbeProtocol = nil
 	}
 
 	// ProbeRequestType
 	if source.ProbeRequestType != nil {
-		probeRequestType := HealthProbeParameters_ProbeRequestType_STATUS(*source.ProbeRequestType)
-		parameters.ProbeRequestType = &probeRequestType
+		probeRequestType := *source.ProbeRequestType
+		probeRequestTypeTemp := genruntime.ToEnum(probeRequestType, healthProbeParameters_ProbeRequestType_STATUS_Values)
+		parameters.ProbeRequestType = &probeRequestTypeTemp
 	} else {
 		parameters.ProbeRequestType = nil
 	}
@@ -1415,7 +1654,7 @@ func (parameters *HealthProbeParameters_STATUS) AssignProperties_From_HealthProb
 }
 
 // AssignProperties_To_HealthProbeParameters_STATUS populates the provided destination HealthProbeParameters_STATUS from our HealthProbeParameters_STATUS
-func (parameters *HealthProbeParameters_STATUS) AssignProperties_To_HealthProbeParameters_STATUS(destination *v20230501s.HealthProbeParameters_STATUS) error {
+func (parameters *HealthProbeParameters_STATUS) AssignProperties_To_HealthProbeParameters_STATUS(destination *storage.HealthProbeParameters_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1471,7 +1710,7 @@ func (parameters *LoadBalancingSettingsParameters) ConvertToARM(resolved genrunt
 	if parameters == nil {
 		return nil, nil
 	}
-	result := &LoadBalancingSettingsParameters_ARM{}
+	result := &arm.LoadBalancingSettingsParameters{}
 
 	// Set property "AdditionalLatencyInMilliseconds":
 	if parameters.AdditionalLatencyInMilliseconds != nil {
@@ -1495,14 +1734,14 @@ func (parameters *LoadBalancingSettingsParameters) ConvertToARM(resolved genrunt
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (parameters *LoadBalancingSettingsParameters) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LoadBalancingSettingsParameters_ARM{}
+	return &arm.LoadBalancingSettingsParameters{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (parameters *LoadBalancingSettingsParameters) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LoadBalancingSettingsParameters_ARM)
+	typedInput, ok := armInput.(arm.LoadBalancingSettingsParameters)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LoadBalancingSettingsParameters_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LoadBalancingSettingsParameters, got %T", armInput)
 	}
 
 	// Set property "AdditionalLatencyInMilliseconds":
@@ -1528,7 +1767,7 @@ func (parameters *LoadBalancingSettingsParameters) PopulateFromARM(owner genrunt
 }
 
 // AssignProperties_From_LoadBalancingSettingsParameters populates our LoadBalancingSettingsParameters from the provided source LoadBalancingSettingsParameters
-func (parameters *LoadBalancingSettingsParameters) AssignProperties_From_LoadBalancingSettingsParameters(source *v20230501s.LoadBalancingSettingsParameters) error {
+func (parameters *LoadBalancingSettingsParameters) AssignProperties_From_LoadBalancingSettingsParameters(source *storage.LoadBalancingSettingsParameters) error {
 
 	// AdditionalLatencyInMilliseconds
 	parameters.AdditionalLatencyInMilliseconds = genruntime.ClonePointerToInt(source.AdditionalLatencyInMilliseconds)
@@ -1544,7 +1783,7 @@ func (parameters *LoadBalancingSettingsParameters) AssignProperties_From_LoadBal
 }
 
 // AssignProperties_To_LoadBalancingSettingsParameters populates the provided destination LoadBalancingSettingsParameters from our LoadBalancingSettingsParameters
-func (parameters *LoadBalancingSettingsParameters) AssignProperties_To_LoadBalancingSettingsParameters(destination *v20230501s.LoadBalancingSettingsParameters) error {
+func (parameters *LoadBalancingSettingsParameters) AssignProperties_To_LoadBalancingSettingsParameters(destination *storage.LoadBalancingSettingsParameters) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1600,14 +1839,14 @@ var _ genruntime.FromARMConverter = &LoadBalancingSettingsParameters_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (parameters *LoadBalancingSettingsParameters_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &LoadBalancingSettingsParameters_STATUS_ARM{}
+	return &arm.LoadBalancingSettingsParameters_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (parameters *LoadBalancingSettingsParameters_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(LoadBalancingSettingsParameters_STATUS_ARM)
+	typedInput, ok := armInput.(arm.LoadBalancingSettingsParameters_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected LoadBalancingSettingsParameters_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.LoadBalancingSettingsParameters_STATUS, got %T", armInput)
 	}
 
 	// Set property "AdditionalLatencyInMilliseconds":
@@ -1633,7 +1872,7 @@ func (parameters *LoadBalancingSettingsParameters_STATUS) PopulateFromARM(owner 
 }
 
 // AssignProperties_From_LoadBalancingSettingsParameters_STATUS populates our LoadBalancingSettingsParameters_STATUS from the provided source LoadBalancingSettingsParameters_STATUS
-func (parameters *LoadBalancingSettingsParameters_STATUS) AssignProperties_From_LoadBalancingSettingsParameters_STATUS(source *v20230501s.LoadBalancingSettingsParameters_STATUS) error {
+func (parameters *LoadBalancingSettingsParameters_STATUS) AssignProperties_From_LoadBalancingSettingsParameters_STATUS(source *storage.LoadBalancingSettingsParameters_STATUS) error {
 
 	// AdditionalLatencyInMilliseconds
 	parameters.AdditionalLatencyInMilliseconds = genruntime.ClonePointerToInt(source.AdditionalLatencyInMilliseconds)
@@ -1649,7 +1888,7 @@ func (parameters *LoadBalancingSettingsParameters_STATUS) AssignProperties_From_
 }
 
 // AssignProperties_To_LoadBalancingSettingsParameters_STATUS populates the provided destination LoadBalancingSettingsParameters_STATUS from our LoadBalancingSettingsParameters_STATUS
-func (parameters *LoadBalancingSettingsParameters_STATUS) AssignProperties_To_LoadBalancingSettingsParameters_STATUS(destination *v20230501s.LoadBalancingSettingsParameters_STATUS) error {
+func (parameters *LoadBalancingSettingsParameters_STATUS) AssignProperties_To_LoadBalancingSettingsParameters_STATUS(destination *storage.LoadBalancingSettingsParameters_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1682,6 +1921,13 @@ const (
 	HealthProbeParameters_ProbeProtocol_NotSet = HealthProbeParameters_ProbeProtocol("NotSet")
 )
 
+// Mapping from string to HealthProbeParameters_ProbeProtocol
+var healthProbeParameters_ProbeProtocol_Values = map[string]HealthProbeParameters_ProbeProtocol{
+	"http":   HealthProbeParameters_ProbeProtocol_Http,
+	"https":  HealthProbeParameters_ProbeProtocol_Https,
+	"notset": HealthProbeParameters_ProbeProtocol_NotSet,
+}
+
 type HealthProbeParameters_ProbeProtocol_STATUS string
 
 const (
@@ -1689,6 +1935,13 @@ const (
 	HealthProbeParameters_ProbeProtocol_STATUS_Https  = HealthProbeParameters_ProbeProtocol_STATUS("Https")
 	HealthProbeParameters_ProbeProtocol_STATUS_NotSet = HealthProbeParameters_ProbeProtocol_STATUS("NotSet")
 )
+
+// Mapping from string to HealthProbeParameters_ProbeProtocol_STATUS
+var healthProbeParameters_ProbeProtocol_STATUS_Values = map[string]HealthProbeParameters_ProbeProtocol_STATUS{
+	"http":   HealthProbeParameters_ProbeProtocol_STATUS_Http,
+	"https":  HealthProbeParameters_ProbeProtocol_STATUS_Https,
+	"notset": HealthProbeParameters_ProbeProtocol_STATUS_NotSet,
+}
 
 // +kubebuilder:validation:Enum={"GET","HEAD","NotSet"}
 type HealthProbeParameters_ProbeRequestType string
@@ -1699,6 +1952,13 @@ const (
 	HealthProbeParameters_ProbeRequestType_NotSet = HealthProbeParameters_ProbeRequestType("NotSet")
 )
 
+// Mapping from string to HealthProbeParameters_ProbeRequestType
+var healthProbeParameters_ProbeRequestType_Values = map[string]HealthProbeParameters_ProbeRequestType{
+	"get":    HealthProbeParameters_ProbeRequestType_GET,
+	"head":   HealthProbeParameters_ProbeRequestType_HEAD,
+	"notset": HealthProbeParameters_ProbeRequestType_NotSet,
+}
+
 type HealthProbeParameters_ProbeRequestType_STATUS string
 
 const (
@@ -1706,6 +1966,13 @@ const (
 	HealthProbeParameters_ProbeRequestType_STATUS_HEAD   = HealthProbeParameters_ProbeRequestType_STATUS("HEAD")
 	HealthProbeParameters_ProbeRequestType_STATUS_NotSet = HealthProbeParameters_ProbeRequestType_STATUS("NotSet")
 )
+
+// Mapping from string to HealthProbeParameters_ProbeRequestType_STATUS
+var healthProbeParameters_ProbeRequestType_STATUS_Values = map[string]HealthProbeParameters_ProbeRequestType_STATUS{
+	"get":    HealthProbeParameters_ProbeRequestType_STATUS_GET,
+	"head":   HealthProbeParameters_ProbeRequestType_STATUS_HEAD,
+	"notset": HealthProbeParameters_ProbeRequestType_STATUS_NotSet,
+}
 
 func init() {
 	SchemeBuilder.Register(&AfdOriginGroup{}, &AfdOriginGroupList{})

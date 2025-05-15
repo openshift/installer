@@ -21,6 +21,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	asonetworkv1 "github.com/Azure/azure-service-operator/v2/api/network/v1api20201101"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 

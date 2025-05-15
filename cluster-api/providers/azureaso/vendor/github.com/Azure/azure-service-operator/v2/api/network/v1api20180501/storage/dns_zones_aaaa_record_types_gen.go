@@ -4,9 +4,12 @@
 package storage
 
 import (
-	v20200601s "github.com/Azure/azure-service-operator/v2/api/network/v1api20200601/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20200601/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -29,8 +32,8 @@ import (
 type DnsZonesAAAARecord struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              DnsZones_AAAA_Spec   `json:"spec,omitempty"`
-	Status            DnsZones_AAAA_STATUS `json:"status,omitempty"`
+	Spec              DnsZonesAAAARecord_Spec   `json:"spec,omitempty"`
+	Status            DnsZonesAAAARecord_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &DnsZonesAAAARecord{}
@@ -45,6 +48,26 @@ func (record *DnsZonesAAAARecord) SetConditions(conditions conditions.Conditions
 	record.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &DnsZonesAAAARecord{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (record *DnsZonesAAAARecord) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if record.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return record.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &DnsZonesAAAARecord{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (record *DnsZonesAAAARecord) SecretDestinationExpressions() []*core.DestinationExpression {
+	if record.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return record.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &DnsZonesAAAARecord{}
 
 // AzureName returns the Azure name of the resource
@@ -54,7 +77,7 @@ func (record *DnsZonesAAAARecord) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2018-05-01"
 func (record DnsZonesAAAARecord) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2018-05-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -88,7 +111,7 @@ func (record *DnsZonesAAAARecord) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (record *DnsZonesAAAARecord) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &DnsZones_AAAA_STATUS{}
+	return &DnsZonesAAAARecord_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -100,13 +123,13 @@ func (record *DnsZonesAAAARecord) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (record *DnsZonesAAAARecord) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*DnsZones_AAAA_STATUS); ok {
+	if st, ok := status.(*DnsZonesAAAARecord_STATUS); ok {
 		record.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st DnsZones_AAAA_STATUS
+	var st DnsZonesAAAARecord_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -139,20 +162,21 @@ type DnsZonesAAAARecordList struct {
 	Items           []DnsZonesAAAARecord `json:"items"`
 }
 
-// Storage version of v1api20180501.DnsZones_AAAA_Spec
-type DnsZones_AAAA_Spec struct {
+// Storage version of v1api20180501.DnsZonesAAAARecord_Spec
+type DnsZonesAAAARecord_Spec struct {
 	AAAARecords []AaaaRecord `json:"AAAARecords,omitempty"`
 	ARecords    []ARecord    `json:"ARecords,omitempty"`
 
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string            `json:"azureName,omitempty"`
-	CNAMERecord     *CnameRecord      `json:"CNAMERecord,omitempty"`
-	CaaRecords      []CaaRecord       `json:"caaRecords,omitempty"`
-	MXRecords       []MxRecord        `json:"MXRecords,omitempty"`
-	Metadata        map[string]string `json:"metadata,omitempty"`
-	NSRecords       []NsRecord        `json:"NSRecords,omitempty"`
-	OriginalVersion string            `json:"originalVersion,omitempty"`
+	AzureName       string                          `json:"azureName,omitempty"`
+	CNAMERecord     *CnameRecord                    `json:"CNAMERecord,omitempty"`
+	CaaRecords      []CaaRecord                     `json:"caaRecords,omitempty"`
+	MXRecords       []MxRecord                      `json:"MXRecords,omitempty"`
+	Metadata        map[string]string               `json:"metadata,omitempty"`
+	NSRecords       []NsRecord                      `json:"NSRecords,omitempty"`
+	OperatorSpec    *DnsZonesAAAARecordOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string                          `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -168,28 +192,28 @@ type DnsZones_AAAA_Spec struct {
 	TargetResource *SubResource                       `json:"targetResource,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &DnsZones_AAAA_Spec{}
+var _ genruntime.ConvertibleSpec = &DnsZonesAAAARecord_Spec{}
 
-// ConvertSpecFrom populates our DnsZones_AAAA_Spec from the provided source
-func (aaaa *DnsZones_AAAA_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == aaaa {
+// ConvertSpecFrom populates our DnsZonesAAAARecord_Spec from the provided source
+func (record *DnsZonesAAAARecord_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	if source == record {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
-	return source.ConvertSpecTo(aaaa)
+	return source.ConvertSpecTo(record)
 }
 
-// ConvertSpecTo populates the provided destination from our DnsZones_AAAA_Spec
-func (aaaa *DnsZones_AAAA_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == aaaa {
+// ConvertSpecTo populates the provided destination from our DnsZonesAAAARecord_Spec
+func (record *DnsZonesAAAARecord_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	if destination == record {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
-	return destination.ConvertSpecFrom(aaaa)
+	return destination.ConvertSpecFrom(record)
 }
 
-// Storage version of v1api20180501.DnsZones_AAAA_STATUS
-type DnsZones_AAAA_STATUS struct {
+// Storage version of v1api20180501.DnsZonesAAAARecord_STATUS
+type DnsZonesAAAARecord_STATUS struct {
 	AAAARecords       []AaaaRecord_STATUS    `json:"AAAARecords,omitempty"`
 	ARecords          []ARecord_STATUS       `json:"ARecords,omitempty"`
 	CNAMERecord       *CnameRecord_STATUS    `json:"CNAMERecord,omitempty"`
@@ -213,24 +237,24 @@ type DnsZones_AAAA_STATUS struct {
 	Type              *string                `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &DnsZones_AAAA_STATUS{}
+var _ genruntime.ConvertibleStatus = &DnsZonesAAAARecord_STATUS{}
 
-// ConvertStatusFrom populates our DnsZones_AAAA_STATUS from the provided source
-func (aaaa *DnsZones_AAAA_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == aaaa {
+// ConvertStatusFrom populates our DnsZonesAAAARecord_STATUS from the provided source
+func (record *DnsZonesAAAARecord_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	if source == record {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return source.ConvertStatusTo(aaaa)
+	return source.ConvertStatusTo(record)
 }
 
-// ConvertStatusTo populates the provided destination from our DnsZones_AAAA_STATUS
-func (aaaa *DnsZones_AAAA_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == aaaa {
+// ConvertStatusTo populates the provided destination from our DnsZonesAAAARecord_STATUS
+func (record *DnsZonesAAAARecord_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	if destination == record {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
-	return destination.ConvertStatusFrom(aaaa)
+	return destination.ConvertStatusFrom(record)
 }
 
 // Storage version of v1api20180501.AaaaRecord
@@ -241,7 +265,7 @@ type AaaaRecord struct {
 }
 
 // AssignProperties_From_AaaaRecord populates our AaaaRecord from the provided source AaaaRecord
-func (record *AaaaRecord) AssignProperties_From_AaaaRecord(source *v20200601s.AaaaRecord) error {
+func (record *AaaaRecord) AssignProperties_From_AaaaRecord(source *storage.AaaaRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -269,7 +293,7 @@ func (record *AaaaRecord) AssignProperties_From_AaaaRecord(source *v20200601s.Aa
 }
 
 // AssignProperties_To_AaaaRecord populates the provided destination AaaaRecord from our AaaaRecord
-func (record *AaaaRecord) AssignProperties_To_AaaaRecord(destination *v20200601s.AaaaRecord) error {
+func (record *AaaaRecord) AssignProperties_To_AaaaRecord(destination *storage.AaaaRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -304,7 +328,7 @@ type AaaaRecord_STATUS struct {
 }
 
 // AssignProperties_From_AaaaRecord_STATUS populates our AaaaRecord_STATUS from the provided source AaaaRecord_STATUS
-func (record *AaaaRecord_STATUS) AssignProperties_From_AaaaRecord_STATUS(source *v20200601s.AaaaRecord_STATUS) error {
+func (record *AaaaRecord_STATUS) AssignProperties_From_AaaaRecord_STATUS(source *storage.AaaaRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -332,7 +356,7 @@ func (record *AaaaRecord_STATUS) AssignProperties_From_AaaaRecord_STATUS(source 
 }
 
 // AssignProperties_To_AaaaRecord_STATUS populates the provided destination AaaaRecord_STATUS from our AaaaRecord_STATUS
-func (record *AaaaRecord_STATUS) AssignProperties_To_AaaaRecord_STATUS(destination *v20200601s.AaaaRecord_STATUS) error {
+func (record *AaaaRecord_STATUS) AssignProperties_To_AaaaRecord_STATUS(destination *storage.AaaaRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -367,7 +391,7 @@ type ARecord struct {
 }
 
 // AssignProperties_From_ARecord populates our ARecord from the provided source ARecord
-func (record *ARecord) AssignProperties_From_ARecord(source *v20200601s.ARecord) error {
+func (record *ARecord) AssignProperties_From_ARecord(source *storage.ARecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -395,7 +419,7 @@ func (record *ARecord) AssignProperties_From_ARecord(source *v20200601s.ARecord)
 }
 
 // AssignProperties_To_ARecord populates the provided destination ARecord from our ARecord
-func (record *ARecord) AssignProperties_To_ARecord(destination *v20200601s.ARecord) error {
+func (record *ARecord) AssignProperties_To_ARecord(destination *storage.ARecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -430,7 +454,7 @@ type ARecord_STATUS struct {
 }
 
 // AssignProperties_From_ARecord_STATUS populates our ARecord_STATUS from the provided source ARecord_STATUS
-func (record *ARecord_STATUS) AssignProperties_From_ARecord_STATUS(source *v20200601s.ARecord_STATUS) error {
+func (record *ARecord_STATUS) AssignProperties_From_ARecord_STATUS(source *storage.ARecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -458,7 +482,7 @@ func (record *ARecord_STATUS) AssignProperties_From_ARecord_STATUS(source *v2020
 }
 
 // AssignProperties_To_ARecord_STATUS populates the provided destination ARecord_STATUS from our ARecord_STATUS
-func (record *ARecord_STATUS) AssignProperties_To_ARecord_STATUS(destination *v20200601s.ARecord_STATUS) error {
+func (record *ARecord_STATUS) AssignProperties_To_ARecord_STATUS(destination *storage.ARecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -511,7 +535,7 @@ type CnameRecord struct {
 }
 
 // AssignProperties_From_CnameRecord populates our CnameRecord from the provided source CnameRecord
-func (record *CnameRecord) AssignProperties_From_CnameRecord(source *v20200601s.CnameRecord) error {
+func (record *CnameRecord) AssignProperties_From_CnameRecord(source *storage.CnameRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -539,7 +563,7 @@ func (record *CnameRecord) AssignProperties_From_CnameRecord(source *v20200601s.
 }
 
 // AssignProperties_To_CnameRecord populates the provided destination CnameRecord from our CnameRecord
-func (record *CnameRecord) AssignProperties_To_CnameRecord(destination *v20200601s.CnameRecord) error {
+func (record *CnameRecord) AssignProperties_To_CnameRecord(destination *storage.CnameRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -574,7 +598,7 @@ type CnameRecord_STATUS struct {
 }
 
 // AssignProperties_From_CnameRecord_STATUS populates our CnameRecord_STATUS from the provided source CnameRecord_STATUS
-func (record *CnameRecord_STATUS) AssignProperties_From_CnameRecord_STATUS(source *v20200601s.CnameRecord_STATUS) error {
+func (record *CnameRecord_STATUS) AssignProperties_From_CnameRecord_STATUS(source *storage.CnameRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -602,7 +626,7 @@ func (record *CnameRecord_STATUS) AssignProperties_From_CnameRecord_STATUS(sourc
 }
 
 // AssignProperties_To_CnameRecord_STATUS populates the provided destination CnameRecord_STATUS from our CnameRecord_STATUS
-func (record *CnameRecord_STATUS) AssignProperties_To_CnameRecord_STATUS(destination *v20200601s.CnameRecord_STATUS) error {
+func (record *CnameRecord_STATUS) AssignProperties_To_CnameRecord_STATUS(destination *storage.CnameRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -629,6 +653,14 @@ func (record *CnameRecord_STATUS) AssignProperties_To_CnameRecord_STATUS(destina
 	return nil
 }
 
+// Storage version of v1api20180501.DnsZonesAAAARecordOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type DnsZonesAAAARecordOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
 // Storage version of v1api20180501.MxRecord
 // An MX record.
 type MxRecord struct {
@@ -638,7 +670,7 @@ type MxRecord struct {
 }
 
 // AssignProperties_From_MxRecord populates our MxRecord from the provided source MxRecord
-func (record *MxRecord) AssignProperties_From_MxRecord(source *v20200601s.MxRecord) error {
+func (record *MxRecord) AssignProperties_From_MxRecord(source *storage.MxRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -669,7 +701,7 @@ func (record *MxRecord) AssignProperties_From_MxRecord(source *v20200601s.MxReco
 }
 
 // AssignProperties_To_MxRecord populates the provided destination MxRecord from our MxRecord
-func (record *MxRecord) AssignProperties_To_MxRecord(destination *v20200601s.MxRecord) error {
+func (record *MxRecord) AssignProperties_To_MxRecord(destination *storage.MxRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -708,7 +740,7 @@ type MxRecord_STATUS struct {
 }
 
 // AssignProperties_From_MxRecord_STATUS populates our MxRecord_STATUS from the provided source MxRecord_STATUS
-func (record *MxRecord_STATUS) AssignProperties_From_MxRecord_STATUS(source *v20200601s.MxRecord_STATUS) error {
+func (record *MxRecord_STATUS) AssignProperties_From_MxRecord_STATUS(source *storage.MxRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -739,7 +771,7 @@ func (record *MxRecord_STATUS) AssignProperties_From_MxRecord_STATUS(source *v20
 }
 
 // AssignProperties_To_MxRecord_STATUS populates the provided destination MxRecord_STATUS from our MxRecord_STATUS
-func (record *MxRecord_STATUS) AssignProperties_To_MxRecord_STATUS(destination *v20200601s.MxRecord_STATUS) error {
+func (record *MxRecord_STATUS) AssignProperties_To_MxRecord_STATUS(destination *storage.MxRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -791,7 +823,7 @@ type PtrRecord struct {
 }
 
 // AssignProperties_From_PtrRecord populates our PtrRecord from the provided source PtrRecord
-func (record *PtrRecord) AssignProperties_From_PtrRecord(source *v20200601s.PtrRecord) error {
+func (record *PtrRecord) AssignProperties_From_PtrRecord(source *storage.PtrRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -819,7 +851,7 @@ func (record *PtrRecord) AssignProperties_From_PtrRecord(source *v20200601s.PtrR
 }
 
 // AssignProperties_To_PtrRecord populates the provided destination PtrRecord from our PtrRecord
-func (record *PtrRecord) AssignProperties_To_PtrRecord(destination *v20200601s.PtrRecord) error {
+func (record *PtrRecord) AssignProperties_To_PtrRecord(destination *storage.PtrRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -854,7 +886,7 @@ type PtrRecord_STATUS struct {
 }
 
 // AssignProperties_From_PtrRecord_STATUS populates our PtrRecord_STATUS from the provided source PtrRecord_STATUS
-func (record *PtrRecord_STATUS) AssignProperties_From_PtrRecord_STATUS(source *v20200601s.PtrRecord_STATUS) error {
+func (record *PtrRecord_STATUS) AssignProperties_From_PtrRecord_STATUS(source *storage.PtrRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -882,7 +914,7 @@ func (record *PtrRecord_STATUS) AssignProperties_From_PtrRecord_STATUS(source *v
 }
 
 // AssignProperties_To_PtrRecord_STATUS populates the provided destination PtrRecord_STATUS from our PtrRecord_STATUS
-func (record *PtrRecord_STATUS) AssignProperties_To_PtrRecord_STATUS(destination *v20200601s.PtrRecord_STATUS) error {
+func (record *PtrRecord_STATUS) AssignProperties_To_PtrRecord_STATUS(destination *storage.PtrRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -923,7 +955,7 @@ type SoaRecord struct {
 }
 
 // AssignProperties_From_SoaRecord populates our SoaRecord from the provided source SoaRecord
-func (record *SoaRecord) AssignProperties_From_SoaRecord(source *v20200601s.SoaRecord) error {
+func (record *SoaRecord) AssignProperties_From_SoaRecord(source *storage.SoaRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -986,7 +1018,7 @@ func (record *SoaRecord) AssignProperties_From_SoaRecord(source *v20200601s.SoaR
 }
 
 // AssignProperties_To_SoaRecord populates the provided destination SoaRecord from our SoaRecord
-func (record *SoaRecord) AssignProperties_To_SoaRecord(destination *v20200601s.SoaRecord) error {
+func (record *SoaRecord) AssignProperties_To_SoaRecord(destination *storage.SoaRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -1062,7 +1094,7 @@ type SoaRecord_STATUS struct {
 }
 
 // AssignProperties_From_SoaRecord_STATUS populates our SoaRecord_STATUS from the provided source SoaRecord_STATUS
-func (record *SoaRecord_STATUS) AssignProperties_From_SoaRecord_STATUS(source *v20200601s.SoaRecord_STATUS) error {
+func (record *SoaRecord_STATUS) AssignProperties_From_SoaRecord_STATUS(source *storage.SoaRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -1125,7 +1157,7 @@ func (record *SoaRecord_STATUS) AssignProperties_From_SoaRecord_STATUS(source *v
 }
 
 // AssignProperties_To_SoaRecord_STATUS populates the provided destination SoaRecord_STATUS from our SoaRecord_STATUS
-func (record *SoaRecord_STATUS) AssignProperties_To_SoaRecord_STATUS(destination *v20200601s.SoaRecord_STATUS) error {
+func (record *SoaRecord_STATUS) AssignProperties_To_SoaRecord_STATUS(destination *storage.SoaRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -1198,7 +1230,7 @@ type SrvRecord struct {
 }
 
 // AssignProperties_From_SrvRecord populates our SrvRecord from the provided source SrvRecord
-func (record *SrvRecord) AssignProperties_From_SrvRecord(source *v20200601s.SrvRecord) error {
+func (record *SrvRecord) AssignProperties_From_SrvRecord(source *storage.SrvRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -1235,7 +1267,7 @@ func (record *SrvRecord) AssignProperties_From_SrvRecord(source *v20200601s.SrvR
 }
 
 // AssignProperties_To_SrvRecord populates the provided destination SrvRecord from our SrvRecord
-func (record *SrvRecord) AssignProperties_To_SrvRecord(destination *v20200601s.SrvRecord) error {
+func (record *SrvRecord) AssignProperties_To_SrvRecord(destination *storage.SrvRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -1282,7 +1314,7 @@ type SrvRecord_STATUS struct {
 }
 
 // AssignProperties_From_SrvRecord_STATUS populates our SrvRecord_STATUS from the provided source SrvRecord_STATUS
-func (record *SrvRecord_STATUS) AssignProperties_From_SrvRecord_STATUS(source *v20200601s.SrvRecord_STATUS) error {
+func (record *SrvRecord_STATUS) AssignProperties_From_SrvRecord_STATUS(source *storage.SrvRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -1319,7 +1351,7 @@ func (record *SrvRecord_STATUS) AssignProperties_From_SrvRecord_STATUS(source *v
 }
 
 // AssignProperties_To_SrvRecord_STATUS populates the provided destination SrvRecord_STATUS from our SrvRecord_STATUS
-func (record *SrvRecord_STATUS) AssignProperties_To_SrvRecord_STATUS(destination *v20200601s.SrvRecord_STATUS) error {
+func (record *SrvRecord_STATUS) AssignProperties_To_SrvRecord_STATUS(destination *storage.SrvRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -1363,7 +1395,7 @@ type TxtRecord struct {
 }
 
 // AssignProperties_From_TxtRecord populates our TxtRecord from the provided source TxtRecord
-func (record *TxtRecord) AssignProperties_From_TxtRecord(source *v20200601s.TxtRecord) error {
+func (record *TxtRecord) AssignProperties_From_TxtRecord(source *storage.TxtRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -1391,7 +1423,7 @@ func (record *TxtRecord) AssignProperties_From_TxtRecord(source *v20200601s.TxtR
 }
 
 // AssignProperties_To_TxtRecord populates the provided destination TxtRecord from our TxtRecord
-func (record *TxtRecord) AssignProperties_To_TxtRecord(destination *v20200601s.TxtRecord) error {
+func (record *TxtRecord) AssignProperties_To_TxtRecord(destination *storage.TxtRecord) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -1426,7 +1458,7 @@ type TxtRecord_STATUS struct {
 }
 
 // AssignProperties_From_TxtRecord_STATUS populates our TxtRecord_STATUS from the provided source TxtRecord_STATUS
-func (record *TxtRecord_STATUS) AssignProperties_From_TxtRecord_STATUS(source *v20200601s.TxtRecord_STATUS) error {
+func (record *TxtRecord_STATUS) AssignProperties_From_TxtRecord_STATUS(source *storage.TxtRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
 
@@ -1454,7 +1486,7 @@ func (record *TxtRecord_STATUS) AssignProperties_From_TxtRecord_STATUS(source *v
 }
 
 // AssignProperties_To_TxtRecord_STATUS populates the provided destination TxtRecord_STATUS from our TxtRecord_STATUS
-func (record *TxtRecord_STATUS) AssignProperties_To_TxtRecord_STATUS(destination *v20200601s.TxtRecord_STATUS) error {
+func (record *TxtRecord_STATUS) AssignProperties_To_TxtRecord_STATUS(destination *storage.TxtRecord_STATUS) error {
 	// Clone the existing property bag
 	propertyBag := genruntime.NewPropertyBag(record.PropertyBag)
 
@@ -1482,83 +1514,83 @@ func (record *TxtRecord_STATUS) AssignProperties_To_TxtRecord_STATUS(destination
 }
 
 type augmentConversionForAaaaRecord interface {
-	AssignPropertiesFrom(src *v20200601s.AaaaRecord) error
-	AssignPropertiesTo(dst *v20200601s.AaaaRecord) error
+	AssignPropertiesFrom(src *storage.AaaaRecord) error
+	AssignPropertiesTo(dst *storage.AaaaRecord) error
 }
 
 type augmentConversionForAaaaRecord_STATUS interface {
-	AssignPropertiesFrom(src *v20200601s.AaaaRecord_STATUS) error
-	AssignPropertiesTo(dst *v20200601s.AaaaRecord_STATUS) error
+	AssignPropertiesFrom(src *storage.AaaaRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.AaaaRecord_STATUS) error
 }
 
 type augmentConversionForARecord interface {
-	AssignPropertiesFrom(src *v20200601s.ARecord) error
-	AssignPropertiesTo(dst *v20200601s.ARecord) error
+	AssignPropertiesFrom(src *storage.ARecord) error
+	AssignPropertiesTo(dst *storage.ARecord) error
 }
 
 type augmentConversionForARecord_STATUS interface {
-	AssignPropertiesFrom(src *v20200601s.ARecord_STATUS) error
-	AssignPropertiesTo(dst *v20200601s.ARecord_STATUS) error
+	AssignPropertiesFrom(src *storage.ARecord_STATUS) error
+	AssignPropertiesTo(dst *storage.ARecord_STATUS) error
 }
 
 type augmentConversionForCnameRecord interface {
-	AssignPropertiesFrom(src *v20200601s.CnameRecord) error
-	AssignPropertiesTo(dst *v20200601s.CnameRecord) error
+	AssignPropertiesFrom(src *storage.CnameRecord) error
+	AssignPropertiesTo(dst *storage.CnameRecord) error
 }
 
 type augmentConversionForCnameRecord_STATUS interface {
-	AssignPropertiesFrom(src *v20200601s.CnameRecord_STATUS) error
-	AssignPropertiesTo(dst *v20200601s.CnameRecord_STATUS) error
+	AssignPropertiesFrom(src *storage.CnameRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.CnameRecord_STATUS) error
 }
 
 type augmentConversionForMxRecord interface {
-	AssignPropertiesFrom(src *v20200601s.MxRecord) error
-	AssignPropertiesTo(dst *v20200601s.MxRecord) error
+	AssignPropertiesFrom(src *storage.MxRecord) error
+	AssignPropertiesTo(dst *storage.MxRecord) error
 }
 
 type augmentConversionForMxRecord_STATUS interface {
-	AssignPropertiesFrom(src *v20200601s.MxRecord_STATUS) error
-	AssignPropertiesTo(dst *v20200601s.MxRecord_STATUS) error
+	AssignPropertiesFrom(src *storage.MxRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.MxRecord_STATUS) error
 }
 
 type augmentConversionForPtrRecord interface {
-	AssignPropertiesFrom(src *v20200601s.PtrRecord) error
-	AssignPropertiesTo(dst *v20200601s.PtrRecord) error
+	AssignPropertiesFrom(src *storage.PtrRecord) error
+	AssignPropertiesTo(dst *storage.PtrRecord) error
 }
 
 type augmentConversionForPtrRecord_STATUS interface {
-	AssignPropertiesFrom(src *v20200601s.PtrRecord_STATUS) error
-	AssignPropertiesTo(dst *v20200601s.PtrRecord_STATUS) error
+	AssignPropertiesFrom(src *storage.PtrRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.PtrRecord_STATUS) error
 }
 
 type augmentConversionForSoaRecord interface {
-	AssignPropertiesFrom(src *v20200601s.SoaRecord) error
-	AssignPropertiesTo(dst *v20200601s.SoaRecord) error
+	AssignPropertiesFrom(src *storage.SoaRecord) error
+	AssignPropertiesTo(dst *storage.SoaRecord) error
 }
 
 type augmentConversionForSoaRecord_STATUS interface {
-	AssignPropertiesFrom(src *v20200601s.SoaRecord_STATUS) error
-	AssignPropertiesTo(dst *v20200601s.SoaRecord_STATUS) error
+	AssignPropertiesFrom(src *storage.SoaRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.SoaRecord_STATUS) error
 }
 
 type augmentConversionForSrvRecord interface {
-	AssignPropertiesFrom(src *v20200601s.SrvRecord) error
-	AssignPropertiesTo(dst *v20200601s.SrvRecord) error
+	AssignPropertiesFrom(src *storage.SrvRecord) error
+	AssignPropertiesTo(dst *storage.SrvRecord) error
 }
 
 type augmentConversionForSrvRecord_STATUS interface {
-	AssignPropertiesFrom(src *v20200601s.SrvRecord_STATUS) error
-	AssignPropertiesTo(dst *v20200601s.SrvRecord_STATUS) error
+	AssignPropertiesFrom(src *storage.SrvRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.SrvRecord_STATUS) error
 }
 
 type augmentConversionForTxtRecord interface {
-	AssignPropertiesFrom(src *v20200601s.TxtRecord) error
-	AssignPropertiesTo(dst *v20200601s.TxtRecord) error
+	AssignPropertiesFrom(src *storage.TxtRecord) error
+	AssignPropertiesTo(dst *storage.TxtRecord) error
 }
 
 type augmentConversionForTxtRecord_STATUS interface {
-	AssignPropertiesFrom(src *v20200601s.TxtRecord_STATUS) error
-	AssignPropertiesTo(dst *v20200601s.TxtRecord_STATUS) error
+	AssignPropertiesFrom(src *storage.TxtRecord_STATUS) error
+	AssignPropertiesTo(dst *storage.TxtRecord_STATUS) error
 }
 
 func init() {

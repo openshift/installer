@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,6 +47,26 @@ func (ruleset *DnsForwardingRuleset) SetConditions(conditions conditions.Conditi
 	ruleset.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &DnsForwardingRuleset{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (ruleset *DnsForwardingRuleset) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if ruleset.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return ruleset.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &DnsForwardingRuleset{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (ruleset *DnsForwardingRuleset) SecretDestinationExpressions() []*core.DestinationExpression {
+	if ruleset.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return ruleset.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &DnsForwardingRuleset{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (ruleset *DnsForwardingRuleset) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-07-01"
 func (ruleset DnsForwardingRuleset) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-07-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -142,10 +165,11 @@ type DnsForwardingRulesetList struct {
 type DnsForwardingRuleset_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName                    string                   `json:"azureName,omitempty"`
-	DnsResolverOutboundEndpoints []DnsresolverSubResource `json:"dnsResolverOutboundEndpoints,omitempty"`
-	Location                     *string                  `json:"location,omitempty"`
-	OriginalVersion              string                   `json:"originalVersion,omitempty"`
+	AzureName                    string                            `json:"azureName,omitempty"`
+	DnsResolverOutboundEndpoints []SubResource                     `json:"dnsResolverOutboundEndpoints,omitempty"`
+	Location                     *string                           `json:"location,omitempty"`
+	OperatorSpec                 *DnsForwardingRulesetOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion              string                            `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -179,18 +203,18 @@ func (ruleset *DnsForwardingRuleset_Spec) ConvertSpecTo(destination genruntime.C
 // Storage version of v1api20220701.DnsForwardingRuleset_STATUS
 // Describes a DNS forwarding ruleset.
 type DnsForwardingRuleset_STATUS struct {
-	Conditions                   []conditions.Condition          `json:"conditions,omitempty"`
-	DnsResolverOutboundEndpoints []DnsresolverSubResource_STATUS `json:"dnsResolverOutboundEndpoints,omitempty"`
-	Etag                         *string                         `json:"etag,omitempty"`
-	Id                           *string                         `json:"id,omitempty"`
-	Location                     *string                         `json:"location,omitempty"`
-	Name                         *string                         `json:"name,omitempty"`
-	PropertyBag                  genruntime.PropertyBag          `json:"$propertyBag,omitempty"`
-	ProvisioningState            *string                         `json:"provisioningState,omitempty"`
-	ResourceGuid                 *string                         `json:"resourceGuid,omitempty"`
-	SystemData                   *SystemData_STATUS              `json:"systemData,omitempty"`
-	Tags                         map[string]string               `json:"tags,omitempty"`
-	Type                         *string                         `json:"type,omitempty"`
+	Conditions                   []conditions.Condition `json:"conditions,omitempty"`
+	DnsResolverOutboundEndpoints []SubResource_STATUS   `json:"dnsResolverOutboundEndpoints,omitempty"`
+	Etag                         *string                `json:"etag,omitempty"`
+	Id                           *string                `json:"id,omitempty"`
+	Location                     *string                `json:"location,omitempty"`
+	Name                         *string                `json:"name,omitempty"`
+	PropertyBag                  genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+	ProvisioningState            *string                `json:"provisioningState,omitempty"`
+	ResourceGuid                 *string                `json:"resourceGuid,omitempty"`
+	SystemData                   *SystemData_STATUS     `json:"systemData,omitempty"`
+	Tags                         map[string]string      `json:"tags,omitempty"`
+	Type                         *string                `json:"type,omitempty"`
 }
 
 var _ genruntime.ConvertibleStatus = &DnsForwardingRuleset_STATUS{}
@@ -213,21 +237,12 @@ func (ruleset *DnsForwardingRuleset_STATUS) ConvertStatusTo(destination genrunti
 	return destination.ConvertStatusFrom(ruleset)
 }
 
-// Storage version of v1api20220701.DnsresolverSubResource
-// Reference to another ARM resource.
-type DnsresolverSubResource struct {
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-
-	// +kubebuilder:validation:Required
-	// Reference: Resource ID.
-	Reference *genruntime.ResourceReference `armReference:"Id" json:"reference,omitempty"`
-}
-
-// Storage version of v1api20220701.DnsresolverSubResource_STATUS
-// Reference to another ARM resource.
-type DnsresolverSubResource_STATUS struct {
-	Id          *string                `json:"id,omitempty"`
-	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+// Storage version of v1api20220701.DnsForwardingRulesetOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type DnsForwardingRulesetOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {

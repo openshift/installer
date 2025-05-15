@@ -23,17 +23,24 @@ import (
 	"strings"
 
 	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
-	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001/storage"
+	// NOTE: when the hub API version is updated, verify the
+	// ManagedClusterAgentPoolProfile below has every field defined. If a field
+	// isn't defined, the agent pool will be created with a zero/null value, and
+	// then updated to the user-defined value. If the field is immutable, this
+	// update will fail. The linter should catch if there are missing fields,
+	// but verify that check is actually working.
+	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
-	"sigs.k8s.io/cluster-api-provider-azure/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	exputil "sigs.k8s.io/cluster-api/exp/util"
 	"sigs.k8s.io/cluster-api/util/secret"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 var (
@@ -80,7 +87,7 @@ func SetManagedClusterDefaults(ctrlClient client.Client, asoManagedControlPlane 
 			return err
 		}
 
-		if err := setManagedClusterCredentials(ctx, cluster, managedClusterPath, managedCluster); err != nil {
+		if err := setManagedClusterCredentials(ctx, cluster, managedClusterPath, managedCluster); err != nil { //nolint:nolintlint // leave it as is
 			return err
 		}
 
@@ -349,12 +356,14 @@ func setAgentPoolProfilesFromAgentPools(managedCluster conversion.Convertible, a
 			ScaleDownMode:                     hubPool.Spec.ScaleDownMode,
 			ScaleSetEvictionPolicy:            hubPool.Spec.ScaleSetEvictionPolicy,
 			ScaleSetPriority:                  hubPool.Spec.ScaleSetPriority,
+			SecurityProfile:                   hubPool.Spec.SecurityProfile,
 			SpotMaxPrice:                      hubPool.Spec.SpotMaxPrice,
 			Tags:                              hubPool.Spec.Tags,
 			Type:                              hubPool.Spec.Type,
 			UpgradeSettings:                   hubPool.Spec.UpgradeSettings,
 			VmSize:                            hubPool.Spec.VmSize,
 			VnetSubnetReference:               hubPool.Spec.VnetSubnetReference,
+			WindowsProfile:                    hubPool.Spec.WindowsProfile,
 			WorkloadRuntime:                   hubPool.Spec.WorkloadRuntime,
 		}
 

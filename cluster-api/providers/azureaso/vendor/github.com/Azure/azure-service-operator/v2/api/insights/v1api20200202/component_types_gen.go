@@ -6,12 +6,15 @@ package v1api20200202
 import (
 	"context"
 	"fmt"
-	v20200202s "github.com/Azure/azure-service-operator/v2/api/insights/v1api20200202/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/insights/v1api20200202/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/insights/v1api20200202/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,7 +57,7 @@ var _ conversion.Convertible = &Component{}
 
 // ConvertFrom populates our Component from the provided hub Component
 func (component *Component) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20200202s.Component)
+	source, ok := hub.(*storage.Component)
 	if !ok {
 		return fmt.Errorf("expected insights/v1api20200202/storage/Component but received %T instead", hub)
 	}
@@ -64,7 +67,7 @@ func (component *Component) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub Component from our Component
 func (component *Component) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20200202s.Component)
+	destination, ok := hub.(*storage.Component)
 	if !ok {
 		return fmt.Errorf("expected insights/v1api20200202/storage/Component but received %T instead", hub)
 	}
@@ -95,6 +98,26 @@ func (component *Component) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the Component resource
 func (component *Component) defaultImpl() { component.defaultAzureName() }
 
+var _ configmaps.Exporter = &Component{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (component *Component) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if component.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return component.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Component{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (component *Component) SecretDestinationExpressions() []*core.DestinationExpression {
+	if component.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return component.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &Component{}
 
 // InitializeSpec initializes the spec for this resource from the given status
@@ -106,10 +129,10 @@ func (component *Component) InitializeSpec(status genruntime.ConvertibleStatus) 
 	return fmt.Errorf("expected Status of type Component_STATUS but received %T instead", status)
 }
 
-var _ genruntime.KubernetesExporter = &Component{}
+var _ genruntime.KubernetesConfigExporter = &Component{}
 
-// ExportKubernetesResources defines a resource which can create other resources in Kubernetes.
-func (component *Component) ExportKubernetesResources(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
+// ExportKubernetesConfigMaps defines a resource which can create ConfigMaps in Kubernetes.
+func (component *Component) ExportKubernetesConfigMaps(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
 	collector := configmaps.NewCollector(component.Namespace)
 	if component.Spec.OperatorSpec != nil && component.Spec.OperatorSpec.ConfigMaps != nil {
 		if component.Status.ConnectionString != nil {
@@ -137,7 +160,7 @@ func (component *Component) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2020-02-02"
 func (component Component) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2020-02-02"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -235,7 +258,7 @@ func (component *Component) ValidateUpdate(old runtime.Object) (admission.Warnin
 
 // createValidations validates the creation of the resource
 func (component *Component) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){component.validateResourceReferences, component.validateOwnerReference, component.validateConfigMapDestinations}
+	return []func() (admission.Warnings, error){component.validateResourceReferences, component.validateOwnerReference, component.validateSecretDestinations, component.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -254,6 +277,9 @@ func (component *Component) updateValidations() []func(old runtime.Object) (admi
 			return component.validateOwnerReference()
 		},
 		func(old runtime.Object) (admission.Warnings, error) {
+			return component.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
 			return component.validateConfigMapDestinations()
 		},
 	}
@@ -264,14 +290,14 @@ func (component *Component) validateConfigMapDestinations() (admission.Warnings,
 	if component.Spec.OperatorSpec == nil {
 		return nil, nil
 	}
-	if component.Spec.OperatorSpec.ConfigMaps == nil {
-		return nil, nil
+	var toValidate []*genruntime.ConfigMapDestination
+	if component.Spec.OperatorSpec.ConfigMaps != nil {
+		toValidate = []*genruntime.ConfigMapDestination{
+			component.Spec.OperatorSpec.ConfigMaps.ConnectionString,
+			component.Spec.OperatorSpec.ConfigMaps.InstrumentationKey,
+		}
 	}
-	toValidate := []*genruntime.ConfigMapDestination{
-		component.Spec.OperatorSpec.ConfigMaps.ConnectionString,
-		component.Spec.OperatorSpec.ConfigMaps.InstrumentationKey,
-	}
-	return genruntime.ValidateConfigMapDestinations(toValidate)
+	return configmaps.ValidateDestinations(component, toValidate, component.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -288,6 +314,14 @@ func (component *Component) validateResourceReferences() (admission.Warnings, er
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (component *Component) validateSecretDestinations() (admission.Warnings, error) {
+	if component.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(component, nil, component.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (component *Component) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*Component)
@@ -299,7 +333,7 @@ func (component *Component) validateWriteOnceProperties(old runtime.Object) (adm
 }
 
 // AssignProperties_From_Component populates our Component from the provided source Component
-func (component *Component) AssignProperties_From_Component(source *v20200202s.Component) error {
+func (component *Component) AssignProperties_From_Component(source *storage.Component) error {
 
 	// ObjectMeta
 	component.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -325,13 +359,13 @@ func (component *Component) AssignProperties_From_Component(source *v20200202s.C
 }
 
 // AssignProperties_To_Component populates the provided destination Component from our Component
-func (component *Component) AssignProperties_To_Component(destination *v20200202s.Component) error {
+func (component *Component) AssignProperties_To_Component(destination *storage.Component) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *component.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20200202s.Component_Spec
+	var spec storage.Component_Spec
 	err := component.Spec.AssignProperties_To_Component_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Component_Spec() to populate field Spec")
@@ -339,7 +373,7 @@ func (component *Component) AssignProperties_To_Component(destination *v20200202
 	destination.Spec = spec
 
 	// Status
-	var status v20200202s.Component_STATUS
+	var status storage.Component_STATUS
 	err = component.Status.AssignProperties_To_Component_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Component_STATUS() to populate field Status")
@@ -460,7 +494,7 @@ func (component *Component_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 	if component == nil {
 		return nil, nil
 	}
-	result := &Component_Spec_ARM{}
+	result := &arm.Component_Spec{}
 
 	// Set property "Etag":
 	if component.Etag != nil {
@@ -498,10 +532,12 @@ func (component *Component_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		component.RetentionInDays != nil ||
 		component.SamplingPercentage != nil ||
 		component.WorkspaceResourceReference != nil {
-		result.Properties = &ApplicationInsightsComponentProperties_ARM{}
+		result.Properties = &arm.ApplicationInsightsComponentProperties{}
 	}
 	if component.Application_Type != nil {
-		applicationType := *component.Application_Type
+		var temp string
+		temp = string(*component.Application_Type)
+		applicationType := arm.ApplicationInsightsComponentProperties_Application_Type(temp)
 		result.Properties.Application_Type = &applicationType
 	}
 	if component.DisableIpMasking != nil {
@@ -513,7 +549,9 @@ func (component *Component_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.DisableLocalAuth = &disableLocalAuth
 	}
 	if component.Flow_Type != nil {
-		flowType := *component.Flow_Type
+		var temp string
+		temp = string(*component.Flow_Type)
+		flowType := arm.ApplicationInsightsComponentProperties_Flow_Type(temp)
 		result.Properties.Flow_Type = &flowType
 	}
 	if component.ForceCustomerStorageForProfiler != nil {
@@ -529,19 +567,27 @@ func (component *Component_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		result.Properties.ImmediatePurgeDataOn30Days = &immediatePurgeDataOn30Days
 	}
 	if component.IngestionMode != nil {
-		ingestionMode := *component.IngestionMode
+		var temp string
+		temp = string(*component.IngestionMode)
+		ingestionMode := arm.ApplicationInsightsComponentProperties_IngestionMode(temp)
 		result.Properties.IngestionMode = &ingestionMode
 	}
 	if component.PublicNetworkAccessForIngestion != nil {
-		publicNetworkAccessForIngestion := *component.PublicNetworkAccessForIngestion
+		var temp string
+		temp = string(*component.PublicNetworkAccessForIngestion)
+		publicNetworkAccessForIngestion := arm.PublicNetworkAccessType(temp)
 		result.Properties.PublicNetworkAccessForIngestion = &publicNetworkAccessForIngestion
 	}
 	if component.PublicNetworkAccessForQuery != nil {
-		publicNetworkAccessForQuery := *component.PublicNetworkAccessForQuery
+		var temp string
+		temp = string(*component.PublicNetworkAccessForQuery)
+		publicNetworkAccessForQuery := arm.PublicNetworkAccessType(temp)
 		result.Properties.PublicNetworkAccessForQuery = &publicNetworkAccessForQuery
 	}
 	if component.Request_Source != nil {
-		requestSource := *component.Request_Source
+		var temp string
+		temp = string(*component.Request_Source)
+		requestSource := arm.ApplicationInsightsComponentProperties_Request_Source(temp)
 		result.Properties.Request_Source = &requestSource
 	}
 	if component.RetentionInDays != nil {
@@ -573,21 +619,23 @@ func (component *Component_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (component *Component_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Component_Spec_ARM{}
+	return &arm.Component_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (component *Component_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Component_Spec_ARM)
+	typedInput, ok := armInput.(arm.Component_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Component_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Component_Spec, got %T", armInput)
 	}
 
 	// Set property "Application_Type":
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Application_Type != nil {
-			applicationType := *typedInput.Properties.Application_Type
+			var temp string
+			temp = string(*typedInput.Properties.Application_Type)
+			applicationType := ApplicationInsightsComponentProperties_Application_Type(temp)
 			component.Application_Type = &applicationType
 		}
 	}
@@ -623,7 +671,9 @@ func (component *Component_Spec) PopulateFromARM(owner genruntime.ArbitraryOwner
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Flow_Type != nil {
-			flowType := *typedInput.Properties.Flow_Type
+			var temp string
+			temp = string(*typedInput.Properties.Flow_Type)
+			flowType := ApplicationInsightsComponentProperties_Flow_Type(temp)
 			component.Flow_Type = &flowType
 		}
 	}
@@ -659,7 +709,9 @@ func (component *Component_Spec) PopulateFromARM(owner genruntime.ArbitraryOwner
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.IngestionMode != nil {
-			ingestionMode := *typedInput.Properties.IngestionMode
+			var temp string
+			temp = string(*typedInput.Properties.IngestionMode)
+			ingestionMode := ApplicationInsightsComponentProperties_IngestionMode(temp)
 			component.IngestionMode = &ingestionMode
 		}
 	}
@@ -688,7 +740,9 @@ func (component *Component_Spec) PopulateFromARM(owner genruntime.ArbitraryOwner
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PublicNetworkAccessForIngestion != nil {
-			publicNetworkAccessForIngestion := *typedInput.Properties.PublicNetworkAccessForIngestion
+			var temp string
+			temp = string(*typedInput.Properties.PublicNetworkAccessForIngestion)
+			publicNetworkAccessForIngestion := PublicNetworkAccessType(temp)
 			component.PublicNetworkAccessForIngestion = &publicNetworkAccessForIngestion
 		}
 	}
@@ -697,7 +751,9 @@ func (component *Component_Spec) PopulateFromARM(owner genruntime.ArbitraryOwner
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PublicNetworkAccessForQuery != nil {
-			publicNetworkAccessForQuery := *typedInput.Properties.PublicNetworkAccessForQuery
+			var temp string
+			temp = string(*typedInput.Properties.PublicNetworkAccessForQuery)
+			publicNetworkAccessForQuery := PublicNetworkAccessType(temp)
 			component.PublicNetworkAccessForQuery = &publicNetworkAccessForQuery
 		}
 	}
@@ -706,7 +762,9 @@ func (component *Component_Spec) PopulateFromARM(owner genruntime.ArbitraryOwner
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Request_Source != nil {
-			requestSource := *typedInput.Properties.Request_Source
+			var temp string
+			temp = string(*typedInput.Properties.Request_Source)
+			requestSource := ApplicationInsightsComponentProperties_Request_Source(temp)
 			component.Request_Source = &requestSource
 		}
 	}
@@ -747,14 +805,14 @@ var _ genruntime.ConvertibleSpec = &Component_Spec{}
 
 // ConvertSpecFrom populates our Component_Spec from the provided source
 func (component *Component_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20200202s.Component_Spec)
+	src, ok := source.(*storage.Component_Spec)
 	if ok {
 		// Populate our instance from source
 		return component.AssignProperties_From_Component_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20200202s.Component_Spec{}
+	src = &storage.Component_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -771,14 +829,14 @@ func (component *Component_Spec) ConvertSpecFrom(source genruntime.ConvertibleSp
 
 // ConvertSpecTo populates the provided destination from our Component_Spec
 func (component *Component_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20200202s.Component_Spec)
+	dst, ok := destination.(*storage.Component_Spec)
 	if ok {
 		// Populate destination from our instance
 		return component.AssignProperties_To_Component_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20200202s.Component_Spec{}
+	dst = &storage.Component_Spec{}
 	err := component.AssignProperties_To_Component_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -794,12 +852,13 @@ func (component *Component_Spec) ConvertSpecTo(destination genruntime.Convertibl
 }
 
 // AssignProperties_From_Component_Spec populates our Component_Spec from the provided source Component_Spec
-func (component *Component_Spec) AssignProperties_From_Component_Spec(source *v20200202s.Component_Spec) error {
+func (component *Component_Spec) AssignProperties_From_Component_Spec(source *storage.Component_Spec) error {
 
 	// Application_Type
 	if source.Application_Type != nil {
-		applicationType := ApplicationInsightsComponentProperties_Application_Type(*source.Application_Type)
-		component.Application_Type = &applicationType
+		applicationType := *source.Application_Type
+		applicationTypeTemp := genruntime.ToEnum(applicationType, applicationInsightsComponentProperties_Application_Type_Values)
+		component.Application_Type = &applicationTypeTemp
 	} else {
 		component.Application_Type = nil
 	}
@@ -828,8 +887,9 @@ func (component *Component_Spec) AssignProperties_From_Component_Spec(source *v2
 
 	// Flow_Type
 	if source.Flow_Type != nil {
-		flowType := ApplicationInsightsComponentProperties_Flow_Type(*source.Flow_Type)
-		component.Flow_Type = &flowType
+		flowType := *source.Flow_Type
+		flowTypeTemp := genruntime.ToEnum(flowType, applicationInsightsComponentProperties_Flow_Type_Values)
+		component.Flow_Type = &flowTypeTemp
 	} else {
 		component.Flow_Type = nil
 	}
@@ -855,8 +915,9 @@ func (component *Component_Spec) AssignProperties_From_Component_Spec(source *v2
 
 	// IngestionMode
 	if source.IngestionMode != nil {
-		ingestionMode := ApplicationInsightsComponentProperties_IngestionMode(*source.IngestionMode)
-		component.IngestionMode = &ingestionMode
+		ingestionMode := *source.IngestionMode
+		ingestionModeTemp := genruntime.ToEnum(ingestionMode, applicationInsightsComponentProperties_IngestionMode_Values)
+		component.IngestionMode = &ingestionModeTemp
 	} else {
 		component.IngestionMode = nil
 	}
@@ -889,24 +950,27 @@ func (component *Component_Spec) AssignProperties_From_Component_Spec(source *v2
 
 	// PublicNetworkAccessForIngestion
 	if source.PublicNetworkAccessForIngestion != nil {
-		publicNetworkAccessForIngestion := PublicNetworkAccessType(*source.PublicNetworkAccessForIngestion)
-		component.PublicNetworkAccessForIngestion = &publicNetworkAccessForIngestion
+		publicNetworkAccessForIngestion := *source.PublicNetworkAccessForIngestion
+		publicNetworkAccessForIngestionTemp := genruntime.ToEnum(publicNetworkAccessForIngestion, publicNetworkAccessType_Values)
+		component.PublicNetworkAccessForIngestion = &publicNetworkAccessForIngestionTemp
 	} else {
 		component.PublicNetworkAccessForIngestion = nil
 	}
 
 	// PublicNetworkAccessForQuery
 	if source.PublicNetworkAccessForQuery != nil {
-		publicNetworkAccessForQuery := PublicNetworkAccessType(*source.PublicNetworkAccessForQuery)
-		component.PublicNetworkAccessForQuery = &publicNetworkAccessForQuery
+		publicNetworkAccessForQuery := *source.PublicNetworkAccessForQuery
+		publicNetworkAccessForQueryTemp := genruntime.ToEnum(publicNetworkAccessForQuery, publicNetworkAccessType_Values)
+		component.PublicNetworkAccessForQuery = &publicNetworkAccessForQueryTemp
 	} else {
 		component.PublicNetworkAccessForQuery = nil
 	}
 
 	// Request_Source
 	if source.Request_Source != nil {
-		requestSource := ApplicationInsightsComponentProperties_Request_Source(*source.Request_Source)
-		component.Request_Source = &requestSource
+		requestSource := *source.Request_Source
+		requestSourceTemp := genruntime.ToEnum(requestSource, applicationInsightsComponentProperties_Request_Source_Values)
+		component.Request_Source = &requestSourceTemp
 	} else {
 		component.Request_Source = nil
 	}
@@ -938,7 +1002,7 @@ func (component *Component_Spec) AssignProperties_From_Component_Spec(source *v2
 }
 
 // AssignProperties_To_Component_Spec populates the provided destination Component_Spec from our Component_Spec
-func (component *Component_Spec) AssignProperties_To_Component_Spec(destination *v20200202s.Component_Spec) error {
+func (component *Component_Spec) AssignProperties_To_Component_Spec(destination *storage.Component_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1015,7 +1079,7 @@ func (component *Component_Spec) AssignProperties_To_Component_Spec(destination 
 
 	// OperatorSpec
 	if component.OperatorSpec != nil {
-		var operatorSpec v20200202s.ComponentOperatorSpec
+		var operatorSpec storage.ComponentOperatorSpec
 		err := component.OperatorSpec.AssignProperties_To_ComponentOperatorSpec(&operatorSpec)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ComponentOperatorSpec() to populate field OperatorSpec")
@@ -1098,7 +1162,7 @@ func (component *Component_Spec) Initialize_From_Component_STATUS(source *Compon
 
 	// Application_Type
 	if source.Application_Type != nil {
-		applicationType := ApplicationInsightsComponentProperties_Application_Type(*source.Application_Type)
+		applicationType := genruntime.ToEnum(string(*source.Application_Type), applicationInsightsComponentProperties_Application_Type_Values)
 		component.Application_Type = &applicationType
 	} else {
 		component.Application_Type = nil
@@ -1125,7 +1189,7 @@ func (component *Component_Spec) Initialize_From_Component_STATUS(source *Compon
 
 	// Flow_Type
 	if source.Flow_Type != nil {
-		flowType := ApplicationInsightsComponentProperties_Flow_Type(*source.Flow_Type)
+		flowType := genruntime.ToEnum(string(*source.Flow_Type), applicationInsightsComponentProperties_Flow_Type_Values)
 		component.Flow_Type = &flowType
 	} else {
 		component.Flow_Type = nil
@@ -1152,7 +1216,7 @@ func (component *Component_Spec) Initialize_From_Component_STATUS(source *Compon
 
 	// IngestionMode
 	if source.IngestionMode != nil {
-		ingestionMode := ApplicationInsightsComponentProperties_IngestionMode(*source.IngestionMode)
+		ingestionMode := genruntime.ToEnum(string(*source.IngestionMode), applicationInsightsComponentProperties_IngestionMode_Values)
 		component.IngestionMode = &ingestionMode
 	} else {
 		component.IngestionMode = nil
@@ -1166,7 +1230,7 @@ func (component *Component_Spec) Initialize_From_Component_STATUS(source *Compon
 
 	// PublicNetworkAccessForIngestion
 	if source.PublicNetworkAccessForIngestion != nil {
-		publicNetworkAccessForIngestion := PublicNetworkAccessType(*source.PublicNetworkAccessForIngestion)
+		publicNetworkAccessForIngestion := genruntime.ToEnum(string(*source.PublicNetworkAccessForIngestion), publicNetworkAccessType_Values)
 		component.PublicNetworkAccessForIngestion = &publicNetworkAccessForIngestion
 	} else {
 		component.PublicNetworkAccessForIngestion = nil
@@ -1174,7 +1238,7 @@ func (component *Component_Spec) Initialize_From_Component_STATUS(source *Compon
 
 	// PublicNetworkAccessForQuery
 	if source.PublicNetworkAccessForQuery != nil {
-		publicNetworkAccessForQuery := PublicNetworkAccessType(*source.PublicNetworkAccessForQuery)
+		publicNetworkAccessForQuery := genruntime.ToEnum(string(*source.PublicNetworkAccessForQuery), publicNetworkAccessType_Values)
 		component.PublicNetworkAccessForQuery = &publicNetworkAccessForQuery
 	} else {
 		component.PublicNetworkAccessForQuery = nil
@@ -1182,7 +1246,7 @@ func (component *Component_Spec) Initialize_From_Component_STATUS(source *Compon
 
 	// Request_Source
 	if source.Request_Source != nil {
-		requestSource := ApplicationInsightsComponentProperties_Request_Source(*source.Request_Source)
+		requestSource := genruntime.ToEnum(string(*source.Request_Source), applicationInsightsComponentProperties_Request_Source_Values)
 		component.Request_Source = &requestSource
 	} else {
 		component.Request_Source = nil
@@ -1337,14 +1401,14 @@ var _ genruntime.ConvertibleStatus = &Component_STATUS{}
 
 // ConvertStatusFrom populates our Component_STATUS from the provided source
 func (component *Component_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20200202s.Component_STATUS)
+	src, ok := source.(*storage.Component_STATUS)
 	if ok {
 		// Populate our instance from source
 		return component.AssignProperties_From_Component_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20200202s.Component_STATUS{}
+	src = &storage.Component_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -1361,14 +1425,14 @@ func (component *Component_STATUS) ConvertStatusFrom(source genruntime.Convertib
 
 // ConvertStatusTo populates the provided destination from our Component_STATUS
 func (component *Component_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20200202s.Component_STATUS)
+	dst, ok := destination.(*storage.Component_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return component.AssignProperties_To_Component_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20200202s.Component_STATUS{}
+	dst = &storage.Component_STATUS{}
 	err := component.AssignProperties_To_Component_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -1387,14 +1451,14 @@ var _ genruntime.FromARMConverter = &Component_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (component *Component_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Component_STATUS_ARM{}
+	return &arm.Component_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (component *Component_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Component_STATUS_ARM)
+	typedInput, ok := armInput.(arm.Component_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Component_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Component_STATUS, got %T", armInput)
 	}
 
 	// Set property "AppId":
@@ -1419,7 +1483,9 @@ func (component *Component_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwn
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Application_Type != nil {
-			applicationType := *typedInput.Properties.Application_Type
+			var temp string
+			temp = string(*typedInput.Properties.Application_Type)
+			applicationType := ApplicationInsightsComponentProperties_Application_Type_STATUS(temp)
 			component.Application_Type = &applicationType
 		}
 	}
@@ -1472,7 +1538,9 @@ func (component *Component_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwn
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Flow_Type != nil {
-			flowType := *typedInput.Properties.Flow_Type
+			var temp string
+			temp = string(*typedInput.Properties.Flow_Type)
+			flowType := ApplicationInsightsComponentProperties_Flow_Type_STATUS(temp)
 			component.Flow_Type = &flowType
 		}
 	}
@@ -1523,7 +1591,9 @@ func (component *Component_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwn
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.IngestionMode != nil {
-			ingestionMode := *typedInput.Properties.IngestionMode
+			var temp string
+			temp = string(*typedInput.Properties.IngestionMode)
+			ingestionMode := ApplicationInsightsComponentProperties_IngestionMode_STATUS(temp)
 			component.IngestionMode = &ingestionMode
 		}
 	}
@@ -1599,7 +1669,9 @@ func (component *Component_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwn
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PublicNetworkAccessForIngestion != nil {
-			publicNetworkAccessForIngestion := *typedInput.Properties.PublicNetworkAccessForIngestion
+			var temp string
+			temp = string(*typedInput.Properties.PublicNetworkAccessForIngestion)
+			publicNetworkAccessForIngestion := PublicNetworkAccessType_STATUS(temp)
 			component.PublicNetworkAccessForIngestion = &publicNetworkAccessForIngestion
 		}
 	}
@@ -1608,7 +1680,9 @@ func (component *Component_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwn
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.PublicNetworkAccessForQuery != nil {
-			publicNetworkAccessForQuery := *typedInput.Properties.PublicNetworkAccessForQuery
+			var temp string
+			temp = string(*typedInput.Properties.PublicNetworkAccessForQuery)
+			publicNetworkAccessForQuery := PublicNetworkAccessType_STATUS(temp)
 			component.PublicNetworkAccessForQuery = &publicNetworkAccessForQuery
 		}
 	}
@@ -1617,7 +1691,9 @@ func (component *Component_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwn
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Request_Source != nil {
-			requestSource := *typedInput.Properties.Request_Source
+			var temp string
+			temp = string(*typedInput.Properties.Request_Source)
+			requestSource := ApplicationInsightsComponentProperties_Request_Source_STATUS(temp)
 			component.Request_Source = &requestSource
 		}
 	}
@@ -1677,7 +1753,7 @@ func (component *Component_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwn
 }
 
 // AssignProperties_From_Component_STATUS populates our Component_STATUS from the provided source Component_STATUS
-func (component *Component_STATUS) AssignProperties_From_Component_STATUS(source *v20200202s.Component_STATUS) error {
+func (component *Component_STATUS) AssignProperties_From_Component_STATUS(source *storage.Component_STATUS) error {
 
 	// AppId
 	component.AppId = genruntime.ClonePointerToString(source.AppId)
@@ -1687,8 +1763,9 @@ func (component *Component_STATUS) AssignProperties_From_Component_STATUS(source
 
 	// Application_Type
 	if source.Application_Type != nil {
-		applicationType := ApplicationInsightsComponentProperties_Application_Type_STATUS(*source.Application_Type)
-		component.Application_Type = &applicationType
+		applicationType := *source.Application_Type
+		applicationTypeTemp := genruntime.ToEnum(applicationType, applicationInsightsComponentProperties_Application_Type_STATUS_Values)
+		component.Application_Type = &applicationTypeTemp
 	} else {
 		component.Application_Type = nil
 	}
@@ -1723,8 +1800,9 @@ func (component *Component_STATUS) AssignProperties_From_Component_STATUS(source
 
 	// Flow_Type
 	if source.Flow_Type != nil {
-		flowType := ApplicationInsightsComponentProperties_Flow_Type_STATUS(*source.Flow_Type)
-		component.Flow_Type = &flowType
+		flowType := *source.Flow_Type
+		flowTypeTemp := genruntime.ToEnum(flowType, applicationInsightsComponentProperties_Flow_Type_STATUS_Values)
+		component.Flow_Type = &flowTypeTemp
 	} else {
 		component.Flow_Type = nil
 	}
@@ -1756,8 +1834,9 @@ func (component *Component_STATUS) AssignProperties_From_Component_STATUS(source
 
 	// IngestionMode
 	if source.IngestionMode != nil {
-		ingestionMode := ApplicationInsightsComponentProperties_IngestionMode_STATUS(*source.IngestionMode)
-		component.IngestionMode = &ingestionMode
+		ingestionMode := *source.IngestionMode
+		ingestionModeTemp := genruntime.ToEnum(ingestionMode, applicationInsightsComponentProperties_IngestionMode_STATUS_Values)
+		component.IngestionMode = &ingestionModeTemp
 	} else {
 		component.IngestionMode = nil
 	}
@@ -1803,24 +1882,27 @@ func (component *Component_STATUS) AssignProperties_From_Component_STATUS(source
 
 	// PublicNetworkAccessForIngestion
 	if source.PublicNetworkAccessForIngestion != nil {
-		publicNetworkAccessForIngestion := PublicNetworkAccessType_STATUS(*source.PublicNetworkAccessForIngestion)
-		component.PublicNetworkAccessForIngestion = &publicNetworkAccessForIngestion
+		publicNetworkAccessForIngestion := *source.PublicNetworkAccessForIngestion
+		publicNetworkAccessForIngestionTemp := genruntime.ToEnum(publicNetworkAccessForIngestion, publicNetworkAccessType_STATUS_Values)
+		component.PublicNetworkAccessForIngestion = &publicNetworkAccessForIngestionTemp
 	} else {
 		component.PublicNetworkAccessForIngestion = nil
 	}
 
 	// PublicNetworkAccessForQuery
 	if source.PublicNetworkAccessForQuery != nil {
-		publicNetworkAccessForQuery := PublicNetworkAccessType_STATUS(*source.PublicNetworkAccessForQuery)
-		component.PublicNetworkAccessForQuery = &publicNetworkAccessForQuery
+		publicNetworkAccessForQuery := *source.PublicNetworkAccessForQuery
+		publicNetworkAccessForQueryTemp := genruntime.ToEnum(publicNetworkAccessForQuery, publicNetworkAccessType_STATUS_Values)
+		component.PublicNetworkAccessForQuery = &publicNetworkAccessForQueryTemp
 	} else {
 		component.PublicNetworkAccessForQuery = nil
 	}
 
 	// Request_Source
 	if source.Request_Source != nil {
-		requestSource := ApplicationInsightsComponentProperties_Request_Source_STATUS(*source.Request_Source)
-		component.Request_Source = &requestSource
+		requestSource := *source.Request_Source
+		requestSourceTemp := genruntime.ToEnum(requestSource, applicationInsightsComponentProperties_Request_Source_STATUS_Values)
+		component.Request_Source = &requestSourceTemp
 	} else {
 		component.Request_Source = nil
 	}
@@ -1853,7 +1935,7 @@ func (component *Component_STATUS) AssignProperties_From_Component_STATUS(source
 }
 
 // AssignProperties_To_Component_STATUS populates the provided destination Component_STATUS from our Component_STATUS
-func (component *Component_STATUS) AssignProperties_To_Component_STATUS(destination *v20200202s.Component_STATUS) error {
+func (component *Component_STATUS) AssignProperties_To_Component_STATUS(destination *storage.Component_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1957,11 +2039,11 @@ func (component *Component_STATUS) AssignProperties_To_Component_STATUS(destinat
 
 	// PrivateLinkScopedResources
 	if component.PrivateLinkScopedResources != nil {
-		privateLinkScopedResourceList := make([]v20200202s.PrivateLinkScopedResource_STATUS, len(component.PrivateLinkScopedResources))
+		privateLinkScopedResourceList := make([]storage.PrivateLinkScopedResource_STATUS, len(component.PrivateLinkScopedResources))
 		for privateLinkScopedResourceIndex, privateLinkScopedResourceItem := range component.PrivateLinkScopedResources {
 			// Shadow the loop variable to avoid aliasing
 			privateLinkScopedResourceItem := privateLinkScopedResourceItem
-			var privateLinkScopedResource v20200202s.PrivateLinkScopedResource_STATUS
+			var privateLinkScopedResource storage.PrivateLinkScopedResource_STATUS
 			err := privateLinkScopedResourceItem.AssignProperties_To_PrivateLinkScopedResource_STATUS(&privateLinkScopedResource)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_PrivateLinkScopedResource_STATUS() to populate field PrivateLinkScopedResources")
@@ -2045,6 +2127,12 @@ const (
 	ApplicationInsightsComponentProperties_Application_Type_Web   = ApplicationInsightsComponentProperties_Application_Type("web")
 )
 
+// Mapping from string to ApplicationInsightsComponentProperties_Application_Type
+var applicationInsightsComponentProperties_Application_Type_Values = map[string]ApplicationInsightsComponentProperties_Application_Type{
+	"other": ApplicationInsightsComponentProperties_Application_Type_Other,
+	"web":   ApplicationInsightsComponentProperties_Application_Type_Web,
+}
+
 type ApplicationInsightsComponentProperties_Application_Type_STATUS string
 
 const (
@@ -2052,14 +2140,30 @@ const (
 	ApplicationInsightsComponentProperties_Application_Type_STATUS_Web   = ApplicationInsightsComponentProperties_Application_Type_STATUS("web")
 )
 
+// Mapping from string to ApplicationInsightsComponentProperties_Application_Type_STATUS
+var applicationInsightsComponentProperties_Application_Type_STATUS_Values = map[string]ApplicationInsightsComponentProperties_Application_Type_STATUS{
+	"other": ApplicationInsightsComponentProperties_Application_Type_STATUS_Other,
+	"web":   ApplicationInsightsComponentProperties_Application_Type_STATUS_Web,
+}
+
 // +kubebuilder:validation:Enum={"Bluefield"}
 type ApplicationInsightsComponentProperties_Flow_Type string
 
 const ApplicationInsightsComponentProperties_Flow_Type_Bluefield = ApplicationInsightsComponentProperties_Flow_Type("Bluefield")
 
+// Mapping from string to ApplicationInsightsComponentProperties_Flow_Type
+var applicationInsightsComponentProperties_Flow_Type_Values = map[string]ApplicationInsightsComponentProperties_Flow_Type{
+	"bluefield": ApplicationInsightsComponentProperties_Flow_Type_Bluefield,
+}
+
 type ApplicationInsightsComponentProperties_Flow_Type_STATUS string
 
 const ApplicationInsightsComponentProperties_Flow_Type_STATUS_Bluefield = ApplicationInsightsComponentProperties_Flow_Type_STATUS("Bluefield")
+
+// Mapping from string to ApplicationInsightsComponentProperties_Flow_Type_STATUS
+var applicationInsightsComponentProperties_Flow_Type_STATUS_Values = map[string]ApplicationInsightsComponentProperties_Flow_Type_STATUS{
+	"bluefield": ApplicationInsightsComponentProperties_Flow_Type_STATUS_Bluefield,
+}
 
 // +kubebuilder:validation:Enum={"ApplicationInsights","ApplicationInsightsWithDiagnosticSettings","LogAnalytics"}
 type ApplicationInsightsComponentProperties_IngestionMode string
@@ -2070,6 +2174,13 @@ const (
 	ApplicationInsightsComponentProperties_IngestionMode_LogAnalytics                              = ApplicationInsightsComponentProperties_IngestionMode("LogAnalytics")
 )
 
+// Mapping from string to ApplicationInsightsComponentProperties_IngestionMode
+var applicationInsightsComponentProperties_IngestionMode_Values = map[string]ApplicationInsightsComponentProperties_IngestionMode{
+	"applicationinsights":                       ApplicationInsightsComponentProperties_IngestionMode_ApplicationInsights,
+	"applicationinsightswithdiagnosticsettings": ApplicationInsightsComponentProperties_IngestionMode_ApplicationInsightsWithDiagnosticSettings,
+	"loganalytics":                              ApplicationInsightsComponentProperties_IngestionMode_LogAnalytics,
+}
+
 type ApplicationInsightsComponentProperties_IngestionMode_STATUS string
 
 const (
@@ -2078,23 +2189,64 @@ const (
 	ApplicationInsightsComponentProperties_IngestionMode_STATUS_LogAnalytics                              = ApplicationInsightsComponentProperties_IngestionMode_STATUS("LogAnalytics")
 )
 
+// Mapping from string to ApplicationInsightsComponentProperties_IngestionMode_STATUS
+var applicationInsightsComponentProperties_IngestionMode_STATUS_Values = map[string]ApplicationInsightsComponentProperties_IngestionMode_STATUS{
+	"applicationinsights":                       ApplicationInsightsComponentProperties_IngestionMode_STATUS_ApplicationInsights,
+	"applicationinsightswithdiagnosticsettings": ApplicationInsightsComponentProperties_IngestionMode_STATUS_ApplicationInsightsWithDiagnosticSettings,
+	"loganalytics":                              ApplicationInsightsComponentProperties_IngestionMode_STATUS_LogAnalytics,
+}
+
 // +kubebuilder:validation:Enum={"rest"}
 type ApplicationInsightsComponentProperties_Request_Source string
 
 const ApplicationInsightsComponentProperties_Request_Source_Rest = ApplicationInsightsComponentProperties_Request_Source("rest")
 
+// Mapping from string to ApplicationInsightsComponentProperties_Request_Source
+var applicationInsightsComponentProperties_Request_Source_Values = map[string]ApplicationInsightsComponentProperties_Request_Source{
+	"rest": ApplicationInsightsComponentProperties_Request_Source_Rest,
+}
+
 type ApplicationInsightsComponentProperties_Request_Source_STATUS string
 
 const ApplicationInsightsComponentProperties_Request_Source_STATUS_Rest = ApplicationInsightsComponentProperties_Request_Source_STATUS("rest")
 
+// Mapping from string to ApplicationInsightsComponentProperties_Request_Source_STATUS
+var applicationInsightsComponentProperties_Request_Source_STATUS_Values = map[string]ApplicationInsightsComponentProperties_Request_Source_STATUS{
+	"rest": ApplicationInsightsComponentProperties_Request_Source_STATUS_Rest,
+}
+
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type ComponentOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
 	// ConfigMaps: configures where to place operator written ConfigMaps.
 	ConfigMaps *ComponentOperatorConfigMaps `json:"configMaps,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // AssignProperties_From_ComponentOperatorSpec populates our ComponentOperatorSpec from the provided source ComponentOperatorSpec
-func (operator *ComponentOperatorSpec) AssignProperties_From_ComponentOperatorSpec(source *v20200202s.ComponentOperatorSpec) error {
+func (operator *ComponentOperatorSpec) AssignProperties_From_ComponentOperatorSpec(source *storage.ComponentOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
 
 	// ConfigMaps
 	if source.ConfigMaps != nil {
@@ -2108,18 +2260,54 @@ func (operator *ComponentOperatorSpec) AssignProperties_From_ComponentOperatorSp
 		operator.ConfigMaps = nil
 	}
 
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
 	// No error
 	return nil
 }
 
 // AssignProperties_To_ComponentOperatorSpec populates the provided destination ComponentOperatorSpec from our ComponentOperatorSpec
-func (operator *ComponentOperatorSpec) AssignProperties_To_ComponentOperatorSpec(destination *v20200202s.ComponentOperatorSpec) error {
+func (operator *ComponentOperatorSpec) AssignProperties_To_ComponentOperatorSpec(destination *storage.ComponentOperatorSpec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
 	// ConfigMaps
 	if operator.ConfigMaps != nil {
-		var configMap v20200202s.ComponentOperatorConfigMaps
+		var configMap storage.ComponentOperatorConfigMaps
 		err := operator.ConfigMaps.AssignProperties_To_ComponentOperatorConfigMaps(&configMap)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_ComponentOperatorConfigMaps() to populate field ConfigMaps")
@@ -2127,6 +2315,24 @@ func (operator *ComponentOperatorSpec) AssignProperties_To_ComponentOperatorSpec
 		destination.ConfigMaps = &configMap
 	} else {
 		destination.ConfigMaps = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
 	}
 
 	// Update the property bag
@@ -2153,14 +2359,14 @@ var _ genruntime.FromARMConverter = &PrivateLinkScopedResource_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (resource *PrivateLinkScopedResource_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateLinkScopedResource_STATUS_ARM{}
+	return &arm.PrivateLinkScopedResource_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (resource *PrivateLinkScopedResource_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateLinkScopedResource_STATUS_ARM)
+	typedInput, ok := armInput.(arm.PrivateLinkScopedResource_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateLinkScopedResource_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateLinkScopedResource_STATUS, got %T", armInput)
 	}
 
 	// Set property "ResourceId":
@@ -2180,7 +2386,7 @@ func (resource *PrivateLinkScopedResource_STATUS) PopulateFromARM(owner genrunti
 }
 
 // AssignProperties_From_PrivateLinkScopedResource_STATUS populates our PrivateLinkScopedResource_STATUS from the provided source PrivateLinkScopedResource_STATUS
-func (resource *PrivateLinkScopedResource_STATUS) AssignProperties_From_PrivateLinkScopedResource_STATUS(source *v20200202s.PrivateLinkScopedResource_STATUS) error {
+func (resource *PrivateLinkScopedResource_STATUS) AssignProperties_From_PrivateLinkScopedResource_STATUS(source *storage.PrivateLinkScopedResource_STATUS) error {
 
 	// ResourceId
 	resource.ResourceId = genruntime.ClonePointerToString(source.ResourceId)
@@ -2193,7 +2399,7 @@ func (resource *PrivateLinkScopedResource_STATUS) AssignProperties_From_PrivateL
 }
 
 // AssignProperties_To_PrivateLinkScopedResource_STATUS populates the provided destination PrivateLinkScopedResource_STATUS from our PrivateLinkScopedResource_STATUS
-func (resource *PrivateLinkScopedResource_STATUS) AssignProperties_To_PrivateLinkScopedResource_STATUS(destination *v20200202s.PrivateLinkScopedResource_STATUS) error {
+func (resource *PrivateLinkScopedResource_STATUS) AssignProperties_To_PrivateLinkScopedResource_STATUS(destination *storage.PrivateLinkScopedResource_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2223,6 +2429,12 @@ const (
 	PublicNetworkAccessType_Enabled  = PublicNetworkAccessType("Enabled")
 )
 
+// Mapping from string to PublicNetworkAccessType
+var publicNetworkAccessType_Values = map[string]PublicNetworkAccessType{
+	"disabled": PublicNetworkAccessType_Disabled,
+	"enabled":  PublicNetworkAccessType_Enabled,
+}
+
 // The network access type for operating on the Application Insights Component. By default it is Enabled
 type PublicNetworkAccessType_STATUS string
 
@@ -2230,6 +2442,12 @@ const (
 	PublicNetworkAccessType_STATUS_Disabled = PublicNetworkAccessType_STATUS("Disabled")
 	PublicNetworkAccessType_STATUS_Enabled  = PublicNetworkAccessType_STATUS("Enabled")
 )
+
+// Mapping from string to PublicNetworkAccessType_STATUS
+var publicNetworkAccessType_STATUS_Values = map[string]PublicNetworkAccessType_STATUS{
+	"disabled": PublicNetworkAccessType_STATUS_Disabled,
+	"enabled":  PublicNetworkAccessType_STATUS_Enabled,
+}
 
 type ComponentOperatorConfigMaps struct {
 	// ConnectionString: indicates where the ConnectionString config map should be placed. If omitted, no config map will be
@@ -2242,7 +2460,7 @@ type ComponentOperatorConfigMaps struct {
 }
 
 // AssignProperties_From_ComponentOperatorConfigMaps populates our ComponentOperatorConfigMaps from the provided source ComponentOperatorConfigMaps
-func (maps *ComponentOperatorConfigMaps) AssignProperties_From_ComponentOperatorConfigMaps(source *v20200202s.ComponentOperatorConfigMaps) error {
+func (maps *ComponentOperatorConfigMaps) AssignProperties_From_ComponentOperatorConfigMaps(source *storage.ComponentOperatorConfigMaps) error {
 
 	// ConnectionString
 	if source.ConnectionString != nil {
@@ -2265,7 +2483,7 @@ func (maps *ComponentOperatorConfigMaps) AssignProperties_From_ComponentOperator
 }
 
 // AssignProperties_To_ComponentOperatorConfigMaps populates the provided destination ComponentOperatorConfigMaps from our ComponentOperatorConfigMaps
-func (maps *ComponentOperatorConfigMaps) AssignProperties_To_ComponentOperatorConfigMaps(destination *v20200202s.ComponentOperatorConfigMaps) error {
+func (maps *ComponentOperatorConfigMaps) AssignProperties_To_ComponentOperatorConfigMaps(destination *storage.ComponentOperatorConfigMaps) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 

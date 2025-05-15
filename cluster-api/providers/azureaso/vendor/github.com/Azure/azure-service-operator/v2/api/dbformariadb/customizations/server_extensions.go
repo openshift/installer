@@ -11,25 +11,26 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	mariadb "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 )
 
-var _ genruntime.KubernetesExporter = &ServerExtension{}
+var _ genruntime.KubernetesSecretExporter = &ServerExtension{}
 
-func (ext *ServerExtension) ExportKubernetesResources(
+func (ext *ServerExtension) ExportKubernetesSecrets(
 	ctx context.Context,
 	obj genruntime.MetaObject,
+	additionalSecrets set.Set[string],
 	armClient *genericarmclient.GenericClient,
-	log logr.Logger) ([]client.Object, error) {
-
+	log logr.Logger,
+) (*genruntime.KubernetesSecretExportResult, error) {
 	// This has to be the current storage version. It will need to be updated
 	// if the storage version changes.
 	typedObj, ok := obj.(*mariadb.Server)
@@ -52,7 +53,10 @@ func (ext *ServerExtension) ExportKubernetesResources(
 		return nil, err
 	}
 
-	return secrets.SliceToClientObjectSlice(secretSlice), nil
+	return &genruntime.KubernetesSecretExportResult{
+		Objs:       secrets.SliceToClientObjectSlice(secretSlice),
+		RawSecrets: nil, // No actual secrets to return so no raw secrets
+	}, nil
 }
 
 func secretsSpecified(obj *mariadb.Server) bool {
@@ -61,17 +65,13 @@ func secretsSpecified(obj *mariadb.Server) bool {
 	}
 
 	secrets := obj.Spec.OperatorSpec.Secrets
-	if secrets.FullyQualifiedDomainName != nil {
-		return true
-	}
-
-	return false
+	return secrets.FullyQualifiedDomainName != nil
 }
 
 func secretsToWrite(obj *mariadb.Server) ([]*v1.Secret, error) {
 	operatorSpecSecrets := obj.Spec.OperatorSpec.Secrets
 	if operatorSpecSecrets == nil {
-		return nil, errors.Errorf("unexpected nil OperatorSpec")
+		return nil, nil
 	}
 
 	collector := secrets.NewCollector(obj.Namespace)

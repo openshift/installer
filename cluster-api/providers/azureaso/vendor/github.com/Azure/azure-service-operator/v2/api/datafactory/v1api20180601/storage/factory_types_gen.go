@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,6 +48,26 @@ func (factory *Factory) SetConditions(conditions conditions.Conditions) {
 	factory.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &Factory{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (factory *Factory) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if factory.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return factory.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Factory{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (factory *Factory) SecretDestinationExpressions() []*core.DestinationExpression {
+	if factory.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return factory.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &Factory{}
 
 // AzureName returns the Azure name of the resource
@@ -54,7 +77,7 @@ func (factory *Factory) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2018-06-01"
 func (factory Factory) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2018-06-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -156,6 +179,7 @@ type Factory_Spec struct {
 	GlobalParameters map[string]GlobalParameterSpecification `json:"globalParameters,omitempty"`
 	Identity         *FactoryIdentity                        `json:"identity,omitempty"`
 	Location         *string                                 `json:"location,omitempty"`
+	OperatorSpec     *FactoryOperatorSpec                    `json:"operatorSpec,omitempty"`
 	OriginalVersion  string                                  `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
@@ -269,6 +293,14 @@ type FactoryIdentity_STATUS struct {
 	TenantId               *string                `json:"tenantId,omitempty"`
 	Type                   *string                `json:"type,omitempty"`
 	UserAssignedIdentities map[string]v1.JSON     `json:"userAssignedIdentities,omitempty"`
+}
+
+// Storage version of v1api20180601.FactoryOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type FactoryOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20180601.FactoryRepoConfiguration

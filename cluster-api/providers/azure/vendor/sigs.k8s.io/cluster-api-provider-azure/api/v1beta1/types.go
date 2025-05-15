@@ -100,7 +100,7 @@ type NetworkSpec struct {
 
 	// APIServerLB is the configuration for the control-plane load balancer.
 	// +optional
-	APIServerLB LoadBalancerSpec `json:"apiServerLB,omitempty"`
+	APIServerLB *LoadBalancerSpec `json:"apiServerLB,omitempty"`
 
 	// NodeOutboundLB is the configuration for the node outbound load balancer.
 	// +optional
@@ -570,7 +570,7 @@ type UserAssignedIdentity struct {
 }
 
 // IdentityType represents different types of identities.
-// +kubebuilder:validation:Enum=ServicePrincipal;UserAssignedMSI;ManualServicePrincipal;ServicePrincipalCertificate;WorkloadIdentity
+// +kubebuilder:validation:Enum=ServicePrincipal;UserAssignedMSI;ManualServicePrincipal;ServicePrincipalCertificate;WorkloadIdentity;UserAssignedIdentityCredential
 type IdentityType string
 
 const (
@@ -588,6 +588,9 @@ const (
 
 	// WorkloadIdentity represents a WorkloadIdentity.
 	WorkloadIdentity IdentityType = "WorkloadIdentity"
+
+	// UserAssignedIdentityCredential represents a UserAssignedIdentityCredential.
+	UserAssignedIdentityCredential IdentityType = "UserAssignedIdentityCredential"
 )
 
 // OSDisk defines the operating system disk for a VM.
@@ -596,6 +599,7 @@ const (
 // conversion-gen where the warning message generated uses a relative directory import rather than the fully
 // qualified import when generating outside of the GOPATH.
 type OSDisk struct {
+	// +kubebuilder:default:=Linux
 	OSType string `json:"osType"`
 	// DiskSizeGB is the size in GB to assign to the OS disk.
 	// Will have a default of 30GB if not provided
@@ -609,6 +613,7 @@ type OSDisk struct {
 	// CachingType specifies the caching requirements.
 	// +optional
 	// +kubebuilder:validation:Enum=None;ReadOnly;ReadWrite
+	// +kubebuilder:default:=None
 	CachingType string `json:"cachingType,omitempty"`
 }
 

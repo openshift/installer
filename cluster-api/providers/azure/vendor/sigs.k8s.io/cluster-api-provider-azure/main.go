@@ -26,7 +26,6 @@ import (
 	// +kubebuilder:scaffold:imports
 	asocontainerservicev1api20210501 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20210501"
 	asocontainerservicev1api20230201 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230201"
-	asocontainerservicev1api20230202preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230202preview"
 	asocontainerservicev1api20230315preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview"
 	asocontainerservicev1api20231001 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
 	asocontainerservicev1api20231102preview "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231102preview"
@@ -42,18 +41,10 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	cgrecord "k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
-	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/controllers"
-	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
-	infrav1controllersexp "sigs.k8s.io/cluster-api-provider-azure/exp/controllers"
-	"sigs.k8s.io/cluster-api-provider-azure/feature"
-	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
-	"sigs.k8s.io/cluster-api-provider-azure/pkg/ot"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
-	"sigs.k8s.io/cluster-api-provider-azure/version"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	"sigs.k8s.io/cluster-api/controllers/remote"
 	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	capifeature "sigs.k8s.io/cluster-api/feature"
@@ -65,6 +56,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/controllers"
+	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
+	infrav1controllersexp "sigs.k8s.io/cluster-api-provider-azure/exp/controllers"
+	"sigs.k8s.io/cluster-api-provider-azure/feature"
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/ot"
+	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
+	"sigs.k8s.io/cluster-api-provider-azure/version"
 )
 
 var (
@@ -86,7 +89,6 @@ func init() {
 	_ = asocontainerservicev1api20231001.AddToScheme(scheme)
 	_ = asonetworkv1api20220701.AddToScheme(scheme)
 	_ = asonetworkv1api20201101.AddToScheme(scheme)
-	_ = asocontainerservicev1api20230202preview.AddToScheme(scheme)
 	_ = asocontainerservicev1api20230315preview.AddToScheme(scheme)
 	_ = asocontainerservicev1api20231102preview.AddToScheme(scheme)
 	_ = asocontainerservicev1api20240402preview.AddToScheme(scheme)
@@ -107,7 +109,7 @@ var (
 	azureMachineConcurrency            int
 	azureMachinePoolConcurrency        int
 	azureMachinePoolMachineConcurrency int
-	azureBootrapConfigGVK              string
+	deprecatedAzureBootrapConfigGVK    string // Deprecated in v1.19.0
 	debouncingTimer                    time.Duration
 	syncPeriod                         time.Duration
 	healthAddr                         string
@@ -256,10 +258,10 @@ func InitFlags(fs *pflag.FlagSet) {
 		"Enable tracing to the opentelemetry-collector service in the same namespace.",
 	)
 
-	fs.StringVar(&azureBootrapConfigGVK,
+	fs.StringVar(&deprecatedAzureBootrapConfigGVK,
 		"bootstrap-config-gvk",
 		"",
-		"Provide fully qualified GVK string to override default kubeadm config watch source, in the form of Kind.version.group (default: KubeadmConfig.v1beta1.bootstrap.cluster.x-k8s.io)",
+		"(Deprecated) Provide fully qualified GVK string to override default kubeadm config watch source, in the form of Kind.version.group (default: KubeadmConfig.v1beta1.bootstrap.cluster.x-k8s.io)",
 	)
 
 	flags.AddManagerOptions(fs, &managerOptions)
@@ -290,6 +292,10 @@ func main() {
 	if err != nil {
 		setupLog.Error(err, "Unable to start manager: invalid flags")
 		os.Exit(1)
+	}
+
+	if deprecatedAzureBootrapConfigGVK != "" {
+		setupLog.Error(fmt.Errorf("bootstrap-config-gvk argument is deprecated and no longer needed"), "Deprecated argument")
 	}
 
 	var watchNamespaces map[string]cache.Config
@@ -370,6 +376,8 @@ func main() {
 }
 
 func registerControllers(ctx context.Context, mgr manager.Manager) {
+	credCache := azure.NewCredentialCache()
+
 	machineCache, err := coalescing.NewRequestCache(debouncingTimer)
 	if err != nil {
 		setupLog.Error(err, "failed to build machineCache ReconcileCache")
@@ -378,6 +386,7 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 		mgr.GetEventRecorderFor("azuremachine-reconciler"),
 		timeouts,
 		watchFilterValue,
+		credCache,
 	).SetupWithManager(ctx, mgr, controllers.Options{Options: controller.Options{MaxConcurrentReconciles: azureMachineConcurrency}, Cache: machineCache}); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AzureMachine")
 		os.Exit(1)
@@ -392,6 +401,7 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 		mgr.GetEventRecorderFor("azurecluster-reconciler"),
 		timeouts,
 		watchFilterValue,
+		credCache,
 	).SetupWithManager(ctx, mgr, controllers.Options{Options: controller.Options{MaxConcurrentReconciles: azureClusterConcurrency}, Cache: clusterCache}); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AzureCluster")
 		os.Exit(1)
@@ -402,6 +412,7 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 		Recorder:         mgr.GetEventRecorderFor("azurejsontemplate-reconciler"),
 		Timeouts:         timeouts,
 		WatchFilterValue: watchFilterValue,
+		CredentialCache:  credCache,
 	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureMachineConcurrency}); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AzureJSONTemplate")
 		os.Exit(1)
@@ -412,7 +423,8 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 		Recorder:         mgr.GetEventRecorderFor("azurejsonmachine-reconciler"),
 		Timeouts:         timeouts,
 		WatchFilterValue: watchFilterValue,
-	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureMachineConcurrency}); err != nil {
+		CredentialCache:  credCache,
+	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureMachineConcurrency, SkipNameValidation: ptr.To(true)}); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AzureJSONMachine")
 		os.Exit(1)
 	}
@@ -422,6 +434,7 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 		Recorder:         mgr.GetEventRecorderFor("asosecret-reconciler"),
 		Timeouts:         timeouts,
 		WatchFilterValue: watchFilterValue,
+		CredentialCache:  credCache,
 	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureClusterConcurrency}); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ASOSecret")
 		os.Exit(1)
@@ -440,7 +453,7 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 			mgr.GetEventRecorderFor("azuremachinepool-reconciler"),
 			timeouts,
 			watchFilterValue,
-			azureBootrapConfigGVK,
+			credCache,
 		).SetupWithManager(ctx, mgr, controllers.Options{Options: controller.Options{MaxConcurrentReconciles: azureMachinePoolConcurrency}, Cache: mpCache}); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "AzureMachinePool")
 			os.Exit(1)
@@ -456,6 +469,7 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 			mgr.GetEventRecorderFor("azuremachinepoolmachine-reconciler"),
 			timeouts,
 			watchFilterValue,
+			credCache,
 		).SetupWithManager(ctx, mgr, controllers.Options{Options: controller.Options{MaxConcurrentReconciles: azureMachinePoolMachineConcurrency}, Cache: mpmCache}); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "AzureMachinePoolMachine")
 			os.Exit(1)
@@ -466,7 +480,8 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 			Recorder:         mgr.GetEventRecorderFor("azurejsonmachinepool-reconciler"),
 			Timeouts:         timeouts,
 			WatchFilterValue: watchFilterValue,
-		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureMachinePoolConcurrency}); err != nil {
+			CredentialCache:  credCache,
+		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureMachinePoolConcurrency, SkipNameValidation: ptr.To(true)}); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "AzureJSONMachinePool")
 			os.Exit(1)
 		}
@@ -481,6 +496,7 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 			mgr.GetEventRecorderFor("azuremanagedmachinepoolmachine-reconciler"),
 			timeouts,
 			watchFilterValue,
+			credCache,
 		).SetupWithManager(ctx, mgr, controllers.Options{Options: controller.Options{MaxConcurrentReconciles: azureMachinePoolConcurrency}, Cache: mmpmCache}); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "AzureManagedMachinePool")
 			os.Exit(1)
@@ -511,6 +527,7 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 			Recorder:         mgr.GetEventRecorderFor("azuremanagedcontrolplane-reconciler"),
 			Timeouts:         timeouts,
 			WatchFilterValue: watchFilterValue,
+			CredentialCache:  credCache,
 		}).SetupWithManager(ctx, mgr, controllers.Options{Options: controller.Options{MaxConcurrentReconciles: azureClusterConcurrency}, Cache: mcpCache}); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "AzureManagedControlPlane")
 			os.Exit(1)
@@ -529,6 +546,7 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 		if err := (&controllers.AzureASOManagedControlPlaneReconciler{
 			Client:           mgr.GetClient(),
 			WatchFilterValue: watchFilterValue,
+			CredentialCache:  controllers.NewASOCredentialCache(credCache, mgr.GetClient()),
 		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureClusterConcurrency}); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "AzureASOManagedControlPlane")
 			os.Exit(1)
@@ -545,23 +563,30 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 			setupLog.Error(err, "unable to create secret caching client")
 			os.Exit(1)
 		}
-		tracker, err := remote.NewClusterCacheTracker(
-			mgr,
-			remote.ClusterCacheTrackerOptions{
-				SecretCachingClient: secretCachingClient,
-				Log:                 &ctrl.Log,
-				Indexes:             []remote.Index{remote.NodeProviderIDIndex},
+		clusterCache, err := clustercache.SetupWithManager(ctx, mgr, clustercache.Options{
+			SecretClient: secretCachingClient,
+			Cache:        clustercache.CacheOptions{},
+			Client: clustercache.ClientOptions{
+				UserAgent: remote.DefaultClusterAPIUserAgent("azure-controller"),
+				Cache: clustercache.ClientCacheOptions{
+					DisableFor: []client.Object{
+						// Don't cache ConfigMaps or Secrets.
+						&corev1.ConfigMap{},
+						&corev1.Secret{},
+					},
+				},
 			},
-		)
+			WatchFilterValue: watchFilterValue,
+		}, controller.Options{})
 		if err != nil {
-			setupLog.Error(err, "unable to create cluster cache tracker")
+			setupLog.Error(err, "unable to create cluster cache")
 			os.Exit(1)
 		}
 
 		if err := (&controllers.AzureASOManagedMachinePoolReconciler{
 			Client:           mgr.GetClient(),
 			WatchFilterValue: watchFilterValue,
-			Tracker:          tracker,
+			Tracker:          clusterCache,
 		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureMachinePoolConcurrency}); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "AzureASOManagedMachinePool")
 			os.Exit(1)
@@ -594,6 +619,11 @@ func registerWebhooks(mgr manager.Manager) {
 		os.Exit(1)
 	}
 
+	if err := infrav1.SetupAzureMachineWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "AzureMachine")
+		os.Exit(1)
+	}
+
 	if err := (&infrav1.AzureMachineTemplate{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "AzureMachineTemplate")
 		os.Exit(1)
@@ -604,66 +634,63 @@ func registerWebhooks(mgr manager.Manager) {
 		os.Exit(1)
 	}
 
-	if err := (&infrav1exp.AzureMachinePoolMachine{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "AzureMachinePoolMachine")
-		os.Exit(1)
+	if feature.Gates.Enabled(capifeature.MachinePool) {
+		if err := infrav1exp.SetupAzureMachinePoolWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "AzureMachinePool")
+			os.Exit(1)
+		}
+
+		if err := (&infrav1exp.AzureMachinePoolMachine{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "AzureMachinePoolMachine")
+			os.Exit(1)
+		}
+
+		if err := infrav1.SetupAzureManagedMachinePoolWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedMachinePool")
+			os.Exit(1)
+		}
+
+		if err := infrav1.SetupAzureManagedMachinePoolTemplateWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedMachinePoolTemplate")
+			os.Exit(1)
+		}
+
+		if err := (&infrav1.AzureManagedCluster{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedCluster")
+			os.Exit(1)
+		}
+
+		if err := (&infrav1.AzureManagedClusterTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedClusterTemplate")
+			os.Exit(1)
+		}
+
+		if err := infrav1.SetupAzureManagedControlPlaneWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedControlPlane")
+			os.Exit(1)
+		}
+
+		if err := infrav1.SetupAzureManagedControlPlaneTemplateWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedControlPlaneTemplate")
+			os.Exit(1)
+		}
 	}
 
-	// NOTE: AzureManagedCluster is behind AKS feature gate flag; the webhook
-	// is going to prevent creating or updating new objects in case the feature flag is disabled
-	if err := (&infrav1.AzureManagedCluster{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedCluster")
-		os.Exit(1)
-	}
+	if feature.Gates.Enabled(feature.ASOAPI) {
+		if err := infrav1alpha.SetupAzureASOManagedClusterWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "AzureASOManagedCluster")
+			os.Exit(1)
+		}
 
-	if err := (&infrav1.AzureManagedClusterTemplate{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedClusterTemplate")
-		os.Exit(1)
-	}
+		if err := infrav1alpha.SetupAzureASOManagedControlPlaneWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "AzureASOManagedControlPlane")
+			os.Exit(1)
+		}
 
-	if err := infrav1exp.SetupAzureMachinePoolWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "AzureMachinePool")
-		os.Exit(1)
-	}
-
-	if err := infrav1.SetupAzureMachineWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "AzureMachine")
-		os.Exit(1)
-	}
-
-	if err := infrav1.SetupAzureManagedMachinePoolWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedMachinePool")
-		os.Exit(1)
-	}
-
-	if err := infrav1.SetupAzureManagedMachinePoolTemplateWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedMachinePoolTemplate")
-		os.Exit(1)
-	}
-
-	if err := infrav1.SetupAzureManagedControlPlaneWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedControlPlane")
-		os.Exit(1)
-	}
-
-	if err := infrav1.SetupAzureManagedControlPlaneTemplateWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "AzureManagedControlPlaneTemplate")
-		os.Exit(1)
-	}
-
-	if err := infrav1alpha.SetupAzureASOManagedClusterWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "AzureASOManagedCluster")
-		os.Exit(1)
-	}
-
-	if err := infrav1alpha.SetupAzureASOManagedControlPlaneWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "AzureASOManagedControlPlane")
-		os.Exit(1)
-	}
-
-	if err := infrav1alpha.SetupAzureASOManagedMachinePoolWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "AzureASOManagedMachinePool")
-		os.Exit(1)
+		if err := infrav1alpha.SetupAzureASOManagedMachinePoolWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "AzureASOManagedMachinePool")
+			os.Exit(1)
+		}
 	}
 
 	if err := mgr.AddReadyzCheck("webhook", mgr.GetWebhookServer().StartedChecker()); err != nil {

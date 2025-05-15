@@ -5,10 +5,14 @@ package v1api20230315preview
 
 import (
 	"fmt"
-	v20230315ps "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20230315preview/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type FleetsMember struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Fleets_Member_Spec   `json:"spec,omitempty"`
-	Status            Fleets_Member_STATUS `json:"status,omitempty"`
+	Spec              FleetsMember_Spec   `json:"spec,omitempty"`
+	Status            FleetsMember_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &FleetsMember{}
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &FleetsMember{}
 
 // ConvertFrom populates our FleetsMember from the provided hub FleetsMember
 func (member *FleetsMember) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20230315ps.FleetsMember)
+	source, ok := hub.(*storage.FleetsMember)
 	if !ok {
 		return fmt.Errorf("expected containerservice/v1api20230315preview/storage/FleetsMember but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (member *FleetsMember) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub FleetsMember from our FleetsMember
 func (member *FleetsMember) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20230315ps.FleetsMember)
+	destination, ok := hub.(*storage.FleetsMember)
 	if !ok {
 		return fmt.Errorf("expected containerservice/v1api20230315preview/storage/FleetsMember but received %T instead", hub)
 	}
@@ -90,15 +94,35 @@ func (member *FleetsMember) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the FleetsMember resource
 func (member *FleetsMember) defaultImpl() { member.defaultAzureName() }
 
+var _ configmaps.Exporter = &FleetsMember{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (member *FleetsMember) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if member.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return member.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &FleetsMember{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (member *FleetsMember) SecretDestinationExpressions() []*core.DestinationExpression {
+	if member.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return member.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &FleetsMember{}
 
 // InitializeSpec initializes the spec for this resource from the given status
 func (member *FleetsMember) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Fleets_Member_STATUS); ok {
-		return member.Spec.Initialize_From_Fleets_Member_STATUS(s)
+	if s, ok := status.(*FleetsMember_STATUS); ok {
+		return member.Spec.Initialize_From_FleetsMember_STATUS(s)
 	}
 
-	return fmt.Errorf("expected Status of type Fleets_Member_STATUS but received %T instead", status)
+	return fmt.Errorf("expected Status of type FleetsMember_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &FleetsMember{}
@@ -110,7 +134,7 @@ func (member *FleetsMember) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-03-15-preview"
 func (member FleetsMember) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-03-15-preview"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -144,7 +168,7 @@ func (member *FleetsMember) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (member *FleetsMember) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Fleets_Member_STATUS{}
+	return &FleetsMember_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -156,13 +180,13 @@ func (member *FleetsMember) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (member *FleetsMember) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Fleets_Member_STATUS); ok {
+	if st, ok := status.(*FleetsMember_STATUS); ok {
 		member.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Fleets_Member_STATUS
+	var st FleetsMember_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -208,7 +232,7 @@ func (member *FleetsMember) ValidateUpdate(old runtime.Object) (admission.Warnin
 
 // createValidations validates the creation of the resource
 func (member *FleetsMember) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){member.validateResourceReferences, member.validateOwnerReference}
+	return []func() (admission.Warnings, error){member.validateResourceReferences, member.validateOwnerReference, member.validateSecretDestinations, member.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -226,7 +250,21 @@ func (member *FleetsMember) updateValidations() []func(old runtime.Object) (admi
 		func(old runtime.Object) (admission.Warnings, error) {
 			return member.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return member.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return member.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (member *FleetsMember) validateConfigMapDestinations() (admission.Warnings, error) {
+	if member.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(member, nil, member.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -243,6 +281,14 @@ func (member *FleetsMember) validateResourceReferences() (admission.Warnings, er
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (member *FleetsMember) validateSecretDestinations() (admission.Warnings, error) {
+	if member.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(member, nil, member.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (member *FleetsMember) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*FleetsMember)
@@ -254,24 +300,24 @@ func (member *FleetsMember) validateWriteOnceProperties(old runtime.Object) (adm
 }
 
 // AssignProperties_From_FleetsMember populates our FleetsMember from the provided source FleetsMember
-func (member *FleetsMember) AssignProperties_From_FleetsMember(source *v20230315ps.FleetsMember) error {
+func (member *FleetsMember) AssignProperties_From_FleetsMember(source *storage.FleetsMember) error {
 
 	// ObjectMeta
 	member.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Fleets_Member_Spec
-	err := spec.AssignProperties_From_Fleets_Member_Spec(&source.Spec)
+	var spec FleetsMember_Spec
+	err := spec.AssignProperties_From_FleetsMember_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Fleets_Member_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_FleetsMember_Spec() to populate field Spec")
 	}
 	member.Spec = spec
 
 	// Status
-	var status Fleets_Member_STATUS
-	err = status.AssignProperties_From_Fleets_Member_STATUS(&source.Status)
+	var status FleetsMember_STATUS
+	err = status.AssignProperties_From_FleetsMember_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Fleets_Member_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_FleetsMember_STATUS() to populate field Status")
 	}
 	member.Status = status
 
@@ -280,24 +326,24 @@ func (member *FleetsMember) AssignProperties_From_FleetsMember(source *v20230315
 }
 
 // AssignProperties_To_FleetsMember populates the provided destination FleetsMember from our FleetsMember
-func (member *FleetsMember) AssignProperties_To_FleetsMember(destination *v20230315ps.FleetsMember) error {
+func (member *FleetsMember) AssignProperties_To_FleetsMember(destination *storage.FleetsMember) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *member.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20230315ps.Fleets_Member_Spec
-	err := member.Spec.AssignProperties_To_Fleets_Member_Spec(&spec)
+	var spec storage.FleetsMember_Spec
+	err := member.Spec.AssignProperties_To_FleetsMember_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Fleets_Member_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_FleetsMember_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20230315ps.Fleets_Member_STATUS
-	err = member.Status.AssignProperties_To_Fleets_Member_STATUS(&status)
+	var status storage.FleetsMember_STATUS
+	err = member.Status.AssignProperties_To_FleetsMember_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Fleets_Member_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_FleetsMember_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -324,7 +370,7 @@ type FleetsMemberList struct {
 	Items           []FleetsMember `json:"items"`
 }
 
-type Fleets_Member_Spec struct {
+type FleetsMember_Spec struct {
 	// +kubebuilder:validation:MaxLength=50
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:Pattern="^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
@@ -344,6 +390,10 @@ type Fleets_Member_Spec struct {
 	// Group: The group this member belongs to for multi-cluster update management.
 	Group *string `json:"group,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *FleetsMemberOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -351,21 +401,21 @@ type Fleets_Member_Spec struct {
 	Owner *genruntime.KnownResourceReference `group:"containerservice.azure.com" json:"owner,omitempty" kind:"Fleet"`
 }
 
-var _ genruntime.ARMTransformer = &Fleets_Member_Spec{}
+var _ genruntime.ARMTransformer = &FleetsMember_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (member *Fleets_Member_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (member *FleetsMember_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if member == nil {
 		return nil, nil
 	}
-	result := &Fleets_Member_Spec_ARM{}
+	result := &arm.FleetsMember_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
 
 	// Set property "Properties":
 	if member.ClusterResourceReference != nil || member.Group != nil {
-		result.Properties = &FleetMemberProperties_ARM{}
+		result.Properties = &arm.FleetMemberProperties{}
 	}
 	if member.ClusterResourceReference != nil {
 		clusterResourceIdARMID, err := resolved.ResolvedReferences.Lookup(*member.ClusterResourceReference)
@@ -383,15 +433,15 @@ func (member *Fleets_Member_Spec) ConvertToARM(resolved genruntime.ConvertToARMR
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (member *Fleets_Member_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Fleets_Member_Spec_ARM{}
+func (member *FleetsMember_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.FleetsMember_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (member *Fleets_Member_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Fleets_Member_Spec_ARM)
+func (member *FleetsMember_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.FleetsMember_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Fleets_Member_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FleetsMember_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
@@ -408,6 +458,8 @@ func (member *Fleets_Member_Spec) PopulateFromARM(owner genruntime.ArbitraryOwne
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	member.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
@@ -418,25 +470,25 @@ func (member *Fleets_Member_Spec) PopulateFromARM(owner genruntime.ArbitraryOwne
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Fleets_Member_Spec{}
+var _ genruntime.ConvertibleSpec = &FleetsMember_Spec{}
 
-// ConvertSpecFrom populates our Fleets_Member_Spec from the provided source
-func (member *Fleets_Member_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20230315ps.Fleets_Member_Spec)
+// ConvertSpecFrom populates our FleetsMember_Spec from the provided source
+func (member *FleetsMember_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.FleetsMember_Spec)
 	if ok {
 		// Populate our instance from source
-		return member.AssignProperties_From_Fleets_Member_Spec(src)
+		return member.AssignProperties_From_FleetsMember_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230315ps.Fleets_Member_Spec{}
+	src = &storage.FleetsMember_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = member.AssignProperties_From_Fleets_Member_Spec(src)
+	err = member.AssignProperties_From_FleetsMember_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -444,17 +496,17 @@ func (member *Fleets_Member_Spec) ConvertSpecFrom(source genruntime.ConvertibleS
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Fleets_Member_Spec
-func (member *Fleets_Member_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20230315ps.Fleets_Member_Spec)
+// ConvertSpecTo populates the provided destination from our FleetsMember_Spec
+func (member *FleetsMember_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.FleetsMember_Spec)
 	if ok {
 		// Populate destination from our instance
-		return member.AssignProperties_To_Fleets_Member_Spec(dst)
+		return member.AssignProperties_To_FleetsMember_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230315ps.Fleets_Member_Spec{}
-	err := member.AssignProperties_To_Fleets_Member_Spec(dst)
+	dst = &storage.FleetsMember_Spec{}
+	err := member.AssignProperties_To_FleetsMember_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -468,8 +520,8 @@ func (member *Fleets_Member_Spec) ConvertSpecTo(destination genruntime.Convertib
 	return nil
 }
 
-// AssignProperties_From_Fleets_Member_Spec populates our Fleets_Member_Spec from the provided source Fleets_Member_Spec
-func (member *Fleets_Member_Spec) AssignProperties_From_Fleets_Member_Spec(source *v20230315ps.Fleets_Member_Spec) error {
+// AssignProperties_From_FleetsMember_Spec populates our FleetsMember_Spec from the provided source FleetsMember_Spec
+func (member *FleetsMember_Spec) AssignProperties_From_FleetsMember_Spec(source *storage.FleetsMember_Spec) error {
 
 	// AzureName
 	member.AzureName = source.AzureName
@@ -490,6 +542,18 @@ func (member *Fleets_Member_Spec) AssignProperties_From_Fleets_Member_Spec(sourc
 		member.Group = nil
 	}
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec FleetsMemberOperatorSpec
+		err := operatorSpec.AssignProperties_From_FleetsMemberOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_FleetsMemberOperatorSpec() to populate field OperatorSpec")
+		}
+		member.OperatorSpec = &operatorSpec
+	} else {
+		member.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -502,8 +566,8 @@ func (member *Fleets_Member_Spec) AssignProperties_From_Fleets_Member_Spec(sourc
 	return nil
 }
 
-// AssignProperties_To_Fleets_Member_Spec populates the provided destination Fleets_Member_Spec from our Fleets_Member_Spec
-func (member *Fleets_Member_Spec) AssignProperties_To_Fleets_Member_Spec(destination *v20230315ps.Fleets_Member_Spec) error {
+// AssignProperties_To_FleetsMember_Spec populates the provided destination FleetsMember_Spec from our FleetsMember_Spec
+func (member *FleetsMember_Spec) AssignProperties_To_FleetsMember_Spec(destination *storage.FleetsMember_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -524,6 +588,18 @@ func (member *Fleets_Member_Spec) AssignProperties_To_Fleets_Member_Spec(destina
 		destination.Group = &group
 	} else {
 		destination.Group = nil
+	}
+
+	// OperatorSpec
+	if member.OperatorSpec != nil {
+		var operatorSpec storage.FleetsMemberOperatorSpec
+		err := member.OperatorSpec.AssignProperties_To_FleetsMemberOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_FleetsMemberOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
 	}
 
 	// OriginalVersion
@@ -548,8 +624,8 @@ func (member *Fleets_Member_Spec) AssignProperties_To_Fleets_Member_Spec(destina
 	return nil
 }
 
-// Initialize_From_Fleets_Member_STATUS populates our Fleets_Member_Spec from the provided source Fleets_Member_STATUS
-func (member *Fleets_Member_Spec) Initialize_From_Fleets_Member_STATUS(source *Fleets_Member_STATUS) error {
+// Initialize_From_FleetsMember_STATUS populates our FleetsMember_Spec from the provided source FleetsMember_STATUS
+func (member *FleetsMember_Spec) Initialize_From_FleetsMember_STATUS(source *FleetsMember_STATUS) error {
 
 	// ClusterResourceReference
 	if source.ClusterResourceId != nil {
@@ -572,14 +648,14 @@ func (member *Fleets_Member_Spec) Initialize_From_Fleets_Member_STATUS(source *F
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (member *Fleets_Member_Spec) OriginalVersion() string {
+func (member *FleetsMember_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (member *Fleets_Member_Spec) SetAzureName(azureName string) { member.AzureName = azureName }
+func (member *FleetsMember_Spec) SetAzureName(azureName string) { member.AzureName = azureName }
 
-type Fleets_Member_STATUS struct {
+type FleetsMember_STATUS struct {
 	// ClusterResourceId: The ARM resource id of the cluster that joins the Fleet. Must be a valid Azure resource id. e.g.:
 	// '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerService/managedClusters/{clusterName}'.
 	ClusterResourceId *string `json:"clusterResourceId,omitempty"`
@@ -613,25 +689,25 @@ type Fleets_Member_STATUS struct {
 	Type *string `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Fleets_Member_STATUS{}
+var _ genruntime.ConvertibleStatus = &FleetsMember_STATUS{}
 
-// ConvertStatusFrom populates our Fleets_Member_STATUS from the provided source
-func (member *Fleets_Member_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20230315ps.Fleets_Member_STATUS)
+// ConvertStatusFrom populates our FleetsMember_STATUS from the provided source
+func (member *FleetsMember_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.FleetsMember_STATUS)
 	if ok {
 		// Populate our instance from source
-		return member.AssignProperties_From_Fleets_Member_STATUS(src)
+		return member.AssignProperties_From_FleetsMember_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230315ps.Fleets_Member_STATUS{}
+	src = &storage.FleetsMember_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = member.AssignProperties_From_Fleets_Member_STATUS(src)
+	err = member.AssignProperties_From_FleetsMember_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -639,17 +715,17 @@ func (member *Fleets_Member_STATUS) ConvertStatusFrom(source genruntime.Converti
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Fleets_Member_STATUS
-func (member *Fleets_Member_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20230315ps.Fleets_Member_STATUS)
+// ConvertStatusTo populates the provided destination from our FleetsMember_STATUS
+func (member *FleetsMember_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.FleetsMember_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return member.AssignProperties_To_Fleets_Member_STATUS(dst)
+		return member.AssignProperties_To_FleetsMember_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230315ps.Fleets_Member_STATUS{}
-	err := member.AssignProperties_To_Fleets_Member_STATUS(dst)
+	dst = &storage.FleetsMember_STATUS{}
+	err := member.AssignProperties_To_FleetsMember_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -663,18 +739,18 @@ func (member *Fleets_Member_STATUS) ConvertStatusTo(destination genruntime.Conve
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Fleets_Member_STATUS{}
+var _ genruntime.FromARMConverter = &FleetsMember_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (member *Fleets_Member_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Fleets_Member_STATUS_ARM{}
+func (member *FleetsMember_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.FleetsMember_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (member *Fleets_Member_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Fleets_Member_STATUS_ARM)
+func (member *FleetsMember_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.FleetsMember_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Fleets_Member_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.FleetsMember_STATUS, got %T", armInput)
 	}
 
 	// Set property "ClusterResourceId":
@@ -719,7 +795,9 @@ func (member *Fleets_Member_STATUS) PopulateFromARM(owner genruntime.ArbitraryOw
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := FleetMemberProvisioningState_STATUS(temp)
 			member.ProvisioningState = &provisioningState
 		}
 	}
@@ -745,8 +823,8 @@ func (member *Fleets_Member_STATUS) PopulateFromARM(owner genruntime.ArbitraryOw
 	return nil
 }
 
-// AssignProperties_From_Fleets_Member_STATUS populates our Fleets_Member_STATUS from the provided source Fleets_Member_STATUS
-func (member *Fleets_Member_STATUS) AssignProperties_From_Fleets_Member_STATUS(source *v20230315ps.Fleets_Member_STATUS) error {
+// AssignProperties_From_FleetsMember_STATUS populates our FleetsMember_STATUS from the provided source FleetsMember_STATUS
+func (member *FleetsMember_STATUS) AssignProperties_From_FleetsMember_STATUS(source *storage.FleetsMember_STATUS) error {
 
 	// ClusterResourceId
 	member.ClusterResourceId = genruntime.ClonePointerToString(source.ClusterResourceId)
@@ -768,8 +846,9 @@ func (member *Fleets_Member_STATUS) AssignProperties_From_Fleets_Member_STATUS(s
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := FleetMemberProvisioningState_STATUS(*source.ProvisioningState)
-		member.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, fleetMemberProvisioningState_STATUS_Values)
+		member.ProvisioningState = &provisioningStateTemp
 	} else {
 		member.ProvisioningState = nil
 	}
@@ -793,8 +872,8 @@ func (member *Fleets_Member_STATUS) AssignProperties_From_Fleets_Member_STATUS(s
 	return nil
 }
 
-// AssignProperties_To_Fleets_Member_STATUS populates the provided destination Fleets_Member_STATUS from our Fleets_Member_STATUS
-func (member *Fleets_Member_STATUS) AssignProperties_To_Fleets_Member_STATUS(destination *v20230315ps.Fleets_Member_STATUS) error {
+// AssignProperties_To_FleetsMember_STATUS populates the provided destination FleetsMember_STATUS from our FleetsMember_STATUS
+func (member *FleetsMember_STATUS) AssignProperties_To_FleetsMember_STATUS(destination *storage.FleetsMember_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -826,7 +905,7 @@ func (member *Fleets_Member_STATUS) AssignProperties_To_Fleets_Member_STATUS(des
 
 	// SystemData
 	if member.SystemData != nil {
-		var systemDatum v20230315ps.SystemData_STATUS
+		var systemDatum storage.SystemData_STATUS
 		err := member.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
@@ -861,6 +940,120 @@ const (
 	FleetMemberProvisioningState_STATUS_Succeeded = FleetMemberProvisioningState_STATUS("Succeeded")
 	FleetMemberProvisioningState_STATUS_Updating  = FleetMemberProvisioningState_STATUS("Updating")
 )
+
+// Mapping from string to FleetMemberProvisioningState_STATUS
+var fleetMemberProvisioningState_STATUS_Values = map[string]FleetMemberProvisioningState_STATUS{
+	"canceled":  FleetMemberProvisioningState_STATUS_Canceled,
+	"failed":    FleetMemberProvisioningState_STATUS_Failed,
+	"joining":   FleetMemberProvisioningState_STATUS_Joining,
+	"leaving":   FleetMemberProvisioningState_STATUS_Leaving,
+	"succeeded": FleetMemberProvisioningState_STATUS_Succeeded,
+	"updating":  FleetMemberProvisioningState_STATUS_Updating,
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type FleetsMemberOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_FleetsMemberOperatorSpec populates our FleetsMemberOperatorSpec from the provided source FleetsMemberOperatorSpec
+func (operator *FleetsMemberOperatorSpec) AssignProperties_From_FleetsMemberOperatorSpec(source *storage.FleetsMemberOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_FleetsMemberOperatorSpec populates the provided destination FleetsMemberOperatorSpec from our FleetsMemberOperatorSpec
+func (operator *FleetsMemberOperatorSpec) AssignProperties_To_FleetsMemberOperatorSpec(destination *storage.FleetsMemberOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
 
 func init() {
 	SchemeBuilder.Register(&FleetsMember{}, &FleetsMemberList{})

@@ -28,8 +28,10 @@ const (
 )
 
 // If we wanted to type-assert we'd have to solve some circular dependency problems... for now this is ok.
-const ResourceGroupKind = "ResourceGroup"
-const ResourceGroupGroup = "resources.azure.com"
+const (
+	ResourceGroupKind  = "ResourceGroup"
+	ResourceGroupGroup = "resources.azure.com"
+)
 
 type ResourceHierarchy []genruntime.ARMMetaObject
 

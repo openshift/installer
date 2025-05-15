@@ -5,10 +5,14 @@ package v1api20210101preview
 
 import (
 	"fmt"
-	v20210101ps "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20210101preview/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20210101preview/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20210101preview/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +33,8 @@ import (
 type NamespacesQueue struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Namespaces_Queue_Spec   `json:"spec,omitempty"`
-	Status            Namespaces_Queue_STATUS `json:"status,omitempty"`
+	Spec              NamespacesQueue_Spec   `json:"spec,omitempty"`
+	Status            NamespacesQueue_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &NamespacesQueue{}
@@ -50,7 +54,7 @@ var _ conversion.Convertible = &NamespacesQueue{}
 // ConvertFrom populates our NamespacesQueue from the provided hub NamespacesQueue
 func (queue *NamespacesQueue) ConvertFrom(hub conversion.Hub) error {
 	// intermediate variable for conversion
-	var source v20210101ps.NamespacesQueue
+	var source storage.NamespacesQueue
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
@@ -68,7 +72,7 @@ func (queue *NamespacesQueue) ConvertFrom(hub conversion.Hub) error {
 // ConvertTo populates the provided hub NamespacesQueue from our NamespacesQueue
 func (queue *NamespacesQueue) ConvertTo(hub conversion.Hub) error {
 	// intermediate variable for conversion
-	var destination v20210101ps.NamespacesQueue
+	var destination storage.NamespacesQueue
 	err := queue.AssignProperties_To_NamespacesQueue(&destination)
 	if err != nil {
 		return errors.Wrap(err, "converting to destination from queue")
@@ -104,6 +108,26 @@ func (queue *NamespacesQueue) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the NamespacesQueue resource
 func (queue *NamespacesQueue) defaultImpl() { queue.defaultAzureName() }
 
+var _ configmaps.Exporter = &NamespacesQueue{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (queue *NamespacesQueue) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if queue.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return queue.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &NamespacesQueue{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (queue *NamespacesQueue) SecretDestinationExpressions() []*core.DestinationExpression {
+	if queue.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return queue.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &NamespacesQueue{}
 
 // AzureName returns the Azure name of the resource
@@ -113,7 +137,7 @@ func (queue *NamespacesQueue) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-01-01-preview"
 func (queue NamespacesQueue) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-01-01-preview"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -147,7 +171,7 @@ func (queue *NamespacesQueue) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (queue *NamespacesQueue) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Namespaces_Queue_STATUS{}
+	return &NamespacesQueue_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -159,13 +183,13 @@ func (queue *NamespacesQueue) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (queue *NamespacesQueue) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Namespaces_Queue_STATUS); ok {
+	if st, ok := status.(*NamespacesQueue_STATUS); ok {
 		queue.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Namespaces_Queue_STATUS
+	var st NamespacesQueue_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -211,7 +235,7 @@ func (queue *NamespacesQueue) ValidateUpdate(old runtime.Object) (admission.Warn
 
 // createValidations validates the creation of the resource
 func (queue *NamespacesQueue) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){queue.validateResourceReferences, queue.validateOwnerReference}
+	return []func() (admission.Warnings, error){queue.validateResourceReferences, queue.validateOwnerReference, queue.validateSecretDestinations, queue.validateConfigMapDestinations}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -229,7 +253,21 @@ func (queue *NamespacesQueue) updateValidations() []func(old runtime.Object) (ad
 		func(old runtime.Object) (admission.Warnings, error) {
 			return queue.validateOwnerReference()
 		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return queue.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return queue.validateConfigMapDestinations()
+		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (queue *NamespacesQueue) validateConfigMapDestinations() (admission.Warnings, error) {
+	if queue.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(queue, nil, queue.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOwnerReference validates the owner field
@@ -246,6 +284,14 @@ func (queue *NamespacesQueue) validateResourceReferences() (admission.Warnings, 
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (queue *NamespacesQueue) validateSecretDestinations() (admission.Warnings, error) {
+	if queue.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(queue, nil, queue.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (queue *NamespacesQueue) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*NamespacesQueue)
@@ -257,24 +303,24 @@ func (queue *NamespacesQueue) validateWriteOnceProperties(old runtime.Object) (a
 }
 
 // AssignProperties_From_NamespacesQueue populates our NamespacesQueue from the provided source NamespacesQueue
-func (queue *NamespacesQueue) AssignProperties_From_NamespacesQueue(source *v20210101ps.NamespacesQueue) error {
+func (queue *NamespacesQueue) AssignProperties_From_NamespacesQueue(source *storage.NamespacesQueue) error {
 
 	// ObjectMeta
 	queue.ObjectMeta = *source.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec Namespaces_Queue_Spec
-	err := spec.AssignProperties_From_Namespaces_Queue_Spec(&source.Spec)
+	var spec NamespacesQueue_Spec
+	err := spec.AssignProperties_From_NamespacesQueue_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Namespaces_Queue_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_From_NamespacesQueue_Spec() to populate field Spec")
 	}
 	queue.Spec = spec
 
 	// Status
-	var status Namespaces_Queue_STATUS
-	err = status.AssignProperties_From_Namespaces_Queue_STATUS(&source.Status)
+	var status NamespacesQueue_STATUS
+	err = status.AssignProperties_From_NamespacesQueue_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Namespaces_Queue_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_From_NamespacesQueue_STATUS() to populate field Status")
 	}
 	queue.Status = status
 
@@ -283,24 +329,24 @@ func (queue *NamespacesQueue) AssignProperties_From_NamespacesQueue(source *v202
 }
 
 // AssignProperties_To_NamespacesQueue populates the provided destination NamespacesQueue from our NamespacesQueue
-func (queue *NamespacesQueue) AssignProperties_To_NamespacesQueue(destination *v20210101ps.NamespacesQueue) error {
+func (queue *NamespacesQueue) AssignProperties_To_NamespacesQueue(destination *storage.NamespacesQueue) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *queue.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20210101ps.Namespaces_Queue_Spec
-	err := queue.Spec.AssignProperties_To_Namespaces_Queue_Spec(&spec)
+	var spec storage.NamespacesQueue_Spec
+	err := queue.Spec.AssignProperties_To_NamespacesQueue_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Namespaces_Queue_Spec() to populate field Spec")
+		return errors.Wrap(err, "calling AssignProperties_To_NamespacesQueue_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
 	// Status
-	var status v20210101ps.Namespaces_Queue_STATUS
-	err = queue.Status.AssignProperties_To_Namespaces_Queue_STATUS(&status)
+	var status storage.NamespacesQueue_STATUS
+	err = queue.Status.AssignProperties_To_NamespacesQueue_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Namespaces_Queue_STATUS() to populate field Status")
+		return errors.Wrap(err, "calling AssignProperties_To_NamespacesQueue_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -327,7 +373,7 @@ type NamespacesQueueList struct {
 	Items           []NamespacesQueue `json:"items"`
 }
 
-type Namespaces_Queue_Spec struct {
+type NamespacesQueue_Spec struct {
 	// AutoDeleteOnIdle: ISO 8061 timeSpan idle interval after which the queue is automatically deleted. The minimum duration
 	// is 5 minutes.
 	AutoDeleteOnIdle *string `json:"autoDeleteOnIdle,omitempty"`
@@ -378,6 +424,10 @@ type Namespaces_Queue_Spec struct {
 	// Default is 1024.
 	MaxSizeInMegabytes *int `json:"maxSizeInMegabytes,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *NamespacesQueueOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -391,14 +441,14 @@ type Namespaces_Queue_Spec struct {
 	RequiresSession *bool `json:"requiresSession,omitempty"`
 }
 
-var _ genruntime.ARMTransformer = &Namespaces_Queue_Spec{}
+var _ genruntime.ARMTransformer = &NamespacesQueue_Spec{}
 
 // ConvertToARM converts from a Kubernetes CRD object to an ARM object
-func (queue *Namespaces_Queue_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
+func (queue *NamespacesQueue_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (interface{}, error) {
 	if queue == nil {
 		return nil, nil
 	}
-	result := &Namespaces_Queue_Spec_ARM{}
+	result := &arm.NamespacesQueue_Spec{}
 
 	// Set property "Name":
 	result.Name = resolved.Name
@@ -418,7 +468,7 @@ func (queue *Namespaces_Queue_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 		queue.MaxSizeInMegabytes != nil ||
 		queue.RequiresDuplicateDetection != nil ||
 		queue.RequiresSession != nil {
-		result.Properties = &SBQueueProperties_ARM{}
+		result.Properties = &arm.SBQueueProperties{}
 	}
 	if queue.AutoDeleteOnIdle != nil {
 		autoDeleteOnIdle := *queue.AutoDeleteOnIdle
@@ -480,15 +530,15 @@ func (queue *Namespaces_Queue_Spec) ConvertToARM(resolved genruntime.ConvertToAR
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (queue *Namespaces_Queue_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Namespaces_Queue_Spec_ARM{}
+func (queue *NamespacesQueue_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.NamespacesQueue_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (queue *Namespaces_Queue_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Namespaces_Queue_Spec_ARM)
+func (queue *NamespacesQueue_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.NamespacesQueue_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Namespaces_Queue_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NamespacesQueue_Spec, got %T", armInput)
 	}
 
 	// Set property "AutoDeleteOnIdle":
@@ -602,6 +652,8 @@ func (queue *Namespaces_Queue_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 		}
 	}
 
+	// no assignment for property "OperatorSpec"
+
 	// Set property "Owner":
 	queue.Owner = &genruntime.KnownResourceReference{
 		Name:  owner.Name,
@@ -630,25 +682,25 @@ func (queue *Namespaces_Queue_Spec) PopulateFromARM(owner genruntime.ArbitraryOw
 	return nil
 }
 
-var _ genruntime.ConvertibleSpec = &Namespaces_Queue_Spec{}
+var _ genruntime.ConvertibleSpec = &NamespacesQueue_Spec{}
 
-// ConvertSpecFrom populates our Namespaces_Queue_Spec from the provided source
-func (queue *Namespaces_Queue_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20210101ps.Namespaces_Queue_Spec)
+// ConvertSpecFrom populates our NamespacesQueue_Spec from the provided source
+func (queue *NamespacesQueue_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+	src, ok := source.(*storage.NamespacesQueue_Spec)
 	if ok {
 		// Populate our instance from source
-		return queue.AssignProperties_From_Namespaces_Queue_Spec(src)
+		return queue.AssignProperties_From_NamespacesQueue_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20210101ps.Namespaces_Queue_Spec{}
+	src = &storage.NamespacesQueue_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
-	err = queue.AssignProperties_From_Namespaces_Queue_Spec(src)
+	err = queue.AssignProperties_From_NamespacesQueue_Spec(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
@@ -656,17 +708,17 @@ func (queue *Namespaces_Queue_Spec) ConvertSpecFrom(source genruntime.Convertibl
 	return nil
 }
 
-// ConvertSpecTo populates the provided destination from our Namespaces_Queue_Spec
-func (queue *Namespaces_Queue_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20210101ps.Namespaces_Queue_Spec)
+// ConvertSpecTo populates the provided destination from our NamespacesQueue_Spec
+func (queue *NamespacesQueue_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+	dst, ok := destination.(*storage.NamespacesQueue_Spec)
 	if ok {
 		// Populate destination from our instance
-		return queue.AssignProperties_To_Namespaces_Queue_Spec(dst)
+		return queue.AssignProperties_To_NamespacesQueue_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20210101ps.Namespaces_Queue_Spec{}
-	err := queue.AssignProperties_To_Namespaces_Queue_Spec(dst)
+	dst = &storage.NamespacesQueue_Spec{}
+	err := queue.AssignProperties_To_NamespacesQueue_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
@@ -680,8 +732,8 @@ func (queue *Namespaces_Queue_Spec) ConvertSpecTo(destination genruntime.Convert
 	return nil
 }
 
-// AssignProperties_From_Namespaces_Queue_Spec populates our Namespaces_Queue_Spec from the provided source Namespaces_Queue_Spec
-func (queue *Namespaces_Queue_Spec) AssignProperties_From_Namespaces_Queue_Spec(source *v20210101ps.Namespaces_Queue_Spec) error {
+// AssignProperties_From_NamespacesQueue_Spec populates our NamespacesQueue_Spec from the provided source NamespacesQueue_Spec
+func (queue *NamespacesQueue_Spec) AssignProperties_From_NamespacesQueue_Spec(source *storage.NamespacesQueue_Spec) error {
 
 	// AutoDeleteOnIdle
 	queue.AutoDeleteOnIdle = genruntime.ClonePointerToString(source.AutoDeleteOnIdle)
@@ -742,6 +794,18 @@ func (queue *Namespaces_Queue_Spec) AssignProperties_From_Namespaces_Queue_Spec(
 	// MaxSizeInMegabytes
 	queue.MaxSizeInMegabytes = genruntime.ClonePointerToInt(source.MaxSizeInMegabytes)
 
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec NamespacesQueueOperatorSpec
+		err := operatorSpec.AssignProperties_From_NamespacesQueueOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_NamespacesQueueOperatorSpec() to populate field OperatorSpec")
+		}
+		queue.OperatorSpec = &operatorSpec
+	} else {
+		queue.OperatorSpec = nil
+	}
+
 	// Owner
 	if source.Owner != nil {
 		owner := source.Owner.Copy()
@@ -770,8 +834,8 @@ func (queue *Namespaces_Queue_Spec) AssignProperties_From_Namespaces_Queue_Spec(
 	return nil
 }
 
-// AssignProperties_To_Namespaces_Queue_Spec populates the provided destination Namespaces_Queue_Spec from our Namespaces_Queue_Spec
-func (queue *Namespaces_Queue_Spec) AssignProperties_To_Namespaces_Queue_Spec(destination *v20210101ps.Namespaces_Queue_Spec) error {
+// AssignProperties_To_NamespacesQueue_Spec populates the provided destination NamespacesQueue_Spec from our NamespacesQueue_Spec
+func (queue *NamespacesQueue_Spec) AssignProperties_To_NamespacesQueue_Spec(destination *storage.NamespacesQueue_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -834,6 +898,18 @@ func (queue *Namespaces_Queue_Spec) AssignProperties_To_Namespaces_Queue_Spec(de
 	// MaxSizeInMegabytes
 	destination.MaxSizeInMegabytes = genruntime.ClonePointerToInt(queue.MaxSizeInMegabytes)
 
+	// OperatorSpec
+	if queue.OperatorSpec != nil {
+		var operatorSpec storage.NamespacesQueueOperatorSpec
+		err := queue.OperatorSpec.AssignProperties_To_NamespacesQueueOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_NamespacesQueueOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
 	// OriginalVersion
 	destination.OriginalVersion = queue.OriginalVersion()
 
@@ -873,14 +949,14 @@ func (queue *Namespaces_Queue_Spec) AssignProperties_To_Namespaces_Queue_Spec(de
 }
 
 // OriginalVersion returns the original API version used to create the resource.
-func (queue *Namespaces_Queue_Spec) OriginalVersion() string {
+func (queue *NamespacesQueue_Spec) OriginalVersion() string {
 	return GroupVersion.Version
 }
 
 // SetAzureName sets the Azure name of the resource
-func (queue *Namespaces_Queue_Spec) SetAzureName(azureName string) { queue.AzureName = azureName }
+func (queue *NamespacesQueue_Spec) SetAzureName(azureName string) { queue.AzureName = azureName }
 
-type Namespaces_Queue_STATUS struct {
+type NamespacesQueue_STATUS struct {
 	// AccessedAt: Last time a message was sent, or the last time there was a receive request to this queue.
 	AccessedAt *string `json:"accessedAt,omitempty"`
 
@@ -969,25 +1045,25 @@ type Namespaces_Queue_STATUS struct {
 	UpdatedAt *string `json:"updatedAt,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Namespaces_Queue_STATUS{}
+var _ genruntime.ConvertibleStatus = &NamespacesQueue_STATUS{}
 
-// ConvertStatusFrom populates our Namespaces_Queue_STATUS from the provided source
-func (queue *Namespaces_Queue_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20210101ps.Namespaces_Queue_STATUS)
+// ConvertStatusFrom populates our NamespacesQueue_STATUS from the provided source
+func (queue *NamespacesQueue_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+	src, ok := source.(*storage.NamespacesQueue_STATUS)
 	if ok {
 		// Populate our instance from source
-		return queue.AssignProperties_From_Namespaces_Queue_STATUS(src)
+		return queue.AssignProperties_From_NamespacesQueue_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20210101ps.Namespaces_Queue_STATUS{}
+	src = &storage.NamespacesQueue_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
-	err = queue.AssignProperties_From_Namespaces_Queue_STATUS(src)
+	err = queue.AssignProperties_From_NamespacesQueue_STATUS(src)
 	if err != nil {
 		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
@@ -995,17 +1071,17 @@ func (queue *Namespaces_Queue_STATUS) ConvertStatusFrom(source genruntime.Conver
 	return nil
 }
 
-// ConvertStatusTo populates the provided destination from our Namespaces_Queue_STATUS
-func (queue *Namespaces_Queue_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20210101ps.Namespaces_Queue_STATUS)
+// ConvertStatusTo populates the provided destination from our NamespacesQueue_STATUS
+func (queue *NamespacesQueue_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+	dst, ok := destination.(*storage.NamespacesQueue_STATUS)
 	if ok {
 		// Populate destination from our instance
-		return queue.AssignProperties_To_Namespaces_Queue_STATUS(dst)
+		return queue.AssignProperties_To_NamespacesQueue_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20210101ps.Namespaces_Queue_STATUS{}
-	err := queue.AssignProperties_To_Namespaces_Queue_STATUS(dst)
+	dst = &storage.NamespacesQueue_STATUS{}
+	err := queue.AssignProperties_To_NamespacesQueue_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
@@ -1019,18 +1095,18 @@ func (queue *Namespaces_Queue_STATUS) ConvertStatusTo(destination genruntime.Con
 	return nil
 }
 
-var _ genruntime.FromARMConverter = &Namespaces_Queue_STATUS{}
+var _ genruntime.FromARMConverter = &NamespacesQueue_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
-func (queue *Namespaces_Queue_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Namespaces_Queue_STATUS_ARM{}
+func (queue *NamespacesQueue_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
+	return &arm.NamespacesQueue_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
-func (queue *Namespaces_Queue_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Namespaces_Queue_STATUS_ARM)
+func (queue *NamespacesQueue_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
+	typedInput, ok := armInput.(arm.NamespacesQueue_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Namespaces_Queue_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NamespacesQueue_STATUS, got %T", armInput)
 	}
 
 	// Set property "AccessedAt":
@@ -1227,7 +1303,9 @@ func (queue *Namespaces_Queue_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.Status != nil {
-			status := *typedInput.Properties.Status
+			var temp string
+			temp = string(*typedInput.Properties.Status)
+			status := EntityStatus_STATUS(temp)
 			queue.Status = &status
 		}
 	}
@@ -1262,8 +1340,8 @@ func (queue *Namespaces_Queue_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 	return nil
 }
 
-// AssignProperties_From_Namespaces_Queue_STATUS populates our Namespaces_Queue_STATUS from the provided source Namespaces_Queue_STATUS
-func (queue *Namespaces_Queue_STATUS) AssignProperties_From_Namespaces_Queue_STATUS(source *v20210101ps.Namespaces_Queue_STATUS) error {
+// AssignProperties_From_NamespacesQueue_STATUS populates our NamespacesQueue_STATUS from the provided source NamespacesQueue_STATUS
+func (queue *NamespacesQueue_STATUS) AssignProperties_From_NamespacesQueue_STATUS(source *storage.NamespacesQueue_STATUS) error {
 
 	// AccessedAt
 	queue.AccessedAt = genruntime.ClonePointerToString(source.AccessedAt)
@@ -1372,8 +1450,9 @@ func (queue *Namespaces_Queue_STATUS) AssignProperties_From_Namespaces_Queue_STA
 
 	// Status
 	if source.Status != nil {
-		status := EntityStatus_STATUS(*source.Status)
-		queue.Status = &status
+		status := *source.Status
+		statusTemp := genruntime.ToEnum(status, entityStatus_STATUS_Values)
+		queue.Status = &statusTemp
 	} else {
 		queue.Status = nil
 	}
@@ -1400,8 +1479,8 @@ func (queue *Namespaces_Queue_STATUS) AssignProperties_From_Namespaces_Queue_STA
 	return nil
 }
 
-// AssignProperties_To_Namespaces_Queue_STATUS populates the provided destination Namespaces_Queue_STATUS from our Namespaces_Queue_STATUS
-func (queue *Namespaces_Queue_STATUS) AssignProperties_To_Namespaces_Queue_STATUS(destination *v20210101ps.Namespaces_Queue_STATUS) error {
+// AssignProperties_To_NamespacesQueue_STATUS populates the provided destination NamespacesQueue_STATUS from our NamespacesQueue_STATUS
+func (queue *NamespacesQueue_STATUS) AssignProperties_To_NamespacesQueue_STATUS(destination *storage.NamespacesQueue_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1416,7 +1495,7 @@ func (queue *Namespaces_Queue_STATUS) AssignProperties_To_Namespaces_Queue_STATU
 
 	// CountDetails
 	if queue.CountDetails != nil {
-		var countDetail v20210101ps.MessageCountDetails_STATUS
+		var countDetail storage.MessageCountDetails_STATUS
 		err := queue.CountDetails.AssignProperties_To_MessageCountDetails_STATUS(&countDetail)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_MessageCountDetails_STATUS() to populate field CountDetails")
@@ -1520,7 +1599,7 @@ func (queue *Namespaces_Queue_STATUS) AssignProperties_To_Namespaces_Queue_STATU
 
 	// SystemData
 	if queue.SystemData != nil {
-		var systemDatum v20210101ps.SystemData_STATUS
+		var systemDatum storage.SystemData_STATUS
 		err := queue.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
@@ -1562,6 +1641,19 @@ const (
 	EntityStatus_STATUS_Unknown         = EntityStatus_STATUS("Unknown")
 )
 
+// Mapping from string to EntityStatus_STATUS
+var entityStatus_STATUS_Values = map[string]EntityStatus_STATUS{
+	"active":          EntityStatus_STATUS_Active,
+	"creating":        EntityStatus_STATUS_Creating,
+	"deleting":        EntityStatus_STATUS_Deleting,
+	"disabled":        EntityStatus_STATUS_Disabled,
+	"receivedisabled": EntityStatus_STATUS_ReceiveDisabled,
+	"renaming":        EntityStatus_STATUS_Renaming,
+	"restoring":       EntityStatus_STATUS_Restoring,
+	"senddisabled":    EntityStatus_STATUS_SendDisabled,
+	"unknown":         EntityStatus_STATUS_Unknown,
+}
+
 // Message Count Details.
 type MessageCountDetails_STATUS struct {
 	// ActiveMessageCount: Number of active messages in the queue, topic, or subscription.
@@ -1584,14 +1676,14 @@ var _ genruntime.FromARMConverter = &MessageCountDetails_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (details *MessageCountDetails_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &MessageCountDetails_STATUS_ARM{}
+	return &arm.MessageCountDetails_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (details *MessageCountDetails_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(MessageCountDetails_STATUS_ARM)
+	typedInput, ok := armInput.(arm.MessageCountDetails_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected MessageCountDetails_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.MessageCountDetails_STATUS, got %T", armInput)
 	}
 
 	// Set property "ActiveMessageCount":
@@ -1629,7 +1721,7 @@ func (details *MessageCountDetails_STATUS) PopulateFromARM(owner genruntime.Arbi
 }
 
 // AssignProperties_From_MessageCountDetails_STATUS populates our MessageCountDetails_STATUS from the provided source MessageCountDetails_STATUS
-func (details *MessageCountDetails_STATUS) AssignProperties_From_MessageCountDetails_STATUS(source *v20210101ps.MessageCountDetails_STATUS) error {
+func (details *MessageCountDetails_STATUS) AssignProperties_From_MessageCountDetails_STATUS(source *storage.MessageCountDetails_STATUS) error {
 
 	// ActiveMessageCount
 	details.ActiveMessageCount = genruntime.ClonePointerToInt(source.ActiveMessageCount)
@@ -1651,7 +1743,7 @@ func (details *MessageCountDetails_STATUS) AssignProperties_From_MessageCountDet
 }
 
 // AssignProperties_To_MessageCountDetails_STATUS populates the provided destination MessageCountDetails_STATUS from our MessageCountDetails_STATUS
-func (details *MessageCountDetails_STATUS) AssignProperties_To_MessageCountDetails_STATUS(destination *v20210101ps.MessageCountDetails_STATUS) error {
+func (details *MessageCountDetails_STATUS) AssignProperties_To_MessageCountDetails_STATUS(destination *storage.MessageCountDetails_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1669,6 +1761,110 @@ func (details *MessageCountDetails_STATUS) AssignProperties_To_MessageCountDetai
 
 	// TransferMessageCount
 	destination.TransferMessageCount = genruntime.ClonePointerToInt(details.TransferMessageCount)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type NamespacesQueueOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_NamespacesQueueOperatorSpec populates our NamespacesQueueOperatorSpec from the provided source NamespacesQueueOperatorSpec
+func (operator *NamespacesQueueOperatorSpec) AssignProperties_From_NamespacesQueueOperatorSpec(source *storage.NamespacesQueueOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesQueueOperatorSpec populates the provided destination NamespacesQueueOperatorSpec from our NamespacesQueueOperatorSpec
+func (operator *NamespacesQueueOperatorSpec) AssignProperties_To_NamespacesQueueOperatorSpec(destination *storage.NamespacesQueueOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
 
 	// Update the property bag
 	if len(propertyBag) > 0 {

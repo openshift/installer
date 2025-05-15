@@ -24,6 +24,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 )
@@ -55,13 +56,13 @@ func (s *SubnetSpec) ResourceRef() *asonetworkv1.VirtualNetworksSubnet {
 }
 
 // Parameters implements azure.ASOResourceSpecGetter.
-func (s *SubnetSpec) Parameters(ctx context.Context, existing *asonetworkv1.VirtualNetworksSubnet) (parameters *asonetworkv1.VirtualNetworksSubnet, err error) {
+func (s *SubnetSpec) Parameters(_ context.Context, existing *asonetworkv1.VirtualNetworksSubnet) (parameters *asonetworkv1.VirtualNetworksSubnet, err error) {
 	subnet := existing
 	if subnet == nil {
 		subnet = &asonetworkv1.VirtualNetworksSubnet{}
 	}
 
-	subnet.Spec = asonetworkv1.VirtualNetworks_Subnet_Spec{
+	subnet.Spec = asonetworkv1.VirtualNetworksSubnet_Spec{
 		AzureName: s.Name,
 		Owner: &genruntime.KnownResourceReference{
 			Name: azure.GetNormalizedKubernetesName(s.VNetName),
@@ -107,6 +108,6 @@ func (s *SubnetSpec) Parameters(ctx context.Context, existing *asonetworkv1.Virt
 }
 
 // WasManaged implements azure.ASOResourceSpecGetter.
-func (s *SubnetSpec) WasManaged(resource *asonetworkv1.VirtualNetworksSubnet) bool {
+func (s *SubnetSpec) WasManaged(_ *asonetworkv1.VirtualNetworksSubnet) bool {
 	return s.IsVNetManaged
 }

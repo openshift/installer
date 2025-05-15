@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v2"
 	"github.com/pkg/errors"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
@@ -58,7 +59,7 @@ func (ac *azureClient) Get(ctx context.Context, spec azure.ResourceSpecGetter) (
 
 // CreateOrUpdateAsync creates a roleassignment.
 // Creating a roleassignment is not a long running operation, so we don't ever return a poller.
-func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armauthorization.RoleAssignmentsClientCreateResponse], err error) {
+func (ac *azureClient) CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[armauthorization.RoleAssignmentsClientCreateResponse], err error) { //nolint:revive // keeping resumeToken for readability
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "roleassignments.azureClient.CreateOrUpdateAsync")
 	defer done()
 

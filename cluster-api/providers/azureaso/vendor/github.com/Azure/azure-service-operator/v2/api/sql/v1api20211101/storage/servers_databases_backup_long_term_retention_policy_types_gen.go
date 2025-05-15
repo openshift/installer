@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type ServersDatabasesBackupLongTermRetentionPolicy struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Servers_Databases_BackupLongTermRetentionPolicy_Spec   `json:"spec,omitempty"`
-	Status            Servers_Databases_BackupLongTermRetentionPolicy_STATUS `json:"status,omitempty"`
+	Spec              ServersDatabasesBackupLongTermRetentionPolicy_Spec   `json:"spec,omitempty"`
+	Status            ServersDatabasesBackupLongTermRetentionPolicy_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &ServersDatabasesBackupLongTermRetentionPolicy{}
@@ -44,6 +47,26 @@ func (policy *ServersDatabasesBackupLongTermRetentionPolicy) SetConditions(condi
 	policy.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &ServersDatabasesBackupLongTermRetentionPolicy{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (policy *ServersDatabasesBackupLongTermRetentionPolicy) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ServersDatabasesBackupLongTermRetentionPolicy{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (policy *ServersDatabasesBackupLongTermRetentionPolicy) SecretDestinationExpressions() []*core.DestinationExpression {
+	if policy.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return policy.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &ServersDatabasesBackupLongTermRetentionPolicy{}
 
 // AzureName returns the Azure name of the resource (always "default")
@@ -53,7 +76,7 @@ func (policy *ServersDatabasesBackupLongTermRetentionPolicy) AzureName() string 
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-11-01"
 func (policy ServersDatabasesBackupLongTermRetentionPolicy) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -86,7 +109,7 @@ func (policy *ServersDatabasesBackupLongTermRetentionPolicy) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (policy *ServersDatabasesBackupLongTermRetentionPolicy) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Servers_Databases_BackupLongTermRetentionPolicy_STATUS{}
+	return &ServersDatabasesBackupLongTermRetentionPolicy_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -98,13 +121,13 @@ func (policy *ServersDatabasesBackupLongTermRetentionPolicy) Owner() *genruntime
 // SetStatus sets the status of this resource
 func (policy *ServersDatabasesBackupLongTermRetentionPolicy) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Servers_Databases_BackupLongTermRetentionPolicy_STATUS); ok {
+	if st, ok := status.(*ServersDatabasesBackupLongTermRetentionPolicy_STATUS); ok {
 		policy.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Servers_Databases_BackupLongTermRetentionPolicy_STATUS
+	var st ServersDatabasesBackupLongTermRetentionPolicy_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -137,10 +160,11 @@ type ServersDatabasesBackupLongTermRetentionPolicyList struct {
 	Items           []ServersDatabasesBackupLongTermRetentionPolicy `json:"items"`
 }
 
-// Storage version of v1api20211101.Servers_Databases_BackupLongTermRetentionPolicy_Spec
-type Servers_Databases_BackupLongTermRetentionPolicy_Spec struct {
-	MonthlyRetention *string `json:"monthlyRetention,omitempty"`
-	OriginalVersion  string  `json:"originalVersion,omitempty"`
+// Storage version of v1api20211101.ServersDatabasesBackupLongTermRetentionPolicy_Spec
+type ServersDatabasesBackupLongTermRetentionPolicy_Spec struct {
+	MonthlyRetention *string                                                    `json:"monthlyRetention,omitempty"`
+	OperatorSpec     *ServersDatabasesBackupLongTermRetentionPolicyOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion  string                                                     `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -153,10 +177,10 @@ type Servers_Databases_BackupLongTermRetentionPolicy_Spec struct {
 	YearlyRetention *string                            `json:"yearlyRetention,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Servers_Databases_BackupLongTermRetentionPolicy_Spec{}
+var _ genruntime.ConvertibleSpec = &ServersDatabasesBackupLongTermRetentionPolicy_Spec{}
 
-// ConvertSpecFrom populates our Servers_Databases_BackupLongTermRetentionPolicy_Spec from the provided source
-func (policy *Servers_Databases_BackupLongTermRetentionPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our ServersDatabasesBackupLongTermRetentionPolicy_Spec from the provided source
+func (policy *ServersDatabasesBackupLongTermRetentionPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -164,8 +188,8 @@ func (policy *Servers_Databases_BackupLongTermRetentionPolicy_Spec) ConvertSpecF
 	return source.ConvertSpecTo(policy)
 }
 
-// ConvertSpecTo populates the provided destination from our Servers_Databases_BackupLongTermRetentionPolicy_Spec
-func (policy *Servers_Databases_BackupLongTermRetentionPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our ServersDatabasesBackupLongTermRetentionPolicy_Spec
+func (policy *ServersDatabasesBackupLongTermRetentionPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -173,8 +197,8 @@ func (policy *Servers_Databases_BackupLongTermRetentionPolicy_Spec) ConvertSpecT
 	return destination.ConvertSpecFrom(policy)
 }
 
-// Storage version of v1api20211101.Servers_Databases_BackupLongTermRetentionPolicy_STATUS
-type Servers_Databases_BackupLongTermRetentionPolicy_STATUS struct {
+// Storage version of v1api20211101.ServersDatabasesBackupLongTermRetentionPolicy_STATUS
+type ServersDatabasesBackupLongTermRetentionPolicy_STATUS struct {
 	Conditions       []conditions.Condition `json:"conditions,omitempty"`
 	Id               *string                `json:"id,omitempty"`
 	MonthlyRetention *string                `json:"monthlyRetention,omitempty"`
@@ -186,10 +210,10 @@ type Servers_Databases_BackupLongTermRetentionPolicy_STATUS struct {
 	YearlyRetention  *string                `json:"yearlyRetention,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Servers_Databases_BackupLongTermRetentionPolicy_STATUS{}
+var _ genruntime.ConvertibleStatus = &ServersDatabasesBackupLongTermRetentionPolicy_STATUS{}
 
-// ConvertStatusFrom populates our Servers_Databases_BackupLongTermRetentionPolicy_STATUS from the provided source
-func (policy *Servers_Databases_BackupLongTermRetentionPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our ServersDatabasesBackupLongTermRetentionPolicy_STATUS from the provided source
+func (policy *ServersDatabasesBackupLongTermRetentionPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -197,13 +221,21 @@ func (policy *Servers_Databases_BackupLongTermRetentionPolicy_STATUS) ConvertSta
 	return source.ConvertStatusTo(policy)
 }
 
-// ConvertStatusTo populates the provided destination from our Servers_Databases_BackupLongTermRetentionPolicy_STATUS
-func (policy *Servers_Databases_BackupLongTermRetentionPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our ServersDatabasesBackupLongTermRetentionPolicy_STATUS
+func (policy *ServersDatabasesBackupLongTermRetentionPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == policy {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(policy)
+}
+
+// Storage version of v1api20211101.ServersDatabasesBackupLongTermRetentionPolicyOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ServersDatabasesBackupLongTermRetentionPolicyOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {

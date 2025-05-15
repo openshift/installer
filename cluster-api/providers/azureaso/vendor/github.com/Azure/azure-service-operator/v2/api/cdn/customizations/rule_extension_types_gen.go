@@ -5,7 +5,7 @@ package customizations
 
 import (
 	v20230501 "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501"
-	v20230501s "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/storage"
+	storage "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +16,5 @@ type RuleExtension struct {
 func (extension *RuleExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20230501.Rule{},
-		&v20230501s.Rule{}}
+		&storage.Rule{}}
 }

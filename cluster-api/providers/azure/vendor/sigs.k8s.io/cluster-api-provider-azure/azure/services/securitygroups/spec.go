@@ -23,6 +23,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 )
@@ -54,7 +55,7 @@ func (s *NSGSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the security group.
-func (s *NSGSpec) Parameters(ctx context.Context, existing interface{}) (interface{}, error) {
+func (s *NSGSpec) Parameters(_ context.Context, existing interface{}) (interface{}, error) {
 	securityRules := make([]*armnetwork.SecurityRule, 0)
 	newAnnotation := map[string]string{}
 	var etag *string

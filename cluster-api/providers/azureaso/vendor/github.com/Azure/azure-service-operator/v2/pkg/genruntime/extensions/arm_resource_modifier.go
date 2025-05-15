@@ -42,8 +42,8 @@ func CreateARMResourceModifier(
 	armClient *genericarmclient.GenericClient,
 	kubeClient kubeclient.Client,
 	resolver *resolver.Resolver,
-	log logr.Logger) ARMResourceModifierFunc {
-
+	log logr.Logger,
+) ARMResourceModifierFunc {
 	impl, ok := host.(ARMResourceModifier)
 	if !ok {
 		return func(ctx context.Context, obj genruntime.ARMMetaObject, armObj genruntime.ARMResource) (genruntime.ARMResource, error) {

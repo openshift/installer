@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,6 +47,26 @@ func (site *Site) SetConditions(conditions conditions.Conditions) {
 	site.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &Site{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (site *Site) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if site.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return site.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Site{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (site *Site) SecretDestinationExpressions() []*core.DestinationExpression {
+	if site.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return site.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &Site{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (site *Site) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-03-01"
 func (site Site) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-03-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -163,6 +186,7 @@ type Site_Spec struct {
 	KeyVaultReferenceIdentity  *string                    `json:"keyVaultReferenceIdentity,omitempty"`
 	Kind                       *string                    `json:"kind,omitempty"`
 	Location                   *string                    `json:"location,omitempty"`
+	OperatorSpec               *SiteOperatorSpec          `json:"operatorSpec,omitempty"`
 	OriginalVersion            string                     `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
@@ -523,6 +547,14 @@ type SiteConfig_STATUS struct {
 	WebsiteTimeZone                        *string                                 `json:"websiteTimeZone,omitempty"`
 	WindowsFxVersion                       *string                                 `json:"windowsFxVersion,omitempty"`
 	XManagedServiceIdentityId              *int                                    `json:"xManagedServiceIdentityId,omitempty"`
+}
+
+// Storage version of v1api20220301.SiteOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type SiteOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20220301.SlotSwapStatus_STATUS

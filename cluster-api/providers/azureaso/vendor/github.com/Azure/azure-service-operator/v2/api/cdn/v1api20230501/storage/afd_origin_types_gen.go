@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type AfdOrigin struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Profiles_OriginGroups_Origin_Spec   `json:"spec,omitempty"`
-	Status            Profiles_OriginGroups_Origin_STATUS `json:"status,omitempty"`
+	Spec              AfdOrigin_Spec   `json:"spec,omitempty"`
+	Status            AfdOrigin_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &AfdOrigin{}
@@ -44,6 +47,26 @@ func (origin *AfdOrigin) SetConditions(conditions conditions.Conditions) {
 	origin.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &AfdOrigin{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (origin *AfdOrigin) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if origin.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return origin.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &AfdOrigin{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (origin *AfdOrigin) SecretDestinationExpressions() []*core.DestinationExpression {
+	if origin.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return origin.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &AfdOrigin{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (origin *AfdOrigin) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-05-01"
 func (origin AfdOrigin) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-05-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -87,7 +110,7 @@ func (origin *AfdOrigin) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (origin *AfdOrigin) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Profiles_OriginGroups_Origin_STATUS{}
+	return &AfdOrigin_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -99,13 +122,13 @@ func (origin *AfdOrigin) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (origin *AfdOrigin) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Profiles_OriginGroups_Origin_STATUS); ok {
+	if st, ok := status.(*AfdOrigin_STATUS); ok {
 		origin.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Profiles_OriginGroups_Origin_STATUS
+	var st AfdOrigin_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -138,19 +161,20 @@ type AfdOriginList struct {
 	Items           []AfdOrigin `json:"items"`
 }
 
-// Storage version of v1api20230501.Profiles_OriginGroups_Origin_Spec
-type Profiles_OriginGroups_Origin_Spec struct {
+// Storage version of v1api20230501.AfdOrigin_Spec
+type AfdOrigin_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName                   string             `json:"azureName,omitempty"`
-	AzureOrigin                 *ResourceReference `json:"azureOrigin,omitempty"`
-	EnabledState                *string            `json:"enabledState,omitempty"`
-	EnforceCertificateNameCheck *bool              `json:"enforceCertificateNameCheck,omitempty"`
-	HostName                    *string            `json:"hostName,omitempty"`
-	HttpPort                    *int               `json:"httpPort,omitempty"`
-	HttpsPort                   *int               `json:"httpsPort,omitempty"`
-	OriginHostHeader            *string            `json:"originHostHeader,omitempty"`
-	OriginalVersion             string             `json:"originalVersion,omitempty"`
+	AzureName                   string                 `json:"azureName,omitempty"`
+	AzureOrigin                 *ResourceReference     `json:"azureOrigin,omitempty"`
+	EnabledState                *string                `json:"enabledState,omitempty"`
+	EnforceCertificateNameCheck *bool                  `json:"enforceCertificateNameCheck,omitempty"`
+	HostName                    *string                `json:"hostName,omitempty"`
+	HttpPort                    *int                   `json:"httpPort,omitempty"`
+	HttpsPort                   *int                   `json:"httpsPort,omitempty"`
+	OperatorSpec                *AfdOriginOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginHostHeader            *string                `json:"originHostHeader,omitempty"`
+	OriginalVersion             string                 `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -163,10 +187,10 @@ type Profiles_OriginGroups_Origin_Spec struct {
 	Weight                    *int                                 `json:"weight,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Profiles_OriginGroups_Origin_Spec{}
+var _ genruntime.ConvertibleSpec = &AfdOrigin_Spec{}
 
-// ConvertSpecFrom populates our Profiles_OriginGroups_Origin_Spec from the provided source
-func (origin *Profiles_OriginGroups_Origin_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our AfdOrigin_Spec from the provided source
+func (origin *AfdOrigin_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == origin {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -174,8 +198,8 @@ func (origin *Profiles_OriginGroups_Origin_Spec) ConvertSpecFrom(source genrunti
 	return source.ConvertSpecTo(origin)
 }
 
-// ConvertSpecTo populates the provided destination from our Profiles_OriginGroups_Origin_Spec
-func (origin *Profiles_OriginGroups_Origin_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our AfdOrigin_Spec
+func (origin *AfdOrigin_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == origin {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -183,8 +207,8 @@ func (origin *Profiles_OriginGroups_Origin_Spec) ConvertSpecTo(destination genru
 	return destination.ConvertSpecFrom(origin)
 }
 
-// Storage version of v1api20230501.Profiles_OriginGroups_Origin_STATUS
-type Profiles_OriginGroups_Origin_STATUS struct {
+// Storage version of v1api20230501.AfdOrigin_STATUS
+type AfdOrigin_STATUS struct {
 	AzureOrigin                 *ResourceReference_STATUS                   `json:"azureOrigin,omitempty"`
 	Conditions                  []conditions.Condition                      `json:"conditions,omitempty"`
 	DeploymentStatus            *string                                     `json:"deploymentStatus,omitempty"`
@@ -206,10 +230,10 @@ type Profiles_OriginGroups_Origin_STATUS struct {
 	Weight                      *int                                        `json:"weight,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Profiles_OriginGroups_Origin_STATUS{}
+var _ genruntime.ConvertibleStatus = &AfdOrigin_STATUS{}
 
-// ConvertStatusFrom populates our Profiles_OriginGroups_Origin_STATUS from the provided source
-func (origin *Profiles_OriginGroups_Origin_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our AfdOrigin_STATUS from the provided source
+func (origin *AfdOrigin_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == origin {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -217,13 +241,21 @@ func (origin *Profiles_OriginGroups_Origin_STATUS) ConvertStatusFrom(source genr
 	return source.ConvertStatusTo(origin)
 }
 
-// ConvertStatusTo populates the provided destination from our Profiles_OriginGroups_Origin_STATUS
-func (origin *Profiles_OriginGroups_Origin_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our AfdOrigin_STATUS
+func (origin *AfdOrigin_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == origin {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(origin)
+}
+
+// Storage version of v1api20230501.AfdOriginOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type AfdOriginOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 // Storage version of v1api20230501.SharedPrivateLinkResourceProperties

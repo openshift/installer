@@ -34,15 +34,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/azure"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
-	"sigs.k8s.io/cluster-api-provider-azure/azure/services/groups"
-	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-azure/feature"
-	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
-	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
-	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
@@ -60,6 +51,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/azure"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/scope"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/services/groups"
+	infrav1exp "sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1"
+	"sigs.k8s.io/cluster-api-provider-azure/feature"
+	"sigs.k8s.io/cluster-api-provider-azure/pkg/coalescing"
+	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
+	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
 const (
@@ -88,7 +89,7 @@ type (
 // AzureClusterToAzureMachinesMapper creates a mapping handler to transform AzureClusters into AzureMachines. The transform
 // requires AzureCluster to map to the owning Cluster, then from the Cluster, collect the Machines belonging to the cluster,
 // then finally projecting the infrastructure reference to the AzureMachine.
-func AzureClusterToAzureMachinesMapper(ctx context.Context, c client.Client, obj runtime.Object, scheme *runtime.Scheme, log logr.Logger) (handler.MapFunc, error) {
+func AzureClusterToAzureMachinesMapper(_ context.Context, c client.Client, obj runtime.Object, scheme *runtime.Scheme, log logr.Logger) (handler.MapFunc, error) {
 	gvk, err := apiutil.GVKForObject(obj, scheme)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to find GVK for AzureMachine")
@@ -704,7 +705,7 @@ func RemoveClusterIdentityFinalizer(ctx context.Context, c client.Client, object
 // MachinePoolToInfrastructureMapFunc returns a handler.MapFunc that watches for
 // MachinePool events and returns reconciliation requests for an infrastructure provider object.
 func MachinePoolToInfrastructureMapFunc(gvk schema.GroupVersionKind, log logr.Logger) handler.MapFunc {
-	return func(ctx context.Context, o client.Object) []reconcile.Request {
+	return func(_ context.Context, o client.Object) []reconcile.Request {
 		m, ok := o.(*expv1.MachinePool)
 		if !ok {
 			log.V(4).Info("attempt to map incorrect type", "type", fmt.Sprintf("%T", o))
@@ -735,7 +736,7 @@ func MachinePoolToInfrastructureMapFunc(gvk schema.GroupVersionKind, log logr.Lo
 // AzureManagedMachinePools. The transform requires AzureManagedCluster to map to the owning Cluster, then from the
 // Cluster, collect the MachinePools belonging to the cluster, then finally projecting the infrastructure reference
 // to the AzureManagedMachinePools.
-func AzureManagedClusterToAzureManagedMachinePoolsMapper(ctx context.Context, c client.Client, scheme *runtime.Scheme, log logr.Logger) (handler.MapFunc, error) {
+func AzureManagedClusterToAzureManagedMachinePoolsMapper(_ context.Context, c client.Client, scheme *runtime.Scheme, log logr.Logger) (handler.MapFunc, error) {
 	gvk, err := apiutil.GVKForObject(new(infrav1.AzureManagedMachinePool), scheme)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to find GVK for AzureManagedMachinePool")
@@ -788,7 +789,7 @@ func AzureManagedClusterToAzureManagedMachinePoolsMapper(ctx context.Context, c 
 // AzureManagedMachinePools. The transform requires AzureManagedControlPlane to map to the owning Cluster, then from the
 // Cluster, collect the MachinePools belonging to the cluster, then finally projecting the infrastructure reference
 // to the AzureManagedMachinePools.
-func AzureManagedControlPlaneToAzureManagedMachinePoolsMapper(ctx context.Context, c client.Client, scheme *runtime.Scheme, log logr.Logger) (handler.MapFunc, error) {
+func AzureManagedControlPlaneToAzureManagedMachinePoolsMapper(_ context.Context, c client.Client, scheme *runtime.Scheme, log logr.Logger) (handler.MapFunc, error) {
 	gvk, err := apiutil.GVKForObject(new(infrav1.AzureManagedMachinePool), scheme)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to find GVK for AzureManagedMachinePool")
@@ -840,7 +841,7 @@ func AzureManagedControlPlaneToAzureManagedMachinePoolsMapper(ctx context.Contex
 // AzureManagedClusterToAzureManagedControlPlaneMapper creates a mapping handler to transform AzureManagedClusters into
 // AzureManagedControlPlane. The transform requires AzureManagedCluster to map to the owning Cluster, then from the
 // Cluster, collect the control plane infrastructure reference.
-func AzureManagedClusterToAzureManagedControlPlaneMapper(ctx context.Context, c client.Client, log logr.Logger) (handler.MapFunc, error) {
+func AzureManagedClusterToAzureManagedControlPlaneMapper(_ context.Context, c client.Client, log logr.Logger) (handler.MapFunc, error) {
 	return func(ctx context.Context, o client.Object) []ctrl.Request {
 		ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultMappingTimeout)
 		defer cancel()
@@ -889,7 +890,7 @@ func AzureManagedClusterToAzureManagedControlPlaneMapper(ctx context.Context, c 
 // AzureManagedControlPlaneToAzureManagedClusterMapper creates a mapping handler to transform AzureManagedClusters into
 // AzureManagedControlPlane. The transform requires AzureManagedCluster to map to the owning Cluster, then from the
 // Cluster, collect the control plane infrastructure reference.
-func AzureManagedControlPlaneToAzureManagedClusterMapper(ctx context.Context, c client.Client, log logr.Logger) (handler.MapFunc, error) {
+func AzureManagedControlPlaneToAzureManagedClusterMapper(_ context.Context, c client.Client, log logr.Logger) (handler.MapFunc, error) {
 	return func(ctx context.Context, o client.Object) []ctrl.Request {
 		ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultMappingTimeout)
 		defer cancel()
@@ -937,7 +938,7 @@ func AzureManagedControlPlaneToAzureManagedClusterMapper(ctx context.Context, c 
 
 // MachinePoolToAzureManagedControlPlaneMapFunc returns a handler.MapFunc that watches for
 // MachinePool events and returns reconciliation requests for a control plane object.
-func MachinePoolToAzureManagedControlPlaneMapFunc(ctx context.Context, c client.Client, gvk schema.GroupVersionKind, log logr.Logger) handler.MapFunc {
+func MachinePoolToAzureManagedControlPlaneMapFunc(_ context.Context, c client.Client, gvk schema.GroupVersionKind, log logr.Logger) handler.MapFunc {
 	return func(ctx context.Context, o client.Object) []reconcile.Request {
 		ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultMappingTimeout)
 		defer cancel()
@@ -1064,20 +1065,20 @@ func ClusterUpdatePauseChange(logger logr.Logger) predicate.Funcs {
 			log.V(6).Info("Cluster paused status remained the same, blocking further processing")
 			return false
 		},
-		CreateFunc:  func(e event.CreateEvent) bool { return false },
-		DeleteFunc:  func(e event.DeleteEvent) bool { return false },
-		GenericFunc: func(e event.GenericEvent) bool { return false },
+		CreateFunc:  func(_ event.CreateEvent) bool { return false },
+		DeleteFunc:  func(_ event.DeleteEvent) bool { return false },
+		GenericFunc: func(_ event.GenericEvent) bool { return false },
 	}
 }
 
 // ClusterPauseChangeAndInfrastructureReady is based on ClusterUnpausedAndInfrastructureReady, but
 // additionally accepts Cluster pause events.
-func ClusterPauseChangeAndInfrastructureReady(log logr.Logger) predicate.Funcs {
-	return predicates.Any(log, predicates.ClusterCreateInfraReady(log), predicates.ClusterUpdateInfraReady(log), ClusterUpdatePauseChange(log))
+func ClusterPauseChangeAndInfrastructureReady(scheme *runtime.Scheme, log logr.Logger) predicate.Funcs {
+	return predicates.Any(scheme, log, predicates.ClusterCreateInfraReady(scheme, log), predicates.ClusterUpdateInfraReady(scheme, log), ClusterUpdatePauseChange(log)) //nolint:staticcheck
 }
 
 // GetClusterScoper returns a ClusterScoper for the given cluster using the infra ref pointing to either an AzureCluster or an AzureManagedCluster.
-func GetClusterScoper(ctx context.Context, logger logr.Logger, c client.Client, cluster *clusterv1.Cluster, timeouts reconciler.Timeouts) (ClusterScoper, error) {
+func GetClusterScoper(ctx context.Context, logger logr.Logger, c client.Client, cluster *clusterv1.Cluster, timeouts reconciler.Timeouts, credCache azure.CredentialCache) (ClusterScoper, error) {
 	infraRef := cluster.Spec.InfrastructureRef
 	switch infraRef.Kind {
 	case "AzureCluster":
@@ -1094,10 +1095,11 @@ func GetClusterScoper(ctx context.Context, logger logr.Logger, c client.Client, 
 
 		// Create the cluster scope
 		return scope.NewClusterScope(ctx, scope.ClusterScopeParams{
-			Client:       c,
-			Cluster:      cluster,
-			AzureCluster: azureCluster,
-			Timeouts:     timeouts,
+			Client:          c,
+			Cluster:         cluster,
+			AzureCluster:    azureCluster,
+			Timeouts:        timeouts,
+			CredentialCache: credCache,
 		})
 
 	case "AzureManagedCluster":
@@ -1114,10 +1116,11 @@ func GetClusterScoper(ctx context.Context, logger logr.Logger, c client.Client, 
 
 		// Create the control plane scope
 		return scope.NewManagedControlPlaneScope(ctx, scope.ManagedControlPlaneScopeParams{
-			Client:       c,
-			Cluster:      cluster,
-			ControlPlane: azureManagedControlPlane,
-			Timeouts:     timeouts,
+			Client:          c,
+			Cluster:         cluster,
+			ControlPlane:    azureManagedControlPlane,
+			Timeouts:        timeouts,
+			CredentialCache: credCache,
 		})
 	}
 

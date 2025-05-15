@@ -5,10 +5,14 @@ package v1api20230701
 
 import (
 	"fmt"
-	v20230701s "github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20230701/storage"
+	arm "github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20230701/arm"
+	storage "github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20230701/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,7 +53,7 @@ var _ conversion.Convertible = &Vault{}
 
 // ConvertFrom populates our Vault from the provided hub Vault
 func (vault *Vault) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*v20230701s.Vault)
+	source, ok := hub.(*storage.Vault)
 	if !ok {
 		return fmt.Errorf("expected keyvault/v1api20230701/storage/Vault but received %T instead", hub)
 	}
@@ -59,7 +63,7 @@ func (vault *Vault) ConvertFrom(hub conversion.Hub) error {
 
 // ConvertTo populates the provided hub Vault from our Vault
 func (vault *Vault) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*v20230701s.Vault)
+	destination, ok := hub.(*storage.Vault)
 	if !ok {
 		return fmt.Errorf("expected keyvault/v1api20230701/storage/Vault but received %T instead", hub)
 	}
@@ -90,6 +94,26 @@ func (vault *Vault) defaultAzureName() {
 // defaultImpl applies the code generated defaults to the Vault resource
 func (vault *Vault) defaultImpl() { vault.defaultAzureName() }
 
+var _ configmaps.Exporter = &Vault{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (vault *Vault) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if vault.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return vault.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &Vault{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (vault *Vault) SecretDestinationExpressions() []*core.DestinationExpression {
+	if vault.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return vault.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.ImportableResource = &Vault{}
 
 // InitializeSpec initializes the spec for this resource from the given status
@@ -110,7 +134,7 @@ func (vault *Vault) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2023-07-01"
 func (vault Vault) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2023-07-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -208,7 +232,7 @@ func (vault *Vault) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 
 // createValidations validates the creation of the resource
 func (vault *Vault) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){vault.validateResourceReferences, vault.validateOwnerReference, vault.validateOptionalConfigMapReferences}
+	return []func() (admission.Warnings, error){vault.validateResourceReferences, vault.validateOwnerReference, vault.validateSecretDestinations, vault.validateConfigMapDestinations, vault.validateOptionalConfigMapReferences}
 }
 
 // deleteValidations validates the deletion of the resource
@@ -227,9 +251,23 @@ func (vault *Vault) updateValidations() []func(old runtime.Object) (admission.Wa
 			return vault.validateOwnerReference()
 		},
 		func(old runtime.Object) (admission.Warnings, error) {
+			return vault.validateSecretDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
+			return vault.validateConfigMapDestinations()
+		},
+		func(old runtime.Object) (admission.Warnings, error) {
 			return vault.validateOptionalConfigMapReferences()
 		},
 	}
+}
+
+// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
+func (vault *Vault) validateConfigMapDestinations() (admission.Warnings, error) {
+	if vault.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return configmaps.ValidateDestinations(vault, nil, vault.Spec.OperatorSpec.ConfigMapExpressions)
 }
 
 // validateOptionalConfigMapReferences validates all optional configmap reference pairs to ensure that at most 1 is set
@@ -238,7 +276,7 @@ func (vault *Vault) validateOptionalConfigMapReferences() (admission.Warnings, e
 	if err != nil {
 		return nil, err
 	}
-	return genruntime.ValidateOptionalConfigMapReferences(refs)
+	return configmaps.ValidateOptionalReferences(refs)
 }
 
 // validateOwnerReference validates the owner field
@@ -255,6 +293,14 @@ func (vault *Vault) validateResourceReferences() (admission.Warnings, error) {
 	return genruntime.ValidateResourceReferences(refs)
 }
 
+// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
+func (vault *Vault) validateSecretDestinations() (admission.Warnings, error) {
+	if vault.Spec.OperatorSpec == nil {
+		return nil, nil
+	}
+	return secrets.ValidateDestinations(vault, nil, vault.Spec.OperatorSpec.SecretExpressions)
+}
+
 // validateWriteOnceProperties validates all WriteOnce properties
 func (vault *Vault) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
 	oldObj, ok := old.(*Vault)
@@ -266,7 +312,7 @@ func (vault *Vault) validateWriteOnceProperties(old runtime.Object) (admission.W
 }
 
 // AssignProperties_From_Vault populates our Vault from the provided source Vault
-func (vault *Vault) AssignProperties_From_Vault(source *v20230701s.Vault) error {
+func (vault *Vault) AssignProperties_From_Vault(source *storage.Vault) error {
 
 	// ObjectMeta
 	vault.ObjectMeta = *source.ObjectMeta.DeepCopy()
@@ -292,13 +338,13 @@ func (vault *Vault) AssignProperties_From_Vault(source *v20230701s.Vault) error 
 }
 
 // AssignProperties_To_Vault populates the provided destination Vault from our Vault
-func (vault *Vault) AssignProperties_To_Vault(destination *v20230701s.Vault) error {
+func (vault *Vault) AssignProperties_To_Vault(destination *storage.Vault) error {
 
 	// ObjectMeta
 	destination.ObjectMeta = *vault.ObjectMeta.DeepCopy()
 
 	// Spec
-	var spec v20230701s.Vault_Spec
+	var spec storage.Vault_Spec
 	err := vault.Spec.AssignProperties_To_Vault_Spec(&spec)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Vault_Spec() to populate field Spec")
@@ -306,7 +352,7 @@ func (vault *Vault) AssignProperties_To_Vault(destination *v20230701s.Vault) err
 	destination.Spec = spec
 
 	// Status
-	var status v20230701s.Vault_STATUS
+	var status storage.Vault_STATUS
 	err = vault.Status.AssignProperties_To_Vault_STATUS(&status)
 	if err != nil {
 		return errors.Wrap(err, "calling AssignProperties_To_Vault_STATUS() to populate field Status")
@@ -351,6 +397,10 @@ type Vault_Spec struct {
 	// Location: The supported Azure location where the key vault should be created.
 	Location *string `json:"location,omitempty"`
 
+	// OperatorSpec: The specification for configuring operator behavior. This field is interpreted by the operator and not
+	// passed directly to Azure
+	OperatorSpec *VaultOperatorSpec `json:"operatorSpec,omitempty"`
+
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
 	// controls the resources lifecycle. When the owner is deleted the resource will also be deleted. Owner is expected to be a
@@ -372,7 +422,7 @@ func (vault *Vault_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 	if vault == nil {
 		return nil, nil
 	}
-	result := &Vault_Spec_ARM{}
+	result := &arm.Vault_Spec{}
 
 	// Set property "Location":
 	if vault.Location != nil {
@@ -389,7 +439,7 @@ func (vault *Vault_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 		if err != nil {
 			return nil, err
 		}
-		properties := *properties_ARM.(*VaultProperties_ARM)
+		properties := *properties_ARM.(*arm.VaultProperties)
 		result.Properties = &properties
 	}
 
@@ -405,14 +455,14 @@ func (vault *Vault_Spec) ConvertToARM(resolved genruntime.ConvertToARMResolvedDe
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (vault *Vault_Spec) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Vault_Spec_ARM{}
+	return &arm.Vault_Spec{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (vault *Vault_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Vault_Spec_ARM)
+	typedInput, ok := armInput.(arm.Vault_Spec)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Vault_Spec_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Vault_Spec, got %T", armInput)
 	}
 
 	// Set property "AzureName":
@@ -423,6 +473,8 @@ func (vault *Vault_Spec) PopulateFromARM(owner genruntime.ArbitraryOwnerReferenc
 		location := *typedInput.Location
 		vault.Location = &location
 	}
+
+	// no assignment for property "OperatorSpec"
 
 	// Set property "Owner":
 	vault.Owner = &genruntime.KnownResourceReference{
@@ -457,14 +509,14 @@ var _ genruntime.ConvertibleSpec = &Vault_Spec{}
 
 // ConvertSpecFrom populates our Vault_Spec from the provided source
 func (vault *Vault_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	src, ok := source.(*v20230701s.Vault_Spec)
+	src, ok := source.(*storage.Vault_Spec)
 	if ok {
 		// Populate our instance from source
 		return vault.AssignProperties_From_Vault_Spec(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230701s.Vault_Spec{}
+	src = &storage.Vault_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
@@ -481,14 +533,14 @@ func (vault *Vault_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) erro
 
 // ConvertSpecTo populates the provided destination from our Vault_Spec
 func (vault *Vault_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	dst, ok := destination.(*v20230701s.Vault_Spec)
+	dst, ok := destination.(*storage.Vault_Spec)
 	if ok {
 		// Populate destination from our instance
 		return vault.AssignProperties_To_Vault_Spec(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230701s.Vault_Spec{}
+	dst = &storage.Vault_Spec{}
 	err := vault.AssignProperties_To_Vault_Spec(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
@@ -504,13 +556,25 @@ func (vault *Vault_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) e
 }
 
 // AssignProperties_From_Vault_Spec populates our Vault_Spec from the provided source Vault_Spec
-func (vault *Vault_Spec) AssignProperties_From_Vault_Spec(source *v20230701s.Vault_Spec) error {
+func (vault *Vault_Spec) AssignProperties_From_Vault_Spec(source *storage.Vault_Spec) error {
 
 	// AzureName
 	vault.AzureName = source.AzureName
 
 	// Location
 	vault.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec VaultOperatorSpec
+		err := operatorSpec.AssignProperties_From_VaultOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_From_VaultOperatorSpec() to populate field OperatorSpec")
+		}
+		vault.OperatorSpec = &operatorSpec
+	} else {
+		vault.OperatorSpec = nil
+	}
 
 	// Owner
 	if source.Owner != nil {
@@ -540,7 +604,7 @@ func (vault *Vault_Spec) AssignProperties_From_Vault_Spec(source *v20230701s.Vau
 }
 
 // AssignProperties_To_Vault_Spec populates the provided destination Vault_Spec from our Vault_Spec
-func (vault *Vault_Spec) AssignProperties_To_Vault_Spec(destination *v20230701s.Vault_Spec) error {
+func (vault *Vault_Spec) AssignProperties_To_Vault_Spec(destination *storage.Vault_Spec) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -549,6 +613,18 @@ func (vault *Vault_Spec) AssignProperties_To_Vault_Spec(destination *v20230701s.
 
 	// Location
 	destination.Location = genruntime.ClonePointerToString(vault.Location)
+
+	// OperatorSpec
+	if vault.OperatorSpec != nil {
+		var operatorSpec storage.VaultOperatorSpec
+		err := vault.OperatorSpec.AssignProperties_To_VaultOperatorSpec(&operatorSpec)
+		if err != nil {
+			return errors.Wrap(err, "calling AssignProperties_To_VaultOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
 
 	// OriginalVersion
 	destination.OriginalVersion = vault.OriginalVersion()
@@ -563,7 +639,7 @@ func (vault *Vault_Spec) AssignProperties_To_Vault_Spec(destination *v20230701s.
 
 	// Properties
 	if vault.Properties != nil {
-		var property v20230701s.VaultProperties
+		var property storage.VaultProperties
 		err := vault.Properties.AssignProperties_To_VaultProperties(&property)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_VaultProperties() to populate field Properties")
@@ -651,14 +727,14 @@ var _ genruntime.ConvertibleStatus = &Vault_STATUS{}
 
 // ConvertStatusFrom populates our Vault_STATUS from the provided source
 func (vault *Vault_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	src, ok := source.(*v20230701s.Vault_STATUS)
+	src, ok := source.(*storage.Vault_STATUS)
 	if ok {
 		// Populate our instance from source
 		return vault.AssignProperties_From_Vault_STATUS(src)
 	}
 
 	// Convert to an intermediate form
-	src = &v20230701s.Vault_STATUS{}
+	src = &storage.Vault_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
@@ -675,14 +751,14 @@ func (vault *Vault_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus
 
 // ConvertStatusTo populates the provided destination from our Vault_STATUS
 func (vault *Vault_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	dst, ok := destination.(*v20230701s.Vault_STATUS)
+	dst, ok := destination.(*storage.Vault_STATUS)
 	if ok {
 		// Populate destination from our instance
 		return vault.AssignProperties_To_Vault_STATUS(dst)
 	}
 
 	// Convert to an intermediate form
-	dst = &v20230701s.Vault_STATUS{}
+	dst = &storage.Vault_STATUS{}
 	err := vault.AssignProperties_To_Vault_STATUS(dst)
 	if err != nil {
 		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
@@ -701,14 +777,14 @@ var _ genruntime.FromARMConverter = &Vault_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (vault *Vault_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Vault_STATUS_ARM{}
+	return &arm.Vault_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (vault *Vault_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Vault_STATUS_ARM)
+	typedInput, ok := armInput.(arm.Vault_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Vault_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Vault_STATUS, got %T", armInput)
 	}
 
 	// no assignment for property "Conditions"
@@ -772,7 +848,7 @@ func (vault *Vault_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 }
 
 // AssignProperties_From_Vault_STATUS populates our Vault_STATUS from the provided source Vault_STATUS
-func (vault *Vault_STATUS) AssignProperties_From_Vault_STATUS(source *v20230701s.Vault_STATUS) error {
+func (vault *Vault_STATUS) AssignProperties_From_Vault_STATUS(source *storage.Vault_STATUS) error {
 
 	// Conditions
 	vault.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
@@ -821,7 +897,7 @@ func (vault *Vault_STATUS) AssignProperties_From_Vault_STATUS(source *v20230701s
 }
 
 // AssignProperties_To_Vault_STATUS populates the provided destination Vault_STATUS from our Vault_STATUS
-func (vault *Vault_STATUS) AssignProperties_To_Vault_STATUS(destination *v20230701s.Vault_STATUS) error {
+func (vault *Vault_STATUS) AssignProperties_To_Vault_STATUS(destination *storage.Vault_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -839,7 +915,7 @@ func (vault *Vault_STATUS) AssignProperties_To_Vault_STATUS(destination *v202307
 
 	// Properties
 	if vault.Properties != nil {
-		var property v20230701s.VaultProperties_STATUS
+		var property storage.VaultProperties_STATUS
 		err := vault.Properties.AssignProperties_To_VaultProperties_STATUS(&property)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_VaultProperties_STATUS() to populate field Properties")
@@ -851,7 +927,7 @@ func (vault *Vault_STATUS) AssignProperties_To_Vault_STATUS(destination *v202307
 
 	// SystemData
 	if vault.SystemData != nil {
-		var systemDatum v20230701s.SystemData_STATUS
+		var systemDatum storage.SystemData_STATUS
 		err := vault.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
@@ -903,14 +979,14 @@ var _ genruntime.FromARMConverter = &SystemData_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (data *SystemData_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &SystemData_STATUS_ARM{}
+	return &arm.SystemData_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(SystemData_STATUS_ARM)
+	typedInput, ok := armInput.(arm.SystemData_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected SystemData_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.SystemData_STATUS, got %T", armInput)
 	}
 
 	// Set property "CreatedAt":
@@ -927,7 +1003,9 @@ func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 
 	// Set property "CreatedByType":
 	if typedInput.CreatedByType != nil {
-		createdByType := *typedInput.CreatedByType
+		var temp string
+		temp = string(*typedInput.CreatedByType)
+		createdByType := IdentityType_STATUS(temp)
 		data.CreatedByType = &createdByType
 	}
 
@@ -945,7 +1023,9 @@ func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 
 	// Set property "LastModifiedByType":
 	if typedInput.LastModifiedByType != nil {
-		lastModifiedByType := *typedInput.LastModifiedByType
+		var temp string
+		temp = string(*typedInput.LastModifiedByType)
+		lastModifiedByType := IdentityType_STATUS(temp)
 		data.LastModifiedByType = &lastModifiedByType
 	}
 
@@ -954,7 +1034,7 @@ func (data *SystemData_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_SystemData_STATUS populates our SystemData_STATUS from the provided source SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v20230701s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *storage.SystemData_STATUS) error {
 
 	// CreatedAt
 	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
@@ -964,8 +1044,9 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 
 	// CreatedByType
 	if source.CreatedByType != nil {
-		createdByType := IdentityType_STATUS(*source.CreatedByType)
-		data.CreatedByType = &createdByType
+		createdByType := *source.CreatedByType
+		createdByTypeTemp := genruntime.ToEnum(createdByType, identityType_STATUS_Values)
+		data.CreatedByType = &createdByTypeTemp
 	} else {
 		data.CreatedByType = nil
 	}
@@ -978,8 +1059,9 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 
 	// LastModifiedByType
 	if source.LastModifiedByType != nil {
-		lastModifiedByType := IdentityType_STATUS(*source.LastModifiedByType)
-		data.LastModifiedByType = &lastModifiedByType
+		lastModifiedByType := *source.LastModifiedByType
+		lastModifiedByTypeTemp := genruntime.ToEnum(lastModifiedByType, identityType_STATUS_Values)
+		data.LastModifiedByType = &lastModifiedByTypeTemp
 	} else {
 		data.LastModifiedByType = nil
 	}
@@ -989,7 +1071,7 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *v
 }
 
 // AssignProperties_To_SystemData_STATUS populates the provided destination SystemData_STATUS from our SystemData_STATUS
-func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *v20230701s.SystemData_STATUS) error {
+func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination *storage.SystemData_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -1019,6 +1101,110 @@ func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination
 		destination.LastModifiedByType = &lastModifiedByType
 	} else {
 		destination.LastModifiedByType = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// No error
+	return nil
+}
+
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type VaultOperatorSpec struct {
+	// ConfigMapExpressions: configures where to place operator written dynamic ConfigMaps (created with CEL expressions).
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+
+	// SecretExpressions: configures where to place operator written dynamic secrets (created with CEL expressions).
+	SecretExpressions []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_VaultOperatorSpec populates our VaultOperatorSpec from the provided source VaultOperatorSpec
+func (operator *VaultOperatorSpec) AssignProperties_From_VaultOperatorSpec(source *storage.VaultOperatorSpec) error {
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_VaultOperatorSpec populates the provided destination VaultOperatorSpec from our VaultOperatorSpec
+func (operator *VaultOperatorSpec) AssignProperties_To_VaultOperatorSpec(destination *storage.VaultOperatorSpec) error {
+	// Create a new property bag
+	propertyBag := genruntime.NewPropertyBag()
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
 	}
 
 	// Update the property bag
@@ -1110,7 +1296,7 @@ func (properties *VaultProperties) ConvertToARM(resolved genruntime.ConvertToARM
 	if properties == nil {
 		return nil, nil
 	}
-	result := &VaultProperties_ARM{}
+	result := &arm.VaultProperties{}
 
 	// Set property "AccessPolicies":
 	for _, item := range properties.AccessPolicies {
@@ -1118,12 +1304,14 @@ func (properties *VaultProperties) ConvertToARM(resolved genruntime.ConvertToARM
 		if err != nil {
 			return nil, err
 		}
-		result.AccessPolicies = append(result.AccessPolicies, *item_ARM.(*AccessPolicyEntry_ARM))
+		result.AccessPolicies = append(result.AccessPolicies, *item_ARM.(*arm.AccessPolicyEntry))
 	}
 
 	// Set property "CreateMode":
 	if properties.CreateMode != nil {
-		createMode := *properties.CreateMode
+		var temp string
+		temp = string(*properties.CreateMode)
+		createMode := arm.VaultProperties_CreateMode(temp)
 		result.CreateMode = &createMode
 	}
 
@@ -1169,13 +1357,15 @@ func (properties *VaultProperties) ConvertToARM(resolved genruntime.ConvertToARM
 		if err != nil {
 			return nil, err
 		}
-		networkAcls := *networkAcls_ARM.(*NetworkRuleSet_ARM)
+		networkAcls := *networkAcls_ARM.(*arm.NetworkRuleSet)
 		result.NetworkAcls = &networkAcls
 	}
 
 	// Set property "ProvisioningState":
 	if properties.ProvisioningState != nil {
-		provisioningState := *properties.ProvisioningState
+		var temp string
+		temp = string(*properties.ProvisioningState)
+		provisioningState := arm.VaultProperties_ProvisioningState(temp)
 		result.ProvisioningState = &provisioningState
 	}
 
@@ -1191,7 +1381,7 @@ func (properties *VaultProperties) ConvertToARM(resolved genruntime.ConvertToARM
 		if err != nil {
 			return nil, err
 		}
-		sku := *sku_ARM.(*Sku_ARM)
+		sku := *sku_ARM.(*arm.Sku)
 		result.Sku = &sku
 	}
 
@@ -1225,14 +1415,14 @@ func (properties *VaultProperties) ConvertToARM(resolved genruntime.ConvertToARM
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *VaultProperties) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VaultProperties_ARM{}
+	return &arm.VaultProperties{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *VaultProperties) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VaultProperties_ARM)
+	typedInput, ok := armInput.(arm.VaultProperties)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VaultProperties_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VaultProperties, got %T", armInput)
 	}
 
 	// Set property "AccessPolicies":
@@ -1247,7 +1437,9 @@ func (properties *VaultProperties) PopulateFromARM(owner genruntime.ArbitraryOwn
 
 	// Set property "CreateMode":
 	if typedInput.CreateMode != nil {
-		createMode := *typedInput.CreateMode
+		var temp string
+		temp = string(*typedInput.CreateMode)
+		createMode := VaultProperties_CreateMode(temp)
 		properties.CreateMode = &createMode
 	}
 
@@ -1300,7 +1492,9 @@ func (properties *VaultProperties) PopulateFromARM(owner genruntime.ArbitraryOwn
 
 	// Set property "ProvisioningState":
 	if typedInput.ProvisioningState != nil {
-		provisioningState := *typedInput.ProvisioningState
+		var temp string
+		temp = string(*typedInput.ProvisioningState)
+		provisioningState := VaultProperties_ProvisioningState(temp)
 		properties.ProvisioningState = &provisioningState
 	}
 
@@ -1346,7 +1540,7 @@ func (properties *VaultProperties) PopulateFromARM(owner genruntime.ArbitraryOwn
 }
 
 // AssignProperties_From_VaultProperties populates our VaultProperties from the provided source VaultProperties
-func (properties *VaultProperties) AssignProperties_From_VaultProperties(source *v20230701s.VaultProperties) error {
+func (properties *VaultProperties) AssignProperties_From_VaultProperties(source *storage.VaultProperties) error {
 
 	// AccessPolicies
 	if source.AccessPolicies != nil {
@@ -1368,8 +1562,9 @@ func (properties *VaultProperties) AssignProperties_From_VaultProperties(source 
 
 	// CreateMode
 	if source.CreateMode != nil {
-		createMode := VaultProperties_CreateMode(*source.CreateMode)
-		properties.CreateMode = &createMode
+		createMode := *source.CreateMode
+		createModeTemp := genruntime.ToEnum(createMode, vaultProperties_CreateMode_Values)
+		properties.CreateMode = &createModeTemp
 	} else {
 		properties.CreateMode = nil
 	}
@@ -1436,8 +1631,9 @@ func (properties *VaultProperties) AssignProperties_From_VaultProperties(source 
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := VaultProperties_ProvisioningState(*source.ProvisioningState)
-		properties.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, vaultProperties_ProvisioningState_Values)
+		properties.ProvisioningState = &provisioningStateTemp
 	} else {
 		properties.ProvisioningState = nil
 	}
@@ -1484,17 +1680,17 @@ func (properties *VaultProperties) AssignProperties_From_VaultProperties(source 
 }
 
 // AssignProperties_To_VaultProperties populates the provided destination VaultProperties from our VaultProperties
-func (properties *VaultProperties) AssignProperties_To_VaultProperties(destination *v20230701s.VaultProperties) error {
+func (properties *VaultProperties) AssignProperties_To_VaultProperties(destination *storage.VaultProperties) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AccessPolicies
 	if properties.AccessPolicies != nil {
-		accessPolicyList := make([]v20230701s.AccessPolicyEntry, len(properties.AccessPolicies))
+		accessPolicyList := make([]storage.AccessPolicyEntry, len(properties.AccessPolicies))
 		for accessPolicyIndex, accessPolicyItem := range properties.AccessPolicies {
 			// Shadow the loop variable to avoid aliasing
 			accessPolicyItem := accessPolicyItem
-			var accessPolicy v20230701s.AccessPolicyEntry
+			var accessPolicy storage.AccessPolicyEntry
 			err := accessPolicyItem.AssignProperties_To_AccessPolicyEntry(&accessPolicy)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AccessPolicyEntry() to populate field AccessPolicies")
@@ -1564,7 +1760,7 @@ func (properties *VaultProperties) AssignProperties_To_VaultProperties(destinati
 
 	// NetworkAcls
 	if properties.NetworkAcls != nil {
-		var networkAcl v20230701s.NetworkRuleSet
+		var networkAcl storage.NetworkRuleSet
 		err := properties.NetworkAcls.AssignProperties_To_NetworkRuleSet(&networkAcl)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NetworkRuleSet() to populate field NetworkAcls")
@@ -1587,7 +1783,7 @@ func (properties *VaultProperties) AssignProperties_To_VaultProperties(destinati
 
 	// Sku
 	if properties.Sku != nil {
-		var sku v20230701s.Sku
+		var sku storage.Sku
 		err := properties.Sku.AssignProperties_To_Sku(&sku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
@@ -1653,7 +1849,7 @@ func (properties *VaultProperties) Initialize_From_VaultProperties_STATUS(source
 
 	// CreateMode
 	if source.CreateMode != nil {
-		createMode := VaultProperties_CreateMode(*source.CreateMode)
+		createMode := genruntime.ToEnum(string(*source.CreateMode), vaultProperties_CreateMode_Values)
 		properties.CreateMode = &createMode
 	} else {
 		properties.CreateMode = nil
@@ -1721,7 +1917,7 @@ func (properties *VaultProperties) Initialize_From_VaultProperties_STATUS(source
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := VaultProperties_ProvisioningState(*source.ProvisioningState)
+		provisioningState := genruntime.ToEnum(string(*source.ProvisioningState), vaultProperties_ProvisioningState_Values)
 		properties.ProvisioningState = &provisioningState
 	} else {
 		properties.ProvisioningState = nil
@@ -1835,14 +2031,14 @@ var _ genruntime.FromARMConverter = &VaultProperties_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (properties *VaultProperties_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VaultProperties_STATUS_ARM{}
+	return &arm.VaultProperties_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (properties *VaultProperties_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VaultProperties_STATUS_ARM)
+	typedInput, ok := armInput.(arm.VaultProperties_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VaultProperties_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VaultProperties_STATUS, got %T", armInput)
 	}
 
 	// Set property "AccessPolicies":
@@ -1857,7 +2053,9 @@ func (properties *VaultProperties_STATUS) PopulateFromARM(owner genruntime.Arbit
 
 	// Set property "CreateMode":
 	if typedInput.CreateMode != nil {
-		createMode := *typedInput.CreateMode
+		var temp string
+		temp = string(*typedInput.CreateMode)
+		createMode := VaultProperties_CreateMode_STATUS(temp)
 		properties.CreateMode = &createMode
 	}
 
@@ -1926,7 +2124,9 @@ func (properties *VaultProperties_STATUS) PopulateFromARM(owner genruntime.Arbit
 
 	// Set property "ProvisioningState":
 	if typedInput.ProvisioningState != nil {
-		provisioningState := *typedInput.ProvisioningState
+		var temp string
+		temp = string(*typedInput.ProvisioningState)
+		provisioningState := VaultProperties_ProvisioningState_STATUS(temp)
 		properties.ProvisioningState = &provisioningState
 	}
 
@@ -1970,7 +2170,7 @@ func (properties *VaultProperties_STATUS) PopulateFromARM(owner genruntime.Arbit
 }
 
 // AssignProperties_From_VaultProperties_STATUS populates our VaultProperties_STATUS from the provided source VaultProperties_STATUS
-func (properties *VaultProperties_STATUS) AssignProperties_From_VaultProperties_STATUS(source *v20230701s.VaultProperties_STATUS) error {
+func (properties *VaultProperties_STATUS) AssignProperties_From_VaultProperties_STATUS(source *storage.VaultProperties_STATUS) error {
 
 	// AccessPolicies
 	if source.AccessPolicies != nil {
@@ -1992,8 +2192,9 @@ func (properties *VaultProperties_STATUS) AssignProperties_From_VaultProperties_
 
 	// CreateMode
 	if source.CreateMode != nil {
-		createMode := VaultProperties_CreateMode_STATUS(*source.CreateMode)
-		properties.CreateMode = &createMode
+		createMode := *source.CreateMode
+		createModeTemp := genruntime.ToEnum(createMode, vaultProperties_CreateMode_STATUS_Values)
+		properties.CreateMode = &createModeTemp
 	} else {
 		properties.CreateMode = nil
 	}
@@ -2081,8 +2282,9 @@ func (properties *VaultProperties_STATUS) AssignProperties_From_VaultProperties_
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := VaultProperties_ProvisioningState_STATUS(*source.ProvisioningState)
-		properties.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, vaultProperties_ProvisioningState_STATUS_Values)
+		properties.ProvisioningState = &provisioningStateTemp
 	} else {
 		properties.ProvisioningState = nil
 	}
@@ -2116,17 +2318,17 @@ func (properties *VaultProperties_STATUS) AssignProperties_From_VaultProperties_
 }
 
 // AssignProperties_To_VaultProperties_STATUS populates the provided destination VaultProperties_STATUS from our VaultProperties_STATUS
-func (properties *VaultProperties_STATUS) AssignProperties_To_VaultProperties_STATUS(destination *v20230701s.VaultProperties_STATUS) error {
+func (properties *VaultProperties_STATUS) AssignProperties_To_VaultProperties_STATUS(destination *storage.VaultProperties_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
 	// AccessPolicies
 	if properties.AccessPolicies != nil {
-		accessPolicyList := make([]v20230701s.AccessPolicyEntry_STATUS, len(properties.AccessPolicies))
+		accessPolicyList := make([]storage.AccessPolicyEntry_STATUS, len(properties.AccessPolicies))
 		for accessPolicyIndex, accessPolicyItem := range properties.AccessPolicies {
 			// Shadow the loop variable to avoid aliasing
 			accessPolicyItem := accessPolicyItem
-			var accessPolicy v20230701s.AccessPolicyEntry_STATUS
+			var accessPolicy storage.AccessPolicyEntry_STATUS
 			err := accessPolicyItem.AssignProperties_To_AccessPolicyEntry_STATUS(&accessPolicy)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_AccessPolicyEntry_STATUS() to populate field AccessPolicies")
@@ -2199,7 +2401,7 @@ func (properties *VaultProperties_STATUS) AssignProperties_To_VaultProperties_ST
 
 	// NetworkAcls
 	if properties.NetworkAcls != nil {
-		var networkAcl v20230701s.NetworkRuleSet_STATUS
+		var networkAcl storage.NetworkRuleSet_STATUS
 		err := properties.NetworkAcls.AssignProperties_To_NetworkRuleSet_STATUS(&networkAcl)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_NetworkRuleSet_STATUS() to populate field NetworkAcls")
@@ -2211,11 +2413,11 @@ func (properties *VaultProperties_STATUS) AssignProperties_To_VaultProperties_ST
 
 	// PrivateEndpointConnections
 	if properties.PrivateEndpointConnections != nil {
-		privateEndpointConnectionList := make([]v20230701s.PrivateEndpointConnectionItem_STATUS, len(properties.PrivateEndpointConnections))
+		privateEndpointConnectionList := make([]storage.PrivateEndpointConnectionItem_STATUS, len(properties.PrivateEndpointConnections))
 		for privateEndpointConnectionIndex, privateEndpointConnectionItem := range properties.PrivateEndpointConnections {
 			// Shadow the loop variable to avoid aliasing
 			privateEndpointConnectionItem := privateEndpointConnectionItem
-			var privateEndpointConnection v20230701s.PrivateEndpointConnectionItem_STATUS
+			var privateEndpointConnection storage.PrivateEndpointConnectionItem_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnectionItem_STATUS(&privateEndpointConnection)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnectionItem_STATUS() to populate field PrivateEndpointConnections")
@@ -2240,7 +2442,7 @@ func (properties *VaultProperties_STATUS) AssignProperties_To_VaultProperties_ST
 
 	// Sku
 	if properties.Sku != nil {
-		var sku v20230701s.Sku_STATUS
+		var sku storage.Sku_STATUS
 		err := properties.Sku.AssignProperties_To_Sku_STATUS(&sku)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
@@ -2308,7 +2510,7 @@ func (entry *AccessPolicyEntry) ConvertToARM(resolved genruntime.ConvertToARMRes
 	if entry == nil {
 		return nil, nil
 	}
-	result := &AccessPolicyEntry_ARM{}
+	result := &arm.AccessPolicyEntry{}
 
 	// Set property "ApplicationId":
 	if entry.ApplicationId != nil {
@@ -2344,7 +2546,7 @@ func (entry *AccessPolicyEntry) ConvertToARM(resolved genruntime.ConvertToARMRes
 		if err != nil {
 			return nil, err
 		}
-		permissions := *permissions_ARM.(*Permissions_ARM)
+		permissions := *permissions_ARM.(*arm.Permissions)
 		result.Permissions = &permissions
 	}
 
@@ -2366,14 +2568,14 @@ func (entry *AccessPolicyEntry) ConvertToARM(resolved genruntime.ConvertToARMRes
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (entry *AccessPolicyEntry) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AccessPolicyEntry_ARM{}
+	return &arm.AccessPolicyEntry{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (entry *AccessPolicyEntry) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AccessPolicyEntry_ARM)
+	typedInput, ok := armInput.(arm.AccessPolicyEntry)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AccessPolicyEntry_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AccessPolicyEntry, got %T", armInput)
 	}
 
 	// Set property "ApplicationId":
@@ -2416,7 +2618,7 @@ func (entry *AccessPolicyEntry) PopulateFromARM(owner genruntime.ArbitraryOwnerR
 }
 
 // AssignProperties_From_AccessPolicyEntry populates our AccessPolicyEntry from the provided source AccessPolicyEntry
-func (entry *AccessPolicyEntry) AssignProperties_From_AccessPolicyEntry(source *v20230701s.AccessPolicyEntry) error {
+func (entry *AccessPolicyEntry) AssignProperties_From_AccessPolicyEntry(source *storage.AccessPolicyEntry) error {
 
 	// ApplicationId
 	if source.ApplicationId != nil {
@@ -2478,7 +2680,7 @@ func (entry *AccessPolicyEntry) AssignProperties_From_AccessPolicyEntry(source *
 }
 
 // AssignProperties_To_AccessPolicyEntry populates the provided destination AccessPolicyEntry from our AccessPolicyEntry
-func (entry *AccessPolicyEntry) AssignProperties_To_AccessPolicyEntry(destination *v20230701s.AccessPolicyEntry) error {
+func (entry *AccessPolicyEntry) AssignProperties_To_AccessPolicyEntry(destination *storage.AccessPolicyEntry) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2511,7 +2713,7 @@ func (entry *AccessPolicyEntry) AssignProperties_To_AccessPolicyEntry(destinatio
 
 	// Permissions
 	if entry.Permissions != nil {
-		var permission v20230701s.Permissions
+		var permission storage.Permissions
 		err := entry.Permissions.AssignProperties_To_Permissions(&permission)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Permissions() to populate field Permissions")
@@ -2607,14 +2809,14 @@ var _ genruntime.FromARMConverter = &AccessPolicyEntry_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (entry *AccessPolicyEntry_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &AccessPolicyEntry_STATUS_ARM{}
+	return &arm.AccessPolicyEntry_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (entry *AccessPolicyEntry_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(AccessPolicyEntry_STATUS_ARM)
+	typedInput, ok := armInput.(arm.AccessPolicyEntry_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected AccessPolicyEntry_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.AccessPolicyEntry_STATUS, got %T", armInput)
 	}
 
 	// Set property "ApplicationId":
@@ -2651,7 +2853,7 @@ func (entry *AccessPolicyEntry_STATUS) PopulateFromARM(owner genruntime.Arbitrar
 }
 
 // AssignProperties_From_AccessPolicyEntry_STATUS populates our AccessPolicyEntry_STATUS from the provided source AccessPolicyEntry_STATUS
-func (entry *AccessPolicyEntry_STATUS) AssignProperties_From_AccessPolicyEntry_STATUS(source *v20230701s.AccessPolicyEntry_STATUS) error {
+func (entry *AccessPolicyEntry_STATUS) AssignProperties_From_AccessPolicyEntry_STATUS(source *storage.AccessPolicyEntry_STATUS) error {
 
 	// ApplicationId
 	entry.ApplicationId = genruntime.ClonePointerToString(source.ApplicationId)
@@ -2679,7 +2881,7 @@ func (entry *AccessPolicyEntry_STATUS) AssignProperties_From_AccessPolicyEntry_S
 }
 
 // AssignProperties_To_AccessPolicyEntry_STATUS populates the provided destination AccessPolicyEntry_STATUS from our AccessPolicyEntry_STATUS
-func (entry *AccessPolicyEntry_STATUS) AssignProperties_To_AccessPolicyEntry_STATUS(destination *v20230701s.AccessPolicyEntry_STATUS) error {
+func (entry *AccessPolicyEntry_STATUS) AssignProperties_To_AccessPolicyEntry_STATUS(destination *storage.AccessPolicyEntry_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2691,7 +2893,7 @@ func (entry *AccessPolicyEntry_STATUS) AssignProperties_To_AccessPolicyEntry_STA
 
 	// Permissions
 	if entry.Permissions != nil {
-		var permission v20230701s.Permissions_STATUS
+		var permission storage.Permissions_STATUS
 		err := entry.Permissions.AssignProperties_To_Permissions_STATUS(&permission)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_Permissions_STATUS() to populate field Permissions")
@@ -2713,6 +2915,24 @@ func (entry *AccessPolicyEntry_STATUS) AssignProperties_To_AccessPolicyEntry_STA
 
 	// No error
 	return nil
+}
+
+// The type of identity.
+type IdentityType_STATUS string
+
+const (
+	IdentityType_STATUS_Application     = IdentityType_STATUS("Application")
+	IdentityType_STATUS_Key             = IdentityType_STATUS("Key")
+	IdentityType_STATUS_ManagedIdentity = IdentityType_STATUS("ManagedIdentity")
+	IdentityType_STATUS_User            = IdentityType_STATUS("User")
+)
+
+// Mapping from string to IdentityType_STATUS
+var identityType_STATUS_Values = map[string]IdentityType_STATUS{
+	"application":     IdentityType_STATUS_Application,
+	"key":             IdentityType_STATUS_Key,
+	"managedidentity": IdentityType_STATUS_ManagedIdentity,
+	"user":            IdentityType_STATUS_User,
 }
 
 // A set of rules governing the network accessibility of a vault.
@@ -2739,17 +2959,21 @@ func (ruleSet *NetworkRuleSet) ConvertToARM(resolved genruntime.ConvertToARMReso
 	if ruleSet == nil {
 		return nil, nil
 	}
-	result := &NetworkRuleSet_ARM{}
+	result := &arm.NetworkRuleSet{}
 
 	// Set property "Bypass":
 	if ruleSet.Bypass != nil {
-		bypass := *ruleSet.Bypass
+		var temp string
+		temp = string(*ruleSet.Bypass)
+		bypass := arm.NetworkRuleSet_Bypass(temp)
 		result.Bypass = &bypass
 	}
 
 	// Set property "DefaultAction":
 	if ruleSet.DefaultAction != nil {
-		defaultAction := *ruleSet.DefaultAction
+		var temp string
+		temp = string(*ruleSet.DefaultAction)
+		defaultAction := arm.NetworkRuleSet_DefaultAction(temp)
 		result.DefaultAction = &defaultAction
 	}
 
@@ -2759,7 +2983,7 @@ func (ruleSet *NetworkRuleSet) ConvertToARM(resolved genruntime.ConvertToARMReso
 		if err != nil {
 			return nil, err
 		}
-		result.IpRules = append(result.IpRules, *item_ARM.(*IPRule_ARM))
+		result.IpRules = append(result.IpRules, *item_ARM.(*arm.IPRule))
 	}
 
 	// Set property "VirtualNetworkRules":
@@ -2768,32 +2992,36 @@ func (ruleSet *NetworkRuleSet) ConvertToARM(resolved genruntime.ConvertToARMReso
 		if err != nil {
 			return nil, err
 		}
-		result.VirtualNetworkRules = append(result.VirtualNetworkRules, *item_ARM.(*VirtualNetworkRule_ARM))
+		result.VirtualNetworkRules = append(result.VirtualNetworkRules, *item_ARM.(*arm.VirtualNetworkRule))
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (ruleSet *NetworkRuleSet) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkRuleSet_ARM{}
+	return &arm.NetworkRuleSet{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (ruleSet *NetworkRuleSet) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NetworkRuleSet_ARM)
+	typedInput, ok := armInput.(arm.NetworkRuleSet)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkRuleSet_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkRuleSet, got %T", armInput)
 	}
 
 	// Set property "Bypass":
 	if typedInput.Bypass != nil {
-		bypass := *typedInput.Bypass
+		var temp string
+		temp = string(*typedInput.Bypass)
+		bypass := NetworkRuleSet_Bypass(temp)
 		ruleSet.Bypass = &bypass
 	}
 
 	// Set property "DefaultAction":
 	if typedInput.DefaultAction != nil {
-		defaultAction := *typedInput.DefaultAction
+		var temp string
+		temp = string(*typedInput.DefaultAction)
+		defaultAction := NetworkRuleSet_DefaultAction(temp)
 		ruleSet.DefaultAction = &defaultAction
 	}
 
@@ -2822,20 +3050,22 @@ func (ruleSet *NetworkRuleSet) PopulateFromARM(owner genruntime.ArbitraryOwnerRe
 }
 
 // AssignProperties_From_NetworkRuleSet populates our NetworkRuleSet from the provided source NetworkRuleSet
-func (ruleSet *NetworkRuleSet) AssignProperties_From_NetworkRuleSet(source *v20230701s.NetworkRuleSet) error {
+func (ruleSet *NetworkRuleSet) AssignProperties_From_NetworkRuleSet(source *storage.NetworkRuleSet) error {
 
 	// Bypass
 	if source.Bypass != nil {
-		bypass := NetworkRuleSet_Bypass(*source.Bypass)
-		ruleSet.Bypass = &bypass
+		bypass := *source.Bypass
+		bypassTemp := genruntime.ToEnum(bypass, networkRuleSet_Bypass_Values)
+		ruleSet.Bypass = &bypassTemp
 	} else {
 		ruleSet.Bypass = nil
 	}
 
 	// DefaultAction
 	if source.DefaultAction != nil {
-		defaultAction := NetworkRuleSet_DefaultAction(*source.DefaultAction)
-		ruleSet.DefaultAction = &defaultAction
+		defaultAction := *source.DefaultAction
+		defaultActionTemp := genruntime.ToEnum(defaultAction, networkRuleSet_DefaultAction_Values)
+		ruleSet.DefaultAction = &defaultActionTemp
 	} else {
 		ruleSet.DefaultAction = nil
 	}
@@ -2881,7 +3111,7 @@ func (ruleSet *NetworkRuleSet) AssignProperties_From_NetworkRuleSet(source *v202
 }
 
 // AssignProperties_To_NetworkRuleSet populates the provided destination NetworkRuleSet from our NetworkRuleSet
-func (ruleSet *NetworkRuleSet) AssignProperties_To_NetworkRuleSet(destination *v20230701s.NetworkRuleSet) error {
+func (ruleSet *NetworkRuleSet) AssignProperties_To_NetworkRuleSet(destination *storage.NetworkRuleSet) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -2903,11 +3133,11 @@ func (ruleSet *NetworkRuleSet) AssignProperties_To_NetworkRuleSet(destination *v
 
 	// IpRules
 	if ruleSet.IpRules != nil {
-		ipRuleList := make([]v20230701s.IPRule, len(ruleSet.IpRules))
+		ipRuleList := make([]storage.IPRule, len(ruleSet.IpRules))
 		for ipRuleIndex, ipRuleItem := range ruleSet.IpRules {
 			// Shadow the loop variable to avoid aliasing
 			ipRuleItem := ipRuleItem
-			var ipRule v20230701s.IPRule
+			var ipRule storage.IPRule
 			err := ipRuleItem.AssignProperties_To_IPRule(&ipRule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_IPRule() to populate field IpRules")
@@ -2921,11 +3151,11 @@ func (ruleSet *NetworkRuleSet) AssignProperties_To_NetworkRuleSet(destination *v
 
 	// VirtualNetworkRules
 	if ruleSet.VirtualNetworkRules != nil {
-		virtualNetworkRuleList := make([]v20230701s.VirtualNetworkRule, len(ruleSet.VirtualNetworkRules))
+		virtualNetworkRuleList := make([]storage.VirtualNetworkRule, len(ruleSet.VirtualNetworkRules))
 		for virtualNetworkRuleIndex, virtualNetworkRuleItem := range ruleSet.VirtualNetworkRules {
 			// Shadow the loop variable to avoid aliasing
 			virtualNetworkRuleItem := virtualNetworkRuleItem
-			var virtualNetworkRule v20230701s.VirtualNetworkRule
+			var virtualNetworkRule storage.VirtualNetworkRule
 			err := virtualNetworkRuleItem.AssignProperties_To_VirtualNetworkRule(&virtualNetworkRule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkRule() to populate field VirtualNetworkRules")
@@ -2953,7 +3183,7 @@ func (ruleSet *NetworkRuleSet) Initialize_From_NetworkRuleSet_STATUS(source *Net
 
 	// Bypass
 	if source.Bypass != nil {
-		bypass := NetworkRuleSet_Bypass(*source.Bypass)
+		bypass := genruntime.ToEnum(string(*source.Bypass), networkRuleSet_Bypass_Values)
 		ruleSet.Bypass = &bypass
 	} else {
 		ruleSet.Bypass = nil
@@ -2961,7 +3191,7 @@ func (ruleSet *NetworkRuleSet) Initialize_From_NetworkRuleSet_STATUS(source *Net
 
 	// DefaultAction
 	if source.DefaultAction != nil {
-		defaultAction := NetworkRuleSet_DefaultAction(*source.DefaultAction)
+		defaultAction := genruntime.ToEnum(string(*source.DefaultAction), networkRuleSet_DefaultAction_Values)
 		ruleSet.DefaultAction = &defaultAction
 	} else {
 		ruleSet.DefaultAction = nil
@@ -3028,25 +3258,29 @@ var _ genruntime.FromARMConverter = &NetworkRuleSet_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (ruleSet *NetworkRuleSet_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &NetworkRuleSet_STATUS_ARM{}
+	return &arm.NetworkRuleSet_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (ruleSet *NetworkRuleSet_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(NetworkRuleSet_STATUS_ARM)
+	typedInput, ok := armInput.(arm.NetworkRuleSet_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected NetworkRuleSet_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.NetworkRuleSet_STATUS, got %T", armInput)
 	}
 
 	// Set property "Bypass":
 	if typedInput.Bypass != nil {
-		bypass := *typedInput.Bypass
+		var temp string
+		temp = string(*typedInput.Bypass)
+		bypass := NetworkRuleSet_Bypass_STATUS(temp)
 		ruleSet.Bypass = &bypass
 	}
 
 	// Set property "DefaultAction":
 	if typedInput.DefaultAction != nil {
-		defaultAction := *typedInput.DefaultAction
+		var temp string
+		temp = string(*typedInput.DefaultAction)
+		defaultAction := NetworkRuleSet_DefaultAction_STATUS(temp)
 		ruleSet.DefaultAction = &defaultAction
 	}
 
@@ -3075,20 +3309,22 @@ func (ruleSet *NetworkRuleSet_STATUS) PopulateFromARM(owner genruntime.Arbitrary
 }
 
 // AssignProperties_From_NetworkRuleSet_STATUS populates our NetworkRuleSet_STATUS from the provided source NetworkRuleSet_STATUS
-func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_From_NetworkRuleSet_STATUS(source *v20230701s.NetworkRuleSet_STATUS) error {
+func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_From_NetworkRuleSet_STATUS(source *storage.NetworkRuleSet_STATUS) error {
 
 	// Bypass
 	if source.Bypass != nil {
-		bypass := NetworkRuleSet_Bypass_STATUS(*source.Bypass)
-		ruleSet.Bypass = &bypass
+		bypass := *source.Bypass
+		bypassTemp := genruntime.ToEnum(bypass, networkRuleSet_Bypass_STATUS_Values)
+		ruleSet.Bypass = &bypassTemp
 	} else {
 		ruleSet.Bypass = nil
 	}
 
 	// DefaultAction
 	if source.DefaultAction != nil {
-		defaultAction := NetworkRuleSet_DefaultAction_STATUS(*source.DefaultAction)
-		ruleSet.DefaultAction = &defaultAction
+		defaultAction := *source.DefaultAction
+		defaultActionTemp := genruntime.ToEnum(defaultAction, networkRuleSet_DefaultAction_STATUS_Values)
+		ruleSet.DefaultAction = &defaultActionTemp
 	} else {
 		ruleSet.DefaultAction = nil
 	}
@@ -3134,7 +3370,7 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_From_NetworkRuleSet_STATU
 }
 
 // AssignProperties_To_NetworkRuleSet_STATUS populates the provided destination NetworkRuleSet_STATUS from our NetworkRuleSet_STATUS
-func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_To_NetworkRuleSet_STATUS(destination *v20230701s.NetworkRuleSet_STATUS) error {
+func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_To_NetworkRuleSet_STATUS(destination *storage.NetworkRuleSet_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3156,11 +3392,11 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_To_NetworkRuleSet_STATUS(
 
 	// IpRules
 	if ruleSet.IpRules != nil {
-		ipRuleList := make([]v20230701s.IPRule_STATUS, len(ruleSet.IpRules))
+		ipRuleList := make([]storage.IPRule_STATUS, len(ruleSet.IpRules))
 		for ipRuleIndex, ipRuleItem := range ruleSet.IpRules {
 			// Shadow the loop variable to avoid aliasing
 			ipRuleItem := ipRuleItem
-			var ipRule v20230701s.IPRule_STATUS
+			var ipRule storage.IPRule_STATUS
 			err := ipRuleItem.AssignProperties_To_IPRule_STATUS(&ipRule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_IPRule_STATUS() to populate field IpRules")
@@ -3174,11 +3410,11 @@ func (ruleSet *NetworkRuleSet_STATUS) AssignProperties_To_NetworkRuleSet_STATUS(
 
 	// VirtualNetworkRules
 	if ruleSet.VirtualNetworkRules != nil {
-		virtualNetworkRuleList := make([]v20230701s.VirtualNetworkRule_STATUS, len(ruleSet.VirtualNetworkRules))
+		virtualNetworkRuleList := make([]storage.VirtualNetworkRule_STATUS, len(ruleSet.VirtualNetworkRules))
 		for virtualNetworkRuleIndex, virtualNetworkRuleItem := range ruleSet.VirtualNetworkRules {
 			// Shadow the loop variable to avoid aliasing
 			virtualNetworkRuleItem := virtualNetworkRuleItem
-			var virtualNetworkRule v20230701s.VirtualNetworkRule_STATUS
+			var virtualNetworkRule storage.VirtualNetworkRule_STATUS
 			err := virtualNetworkRuleItem.AssignProperties_To_VirtualNetworkRule_STATUS(&virtualNetworkRule)
 			if err != nil {
 				return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkRule_STATUS() to populate field VirtualNetworkRules")
@@ -3223,14 +3459,14 @@ var _ genruntime.FromARMConverter = &PrivateEndpointConnectionItem_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (item *PrivateEndpointConnectionItem_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateEndpointConnectionItem_STATUS_ARM{}
+	return &arm.PrivateEndpointConnectionItem_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (item *PrivateEndpointConnectionItem_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateEndpointConnectionItem_STATUS_ARM)
+	typedInput, ok := armInput.(arm.PrivateEndpointConnectionItem_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateEndpointConnectionItem_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateEndpointConnectionItem_STATUS, got %T", armInput)
 	}
 
 	// Set property "Etag":
@@ -3277,7 +3513,9 @@ func (item *PrivateEndpointConnectionItem_STATUS) PopulateFromARM(owner genrunti
 	// copying flattened property:
 	if typedInput.Properties != nil {
 		if typedInput.Properties.ProvisioningState != nil {
-			provisioningState := *typedInput.Properties.ProvisioningState
+			var temp string
+			temp = string(*typedInput.Properties.ProvisioningState)
+			provisioningState := PrivateEndpointConnectionProvisioningState_STATUS(temp)
 			item.ProvisioningState = &provisioningState
 		}
 	}
@@ -3287,7 +3525,7 @@ func (item *PrivateEndpointConnectionItem_STATUS) PopulateFromARM(owner genrunti
 }
 
 // AssignProperties_From_PrivateEndpointConnectionItem_STATUS populates our PrivateEndpointConnectionItem_STATUS from the provided source PrivateEndpointConnectionItem_STATUS
-func (item *PrivateEndpointConnectionItem_STATUS) AssignProperties_From_PrivateEndpointConnectionItem_STATUS(source *v20230701s.PrivateEndpointConnectionItem_STATUS) error {
+func (item *PrivateEndpointConnectionItem_STATUS) AssignProperties_From_PrivateEndpointConnectionItem_STATUS(source *storage.PrivateEndpointConnectionItem_STATUS) error {
 
 	// Etag
 	item.Etag = genruntime.ClonePointerToString(source.Etag)
@@ -3321,8 +3559,9 @@ func (item *PrivateEndpointConnectionItem_STATUS) AssignProperties_From_PrivateE
 
 	// ProvisioningState
 	if source.ProvisioningState != nil {
-		provisioningState := PrivateEndpointConnectionProvisioningState_STATUS(*source.ProvisioningState)
-		item.ProvisioningState = &provisioningState
+		provisioningState := *source.ProvisioningState
+		provisioningStateTemp := genruntime.ToEnum(provisioningState, privateEndpointConnectionProvisioningState_STATUS_Values)
+		item.ProvisioningState = &provisioningStateTemp
 	} else {
 		item.ProvisioningState = nil
 	}
@@ -3332,7 +3571,7 @@ func (item *PrivateEndpointConnectionItem_STATUS) AssignProperties_From_PrivateE
 }
 
 // AssignProperties_To_PrivateEndpointConnectionItem_STATUS populates the provided destination PrivateEndpointConnectionItem_STATUS from our PrivateEndpointConnectionItem_STATUS
-func (item *PrivateEndpointConnectionItem_STATUS) AssignProperties_To_PrivateEndpointConnectionItem_STATUS(destination *v20230701s.PrivateEndpointConnectionItem_STATUS) error {
+func (item *PrivateEndpointConnectionItem_STATUS) AssignProperties_To_PrivateEndpointConnectionItem_STATUS(destination *storage.PrivateEndpointConnectionItem_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3344,7 +3583,7 @@ func (item *PrivateEndpointConnectionItem_STATUS) AssignProperties_To_PrivateEnd
 
 	// PrivateEndpoint
 	if item.PrivateEndpoint != nil {
-		var privateEndpoint v20230701s.PrivateEndpoint_STATUS
+		var privateEndpoint storage.PrivateEndpoint_STATUS
 		err := item.PrivateEndpoint.AssignProperties_To_PrivateEndpoint_STATUS(&privateEndpoint)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpoint_STATUS() to populate field PrivateEndpoint")
@@ -3356,7 +3595,7 @@ func (item *PrivateEndpointConnectionItem_STATUS) AssignProperties_To_PrivateEnd
 
 	// PrivateLinkServiceConnectionState
 	if item.PrivateLinkServiceConnectionState != nil {
-		var privateLinkServiceConnectionState v20230701s.PrivateLinkServiceConnectionState_STATUS
+		var privateLinkServiceConnectionState storage.PrivateLinkServiceConnectionState_STATUS
 		err := item.PrivateLinkServiceConnectionState.AssignProperties_To_PrivateLinkServiceConnectionState_STATUS(&privateLinkServiceConnectionState)
 		if err != nil {
 			return errors.Wrap(err, "calling AssignProperties_To_PrivateLinkServiceConnectionState_STATUS() to populate field PrivateLinkServiceConnectionState")
@@ -3403,17 +3642,21 @@ func (sku *Sku) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (i
 	if sku == nil {
 		return nil, nil
 	}
-	result := &Sku_ARM{}
+	result := &arm.Sku{}
 
 	// Set property "Family":
 	if sku.Family != nil {
-		family := *sku.Family
+		var temp string
+		temp = string(*sku.Family)
+		family := arm.Sku_Family(temp)
 		result.Family = &family
 	}
 
 	// Set property "Name":
 	if sku.Name != nil {
-		name := *sku.Name
+		var temp string
+		temp = string(*sku.Name)
+		name := arm.Sku_Name(temp)
 		result.Name = &name
 	}
 	return result, nil
@@ -3421,25 +3664,29 @@ func (sku *Sku) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails) (i
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (sku *Sku) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Sku_ARM{}
+	return &arm.Sku{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (sku *Sku) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Sku_ARM)
+	typedInput, ok := armInput.(arm.Sku)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Sku_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Sku, got %T", armInput)
 	}
 
 	// Set property "Family":
 	if typedInput.Family != nil {
-		family := *typedInput.Family
+		var temp string
+		temp = string(*typedInput.Family)
+		family := Sku_Family(temp)
 		sku.Family = &family
 	}
 
 	// Set property "Name":
 	if typedInput.Name != nil {
-		name := *typedInput.Name
+		var temp string
+		temp = string(*typedInput.Name)
+		name := Sku_Name(temp)
 		sku.Name = &name
 	}
 
@@ -3448,20 +3695,22 @@ func (sku *Sku) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInp
 }
 
 // AssignProperties_From_Sku populates our Sku from the provided source Sku
-func (sku *Sku) AssignProperties_From_Sku(source *v20230701s.Sku) error {
+func (sku *Sku) AssignProperties_From_Sku(source *storage.Sku) error {
 
 	// Family
 	if source.Family != nil {
-		family := Sku_Family(*source.Family)
-		sku.Family = &family
+		family := *source.Family
+		familyTemp := genruntime.ToEnum(family, sku_Family_Values)
+		sku.Family = &familyTemp
 	} else {
 		sku.Family = nil
 	}
 
 	// Name
 	if source.Name != nil {
-		name := Sku_Name(*source.Name)
-		sku.Name = &name
+		name := *source.Name
+		nameTemp := genruntime.ToEnum(name, sku_Name_Values)
+		sku.Name = &nameTemp
 	} else {
 		sku.Name = nil
 	}
@@ -3471,7 +3720,7 @@ func (sku *Sku) AssignProperties_From_Sku(source *v20230701s.Sku) error {
 }
 
 // AssignProperties_To_Sku populates the provided destination Sku from our Sku
-func (sku *Sku) AssignProperties_To_Sku(destination *v20230701s.Sku) error {
+func (sku *Sku) AssignProperties_To_Sku(destination *storage.Sku) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3507,7 +3756,7 @@ func (sku *Sku) Initialize_From_Sku_STATUS(source *Sku_STATUS) error {
 
 	// Family
 	if source.Family != nil {
-		family := Sku_Family(*source.Family)
+		family := genruntime.ToEnum(string(*source.Family), sku_Family_Values)
 		sku.Family = &family
 	} else {
 		sku.Family = nil
@@ -3515,7 +3764,7 @@ func (sku *Sku) Initialize_From_Sku_STATUS(source *Sku_STATUS) error {
 
 	// Name
 	if source.Name != nil {
-		name := Sku_Name(*source.Name)
+		name := genruntime.ToEnum(string(*source.Name), sku_Name_Values)
 		sku.Name = &name
 	} else {
 		sku.Name = nil
@@ -3538,25 +3787,29 @@ var _ genruntime.FromARMConverter = &Sku_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (sku *Sku_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Sku_STATUS_ARM{}
+	return &arm.Sku_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (sku *Sku_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Sku_STATUS_ARM)
+	typedInput, ok := armInput.(arm.Sku_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Sku_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Sku_STATUS, got %T", armInput)
 	}
 
 	// Set property "Family":
 	if typedInput.Family != nil {
-		family := *typedInput.Family
+		var temp string
+		temp = string(*typedInput.Family)
+		family := Sku_Family_STATUS(temp)
 		sku.Family = &family
 	}
 
 	// Set property "Name":
 	if typedInput.Name != nil {
-		name := *typedInput.Name
+		var temp string
+		temp = string(*typedInput.Name)
+		name := Sku_Name_STATUS(temp)
 		sku.Name = &name
 	}
 
@@ -3565,20 +3818,22 @@ func (sku *Sku_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference,
 }
 
 // AssignProperties_From_Sku_STATUS populates our Sku_STATUS from the provided source Sku_STATUS
-func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *v20230701s.Sku_STATUS) error {
+func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *storage.Sku_STATUS) error {
 
 	// Family
 	if source.Family != nil {
-		family := Sku_Family_STATUS(*source.Family)
-		sku.Family = &family
+		family := *source.Family
+		familyTemp := genruntime.ToEnum(family, sku_Family_STATUS_Values)
+		sku.Family = &familyTemp
 	} else {
 		sku.Family = nil
 	}
 
 	// Name
 	if source.Name != nil {
-		name := Sku_Name_STATUS(*source.Name)
-		sku.Name = &name
+		name := *source.Name
+		nameTemp := genruntime.ToEnum(name, sku_Name_STATUS_Values)
+		sku.Name = &nameTemp
 	} else {
 		sku.Name = nil
 	}
@@ -3588,7 +3843,7 @@ func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *v20230701s.Sku_S
 }
 
 // AssignProperties_To_Sku_STATUS populates the provided destination Sku_STATUS from our Sku_STATUS
-func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *v20230701s.Sku_STATUS) error {
+func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *storage.Sku_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3619,6 +3874,68 @@ func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *v20230701s.Sk
 	return nil
 }
 
+// +kubebuilder:validation:Enum={"createOrRecover","default","purgeThenCreate","recover"}
+type VaultProperties_CreateMode string
+
+const (
+	VaultProperties_CreateMode_CreateOrRecover = VaultProperties_CreateMode("createOrRecover")
+	VaultProperties_CreateMode_Default         = VaultProperties_CreateMode("default")
+	VaultProperties_CreateMode_PurgeThenCreate = VaultProperties_CreateMode("purgeThenCreate")
+	VaultProperties_CreateMode_Recover         = VaultProperties_CreateMode("recover")
+)
+
+// Mapping from string to VaultProperties_CreateMode
+var vaultProperties_CreateMode_Values = map[string]VaultProperties_CreateMode{
+	"createorrecover": VaultProperties_CreateMode_CreateOrRecover,
+	"default":         VaultProperties_CreateMode_Default,
+	"purgethencreate": VaultProperties_CreateMode_PurgeThenCreate,
+	"recover":         VaultProperties_CreateMode_Recover,
+}
+
+type VaultProperties_CreateMode_STATUS string
+
+const (
+	VaultProperties_CreateMode_STATUS_CreateOrRecover = VaultProperties_CreateMode_STATUS("createOrRecover")
+	VaultProperties_CreateMode_STATUS_Default         = VaultProperties_CreateMode_STATUS("default")
+	VaultProperties_CreateMode_STATUS_PurgeThenCreate = VaultProperties_CreateMode_STATUS("purgeThenCreate")
+	VaultProperties_CreateMode_STATUS_Recover         = VaultProperties_CreateMode_STATUS("recover")
+)
+
+// Mapping from string to VaultProperties_CreateMode_STATUS
+var vaultProperties_CreateMode_STATUS_Values = map[string]VaultProperties_CreateMode_STATUS{
+	"createorrecover": VaultProperties_CreateMode_STATUS_CreateOrRecover,
+	"default":         VaultProperties_CreateMode_STATUS_Default,
+	"purgethencreate": VaultProperties_CreateMode_STATUS_PurgeThenCreate,
+	"recover":         VaultProperties_CreateMode_STATUS_Recover,
+}
+
+// +kubebuilder:validation:Enum={"RegisteringDns","Succeeded"}
+type VaultProperties_ProvisioningState string
+
+const (
+	VaultProperties_ProvisioningState_RegisteringDns = VaultProperties_ProvisioningState("RegisteringDns")
+	VaultProperties_ProvisioningState_Succeeded      = VaultProperties_ProvisioningState("Succeeded")
+)
+
+// Mapping from string to VaultProperties_ProvisioningState
+var vaultProperties_ProvisioningState_Values = map[string]VaultProperties_ProvisioningState{
+	"registeringdns": VaultProperties_ProvisioningState_RegisteringDns,
+	"succeeded":      VaultProperties_ProvisioningState_Succeeded,
+}
+
+type VaultProperties_ProvisioningState_STATUS string
+
+const (
+	VaultProperties_ProvisioningState_STATUS_RegisteringDns = VaultProperties_ProvisioningState_STATUS("RegisteringDns")
+	VaultProperties_ProvisioningState_STATUS_Succeeded      = VaultProperties_ProvisioningState_STATUS("Succeeded")
+)
+
+// Mapping from string to VaultProperties_ProvisioningState_STATUS
+var vaultProperties_ProvisioningState_STATUS_Values = map[string]VaultProperties_ProvisioningState_STATUS{
+	"registeringdns": VaultProperties_ProvisioningState_STATUS_RegisteringDns,
+	"succeeded":      VaultProperties_ProvisioningState_STATUS_Succeeded,
+}
+
 // A rule governing the accessibility of a vault from a specific ip address or ip range.
 type IPRule struct {
 	// +kubebuilder:validation:Required
@@ -3634,7 +3951,7 @@ func (rule *IPRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails
 	if rule == nil {
 		return nil, nil
 	}
-	result := &IPRule_ARM{}
+	result := &arm.IPRule{}
 
 	// Set property "Value":
 	if rule.Value != nil {
@@ -3646,14 +3963,14 @@ func (rule *IPRule) ConvertToARM(resolved genruntime.ConvertToARMResolvedDetails
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rule *IPRule) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &IPRule_ARM{}
+	return &arm.IPRule{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rule *IPRule) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(IPRule_ARM)
+	typedInput, ok := armInput.(arm.IPRule)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected IPRule_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.IPRule, got %T", armInput)
 	}
 
 	// Set property "Value":
@@ -3667,7 +3984,7 @@ func (rule *IPRule) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, ar
 }
 
 // AssignProperties_From_IPRule populates our IPRule from the provided source IPRule
-func (rule *IPRule) AssignProperties_From_IPRule(source *v20230701s.IPRule) error {
+func (rule *IPRule) AssignProperties_From_IPRule(source *storage.IPRule) error {
 
 	// Value
 	rule.Value = genruntime.ClonePointerToString(source.Value)
@@ -3677,7 +3994,7 @@ func (rule *IPRule) AssignProperties_From_IPRule(source *v20230701s.IPRule) erro
 }
 
 // AssignProperties_To_IPRule populates the provided destination IPRule from our IPRule
-func (rule *IPRule) AssignProperties_To_IPRule(destination *v20230701s.IPRule) error {
+func (rule *IPRule) AssignProperties_To_IPRule(destination *storage.IPRule) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3716,14 +4033,14 @@ var _ genruntime.FromARMConverter = &IPRule_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rule *IPRule_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &IPRule_STATUS_ARM{}
+	return &arm.IPRule_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rule *IPRule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(IPRule_STATUS_ARM)
+	typedInput, ok := armInput.(arm.IPRule_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected IPRule_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.IPRule_STATUS, got %T", armInput)
 	}
 
 	// Set property "Value":
@@ -3737,7 +4054,7 @@ func (rule *IPRule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerRefere
 }
 
 // AssignProperties_From_IPRule_STATUS populates our IPRule_STATUS from the provided source IPRule_STATUS
-func (rule *IPRule_STATUS) AssignProperties_From_IPRule_STATUS(source *v20230701s.IPRule_STATUS) error {
+func (rule *IPRule_STATUS) AssignProperties_From_IPRule_STATUS(source *storage.IPRule_STATUS) error {
 
 	// Value
 	rule.Value = genruntime.ClonePointerToString(source.Value)
@@ -3747,7 +4064,7 @@ func (rule *IPRule_STATUS) AssignProperties_From_IPRule_STATUS(source *v20230701
 }
 
 // AssignProperties_To_IPRule_STATUS populates the provided destination IPRule_STATUS from our IPRule_STATUS
-func (rule *IPRule_STATUS) AssignProperties_To_IPRule_STATUS(destination *v20230701s.IPRule_STATUS) error {
+func (rule *IPRule_STATUS) AssignProperties_To_IPRule_STATUS(destination *storage.IPRule_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3763,6 +4080,60 @@ func (rule *IPRule_STATUS) AssignProperties_To_IPRule_STATUS(destination *v20230
 
 	// No error
 	return nil
+}
+
+// +kubebuilder:validation:Enum={"AzureServices","None"}
+type NetworkRuleSet_Bypass string
+
+const (
+	NetworkRuleSet_Bypass_AzureServices = NetworkRuleSet_Bypass("AzureServices")
+	NetworkRuleSet_Bypass_None          = NetworkRuleSet_Bypass("None")
+)
+
+// Mapping from string to NetworkRuleSet_Bypass
+var networkRuleSet_Bypass_Values = map[string]NetworkRuleSet_Bypass{
+	"azureservices": NetworkRuleSet_Bypass_AzureServices,
+	"none":          NetworkRuleSet_Bypass_None,
+}
+
+type NetworkRuleSet_Bypass_STATUS string
+
+const (
+	NetworkRuleSet_Bypass_STATUS_AzureServices = NetworkRuleSet_Bypass_STATUS("AzureServices")
+	NetworkRuleSet_Bypass_STATUS_None          = NetworkRuleSet_Bypass_STATUS("None")
+)
+
+// Mapping from string to NetworkRuleSet_Bypass_STATUS
+var networkRuleSet_Bypass_STATUS_Values = map[string]NetworkRuleSet_Bypass_STATUS{
+	"azureservices": NetworkRuleSet_Bypass_STATUS_AzureServices,
+	"none":          NetworkRuleSet_Bypass_STATUS_None,
+}
+
+// +kubebuilder:validation:Enum={"Allow","Deny"}
+type NetworkRuleSet_DefaultAction string
+
+const (
+	NetworkRuleSet_DefaultAction_Allow = NetworkRuleSet_DefaultAction("Allow")
+	NetworkRuleSet_DefaultAction_Deny  = NetworkRuleSet_DefaultAction("Deny")
+)
+
+// Mapping from string to NetworkRuleSet_DefaultAction
+var networkRuleSet_DefaultAction_Values = map[string]NetworkRuleSet_DefaultAction{
+	"allow": NetworkRuleSet_DefaultAction_Allow,
+	"deny":  NetworkRuleSet_DefaultAction_Deny,
+}
+
+type NetworkRuleSet_DefaultAction_STATUS string
+
+const (
+	NetworkRuleSet_DefaultAction_STATUS_Allow = NetworkRuleSet_DefaultAction_STATUS("Allow")
+	NetworkRuleSet_DefaultAction_STATUS_Deny  = NetworkRuleSet_DefaultAction_STATUS("Deny")
+)
+
+// Mapping from string to NetworkRuleSet_DefaultAction_STATUS
+var networkRuleSet_DefaultAction_STATUS_Values = map[string]NetworkRuleSet_DefaultAction_STATUS{
+	"allow": NetworkRuleSet_DefaultAction_STATUS_Allow,
+	"deny":  NetworkRuleSet_DefaultAction_STATUS_Deny,
 }
 
 // Permissions the identity has for keys, secrets, certificates and storage.
@@ -3787,60 +4158,76 @@ func (permissions *Permissions) ConvertToARM(resolved genruntime.ConvertToARMRes
 	if permissions == nil {
 		return nil, nil
 	}
-	result := &Permissions_ARM{}
+	result := &arm.Permissions{}
 
 	// Set property "Certificates":
 	for _, item := range permissions.Certificates {
-		result.Certificates = append(result.Certificates, item)
+		var temp string
+		temp = string(item)
+		result.Certificates = append(result.Certificates, arm.Permissions_Certificates(temp))
 	}
 
 	// Set property "Keys":
 	for _, item := range permissions.Keys {
-		result.Keys = append(result.Keys, item)
+		var temp string
+		temp = string(item)
+		result.Keys = append(result.Keys, arm.Permissions_Keys(temp))
 	}
 
 	// Set property "Secrets":
 	for _, item := range permissions.Secrets {
-		result.Secrets = append(result.Secrets, item)
+		var temp string
+		temp = string(item)
+		result.Secrets = append(result.Secrets, arm.Permissions_Secrets(temp))
 	}
 
 	// Set property "Storage":
 	for _, item := range permissions.Storage {
-		result.Storage = append(result.Storage, item)
+		var temp string
+		temp = string(item)
+		result.Storage = append(result.Storage, arm.Permissions_Storage(temp))
 	}
 	return result, nil
 }
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (permissions *Permissions) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Permissions_ARM{}
+	return &arm.Permissions{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (permissions *Permissions) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Permissions_ARM)
+	typedInput, ok := armInput.(arm.Permissions)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Permissions_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Permissions, got %T", armInput)
 	}
 
 	// Set property "Certificates":
 	for _, item := range typedInput.Certificates {
-		permissions.Certificates = append(permissions.Certificates, item)
+		var temp string
+		temp = string(item)
+		permissions.Certificates = append(permissions.Certificates, Permissions_Certificates(temp))
 	}
 
 	// Set property "Keys":
 	for _, item := range typedInput.Keys {
-		permissions.Keys = append(permissions.Keys, item)
+		var temp string
+		temp = string(item)
+		permissions.Keys = append(permissions.Keys, Permissions_Keys(temp))
 	}
 
 	// Set property "Secrets":
 	for _, item := range typedInput.Secrets {
-		permissions.Secrets = append(permissions.Secrets, item)
+		var temp string
+		temp = string(item)
+		permissions.Secrets = append(permissions.Secrets, Permissions_Secrets(temp))
 	}
 
 	// Set property "Storage":
 	for _, item := range typedInput.Storage {
-		permissions.Storage = append(permissions.Storage, item)
+		var temp string
+		temp = string(item)
+		permissions.Storage = append(permissions.Storage, Permissions_Storage(temp))
 	}
 
 	// No error
@@ -3848,7 +4235,7 @@ func (permissions *Permissions) PopulateFromARM(owner genruntime.ArbitraryOwnerR
 }
 
 // AssignProperties_From_Permissions populates our Permissions from the provided source Permissions
-func (permissions *Permissions) AssignProperties_From_Permissions(source *v20230701s.Permissions) error {
+func (permissions *Permissions) AssignProperties_From_Permissions(source *storage.Permissions) error {
 
 	// Certificates
 	if source.Certificates != nil {
@@ -3856,7 +4243,7 @@ func (permissions *Permissions) AssignProperties_From_Permissions(source *v20230
 		for certificateIndex, certificateItem := range source.Certificates {
 			// Shadow the loop variable to avoid aliasing
 			certificateItem := certificateItem
-			certificateList[certificateIndex] = Permissions_Certificates(certificateItem)
+			certificateList[certificateIndex] = genruntime.ToEnum(certificateItem, permissions_Certificates_Values)
 		}
 		permissions.Certificates = certificateList
 	} else {
@@ -3869,7 +4256,7 @@ func (permissions *Permissions) AssignProperties_From_Permissions(source *v20230
 		for keyIndex, keyItem := range source.Keys {
 			// Shadow the loop variable to avoid aliasing
 			keyItem := keyItem
-			keyList[keyIndex] = Permissions_Keys(keyItem)
+			keyList[keyIndex] = genruntime.ToEnum(keyItem, permissions_Keys_Values)
 		}
 		permissions.Keys = keyList
 	} else {
@@ -3882,7 +4269,7 @@ func (permissions *Permissions) AssignProperties_From_Permissions(source *v20230
 		for secretIndex, secretItem := range source.Secrets {
 			// Shadow the loop variable to avoid aliasing
 			secretItem := secretItem
-			secretList[secretIndex] = Permissions_Secrets(secretItem)
+			secretList[secretIndex] = genruntime.ToEnum(secretItem, permissions_Secrets_Values)
 		}
 		permissions.Secrets = secretList
 	} else {
@@ -3895,7 +4282,7 @@ func (permissions *Permissions) AssignProperties_From_Permissions(source *v20230
 		for storageIndex, storageItem := range source.Storage {
 			// Shadow the loop variable to avoid aliasing
 			storageItem := storageItem
-			storageList[storageIndex] = Permissions_Storage(storageItem)
+			storageList[storageIndex] = genruntime.ToEnum(storageItem, permissions_Storage_Values)
 		}
 		permissions.Storage = storageList
 	} else {
@@ -3907,7 +4294,7 @@ func (permissions *Permissions) AssignProperties_From_Permissions(source *v20230
 }
 
 // AssignProperties_To_Permissions populates the provided destination Permissions from our Permissions
-func (permissions *Permissions) AssignProperties_To_Permissions(destination *v20230701s.Permissions) error {
+func (permissions *Permissions) AssignProperties_To_Permissions(destination *storage.Permissions) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -3983,7 +4370,7 @@ func (permissions *Permissions) Initialize_From_Permissions_STATUS(source *Permi
 		for certificateIndex, certificateItem := range source.Certificates {
 			// Shadow the loop variable to avoid aliasing
 			certificateItem := certificateItem
-			certificate := Permissions_Certificates(certificateItem)
+			certificate := genruntime.ToEnum(string(certificateItem), permissions_Certificates_Values)
 			certificateList[certificateIndex] = certificate
 		}
 		permissions.Certificates = certificateList
@@ -3997,7 +4384,7 @@ func (permissions *Permissions) Initialize_From_Permissions_STATUS(source *Permi
 		for keyIndex, keyItem := range source.Keys {
 			// Shadow the loop variable to avoid aliasing
 			keyItem := keyItem
-			key := Permissions_Keys(keyItem)
+			key := genruntime.ToEnum(string(keyItem), permissions_Keys_Values)
 			keyList[keyIndex] = key
 		}
 		permissions.Keys = keyList
@@ -4011,7 +4398,7 @@ func (permissions *Permissions) Initialize_From_Permissions_STATUS(source *Permi
 		for secretIndex, secretItem := range source.Secrets {
 			// Shadow the loop variable to avoid aliasing
 			secretItem := secretItem
-			secret := Permissions_Secrets(secretItem)
+			secret := genruntime.ToEnum(string(secretItem), permissions_Secrets_Values)
 			secretList[secretIndex] = secret
 		}
 		permissions.Secrets = secretList
@@ -4025,7 +4412,7 @@ func (permissions *Permissions) Initialize_From_Permissions_STATUS(source *Permi
 		for storageIndex, storageItem := range source.Storage {
 			// Shadow the loop variable to avoid aliasing
 			storageItem := storageItem
-			storage := Permissions_Storage(storageItem)
+			storage := genruntime.ToEnum(string(storageItem), permissions_Storage_Values)
 			storageList[storageIndex] = storage
 		}
 		permissions.Storage = storageList
@@ -4056,34 +4443,42 @@ var _ genruntime.FromARMConverter = &Permissions_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (permissions *Permissions_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &Permissions_STATUS_ARM{}
+	return &arm.Permissions_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (permissions *Permissions_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(Permissions_STATUS_ARM)
+	typedInput, ok := armInput.(arm.Permissions_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected Permissions_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.Permissions_STATUS, got %T", armInput)
 	}
 
 	// Set property "Certificates":
 	for _, item := range typedInput.Certificates {
-		permissions.Certificates = append(permissions.Certificates, item)
+		var temp string
+		temp = string(item)
+		permissions.Certificates = append(permissions.Certificates, Permissions_Certificates_STATUS(temp))
 	}
 
 	// Set property "Keys":
 	for _, item := range typedInput.Keys {
-		permissions.Keys = append(permissions.Keys, item)
+		var temp string
+		temp = string(item)
+		permissions.Keys = append(permissions.Keys, Permissions_Keys_STATUS(temp))
 	}
 
 	// Set property "Secrets":
 	for _, item := range typedInput.Secrets {
-		permissions.Secrets = append(permissions.Secrets, item)
+		var temp string
+		temp = string(item)
+		permissions.Secrets = append(permissions.Secrets, Permissions_Secrets_STATUS(temp))
 	}
 
 	// Set property "Storage":
 	for _, item := range typedInput.Storage {
-		permissions.Storage = append(permissions.Storage, item)
+		var temp string
+		temp = string(item)
+		permissions.Storage = append(permissions.Storage, Permissions_Storage_STATUS(temp))
 	}
 
 	// No error
@@ -4091,7 +4486,7 @@ func (permissions *Permissions_STATUS) PopulateFromARM(owner genruntime.Arbitrar
 }
 
 // AssignProperties_From_Permissions_STATUS populates our Permissions_STATUS from the provided source Permissions_STATUS
-func (permissions *Permissions_STATUS) AssignProperties_From_Permissions_STATUS(source *v20230701s.Permissions_STATUS) error {
+func (permissions *Permissions_STATUS) AssignProperties_From_Permissions_STATUS(source *storage.Permissions_STATUS) error {
 
 	// Certificates
 	if source.Certificates != nil {
@@ -4099,7 +4494,7 @@ func (permissions *Permissions_STATUS) AssignProperties_From_Permissions_STATUS(
 		for certificateIndex, certificateItem := range source.Certificates {
 			// Shadow the loop variable to avoid aliasing
 			certificateItem := certificateItem
-			certificateList[certificateIndex] = Permissions_Certificates_STATUS(certificateItem)
+			certificateList[certificateIndex] = genruntime.ToEnum(certificateItem, permissions_Certificates_STATUS_Values)
 		}
 		permissions.Certificates = certificateList
 	} else {
@@ -4112,7 +4507,7 @@ func (permissions *Permissions_STATUS) AssignProperties_From_Permissions_STATUS(
 		for keyIndex, keyItem := range source.Keys {
 			// Shadow the loop variable to avoid aliasing
 			keyItem := keyItem
-			keyList[keyIndex] = Permissions_Keys_STATUS(keyItem)
+			keyList[keyIndex] = genruntime.ToEnum(keyItem, permissions_Keys_STATUS_Values)
 		}
 		permissions.Keys = keyList
 	} else {
@@ -4125,7 +4520,7 @@ func (permissions *Permissions_STATUS) AssignProperties_From_Permissions_STATUS(
 		for secretIndex, secretItem := range source.Secrets {
 			// Shadow the loop variable to avoid aliasing
 			secretItem := secretItem
-			secretList[secretIndex] = Permissions_Secrets_STATUS(secretItem)
+			secretList[secretIndex] = genruntime.ToEnum(secretItem, permissions_Secrets_STATUS_Values)
 		}
 		permissions.Secrets = secretList
 	} else {
@@ -4138,7 +4533,7 @@ func (permissions *Permissions_STATUS) AssignProperties_From_Permissions_STATUS(
 		for storageIndex, storageItem := range source.Storage {
 			// Shadow the loop variable to avoid aliasing
 			storageItem := storageItem
-			storageList[storageIndex] = Permissions_Storage_STATUS(storageItem)
+			storageList[storageIndex] = genruntime.ToEnum(storageItem, permissions_Storage_STATUS_Values)
 		}
 		permissions.Storage = storageList
 	} else {
@@ -4150,7 +4545,7 @@ func (permissions *Permissions_STATUS) AssignProperties_From_Permissions_STATUS(
 }
 
 // AssignProperties_To_Permissions_STATUS populates the provided destination Permissions_STATUS from our Permissions_STATUS
-func (permissions *Permissions_STATUS) AssignProperties_To_Permissions_STATUS(destination *v20230701s.Permissions_STATUS) error {
+func (permissions *Permissions_STATUS) AssignProperties_To_Permissions_STATUS(destination *storage.Permissions_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4227,14 +4622,14 @@ var _ genruntime.FromARMConverter = &PrivateEndpoint_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (endpoint *PrivateEndpoint_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateEndpoint_STATUS_ARM{}
+	return &arm.PrivateEndpoint_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (endpoint *PrivateEndpoint_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateEndpoint_STATUS_ARM)
+	typedInput, ok := armInput.(arm.PrivateEndpoint_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateEndpoint_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateEndpoint_STATUS, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -4248,7 +4643,7 @@ func (endpoint *PrivateEndpoint_STATUS) PopulateFromARM(owner genruntime.Arbitra
 }
 
 // AssignProperties_From_PrivateEndpoint_STATUS populates our PrivateEndpoint_STATUS from the provided source PrivateEndpoint_STATUS
-func (endpoint *PrivateEndpoint_STATUS) AssignProperties_From_PrivateEndpoint_STATUS(source *v20230701s.PrivateEndpoint_STATUS) error {
+func (endpoint *PrivateEndpoint_STATUS) AssignProperties_From_PrivateEndpoint_STATUS(source *storage.PrivateEndpoint_STATUS) error {
 
 	// Id
 	endpoint.Id = genruntime.ClonePointerToString(source.Id)
@@ -4258,7 +4653,7 @@ func (endpoint *PrivateEndpoint_STATUS) AssignProperties_From_PrivateEndpoint_ST
 }
 
 // AssignProperties_To_PrivateEndpoint_STATUS populates the provided destination PrivateEndpoint_STATUS from our PrivateEndpoint_STATUS
-func (endpoint *PrivateEndpoint_STATUS) AssignProperties_To_PrivateEndpoint_STATUS(destination *v20230701s.PrivateEndpoint_STATUS) error {
+func (endpoint *PrivateEndpoint_STATUS) AssignProperties_To_PrivateEndpoint_STATUS(destination *storage.PrivateEndpoint_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4288,6 +4683,16 @@ const (
 	PrivateEndpointConnectionProvisioningState_STATUS_Updating     = PrivateEndpointConnectionProvisioningState_STATUS("Updating")
 )
 
+// Mapping from string to PrivateEndpointConnectionProvisioningState_STATUS
+var privateEndpointConnectionProvisioningState_STATUS_Values = map[string]PrivateEndpointConnectionProvisioningState_STATUS{
+	"creating":     PrivateEndpointConnectionProvisioningState_STATUS_Creating,
+	"deleting":     PrivateEndpointConnectionProvisioningState_STATUS_Deleting,
+	"disconnected": PrivateEndpointConnectionProvisioningState_STATUS_Disconnected,
+	"failed":       PrivateEndpointConnectionProvisioningState_STATUS_Failed,
+	"succeeded":    PrivateEndpointConnectionProvisioningState_STATUS_Succeeded,
+	"updating":     PrivateEndpointConnectionProvisioningState_STATUS_Updating,
+}
+
 // An object that represents the approval state of the private link connection.
 type PrivateLinkServiceConnectionState_STATUS struct {
 	// ActionsRequired: A message indicating if changes on the service provider require any updates on the consumer.
@@ -4304,19 +4709,21 @@ var _ genruntime.FromARMConverter = &PrivateLinkServiceConnectionState_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (state *PrivateLinkServiceConnectionState_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &PrivateLinkServiceConnectionState_STATUS_ARM{}
+	return &arm.PrivateLinkServiceConnectionState_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (state *PrivateLinkServiceConnectionState_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(PrivateLinkServiceConnectionState_STATUS_ARM)
+	typedInput, ok := armInput.(arm.PrivateLinkServiceConnectionState_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected PrivateLinkServiceConnectionState_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.PrivateLinkServiceConnectionState_STATUS, got %T", armInput)
 	}
 
 	// Set property "ActionsRequired":
 	if typedInput.ActionsRequired != nil {
-		actionsRequired := *typedInput.ActionsRequired
+		var temp string
+		temp = string(*typedInput.ActionsRequired)
+		actionsRequired := PrivateLinkServiceConnectionState_ActionsRequired_STATUS(temp)
 		state.ActionsRequired = &actionsRequired
 	}
 
@@ -4328,7 +4735,9 @@ func (state *PrivateLinkServiceConnectionState_STATUS) PopulateFromARM(owner gen
 
 	// Set property "Status":
 	if typedInput.Status != nil {
-		status := *typedInput.Status
+		var temp string
+		temp = string(*typedInput.Status)
+		status := PrivateEndpointServiceConnectionStatus_STATUS(temp)
 		state.Status = &status
 	}
 
@@ -4337,12 +4746,13 @@ func (state *PrivateLinkServiceConnectionState_STATUS) PopulateFromARM(owner gen
 }
 
 // AssignProperties_From_PrivateLinkServiceConnectionState_STATUS populates our PrivateLinkServiceConnectionState_STATUS from the provided source PrivateLinkServiceConnectionState_STATUS
-func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_From_PrivateLinkServiceConnectionState_STATUS(source *v20230701s.PrivateLinkServiceConnectionState_STATUS) error {
+func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_From_PrivateLinkServiceConnectionState_STATUS(source *storage.PrivateLinkServiceConnectionState_STATUS) error {
 
 	// ActionsRequired
 	if source.ActionsRequired != nil {
-		actionsRequired := PrivateLinkServiceConnectionState_ActionsRequired_STATUS(*source.ActionsRequired)
-		state.ActionsRequired = &actionsRequired
+		actionsRequired := *source.ActionsRequired
+		actionsRequiredTemp := genruntime.ToEnum(actionsRequired, privateLinkServiceConnectionState_ActionsRequired_STATUS_Values)
+		state.ActionsRequired = &actionsRequiredTemp
 	} else {
 		state.ActionsRequired = nil
 	}
@@ -4352,8 +4762,9 @@ func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_From_Pri
 
 	// Status
 	if source.Status != nil {
-		status := PrivateEndpointServiceConnectionStatus_STATUS(*source.Status)
-		state.Status = &status
+		status := *source.Status
+		statusTemp := genruntime.ToEnum(status, privateEndpointServiceConnectionStatus_STATUS_Values)
+		state.Status = &statusTemp
 	} else {
 		state.Status = nil
 	}
@@ -4363,7 +4774,7 @@ func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_From_Pri
 }
 
 // AssignProperties_To_PrivateLinkServiceConnectionState_STATUS populates the provided destination PrivateLinkServiceConnectionState_STATUS from our PrivateLinkServiceConnectionState_STATUS
-func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_To_PrivateLinkServiceConnectionState_STATUS(destination *v20230701s.PrivateLinkServiceConnectionState_STATUS) error {
+func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_To_PrivateLinkServiceConnectionState_STATUS(destination *storage.PrivateLinkServiceConnectionState_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4397,6 +4808,52 @@ func (state *PrivateLinkServiceConnectionState_STATUS) AssignProperties_To_Priva
 	return nil
 }
 
+// +kubebuilder:validation:Enum={"A"}
+type Sku_Family string
+
+const Sku_Family_A = Sku_Family("A")
+
+// Mapping from string to Sku_Family
+var sku_Family_Values = map[string]Sku_Family{
+	"a": Sku_Family_A,
+}
+
+type Sku_Family_STATUS string
+
+const Sku_Family_STATUS_A = Sku_Family_STATUS("A")
+
+// Mapping from string to Sku_Family_STATUS
+var sku_Family_STATUS_Values = map[string]Sku_Family_STATUS{
+	"a": Sku_Family_STATUS_A,
+}
+
+// +kubebuilder:validation:Enum={"premium","standard"}
+type Sku_Name string
+
+const (
+	Sku_Name_Premium  = Sku_Name("premium")
+	Sku_Name_Standard = Sku_Name("standard")
+)
+
+// Mapping from string to Sku_Name
+var sku_Name_Values = map[string]Sku_Name{
+	"premium":  Sku_Name_Premium,
+	"standard": Sku_Name_Standard,
+}
+
+type Sku_Name_STATUS string
+
+const (
+	Sku_Name_STATUS_Premium  = Sku_Name_STATUS("premium")
+	Sku_Name_STATUS_Standard = Sku_Name_STATUS("standard")
+)
+
+// Mapping from string to Sku_Name_STATUS
+var sku_Name_STATUS_Values = map[string]Sku_Name_STATUS{
+	"premium":  Sku_Name_STATUS_Premium,
+	"standard": Sku_Name_STATUS_Standard,
+}
+
 // A rule governing the accessibility of a vault from a specific virtual network.
 type VirtualNetworkRule struct {
 	// IgnoreMissingVnetServiceEndpoint: Property to specify whether NRP will ignore the check if parent subnet has
@@ -4416,7 +4873,7 @@ func (rule *VirtualNetworkRule) ConvertToARM(resolved genruntime.ConvertToARMRes
 	if rule == nil {
 		return nil, nil
 	}
-	result := &VirtualNetworkRule_ARM{}
+	result := &arm.VirtualNetworkRule{}
 
 	// Set property "Id":
 	if rule.Reference != nil {
@@ -4438,14 +4895,14 @@ func (rule *VirtualNetworkRule) ConvertToARM(resolved genruntime.ConvertToARMRes
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rule *VirtualNetworkRule) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualNetworkRule_ARM{}
+	return &arm.VirtualNetworkRule{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rule *VirtualNetworkRule) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualNetworkRule_ARM)
+	typedInput, ok := armInput.(arm.VirtualNetworkRule)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualNetworkRule_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualNetworkRule, got %T", armInput)
 	}
 
 	// Set property "IgnoreMissingVnetServiceEndpoint":
@@ -4461,7 +4918,7 @@ func (rule *VirtualNetworkRule) PopulateFromARM(owner genruntime.ArbitraryOwnerR
 }
 
 // AssignProperties_From_VirtualNetworkRule populates our VirtualNetworkRule from the provided source VirtualNetworkRule
-func (rule *VirtualNetworkRule) AssignProperties_From_VirtualNetworkRule(source *v20230701s.VirtualNetworkRule) error {
+func (rule *VirtualNetworkRule) AssignProperties_From_VirtualNetworkRule(source *storage.VirtualNetworkRule) error {
 
 	// IgnoreMissingVnetServiceEndpoint
 	if source.IgnoreMissingVnetServiceEndpoint != nil {
@@ -4484,7 +4941,7 @@ func (rule *VirtualNetworkRule) AssignProperties_From_VirtualNetworkRule(source 
 }
 
 // AssignProperties_To_VirtualNetworkRule populates the provided destination VirtualNetworkRule from our VirtualNetworkRule
-func (rule *VirtualNetworkRule) AssignProperties_To_VirtualNetworkRule(destination *v20230701s.VirtualNetworkRule) error {
+func (rule *VirtualNetworkRule) AssignProperties_To_VirtualNetworkRule(destination *storage.VirtualNetworkRule) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4553,14 +5010,14 @@ var _ genruntime.FromARMConverter = &VirtualNetworkRule_STATUS{}
 
 // NewEmptyARMValue returns an empty ARM value suitable for deserializing into
 func (rule *VirtualNetworkRule_STATUS) NewEmptyARMValue() genruntime.ARMResourceStatus {
-	return &VirtualNetworkRule_STATUS_ARM{}
+	return &arm.VirtualNetworkRule_STATUS{}
 }
 
 // PopulateFromARM populates a Kubernetes CRD object from an Azure ARM object
 func (rule *VirtualNetworkRule_STATUS) PopulateFromARM(owner genruntime.ArbitraryOwnerReference, armInput interface{}) error {
-	typedInput, ok := armInput.(VirtualNetworkRule_STATUS_ARM)
+	typedInput, ok := armInput.(arm.VirtualNetworkRule_STATUS)
 	if !ok {
-		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected VirtualNetworkRule_STATUS_ARM, got %T", armInput)
+		return fmt.Errorf("unexpected type supplied for PopulateFromARM() function. Expected arm.VirtualNetworkRule_STATUS, got %T", armInput)
 	}
 
 	// Set property "Id":
@@ -4580,7 +5037,7 @@ func (rule *VirtualNetworkRule_STATUS) PopulateFromARM(owner genruntime.Arbitrar
 }
 
 // AssignProperties_From_VirtualNetworkRule_STATUS populates our VirtualNetworkRule_STATUS from the provided source VirtualNetworkRule_STATUS
-func (rule *VirtualNetworkRule_STATUS) AssignProperties_From_VirtualNetworkRule_STATUS(source *v20230701s.VirtualNetworkRule_STATUS) error {
+func (rule *VirtualNetworkRule_STATUS) AssignProperties_From_VirtualNetworkRule_STATUS(source *storage.VirtualNetworkRule_STATUS) error {
 
 	// Id
 	rule.Id = genruntime.ClonePointerToString(source.Id)
@@ -4598,7 +5055,7 @@ func (rule *VirtualNetworkRule_STATUS) AssignProperties_From_VirtualNetworkRule_
 }
 
 // AssignProperties_To_VirtualNetworkRule_STATUS populates the provided destination VirtualNetworkRule_STATUS from our VirtualNetworkRule_STATUS
-func (rule *VirtualNetworkRule_STATUS) AssignProperties_To_VirtualNetworkRule_STATUS(destination *v20230701s.VirtualNetworkRule_STATUS) error {
+func (rule *VirtualNetworkRule_STATUS) AssignProperties_To_VirtualNetworkRule_STATUS(destination *storage.VirtualNetworkRule_STATUS) error {
 	// Create a new property bag
 	propertyBag := genruntime.NewPropertyBag()
 
@@ -4624,6 +5081,330 @@ func (rule *VirtualNetworkRule_STATUS) AssignProperties_To_VirtualNetworkRule_ST
 	return nil
 }
 
+// +kubebuilder:validation:Enum={"all","backup","create","delete","deleteissuers","get","getissuers","import","list","listissuers","managecontacts","manageissuers","purge","recover","restore","setissuers","update"}
+type Permissions_Certificates string
+
+const (
+	Permissions_Certificates_All            = Permissions_Certificates("all")
+	Permissions_Certificates_Backup         = Permissions_Certificates("backup")
+	Permissions_Certificates_Create         = Permissions_Certificates("create")
+	Permissions_Certificates_Delete         = Permissions_Certificates("delete")
+	Permissions_Certificates_Deleteissuers  = Permissions_Certificates("deleteissuers")
+	Permissions_Certificates_Get            = Permissions_Certificates("get")
+	Permissions_Certificates_Getissuers     = Permissions_Certificates("getissuers")
+	Permissions_Certificates_Import         = Permissions_Certificates("import")
+	Permissions_Certificates_List           = Permissions_Certificates("list")
+	Permissions_Certificates_Listissuers    = Permissions_Certificates("listissuers")
+	Permissions_Certificates_Managecontacts = Permissions_Certificates("managecontacts")
+	Permissions_Certificates_Manageissuers  = Permissions_Certificates("manageissuers")
+	Permissions_Certificates_Purge          = Permissions_Certificates("purge")
+	Permissions_Certificates_Recover        = Permissions_Certificates("recover")
+	Permissions_Certificates_Restore        = Permissions_Certificates("restore")
+	Permissions_Certificates_Setissuers     = Permissions_Certificates("setissuers")
+	Permissions_Certificates_Update         = Permissions_Certificates("update")
+)
+
+// Mapping from string to Permissions_Certificates
+var permissions_Certificates_Values = map[string]Permissions_Certificates{
+	"all":            Permissions_Certificates_All,
+	"backup":         Permissions_Certificates_Backup,
+	"create":         Permissions_Certificates_Create,
+	"delete":         Permissions_Certificates_Delete,
+	"deleteissuers":  Permissions_Certificates_Deleteissuers,
+	"get":            Permissions_Certificates_Get,
+	"getissuers":     Permissions_Certificates_Getissuers,
+	"import":         Permissions_Certificates_Import,
+	"list":           Permissions_Certificates_List,
+	"listissuers":    Permissions_Certificates_Listissuers,
+	"managecontacts": Permissions_Certificates_Managecontacts,
+	"manageissuers":  Permissions_Certificates_Manageissuers,
+	"purge":          Permissions_Certificates_Purge,
+	"recover":        Permissions_Certificates_Recover,
+	"restore":        Permissions_Certificates_Restore,
+	"setissuers":     Permissions_Certificates_Setissuers,
+	"update":         Permissions_Certificates_Update,
+}
+
+type Permissions_Certificates_STATUS string
+
+const (
+	Permissions_Certificates_STATUS_All            = Permissions_Certificates_STATUS("all")
+	Permissions_Certificates_STATUS_Backup         = Permissions_Certificates_STATUS("backup")
+	Permissions_Certificates_STATUS_Create         = Permissions_Certificates_STATUS("create")
+	Permissions_Certificates_STATUS_Delete         = Permissions_Certificates_STATUS("delete")
+	Permissions_Certificates_STATUS_Deleteissuers  = Permissions_Certificates_STATUS("deleteissuers")
+	Permissions_Certificates_STATUS_Get            = Permissions_Certificates_STATUS("get")
+	Permissions_Certificates_STATUS_Getissuers     = Permissions_Certificates_STATUS("getissuers")
+	Permissions_Certificates_STATUS_Import         = Permissions_Certificates_STATUS("import")
+	Permissions_Certificates_STATUS_List           = Permissions_Certificates_STATUS("list")
+	Permissions_Certificates_STATUS_Listissuers    = Permissions_Certificates_STATUS("listissuers")
+	Permissions_Certificates_STATUS_Managecontacts = Permissions_Certificates_STATUS("managecontacts")
+	Permissions_Certificates_STATUS_Manageissuers  = Permissions_Certificates_STATUS("manageissuers")
+	Permissions_Certificates_STATUS_Purge          = Permissions_Certificates_STATUS("purge")
+	Permissions_Certificates_STATUS_Recover        = Permissions_Certificates_STATUS("recover")
+	Permissions_Certificates_STATUS_Restore        = Permissions_Certificates_STATUS("restore")
+	Permissions_Certificates_STATUS_Setissuers     = Permissions_Certificates_STATUS("setissuers")
+	Permissions_Certificates_STATUS_Update         = Permissions_Certificates_STATUS("update")
+)
+
+// Mapping from string to Permissions_Certificates_STATUS
+var permissions_Certificates_STATUS_Values = map[string]Permissions_Certificates_STATUS{
+	"all":            Permissions_Certificates_STATUS_All,
+	"backup":         Permissions_Certificates_STATUS_Backup,
+	"create":         Permissions_Certificates_STATUS_Create,
+	"delete":         Permissions_Certificates_STATUS_Delete,
+	"deleteissuers":  Permissions_Certificates_STATUS_Deleteissuers,
+	"get":            Permissions_Certificates_STATUS_Get,
+	"getissuers":     Permissions_Certificates_STATUS_Getissuers,
+	"import":         Permissions_Certificates_STATUS_Import,
+	"list":           Permissions_Certificates_STATUS_List,
+	"listissuers":    Permissions_Certificates_STATUS_Listissuers,
+	"managecontacts": Permissions_Certificates_STATUS_Managecontacts,
+	"manageissuers":  Permissions_Certificates_STATUS_Manageissuers,
+	"purge":          Permissions_Certificates_STATUS_Purge,
+	"recover":        Permissions_Certificates_STATUS_Recover,
+	"restore":        Permissions_Certificates_STATUS_Restore,
+	"setissuers":     Permissions_Certificates_STATUS_Setissuers,
+	"update":         Permissions_Certificates_STATUS_Update,
+}
+
+// +kubebuilder:validation:Enum={"all","backup","create","decrypt","delete","encrypt","get","getrotationpolicy","import","list","purge","recover","release","restore","rotate","setrotationpolicy","sign","unwrapKey","update","verify","wrapKey"}
+type Permissions_Keys string
+
+const (
+	Permissions_Keys_All               = Permissions_Keys("all")
+	Permissions_Keys_Backup            = Permissions_Keys("backup")
+	Permissions_Keys_Create            = Permissions_Keys("create")
+	Permissions_Keys_Decrypt           = Permissions_Keys("decrypt")
+	Permissions_Keys_Delete            = Permissions_Keys("delete")
+	Permissions_Keys_Encrypt           = Permissions_Keys("encrypt")
+	Permissions_Keys_Get               = Permissions_Keys("get")
+	Permissions_Keys_Getrotationpolicy = Permissions_Keys("getrotationpolicy")
+	Permissions_Keys_Import            = Permissions_Keys("import")
+	Permissions_Keys_List              = Permissions_Keys("list")
+	Permissions_Keys_Purge             = Permissions_Keys("purge")
+	Permissions_Keys_Recover           = Permissions_Keys("recover")
+	Permissions_Keys_Release           = Permissions_Keys("release")
+	Permissions_Keys_Restore           = Permissions_Keys("restore")
+	Permissions_Keys_Rotate            = Permissions_Keys("rotate")
+	Permissions_Keys_Setrotationpolicy = Permissions_Keys("setrotationpolicy")
+	Permissions_Keys_Sign              = Permissions_Keys("sign")
+	Permissions_Keys_UnwrapKey         = Permissions_Keys("unwrapKey")
+	Permissions_Keys_Update            = Permissions_Keys("update")
+	Permissions_Keys_Verify            = Permissions_Keys("verify")
+	Permissions_Keys_WrapKey           = Permissions_Keys("wrapKey")
+)
+
+// Mapping from string to Permissions_Keys
+var permissions_Keys_Values = map[string]Permissions_Keys{
+	"all":               Permissions_Keys_All,
+	"backup":            Permissions_Keys_Backup,
+	"create":            Permissions_Keys_Create,
+	"decrypt":           Permissions_Keys_Decrypt,
+	"delete":            Permissions_Keys_Delete,
+	"encrypt":           Permissions_Keys_Encrypt,
+	"get":               Permissions_Keys_Get,
+	"getrotationpolicy": Permissions_Keys_Getrotationpolicy,
+	"import":            Permissions_Keys_Import,
+	"list":              Permissions_Keys_List,
+	"purge":             Permissions_Keys_Purge,
+	"recover":           Permissions_Keys_Recover,
+	"release":           Permissions_Keys_Release,
+	"restore":           Permissions_Keys_Restore,
+	"rotate":            Permissions_Keys_Rotate,
+	"setrotationpolicy": Permissions_Keys_Setrotationpolicy,
+	"sign":              Permissions_Keys_Sign,
+	"unwrapkey":         Permissions_Keys_UnwrapKey,
+	"update":            Permissions_Keys_Update,
+	"verify":            Permissions_Keys_Verify,
+	"wrapkey":           Permissions_Keys_WrapKey,
+}
+
+type Permissions_Keys_STATUS string
+
+const (
+	Permissions_Keys_STATUS_All               = Permissions_Keys_STATUS("all")
+	Permissions_Keys_STATUS_Backup            = Permissions_Keys_STATUS("backup")
+	Permissions_Keys_STATUS_Create            = Permissions_Keys_STATUS("create")
+	Permissions_Keys_STATUS_Decrypt           = Permissions_Keys_STATUS("decrypt")
+	Permissions_Keys_STATUS_Delete            = Permissions_Keys_STATUS("delete")
+	Permissions_Keys_STATUS_Encrypt           = Permissions_Keys_STATUS("encrypt")
+	Permissions_Keys_STATUS_Get               = Permissions_Keys_STATUS("get")
+	Permissions_Keys_STATUS_Getrotationpolicy = Permissions_Keys_STATUS("getrotationpolicy")
+	Permissions_Keys_STATUS_Import            = Permissions_Keys_STATUS("import")
+	Permissions_Keys_STATUS_List              = Permissions_Keys_STATUS("list")
+	Permissions_Keys_STATUS_Purge             = Permissions_Keys_STATUS("purge")
+	Permissions_Keys_STATUS_Recover           = Permissions_Keys_STATUS("recover")
+	Permissions_Keys_STATUS_Release           = Permissions_Keys_STATUS("release")
+	Permissions_Keys_STATUS_Restore           = Permissions_Keys_STATUS("restore")
+	Permissions_Keys_STATUS_Rotate            = Permissions_Keys_STATUS("rotate")
+	Permissions_Keys_STATUS_Setrotationpolicy = Permissions_Keys_STATUS("setrotationpolicy")
+	Permissions_Keys_STATUS_Sign              = Permissions_Keys_STATUS("sign")
+	Permissions_Keys_STATUS_UnwrapKey         = Permissions_Keys_STATUS("unwrapKey")
+	Permissions_Keys_STATUS_Update            = Permissions_Keys_STATUS("update")
+	Permissions_Keys_STATUS_Verify            = Permissions_Keys_STATUS("verify")
+	Permissions_Keys_STATUS_WrapKey           = Permissions_Keys_STATUS("wrapKey")
+)
+
+// Mapping from string to Permissions_Keys_STATUS
+var permissions_Keys_STATUS_Values = map[string]Permissions_Keys_STATUS{
+	"all":               Permissions_Keys_STATUS_All,
+	"backup":            Permissions_Keys_STATUS_Backup,
+	"create":            Permissions_Keys_STATUS_Create,
+	"decrypt":           Permissions_Keys_STATUS_Decrypt,
+	"delete":            Permissions_Keys_STATUS_Delete,
+	"encrypt":           Permissions_Keys_STATUS_Encrypt,
+	"get":               Permissions_Keys_STATUS_Get,
+	"getrotationpolicy": Permissions_Keys_STATUS_Getrotationpolicy,
+	"import":            Permissions_Keys_STATUS_Import,
+	"list":              Permissions_Keys_STATUS_List,
+	"purge":             Permissions_Keys_STATUS_Purge,
+	"recover":           Permissions_Keys_STATUS_Recover,
+	"release":           Permissions_Keys_STATUS_Release,
+	"restore":           Permissions_Keys_STATUS_Restore,
+	"rotate":            Permissions_Keys_STATUS_Rotate,
+	"setrotationpolicy": Permissions_Keys_STATUS_Setrotationpolicy,
+	"sign":              Permissions_Keys_STATUS_Sign,
+	"unwrapkey":         Permissions_Keys_STATUS_UnwrapKey,
+	"update":            Permissions_Keys_STATUS_Update,
+	"verify":            Permissions_Keys_STATUS_Verify,
+	"wrapkey":           Permissions_Keys_STATUS_WrapKey,
+}
+
+// +kubebuilder:validation:Enum={"all","backup","delete","get","list","purge","recover","restore","set"}
+type Permissions_Secrets string
+
+const (
+	Permissions_Secrets_All     = Permissions_Secrets("all")
+	Permissions_Secrets_Backup  = Permissions_Secrets("backup")
+	Permissions_Secrets_Delete  = Permissions_Secrets("delete")
+	Permissions_Secrets_Get     = Permissions_Secrets("get")
+	Permissions_Secrets_List    = Permissions_Secrets("list")
+	Permissions_Secrets_Purge   = Permissions_Secrets("purge")
+	Permissions_Secrets_Recover = Permissions_Secrets("recover")
+	Permissions_Secrets_Restore = Permissions_Secrets("restore")
+	Permissions_Secrets_Set     = Permissions_Secrets("set")
+)
+
+// Mapping from string to Permissions_Secrets
+var permissions_Secrets_Values = map[string]Permissions_Secrets{
+	"all":     Permissions_Secrets_All,
+	"backup":  Permissions_Secrets_Backup,
+	"delete":  Permissions_Secrets_Delete,
+	"get":     Permissions_Secrets_Get,
+	"list":    Permissions_Secrets_List,
+	"purge":   Permissions_Secrets_Purge,
+	"recover": Permissions_Secrets_Recover,
+	"restore": Permissions_Secrets_Restore,
+	"set":     Permissions_Secrets_Set,
+}
+
+type Permissions_Secrets_STATUS string
+
+const (
+	Permissions_Secrets_STATUS_All     = Permissions_Secrets_STATUS("all")
+	Permissions_Secrets_STATUS_Backup  = Permissions_Secrets_STATUS("backup")
+	Permissions_Secrets_STATUS_Delete  = Permissions_Secrets_STATUS("delete")
+	Permissions_Secrets_STATUS_Get     = Permissions_Secrets_STATUS("get")
+	Permissions_Secrets_STATUS_List    = Permissions_Secrets_STATUS("list")
+	Permissions_Secrets_STATUS_Purge   = Permissions_Secrets_STATUS("purge")
+	Permissions_Secrets_STATUS_Recover = Permissions_Secrets_STATUS("recover")
+	Permissions_Secrets_STATUS_Restore = Permissions_Secrets_STATUS("restore")
+	Permissions_Secrets_STATUS_Set     = Permissions_Secrets_STATUS("set")
+)
+
+// Mapping from string to Permissions_Secrets_STATUS
+var permissions_Secrets_STATUS_Values = map[string]Permissions_Secrets_STATUS{
+	"all":     Permissions_Secrets_STATUS_All,
+	"backup":  Permissions_Secrets_STATUS_Backup,
+	"delete":  Permissions_Secrets_STATUS_Delete,
+	"get":     Permissions_Secrets_STATUS_Get,
+	"list":    Permissions_Secrets_STATUS_List,
+	"purge":   Permissions_Secrets_STATUS_Purge,
+	"recover": Permissions_Secrets_STATUS_Recover,
+	"restore": Permissions_Secrets_STATUS_Restore,
+	"set":     Permissions_Secrets_STATUS_Set,
+}
+
+// +kubebuilder:validation:Enum={"all","backup","delete","deletesas","get","getsas","list","listsas","purge","recover","regeneratekey","restore","set","setsas","update"}
+type Permissions_Storage string
+
+const (
+	Permissions_Storage_All           = Permissions_Storage("all")
+	Permissions_Storage_Backup        = Permissions_Storage("backup")
+	Permissions_Storage_Delete        = Permissions_Storage("delete")
+	Permissions_Storage_Deletesas     = Permissions_Storage("deletesas")
+	Permissions_Storage_Get           = Permissions_Storage("get")
+	Permissions_Storage_Getsas        = Permissions_Storage("getsas")
+	Permissions_Storage_List          = Permissions_Storage("list")
+	Permissions_Storage_Listsas       = Permissions_Storage("listsas")
+	Permissions_Storage_Purge         = Permissions_Storage("purge")
+	Permissions_Storage_Recover       = Permissions_Storage("recover")
+	Permissions_Storage_Regeneratekey = Permissions_Storage("regeneratekey")
+	Permissions_Storage_Restore       = Permissions_Storage("restore")
+	Permissions_Storage_Set           = Permissions_Storage("set")
+	Permissions_Storage_Setsas        = Permissions_Storage("setsas")
+	Permissions_Storage_Update        = Permissions_Storage("update")
+)
+
+// Mapping from string to Permissions_Storage
+var permissions_Storage_Values = map[string]Permissions_Storage{
+	"all":           Permissions_Storage_All,
+	"backup":        Permissions_Storage_Backup,
+	"delete":        Permissions_Storage_Delete,
+	"deletesas":     Permissions_Storage_Deletesas,
+	"get":           Permissions_Storage_Get,
+	"getsas":        Permissions_Storage_Getsas,
+	"list":          Permissions_Storage_List,
+	"listsas":       Permissions_Storage_Listsas,
+	"purge":         Permissions_Storage_Purge,
+	"recover":       Permissions_Storage_Recover,
+	"regeneratekey": Permissions_Storage_Regeneratekey,
+	"restore":       Permissions_Storage_Restore,
+	"set":           Permissions_Storage_Set,
+	"setsas":        Permissions_Storage_Setsas,
+	"update":        Permissions_Storage_Update,
+}
+
+type Permissions_Storage_STATUS string
+
+const (
+	Permissions_Storage_STATUS_All           = Permissions_Storage_STATUS("all")
+	Permissions_Storage_STATUS_Backup        = Permissions_Storage_STATUS("backup")
+	Permissions_Storage_STATUS_Delete        = Permissions_Storage_STATUS("delete")
+	Permissions_Storage_STATUS_Deletesas     = Permissions_Storage_STATUS("deletesas")
+	Permissions_Storage_STATUS_Get           = Permissions_Storage_STATUS("get")
+	Permissions_Storage_STATUS_Getsas        = Permissions_Storage_STATUS("getsas")
+	Permissions_Storage_STATUS_List          = Permissions_Storage_STATUS("list")
+	Permissions_Storage_STATUS_Listsas       = Permissions_Storage_STATUS("listsas")
+	Permissions_Storage_STATUS_Purge         = Permissions_Storage_STATUS("purge")
+	Permissions_Storage_STATUS_Recover       = Permissions_Storage_STATUS("recover")
+	Permissions_Storage_STATUS_Regeneratekey = Permissions_Storage_STATUS("regeneratekey")
+	Permissions_Storage_STATUS_Restore       = Permissions_Storage_STATUS("restore")
+	Permissions_Storage_STATUS_Set           = Permissions_Storage_STATUS("set")
+	Permissions_Storage_STATUS_Setsas        = Permissions_Storage_STATUS("setsas")
+	Permissions_Storage_STATUS_Update        = Permissions_Storage_STATUS("update")
+)
+
+// Mapping from string to Permissions_Storage_STATUS
+var permissions_Storage_STATUS_Values = map[string]Permissions_Storage_STATUS{
+	"all":           Permissions_Storage_STATUS_All,
+	"backup":        Permissions_Storage_STATUS_Backup,
+	"delete":        Permissions_Storage_STATUS_Delete,
+	"deletesas":     Permissions_Storage_STATUS_Deletesas,
+	"get":           Permissions_Storage_STATUS_Get,
+	"getsas":        Permissions_Storage_STATUS_Getsas,
+	"list":          Permissions_Storage_STATUS_List,
+	"listsas":       Permissions_Storage_STATUS_Listsas,
+	"purge":         Permissions_Storage_STATUS_Purge,
+	"recover":       Permissions_Storage_STATUS_Recover,
+	"regeneratekey": Permissions_Storage_STATUS_Regeneratekey,
+	"restore":       Permissions_Storage_STATUS_Restore,
+	"set":           Permissions_Storage_STATUS_Set,
+	"setsas":        Permissions_Storage_STATUS_Setsas,
+	"update":        Permissions_Storage_STATUS_Update,
+}
+
 // The private endpoint connection status.
 type PrivateEndpointServiceConnectionStatus_STATUS string
 
@@ -4634,9 +5415,22 @@ const (
 	PrivateEndpointServiceConnectionStatus_STATUS_Rejected     = PrivateEndpointServiceConnectionStatus_STATUS("Rejected")
 )
 
+// Mapping from string to PrivateEndpointServiceConnectionStatus_STATUS
+var privateEndpointServiceConnectionStatus_STATUS_Values = map[string]PrivateEndpointServiceConnectionStatus_STATUS{
+	"approved":     PrivateEndpointServiceConnectionStatus_STATUS_Approved,
+	"disconnected": PrivateEndpointServiceConnectionStatus_STATUS_Disconnected,
+	"pending":      PrivateEndpointServiceConnectionStatus_STATUS_Pending,
+	"rejected":     PrivateEndpointServiceConnectionStatus_STATUS_Rejected,
+}
+
 type PrivateLinkServiceConnectionState_ActionsRequired_STATUS string
 
 const PrivateLinkServiceConnectionState_ActionsRequired_STATUS_None = PrivateLinkServiceConnectionState_ActionsRequired_STATUS("None")
+
+// Mapping from string to PrivateLinkServiceConnectionState_ActionsRequired_STATUS
+var privateLinkServiceConnectionState_ActionsRequired_STATUS_Values = map[string]PrivateLinkServiceConnectionState_ActionsRequired_STATUS{
+	"none": PrivateLinkServiceConnectionState_ActionsRequired_STATUS_None,
+}
 
 func init() {
 	SchemeBuilder.Register(&Vault{}, &VaultList{})

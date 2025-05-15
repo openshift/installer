@@ -22,6 +22,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 )
 
@@ -48,7 +49,7 @@ func (s *VMExtensionSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the VM extension.
-func (s *VMExtensionSpec) Parameters(ctx context.Context, existing interface{}) (interface{}, error) {
+func (s *VMExtensionSpec) Parameters(_ context.Context, existing interface{}) (interface{}, error) {
 	if existing != nil {
 		_, ok := existing.(armcompute.VirtualMachineExtension)
 		if !ok {

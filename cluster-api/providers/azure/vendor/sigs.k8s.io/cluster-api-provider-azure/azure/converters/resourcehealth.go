@@ -21,9 +21,10 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcehealth/armresourcehealth"
 	"k8s.io/utils/ptr"
-	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
+
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 
 // SDKAvailabilityStatusToCondition converts an Azure Resource Health availability status to a status condition.
@@ -44,7 +45,7 @@ func SDKAvailabilityStatusToCondition(availStatus armresourcehealth.Availability
 		// response may include spaces (e.g. "Customer Initiated")
 		words := strings.Split(*availStatus.Properties.ReasonType, " ")
 		for _, word := range words {
-			if len(word) > 0 {
+			if word != "" {
 				reason.WriteString(strings.ToTitle(word[:1]))
 			}
 			if len(word) > 1 {

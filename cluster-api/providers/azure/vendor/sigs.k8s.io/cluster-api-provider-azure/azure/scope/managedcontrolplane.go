@@ -38,6 +38,14 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	bootstrapapi "k8s.io/cluster-bootstrap/token/api"
 	"k8s.io/utils/ptr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/controllers/remote"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api/util/patch"
+	"sigs.k8s.io/cluster-api/util/secret"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/aksextensions"
@@ -49,13 +57,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/virtualnetworks"
 	"sigs.k8s.io/cluster-api-provider-azure/util/futures"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/controllers/remote"
-	"sigs.k8s.io/cluster-api/util/conditions"
-	"sigs.k8s.io/cluster-api/util/patch"
-	"sigs.k8s.io/cluster-api/util/secret"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const (
@@ -74,6 +75,7 @@ type ManagedControlPlaneScopeParams struct {
 	ManagedMachinePools []ManagedMachinePool
 	Cache               *ManagedControlPlaneCache
 	Timeouts            azure.AsyncReconciler
+	CredentialCache     azure.CredentialCache
 }
 
 // NewManagedControlPlaneScope creates a new Scope from the supplied parameters.
@@ -90,7 +92,7 @@ func NewManagedControlPlaneScope(ctx context.Context, params ManagedControlPlane
 		return nil, errors.New("failed to generate new scope from nil ControlPlane")
 	}
 
-	credentialsProvider, err := NewAzureCredentialsProvider(ctx, params.Client, params.ControlPlane.Spec.IdentityRef, params.ControlPlane.Namespace)
+	credentialsProvider, err := NewAzureCredentialsProvider(ctx, params.CredentialCache, params.Client, params.ControlPlane.Spec.IdentityRef, params.ControlPlane.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init credentials provider")
 	}

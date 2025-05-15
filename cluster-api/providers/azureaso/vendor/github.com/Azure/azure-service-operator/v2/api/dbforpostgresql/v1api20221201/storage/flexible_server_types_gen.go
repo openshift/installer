@@ -9,6 +9,8 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,10 +51,30 @@ func (server *FlexibleServer) SetConditions(conditions conditions.Conditions) {
 	server.Status.Conditions = conditions
 }
 
-var _ genruntime.KubernetesExporter = &FlexibleServer{}
+var _ configmaps.Exporter = &FlexibleServer{}
 
-// ExportKubernetesResources defines a resource which can create other resources in Kubernetes.
-func (server *FlexibleServer) ExportKubernetesResources(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (server *FlexibleServer) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if server.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return server.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &FlexibleServer{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (server *FlexibleServer) SecretDestinationExpressions() []*core.DestinationExpression {
+	if server.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return server.Spec.OperatorSpec.SecretExpressions
+}
+
+var _ genruntime.KubernetesConfigExporter = &FlexibleServer{}
+
+// ExportKubernetesConfigMaps defines a resource which can create ConfigMaps in Kubernetes.
+func (server *FlexibleServer) ExportKubernetesConfigMaps(_ context.Context, _ genruntime.MetaObject, _ *genericarmclient.GenericClient, _ logr.Logger) ([]client.Object, error) {
 	collector := configmaps.NewCollector(server.Namespace)
 	if server.Spec.OperatorSpec != nil && server.Spec.OperatorSpec.ConfigMaps != nil {
 		if server.Status.FullyQualifiedDomainName != nil {
@@ -75,7 +97,7 @@ func (server *FlexibleServer) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2022-12-01"
 func (server FlexibleServer) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2022-12-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -315,7 +337,8 @@ type Backup_STATUS struct {
 // Storage version of v1api20221201.DataEncryption
 // Data encryption properties of a server
 type DataEncryption struct {
-	PrimaryKeyURI *string `json:"primaryKeyURI,omitempty"`
+	PrimaryKeyURI           *string                        `json:"primaryKeyURI,omitempty" optionalConfigMapPair:"PrimaryKeyURI"`
+	PrimaryKeyURIFromConfig *genruntime.ConfigMapReference `json:"primaryKeyURIFromConfig,omitempty" optionalConfigMapPair:"PrimaryKeyURI"`
 
 	// PrimaryUserAssignedIdentityReference: Resource Id for the User assigned identity to be used for data encryption for
 	// primary server.
@@ -336,9 +359,11 @@ type DataEncryption_STATUS struct {
 // Storage version of v1api20221201.FlexibleServerOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type FlexibleServerOperatorSpec struct {
-	ConfigMaps  *FlexibleServerOperatorConfigMaps `json:"configMaps,omitempty"`
-	PropertyBag genruntime.PropertyBag            `json:"$propertyBag,omitempty"`
-	Secrets     *FlexibleServerOperatorSecrets    `json:"secrets,omitempty"`
+	ConfigMapExpressions []*core.DestinationExpression     `json:"configMapExpressions,omitempty"`
+	ConfigMaps           *FlexibleServerOperatorConfigMaps `json:"configMaps,omitempty"`
+	PropertyBag          genruntime.PropertyBag            `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression     `json:"secretExpressions,omitempty"`
+	Secrets              *FlexibleServerOperatorSecrets    `json:"secrets,omitempty"`
 }
 
 // Storage version of v1api20221201.HighAvailability

@@ -15,9 +15,9 @@ const (
 	// AzureClientID is the client ID of the Azure Service Principal or Managed Identity to use to authenticate with Azure.
 	AzureClientID = "AZURE_CLIENT_ID"
 	// AzureClientCertificate is a PEM or PKCS12 certificate string including the private key for Azure Credential Authentication.
-	// If certificate is password protected,  use 'AzureClientCertificatePassword' for password.
+	// If the certificate is password protected,  use the 'AzureClientCertificatePassword' for password.
 	AzureClientCertificate = "AZURE_CLIENT_CERTIFICATE"
-	// AzureClientCertificatePassword is password used to protect the AzureClientCertificate.
+	// AzureClientCertificatePassword is the password used to protect the AzureClientCertificate.
 	// #nosec
 	AzureClientCertificatePassword = "AZURE_CLIENT_CERTIFICATE_PASSWORD"
 	// TargetNamespaces lists the namespaces the operator will watch
@@ -32,8 +32,8 @@ const (
 	// exists to detect and correct changes that happened in Azure that Kubernetes is not
 	// aware about. BE VERY CAREFUL setting this value low - even a modest number of resources
 	// can cause subscription level throttling if they are re-synced frequently.
-	// If nil, no sync is performed. Durations are specified as "1h", "15m", or "60s". See
-	// https://pkg.go.dev/time#ParseDuration for more details.
+	// Durations are specified as "1h", "15m", or "60s". Specify the special value "never" to prevent
+	// syncing. See https://pkg.go.dev/time#ParseDuration for more details.
 	SyncPeriod = "AZURE_SYNC_PERIOD"
 	// ResourceManagerEndpoint is the Azure Resource Manager endpoint.
 	// If not specified, the default is the Public cloud resource manager endpoint.
@@ -57,4 +57,36 @@ const (
 	UseWorkloadIdentityAuth = "USE_WORKLOAD_IDENTITY_AUTH"
 	// UserAgentSuffix is appended to the default User-Agent for Azure HTTP clients.
 	UserAgentSuffix = "AZURE_USER_AGENT_SUFFIX"
+	// MaxConcurrentReconciles is the number of threads/goroutines dedicated to reconciling each resource type.
+	// If not specified, the default is 1.
+	// IMPORTANT: Having MaxConcurrentReconciles set to N does not mean that ASO is limited to N interactions with
+	// Azure at any given time, because the control loop yields to another resource while it is not actively issuing HTTP
+	// calls to Azure. Any single resource only blocks the control-loop for its resource-type for as long as it takes to issue
+	// an HTTP call to Azure, view the result, and make a decision. In most cases the time taken to perform these actions
+	// (and thus how long the loop is blocked and preventing other resources from being acted upon) is a few hundred
+	// milliseconds to at most a second or two. In a typical 60s period, many hundreds or even thousands of resources
+	// can be managed with this set to 1.
+	// MaxConcurrentReconciles applies to every registered resource type being watched/managed by ASO.
+	MaxConcurrentReconciles = "MAX_CONCURRENT_RECONCILES"
+	// RateLimitMode configures the internal rate-limiting mode.
+	// Valid values are [disabled, bucket]
+	// * disabled: No ASO-controlled rate-limiting occurs. ASO will attempt to communicate with Azure and
+	//   kube-apiserver as much as needed based on load. It will back off based on throttling from
+	//   either kube-apiserver or Azure, but will not artificially limit its throughput.
+	// * bucket: Uses a token-bucket algorithm to rate-limit reconciliations. Note that this limits how often
+	//   the operator performs a reconciliation, but not every reconciliation triggers a call to kube-apiserver
+	//   or Azure (though many do). Since this controls reconciles it can be used to coarsely control throughput
+	//   and CPU usage of the operator, as well as the number of requests that the operator issues to Azure.
+	//   Keep in mind that the Azure throttling limits (defined at
+	//   https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/request-limits-and-throttling)
+	//   differentiate between request types. Since a given reconcile for a resource may result in polling (a GET) or
+	//   modification (a PUT) it's not possible to entirely avoid Azure throttling by tuning these bucket limits.
+	//   We don't recommend enabling this mode by default.
+	//   If enabling this mode, we strongly recommend doing some experimentation to tune these values to something to
+	//   works for your specific need.
+	RateLimitMode = "RATE_LIMIT_MODE"
+	// RateLimitQPS is the rate (per second) that the bucket is refilled. This value only has an effect if RateLimitMode is 'bucket'.
+	RateLimitQPS = "RATE_LIMIT_QPS"
+	// RateLimitBucketSize is the size of the bucket. This value only has an effect if RateLimitMode is 'bucket'.
+	RateLimitBucketSize = "RATE_LIMIT_BUCKET_SIZE"
 )

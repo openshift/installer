@@ -6,6 +6,9 @@ package storage
 import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,8 +31,8 @@ import (
 type ServersOutboundFirewallRule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              Servers_OutboundFirewallRule_Spec   `json:"spec,omitempty"`
-	Status            Servers_OutboundFirewallRule_STATUS `json:"status,omitempty"`
+	Spec              ServersOutboundFirewallRule_Spec   `json:"spec,omitempty"`
+	Status            ServersOutboundFirewallRule_STATUS `json:"status,omitempty"`
 }
 
 var _ conditions.Conditioner = &ServersOutboundFirewallRule{}
@@ -44,6 +47,26 @@ func (rule *ServersOutboundFirewallRule) SetConditions(conditions conditions.Con
 	rule.Status.Conditions = conditions
 }
 
+var _ configmaps.Exporter = &ServersOutboundFirewallRule{}
+
+// ConfigMapDestinationExpressions returns the Spec.OperatorSpec.ConfigMapExpressions property
+func (rule *ServersOutboundFirewallRule) ConfigMapDestinationExpressions() []*core.DestinationExpression {
+	if rule.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return rule.Spec.OperatorSpec.ConfigMapExpressions
+}
+
+var _ secrets.Exporter = &ServersOutboundFirewallRule{}
+
+// SecretDestinationExpressions returns the Spec.OperatorSpec.SecretExpressions property
+func (rule *ServersOutboundFirewallRule) SecretDestinationExpressions() []*core.DestinationExpression {
+	if rule.Spec.OperatorSpec == nil {
+		return nil
+	}
+	return rule.Spec.OperatorSpec.SecretExpressions
+}
+
 var _ genruntime.KubernetesResource = &ServersOutboundFirewallRule{}
 
 // AzureName returns the Azure name of the resource
@@ -53,7 +76,7 @@ func (rule *ServersOutboundFirewallRule) AzureName() string {
 
 // GetAPIVersion returns the ARM API version of the resource. This is always "2021-11-01"
 func (rule ServersOutboundFirewallRule) GetAPIVersion() string {
-	return string(APIVersion_Value)
+	return "2021-11-01"
 }
 
 // GetResourceScope returns the scope of the resource
@@ -87,7 +110,7 @@ func (rule *ServersOutboundFirewallRule) GetType() string {
 
 // NewEmptyStatus returns a new empty (blank) status
 func (rule *ServersOutboundFirewallRule) NewEmptyStatus() genruntime.ConvertibleStatus {
-	return &Servers_OutboundFirewallRule_STATUS{}
+	return &ServersOutboundFirewallRule_STATUS{}
 }
 
 // Owner returns the ResourceReference of the owner
@@ -99,13 +122,13 @@ func (rule *ServersOutboundFirewallRule) Owner() *genruntime.ResourceReference {
 // SetStatus sets the status of this resource
 func (rule *ServersOutboundFirewallRule) SetStatus(status genruntime.ConvertibleStatus) error {
 	// If we have exactly the right type of status, assign it
-	if st, ok := status.(*Servers_OutboundFirewallRule_STATUS); ok {
+	if st, ok := status.(*ServersOutboundFirewallRule_STATUS); ok {
 		rule.Status = *st
 		return nil
 	}
 
 	// Convert status to required version
-	var st Servers_OutboundFirewallRule_STATUS
+	var st ServersOutboundFirewallRule_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert status")
@@ -138,12 +161,13 @@ type ServersOutboundFirewallRuleList struct {
 	Items           []ServersOutboundFirewallRule `json:"items"`
 }
 
-// Storage version of v1api20211101.Servers_OutboundFirewallRule_Spec
-type Servers_OutboundFirewallRule_Spec struct {
+// Storage version of v1api20211101.ServersOutboundFirewallRule_Spec
+type ServersOutboundFirewallRule_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName       string `json:"azureName,omitempty"`
-	OriginalVersion string `json:"originalVersion,omitempty"`
+	AzureName       string                                   `json:"azureName,omitempty"`
+	OperatorSpec    *ServersOutboundFirewallRuleOperatorSpec `json:"operatorSpec,omitempty"`
+	OriginalVersion string                                   `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -153,10 +177,10 @@ type Servers_OutboundFirewallRule_Spec struct {
 	PropertyBag genruntime.PropertyBag             `json:"$propertyBag,omitempty"`
 }
 
-var _ genruntime.ConvertibleSpec = &Servers_OutboundFirewallRule_Spec{}
+var _ genruntime.ConvertibleSpec = &ServersOutboundFirewallRule_Spec{}
 
-// ConvertSpecFrom populates our Servers_OutboundFirewallRule_Spec from the provided source
-func (rule *Servers_OutboundFirewallRule_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
+// ConvertSpecFrom populates our ServersOutboundFirewallRule_Spec from the provided source
+func (rule *ServersOutboundFirewallRule_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == rule {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -164,8 +188,8 @@ func (rule *Servers_OutboundFirewallRule_Spec) ConvertSpecFrom(source genruntime
 	return source.ConvertSpecTo(rule)
 }
 
-// ConvertSpecTo populates the provided destination from our Servers_OutboundFirewallRule_Spec
-func (rule *Servers_OutboundFirewallRule_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
+// ConvertSpecTo populates the provided destination from our ServersOutboundFirewallRule_Spec
+func (rule *ServersOutboundFirewallRule_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == rule {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
@@ -173,8 +197,8 @@ func (rule *Servers_OutboundFirewallRule_Spec) ConvertSpecTo(destination genrunt
 	return destination.ConvertSpecFrom(rule)
 }
 
-// Storage version of v1api20211101.Servers_OutboundFirewallRule_STATUS
-type Servers_OutboundFirewallRule_STATUS struct {
+// Storage version of v1api20211101.ServersOutboundFirewallRule_STATUS
+type ServersOutboundFirewallRule_STATUS struct {
 	Conditions        []conditions.Condition `json:"conditions,omitempty"`
 	Id                *string                `json:"id,omitempty"`
 	Name              *string                `json:"name,omitempty"`
@@ -183,10 +207,10 @@ type Servers_OutboundFirewallRule_STATUS struct {
 	Type              *string                `json:"type,omitempty"`
 }
 
-var _ genruntime.ConvertibleStatus = &Servers_OutboundFirewallRule_STATUS{}
+var _ genruntime.ConvertibleStatus = &ServersOutboundFirewallRule_STATUS{}
 
-// ConvertStatusFrom populates our Servers_OutboundFirewallRule_STATUS from the provided source
-func (rule *Servers_OutboundFirewallRule_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
+// ConvertStatusFrom populates our ServersOutboundFirewallRule_STATUS from the provided source
+func (rule *ServersOutboundFirewallRule_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == rule {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
@@ -194,13 +218,21 @@ func (rule *Servers_OutboundFirewallRule_STATUS) ConvertStatusFrom(source genrun
 	return source.ConvertStatusTo(rule)
 }
 
-// ConvertStatusTo populates the provided destination from our Servers_OutboundFirewallRule_STATUS
-func (rule *Servers_OutboundFirewallRule_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
+// ConvertStatusTo populates the provided destination from our ServersOutboundFirewallRule_STATUS
+func (rule *ServersOutboundFirewallRule_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == rule {
 		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(rule)
+}
+
+// Storage version of v1api20211101.ServersOutboundFirewallRuleOperatorSpec
+// Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
+type ServersOutboundFirewallRuleOperatorSpec struct {
+	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
+	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
+	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
 }
 
 func init() {

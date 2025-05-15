@@ -23,6 +23,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v4"
 	"github.com/pkg/errors"
+
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
@@ -35,7 +36,7 @@ type azureClient struct {
 }
 
 // NewClient creates a new network interfaces client from an authorizer.
-func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClient, error) {
+func NewClient(auth azure.Authorizer, apiCallTimeout time.Duration) (*azureClient, error) { //nolint:revive // leave it as is
 	opts, err := azure.ARMClientOptions(auth.CloudEnvironment())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create networkinterfaces client options")

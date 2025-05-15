@@ -7,6 +7,7 @@
 package execpath
 
 import (
+	"cmp"
 	"os"
 	"path/filepath"
 	"strings"
@@ -45,10 +46,8 @@ func Look(file string, getenv func(string) string) (string, error) {
 	}
 	path := getenv("PATH")
 	for _, dir := range filepath.SplitList(path) {
-		if dir == "" {
-			// Unix shell semantics: path element "" means "."
-			dir = "."
-		}
+		// Unix shell semantics: path element "" means "."
+		dir = cmp.Or(dir, ".")
 		path := filepath.Join(dir, file)
 		if err := findExecutable(path); err == nil {
 			return path, nil
