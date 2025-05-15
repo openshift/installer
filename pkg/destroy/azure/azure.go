@@ -47,8 +47,6 @@ type ClusterUninstaller struct {
 	ResourceGroupName           string
 	BaseDomainResourceGroupName string
 	NetworkResourceGroupName    string
-	ZoneName                    string
-	ClusterName                 string
 
 	Logger logrus.FieldLogger
 
@@ -136,8 +134,6 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		Logger:                      logger,
 		BaseDomainResourceGroupName: metadata.Azure.BaseDomainResourceGroupName,
 		CloudName:                   cloudName,
-		ZoneName:                    metadata.Azure.BaseDomainName,
-		ClusterName:                 metadata.ClusterName,
 	}, nil
 }
 
@@ -197,7 +193,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 			if o.CloudName == azure.StackCloud {
 				err = deleteAzureStackPublicRecords(ctx, o)
 			} else {
-				err = deletePublicRecords(ctx, o)
+				err = deletePublicRecords(ctx, o.zonesClient, o.recordsClient, o.privateZonesClient, o.privateRecordSetsClient, o.Logger, o.ResourceGroupName)
 			}
 			if err != nil {
 				o.Logger.Debug(err)
@@ -423,70 +419,17 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 	return utilerrors.NewAggregate(errs)
 }
 
-func deleteRecordsFromBaseDomain(ctx context.Context, o *ClusterUninstaller) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
-	defer cancel()
-
-	if o.BaseDomainResourceGroupName == "" || o.ZoneName == "" || o.ClusterName == "" {
-		o.Logger.Debugf("could not find values in the metadata to get record set")
-		return nil
-	}
-
-	var errs []error
-	apiURL := fmt.Sprintf("api.%s", o.ClusterName)
-	appsURL := fmt.Sprintf("*.apps.%s", o.ClusterName)
-	errs = append(errs, deleteRecordsets(ctx, o, apiURL, dns.CNAME))
-	errs = append(errs, deleteRecordsets(ctx, o, appsURL, dns.A))
-	return utilerrors.NewAggregate(errs)
-}
-
-func deleteRecordsets(ctx context.Context, o *ClusterUninstaller, url string, recordType dns.RecordType) error {
-	var errs []error
-	tag := fmt.Sprintf("kubernetes.io_cluster.%s", o.InfraID)
-	result, err := o.recordsClient.Get(ctx, o.BaseDomainResourceGroupName, o.ZoneName, url, recordType)
-	if err != nil {
-		logrus.Debugf("unable to find %s: already deleted or insufficient permissions", url)
-		if isAuthError(err) {
-			return err
-		}
-		return nil
-	}
-
-	if value, ok := result.Metadata[tag]; ok && *value == "owned" {
-		deleteResult, err := o.recordsClient.Delete(ctx, o.BaseDomainResourceGroupName, o.ZoneName, url, recordType, "")
-		if err != nil {
-			if deleteResult.IsHTTPStatus(http.StatusNotFound) {
-				o.Logger.Debug("already deleted")
-				return utilerrors.NewAggregate(errs)
-			}
-			errs = append(errs, fmt.Errorf("failed to delete base domain dns zone: %w", err))
-			if isAuthError(err) {
-				return err
-			}
-		} else {
-			o.Logger.WithField("record", url).Info("deleted")
-		}
-	} else {
-		o.Logger.WithField("record", url).Debugf("metadata mismatch")
-	}
-	return utilerrors.NewAggregate(errs)
-}
-
-func deletePublicRecords(ctx context.Context, o *ClusterUninstaller) error {
+func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, privateDNSClient privatedns.PrivateZonesClient, privateRecordsClient privatedns.RecordSetsClient, logger logrus.FieldLogger, rgName string) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 
 	// collect records from private zones in rgName
 	var errs []error
 
-	zonesPage, err := o.zonesClient.ListByResourceGroup(ctx, o.ResourceGroupName, to.Int32Ptr(100))
+	zonesPage, err := dnsClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100))
 	if err != nil {
 		if zonesPage.Response().IsHTTPStatus(http.StatusNotFound) {
-			o.Logger.Debug("private zone not found, checking public records")
-			err2 := deleteRecordsFromBaseDomain(ctx, o)
-			if err2 != nil {
-				o.Logger.Debugf("failed to delete record sets from the base domain: %w", err)
-			}
+			logger.Debug("already deleted")
 			return utilerrors.NewAggregate(errs)
 		}
 		errs = append(errs, fmt.Errorf("failed to list dns zone: %w", err))
@@ -505,7 +448,7 @@ func deletePublicRecords(ctx context.Context, o *ClusterUninstaller) error {
 
 		for _, zone := range zonesPage.Values() {
 			if zone.ZoneType == dns.Private {
-				if err := deletePublicRecordsForZone(ctx, o.zonesClient, o.recordsClient, o.Logger, o.ResourceGroupName, to.String(zone.Name)); err != nil {
+				if err := deletePublicRecordsForZone(ctx, dnsClient, recordsClient, logger, rgName, to.String(zone.Name)); err != nil {
 					errs = append(errs, fmt.Errorf("failed to delete public records for %s: %w", to.String(zone.Name), err))
 					if isAuthError(err) {
 						return err
@@ -516,10 +459,10 @@ func deletePublicRecords(ctx context.Context, o *ClusterUninstaller) error {
 		}
 	}
 
-	privateZonesPage, err := o.privateZonesClient.ListByResourceGroup(ctx, o.ResourceGroupName, to.Int32Ptr(100))
+	privateZonesPage, err := privateDNSClient.ListByResourceGroup(ctx, rgName, to.Int32Ptr(100))
 	if err != nil {
 		if privateZonesPage.Response().IsHTTPStatus(http.StatusNotFound) {
-			o.Logger.Debug("already deleted")
+			logger.Debug("already deleted")
 			return utilerrors.NewAggregate(errs)
 		}
 		errs = append(errs, fmt.Errorf("failed to list private dns zone: %w", err))
@@ -536,7 +479,7 @@ func deletePublicRecords(ctx context.Context, o *ClusterUninstaller) error {
 		pageCount++
 
 		for _, zone := range privateZonesPage.Values() {
-			if err := deletePublicRecordsForPrivateZone(ctx, o.privateRecordSetsClient, o.zonesClient, o.recordsClient, o.Logger, o.ResourceGroupName, to.String(zone.Name)); err != nil {
+			if err := deletePublicRecordsForPrivateZone(ctx, privateRecordsClient, dnsClient, recordsClient, logger, rgName, to.String(zone.Name)); err != nil {
 				errs = append(errs, fmt.Errorf("failed to delete public records for %s: %w", to.String(zone.Name), err))
 				if isAuthError(err) {
 					return err
@@ -547,7 +490,7 @@ func deletePublicRecords(ctx context.Context, o *ClusterUninstaller) error {
 	}
 
 	if pageCount == 0 {
-		o.Logger.Warn("no DNS records found: either they were already deleted or the service principal lacks permissions to list them")
+		logger.Warn("no DNS records found: either they were already deleted or the service principal lacks permissions to list them")
 	}
 
 	return utilerrors.NewAggregate(errs)
