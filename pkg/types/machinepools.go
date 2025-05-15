@@ -60,6 +60,21 @@ const (
 
 type DataDisk struct {
 	Type DataDiskType `json:"type,omitempty"`
+
+	UserDefined *DiskUserDefined `json:"userDefined,omitempty"`
+	Etcd        *DiskEtcd        `json:"etcd,omitempty"`
+	Swap        *DiskSwap        `json:"swap,omitempty"`
+}
+
+type DiskUserDefined struct {
+	PlatformDiskID string `json:"platformDiskID,omitempty"`
+	MountPath      string `json:"mountPath,omitempty"`
+}
+type DiskSwap struct {
+	PlatformDiskID string `json:"platformDiskID,omitempty"`
+}
+type DiskEtcd struct {
+	PlatformDiskID string `json:"platformDiskID,omitempty"`
 }
 
 // MachinePool is a pool of machines to be installed.
