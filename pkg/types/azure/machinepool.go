@@ -72,8 +72,6 @@ type MachinePool struct {
 	Settings *SecuritySettings `json:"settings,omitempty"`
 
 	// Identity is the type of identity used for the virtual machine.
-	// The type 'SystemAssigned' is an implicitly created identity.
-	// The generated identity will be assigned a Subscription contributor role.
 	// The type 'UserAssigned' is a standalone Azure resource provided by the user
 	// and assigned to the VM
 	// Identity can only be set for control-plane nodes.
@@ -263,7 +261,9 @@ type OSImage struct {
 
 // VMIdentity configures the identity attached to the VM.
 type VMIdentity struct {
-	// Type specifies the type of identity to be used.
+	// Valid Values: "None", "UserAssigned"
+	//       Type specifies the type of identity to be used.
+	// +kubebuilder:validation:Enum=None;UserAssigned
 	Type capz.VMIdentity `json:"type"`
 
 	// UserAssignedIdentities is a list of identities to be attached to a node.
