@@ -11,7 +11,7 @@ import (
 // WaitForOperationGlobal will attempt to wait for a operation to complete where the operational
 // resource is globally scoped.
 func WaitForOperationGlobal(ctx context.Context, projectID string, operation *compute.Operation) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*2)
 	defer cancel()
 
 	service, err := NewComputeService()
