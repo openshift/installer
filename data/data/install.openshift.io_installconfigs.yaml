@@ -252,19 +252,22 @@ spec:
                         default: None
                         description: |-
                           Identity is the type of identity used for the virtual machine.
-                          The type 'SystemAssigned' is an implicitly created identity.
-                          The generated identity will be assigned a Subscription contributor role.
                           The type 'UserAssigned' is a standalone Azure resource provided by the user
                           and assigned to the VM
                           Identity can only be set for control-plane nodes.
                         properties:
                           type:
-                            description: Type specifies the type of identity to be
-                              used.
-                            enum:
-                            - None
-                            - SystemAssigned
-                            - UserAssigned
+                            allOf:
+                            - enum:
+                              - None
+                              - SystemAssigned
+                              - UserAssigned
+                            - enum:
+                              - None
+                              - UserAssigned
+                            description: |-
+                              Valid Values: "None", "UserAssigned"
+                                    Type specifies the type of identity to be used.
                             type: string
                           userAssignedIdentities:
                             description: |-
@@ -1574,19 +1577,22 @@ spec:
                           default: None
                           description: |-
                             Identity is the type of identity used for the virtual machine.
-                            The type 'SystemAssigned' is an implicitly created identity.
-                            The generated identity will be assigned a Subscription contributor role.
                             The type 'UserAssigned' is a standalone Azure resource provided by the user
                             and assigned to the VM
                             Identity can only be set for control-plane nodes.
                           properties:
                             type:
-                              description: Type specifies the type of identity to
-                                be used.
-                              enum:
-                              - None
-                              - SystemAssigned
-                              - UserAssigned
+                              allOf:
+                              - enum:
+                                - None
+                                - SystemAssigned
+                                - UserAssigned
+                              - enum:
+                                - None
+                                - UserAssigned
+                              description: |-
+                                Valid Values: "None", "UserAssigned"
+                                      Type specifies the type of identity to be used.
                               type: string
                             userAssignedIdentities:
                               description: |-
@@ -2835,19 +2841,22 @@ spec:
                         default: None
                         description: |-
                           Identity is the type of identity used for the virtual machine.
-                          The type 'SystemAssigned' is an implicitly created identity.
-                          The generated identity will be assigned a Subscription contributor role.
                           The type 'UserAssigned' is a standalone Azure resource provided by the user
                           and assigned to the VM
                           Identity can only be set for control-plane nodes.
                         properties:
                           type:
-                            description: Type specifies the type of identity to be
-                              used.
-                            enum:
-                            - None
-                            - SystemAssigned
-                            - UserAssigned
+                            allOf:
+                            - enum:
+                              - None
+                              - SystemAssigned
+                              - UserAssigned
+                            - enum:
+                              - None
+                              - UserAssigned
+                            description: |-
+                              Valid Values: "None", "UserAssigned"
+                                    Type specifies the type of identity to be used.
                             type: string
                           userAssignedIdentities:
                             description: |-
@@ -4570,19 +4579,22 @@ spec:
                         default: None
                         description: |-
                           Identity is the type of identity used for the virtual machine.
-                          The type 'SystemAssigned' is an implicitly created identity.
-                          The generated identity will be assigned a Subscription contributor role.
                           The type 'UserAssigned' is a standalone Azure resource provided by the user
                           and assigned to the VM
                           Identity can only be set for control-plane nodes.
                         properties:
                           type:
-                            description: Type specifies the type of identity to be
-                              used.
-                            enum:
-                            - None
-                            - SystemAssigned
-                            - UserAssigned
+                            allOf:
+                            - enum:
+                              - None
+                              - SystemAssigned
+                              - UserAssigned
+                            - enum:
+                              - None
+                              - UserAssigned
+                            description: |-
+                              Valid Values: "None", "UserAssigned"
+                                    Type specifies the type of identity to be used.
                             type: string
                           userAssignedIdentities:
                             description: |-
