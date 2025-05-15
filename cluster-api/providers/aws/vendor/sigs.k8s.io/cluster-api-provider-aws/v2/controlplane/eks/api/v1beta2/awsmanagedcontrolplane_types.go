@@ -88,6 +88,30 @@ type AWSManagedControlPlaneSpec struct { //nolint: maligned
 	// +optional
 	RoleAdditionalPolicies *[]string `json:"roleAdditionalPolicies,omitempty"`
 
+	// RolePath sets the path to the role. For more information about paths, see IAM Identifiers
+	// (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_Identifiers.html)
+	// in the IAM User Guide.
+	//
+	// This parameter is optional. If it is not included, it defaults to a slash
+	// (/).
+	// +optional
+	RolePath string `json:"rolePath,omitempty"`
+
+	// RolePermissionsBoundary sets the ARN of the managed policy that is used
+	// to set the permissions boundary for the role.
+	//
+	// A permissions boundary policy defines the maximum permissions that identity-based
+	// policies can grant to an entity, but does not grant permissions. Permissions
+	// boundaries do not define the maximum permissions that a resource-based policy
+	// can grant to an entity. To learn more, see Permissions boundaries for IAM
+	// entities (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
+	// in the IAM User Guide.
+	//
+	// For more information about policy types, see Policy types (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html#access_policy-types)
+	// in the IAM User Guide.
+	// +optional
+	RolePermissionsBoundary string `json:"rolePermissionsBoundary,omitempty"`
+
 	// Logging specifies which EKS Cluster logs should be enabled. Entries for
 	// each of the enabled logs will be sent to CloudWatch
 	// +optional
@@ -172,6 +196,12 @@ type AWSManagedControlPlaneSpec struct { //nolint: maligned
 	// VpcCni is used to set configuration options for the VPC CNI plugin
 	// +optional
 	VpcCni VpcCni `json:"vpcCni,omitempty"`
+
+	// BootstrapSelfManagedAddons is used to set configuration options for
+	// bare EKS cluster without EKS default networking addons
+	// If you set this value to false when creating a cluster, the default networking add-ons will not be installed
+	// +kubebuilder:default=true
+	BootstrapSelfManagedAddons bool `json:"bootstrapSelfManagedAddons,omitempty"`
 
 	// RestrictPrivateSubnets indicates that the EKS control plane should only use private subnets.
 	// +kubebuilder:default=false

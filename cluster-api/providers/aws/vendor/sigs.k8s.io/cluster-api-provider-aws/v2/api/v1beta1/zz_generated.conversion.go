@@ -2085,6 +2085,7 @@ func autoConvert_v1beta2_NetworkSpec_To_v1beta1_NetworkSpec(in *v1beta2.NetworkS
 	out.CNI = (*CNISpec)(unsafe.Pointer(in.CNI))
 	out.SecurityGroupOverrides = *(*map[SecurityGroupRole]string)(unsafe.Pointer(&in.SecurityGroupOverrides))
 	// WARNING: in.AdditionalControlPlaneIngressRules requires manual conversion: does not exist in peer-type
+	// WARNING: in.AdditionalNodeIngressRules requires manual conversion: does not exist in peer-type
 	// WARNING: in.NodePortIngressRuleCidrBlocks requires manual conversion: does not exist in peer-type
 	return nil
 }

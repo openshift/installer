@@ -413,6 +413,11 @@ func (s *ClusterScope) AdditionalControlPlaneIngressRules() []infrav1.IngressRul
 	return s.AWSCluster.Spec.NetworkSpec.DeepCopy().AdditionalControlPlaneIngressRules
 }
 
+// AdditionalNodeIngressRules returns the additional ingress rules for the node security group.
+func (s *ClusterScope) AdditionalNodeIngressRules() []infrav1.IngressRule {
+	return s.AWSCluster.Spec.NetworkSpec.DeepCopy().AdditionalNodeIngressRules
+}
+
 // UnstructuredControlPlane returns the unstructured object for the control plane, if any.
 // When the reference is not set, it returns an empty object.
 func (s *ClusterScope) UnstructuredControlPlane() (*unstructured.Unstructured, error) {

@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta2
 
 import (
+	"fmt"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -200,6 +201,18 @@ func (r *AWSMachinePool) validateInstanceMarketType() field.ErrorList {
 
 	if r.Spec.AWSLaunchTemplate.MarketType == v1beta2.MarketTypeCapacityBlock && r.Spec.AWSLaunchTemplate.CapacityReservationID == nil {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.awsLaunchTemplate.capacityReservationID"), "is required when CapacityBlock is provided"))
+	}
+	switch r.Spec.AWSLaunchTemplate.MarketType {
+	case "", v1beta2.MarketTypeOnDemand, v1beta2.MarketTypeSpot, v1beta2.MarketTypeCapacityBlock:
+	default:
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.awsLaunchTemplate.MarketType"), r.Spec.AWSLaunchTemplate.MarketType, fmt.Sprintf("Valid values are: %s, %s, %s and omitted", v1beta2.MarketTypeOnDemand, v1beta2.MarketTypeSpot, v1beta2.MarketTypeCapacityBlock)))
+	}
+	if r.Spec.AWSLaunchTemplate.MarketType == v1beta2.MarketTypeSpot && r.Spec.AWSLaunchTemplate.CapacityReservationID != nil {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.awsLaunchTemplate.marketType"), "cannot be set to 'Spot' when CapacityReservationID is specified"))
+	}
+
+	if r.Spec.AWSLaunchTemplate.CapacityReservationID != nil && r.Spec.AWSLaunchTemplate.SpotMarketOptions != nil {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.awsLaunchTemplate.spotMarketOptions"), "cannot be set to when CapacityReservationID is specified"))
 	}
 
 	return allErrs

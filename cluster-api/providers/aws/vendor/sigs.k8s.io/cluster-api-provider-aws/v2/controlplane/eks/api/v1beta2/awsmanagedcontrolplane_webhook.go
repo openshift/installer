@@ -502,4 +502,7 @@ func (r *AWSManagedControlPlane) Default() {
 
 	infrav1.SetDefaults_Bastion(&r.Spec.Bastion)
 	infrav1.SetDefaults_NetworkSpec(&r.Spec.NetworkSpec)
+
+	// Set default value for BootstrapSelfManagedAddons
+	r.Spec.BootstrapSelfManagedAddons = true
 }
