@@ -50,16 +50,16 @@ const (
 	ArchitectureARM64 = "arm64"
 )
 
-type DataDiskType string
+type DiskType string
 
 const (
-	Etcd        DataDiskType = "etcd"
-	Swap        DataDiskType = "swap"
-	UserDefined DataDiskType = "user-defined"
+	Etcd        DiskType = "etcd"
+	Swap        DiskType = "swap"
+	UserDefined DiskType = "user-defined"
 )
 
-type DataDisk struct {
-	Type DataDiskType `json:"type,omitempty"`
+type Disk struct {
+	Type DiskType `json:"type,omitempty"`
 
 	UserDefined *DiskUserDefined `json:"userDefined,omitempty"`
 	Etcd        *DiskEtcd        `json:"etcd,omitempty"`
@@ -112,7 +112,7 @@ type MachinePool struct {
 	Fencing *Fencing `json:"fencing,omitempty"`
 
 	// datadisk
-	DataDisks []DataDisk `json:"dataDisks,omitempty"`
+	DiskSetup []Disk `json:"diskSetup,omitempty"`
 }
 
 // MachinePoolPlatform is the platform-specific configuration for a machine
