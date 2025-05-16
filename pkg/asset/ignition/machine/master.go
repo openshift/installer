@@ -54,7 +54,7 @@ func (a *Master) Generate(_ context.Context, dependencies asset.Parents) error {
 	}
 
 	if installConfig.Config.ControlPlane != nil {
-		for i, d := range installConfig.Config.ControlPlane.DataDisks {
+		for i, d := range installConfig.Config.ControlPlane.DiskSetup {
 			if d.Type == types.Etcd {
 
 				// platform specific...
