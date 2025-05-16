@@ -212,6 +212,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 				Identity:               mpool.Identity.Type,
 				UserAssignedIdentities: userAssignedIdentities,
 				Diagnostics:            controlPlaneDiag,
+				DataDisks:              mpool.DataDisks,
 			},
 		}
 

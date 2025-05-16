@@ -80,6 +80,10 @@ type MachinePool struct {
 	// +kubebuilder:default=None
 	// +optional
 	Identity *VMIdentity `json:"identity,omitempty"`
+
+	// DataDisk specifies the parameters that are used to add one or more data disks to the machine.
+	// +optional
+	DataDisks []capz.DataDisk `json:"dataDisks,omitempty"`
 }
 
 // SecuritySettings define the security type and the UEFI settings of the virtual machine.
@@ -231,6 +235,10 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.Identity != nil {
 		a.Identity = required.Identity
+	}
+
+	if required.DataDisks != nil {
+		a.DataDisks = required.DataDisks
 	}
 }
 
