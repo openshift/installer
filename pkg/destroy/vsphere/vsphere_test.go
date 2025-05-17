@@ -189,6 +189,11 @@ func TestVsphereDeleteFolder(t *testing.T) {
 		DeleteFolder(gomock.Any(), gomock.Any()).
 		Return(errors.New("some vsphere error deleting Folder")).
 		AnyTimes()
+	vsphereClient.
+		EXPECT().
+		GetVCenterName().
+		Return("").
+		AnyTimes() // We should be logging vCenter name
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -316,6 +321,11 @@ func TestVsphereStopVirtualMachines(t *testing.T) {
 		EXPECT().
 		StopVirtualMachine(gomock.Any(), gomock.Any()).
 		Times(0)
+	vsphereClient.
+		EXPECT().
+		GetVCenterName().
+		Return("").
+		AnyTimes() // We should be logging vCenter name
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -412,6 +422,11 @@ func TestVsphereDeleteVirtualMachines(t *testing.T) {
 		EXPECT().
 		StopVirtualMachine(gomock.Any(), gomock.Any()).
 		Times(0)
+	vsphereClient.
+		EXPECT().
+		GetVCenterName().
+		Return("").
+		AnyTimes() // We should be logging vCenter name
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -464,6 +479,11 @@ func TestDeleteStoragePolicy(t *testing.T) {
 		DeleteStoragePolicy(gomock.Any(), gomock.Any()).
 		Return(nil).
 		AnyTimes()
+	vsphereClient.
+		EXPECT().
+		GetVCenterName().
+		Return("").
+		AnyTimes() // We should be logging vCenter name
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -514,6 +534,11 @@ func TestDeleteTag(t *testing.T) {
 		DeleteTag(gomock.Any(), gomock.Any()).
 		Return(nil).
 		AnyTimes()
+	vsphereClient.
+		EXPECT().
+		GetVCenterName().
+		Return("").
+		AnyTimes() // We should be logging vCenter name
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -566,6 +591,11 @@ func TestDeleteTagCategory(t *testing.T) {
 		DeleteTagCategory(gomock.Any(), gomock.Any()).
 		Return(nil).
 		AnyTimes()
+	vsphereClient.
+		EXPECT().
+		GetVCenterName().
+		Return("").
+		AnyTimes() // We should be logging vCenter name
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
