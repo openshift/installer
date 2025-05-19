@@ -327,7 +327,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		}
 		openstack.ConfigMasters(machines, clusterID.InfraID)
 	case azuretypes.Name:
-		mpool := defaultAzureMachinePoolPlatform()
+		mpool := defaultAzureMachinePoolPlatform(installConfig.Config.Platform.Azure.CloudName)
 		mpool.InstanceType = azuredefaults.ControlPlaneInstanceType(
 			installConfig.Config.Platform.Azure.CloudName,
 			installConfig.Config.Platform.Azure.Region,

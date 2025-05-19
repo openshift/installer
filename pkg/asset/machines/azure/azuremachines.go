@@ -146,6 +146,17 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 	for i, id := range mpool.Identity.UserAssignedIdentities {
 		userAssignedIdentities[i] = capz.UserAssignedIdentity{ProviderID: id.ProviderID()}
 	}
+
+	// If identity type is UserAssigned, but no identities are provided, the installer
+	// will create one. Populate the manifest with a reference to that identity.
+	if mpool.Identity.Type == capz.VMIdentityUserAssigned && len(userAssignedIdentities) == 0 {
+		userAssignedIdentities = []capz.UserAssignedIdentity{
+			{
+				ProviderID: fmt.Sprintf("/subscriptions/%s/resourcegroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s-identity", subscriptionID, resourceGroup, clusterID),
+			},
+		}
+	}
+
 	storageAccountName := aztypes.GetStorageAccountName(clusterID)
 
 	defaultDiag := &capz.Diagnostics{
