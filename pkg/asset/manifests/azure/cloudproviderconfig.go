@@ -21,6 +21,7 @@ type CloudProviderConfig struct {
 	SubnetName               string
 	ResourceManagerEndpoint  string
 	ARO                      bool
+	UseManagedIdentity       bool
 }
 
 // JSON generates the cloud provider json config for the azure platform.
@@ -55,6 +56,16 @@ func (params CloudProviderConfig) JSON() (string, error) {
 		// https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-tcp-reset
 		LoadBalancerSku:             "standard",
 		ExcludeMasterFromStandardLB: &excludeMasterFromStandardLB,
+	}
+
+	if params.UseManagedIdentity {
+		config.UseManagedIdentityExtension = true
+		// The cloud provider needs the clientID which is only known after terraform has run.
+		// When left empty, the existing managed identity on the VM will be used.
+		// By leaving it empty, we don't have to create the identity before running the installer.
+		// We only need to know that there will be one assigned to the VM, and we control this.
+		// ref: https://github.com/kubernetes/kubernetes/blob/4b7c607ba47928a7be77fadef1550d6498397a4c/staging/src/k8s.io/legacy-cloud-providers/azure/auth/azure_auth.go#L69
+		config.UserAssignedIdentityID = ""
 	}
 
 	if params.CloudName == azure.StackCloud {
