@@ -4,9 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/types/azure"
 )
 
 // TestStringsToIPs tests the StringsToIPs function.
@@ -63,5 +65,123 @@ func TestMachineNetworksToCIDRs(t *testing.T) {
 	for _, tc := range testcases {
 		res := MachineNetworksToCIDRs(tc.networks)
 		assert.Equal(t, tc.expected, res, "conversion failed")
+	}
+}
+
+func TestCreateAzureIdentity(t *testing.T) {
+	baseInstallConfig := func() *InstallConfig {
+		return &InstallConfig{
+			Compute: []MachinePool{
+				{
+					Platform: MachinePoolPlatform{
+						Azure: &azure.MachinePool{},
+					},
+				},
+			},
+			ControlPlane: &MachinePool{
+				Platform: MachinePoolPlatform{
+					Azure: &azure.MachinePool{},
+				},
+			},
+			Platform: Platform{
+				Azure: &azure.Platform{},
+			},
+		}
+	}
+
+	cases := []struct {
+		name           string
+		installConfig  *InstallConfig
+		expectedResult bool
+	}{
+		{
+			name: "Create Identities with minimal install config (default)",
+			installConfig: &InstallConfig{
+				Platform: Platform{
+					Azure: &azure.Platform{},
+				},
+			},
+			expectedResult: true,
+		},
+		{
+			name: "Create Identities by Default",
+			installConfig: func() *InstallConfig {
+				return baseInstallConfig()
+			}(),
+			expectedResult: true,
+		},
+		{
+			name: "Don't create identities when default machine pool identity is none",
+			installConfig: func() *InstallConfig {
+				ic := baseInstallConfig()
+				ic.Platform.Azure.DefaultMachinePlatform = &azure.MachinePool{
+					Identity: &azure.VMIdentity{
+						Type: capz.VMIdentityNone,
+					},
+				}
+				return ic
+			}(),
+			expectedResult: false,
+		},
+		{
+			name: "create identities when identity type is user assigned but none are supplied",
+			installConfig: func() *InstallConfig {
+				ic := baseInstallConfig()
+				ic.Platform.Azure.DefaultMachinePlatform = &azure.MachinePool{
+					Identity: &azure.VMIdentity{
+						Type: capz.VMIdentityUserAssigned,
+					},
+				}
+				return ic
+			}(),
+			expectedResult: true,
+		},
+		{
+			name: "create identities when byo control plane identity",
+			installConfig: func() *InstallConfig {
+				ic := baseInstallConfig()
+				ic.Platform.Azure.DefaultMachinePlatform = &azure.MachinePool{
+					Identity: &azure.VMIdentity{
+						Type: capz.VMIdentityUserAssigned,
+					},
+				}
+				ic.ControlPlane.Platform.Azure.Identity = &azure.VMIdentity{
+					Type: capz.VMIdentityUserAssigned,
+					UserAssignedIdentities: []azure.UserAssignedIdentity{
+						{
+							Name:          "test",
+							ResourceGroup: "test",
+							Subscription:  "test",
+						},
+					},
+				}
+				return ic
+			}(),
+			expectedResult: true,
+		},
+		{
+			name: "Do not create identities when byo identities",
+			installConfig: func() *InstallConfig {
+				ic := baseInstallConfig()
+				ic.Platform.Azure.DefaultMachinePlatform = &azure.MachinePool{
+					Identity: &azure.VMIdentity{
+						Type: capz.VMIdentityUserAssigned,
+						UserAssignedIdentities: []azure.UserAssignedIdentity{
+							{
+								Name:          "test",
+								ResourceGroup: "test",
+								Subscription:  "test",
+							},
+						},
+					},
+				}
+				return ic
+			}(),
+			expectedResult: false,
+		},
+	}
+	for _, tc := range cases {
+		res := tc.installConfig.CreateAzureIdentity()
+		assert.Equal(t, tc.expectedResult, res, tc.name)
 	}
 }
